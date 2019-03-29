@@ -13,19 +13,15 @@ import { TokenProvider } from "./tokens";
  * clients
  */
 export class DocumentService implements api.IDocumentService {
-    private deltaStorage: DeltaStorageService;
-
     constructor(
-        protected deltaUrl: string,
+        protected ordererUrl: string,
+        private deltaStorageUrl: string,
         private gitUrl: string,
         private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
         private directCredentials: ICredentials,
-        private gitCache: IGitCache) {
-
-        this.deltaStorage = new DeltaStorageService(this.deltaUrl);
-    }
+        private gitCache: IGitCache) {}
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
         return new TokenProvider(tokens.jwt);
@@ -39,7 +35,6 @@ export class DocumentService implements api.IDocumentService {
         if (this.gitUrl === undefined) {
             return new NullBlobtorageService();
         }
-        const endpoint = `${this.gitUrl}/repos/${encodeURIComponent(tenantId)}`;
 
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token
@@ -57,7 +52,7 @@ export class DocumentService implements api.IDocumentService {
         }
 
         const historian = new Historian(
-            endpoint,
+            this.gitUrl,
             this.historianApi,
             this.disableCache,
             credentials);
@@ -82,7 +77,7 @@ export class DocumentService implements api.IDocumentService {
             }
         }
 
-        return new DocumentStorageService(tenantId, id, gitManager);
+        return new DocumentStorageService(id, gitManager);
     }
 
     public async connectToDeltaStorage(
@@ -90,7 +85,8 @@ export class DocumentService implements api.IDocumentService {
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
 
-        return new DocumentDeltaStorageService(tenantId, id, tokenProvider, this.deltaStorage);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
+        return new DocumentDeltaStorageService(tenantId, id, tokenProvider, deltaStorage);
     }
 
     public async connectToDeltaStream(
@@ -99,7 +95,7 @@ export class DocumentService implements api.IDocumentService {
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const token = (tokenProvider as TokenProvider).token;
-        return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.deltaUrl);
+        return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.ordererUrl);
     }
 
     public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
@@ -112,7 +108,7 @@ export class DocumentService implements api.IDocumentService {
             };
         }
 
-        const result = await Axios.post<string>(`${this.deltaUrl}/documents/${tenantId}/${id}/forks`, { headers });
+        const result = await Axios.post<string>(`${this.ordererUrl}/documents/${tenantId}/${id}/forks`, { headers });
         return result.data;
     }
 

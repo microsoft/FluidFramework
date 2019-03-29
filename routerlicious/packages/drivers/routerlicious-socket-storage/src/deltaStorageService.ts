@@ -48,10 +48,10 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         }
 
         const opPromise = axios.get<api.ISequencedDocumentMessage[]>(
-            `${this.url}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
+            `${this.url}?${query}`, { headers });
 
         const contentPromise = axios.get<any[]>(
-            `${this.url}/deltas/content/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}?${query}`, { headers });
+            `${this.url}/content?${query}`, { headers });
 
         const [opData, contentData] = await Promise.all([opPromise, contentPromise]);
 

@@ -34,9 +34,6 @@ export interface IPragueResolvedUrl extends IResolvedUrlBase {
     url: string;
     tokens: { [name: string]: string };
     endpoints: { [name: string]: string };
-    // ordererUrl: string;
-    // deltaStorageUrl: string;
-    // storageUrl: string;
 }
 
 export interface IUrlResolver {

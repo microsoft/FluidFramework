@@ -29,14 +29,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const pragueResolvedUrl = resolvedUrl as IPragueResolvedUrl;
         const storageUrl = pragueResolvedUrl.endpoints.storageUrl;
         const ordererUrl = pragueResolvedUrl.endpoints.ordererUrl;
-        if (!storageUrl || !ordererUrl) {
+        const deltaStorageUrl = pragueResolvedUrl.endpoints.deltaStorageUrl;
+        if (!storageUrl || !ordererUrl || !deltaStorageUrl) {
             // tslint:disable-next-line:max-line-length
-            return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][ordererUrl:${ordererUrl}]`);
+            return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         if (this.useDocumentService2) {
             return Promise.resolve(new DocumentService2(
                 ordererUrl,
+                deltaStorageUrl,
                 storageUrl,
                 this.errorTracking,
                 this.disableCache,
@@ -47,6 +49,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
         return Promise.resolve(new DocumentService(
             ordererUrl,
+            deltaStorageUrl,
             storageUrl,
             this.errorTracking,
             this.disableCache,

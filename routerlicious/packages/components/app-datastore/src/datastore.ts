@@ -48,12 +48,17 @@ class InsecureUrlResolver implements IUrlResolver {
             `/${encodeURIComponent(tenantId)}` +
             `/${encodeURIComponent(documentId)}`;
 
+        const deltaStorageUrl =
+            `${this.ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+
+        const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(tenantId)}`;
+
         // tslint:disable-next-line:no-unnecessary-local-variable
         const response: IPragueResolvedUrl = {
             endpoints: {
-                deltaStorageUrl: this.ordererUrl,
+                deltaStorageUrl,
                 ordererUrl: this.ordererUrl,
-                storageUrl: this.storageUrl,
+                storageUrl,
             },
             tokens: { jwt: this.auth(tenantId, documentId) },
             type: "prague",

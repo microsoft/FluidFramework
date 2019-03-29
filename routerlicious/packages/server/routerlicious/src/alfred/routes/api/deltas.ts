@@ -102,8 +102,9 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
 
     /**
      * Retrieves delta contents for the given document. With an optional from and to range (both exclusive) specified
+     * @deprecated path "/content:tenantId?/:id" currently kept for backwards compatibility
      */
-    router.get("/content/:tenantId?/:id", (request, response, next) => {
+    router.get(["/content/:tenantId?/:id", "/:tenantId?/:id/content"], (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
         const tenantId = request.params.tenantId || appTenants[0].id;

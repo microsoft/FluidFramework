@@ -9,6 +9,7 @@ export class TestResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         const resolved: IPragueResolvedUrl = {
             endpoints: {
+                deltaStorageUrl: "test.com",
                 ordererUrl: "test.com",
                 storageUrl: "test.com",
             },

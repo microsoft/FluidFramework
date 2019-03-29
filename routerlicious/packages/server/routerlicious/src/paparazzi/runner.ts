@@ -20,12 +20,24 @@ import * as winston from "winston";
 import { NodeCodeLoader } from "./chaincodeHost";
 
 class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(private serverUrl: string, private historianUrl: string) {
-    }
+    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
-    // tslint:disable-next-line:no-shadowed-variable
-    public createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return Promise.resolve(socketStorage.createDocumentService(this.serverUrl, this.historianUrl));
+        if (resolvedUrl.type !== "prague") {
+            Promise.reject("only prague type urls can be resolved.");
+        }
+
+        const urlAsPragueUrl = resolvedUrl as IPragueResolvedUrl;
+
+        const ordererUrl = urlAsPragueUrl.endpoints.ordererUrl;
+        const storageUrl = urlAsPragueUrl.endpoints.storageUrl;
+        const deltaStorageUrl = urlAsPragueUrl.endpoints.deltaStorageUrl;
+
+        if (!ordererUrl || !storageUrl || !deltaStorageUrl) {
+            // tslint:disable-next-line:max-line-length
+            Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
+        }
+
+        return Promise.resolve(socketStorage.createDocumentService(ordererUrl, deltaStorageUrl, storageUrl));
     }
 }
 
@@ -43,7 +55,7 @@ export class PaparazziRunner implements utils.IRunner {
         this.permission = new Set(workerConfig.permission as string[]);
         const alfredUrl = workerConfig.alfredUrl;
 
-        const serviceFactory = new WorkerDocumentServiceFactory(alfredUrl, workerConfig.blobStorageUrl);
+        const serviceFactory = new WorkerDocumentServiceFactory();
 
         this.workerService = new agent.WorkerService(
             serviceFactory,
@@ -134,10 +146,22 @@ export class PaparazziRunner implements utils.IRunner {
             const documentUrl = `prague://${url.parse(this.workerConfig.alfredUrl).host}` +
                 `/${encodeURIComponent(requestMsg.tenantId)}` +
                 `/${encodeURIComponent(requestMsg.documentId)}`;
+
+            const deltaStorageUrl =
+                this.workerConfig.alfredUrl +
+                "/deltas" +
+                `/${encodeURIComponent(requestMsg.tenantId)}/${encodeURIComponent(requestMsg.documentId)}`;
+
+            const storageUrl =
+                this.workerConfig.blobStorageUrl +
+                "/repos" +
+                `/${encodeURIComponent(requestMsg.tenantId)}`;
+
             const resolved: IPragueResolvedUrl = {
                 endpoints: {
+                    deltaStorageUrl,
                     ordererUrl: this.workerConfig.alfredUrl,
-                    storageUrl: this.workerConfig.blobStorageUrl.replace("historian:3000", "localhost:3001"),
+                    storageUrl,
                 },
                 tokens: { jwt: requestMsg.token },
                 type: "prague",

@@ -4,7 +4,8 @@ import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";
 
 export function createDocumentService(
-    deltaUrl: string,
+    ordererUrl: string,
+    deltaStorageUrl: string,
     gitUrl: string,
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
@@ -14,7 +15,8 @@ export function createDocumentService(
 
     /* tslint:disable:no-unsafe-any */
     const service = new DocumentService(
-        deltaUrl,
+        ordererUrl,
+        deltaStorageUrl,
         gitUrl,
         errorTracking,
         disableCache,

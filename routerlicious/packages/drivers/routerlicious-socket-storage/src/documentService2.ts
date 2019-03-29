@@ -10,12 +10,13 @@ import { WSDeltaConnection } from "./wsDeltaConnection";
  */
 export class DocumentService2 extends DocumentService {
     constructor(
-        deltaUrl: string,
+        ordererUrl: string,
+        deltaStorageUrl: string,
         gitUrl: string,
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
         directCredentials: ICredentials) {
-        super(deltaUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials, null);
+        super(ordererUrl, deltaStorageUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials, null);
     }
     public async connectToDeltaStream(
         tenantId: string,
@@ -23,6 +24,6 @@ export class DocumentService2 extends DocumentService {
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const token = (tokenProvider as TokenProvider).token;
-        return WSDeltaConnection.Create(tenantId, id, token, client, this.deltaUrl);
+        return WSDeltaConnection.Create(tenantId, id, token, client, this.ordererUrl);
     }
 }

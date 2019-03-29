@@ -42,10 +42,22 @@ export function create(
             `${parse(config.get("worker:serverUrl")).host}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(request.params.id)}`;
+
+        const deltaStorageUrl =
+            config.get("worker:serverUrl") +
+            "/deltas" +
+            `/${encodeURIComponent(tenantId)}/${encodeURIComponent(request.params.id)}`;
+
+        const storageUrl =
+            config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
+            "/repos" +
+            `/${encodeURIComponent(tenantId)}`;
+
         const resolved: IPragueResolvedUrl = {
             endpoints: {
+                deltaStorageUrl,
                 ordererUrl: config.get("worker:serverUrl"),
-                storageUrl: config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001"),
+                storageUrl,
             },
             tokens: { jwt: token },
             type: "prague",
