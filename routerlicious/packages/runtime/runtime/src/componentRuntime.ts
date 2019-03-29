@@ -152,6 +152,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly baseSnapshot: ISnapshotTree) {
         super();
         this.baseSha = baseSnapshot ? baseSnapshot.sha : null;
+        this.filterHostEvents();
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -263,6 +264,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
         return this.chaincode.attach(platform);
+    }
+
+    // May be the host runtime emits events down to interested component runtime?
+    private filterHostEvents() {
+        this.hostRuntime.on("leader", (clientId: string) => {
+            this.emit("leader", clientId);
+        });
     }
 
     private submitOp(type: MessageType, content: any): number {

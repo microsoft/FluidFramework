@@ -15,6 +15,7 @@ import {
     ITree,
     MessageType,
 } from "@prague/container-definitions";
+import { EventEmitter } from "events";
 
 export interface IComponentDeltaHandler {
     prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
@@ -50,7 +51,7 @@ export interface IChaincodeComponent {
     snapshot(): ITree;
 }
 
-export interface IComponentRuntime {
+export interface IComponentRuntime extends EventEmitter {
     readonly tenantId: string;
     readonly documentId: string;
     readonly id: string;
@@ -130,6 +131,8 @@ export interface IHostRuntime extends IRuntime {
     getPackage(name: string): Promise<IComponentFactory>;
 
     error(err: any): void;
+
+    on(event: string, listener: (...args: any[]) => void): this;
 }
 
 export interface IComponentFactory {

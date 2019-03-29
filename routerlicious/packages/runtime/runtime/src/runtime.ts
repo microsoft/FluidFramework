@@ -168,6 +168,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     ) {
         super();
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
+        this.startLeaderElection();
     }
 
     public async loadComponent(
@@ -426,7 +427,14 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.verifyNotClosed();
         this.tasks = tasks;
         this.version = version;
-        this.startLeaderElection();
+        if (this.isLeader()) {
+            this.runTaskAnalyzer();
+        }
+    }
+
+    /* tslint:disable:no-unnecessary-override */
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
     }
 
     private updateMinSequenceNumber(minimumSequenceNumber: number) {
@@ -561,7 +569,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.leaderElector = new LeaderElector(this.getQuorum(), this.clientId);
         this.leaderElector.on("newLeader", (clientId: string) => {
             debug(`New leader elected: ${clientId}`);
-            this.runTaskAnalyzer();
+            if (this.isLeader()) {
+                this.emit("leader", clientId);
+                this.runTaskAnalyzer();
+            }
         });
         this.leaderElector.on("leaderLeft", (clientId: string) => {
             debug(`Leader ${clientId} left`);
@@ -573,7 +584,9 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         });
         this.leaderElector.on("memberLeft", (clientId: string) => {
             debug(`Member ${clientId} left`);
-            this.runTaskAnalyzer();
+            if (this.isLeader()) {
+                this.runTaskAnalyzer();
+            }
         });
         this.proposeLeadership();
     }
@@ -588,32 +601,38 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
+    private isLeader(): boolean {
+        if (this.leaderElector && this.leaderElector.getLeader() === this.clientId) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * On a client joining/departure, decide whether this client is the new leader.
      * If so, calculate if there are any unhandled tasks for browsers and remote agents.
      * Emit local help message for this browser and submits a remote help message for agents.
      */
     private runTaskAnalyzer() {
-        if (this.leaderElector.getLeader() === this.clientId) {
-            // Analyze the current state and ask for local and remote help seperately.
-            const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
-            if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
-                if (helpTasks.browser.length > 0) {
-                    const localHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.browser,
-                        version: this.version,   // back-compat
-                    };
-                    debug(`Requesting local help for ${helpTasks.browser}`);
-                    this.emit("localHelp", localHelpMessage);
-                }
-                if (helpTasks.robot.length > 0) {
-                    const remoteHelpMessage: IHelpMessage = {
-                        tasks: helpTasks.robot,
-                        version: this.version,   // back-compat
-                    };
-                    debug(`Requesting remote help for ${helpTasks.robot}`);
-                    this.submit(MessageType.RemoteHelp, remoteHelpMessage);
-                }
+        // Analyze the current state and ask for local and remote help seperately.
+        const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
+        if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
+            if (helpTasks.browser.length > 0) {
+                const localHelpMessage: IHelpMessage = {
+                    tasks: helpTasks.browser,
+                    version: this.version,   // back-compat
+                };
+                debug(`Requesting local help for ${helpTasks.browser}`);
+                this.emit("localHelp", localHelpMessage);
+            }
+            if (helpTasks.robot.length > 0) {
+                const remoteHelpMessage: IHelpMessage = {
+                    tasks: helpTasks.robot,
+                    version: this.version,   // back-compat
+                };
+                debug(`Requesting remote help for ${helpTasks.robot}`);
+                this.submit(MessageType.RemoteHelp, remoteHelpMessage);
             }
         }
     }
