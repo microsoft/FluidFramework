@@ -150,6 +150,8 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
 
         const host = new ui.BrowserContainerHost();
 
+        const inkPlane = this.rootView.get("ink");
+
         // Bindy for insights
         const image = new controls.Image(
             document.createElement("div"),
@@ -160,6 +162,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             containerDiv,
             new API.Document(this.runtime, this.rootView),
             this.sharedString,
+            inkPlane,
             image,
             this.rootView.get("pageInk") as IStream,
             {});

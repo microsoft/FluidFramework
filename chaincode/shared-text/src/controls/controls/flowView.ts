@@ -1,11 +1,10 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { IGenericBlob, ISequencedDocumentMessage, ISignalMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
-import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 // tslint:disable-next-line:no-var-requires
@@ -19,7 +18,16 @@ import {
     Table,
 } from "../text";
 import * as ui from "../ui";
+import { Cursor, IRange } from "./cursor";
+import * as domutils from "./domutils";
+import { KeyCode } from "./keycode";
+import { PresenceSignal } from "./presenceSignal";
+import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
+
+export interface IFlowViewUser extends IUser {
+    name: string;
+}
 
 export interface IOverlayMarker {
     id: string;
@@ -71,28 +79,6 @@ interface IRangeInfo {
     offset: number;
 }
 
-export interface Item {
-    key: string;
-    div?: HTMLDivElement;
-    iconURL?: string;
-}
-
-let viewOptions: Object;
-
-export function namesToItems(names: string[]): Item[] {
-    const items: Item[] = new Array(names.length);
-
-    for (let i = 0, len = names.length; i < len; i++) {
-        items[i] = { key: names[i] };
-    }
-
-    return items;
-}
-
-function altsToItems(alts: Alt[]) {
-    return alts.map((v) => ({ key: v.text }));
-}
-
 type Alt = MergeTree.ProxString<number>;
 // TODO: mechanism for intelligent services to publish interfaces like this
 interface ITextErrorInfo {
@@ -100,13 +86,18 @@ interface ITextErrorInfo {
     alternates: Alt[];
     color?: string;
 }
+function altsToItems(alts: Alt[]) {
+    return alts.map((v) => ({ key: v.text }));
+}
 
-export interface ICmd extends Item {
+export interface IFlowViewCmd extends SearchMenu.Item {
     exec?: (flowView: FlowView) => void;
     enabled?: (flowView: FlowView) => boolean;
 }
 
-const commands: ICmd[] = [
+let viewOptions: Object;
+
+const commands: IFlowViewCmd[] = [
     {
         exec: (f) => {
             f.copyFormat();
@@ -411,537 +402,11 @@ const commands: ICmd[] = [
         },
         key: "insert chart",
     },
-    {
-        exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
-        },
-        key: "insert map",
-    },
-    {
-        exec: (f) => {
-            f.insertInnerComponent("chart", "@chaincode/charts");
-        },
-        key: "insert chart",
-    },
-    {
-        exec: (f) => {
-            f.insertInnerComponent("code", "@chaincode/monaco");
-        },
-        key: "insert monaco",
-    },
-    {
-        exec: (f) => {
-            (navigator as any).clipboard.readText().then((text) => {
-                console.log(`Inserting ${text}`);
-                f.insertDocument(text);
-            });
-        },
-        key: "paste component",
-    },
 ];
 
 export function moveMarker(flowView: FlowView, fromPos: number, toPos: number) {
-    flowView.sharedString.cut("inclusion", fromPos, fromPos + 1);
-    flowView.sharedString.paste("inclusion", toPos);
-}
-
-export interface ISelectionListBox {
-    elm: HTMLDivElement;
-    show();
-    hide();
-    prevItem();
-    nextItem();
-    removeHighlight();
-    showSelectionList(selectionItems: Item[], hintSelection?: string);
-    selectItem(key: string);
-    items(): Item[];
-    getSelectedKey(): string;
-    getSelectedItem(): Item;
-    getSelectionIndex(): number;
-    setSelectionIndex(indx: number);
-    keydown(e: KeyboardEvent);
-}
-
-export function selectionListBoxCreate(
-    shapeRect: ui.Rectangle,
-    popup: boolean,
-    container: HTMLElement,
-    itemHeight: number,
-    offsetY: number,
-    varHeight?: number): ISelectionListBox {
-
-    const listContainer = document.createElement("div");
-    let items: Item[];
-    let itemCapacity: number;
-    let selectionIndex = -1;
-    let topSelection = 0;
-
-    init();
-
-    return {
-        elm: listContainer,
-        getSelectedItem,
-        getSelectedKey,
-        getSelectionIndex,
-        hide: () => {
-            listContainer.style.visibility = "hidden";
-        },
-        items: () => items,
-        keydown,
-        nextItem,
-        prevItem,
-        removeHighlight,
-        selectItem: selectItemByKey,
-        setSelectionIndex,
-        show: () => {
-            listContainer.style.visibility = "visible";
-        },
-        showSelectionList,
-    };
-
-    function getSelectionIndex() {
-        return selectionIndex;
-    }
-
-    function setSelectionIndex(indx: number) {
-        selectItem(indx);
-    }
-
-    function selectItemByKey(key: string) {
-        key = key.trim();
-        if (selectionIndex >= 0) {
-            if (items[selectionIndex].key === key) {
-                return;
-            }
-        }
-        for (let i = 0, len = items.length; i < len; i++) {
-            if (items[i].key === key) {
-                selectItem(i);
-                break;
-            }
-        }
-    }
-
-    function getSelectedKey() {
-        if (selectionIndex >= 0) {
-            return items[selectionIndex].key;
-        }
-    }
-
-    function getSelectedItem() {
-        if (selectionIndex >= 0) {
-            return items[selectionIndex];
-        }
-    }
-
-    function prevItem() {
-        if (selectionIndex > 0) {
-            selectItem(selectionIndex - 1);
-        }
-    }
-
-    function nextItem() {
-        if (selectionIndex < (items.length - 1)) {
-            selectItem(selectionIndex + 1);
-        }
-    }
-
-    function keydown(e: KeyboardEvent) {
-        if (e.keyCode === KeyCode.upArrow) {
-            prevItem();
-        } else if (e.keyCode === KeyCode.downArrow) {
-            nextItem();
-        }
-    }
-
-    function init() {
-        listContainer.style.boxShadow = "0px 3px 2px #bbbbbb";
-        listContainer.style.backgroundColor = "white";
-        listContainer.style.border = "#e5e5e5 solid 2px";
-
-        updateRectangles();
-        container.appendChild(listContainer);
-    }
-
-    function nonPopUpdateRectangles() {
-        const trimRect = new ui.Rectangle(shapeRect.x, shapeRect.y,
-            shapeRect.width - 10, shapeRect.height - 10);
-        trimRect.conformElement(listContainer);
-        itemCapacity = Math.floor(trimRect.height / itemHeight);
-
-        if (varHeight) {
-            listContainer.style.paddingBottom = varHeight + "px";
-        }
-    }
-
-    function updateRectangles() {
-        if (!popup) {
-            nonPopUpdateRectangles();
-        } else {
-            const width = shapeRect.width;
-            const height = window.innerHeight / 3;
-            let top: number;
-            let bottom: number;
-            let right: number;
-            if ((shapeRect.x + shapeRect.width) > window.innerWidth) {
-                right = shapeRect.x;
-            }
-            // TODO: use container div instead of window/doc body
-            // TODO: right/left (for now assume go right)
-            if ((height + shapeRect.y + offsetY + shapeRect.height) >= window.innerHeight) {
-                bottom = window.innerHeight - shapeRect.y;
-            } else {
-                top = shapeRect.y + shapeRect.height;
-            }
-            itemCapacity = Math.floor(height / itemHeight);
-            if (top !== undefined) {
-                const listContainerRect = new ui.Rectangle(shapeRect.x, top, width, height);
-                listContainerRect.height = itemCapacity * itemHeight;
-                listContainerRect.conformElementMaxHeight(listContainer);
-            } else {
-                const listContainerRect = new ui.Rectangle(shapeRect.x, 0, width, height);
-                listContainerRect.height = itemCapacity * itemHeight;
-                listContainerRect.conformElementMaxHeightFromBottom(listContainer, bottom);
-            }
-            if (right !== undefined) {
-                listContainer.style.right = (window.innerWidth - right) + "px";
-                listContainer.style.left = "";
-            }
-            if (varHeight) {
-                listContainer.style.paddingBottom = varHeight + "px";
-            }
-        }
-    }
-
-    function removeHighlight() {
-        if (selectionIndex >= 0) {
-            if (items[selectionIndex].div) {
-                items[selectionIndex].div.style.backgroundColor = "white";
-            }
-        }
-    }
-
-    function selectItem(indx: number) {
-        // then scroll if necessary
-        if (indx < topSelection) {
-            topSelection = indx;
-        } else if ((indx - topSelection) >= itemCapacity) {
-            topSelection = (indx - itemCapacity) + 1;
-        }
-        if (selectionIndex !== indx) {
-            selectionIndex = indx;
-            updateSelectionList();
-        }
-    }
-
-    function makeItemDiv(i: number, div: HTMLDivElement) {
-        const item = items[i];
-        const itemDiv = div;
-        itemDiv.style.fontSize = "18px";
-        itemDiv.style.fontFamily = "Segoe UI";
-        itemDiv.style.lineHeight = itemHeight + "px";
-        itemDiv.style.whiteSpace = "pre";
-        items[i].div = itemDiv;
-        const itemSpan = document.createElement("span");
-        itemSpan.innerText = "  " + item.key;
-        itemDiv.appendChild(itemSpan);
-
-        if (item.iconURL) {
-            const icon = document.createElement("img");
-            icon.style.cssFloat = "left";
-            icon.style.height = itemHeight + "px";
-            icon.style.width = itemHeight + "px";
-            icon.setAttribute("src", item.iconURL);
-            itemDiv.insertBefore(icon, itemSpan);
-        }
-        return itemDiv;
-    }
-
-    function showSelectionList(selectionItems: Item[], hintSelection?: string) {
-        topSelection = 0;
-        items = selectionItems;
-        clearSubtree(listContainer);
-        selectionIndex = -1;
-        if (selectionItems.length === 0) {
-            return;
-        }
-
-        updateSelectionList();
-
-        if (hintSelection) {
-            selectItemByKey(hintSelection);
-        } else {
-            selectItem(0);
-        }
-    }
-
-    function updateSelectionList() {
-        clearSubtree(listContainer);
-        const len = items.length;
-        for (let i = 0; i < itemCapacity; i++) {
-            const indx = i + topSelection;
-            if (indx === len) {
-                break;
-            } else {
-                const item = items[indx];
-                if (!item.div) {
-                    item.div = document.createElement("div");
-                    listContainer.appendChild(item.div);
-                    makeItemDiv(indx, item.div);
-                } else {
-                    listContainer.appendChild(item.div);
-                }
-                if (indx === selectionIndex) {
-                    item.div.style.backgroundColor = "#aaaaff";
-                } else {
-                    item.div.style.backgroundColor = "white";
-                }
-            }
-        }
-    }
-}
-
-export interface ISearchBox {
-    showSelectionList(selectionItems: Item[]);
-    dismiss();
-    keydown(e: KeyboardEvent);
-    keypress(e: KeyboardEvent);
-    getSearchString(): string;
-    getSelectedKey(): string;
-    getSelectedItem(): Item;
-    updateText();
-}
-
-export interface IInputBox {
-    elm: HTMLDivElement;
-    setText(text: string);
-    getText(): string;
-    initCursor(y: number);
-    keydown(e: KeyboardEvent);
-    keypress(e: KeyboardEvent);
-}
-
-export function inputBoxCreate(onsubmit: (s: string) => void,
-    onchanged: (s: string) => void) {
-    const elm = document.createElement("div");
-    const span = document.createElement("span");
-    elm.appendChild(span);
-    let cursor: Cursor;
-
-    return {
-        elm,
-        getText,
-        initCursor,
-        keydown,
-        keypress,
-        setText,
-    } as IInputBox;
-
-    function adjustCursorX() {
-        const computedStyle = getComputedStyle(elm);
-        const fontstr = computedStyle.font;
-        const text = span.innerText.substring(0, cursor.pos);
-        const w = Math.round(getTextWidth(text, fontstr));
-        cursor.lateralMove(w);
-    }
-
-    function keydown(e: KeyboardEvent) {
-        switch (e.keyCode) {
-            case KeyCode.leftArrow:
-                if (cursor.pos > 0) {
-                    cursor.pos--;
-                    adjustCursorX();
-                }
-                break;
-            case KeyCode.rightArrow:
-                if (cursor.pos < elm.innerText.length) {
-                    cursor.pos++;
-                    adjustCursorX();
-                }
-                break;
-            case KeyCode.backspace:
-                if (cursor.pos > 0) {
-                    let text = span.innerText;
-                    text = text.substring(0, cursor.pos - 1) +
-                        text.substring(cursor.pos);
-                    span.innerText = text;
-                    cursor.pos--;
-                    adjustCursorX();
-                    onchanged(text);
-                }
-                break;
-            case KeyCode.del:
-                if (cursor.pos < span.innerText.length) {
-                    let text = span.innerText;
-                    text = text.substring(0, cursor.pos) +
-                        text.substring(cursor.pos + 1);
-                    span.innerText = text;
-                    onchanged(text);
-                }
-                break;
-        }
-    }
-
-    function keypress(e: KeyboardEvent) {
-        let text = span.innerText;
-        const code = e.charCode;
-        if (code === CharacterCodes.cr) {
-            onsubmit(text);
-        } else {
-            text = text.substring(0, cursor.pos) +
-                String.fromCharCode(code) + text.substring(cursor.pos);
-            span.innerText = text;
-            cursor.pos++;
-            adjustCursorX();
-            onchanged(text);
-        }
-    }
-
-    function initCursor(y: number) {
-        const lineHeight = getTextHeight(elm);
-        cursor = new Cursor(elm);
-        cursor.assignToLine(0, lineHeight - y, elm);
-        // cursor.editSpan.style.top=`${y}px`;
-        cursor.scope();
-    }
-
-    function setText(text: string) {
-        span.innerText = text;
-    }
-
-    function getText() {
-        return span.innerText;
-    }
-}
-
-export function searchBoxCreate(boundingElm: HTMLElement,
-    searchStringChanged: (searchString: string) => void): ISearchBox {
-    const container = document.createElement("div");
-    const inputElmHeight = 32;
-    const itemHeight = 24;
-    let inputElm: HTMLElement;
-    let inputBox: IInputBox;
-    let selectionListBox: ISelectionListBox;
-
-    init();
-
-    return {
-        dismiss,
-        getSearchString,
-        getSelectedItem,
-        getSelectedKey,
-        keydown,
-        keypress,
-        showSelectionList: (items) => selectionListBox.showSelectionList(items),
-        updateText,
-    };
-
-    function getSelectedKey() {
-        return selectionListBox.getSelectedKey();
-    }
-
-    function getSelectedItem() {
-        return selectionListBox.getSelectedItem();
-    }
-
-    function getSearchString() {
-        return inputBox.getText();
-    }
-
-    function dismiss() {
-        document.body.removeChild(container);
-    }
-
-    function keydown(e: KeyboardEvent) {
-        if (e.keyCode === KeyCode.leftArrow) {
-            textSegKeydown(e);
-        } else if (e.keyCode === KeyCode.upArrow) {
-            selectionListBox.prevItem();
-        } else if (e.keyCode === KeyCode.rightArrow) {
-            textSegKeydown(e);
-        } else if (e.keyCode === KeyCode.downArrow) {
-            selectionListBox.nextItem();
-        } else {
-            textSegKeydown(e);
-        }
-    }
-
-    function textSegKeydown(e: KeyboardEvent) {
-        inputBox.keydown(e);
-    }
-
-    function keypress(e: KeyboardEvent) {
-        if (e.charCode >= 32) {
-            inputBox.keypress(e);
-        }
-    }
-
-    function updateRectangles() {
-        const boundingRect = ui.Rectangle.fromClientRect(boundingElm.getBoundingClientRect());
-        const offsetY = boundingRect.y;
-        boundingRect.width = Math.floor(window.innerWidth / 4);
-        boundingRect.height = Math.floor(window.innerHeight / 3);
-        boundingRect.moveElementToUpperLeft(container);
-        boundingRect.x = 0;
-        boundingRect.y = 0;
-        const inputElmBorderSize = 2;
-        const vertSplit = boundingRect.nipVert(inputElmHeight + inputElmBorderSize);
-        vertSplit[0].height -= inputElmBorderSize;
-        vertSplit[0].conformElement(inputElm);
-        inputElm.style.lineHeight = `${vertSplit[0].height}px`;
-        vertSplit[0].height += inputElmBorderSize;
-        selectionListBox = selectionListBoxCreate(vertSplit[0], true, container, itemHeight, offsetY);
-    }
-
-    function updateText() {
-        const text = inputBox.getText();
-        if (text.length > 0) {
-            searchStringChanged(text);
-            if (selectionListBox) {
-                const items = selectionListBox.items();
-                if (items) {
-                    showListContainer(selectionListBox.items().length === 0);
-                }
-            }
-        } else {
-            resetInputBox();
-        }
-    }
-
-    function showListContainer(hidden?: boolean) {
-        inputElm.style.fontStyle = "normal";
-        inputElm.style.color = "black";
-        if (!hidden) {
-            selectionListBox.show();
-            inputElm.style.borderBottomStyle = "none";
-        }
-    }
-
-    function resetInputBox() {
-        selectionListBox.hide();
-        inputElm.style.borderBottom = "#e5e5e5 solid 2px";
-        inputElm.style.boxShadow = "0 0 20px blue";
-    }
-
-    function init() {
-        container.style.zIndex = "4";
-        inputBox = inputBoxCreate((s) => updateText(),
-            (s) => updateText());
-        inputElm = inputBox.elm;
-        inputElm.style.fontSize = "18px";
-        inputElm.style.fontFamily = "Segoe UI";
-        inputElm.style.borderTop = "#e5e5e5 solid 2px";
-        inputElm.style.borderLeft = "#e5e5e5 solid 2px";
-        inputElm.style.borderRight = "#e5e5e5 solid 2px";
-        inputElm.style.backgroundColor = "white";
-        inputElm.style.whiteSpace = "pre";
-        updateRectangles();
-        resetInputBox();
-
-        container.appendChild(inputElm);
-        document.body.appendChild(container);
-        inputBox.initCursor(2);
-    }
+    flowView.sharedString.cut(fromPos, fromPos + 1, "inclusion");
+    flowView.sharedString.paste(toPos, "inclusion");
 }
 
 function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
@@ -970,86 +435,12 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
     return offset;
 }
 
-let cachedCanvas: HTMLCanvasElement;
 const baseURI = typeof document !== "undefined" ? document.location.origin : "";
 const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
 const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
 // const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
-
-function getTextHeight(elm: HTMLDivElement) {
-    const computedStyle = getComputedStyle(elm);
-    if (computedStyle.lineHeight && (computedStyle.lineHeight.length > 0) &&
-        (computedStyle.lineHeight !== "normal")) {
-        return parseInt(computedStyle.lineHeight, 10);
-    } else {
-        return parseInt(computedStyle.fontSize, 10);
-    }
-}
-
-const textWidthCache = new Map<string, Map<string, number>>();
-const lineHeightCache = new Map<string, number>();
-
-function getLineHeight(fontstr: string, lineHeight?: string) {
-    if (lineHeight) {
-        fontstr += ("/" + lineHeight);
-    }
-    let height = lineHeightCache.get(fontstr);
-    if (height === undefined) {
-        const elm = document.createElement("div");
-        elm.style.position = "absolute";
-        elm.style.zIndex = "-10";
-        elm.style.left = "0px";
-        elm.style.top = "0px";
-        elm.style.font = fontstr;
-        document.body.appendChild(elm);
-        height = getTextHeight(elm);
-        document.body.removeChild(elm);
-        lineHeightCache.set(fontstr, height);
-    }
-    if (isNaN(height)) {
-        console.log(`nan height with fontstr ${fontstr}`);
-    }
-    return height;
-}
-
-function getTextWidth(text: string, font: string) {
-    let fontMap = textWidthCache.get(font);
-    let w: number;
-    if (!fontMap) {
-        fontMap = new Map<string, number>();
-    } else {
-        w = fontMap.get(text);
-    }
-    if (w === undefined) {
-        const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-        const context = canvas.getContext("2d");
-        context.font = font;
-        const metrics = context.measureText(text);
-        w = metrics.width;
-        fontMap.set(text, w);
-    }
-    return w;
-}
-
-function getMultiTextWidth(texts: string[], font: string) {
-    // re-use canvas object for better performance
-    const canvas = cachedCanvas || (cachedCanvas = document.createElement("canvas"));
-    const context = canvas.getContext("2d");
-    context.font = font;
-    let sum = 0;
-    for (const text of texts) {
-        const metrics = context.measureText(text);
-        sum += metrics.width;
-    }
-    return sum;
-}
-
-export interface IRange {
-    start: number;
-    end: number;
-}
 
 // global until remove old render
 let textErrorRun: IRange;
@@ -1083,7 +474,7 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     const fontstr = "18px Times";
     viewportDiv.style.font = fontstr;
     const headerFontstr = "22px Times";
-    const wordSpacing = getTextWidth(" ", fontstr);
+    const wordSpacing = domutils.getTextWidth(" ", fontstr);
     const headerDivHeight = 32;
     const computedStyle = window.getComputedStyle(viewportDiv);
     const defaultLineHeight = 1.2;
@@ -1103,7 +494,7 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
 
 function showPresence(presenceX: number, lineContext: ILineContext, presenceInfo: ILocalPresenceInfo) {
     if (!presenceInfo.cursor) {
-        presenceInfo.cursor = new Cursor(lineContext.flowView.viewportDiv, presenceInfo.xformPos);
+        presenceInfo.cursor = new FlowCursor(lineContext.flowView.viewportDiv, presenceInfo.xformPos);
         presenceInfo.cursor.addPresenceInfo(presenceInfo);
     }
     presenceInfo.cursor.assignToLine(presenceX, lineContext.lineDivHeight, lineContext.lineDiv);
@@ -1324,8 +715,8 @@ function decorateLineDiv(lineDiv: ILineDiv, lineFontstr: string, lineDivHeight: 
     if (indentSymbol.font) {
         indentFontstr = indentSymbol.font;
     }
-    const em = Math.round(getTextWidth("M", lineFontstr));
-    const symbolWidth = getTextWidth(indentSymbol.text, indentFontstr);
+    const em = Math.round(domutils.getTextWidth("M", lineFontstr));
+    const symbolWidth = domutils.getTextWidth(indentSymbol.text, indentFontstr);
     const symbolDiv = makeContentDiv(
         new ui.Rectangle(
             lineDiv.indentWidth - Math.floor(em + symbolWidth), 0, symbolWidth, lineDivHeight), indentFontstr);
@@ -1338,7 +729,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
         const outerViewportBounds = ui.Rectangle.fromClientRect(flowView.viewportDiv.getBoundingClientRect());
         const lineDivBounds = lineDiv.getBoundingClientRect();
         const lineDivHeight = lineDivBounds.height;
-        clearSubtree(lineDiv);
+        domutils.clearSubtree(lineDiv);
         let contentDiv = lineDiv;
         if (lineDiv.indentSymbol) {
             decorateLineDiv(lineDiv, lineDiv.style.font, lineDivHeight);
@@ -1460,7 +851,7 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
         const blockItem = <Paragraph.IPGBlock>item;
         if (blockItem.text.length > offset) {
             const fontstr = item.fontstr || defaultFontstr;
-            const subw = getTextWidth(blockItem.text.substring(0, offset), fontstr);
+            const subw = domutils.getTextWidth(blockItem.text.substring(0, offset), fontstr);
             return Math.floor(w + subw);
         } else {
             w += item.width;
@@ -2024,7 +1415,7 @@ export interface IFlowRefMarker extends MergeTree.Marker {
 }
 
 export interface IListRefMarker extends MergeTree.Marker {
-    selectionListBox: ISelectionListBox;
+    selectionListBox: SearchMenu.ISelectionListBox;
 }
 
 export class Viewport {
@@ -2190,7 +1581,7 @@ export class Viewport {
                         }
                         const shapeRect = new ui.Rectangle(0, 0, exclu.width, exclu.height);
                         listRefMarker.selectionListBox =
-                            selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
+                            SearchMenu.selectionListBoxCreate(shapeRect, false, innerDiv, 24, 2);
 
                         // Allow the list box to receive DOM focus and subscribe its 'keydown' handler.
                         allowDOMEvents(listRefMarker.selectionListBox.elm);
@@ -2357,11 +1748,11 @@ interface IRenderOutput {
 
 function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     function gtw(text: string, fontstr: string) {
-        return getTextWidth(text, fontstr);
+        return domutils.getTextWidth(text, fontstr);
     }
 
     function glh(fontstr: string, lineHeight?: string) {
-        return getLineHeight(fontstr, lineHeight);
+        return domutils.getLineHeight(fontstr, lineHeight);
     }
 
     function getFont(pg: Paragraph.IParagraphMarker) {
@@ -2579,7 +1970,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             if (indentPct !== 0.0) {
                 indentWidth = Math.floor(indentPct * lineWidth);
                 if (docContext.indentWidthThreshold >= lineWidth) {
-                    const em2 = Math.round(2 * getTextWidth("M", docContext.fontstr));
+                    const em2 = Math.round(2 * domutils.getTextWidth("M", docContext.fontstr));
                     indentWidth = em2 + indentWidth;
                 }
             }
@@ -2694,11 +2085,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 layoutContext.viewport.div.style,
                 layoutContext.flowView.services,
             );
-
-            // Workaround for client side code snapshotting cachedElement
-            if (!(asMarker.properties.cachedElement instanceof HTMLElement)) {
-                asMarker.properties.cachedElement = undefined;
-            }
 
             const componentDiv = maybeComponent.upsert(
                 asMarker.properties.state,
@@ -2886,7 +2272,7 @@ function makeSegSpan(
                     textErrorRun.end += segText.length;
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
-                let slb: ISelectionListBox;
+                let slb: SearchMenu.ISelectionListBox;
                 span.textErrorRun = textErrorRun;
                 if (textErrorInfo.color === "paul") {
                     span.style.background = underlinePaulStringURL;
@@ -2924,7 +2310,7 @@ function makeSegSpan(
                         if ((e.button === 2) || ((e.button === 0) && (e.ctrlKey))) {
                             const spanBounds = ui.Rectangle.fromClientRect(span.getBoundingClientRect());
                             spanBounds.width = Math.floor(window.innerWidth / 4);
-                            slb = selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
+                            slb = SearchMenu.selectionListBoxCreate(spanBounds, true, document.body, 24, 0, 12);
                             slb.showSelectionList(altsToItems(textErrorInfo.alternates));
                             span.onmouseup = cancelIntellisense;
                             document.body.onmouseup = cancelIntellisense;
@@ -2990,19 +2376,6 @@ export function pixelToPosition(flowView: FlowView, x: number, y: number) {
     }
 }
 
-// Called from a few contexts, inclusions are called render
-export function clearSubtree(elm: HTMLElement) {
-    const removeList: Node[] = [];
-    for (const child of elm.childNodes) {
-        if (!(child as HTMLElement).classList.contains("preserve")) {
-            removeList.push(child);
-        }
-    }
-    for (const node of removeList) {
-        elm.removeChild(node);
-    }
-}
-
 export function clearInclusion(elm: HTMLElement, sha: string) {
     for (const child of elm.childNodes) {
         if ((child as HTMLElement).classList.contains(sha)) {
@@ -3014,106 +2387,13 @@ export function clearInclusion(elm: HTMLElement, sha: string) {
 const Nope = -1;
 
 const presenceColors = ["darkgreen", "sienna", "olive", "purple"];
-export class Cursor {
-    public off = true;
-    public parentSpan: HTMLSpanElement;
-    public editSpan: HTMLSpanElement;
+export class FlowCursor extends Cursor {
     public presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
     public presenceInfoUpdated = true;
-    public mark = Nope;
-    private blinkCount = 0;
-    private blinkTimer: any;
-    private bgColor = "blue";
-    private enabled = true;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
-        this.makeSpan();
-    }
-
-    public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
-        // for now, color
-        const presenceColorIndex = presenceInfo.clientId % presenceColors.length;
-        this.bgColor = presenceColors[presenceColorIndex];
-        this.presenceInfo = presenceInfo;
-        this.makePresenceDiv();
-
-        this.refresh();
-
-        if (this.enabled) {
-            this.show();
-        } else {
-            this.hide(true);
-        }
-    }
-
-    /**
-     * Refreshes the cursor
-     * It will enable / disable the cursor depending on if the client is connected
-     */
-    public refresh() {
-        if (this.presenceInfo) {
-            if (this.presenceInfo.shouldShowCursor()) {
-                this.enable();
-            } else {
-                this.disable();
-            }
-        }
-    }
-
-    /**
-     * Enable the cursor - makes the cursor visible
-     */
-    public enable() {
-        if (this.enabled) {
-            return;
-        }
-
-        this.enabled = true;
-        this.show();
-
-        this.blinkCursor();
-    }
-
-    /**
-     * Disable the cursor - hides the cursor and prevents it from showing up
-     */
-    public disable() {
-        if (!this.enabled) {
-            return;
-        }
-
-        this.enabled = false;
-        this.hide(true);
-        this.clearSelection();
-
-        if (this.blinkTimer) {
-            clearTimeout(this.blinkTimer);
-            this.blinkTimer = undefined;
-        }
-    }
-
-    public tryMark() {
-        if (this.mark === Nope) {
-            this.mark = this.pos;
-        }
-    }
-
-    public emptySelection() {
-        return this.mark === this.pos;
-    }
-
-    public clearSelection() {
-        this.mark = Nope;
-    }
-
-    public getSelection() {
-        if (this.mark !== Nope) {
-            return {
-                end: Math.max(this.mark, this.pos),
-                start: Math.min(this.mark, this.pos),
-            } as IRange;
-        }
+        super(viewportDiv, pos);
     }
 
     public hide(hidePresenceDiv: boolean = false) {
@@ -3137,10 +2417,39 @@ export class Cursor {
         }
     }
 
+    /**
+     * Refreshes the cursor
+     * It will enable / disable the cursor depending on if the client is connected
+     */
+    public refresh() {
+        if (this.presenceInfo) {
+            if (this.presenceInfo.shouldShowCursor()) {
+                this.enable();
+            } else {
+                this.disable();
+            }
+        }
+    }
+    public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
+        // for now, color
+        const presenceColorIndex = presenceInfo.clientId % presenceColors.length;
+        this.bgColor = presenceColors[presenceColorIndex];
+        this.presenceInfo = presenceInfo;
+        this.makePresenceDiv();
+
+        this.refresh();
+
+        if (this.enabled) {
+            this.show();
+        } else {
+            this.hide(true);
+        }
+    }
+
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
         // TODO callback to go from UID to display information
-        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user);
+        this.presenceDiv.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
         this.presenceDiv.style.zIndex = "1";
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
@@ -3150,17 +2459,6 @@ export class Cursor {
         this.presenceDiv.style.borderTopRightRadius = "1em";
         // go underneath local cursor
         this.editSpan.style.zIndex = "1";
-    }
-
-    public makeSpan() {
-        this.editSpan = document.createElement("span");
-        this.editSpan.innerText = "\uFEFF";
-        this.editSpan.style.zIndex = "3";
-        this.editSpan.style.position = "absolute";
-        this.editSpan.style.left = "0px";
-        this.editSpan.style.top = "0px";
-        this.editSpan.style.width = "2px";
-        this.show();
     }
 
     public onLine(pos: number) {
@@ -3193,21 +2491,6 @@ export class Cursor {
         }
     }
 
-    public rect() {
-        return this.editSpan.getBoundingClientRect();
-    }
-
-    public scope() {
-        this.bgColor = "gray";
-        this.editSpan.style.backgroundColor = this.bgColor;
-        this.editSpan.style.zIndex = "4";
-        this.editSpan.style.width = "1px";
-    }
-
-    public lateralMove(x: number) {
-        this.editSpan.style.left = `${x}px`;
-    }
-
     public assignToLine(x: number, h: number, lineDiv: HTMLDivElement) {
         this.editSpan.style.left = `${x}px`;
         this.editSpan.style.height = `${h}px`;
@@ -3237,7 +2520,7 @@ export class Cursor {
         }
     }
 
-    private blinker = () => {
+    protected blinker = () => {
         if (!this.enabled) {
             return;
         }
@@ -3268,38 +2551,29 @@ export class Cursor {
         }
     }
 
-    private blinkCursor() {
-        this.blinkCount = 30;
-        this.off = true;
-        this.blinkTimer = setTimeout(this.blinker, 20);
+    private getUserDisplayString(user: IFlowViewUser): string {
+        // TODO - callback to client code to provide mapping from user -> display
+        // this would allow a user ID to be put on the wire which can then be mapped
+        // back to an email, name, etc...
+        return user.name;
     }
-
-    private getUserDisplayString(user: IUser): string {
-        const namedUser = user as { id: string, name: string };
-        return namedUser.name;
-    }
-}
-
-enum KeyCode {
-    backspace = 8,
-    TAB = 9,
-    esc = 27,
-    pageUp = 33,
-    pageDown = 34,
-    end = 35,
-    home = 36,
-    leftArrow = 37,
-    upArrow = 38,
-    rightArrow = 39,
-    downArrow = 40,
-    del = 46,
-    letter_a = 65,
-    letter_z = 90,
 }
 
 export interface IRemotePresenceBase {
     type: string;
 }
+export interface ILocalPresenceInfo {
+    localRef?: MergeTree.LocalReference;
+    markLocalRef?: MergeTree.LocalReference;
+    xformPos?: number;
+    markXformPos?: number;
+    clientId: number;
+    user: IUser;
+    cursor?: FlowCursor;
+    fresh: boolean;
+    shouldShowCursor: () => boolean;
+}
+
 export interface IRemotePresenceInfo extends IRemotePresenceBase {
     type: "selection";
     origPos: number;
@@ -3323,18 +2597,6 @@ export interface IRemoteDragInfo extends IRemotePresenceBase {
     onTheMove: boolean;
     dx: number;
     dy: number;
-}
-
-export interface ILocalPresenceInfo {
-    localRef?: MergeTree.LocalReference;
-    markLocalRef?: MergeTree.LocalReference;
-    xformPos?: number;
-    markXformPos?: number;
-    clientId: number;
-    user: IUser;
-    cursor?: Cursor;
-    fresh: boolean;
-    shouldShowCursor: () => boolean;
 }
 
 interface ISegmentOffset {
@@ -3490,7 +2752,7 @@ export interface IReferenceDoc {
 }
 
 export interface IListReferenceDoc extends IReferenceDoc {
-    items: Item[];
+    items: SearchMenu.Item[];
     selectionIndex: number;
 }
 
@@ -3563,7 +2825,7 @@ export class FlowView extends ui.Component {
     public ticking = false;
     public wheelTicking = false;
     public topChar = -1;
-    public cursor: Cursor;
+    public cursor: FlowCursor;
     public bookmarks: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
     public tempBookmarks: Sequence.SharedStringInterval[];
     public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
@@ -3572,7 +2834,7 @@ export class FlowView extends ui.Component {
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
-    public presenceMapView: types.ISharedMap;
+    public presenceSignal: PresenceSignal;
     public presenceVector: ILocalPresenceInfo[] = [];
     public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
@@ -3594,15 +2856,21 @@ export class FlowView extends ui.Component {
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
     public services = new Map<string, any>();
+    public srcLanguage = "en";
 
     private lastVerticalX = -1;
     private randWordTimer: any;
     private pendingRender = false;
     private diagCharPort = false;
     private targetTranslation: string;
-    private activeSearchBox: ISearchBox;
-    private cmdTree: MergeTree.TST<ICmd>;
+    private activeSearchBox: SearchMenu.ISearchBox;
+    private cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
+
+    // A list of Marker segments modified by the most recently processed op.  (Reset on each
+    // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
+    // may have been invalidated.
+    private modifiedMarkers = [];
 
     constructor(
         element: HTMLDivElement,
@@ -3623,42 +2891,45 @@ export class FlowView extends ui.Component {
         // Clip children of FlowView to the bounds of the FlowView's root div.
         this.element.style.overflow = "hidden";
 
-        this.cmdTree = new MergeTree.TST<ICmd>();
+        this.cmdTree = new MergeTree.TST<IFlowViewCmd>();
         for (const command of commands) {
             this.cmdTree.put(command.key.toLowerCase(), command);
         }
 
         this.client = sharedString.client;
+
         this.viewportDiv = document.createElement("div");
         this.element.appendChild(this.viewportDiv);
-        const translationLanguage = "translationLanguage";
-        this.targetTranslation = options[translationLanguage]
-            ? `translation-${options[translationLanguage]}`
+        const translationToLanguage = "translationToLanguage";
+        this.targetTranslation = options[translationToLanguage]
+            ? `translation-${options[translationToLanguage]}`
             : undefined;
-
+        if (options["translationFromLanguage"]) {
+            this.srcLanguage = options["translationFromLanguage"];
+        }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
-        sharedString.on("op", (msg, local) => {
-            if (local) {
-                return;
-            }
+        sharedString.on("sequenceDelta", (event, target) => {
+            // For each incoming delta, save any referenced Marker segments.
+            // (see comments at 'modifiedMarkers' decl for more info.)
+            this.modifiedMarkers = event
+                .deltaArgs
+                .segments
+                .filter((segment) => segment.getType() === MergeTree.SegmentType.Marker);
 
-            const delta = msg.contents as MergeTree.IMergeTreeOp;
-            if (this.applyOp(delta, msg)) {
-                this.queueRender(msg);
-            }
+            this.handleSharedStringDelta(event, target);
         });
 
         // refresh cursors when clients join or leave
-        collabDocument.on("clientJoin", () => {
+        collabDocument.runtime.getQuorum().on("addMember", () => {
+            this.updatePresenceCursors();
+            this.broadcastPresence();
+        });
+        collabDocument.runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
-        collabDocument.on("clientLeave", () => {
-            this.updatePresenceCursors();
-        });
-
-        this.cursor = new Cursor(this.viewportDiv);
+        this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
         blobUploadHandler(
             element,
@@ -3666,13 +2937,11 @@ export class FlowView extends ui.Component {
             (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
-        // HACK: Expose "insertComponent" and "insertText" via window to Collaborative Browser Extension
+        // HACK: Expose "insertComponent" and "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
         window["insertComponent"] = this.insertComponent.bind(this);
         window["insertText"] = (text: string) => {
             this.sharedString.insertText(text, this.cursor.pos);
-            this.cursor.pos += text.length;
-            this.localQueueRender(this.cursor.pos);
         };
 
         // Expose the ability to invalidate the current layout when a component's width/height changes.
@@ -3681,38 +2950,46 @@ export class FlowView extends ui.Component {
             this.localQueueRender(FlowView.docStartPosition);
         });
 
-        // Provide access to the containing collaborative object
+        // Provide access to the containing shared object
         this.services.set("document", this.collabDocument);
+        this.initializeMaps();
+    }
 
+    public async initializeMaps() {
         // TODO: Should insert a workbook into the document on demand, implement the ability
         //       to add references to pre-existing notebooks, support multiple notebooks, ...
         //
         //       Instead, we currently check to see if a workbook already exists.  If not, we
         //       insert one up front.
-        this.getWorkBook().then((workbookMap) => {
-            this.services.set(
-                "workbook",
-                new CollaborativeWorkbook(workbookMap, 6, 6, [
-                    ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
-                    ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                    ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
-                    ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
-                    ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
-                    ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
-                ]));
+        const rootMap = this.collabDocument.getRoot();
+        let workbookMap: types.ISharedMap;
 
-            // Set the map after loading data so it's populated when other clients load it
-            if (!this.collabDocument.existing) {
-                this.collabDocument.getRoot().set("workbook", workbookMap);
-            }
+        if (!this.collabDocument.existing) {
+            workbookMap = this.collabDocument.createMap();
+        } else {
+            workbookMap = await rootMap.wait<types.ISharedMap>("workbook");
+        }
 
-            workbookMap.on("valueChanged", () => {
-                // TODO: Track which cells are visible and damp invalidation for off-screen cells.
-                this.queueRender(undefined, true);
-            });
+        this.services.set(
+            "workbook",
+            new CollaborativeWorkbook(workbookMap, 6, 6, [
+                ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
+                ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
+                ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
+                ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
+                ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
+                ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
+            ]));
 
+        // Set the map after loading data so it's populated when other clients load it
+        if (!this.collabDocument.existing) {
+            rootMap.set("workbook", workbookMap);
+        }
+
+        workbookMap.on("valueChanged", () => {
+            // TODO: Track which cells are visible and damp invalidation for off-screen cells.
+            this.queueRender(undefined, true);
         });
-
     }
 
     public treeForViewport() {
@@ -3727,7 +3004,7 @@ export class FlowView extends ui.Component {
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;
         childFlow.commentsView = this.commentsView;
-        childFlow.presenceMapView = this.presenceMapView;
+        childFlow.presenceSignal = this.presenceSignal;
         childFlow.presenceVector = this.presenceVector;
         childFlow.bookmarks = this.bookmarks;
         childFlow.cursor.pos = cursorPos;
@@ -3753,7 +3030,6 @@ export class FlowView extends ui.Component {
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-        this.localQueueRender(this.cursor.pos);
     }
 
     public measureClone() {
@@ -3931,13 +3207,12 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public addPresenceMap(presenceMap: types.ISharedMap) {
-        presenceMap.on("valueChanged", (delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) => {
-            this.remotePresenceUpdate(delta, local, op);
+    public addPresenceSignal(presenceSignal: PresenceSignal) {
+        presenceSignal.on("message", (message: ISignalMessage, local: boolean) => {
+            this.remotePresenceUpdate(message, local);
         });
 
-        this.presenceMapView = presenceMap;
-        this.updatePresence();
+        this.broadcastPresence();
     }
 
     public presenceInfoInRange(start: number, end: number) {
@@ -4029,7 +3304,7 @@ export class FlowView extends ui.Component {
 
         // Estimate placement location
         const text = this.client.getText(lineDiv.linePos, position);
-        const textWidth = getTextWidth(text, lineDiv.style.font);
+        const textWidth = domutils.getTextWidth(text, lineDiv.style.font);
         const lineDivRect = lineDiv.getBoundingClientRect();
 
         const location = { x: lineDivRect.left + textWidth, y: lineDivRect.bottom };
@@ -4147,7 +3422,7 @@ export class FlowView extends ui.Component {
             if (tilePos) {
                 this.curPG = tilePos.tile as MergeTree.Marker;
             }
-            this.updatePresence();
+            this.broadcastPresence();
             this.cursor.updateView(this);
             if (this.parentFlow) {
                 this.parentFlow.focusChild = this;
@@ -4233,9 +3508,11 @@ export class FlowView extends ui.Component {
         return x;
     }
 
-    public cursorRev() {
+    public cursorRev(skipFirstRev = false) {
         if (this.cursor.pos > FlowView.docStartPosition) {
-            this.cursor.pos--;
+            if (!skipFirstRev) {
+                this.cursor.pos--;
+            }
             const segoff = getContainingSegment(this, this.cursor.pos);
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
@@ -4395,7 +3672,7 @@ export class FlowView extends ui.Component {
         // TODO: only rerender line if selection on one line
         if (this.cursor.getSelection()) {
             this.cursor.clearSelection();
-            this.updatePresence();
+            this.broadcastPresence();
             if (render) {
                 this.localQueueRender(this.cursor.pos);
             }
@@ -4441,7 +3718,7 @@ export class FlowView extends ui.Component {
                         if (dist >= thresh) {
                             this.movingInclusion.dx = deltaX;
                             this.movingInclusion.dy = deltaY;
-                            this.updateDragPresence();
+                            this.broadcastDragPresence();
                             this.render(this.topChar, true);
                         }
                     } else {
@@ -4503,7 +3780,7 @@ export class FlowView extends ui.Component {
                     this.movingInclusion.dy = 0;
                     this.movingInclusion.onTheMove = false;
                     this.movingInclusion.ulPos = undefined;
-                    this.updateDragPresence();
+                    this.broadcastDragPresence();
                     if (toPos !== undefined) {
                         // console.log(`moving to ${toPos}`);
                         const fromPos = getOffset(this, this.movingInclusion.marker);
@@ -4615,7 +3892,6 @@ export class FlowView extends ui.Component {
                         this.cursorLocation();
                     }
                     this.sharedString.removeText(toRemove.start, toRemove.end);
-                    this.localQueueRender(toRemove.start);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
@@ -4635,7 +3911,7 @@ export class FlowView extends ui.Component {
                     if (this.modes.showCursorLocation) {
                         this.cursorLocation();
                     }
-                    this.updatePresence();
+                    this.broadcastPresence();
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
@@ -4648,7 +3924,7 @@ export class FlowView extends ui.Component {
                             this.clearSelection();
                         }
                         this.cursorFwd();
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else if (e.keyCode === KeyCode.leftArrow) {
@@ -4662,7 +3938,7 @@ export class FlowView extends ui.Component {
                             this.clearSelection();
                         }
                         this.cursorRev();
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
@@ -4701,7 +3977,7 @@ export class FlowView extends ui.Component {
                         if (this.cursor.pos > maxPos) {
                             this.cursor.pos = maxPos;
                         }
-                        this.updatePresence();
+                        this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
                 } else {
@@ -4721,7 +3997,7 @@ export class FlowView extends ui.Component {
                 this.focusChild.keypressHandler(e);
             } else if (this.activeSearchBox) {
                 if (e.charCode === CharacterCodes.cr) {
-                    const cmd = this.activeSearchBox.getSelectedItem() as ICmd;
+                    const cmd = this.activeSearchBox.getSelectedItem() as IFlowViewCmd;
 
                     // If the searchbox successfully resolved to a simple command, execute it.
                     if (cmd && cmd.exec) {
@@ -4752,20 +4028,17 @@ export class FlowView extends ui.Component {
                 }
             } else {
                 const pos = this.cursor.pos;
-                this.cursor.pos++;
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
                     this.insertParagraph(pos);
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
-                    this.updatePGInfo(pos);
                 }
                 this.clearSelection();
                 if (this.modes.showCursorLocation) {
                     this.cursorLocation();
                 }
-                this.localQueueRender(this.cursor.pos);
             }
         };
 
@@ -4827,7 +4100,6 @@ export class FlowView extends ui.Component {
                 }, tileInfo.pos, tileInfo.pos + 1);
             }
             tile.listCache = undefined;
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4860,7 +4132,7 @@ export class FlowView extends ui.Component {
                         this.cursor.pos = endOffset + 1;
                     }
                 }
-                this.updatePresence();
+                this.broadcastPresence();
                 this.cursor.updateView(this);
             }
             return true;
@@ -4891,7 +4163,6 @@ export class FlowView extends ui.Component {
             } else {
                 this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
             }
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -4926,10 +4197,6 @@ export class FlowView extends ui.Component {
                 this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
         }
-        if (updatePG) {
-            this.updatePGInfo(this.cursor.pos);
-        }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public paintFormat() {
@@ -5047,24 +4314,8 @@ export class FlowView extends ui.Component {
         this.insertComponent("chart", {});
     }
 
-    /** Insert an external component */
-    public insertChaincode(prefix: string, chaincode: string) {
-        const id = `${prefix}${Date.now()}`;
-        this.insertComponent("document", { id, chaincode });
-    }
-
-    public insertInnerComponent(prefix: string, chaincode: string) {
-        const id = `${prefix}${Date.now()}`;
-
-        const documentRuntime = this.collabDocument.runtime as unknown;
-        const runtime = documentRuntime as IComponentRuntime;
-        runtime.createAndAttachComponent(id, chaincode);
-
-        this.insertComponent("innerComponent", { id, chaincode });
-    }
-
-    /** Insert a Document */
-    public insertDocument(url) {
+    /** Insert an external Document */
+    public insertDocument(url: string) {
         this.insertComponent("document", { url });
     }
 
@@ -5079,8 +4330,7 @@ export class FlowView extends ui.Component {
     }
 
     public insertList() {
-        const startPos = this.cursor.pos;
-        const testList: Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
+        const testList: SearchMenu.Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
             selectionIndex: 0,
@@ -5092,7 +4342,6 @@ export class FlowView extends ui.Component {
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
-        this.localQueueRender(startPos);
     }
 
     public insertPhoto() {
@@ -5126,7 +4375,6 @@ export class FlowView extends ui.Component {
                         [Paragraph.referenceProperty]: irdoc,
                     };
                     this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Simple, refProps);
-                    this.localQueueRender(this.cursor.pos);
                 });
             });
     }
@@ -5135,7 +4383,7 @@ export class FlowView extends ui.Component {
     public copy() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            this.sharedString.copy("clipboard", sel.start, sel.end);
+            this.sharedString.copy(sel.start, sel.end, "clipboard");
             this.clearSelection();
         }
     }
@@ -5144,7 +4392,7 @@ export class FlowView extends ui.Component {
         const sel = this.cursor.getSelection();
         if (sel) {
             const len = sel.end - sel.start;
-            this.sharedString.cut("clipboard", sel.start, sel.end);
+            this.sharedString.cut(sel.start, sel.end, "clipboard");
             if (this.cursor.pos === sel.end) {
                 this.cursor.pos -= len;
             }
@@ -5152,19 +4400,18 @@ export class FlowView extends ui.Component {
             if (this.modes.showCursorLocation) {
                 this.cursorLocation();
             }
-            this.updatePresence();
+            this.broadcastPresence();
         }
     }
 
     public paste() {
         this.updatePGInfo(this.cursor.pos);
-        this.cursor.pos = this.sharedString.paste("clipboard", this.cursor.pos);
+        this.cursor.pos = this.sharedString.paste(this.cursor.pos, "clipboard");
         this.updatePGInfo(this.cursor.pos);
-        this.updatePresence();
+        this.broadcastPresence();
         if (this.modes.showCursorLocation) {
             this.cursorLocation();
         }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public deleteRow() {
@@ -5179,7 +4426,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5195,7 +4441,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5212,7 +4457,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5228,7 +4472,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5243,7 +4486,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.succinctPrintTable(tableMarker, tableMarkerPos, this.sharedString);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5353,7 +4595,6 @@ export class FlowView extends ui.Component {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
-            this.localQueueRender(this.cursor.pos);
         }
     }
 
@@ -5365,7 +4606,6 @@ export class FlowView extends ui.Component {
                 pgMarker.cachedLength + tileInfo.pos);
             Paragraph.clearContentCaches(pgMarker);
         }
-        this.localQueueRender(this.cursor.pos);
     }
 
     public keyCmd(charCode: number) {
@@ -5391,11 +4631,10 @@ export class FlowView extends ui.Component {
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
                 Table.createTable(this.cursor.pos, this.sharedString);
-                this.localQueueRender(this.cursor.pos);
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = searchBoxCreate(this.viewportDiv, (searchString) => {
+                this.activeSearchBox = SearchMenu.searchBoxCreate(this.viewportDiv, (searchString) => {
                     const prefix = this.activeSearchBox.getSearchString().toLowerCase();
                     const items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
                         return res.val;
@@ -5460,7 +4699,7 @@ export class FlowView extends ui.Component {
         }
         console.log(`${count} unique`);
         const clock = Date.now();
-        getMultiTextWidth(uniques, "18px Times");
+        domutils.getMultiTextWidth(uniques, "18px Times");
         console.log(`unique pp cost: ${Date.now() - clock}ms`);
     }
 
@@ -5480,7 +4719,7 @@ export class FlowView extends ui.Component {
             } else {
                 this.setCursorPosFromPixels(this.lastLineDiv(), x);
             }
-            this.updatePresence();
+            this.broadcastPresence();
             this.cursor.updateView(this);
         }
     }
@@ -5544,7 +4783,7 @@ export class FlowView extends ui.Component {
         const clk = Date.now();
         // TODO: consider using markers for presence info once splice segments during pg render
         this.updatePresencePositions();
-        clearSubtree(this.viewportDiv);
+        domutils.clearSubtree(this.viewportDiv);
         // this.viewportDiv.appendChild(this.cursor.editSpan);
         const renderOutput = renderTree(this.viewportDiv, this.topChar, this, this.targetTranslation);
         this.viewportStartPos = renderOutput.viewportStartPos;
@@ -5577,7 +4816,7 @@ export class FlowView extends ui.Component {
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
-        // Takes a collaborative Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
+        // Takes a shared Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
         const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ISharedObject) => {
             if (interval.properties && interval.properties["story"]) {
                 assert(commentSharedString);
@@ -5587,7 +4826,7 @@ export class FlowView extends ui.Component {
             return true;
         };
 
-        // Fetches the collaborative object with the key story["value"];
+        // Fetches the shared object with the key story["value"];
         const onPrepareDeserialize: Sequence.PrepareDeserializeCallback = (properties) => {
             if (properties && properties["story"]) {
                 const story = properties["story"];
@@ -5611,8 +4850,8 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        const presenceMap = this.docRoot.get("presence") as types.ISharedMap;
-        this.addPresenceMap(presenceMap);
+        this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
+        this.addPresenceSignal(this.presenceSignal);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections;
         intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
@@ -5667,8 +4906,7 @@ export class FlowView extends ui.Component {
         } else {
             console.log("did not find pg to clear");
         }
-        const markers = this.client.getModifiedMarkersForOp();
-        if (markers.length > 0) {
+        if (this.modifiedMarkers.length > 0) {
             this.updateTableInfo(changePos);
         }
     }
@@ -5721,7 +4959,9 @@ export class FlowView extends ui.Component {
         }
 
         newProps[MergeTree.reservedTileLabelsKey] = newLabels;
-
+        if (this.srcLanguage !== "en") {
+            newProps["fromLanguage"] = this.srcLanguage;
+        }
         // TODO: place in group op
         // old marker gets new props
         this.sharedString.annotateRange(newProps, pgPos, pgPos + 1, { name: "rewrite" });
@@ -5730,8 +4970,6 @@ export class FlowView extends ui.Component {
     }
 
     private insertComponent(type: string, state: {}) {
-        const startPos = this.cursor.pos;
-
         // TODO: All markers should be inserted as an atomic group.
         const component = ui.refTypeNameToComponent.get(type);
         if (isBlock(component)) {
@@ -5750,26 +4988,24 @@ export class FlowView extends ui.Component {
         };
 
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
-        this.localQueueRender(startPos);
     }
 
-    private remotePresenceUpdate(delta: types.IValueChanged, local: boolean, op: ISequencedDocumentMessage) {
+    private remotePresenceUpdate(message: ISignalMessage, local: boolean) {
         if (local) {
             return;
         }
 
-        const remotePresenceBase = this.presenceMapView.get(delta.key) as IRemotePresenceBase;
-        const docClient = this.collabDocument.getClient(op.clientId);
+        const remotePresenceBase = message.content as IRemotePresenceBase;
+
         if (remotePresenceBase.type === "selection") {
-            this.remotePresenceToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemotePresenceInfo);
+            this.remotePresenceToLocal(message.clientId, remotePresenceBase as IRemotePresenceInfo);
         } else if (remotePresenceBase.type === "drag") {
-            this.remoteDragToLocal(delta.key, docClient.client.user, remotePresenceBase as IRemoteDragInfo);
+            this.remoteDragToLocal(remotePresenceBase as IRemoteDragInfo);
         }
     }
 
     private remotePresenceFromEdit(
         longClientId: string,
-        userInfo: IUser,
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
@@ -5781,10 +5017,10 @@ export class FlowView extends ui.Component {
             type: "selection",
         };
 
-        this.remotePresenceToLocal(longClientId, userInfo, remotePosInfo);
+        this.remotePresenceToLocal(longClientId, remotePosInfo);
     }
     // TODO: throttle this if local starts moving
-    private remoteDragToLocal(longClientId: string, user: IUser, remoteDragInfo: IRemoteDragInfo) {
+    private remoteDragToLocal(remoteDragInfo: IRemoteDragInfo) {
         this.movingInclusion.exclu = remoteDragInfo.exclu;
         this.movingInclusion.marker = <MergeTree.Marker>getContainingSegment(this, remoteDragInfo.markerPos).segment;
         this.movingInclusion.dx = remoteDragInfo.dx;
@@ -5793,7 +5029,7 @@ export class FlowView extends ui.Component {
         this.localQueueRender(Nope);
     }
 
-    private remotePresenceToLocal(longClientId: string, user: IUser, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
+    private remotePresenceToLocal(longClientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         const clientId = this.client.getOrAddShortClientId(longClientId);
 
         let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
@@ -5808,48 +5044,51 @@ export class FlowView extends ui.Component {
                 }
             }
         }
+
         if (segoff.segment) {
-            const localPresenceInfo = {
-                clientId,
-                fresh: true,
-                localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
-                    MergeTree.ReferenceType.SlideOnRemove),
-                shouldShowCursor: () => {
-                    return this.client.getClientId() !== clientId &&
-                        Array.from(this.collabDocument.getClients().keys())
-                            .map((k) => this.client.getOrAddShortClientId(k))
-                            .indexOf(clientId) !== -1;
-                },
-                user,
-            } as ILocalPresenceInfo;
-            if (remotePresenceInfo.origMark >= 0) {
-                const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
-                    remotePresenceInfo.refseq, clientId);
-                if (markSegoff.segment) {
-                    localPresenceInfo.markLocalRef =
-                        new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
-                            markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+            const docClient = this.collabDocument.getClient(longClientId);
+            if (docClient && docClient.client.type === "browser") {
+                const localPresenceInfo = {
+                    clientId,
+                    fresh: true,
+                    localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
+                        MergeTree.ReferenceType.SlideOnRemove),
+                    shouldShowCursor: () => {
+                        return this.client.getClientId() !== clientId &&
+                            Array.from(this.collabDocument.getClients().keys())
+                                .map((k) => this.client.getOrAddShortClientId(k))
+                                .indexOf(clientId) !== -1;
+                    },
+                    user: docClient.client.user,
+                } as ILocalPresenceInfo;
+                if (remotePresenceInfo.origMark >= 0) {
+                    const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
+                        remotePresenceInfo.refseq, clientId);
+                    if (markSegoff.segment) {
+                        localPresenceInfo.markLocalRef =
+                            new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                    }
                 }
+                this.updatePresenceVector(localPresenceInfo);
             }
-            this.updatePresenceVector(localPresenceInfo);
         }
     }
 
-    private updatePresence() {
-        if (this.presenceMapView) {
+    private broadcastPresence() {
+        if (this.presenceSignal && this.collabDocument.isConnected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
                 refseq: this.client.getCurrentSeq(),
                 type: "selection",
             };
-
-            this.presenceMapView.set(this.collabDocument.clientId, presenceInfo);
+            this.presenceSignal.submitPresence(presenceInfo);
         }
     }
 
-    private updateDragPresence() {
-        if (this.presenceMapView) {
+    private broadcastDragPresence() {
+        if (this.presenceSignal && this.collabDocument.isConnected) {
             let dragPresenceInfo: IRemoteDragInfo;
             dragPresenceInfo = {
                 dx: this.movingInclusion.dx,
@@ -5859,7 +5098,7 @@ export class FlowView extends ui.Component {
                 onTheMove: this.movingInclusion.onTheMove,
                 type: "drag",
             };
-            this.presenceMapView.set(this.collabDocument.clientId, dragPresenceInfo);
+            this.presenceSignal.submitPresence(dragPresenceInfo);
         }
     }
 
@@ -5875,68 +5114,72 @@ export class FlowView extends ui.Component {
         this.localQueueRender(this.cursor.pos);
     }
 
-    // TODO: paragraph spanning changes and annotations
-    // TODO: generalize this by using transform fwd
-    private applyOp(delta: MergeTree.IMergeTreeOp, msg: ISequencedDocumentMessage) {
-        // tslint:disable:switch-default
-        switch (delta.type) {
+    private handleSharedStringDelta(event: Sequence.SequenceDeltaEvent, target: Sequence.SharedString) {
+        let opCursorPos: number;
+        switch (event.deltaOperation) {
+            case MergeTree.MergeTreeDeltaType.ANNOTATE:
+                opCursorPos = event.end;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        this.updatePGInfo(range.start + range.length);
+                    }
+                });
+                break;
+
             case MergeTree.MergeTreeDeltaType.INSERT:
-                let adjLength = 1;
-                if (delta.marker) {
-                    this.updatePGInfo(delta.pos1 - 1);
-                } else if (delta.pos1 <= this.cursor.pos) {
-                    if (delta.text) {
-                        // insert text
-                        adjLength = delta.text.length;
-                        if (delta.pos2 !== undefined) {
-                            // replace range
-                            const remLen = delta.pos2 - delta.pos1;
-                            adjLength -= remLen;
+                opCursorPos = event.end;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        this.updatePGInfo(range.start + range.length);
+                        if (!event.isLocal && range.start <= this.cursor.pos) {
+                            this.cursor.pos += range.length;
                         }
-                        this.cursor.pos += adjLength;
-                    } else if (delta.register) {
-                        // paste
-                        const len = this.sharedString.client.registerCollection.getLength(msg.clientId,
-                            delta.register);
-                        this.cursor.pos += len;
-                        adjLength = len;
+                    }
+                });
+                break;
+
+            case MergeTree.MergeTreeDeltaType.REMOVE:
+                opCursorPos = event.start;
+                event.ranges.forEach((range) => {
+                    if (range.type === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.start - 1);
+                    } else if (range.type === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.start);
+                        if (!event.isLocal && range.start <= this.cursor.pos) {
+                            this.cursor.pos -= range.length;
+                        }
+                    }
+                });
+                break;
+        }
+
+        if (!event.opArgs.groupOp
+            || event.opArgs.op === event.opArgs.groupOp.ops[event.opArgs.groupOp.ops.length - 1]) {
+            if (event.isLocal) {
+                if (opCursorPos) {
+                    this.cursor.pos = opCursorPos;
+                    if (event.opArgs.groupOp) {
+                        // make sure after the group op the cursor ends up
+                        // in text if it is not already.
+                        // This is primarily needed for tables.
+                        this.cursorRev(true);
                     }
                 }
-                this.remotePresenceFromEdit(
-                    msg.clientId,
-                    this.collabDocument.getClient(msg.clientId).client.user,
-                    msg.referenceSequenceNumber,
-                    delta.pos1,
-                    adjLength);
-                this.updatePGInfo(delta.pos1);
-                if (adjLength > 1) {
-                    this.updatePGInfo(delta.pos1 + adjLength);
+                this.localQueueRender(this.cursor.pos);
+            } else {
+                if (opCursorPos) {
+                    this.remotePresenceFromEdit(
+                        event.opArgs.sequencedMessage.clientId,
+                        event.opArgs.sequencedMessage.referenceSequenceNumber,
+                        opCursorPos);
                 }
-                return true;
-            // TODO: update pg info for pos2 (remove and annotate)
-            case MergeTree.MergeTreeDeltaType.REMOVE:
-                if (delta.pos2 <= this.cursor.pos) {
-                    this.cursor.pos -= (delta.pos2 - delta.pos1);
-                } else if (this.cursor.pos >= delta.pos1) {
-                    this.cursor.pos = delta.pos1;
-                }
-                this.remotePresenceFromEdit(
-                    msg.clientId,
-                    this.collabDocument.getClient(msg.clientId).client.user,
-                    msg.referenceSequenceNumber,
-                    delta.pos1);
-                this.updatePGInfo(delta.pos1);
-                return true;
-            case MergeTree.MergeTreeDeltaType.GROUP: {
-                let opAffectsViewport = false;
-                for (const groupOp of delta.ops) {
-                    opAffectsViewport = opAffectsViewport || this.applyOp(groupOp, msg);
-                }
-                return opAffectsViewport;
-            }
-            case MergeTree.MergeTreeDeltaType.ANNOTATE: {
-                this.updatePGInfo(delta.pos1);
-                return this.posInViewport(delta.pos1) || this.posInViewport(delta.pos2 - 1);
+                this.queueRender(undefined, this.posInViewport(event.start) || this.posInViewport(event.end));
             }
         }
     }
@@ -5968,14 +5211,6 @@ export class FlowView extends ui.Component {
                 this.pendingRender = false;
                 this.render(this.topChar, true);
             });
-        }
-    }
-
-    private async getWorkBook(): Promise<types.ISharedMap> {
-        if (!this.collabDocument.existing) {
-            return this.collabDocument.createMap();
-        } else {
-            return this.collabDocument.getRoot().wait<types.ISharedMap>("workbook");
         }
     }
 }

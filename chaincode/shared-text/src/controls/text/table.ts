@@ -1,9 +1,9 @@
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
-import * as SharedStringModule from "@prague/sequence";
+import * as Sequence from "@prague/sequence";
 import * as Paragraph from "./paragraph";
 
-type SharedString = SharedStringModule.SharedString;
+type SharedString = Sequence.SharedString;
 
 export interface ITableMarker extends MergeTree.Marker {
     table?: Table;
@@ -54,9 +54,8 @@ function createRelativeMarkerOp(
         props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        marker: { refType },
+        seg: { marker: { refType }, props },
         relativePos1,
-        props,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
 }
@@ -80,9 +79,8 @@ function createMarkerOp(
         props[MergeTree.reservedTileLabelsKey] = tileLabels;
     }
     return <MergeTree.IMergeTreeInsertMsg>{
-        marker: { refType },
+        seg: { marker: { refType }, props },
         pos1,
-        props,
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
 }
@@ -180,10 +178,12 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
     }
     let opList = <MergeTree.IMergeTreeOp[]>[];
     const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
-        marker: <MergeTree.IMarkerDef>{
-            refType: MergeTree.ReferenceType.Simple,
+        seg: {
+            marker: <MergeTree.IMarkerDef>{
+                refType: MergeTree.ReferenceType.Simple,
+            },
+            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
         },
-        props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
         relativePos1: { id: prevColumnId },
         type: MergeTree.MergeTreeDeltaType.INSERT,
     };
@@ -217,9 +217,12 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     for (let row of table.rows) {
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
-                let clientId = sharedString.client.longClientId;
+                const clientId = sharedString.client.longClientId;
+                const mergeTree = sharedString.client.mergeTree;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
-                    sharedString.removeNest(cell.marker, cell.endMarker);
+                    sharedString.removeRange(
+                        mergeTree.getOffset(cell.marker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId),
+                        mergeTree.getOffset(cell.endMarker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId));
                 });
             }
         }
@@ -351,10 +354,12 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
     for (let i = columnIds.length - 1; i >= 0; i--) {
         let columnId = columnIds[i];
         const insertColMarkerOp = <MergeTree.IMergeTreeInsertMsg>{
-            marker: <MergeTree.IMarkerDef>{
-                refType: MergeTree.ReferenceType.Simple,
+            seg: {
+                marker: <MergeTree.IMarkerDef>{
+                    refType: MergeTree.ReferenceType.Simple,
+                },
+                props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId }
             },
-            props: { columnId, [MergeTree.reservedMarkerIdKey]: columnId },
             relativePos1: { id: tableId },
             type: MergeTree.MergeTreeDeltaType.INSERT,
         };
@@ -594,8 +599,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 }
             } else {
                 // text segment
-                let tilePos = sharedString.client.mergeTree.findTile(nextPos, sharedString.client.getClientId(),
-                    "pg", false);
+                let tilePos = sharedString.findTile(nextPos, "pg", false);
                 let pgMarker = <Paragraph.IParagraphMarker>tilePos.tile;
                 if (!pgMarker.itemCache) {
                     if (fontInfo) {
