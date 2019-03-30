@@ -107,6 +107,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.connected;
     }
 
+    public get leader(): boolean {
+        return this.hostRuntime.leader;
+    }
+
     public get connectionState(): ConnectionState {
         return this.hostRuntime.connectionState;
     }
@@ -152,7 +156,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly baseSnapshot: ISnapshotTree) {
         super();
         this.baseSha = baseSnapshot ? baseSnapshot.sha : null;
-        this.filterHostEvents();
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -266,11 +269,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.chaincode.attach(platform);
     }
 
-    // May be the host runtime emits events down to interested component runtime?
-    private filterHostEvents() {
-        this.hostRuntime.on("leader", (clientId: string) => {
-            this.emit("leader", clientId);
-        });
+    public updateLeader(clientId: string) {
+        this.emit("leader", clientId);
     }
 
     private submitOp(type: MessageType, content: any): number {

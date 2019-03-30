@@ -154,6 +154,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    public get leader(): boolean {
+        return this.leaderElector && (this.leaderElector.getLeader() === this.clientId);
+    }
+
     // Components tracked by the Domain
     private components = new Map<string, ComponentRuntime>();
     private componentsDeferred = new Map<string, Deferred<ComponentRuntime>>();
@@ -427,7 +431,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.verifyNotClosed();
         this.tasks = tasks;
         this.version = version;
-        if (this.isLeader()) {
+        if (this.leader) {
             this.runTaskAnalyzer();
         }
     }
@@ -569,8 +573,11 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.leaderElector = new LeaderElector(this.getQuorum(), this.clientId);
         this.leaderElector.on("newLeader", (clientId: string) => {
             debug(`New leader elected: ${clientId}`);
-            if (this.isLeader()) {
+            if (this.leader) {
                 this.emit("leader", clientId);
+                for (const [, component] of this.components) {
+                    component.updateLeader(clientId);
+                }
                 this.runTaskAnalyzer();
             }
         });
@@ -584,7 +591,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         });
         this.leaderElector.on("memberLeft", (clientId: string) => {
             debug(`Member ${clientId} left`);
-            if (this.isLeader()) {
+            if (this.leader) {
                 this.runTaskAnalyzer();
             }
         });
@@ -598,14 +605,6 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             }, (err) => {
                 debug(`Leadership proposal rejected ${err}`);
             });
-        }
-    }
-
-    private isLeader(): boolean {
-        if (this.leaderElector && this.leaderElector.getLeader() === this.clientId) {
-            return true;
-        } else {
-            return false;
         }
     }
 

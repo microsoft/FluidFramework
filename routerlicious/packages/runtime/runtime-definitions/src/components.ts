@@ -61,6 +61,7 @@ export interface IComponentRuntime extends EventEmitter {
     readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
+    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
@@ -95,7 +96,7 @@ export interface IComponentRuntime extends EventEmitter {
 }
 
 export interface IHostRuntime extends IRuntime {
-    // TODOTODO do I also need the component ID? Does the tenant ID even show up?
+    // TODO do I also need the component ID? Does the tenant ID even show up?
     readonly tenantId: string;
     readonly id: string;
     readonly existing: boolean;
@@ -104,6 +105,7 @@ export interface IHostRuntime extends IRuntime {
     readonly clientType: string;
     readonly parentBranch: string;
     readonly connected: boolean;
+    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly blobManager: IBlobManager;
     readonly storage: IDocumentStorageService;
@@ -131,8 +133,6 @@ export interface IHostRuntime extends IRuntime {
     getPackage(name: string): Promise<IComponentFactory>;
 
     error(err: any): void;
-
-    on(event: string, listener: (...args: any[]) => void): this;
 }
 
 export interface IComponentFactory {
