@@ -22,18 +22,6 @@
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio"
   },
-  "devDependencies": {
-    "@prague/build-common": "^0.2.0",
-    "@types/node": "^10.12.12",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "tslint": "^5.11.0",
-    "@types/react-dom": "^16.0.11",
-    "ts-loader": "^4.5.0",
-    "typescript": "^3.2.2",
-    "webpack": "^4.8.2",
-    "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
-  },
   "prague": {
     "browser": {
       "entrypoint": "main",
@@ -43,15 +31,29 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.0",
     "@prague/api-definitions": "^0.2.0",
+    "@prague/app-component": "^0.2.0",
     "@prague/cell": "^0.2.0",
     "@prague/container-definitions": "^0.2.0",
     "@prague/map": "^0.2.0",
     "@prague/runtime-definitions": "^0.2.0",
     "@prague/sequence": "^0.2.0",
     "@prague/stream": "^0.2.0",
+    "debug": "^3.1.0",
     "react": "^16.8.3",
-    "react-dom": "^16.8.3"
+    "react-dom": "^16.8.3",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.2.0",
+    "@types/node": "^10.12.12",
+    "@types/react-dom": "^16.0.11",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
   }
 }

@@ -50,8 +50,8 @@
     "@prague/utils": "^0.2.0",
     "@uifabric/icons": "~6.3.0",
     "office-ui-fabric-react": "^6.108.0",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3"
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "@prague/build-common": "^0.2.0",

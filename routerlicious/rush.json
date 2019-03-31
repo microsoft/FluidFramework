@@ -4,6 +4,7 @@
   "nodeSupportedVersionRange": ">=8.0.0",
   "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 999,
+  "ensureConsistentVersions": true,
   "projects": [
     {
       "packageName": "@prague/intelligence-runner",
@@ -56,6 +57,10 @@
     {
       "packageName": "@prague/flow-util",
       "projectFolder": "packages/components/flow-util/"
+    },
+    {
+      "packageName": "@chaincode/owned-map",
+      "projectFolder": "packages/components/owned-map/"
     },
     {
       "packageName": "@chaincode/table-document",
@@ -212,6 +217,10 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
+    },
+    {
+      "packageName": "@prague/build-common",
+      "projectFolder": "packages/build-common/"
     }
   ]
 }
