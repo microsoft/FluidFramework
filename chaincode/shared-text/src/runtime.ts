@@ -135,6 +135,8 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             this.runTask(this.runtime.clientType);
         });
 
+        this.listenForLeaderEvent();
+
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
@@ -232,6 +234,16 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         }
 
         return collabDoc;
+    }
+
+    private listenForLeaderEvent() {
+        if (this.runtime.leader) {
+            this.runTask("intel");
+        } else {
+            this.runtime.on("leader", (clientId) => {
+                this.runTask("intel");
+            });
+        }
     }
 
     private runTask(clientType: string) {
@@ -382,7 +394,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "intel", "translation"], "1.0");
+    runtime.registerTasks(["snapshot", "spell", "translation"], "1.0");
 
     waitForFullConnection(runtime).then(() => {
         // Call snapshot directly from runtime.
