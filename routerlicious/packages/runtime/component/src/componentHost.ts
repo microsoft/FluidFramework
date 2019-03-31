@@ -123,6 +123,10 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return this.componentRuntime.connected;
     }
 
+    public get leader(): boolean {
+        return this.componentRuntime.leader;
+    }
+
     // Interface used to access the runtime code
     public get platform(): IPlatform {
         return this._platform;
@@ -165,6 +169,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void) {
         super();
+        this.attachListener();
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -607,6 +612,14 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
             deltaConnection,
             objectStorage,
         };
+    }
+
+    // Ideally the component runtime should drive this. But the interface change just for this
+    // is probably an overkill.
+    private attachListener() {
+        this.componentRuntime.on("leader", (clientId: string) => {
+            this.emit("leader", clientId);
+        });
     }
 
     private verifyNotClosed() {

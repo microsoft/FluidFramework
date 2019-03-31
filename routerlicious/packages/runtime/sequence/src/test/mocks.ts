@@ -39,6 +39,7 @@ export class MockRuntime implements IRuntime {
     public readonly clientType: string = "browser";
     public readonly parentBranch: string;
     public readonly connected: boolean;
+    public readonly leader: boolean;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly platform: IPlatform;
     public readonly loader: ILoader;

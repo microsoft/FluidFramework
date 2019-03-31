@@ -84,6 +84,8 @@ export interface IRuntime extends EventEmitter {
 
     readonly connected: boolean;
 
+    readonly leader: boolean;
+
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     readonly platform: IPlatform;
