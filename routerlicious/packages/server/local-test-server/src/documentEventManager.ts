@@ -17,6 +17,15 @@ export class DocumentDeltaEventManager {
     private readonly documents: Set<IDocumentDeltaEvent> =
         new Set<IDocumentDeltaEvent>();
 
+    private isNormalProcessingPaused = false;
+
+    /*
+    * Is processing being deterministically controlled, or are changes allowed to flow freely?
+    */
+    public get isProcessingControlled() {
+        return this.isNormalProcessingPaused;
+    }
+
     public constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) { }
 
     public registerDocuments(...docs: IDocumentDeltaEvent[]) {
@@ -59,8 +68,21 @@ export class DocumentDeltaEventManager {
             (doc) => !doc.deltaManager.outbound.idle);
     }
 
+    /**
+     * Pause normal delta event processing for controlled testing.
+     * Should be called upfront during automated testing.
+     */
     public pauseProcessing(...docs: IDocumentDeltaEvent[]) {
         this.pauseAndValidateDocs(...docs);
+    }
+
+    /**
+     * Resume normal delta event processing after a pauseProcessing call.
+     * Useful when called from a manual test utility, but not for automated testing.
+     */
+    public resumeProcessing(...docs: IDocumentDeltaEvent[]) {
+        docs.forEach((doc) => { this.resumeDocument(doc); });
+        this.isNormalProcessingPaused = false;
     }
 
     private pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]):
@@ -69,6 +91,7 @@ export class DocumentDeltaEventManager {
         for (const doc of this.documents) {
             this.pauseDocument(doc);
         }
+        this.isNormalProcessingPaused = true;
 
         if (docs && docs.length > 0) {
             docs.forEach((doc) => {
@@ -100,13 +123,21 @@ export class DocumentDeltaEventManager {
             }
         } while (working);
 
-        for (const doc of docs) {
-            this.pauseDocument(doc);
+        // If deterministically controlling events, need to pause before continuing
+        if (this.isNormalProcessingPaused) {
+            for (const doc of docs) {
+                this.pauseDocument(doc);
+            }
         }
     }
 
     private pauseDocument(doc: IDocumentDeltaEvent) {
         doc.deltaManager.inbound.pause();
         doc.deltaManager.outbound.pause();
+    }
+
+    private resumeDocument(doc: IDocumentDeltaEvent) {
+        doc.deltaManager.inbound.resume();
+        doc.deltaManager.outbound.resume();
     }
 }
