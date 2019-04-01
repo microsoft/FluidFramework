@@ -3,6 +3,7 @@ import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
 import {
+    IDocumentDeltaEvent,
     ITestDeltaConnectionServer,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
@@ -49,6 +50,10 @@ class TestRootComponent extends Component {
 
     public unmark(fenceId: number) {
         this.root.delete(`fence-${fenceId}`);
+    }
+
+    public getDocumentDeltaEvent(): IDocumentDeltaEvent  {
+        return this.runtime;
     }
 
     protected async create(): Promise<void> {
@@ -156,6 +161,11 @@ export class TestHost {
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
         const root = await this.root;
         return root.getType<T>(id);
+    }
+
+    public async getDocumentDeltaEvent() {
+        const root = await this.root;
+        return root.getDocumentDeltaEvent();
     }
 
     public async close() {

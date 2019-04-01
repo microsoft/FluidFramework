@@ -3,7 +3,7 @@ import { Component } from "@prague/app-component";
 import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
 import { IChaincodeComponent } from "@prague/runtime-definitions";
 import * as assert from "assert";
-import { TestHost } from "..";
+import { DocumentDeltaEventManager, TestHost } from "..";
 import { SharedString, SharedStringExtension } from "../../../../runtime/sequence/dist";
 
 export class TestComponent extends Component {
@@ -172,6 +172,54 @@ describe("TestHost", () => {
 
                 assert.strictEqual(text1.client.mergeTree.root.cachedLength, 2);
                 assert.strictEqual(text2.client.mergeTree.root.cachedLength, 2);
+            });
+        });
+
+        describe("Controlling component coauth via DocumentDeltaEventManager", () => {
+
+            let host1: TestHost;
+            let host2: TestHost;
+
+            beforeEach(async () => {
+                host1 = new TestHost(testComponents);
+                host2 = host1.clone();
+            });
+
+            afterEach(async () => {
+                await host1.close();
+                await host2.close();
+            });
+
+            it("Controlled inbounds and outbounds", async () => {
+                const deltaEventManager = new DocumentDeltaEventManager(host1.deltaConnectionServer);
+                const user1DocumentDeltaEvent = await host1.getDocumentDeltaEvent();
+                const user2DocumentDeltaEvent = await host2.getDocumentDeltaEvent();
+                deltaEventManager.registerDocuments(user1DocumentDeltaEvent, user2DocumentDeltaEvent);
+
+                const user1Component = await host1.createComponent<TestComponent>("test_component", TestComponent.type);
+                const user2Component = await host2.openComponent<TestComponent>("test_component");
+
+                deltaEventManager.pauseProcessing();
+
+                user1Component.increment();
+                assert.equal(user1Component.value, 1, "Expected user1 to see the local increment");
+                assert.equal(user2Component.value, 0,
+                    "Expected user 2 NOT to see the increment due to pauseProcessing call");
+                await deltaEventManager.processOutgoing(user1DocumentDeltaEvent);
+                assert.equal(user2Component.value, 0,
+                    "Expected user 2 NOT to see the increment due to no processIncoming call yet");
+                await deltaEventManager.processIncoming(user2DocumentDeltaEvent);
+                assert.equal(user2Component.value, 1, "Expected user 2 to see the increment now");
+
+                user2Component.increment();
+                assert.equal(user2Component.value, 2, "Expected user 2 to see the local increment");
+                assert.equal(user1Component.value, 1,
+                    "Expected user 1 NOT to see the increment due to pauseProcessing call");
+                await deltaEventManager.processOutgoing(user2DocumentDeltaEvent);
+                assert.equal(user1Component.value, 1,
+                    "Expected user 1 NOT to see the increment due to no processIncoming call yet");
+                await deltaEventManager.processIncoming(user1DocumentDeltaEvent);
+                assert.equal(user1Component.value, 2, "Expected user 1 to see the increment now");
             });
         });
     });
