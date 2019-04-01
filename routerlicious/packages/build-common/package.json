@@ -4,6 +4,7 @@
   "description": "Package containing common configs",
   "sideEffects": "false",
   "scripts": {
+    "build": "echo Skipping @prague/build-common: No build steps necessary."
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

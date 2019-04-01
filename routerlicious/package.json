@@ -14,7 +14,7 @@
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
     "rush": "node ./common/tools/node_modules/@microsoft/rush/bin/rush",
     "rush:build": "npm run rush -- build",
-    "rush:repair": "git clean -xfd && pushd ./common/tools && npm i && popd && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update",
+    "rush:repair": "git clean -Xfd && pushd ./common/tools && npm i && popd && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update",
     "rush:install": "npm run rush -- install",
     "rush:rebuild": "npm run rush -- rebuild",
     "rush:update": "npm run rush -- update",

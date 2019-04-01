@@ -17,19 +17,6 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "devDependencies": {
-    "@prague/build-common": "^0.2.0",
-    "concurrently": "^4.1.0",
-    "@types/mocha": "^5.2.5",
-    "@types/nock": "^9.3.0",
-    "@types/node": "^10.12.12",
-    "mocha": "^5.2.0",
-    "nock": "^10.0.1",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.4.0"
-  },
   "dependencies": {
     "@prague/container-definitions": "^0.2.0",
     "@prague/gitresources": "^0.2.0",
@@ -37,5 +24,19 @@
     "@prague/socket-storage-shared": "^0.2.0",
     "axios": "^0.18.0",
     "debug": "^3.1.0"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.2.0",
+    "@types/debug": "^0.0.31",
+    "@types/mocha": "^5.2.5",
+    "@types/nock": "^9.3.0",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "mocha": "^5.2.0",
+    "nock": "^10.0.1",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.4.0"
   }
 }
