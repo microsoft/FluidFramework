@@ -1,13 +1,14 @@
 import {
     IContentMessage,
-    IDeltaStorageService,
     IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ITokenProvider,
 } from "@prague/container-definitions";
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
+import { debug } from "./debug";
 
 // Simulated delay interval for emitting the ops
 const DelayInterval = 50;
@@ -26,7 +27,7 @@ class Replayer {
         private tenantId: string,
         private id: string,
         private tokenProvider: ITokenProvider,
-        private storageService: IDeltaStorageService,
+        private documentStorageService: IDocumentDeltaStorageService,
         private replayFrom: number,
         private replayTo: number,
         private unitIsTime: boolean) {
@@ -40,11 +41,10 @@ class Replayer {
             const fetchToBatch = fetchCurrent + MaxBatchDeltas;
             const fetchTo = useFetchToBatch ? fetchToBatch : Math.min(fetchToBatch, this.replayTo);
 
-            const fetchedOps = await this.storageService.get(
-                this.tenantId, this.id, this.tokenProvider, fetchCurrent, fetchTo);
+            const fetchedOps = await this.documentStorageService.get(fetchCurrent, fetchTo);
 
             if (fetchedOps.length <= 0) {
-                console.log("Fetch done", fetchCurrent);
+                debug(`Fetch done ${fetchCurrent}`);
                 break;
             }
 
@@ -96,7 +96,7 @@ class Replayer {
             // emit all the ops from 0 to from immediately
             if (skipToIndex !== 0) {
                 const playbackOps = fetchedOps.slice(0, skipToIndex);
-                console.log("Skipped", skipToIndex);
+                debug(`Skipped ${skipToIndex}`);
                 this.emit(playbackOps);
             }
         }
@@ -116,7 +116,7 @@ class Replayer {
                 let nextInterval = DelayInterval;
                 current += 1;
 
-                console.log("Replay next", this.replayCurrent + current);
+                debug(`Replay next ${this.replayCurrent + current}`);
                 if (this.unitIsTime === true) {
                     const currentTimeStamp = currentOp.timestamp;
                     if (currentTimeStamp !== undefined) {
@@ -157,9 +157,9 @@ class Replayer {
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
                     setTimeout(replayNextOps, nextInterval);
-                    console.log("Replay scheduled", this.replayCurrent + current, nextInterval);
+                    debug(`Replay scheduled ${this.replayCurrent + current} ${nextInterval}`);
                 } else {
-                    console.log("Replay done", this.replayCurrent + current);
+                    debug(`Replay done ${this.replayCurrent + current}`);
                     this.replayCurrent += current;
                     resolve();
                 }
@@ -174,7 +174,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         tenantId: string,
         id: string,
         tokenProvider: ITokenProvider,
-        storageService: IDeltaStorageService,
+        documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
         unitIsTime: boolean,
@@ -192,7 +192,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
         // tslint:disable-next-line:no-floating-promises
         this.FetchAndEmitOps(
-            deltaConnection, tenantId, id, tokenProvider, storageService, replayFrom, replayTo, unitIsTime);
+            deltaConnection, tenantId, id, tokenProvider, documentStorageService, replayFrom, replayTo, unitIsTime);
 
         return deltaConnection;
     }
@@ -202,13 +202,21 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         tenantId: string,
         id: string,
         tokenProvider: ITokenProvider,
-        storageService: IDeltaStorageService,
+        documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
         unitIsTime: boolean): Promise<void> {
 
-        return (new Replayer(
-            deltaConnection, tenantId, id, tokenProvider, storageService, replayFrom, replayTo, unitIsTime)).start();
+        const replayer =  new Replayer(
+            deltaConnection,
+            tenantId,
+            id,
+            tokenProvider,
+            documentStorageService,
+            replayFrom,
+            replayTo,
+            unitIsTime);
+        return replayer.start();
     }
 
     public get clientId(): string {
@@ -241,18 +249,18 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     }
 
     public submit(message: IDocumentMessage): void {
-        console.log("dropping the outbound message");
+        debug("dropping the outbound message");
     }
 
     public async submitAsync(message: IDocumentMessage): Promise<void> {
-        console.log("dropping the outbound message and wait for response");
+        debug("dropping the outbound message and wait for response");
     }
 
     public async submitSignal(message: any) {
-        console.log("dropping the outbound signal and wait for response");
+        debug("dropping the outbound signal and wait for response");
     }
 
     public disconnect() {
-        console.log("no implementation for disconnect...");
+        debug("no implementation for disconnect...");
     }
 }

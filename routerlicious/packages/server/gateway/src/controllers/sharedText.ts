@@ -2,7 +2,12 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { Browser, IClient, IPragueResolvedUrl, IResolvedUrl, ISequencedClient } from "@prague/container-definitions";
+import { Browser,
+        IClient,
+        IDocumentServiceFactory,
+        IPragueResolvedUrl,
+        IResolvedUrl,
+        ISequencedClient } from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
@@ -107,16 +112,21 @@ async function loadDocument(
         ? new BrowserErrorTrackingService()
         : new DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
-    const documentService = replayMode
-        ? new ReplayDocumentServiceFactory(document.location.origin, from, to)
-        : new RouterliciousDocumentServiceFactory(
-            false,
-            errorService,
-            disableCache,
-            config.historianApi,
-            seedData,
-            config.credentials);
-    API.registerDocumentServiceFactory(documentService);
+    let documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
+        false,
+        errorService,
+        disableCache,
+        config.historianApi,
+        seedData,
+        config.credentials);
+    if (replayMode) {
+        documentServiceFactory =
+            new ReplayDocumentServiceFactory(
+                from,
+                to,
+                documentServiceFactory);
+    }
+    API.registerDocumentServiceFactory(documentServiceFactory);
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,

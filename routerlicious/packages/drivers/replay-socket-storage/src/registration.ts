@@ -1,15 +1,15 @@
-import { IDocumentService } from "@prague/container-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@prague/container-definitions";
 import { ReplayDocumentService } from "./documentService";
 
 export function createReplayDocumentService(
-    deltaUrl: string,
     replayFrom: number,
     replayTo: number,
+    documentService: IDocumentService,
     unitIsTime?: boolean,
 ): IDocumentService {
 
     const service = new ReplayDocumentService(
-        deltaUrl, replayFrom, replayTo, unitIsTime);
+        replayFrom, replayTo, documentService, unitIsTime);
 
     return service;
 }

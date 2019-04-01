@@ -3,9 +3,15 @@ import { createReplayDocumentService } from "./registration";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
-    constructor(private deltaUrl: string, private from: number, private to: number) {}
+    constructor(
+        private from: number,
+        private to: number,
+        private documentServiceFactory: IDocumentServiceFactory) {}
 
-    public createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
-        return Promise.resolve(createReplayDocumentService(this.deltaUrl, this.from, this.to));
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+        return Promise.resolve(createReplayDocumentService(
+            this.from,
+            this.to,
+            await this.documentServiceFactory.createDocumentService(resolvedUrl)));
     }
 }

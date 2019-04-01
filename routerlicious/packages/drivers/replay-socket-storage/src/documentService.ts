@@ -1,6 +1,5 @@
 import * as api from "@prague/container-definitions";
-import { TokenProvider } from "@prague/routerlicious-socket-storage";
-import { DeltaStorageService, ReplayDeltaStorageService } from "./deltaStorageService";
+import { ReplayDeltaStorageService } from "./deltaStorageService";
 import { ReplayDocumentDeltaConnection } from "./documentDeltaConnection";
 import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
 
@@ -10,16 +9,14 @@ import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
  * and emitting them with a pre determined delay
  */
 export class ReplayDocumentService implements api.IDocumentService {
-    private deltaStorage: DeltaStorageService;
-    constructor(private deltaUrl: string,
-                private replayFrom: number,
+    constructor(private replayFrom: number,
                 private replayTo: number,
+                private documentService: api.IDocumentService,
                 private unitIsTime: boolean) {
-        this.deltaStorage = new DeltaStorageService(this.deltaUrl);
     }
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
-        return new TokenProvider(tokens.jwt);
+        return this.documentService.createTokenProvider(tokens);
     }
 
     public async connectToStorage(
@@ -41,8 +38,11 @@ export class ReplayDocumentService implements api.IDocumentService {
         id: string,
         tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return ReplayDocumentDeltaConnection.Create(tenantId, id, tokenProvider, this.deltaStorage,
-             this.replayFrom, this.replayTo, this.unitIsTime);
+
+        const documentDeltaStorageService: api.IDocumentDeltaStorageService =
+            await this.documentService.connectToDeltaStorage(tenantId, id, tokenProvider);
+        return ReplayDocumentDeltaConnection.Create(tenantId, id, tokenProvider, documentDeltaStorageService,
+            this.replayFrom, this.replayTo, this.unitIsTime);
     }
     public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
         return null;
