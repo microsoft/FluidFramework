@@ -12,6 +12,7 @@
         "noUnusedLocals": false,
         "sourceMap": true,
         "inlineSources": true,
-        "noImplicitAny": false
+        "noImplicitAny": false,
+        "incremental": true
     }
 }

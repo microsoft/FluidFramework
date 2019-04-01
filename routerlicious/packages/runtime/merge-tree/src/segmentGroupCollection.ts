@@ -1,8 +1,7 @@
-import { ISegment, SegmentGroup } from ".";
-import { ListMakeHead } from "./collections";
+import { ISegment, List, ListMakeHead, SegmentGroup } from ".";
 
 export class SegmentGroupCollection {
-    private readonly segmentGroups = ListMakeHead<SegmentGroup>();
+    private readonly segmentGroups: List<SegmentGroup> = ListMakeHead<SegmentGroup>();
 
     constructor(private readonly segment: ISegment) {}
 

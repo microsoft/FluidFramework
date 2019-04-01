@@ -12,7 +12,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "tsc": "tsc",
-    "build:esnext": "tsc --outDir lib --m esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose",
@@ -77,7 +77,7 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.2.2",
+    "typescript": "^3.4.0",
     "ts-loader": "^4.5.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2"

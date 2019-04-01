@@ -32,7 +32,8 @@ export class TestClient extends Client {
     public static useCheckQ = false;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
-    protected readonly q = Collections.ListMakeHead<ISequencedDocumentMessage>();
+    protected readonly q: Collections.List<ISequencedDocumentMessage> =
+        Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     constructor(initText: string, options?: PropertySet) {
         super(initText, specToSegment, options);

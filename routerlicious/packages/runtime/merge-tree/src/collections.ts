@@ -38,14 +38,14 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> {
 }
 
 export function ListMakeEntry<U>(data: U): List<U> {
-    var entry: List<U> = new List<U>(false, data);
+    const entry: List<U> = new List<U>(false, data);
     entry.prev = entry;
     entry.next = entry;
     return entry;
 }
 
 export function ListMakeHead<U>(): List<U> {
-    var entry: List<U> = new List<U>(true, undefined);
+    const entry: List<U> = new List<U>(true, undefined);
     entry.prev = entry;
     entry.next = entry;
     return entry;
@@ -66,7 +66,7 @@ export class List<T> {
     }
 
     add(data: T): List<T> {
-        var entry = ListMakeEntry(data);
+        const entry = ListMakeEntry(data);
         this.prev.next = entry;
         entry.next = this;
         entry.prev = this.prev;
@@ -100,8 +100,8 @@ export class List<T> {
     }
 
     count(): number {
-        var entry: List<T>;
-        var i: number;
+        let entry: List<T>;
+        let i: number;
 
         entry = this.next;
         for (i = 0; !(entry.isHead); i++) {
@@ -135,7 +135,7 @@ export class List<T> {
     }
 
     push(data: T): void {
-        var entry = ListMakeEntry(data);
+        const entry = ListMakeEntry(data);
         entry.data = data;
         entry.isHead = false;
         entry.next = this.next;
@@ -160,7 +160,7 @@ export class List<T> {
     }
 
     insertAfter(data: T): List<T> {
-        var entry: List<T> = ListMakeEntry(data);
+        const entry: List<T> = ListMakeEntry(data);
         entry.next = this.next;
         entry.prev = this;
         this.next = entry;
@@ -169,7 +169,7 @@ export class List<T> {
     }
 
     insertBefore(data: T): List<T> {
-        var entry = ListMakeEntry(data);
+        const entry = ListMakeEntry(data);
         return this.insertEntryBefore(entry);
     }
 
@@ -188,7 +188,7 @@ export interface Comparer<T> {
     min: T;
 }
 
-export var numberComparer: Comparer<number> = {
+export const numberComparer: Comparer<number> = {
     min: Number.MIN_VALUE,
     compare: (a, b) => a - b,
 }
@@ -200,7 +200,7 @@ export class Heap<T> {
     }
     constructor(a: T[], public comp: Comparer<T>) {
         this.L = [comp.min];
-        for (var i = 0, len = a.length; i < len; i++) {
+        for (let i = 0, len = a.length; i < len; i++) {
             this.add(a[i]);
         }
     }
@@ -209,7 +209,7 @@ export class Heap<T> {
     }
 
     get() {
-        var x = this.L[1];
+        const x = this.L[1];
         this.L[1] = this.L[this.count()];
         this.L.pop();
         this.fixdown(1);
@@ -223,7 +223,7 @@ export class Heap<T> {
 
     private fixup(k: number) {
         while (k > 1 && (this.comp.compare(this.L[k >> 1], this.L[k]) > 0)) {
-            var tmp = this.L[k >> 1];
+            const tmp = this.L[k >> 1];
             this.L[k >> 1] = this.L[k];
             this.L[k] = tmp;
             k = k >> 1;
@@ -232,14 +232,14 @@ export class Heap<T> {
 
     private fixdown(k: number) {
         while ((k << 1) <= (this.count())) {
-            var j = k << 1;
+            let j = k << 1;
             if ((j < this.count()) && (this.comp.compare(this.L[j], this.L[j + 1]) > 0)) {
                 j++;
             }
             if (this.comp.compare(this.L[k], this.L[j]) <= 0) {
                 break;
             }
-            var tmp = this.L[k];
+            const tmp = this.L[k];
             this.L[k] = this.L[j];
             this.L[j] = tmp;
             k = j;
