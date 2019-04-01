@@ -316,7 +316,7 @@ export class Container extends EventEmitter implements IContainer {
 
         // Get the snapshot tree
         const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => version ? storage.getSnapshotTree(version) : null);
+            ([storage, version]) => storage.getSnapshotTree(version));
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
