@@ -29,20 +29,20 @@ class NullRuntime implements IRuntime {
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return Promise.reject("Null chaincode should not receive messages");
+        return Promise.reject("Null runtime should not receive messages");
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        throw new Error("Null chaincode should not receive messages");
+        throw new Error("Null runtime should not receive messages");
     }
 
     public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        return Promise.reject("Null chaincode should not receive messages");
+        return Promise.reject("Null runtime should not receive messages");
     }
 
     public processSignal(message: any, local: boolean) {
-        // todo (mdaumi): We might want to buffer signals before transitioning.
-        return Promise.reject("Null chaincode should not receive signals");
+        // Null runtime can receive signals but it's okay to miss those.
+        return;
     }
 }
 
