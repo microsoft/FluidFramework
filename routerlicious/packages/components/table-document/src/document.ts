@@ -1,4 +1,5 @@
 import { Component } from "@prague/app-component";
+import { Workbook } from "@prague/client-ui/ext/calc2";
 import { CounterValueType } from "@prague/map";
 import { MapExtension, registerDefaultValueType  } from "@prague/map";
 import {
@@ -15,9 +16,6 @@ import {
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import * as assert from "assert";
-import {
-    Workbook,
-} from "../../client-ui/ext/calc2";
 import { CellInterval } from "./cellinterval";
 import { TableSliceType } from "./ComponentTypes";
 import { positionToRowCol, rowColToPosition, SparseMatrix, SparseMatrixExtension } from "./matrix/sparsematrix";
