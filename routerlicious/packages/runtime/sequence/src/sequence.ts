@@ -108,6 +108,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
         if (removeOp) {
             this.submitIfAttached(removeOp);
         }
+        return removeOp;
     }
 
     /**

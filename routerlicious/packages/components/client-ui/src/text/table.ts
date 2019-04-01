@@ -60,7 +60,7 @@ function createRelativeMarkerOp(
     };
 }
 
-function createMarkerOp(
+export function createMarkerOp(
     pos1: number, id: string,
     refType: MergeTree.ReferenceType, rangeLabels: string[], tileLabels?: string[],
     props?: MergeTree.PropertySet) {
@@ -610,6 +610,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                         };
                         let paragraphLexer = new Paragraph.ParagraphLexer({
                             markerToken: Paragraph.markerToItems,
+                            mathToken: Paragraph.textToMathItem,
                             textToken: Paragraph.textTokenToItems,
                         }, itemsContext);
                         itemsContext.paragraphLexer = paragraphLexer;

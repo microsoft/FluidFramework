@@ -64,6 +64,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
         if (insertOp) {
             this.submitIfAttached(insertOp);
         }
+        return insertOp;
     }
 
     public getText(start?: number, end?: number): string {
@@ -132,7 +133,7 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     }
     public removeText(start: number, end: number) {
-        this.removeRange(start, end);
+        return this.removeRange(start, end);
     }
 
     public annotateRangeFromPast(

@@ -38,8 +38,9 @@ export interface IParagraphMarker extends MergeTree.Marker {
 export enum ParagraphItemType {
     Block,
     Glue,
-    Penalty,
     Marker,
+    MathBlock,
+    Penalty,
 }
 
 export interface IParagraphItem {
@@ -60,6 +61,14 @@ export interface IPGBlock extends IParagraphItem {
     text: string;
 }
 
+export interface IPGMathBlock extends IParagraphItem {
+    type: ParagraphItemType.MathBlock;
+
+    // TODO: Only the string's length property appears to be used to determine how many
+    //       positions the block occupies.  Consider making this 'positionLength' or similar.
+    text: string;
+}
+
 export interface IPGMarker extends IParagraphItem {
     type: ParagraphItemType.Marker;
     segment: MergeTree.Marker;
@@ -67,6 +76,10 @@ export interface IPGMarker extends IParagraphItem {
 
 function makeIPGBlock(width: number, text: string, textSegment: MergeTree.TextSegment) {
     return <IPGBlock>{ type: ParagraphItemType.Block, width, text, segment: textSegment };
+}
+
+function makeIPGMathBlock(width: number, text: string) {
+    return <IPGMathBlock>{ type: ParagraphItemType.MathBlock, width, text };
 }
 
 function makeIPGMarker(marker: MergeTree.Marker) {
@@ -139,17 +152,21 @@ export function breakPGIntoLinesFF(items: ParagraphItem[], lineWidth: number) {
 export const enum ParagraphLexerState {
     AccumBlockChars,
     AccumSpaces,
+    AccumMath,
 }
 
 export interface ParagraphTokenActions<TContext> {
-    textToken(text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment, context?: TContext);
-    markerToken(marker: MergeTree.Marker, context?: TContext);
+    textToken(text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment, context?: TContext): void;
+    markerToken(marker: MergeTree.Marker, context?: TContext): void;
+    mathToken(mathText: string, context?: TContext): void;
 }
 
 export class ParagraphLexer<TContext> {
     public state = ParagraphLexerState.AccumBlockChars;
     private spaceCount = 0;
     private textBuf = "";
+    private mathBuf = "";
+    private inMath = false;
     private leadSegment: MergeTree.TextSegment;
 
     constructor(public tokenActions: ParagraphTokenActions<TContext>, public actionContext?: TContext) {
@@ -167,31 +184,46 @@ export class ParagraphLexer<TContext> {
         this.emitMarker(marker);
     }
 
-    public lex(textSegment: MergeTree.TextSegment) {
-        if (this.leadSegment && (!MergeTree.matchProperties(this.leadSegment.properties, textSegment.properties))) {
+    public mathBoundary(isStart: boolean) {
+        if (isStart) {
             this.emit();
-            this.leadSegment = textSegment;
-        } else if (!this.leadSegment) {
-            this.leadSegment = textSegment;
+            this.state = ParagraphLexerState.AccumMath;
+            this.mathBuf = "";
+        } else {
+            this.emitMath();
+            this.reset();
         }
-        let segText = textSegment.text;
-        for (let i = 0, len = segText.length; i < len; i++) {
-            let c = segText.charAt(i);
-            if (c === " ") {
-                if (this.state === ParagraphLexerState.AccumBlockChars) {
-                    this.emitBlock();
-                }
-                this.state = ParagraphLexerState.AccumSpaces;
-                this.spaceCount++;
-            } else {
-                if (this.state === ParagraphLexerState.AccumSpaces) {
-                    this.emitGlue();
-                }
-                this.state = ParagraphLexerState.AccumBlockChars;
-                this.textBuf += c;
+    }
+
+    public lex(textSegment: MergeTree.TextSegment) {
+        if (this.state === ParagraphLexerState.AccumMath) {
+            this.mathBuf += textSegment.text;
+        } else {
+            if (this.leadSegment && (!MergeTree.matchProperties(this.leadSegment.properties, textSegment.properties))) {
+                this.emit();
+                this.leadSegment = textSegment;
+            } else if (!this.leadSegment) {
+                this.leadSegment = textSegment;
             }
+            let segText = textSegment.text;
+            for (let i = 0, len = segText.length; i < len; i++) {
+                let c = segText.charAt(i);
+                if (c === " ") {
+                    if (this.state === ParagraphLexerState.AccumBlockChars) {
+                        this.emitBlock();
+                    }
+                    this.state = ParagraphLexerState.AccumSpaces;
+                    this.spaceCount++;
+                } else {
+                    if (this.state === ParagraphLexerState.AccumSpaces) {
+                        this.emitGlue();
+                    }
+                    this.state = ParagraphLexerState.AccumBlockChars;
+                    this.textBuf += c;
+                }
+            }
+            this.emit();
         }
-        this.emit();
     }
 
     private emit() {
@@ -215,6 +247,10 @@ export class ParagraphLexer<TContext> {
             this.tokenActions.textToken(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
             this.textBuf = "";
         }
+    }
+
+    private emitMath() {
+        this.tokenActions.mathToken(this.mathBuf, this.actionContext);
     }
 
     private emitMarker(marker: MergeTree.Marker) {
@@ -420,10 +456,16 @@ export function getContentPct(pgMarker: IParagraphMarker) {
     }
 }
 
+export interface IHeightWidth {
+    h: number;
+    w: number;
+}
+
 export interface IFontInfo {
     getTextWidth(text: string, fontstr: string);
     getLineHeight(fontstr: string, lineHeight?: string): number;
     getFont(pg: IParagraphMarker): string;
+    getMathWidthHeight(mathText: string, fontstr: string): IHeightWidth;
 }
 
 export interface IItemsContext {
@@ -453,7 +495,7 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
             { font },
             itemsContext.services);
 
-        items.push({ 
+        items.push({
             type: ParagraphItemType.Block,
             text: "1",  // Only text.length is used to measure positions occupied.
             width: maybeComponent.measure(state, context).max,
@@ -465,6 +507,19 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
 
     // Otherwise, assume this is a paragraph marker.  (Note early 'return' above.)
     items.push(makeIPGMarker(marker));
+}
+
+export function textToMathItem(mathText: string, itemsContext: IItemsContext) {
+    let fontInfo = itemsContext.fontInfo;
+    let pgFontstr = fontInfo.getFont(itemsContext.curPGMarker);
+    const hw = itemsContext.fontInfo.getMathWidthHeight(mathText, pgFontstr);
+    if ((itemsContext.itemInfo.maxHeight===undefined)||(hw.h > itemsContext.itemInfo.maxHeight)) {
+        itemsContext.itemInfo.maxHeight = hw.h;
+    } 
+    if (hw.w>itemsContext.itemInfo.minWidth) {
+        itemsContext.itemInfo.minWidth = hw.w;
+    }
+    return makeIPGMathBlock(hw.w, mathText);
 }
 
 export function textTokenToItems(
@@ -548,6 +603,8 @@ export function segmentToItems(
         } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
             context.nextPGPos = segpos;
             return false;
+        } else if (marker.hasTileLabel("math")) {
+            context.paragraphLexer.mathBoundary(marker.properties.mathStart);
         }
     }
     return true;

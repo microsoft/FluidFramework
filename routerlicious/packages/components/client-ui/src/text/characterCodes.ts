@@ -1,7 +1,7 @@
 export enum CharacterCodes {
     _ = 95,
     $ = 36,
-
+    S4 = 52,
     ampersand = 38,             // &
     asterisk = 42,              // *
     at = 64,                    // @

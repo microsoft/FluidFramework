@@ -8,6 +8,7 @@ import { findRandomWord } from "@prague/merge-tree-utils";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
+import * as Katex from "katex";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
@@ -170,6 +171,12 @@ const commands: IFlowViewCmd[] = [
             f.showCommentText();
         },
         key: "comment text",
+    },
+    {
+        exec: (f) => {
+            f.showKatex();
+        },
+        key: "katex",
     },
     {
         exec: (f) => {
@@ -459,6 +466,9 @@ interface ILineContext {
     flowView: FlowView;
     span: ISegSpan;
     deferredAttach?: boolean;
+    mathSegpos?: number;
+    mathMode: boolean;
+    mathBuffer: string;
     reRenderList?: ILineDiv[];
     pgMarker: Paragraph.IParagraphMarker;
 }
@@ -475,6 +485,7 @@ export interface IDocumentContext {
     cellTopMargin: number;
     tableVspace: number;
     indentWidthThreshold: number;
+    viewportDiv: HTMLDivElement;
 }
 
 function buildDocumentContext(viewportDiv: HTMLDivElement) {
@@ -495,7 +506,7 @@ function buildDocumentContext(viewportDiv: HTMLDivElement) {
     const indentWidthThreshold = 600;
     return {
         cellHMargin, cellTopMargin, cellVspace, defaultLineDivHeight, fontstr, headerDivHeight, headerFontstr,
-        indentWidthThreshold, pgVspace, tableVspace, wordSpacing,
+        indentWidthThreshold, pgVspace, tableVspace, viewportDiv, wordSpacing,
     } as IDocumentContext;
 }
 
@@ -635,28 +646,34 @@ function renderSegmentIntoLine(
     }
     const segType = segment.getType();
     if (segType === MergeTree.SegmentType.Text) {
-        if (start < 0) {
-            start = 0;
-        }
-        if (end > segment.cachedLength) {
-            end = segment.cachedLength;
-        }
         const textSegment = segment as MergeTree.TextSegment;
-        const text = textSegment.text.substring(start, end);
-        const textStartPos = segpos + start;
-        const textEndPos = segpos + end;
-        lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
-        if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
-            lineContext.span.style.color = wordHeadingColor;
-        }
-        lineContext.contentDiv.appendChild(lineContext.span);
-        lineContext.lineDiv.lineEnd += text.length;
-        if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
-            showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
-        }
-        const presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
-        if (presenceInfo) {
-            showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
+        if (lineContext.mathMode) {
+            // will be whole segment
+            // TODO: show math box if cursor in math
+            lineContext.mathBuffer += textSegment.text;
+        } else {
+            if (start < 0) {
+                start = 0;
+            }
+            if (end > segment.cachedLength) {
+                end = segment.cachedLength;
+            }
+            const text = textSegment.text.substring(start, end);
+            const textStartPos = segpos + start;
+            const textEndPos = segpos + end;
+            lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
+            if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
+                lineContext.span.style.color = wordHeadingColor;
+            }
+            lineContext.contentDiv.appendChild(lineContext.span);
+            lineContext.lineDiv.lineEnd += text.length;
+            if ((lineContext.flowView.cursor.pos >= textStartPos) && (lineContext.flowView.cursor.pos <= textEndPos)) {
+                showPositionInLine(lineContext, textStartPos, text, lineContext.flowView.cursor.pos);
+            }
+            const presenceInfo = lineContext.flowView.presenceInfoInRange(textStartPos, textEndPos);
+            if (presenceInfo) {
+                showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
+            }
         }
     } else if (segType === MergeTree.SegmentType.Marker) {
         const marker = segment as MergeTree.Marker;
@@ -688,6 +705,24 @@ function renderSegmentIntoLine(
                 }
 
                 lineContext.contentDiv.appendChild(newElement);
+            }
+        }
+
+        if (marker.hasTileLabel("math")) {
+            if (marker.properties.mathStart) {
+                lineContext.mathMode = true;
+                lineContext.mathSegpos = segpos;
+            } else {
+                lineContext.span = makeMathSpan(lineContext.mathSegpos, 0);
+                Katex.render(lineContext.mathBuffer, lineContext.span,
+                    { throwOnError: false });
+                lineContext.span.style.borderBottom = "solid blue 1px";
+                lineContext.span.style.marginLeft = "2px";
+                lineContext.span.style.marginRight = "2px";
+                lineContext.contentDiv.appendChild(lineContext.span);
+                lineContext.lineDiv.lineEnd += lineContext.mathBuffer.length;
+                lineContext.mathBuffer = "";
+                lineContext.mathMode = false;
             }
         }
 
@@ -752,6 +787,8 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
             lineDiv,
             lineDivHeight,
             markerPos: 0,
+            mathBuffer: "",
+            mathMode: false,
             outerViewportBounds,
             pgMarker: undefined,
             span: undefined,
@@ -1753,6 +1790,16 @@ interface IRenderOutput {
     viewportEndPos: number;
 }
 
+export function getRenderedMathWidthHeight(hostDiv: HTMLDivElement, mathText: string, font: string) {
+    const elt = document.createElement("div");
+    hostDiv.appendChild(elt);
+    elt.style.font = font;
+    Katex.render(mathText, elt, { throwOnError: false });
+    const bb = elt.getBoundingClientRect();
+    hostDiv.removeChild(elt);
+    return { h: bb.height, w: bb.width };
+}
+
 function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     function gtw(text: string, fontstr: string) {
         return domutils.getTextWidth(text, fontstr);
@@ -1769,9 +1816,14 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
             return docContext.fontstr;
         }
     }
+
+    function getRMWH(mathText: string, font: string) {
+        return getRenderedMathWidthHeight(docContext.viewportDiv, mathText, font);
+    }
     return {
         getFont,
         getLineHeight: glh,
+        getMathWidthHeight: getRMWH,
         getTextWidth: gtw,
     };
 }
@@ -1914,6 +1966,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     const deferredPGs = (layoutContext.containingPGMarker !== undefined);
     const paragraphLexer = new Paragraph.ParagraphLexer({
         markerToken: Paragraph.markerToItems,
+        mathToken: Paragraph.textToMathItem,
         textToken: Paragraph.textTokenToItems,
     }, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
@@ -2013,7 +2066,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 const lineContext = {
                     contentDiv, deferredAttach: layoutContext.deferredAttach, flowView: layoutContext.flowView,
-                    lineDiv, lineDivHeight, pgMarker: endPGMarker, span,
+                    lineDiv, lineDivHeight, mathBuffer: "", mathMode: false, pgMarker: endPGMarker, span,
                 } as ILineContext;
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
@@ -2254,6 +2307,15 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         viewportEndPos,
         viewportStartPos,
     };
+}
+
+function makeMathSpan(mathSegpos: number, offsetFromSegpos: number) {
+    const span = document.createElement("span") as ISegSpan;
+    span.segPos = mathSegpos;
+    if (offsetFromSegpos > 0) {
+        span.offset = offsetFromSegpos;
+    }
+    return span;
 }
 
 function makeSegSpan(
@@ -3524,10 +3586,13 @@ export class FlowView extends ui.Component {
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now (could be external later)
                 const marker = segoff.segment as MergeTree.Marker;
-                if ((marker.refType & MergeTree.ReferenceType.Tile) &&
-                    (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
-                        this.cursorRev();
+                if (marker.refType & MergeTree.ReferenceType.Tile) {
+                    if (marker.hasTileLabel("pg")) {
+                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                            this.cursorRev();
+                        }
+                    } else if (marker.hasTileLabel("math")) {
+                        return;
                     }
                 } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
                     const cellMarker = marker as Table.ICellMarker;
@@ -3558,12 +3623,15 @@ export class FlowView extends ui.Component {
             if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
                 // REVIEW: assume marker for now
                 const marker = segoff.segment as MergeTree.Marker;
-                if ((marker.refType & MergeTree.ReferenceType.Tile) &&
-                    (marker.hasTileLabel("pg"))) {
-                    if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
-                        this.cursorFwd();
-                    } else {
-                        return;
+                if (marker.refType & MergeTree.ReferenceType.Tile) {
+                    if (marker.hasTileLabel("pg")) {
+                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                            this.cursorFwd();
+                        } else {
+                            return;
+                        }
+                    } else if (marker.hasTileLabel("math")) {
+                        this.cursor.pos = this.endOfMathRegion(this.cursor.pos + 1);
                     }
                 } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
                     if (marker.hasRangeLabel("table")) {
@@ -3873,12 +3941,13 @@ export class FlowView extends ui.Component {
                 let specialKey = true;
                 this.lastVerticalX = -1;
                 if (e.ctrlKey && (e.keyCode !== 17)) {
-                    this.keyCmd(e.keyCode);
+                    this.keyCmd(e.keyCode, e.shiftKey);
                 } else if (e.keyCode === KeyCode.TAB) {
                     this.onTAB(e.shiftKey);
                 } else if (e.keyCode === KeyCode.esc) {
                     this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
+                    // TODO: in math region; don't backspace if region empty
                     let toRemove = this.cursor.getSelection();
                     if (toRemove) {
                         // If there was a selected range, use it as range to remove below.  In preparation, clear
@@ -4054,6 +4123,25 @@ export class FlowView extends ui.Component {
         this.on("keypress", keypressHandler);
         this.keypressHandler = keypressHandler;
         this.keydownHandler = keydownHandler;
+    }
+
+    public endOfMathRegion(posInRegion: number) {
+        const tileInfo = findTile(this, posInRegion, "math");
+        return tileInfo.pos;
+    }
+
+    public enterMathMode() {
+        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
+            { [MergeTree.reservedTileLabelsKey]: ["math"], mathStart: true });
+        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
+            { [MergeTree.reservedTileLabelsKey]: ["math"], mathEnd: true });
+        this.cursor.pos--;
+        this.clearSelection();
+        if (this.modes.showCursorLocation) {
+            this.cursorLocation();
+        }
+        this.updatePGInfo(this.cursor.pos);
+        this.localQueueRender(this.cursor.pos);
     }
 
     public viewTileProps() {
@@ -4288,6 +4376,15 @@ export class FlowView extends ui.Component {
             const text = this.client.getText(sel.start, sel.end);
             Geocoder.geocode(text, (err, data) => console.log(data),
                 { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
+        }
+    }
+
+    public showKatex() {
+        const sel = this.cursor.getSelection();
+        if (sel) {
+            const text = this.client.getText(sel.start, sel.end);
+            const html = Katex.renderToString(text, { throwOnError: false });
+            this.statusMessage("math", html);
         }
     }
 
@@ -4624,7 +4721,7 @@ export class FlowView extends ui.Component {
         }
     }
 
-    public keyCmd(charCode: number) {
+    public keyCmd(charCode: number, shift = false) {
         switch (charCode) {
             case CharacterCodes.C:
                 this.copy();
@@ -4687,8 +4784,11 @@ export class FlowView extends ui.Component {
             case CharacterCodes.S:
                 this.collabDocument.save();
                 break;
+            case CharacterCodes.S4:
+                this.enterMathMode();
+                break;
             default:
-                console.log(`got command key ${String.fromCharCode(charCode)}`);
+                console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);
                 break;
         }
     }
