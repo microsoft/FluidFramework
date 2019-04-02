@@ -164,6 +164,8 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     // tslint:disable-next-line:variable-name
     private _root: ISharedMap = null;
 
+    private ensureOpenedPromise: Promise<Component> = null;
+
     constructor(types: ReadonlyArray<[string, ISharedObjectExtension]>) {
         super();
 
@@ -196,7 +198,12 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     public async attach(platform: IPlatform): Promise<IPlatform> {
         debug(`${this.dbgName}.attach()`);
         this._platform = platform;
-        return new ComponentPlatform(this.ensureOpened());
+
+        if (!this.ensureOpenedPromise) {
+            this.ensureOpenedPromise = this.ensureOpened();
+        }
+
+        return new ComponentPlatform(this.ensureOpenedPromise);
     }
 
     public snapshot(): ITree {
