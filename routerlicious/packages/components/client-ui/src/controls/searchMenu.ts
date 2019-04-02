@@ -5,6 +5,7 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 
+// tslint:disable-next-line:interface-name
 export interface Item {
     key: string;
     div?: HTMLDivElement;
