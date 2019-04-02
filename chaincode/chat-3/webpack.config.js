@@ -26,6 +26,13 @@ module.exports = env => {
             devtoolNamespace: "chaincode/chat",
             libraryTarget: "umd"
         },
+        node: {
+            dgram: 'empty',
+            fs: 'empty',
+            net: 'empty',
+            tls: 'empty',
+            child_process: 'empty',
+        },
         devServer: {
             publicPath: '/dist'
         }

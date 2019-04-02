@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat-3",
   "description": "Prague Chat with custom runtime",
-  "version": "0.0.19",
+  "version": "0.0.37",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -17,6 +17,7 @@
     "@prague/prague-dev-server": "^3.2.5",
     "@types/node": "^10.11.5",
     "@types/react-dom": "^16.0.11",
+    "@types/request": "^2.47.1",
     "clean-webpack-plugin": "^0.1.19",
     "tslint": "^5.11.0",
     "ts-loader": "^4.4.2",
@@ -37,6 +38,7 @@
     "@prague/container-definitions": "^0.2.5666",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
-    "react-dom": "^16.7.0"
+    "react-dom": "^16.7.0",
+    "request": "^2.88.0"
   }
 }
