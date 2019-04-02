@@ -54,7 +54,7 @@ export interface IRelativePosition {
      */
     before?: boolean;
     /**
-     * A positive number >= 1.  If before is false, offset is added to the position.
+     * A positive number \>= 1.  If before is false, offset is added to the position.
      * If before is true, offset is subtracted from the position.
      */
     offset?: number;

@@ -28,7 +28,7 @@ export class Registry<TExtension extends IExtension> {
 
     /**
      * Registers a new extension
-     * @param extension The extension to register
+     * @param extension - The extension to register
      */
     public register(extension: TExtension) {
         this.extensions.push(extension);
@@ -37,7 +37,7 @@ export class Registry<TExtension extends IExtension> {
 
     /**
      * Retrieves the extension with the given id
-     * @param id ID for the extension to retrieve
+     * @param id - ID for the extension to retrieve
      */
     public getExtension(type: string): TExtension {
         if (!(type in this.extensionsMap)) {

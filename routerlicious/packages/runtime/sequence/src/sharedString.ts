@@ -23,9 +23,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     /**
      * Inserts a marker at a relative postition
-     * @param relativePos1 The relative postition to insert the marker at
-     * @param refType The reference type of the marker
-     * @param props  The properties of the marker
+     *
+     * @param relativePos1 - The relative postition to insert the marker at
+     * @param refType - The reference type of the marker
+     * @param props - The properties of the marker
      */
     public insertMarkerRelative(
         relativePos1: MergeTree.IRelativePosition,
@@ -46,9 +47,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     /**
      * Inserts a marker at the postition
-     * @param pos The  postition to insert the marker at
-     * @param refType The reference type of the marker
-     * @param props  The properties of the marker
+     *
+     * @param pos - The postition to insert the marker at
+     * @param refType - The reference type of the marker
+     * @param props - The properties of the marker
      */
     public insertMarker(
         pos: number,
@@ -73,9 +75,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     /**
      * Inserts the text at the postition
-     * @param relativePos1 The  postition to insert the text at
-     * @param text The text to insert
-     * @param props  The properties of text
+     *
+     * @param relativePos1 - The  postition to insert the text at
+     * @param text - The text to insert
+     * @param props - The properties of text
      */
     public insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
@@ -92,9 +95,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     /**
      * Inserts the text at the postition
-     * @param pos The  postition to insert the text at
-     * @param text The text to insert
-     * @param props  The properties of text
+     *
+     * @param pos - The  postition to insert the text at
+     * @param text - The text to insert
+     * @param props - The properties of text
      */
     public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
@@ -110,10 +114,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
     /**
      * Replaces a range with the provided text.
      *
-     * @param start The inclusive start of the range to replace
-     * @param end The exclusive end of the range to replace
-     * @param text The text to replace the range with
-     * @param props Optional. The properties of the replacement text
+     * @param start - The inclusive start of the range to replace
+     * @param end - The exclusive end of the range to replace
+     * @param text - The text to replace the range with
+     * @param props - Optional. The properties of the replacement text
      */
     public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
         this.client.mergeTree.startGroupOperation();
@@ -151,9 +155,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
     /**
      * Annotates the marker with the provided properties
      * and calls the callback on concensus.
-     * @param marker The marker to annotate
-     * @param props The properties to annotate the marker with
-     * @param consensusCallback The callback called when consensus is reached
+     *
+     * @param marker - The marker to annotate
+     * @param props - The properties to annotate the marker with
+     * @param consensusCallback - The callback called when consensus is reached
      */
     public annotateMarkerNotifyConsensus(
         marker: MergeTree.Marker,
@@ -168,9 +173,10 @@ export class SharedString extends SegmentSequence<SharedStringSegment> {
 
     /**
      * Annotates the marker with the provided properties
-     * @param marker The marker to annotate
-     * @param props The properties to annotate the marker with
-     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     *
+     * @param marker - The marker to annotate
+     * @param props - The properties to annotate the marker with
+     * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
      */
     public annotateMarker(
         marker: MergeTree.Marker,

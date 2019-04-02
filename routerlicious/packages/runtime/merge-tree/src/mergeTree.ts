@@ -1256,8 +1256,8 @@ export class CollaborationWindow {
  * Returns the partial length whose sequence number is
  * the greatest sequence number within a that is
  * less than or equal to key.
- * @param {PartialLength[]} a array of partial segment lengths
- * @param {number} key sequence number
+ * @param a - array of partial segment lengths
+ * @param key - sequence number
  */
 function latestLEQ(a: PartialSequenceLength[], key: number) {
     let best = -1;
@@ -1747,9 +1747,9 @@ export class PartialSequenceLengths {
     }
     /**
      * Combine the partial lengths of block's children
-     * @param {IMergeBlock} block an interior node; it is assumed that each interior node child of this block
+     * @param block - an interior node; it is assumed that each interior node child of this block
      * has its partials up to date
-     * @param {CollaborationWindow} collabWindow segment window fo the segment tree containing textSegmentBlock
+     * @param collabWindow - segment window of the segment tree containing textSegmentBlock
      */
     static combineBranch(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, branchId: number, recur = false) {
         let combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
@@ -3158,7 +3158,7 @@ export class MergeTree {
 
     /**
      * Assign sequence number to existing segment; update partial lengths to reflect the change
-     * @param seq sequence number given by server to pending segment
+     * @param seq - sequence number given by server to pending segment
      */
     ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs, verboseOps = false) {
         const seq = opArgs.sequencedMessage.sequenceNumber;
@@ -3206,9 +3206,9 @@ export class MergeTree {
     /**
      * Given a position specified relative to a marker id, lookup the marker
      * and convert the position to a character position.
-     * @param relativePos Id of marker (may be indirect) and whether position is before or after marker.
-     * @param refseq The reference sequence number at which to compute the position.
-     * @param clientId The client id with which to compute the position.
+     * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+     * @param refseq - The reference sequence number at which to compute the position.
+     * @param clientId - The client id with which to compute the position.
      */
     posFromRelativePos(relativePos: IRelativePosition, refseq = UniversalSequenceNumber,
         clientId = this.collabWindow.clientId) {
@@ -3668,14 +3668,14 @@ export class MergeTree {
 
     /**
      * Annotate a range with properites
-     * @param start The inclusive start postition of the range to annotate
-     * @param end The exclusive end position of the range to annotate
-     * @param props The properties to annotate the range with
-     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
-     * @param refSeq The refernece sequence number to use to apply the annotate
-     * @param clientId The id of the client making the annotate
-     * @param seq The sequence number of the annotate operation
-     * @param opArgs The op args for the annotate op. this is passed to the merge tree callback if there is one
+     * @param start - The inclusive start postition of the range to annotate
+     * @param end - The exclusive end position of the range to annotate
+     * @param props - The properties to annotate the range with
+     * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @param refSeq - The refernece sequence number to use to apply the annotate
+     * @param clientId - The id of the client making the annotate
+     * @param seq - The sequence number of the annotate operation
+     * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
      */
     annotateRange(start: number, end: number, props: Properties.PropertySet, combiningOp: ops.ICombiningOp, refSeq: number,
         clientId: number, seq: number,  opArgs: IMergeTreeDeltaOpArgs) {

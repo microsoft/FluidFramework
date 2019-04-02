@@ -806,7 +806,7 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
     /**
      * Depth-first traversal with custom action; if action returns
      * false, traversal is halted.
-     * @param action action to apply to each node
+     * @param action - action to apply to each node
      */
     walk(actions: RBNodeActions<TKey, TData>) {
         this.nodeWalk(this.root, actions);
@@ -879,9 +879,9 @@ export interface AugmentedIntervalNode {
     minmax: IInterval;
 }
 /**
- * Union of two ranges; assumes for both ranges start <= end.
- * @param a A range
- * @param b A range
+ * Union of two ranges; assumes for both ranges start \<= end.
+ * @param a - A range
+ * @param b - A range
  */
 export function integerRangeUnion(a: Base.IIntegerRange, b: Base.IIntegerRange) {
     return <Base.IIntegerRange>{

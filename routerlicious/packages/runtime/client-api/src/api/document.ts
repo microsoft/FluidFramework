@@ -118,7 +118,7 @@ export class Document extends EventEmitter {
 
     /**
      * Constructs a new shared object that can be attached to the document
-     * @param type the identifier for the shared object type
+     * @param type - the identifier for the shared object type
      */
     public create(type: string, id = uuid()): ISharedObject {
         const channel = this.runtime.createChannel(id, type);
@@ -136,7 +136,7 @@ export class Document extends EventEmitter {
      * This method should not be called directly. Instead access should be obtained through the root map
      * or another distributed object.
      *
-     * @param id Identifier of the object to load
+     * @param id - Identifier of the object to load
      */
     public async get(id: string): Promise<ISharedObject> {
         const channel = await this.runtime.getChannel(id);

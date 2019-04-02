@@ -48,9 +48,9 @@ export class Client {
     }
     /**
      * Annotate a maker and call the callback on concensus.
-     * @param marker The marker to annotate
-     * @param props The properties to annotate the marker with
-     * @param consensusCallback The callback called when consensus is reached
+     * @param marker - The marker to annotate
+     * @param props - The properties to annotate the marker with
+     * @param consensusCallback - The callback called when consensus is reached
      * @returns The annotate op if valid, otherwise undefined
      */
     public annotateMarkerNotifyConsensus(
@@ -78,9 +78,9 @@ export class Client {
     }
     /**
      * Annotates the markers with the provided properties
-     * @param marker The marker to annotate
-     * @param props The properties to annotate the marker with
-     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @param marker - The marker to annotate
+     * @param props - The properties to annotate the marker with
+     * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
      * @returns The annotate op if valid, otherwise undefined
      */
     public annotateMarker(
@@ -99,10 +99,10 @@ export class Client {
     }
     /**
      * Annotates the range with the provided properties
-     * @param start The inclusive start postition of the range to annotate
-     * @param end The exclusive end position of the range to annotate
-     * @param props The properties to annotate the range with
-     * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @param start - The inclusive start postition of the range to annotate
+     * @param end - The exclusive end position of the range to annotate
+     * @param props - The properties to annotate the range with
+     * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
      * @returns The annotate op if valid, otherwise undefined
      */
     public annotateRangeLocal(
@@ -127,9 +127,9 @@ export class Client {
      * Removes the range and puts the content of the removed range in a register
      * if a register name is provided
      *
-     * @param start The inclusive start of the range to remove
-     * @param end The exclusive end of the range to remove
-     * @param register Optional. The name of the register to store the removed range in
+     * @param start - The inclusive start of the range to remove
+     * @param end - The exclusive end of the range to remove
+     * @param register - Optional. The name of the register to store the removed range in
      */
     public removeRangeLocal(start: number, end: number, register?: string) {
 
@@ -142,8 +142,8 @@ export class Client {
     }
 
     /**
-     * @param pos The position to insert the segment at
-     * @param segment The segment to insert
+     * @param pos - The position to insert the segment at
+     * @param segment - The segment to insert
      */
     public insertSegmentLocal(pos: number, segment: ISegment): ops.IMergeTreeInsertMsg {
 
@@ -155,8 +155,8 @@ export class Client {
     }
 
     /**
-     * @param pos The position to insert the register contents at
-     * @param register The name of the register to insert the value of
+     * @param pos - The position to insert the register contents at
+     * @param register - The name of the register to insert the value of
      */
     public pasteLocal(pos: number, register: string) {
         const insertOp = OpBuilder.createInsertFromRegisterOp(pos, register);
@@ -168,9 +168,9 @@ export class Client {
 
     /**
      *
-     * @param start The inclusive start of the range to copy into the register
-     * @param end The exclusive end of the range to copy into the register
-     * @param register The name of the register to insert the range contents into
+     * @param start - he inclusive start of the range to copy into the register
+     * @param end - The exclusive end of the range to copy into the register
+     * @param register - The name of the register to insert the range contents into
      */
     public copyLocal(start: number, end: number, register: string) {
         const insertOp = OpBuilder.createInsertToRegisterOp(start, end, register);
@@ -182,7 +182,7 @@ export class Client {
 
     /**
      * Performs the annotate based on the provided op
-     * @param opArgs The ops args for the op
+     * @param opArgs - The ops args for the op
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
@@ -220,7 +220,7 @@ export class Client {
 
     /**
      * Performs the annotate based on the provided op
-     * @param opArgs The ops args for the op
+     * @param opArgs - The ops args for the op
      * @returns True if the annotate was applied. False if it could not be.
      */
     private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
@@ -255,7 +255,7 @@ export class Client {
 
     /**
      * Performs the insert based on the provided op
-     * @param opArgs The ops args for the op
+     * @param opArgs - The ops args for the op
      * @returns True if the insert was applied. False if it could not be.
      */
     private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
@@ -311,10 +311,10 @@ export class Client {
 
     /**
      *
-     * @param opArgs The op args of the op to complete
-     * @param clientArgs The client args for the op
-     * @param range The range the op applied to
-     * @param clockStart Optional. The clock start if timing data should be updated.
+     * @param opArgs - The op args of the op to complete
+     * @param clientArgs - The client args for the op
+     * @param range - The range the op applied to
+     * @param clockStart - Optional. The clock start if timing data should be updated.
      */
     private completeAndLogOp(
         opArgs: IMergeTreeDeltaOpArgs,
@@ -345,8 +345,8 @@ export class Client {
 
     /**
      * Returns a valid range for the op, or undefined
-     * @param op The op to generate the range for
-     * @param clientArgs The client args for the op
+     * @param op - The op to generate the range for
+     * @param clientArgs - The client args for the op
      */
     private getValidOpRange(
         op: ops.IMergeTreeAnnotateMsg | ops.IMergeTreeInsertMsg | ops.IMergeTreeRemoveMsg,
@@ -384,7 +384,7 @@ export class Client {
 
     /**
      * Get's the client args from the op if remote, otherwise uses the local clients info
-     * @param opArgs The op arge to get the client sequence args for
+     * @param opArgs - The op arge to get the client sequence args for
      */
     private getClientSequenceArgs(opArgs: IMergeTreeDeltaOpArgs): IMergeTreeClientSequenceArgs {
 
@@ -408,9 +408,9 @@ export class Client {
     }
 
     /**
-     * @param range The range to copy into the register
-     * @param register The name of the register to copy to range into
-     * @param clientArgs  The client args to use when evaluating the range for copying
+     * @param range - The range to copy into the register
+     * @param register - The name of the register to copy to range into
+     * @param clientArgs - The client args to use when evaluating the range for copying
      */
     private copy(range: IIntegerRange, register: string, clientArgs: IMergeTreeClientSequenceArgs) {
         const segs = this.mergeTree.cloneSegments(

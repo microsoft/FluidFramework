@@ -11,9 +11,9 @@ import { PropertySet } from "./properties";
 
 /**
  * Creates the op for annotating the markers with the provided properties
- * @param marker The marker to annotate
- * @param props The properties to annotate the marker with
- * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+ * @param marker - The marker to annotate
+ * @param props - The properties to annotate the marker with
+ * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
  */
 export function createAnnotateMarkerOp(
@@ -35,10 +35,10 @@ export function createAnnotateMarkerOp(
 
 /**
  * Creates the op for annotating the range with the provided properties
- * @param start The inclusive start postition of the range to annotate
- * @param end The exclusive end position of the range to annotate
- * @param props The properties to annotate the range with
- * @param combiningOp Optional. Specifies how to combine values for the property, such as "incr" for increment.
+ * @param start - The inclusive start postition of the range to annotate
+ * @param end - The exclusive end position of the range to annotate
+ * @param props - The properties to annotate the range with
+ * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
  */
 export function createAnnotateRangeOp(
@@ -56,9 +56,9 @@ export function createAnnotateRangeOp(
  * Creates the op to remove a range and puts the content of the removed range in a register
  * if a register name is provided
  *
- * @param start The inclusive start of the range to remove
- * @param end The exclusive end of the range to remove
- * @param register Optional. The name of the register to store the removed range in
+ * @param start - The inclusive start of the range to remove
+ * @param end - The exclusive end of the range to remove
+ * @param register - Optional. The name of the register to store the removed range in
  */
 export function createRemoveRangeOp(start: number, end: number, register?: string): IMergeTreeRemoveMsg {
     return {
@@ -71,8 +71,8 @@ export function createRemoveRangeOp(start: number, end: number, register?: strin
 
 /**
  *
- * @param pos The position to insert the segment at
- * @param segment The segment to insert
+ * @param pos - The position to insert the segment at
+ * @param segment - The segment to insert
  */
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
     return {
@@ -84,8 +84,8 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 
 /**
  *
- * @param pos The position to insert the register contents at
- * @param register The name of the register to insert the value of
+ * @param pos - The position to insert the register contents at
+ * @param register - The name of the register to insert the value of
  */
 export function createInsertFromRegisterOp(pos: number,  register: string): IMergeTreeInsertMsg {
     return {
@@ -97,9 +97,9 @@ export function createInsertFromRegisterOp(pos: number,  register: string): IMer
 
 /**
  *
- * @param start The inclusive start of the range to insert into the register
- * @param end The exclusive end of the range to insert into the register
- * @param register The name of the register to insert the range contents into
+ * @param start - The inclusive start of the range to insert into the register
+ * @param end - The exclusive end of the range to insert into the register
+ * @param register - The name of the register to insert the range contents into
  */
 export function createInsertToRegisterOp(start: number, end: number, register: string): IMergeTreeInsertMsg {
     return {
@@ -112,7 +112,7 @@ export function createInsertToRegisterOp(start: number, end: number, register: s
 
 /**
  *
- * @param ops The ops to group
+ * @param ops - The ops to group
  */
 export function createGroupOp(
     ... ops: Array<IMergeTreeAnnotateMsg | IMergeTreeRemoveMsg | IMergeTreeInsertMsg>): IMergeTreeGroupMsg {

@@ -26,7 +26,7 @@ export interface IConsensusOrderedCollectionExtension extends ISharedObjectExten
  * holds a collection of JSON-able or distributed objects, and have a
  * deterministic add/remove order.
  *
- * @remark
+ * @remarks
  * The order the server receive the add/remove operation determines the
  * order those operation are applied to the collection. Different clients
  * issuing `add` or `remove` operations at the same time will be sequenced.
