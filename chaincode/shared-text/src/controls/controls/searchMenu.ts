@@ -5,14 +5,14 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 
-export interface Item {
+export interface IItem {
     key: string;
     div?: HTMLDivElement;
     iconURL?: string;
 }
 
-export function namesToItems(names: string[]): Item[] {
-    const items: Item[] = new Array(names.length);
+export function namesToItems(names: string[]): IItem[] {
+    const items: IItem[] = new Array(names.length);
 
     for (let i = 0, len = names.length; i < len; i++) {
         items[i] = { key: names[i] };
@@ -28,11 +28,11 @@ export interface ISelectionListBox {
     prevItem();
     nextItem();
     removeHighlight();
-    showSelectionList(selectionItems: Item[], hintSelection?: string);
+    showSelectionList(selectionItems: IItem[], hintSelection?: string);
     selectItem(key: string);
-    items(): Item[];
+    items(): IItem[];
     getSelectedKey(): string;
-    getSelectedItem(): Item;
+    getSelectedItem(): IItem;
     getSelectionIndex(): number;
     setSelectionIndex(indx: number);
     keydown(e: KeyboardEvent);
@@ -47,7 +47,7 @@ export function selectionListBoxCreate(
     varHeight?: number): ISelectionListBox {
 
     const listContainer = document.createElement("div");
-    let items: Item[];
+    let items: IItem[];
     let itemCapacity: number;
     let selectionIndex = -1;
     let topSelection = 0;
@@ -233,7 +233,7 @@ export function selectionListBoxCreate(
         return itemDiv;
     }
 
-    function showSelectionList(selectionItems: Item[], hintSelection?: string) {
+    function showSelectionList(selectionItems: IItem[], hintSelection?: string) {
         topSelection = 0;
         items = selectionItems;
         domutils.clearSubtree(listContainer);
@@ -278,13 +278,13 @@ export function selectionListBoxCreate(
 }
 
 export interface ISearchBox {
-    showSelectionList(selectionItems: Item[]);
+    showSelectionList(selectionItems: IItem[]);
     dismiss(): void;
     keydown(e: KeyboardEvent);
     keypress(e: KeyboardEvent);
     getSearchString(): string;
     getSelectedKey(): string;
-    getSelectedItem(): Item;
+    getSelectedItem(): IItem;
     updateText();
 }
 

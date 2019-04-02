@@ -90,7 +90,7 @@ function altsToItems(alts: Alt[]) {
     return alts.map((v) => ({ key: v.text }));
 }
 
-export interface IFlowViewCmd extends SearchMenu.Item {
+export interface IFlowViewCmd extends SearchMenu.IItem {
     exec?: (flowView: FlowView) => void;
     enabled?: (flowView: FlowView) => boolean;
 }
@@ -2752,7 +2752,7 @@ export interface IReferenceDoc {
 }
 
 export interface IListReferenceDoc extends IReferenceDoc {
-    items: SearchMenu.Item[];
+    items: SearchMenu.IItem[];
     selectionIndex: number;
 }
 
@@ -4330,7 +4330,7 @@ export class FlowView extends ui.Component {
     }
 
     public insertList() {
-        const testList: SearchMenu.Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
+        const testList: SearchMenu.IItem[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
             selectionIndex: 0,
