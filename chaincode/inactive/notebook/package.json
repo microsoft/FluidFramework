@@ -6,12 +6,13 @@
   "author": "Microsoft",
   "scripts": {
     "build": "npm run tslint && npm run webpack",
-    "start": "webpack-serve webpack.config.js --open",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js --open",
     "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "dependencies": {
+    "@prague/prague-dev-server": "^3.2.5",
     "@prague/client-api": "^0.1.3556",
     "@prague/loader": "^0.1.3556",
     "@prague/loader-web": "^0.1.3556",

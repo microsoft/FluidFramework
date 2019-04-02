@@ -10,11 +10,12 @@
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --port 8081"
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@prague/prague-dev-server": "^3.2.5",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.11.0",

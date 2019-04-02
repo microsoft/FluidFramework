@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/youtube",
-  "version": "0.2.3",
-  "description": "YouTube video player",
+  "name": "@chaincode/poll",
+  "version": "1.2.11",
+  "description": "Classic Prague runtime as chaincode",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
@@ -10,28 +10,36 @@
     "tsc": "tsc",
     "webpack": "webpack --config webpack.config.js",
     "tslint": "tslint 'src/**/*.ts'",
-    "start": "webpack-serve webpack.config.js --port 8081"
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "update": "npm run build && npm version patch && npm publish --registry http://localhost:4873"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
+    "@prague/prague-dev-server": "^3.2.5",
+    "@types/jquery": "^3.3.6",
+    "@types/knockout": "^3.4.59",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",
     "tslint": "^5.11.0",
     "typescript": "^3.0.1",
     "webpack": "^4.7.0",
-    "webpack-cli": "^3.1.1",
+    "webpack-cli": "^3.1.2",
     "webpack-serve": "^2.0.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
     "@prague/api-definitions": "^0.1.3542",
-    "@prague/client-ui": "^0.1.3542",
     "@prague/map": "^0.1.3542",
     "@prague/runtime-definitions": "^0.1.3542",
     "@prague/shared-string": "^0.1.3542",
     "@prague/stream": "^0.1.3542",
-    "@types/node": "^10.5.8"
+    "@prague/utils": "^0.1.3577",
+    "@types/node": "^10.5.8",
+    "css-loader": "^1.0.0",
+    "jquery": "^3.3.1",
+    "knockout": "^3.4.2",
+    "style-loader": "^0.23.0"
   },
   "prague": {
     "browser": {
