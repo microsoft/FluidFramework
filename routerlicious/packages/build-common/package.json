@@ -1,6 +1,6 @@
 {
   "name": "@prague/build-common",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Package containing common configs",
   "sideEffects": "false",
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@prague/merge-tree-utils",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague document loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -19,11 +19,11 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/merge-tree": "^0.2.0",
+    "@prague/merge-tree": "^0.3.0",
     "random-js": "^1.0.8"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "@types/random-js": "^1.0.31",

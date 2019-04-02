@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague services core definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "jsonwebtoken": "^8.4.0",
     "rimraf": "^2.6.2",
@@ -25,11 +25,11 @@
     "typescript": "^3.4.0"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/gitresources": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
-    "@prague/services-client": "^0.2.0",
-    "@prague/utils": "^0.2.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/gitresources": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/services-client": "^0.3.0",
+    "@prague/utils": "^0.3.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",

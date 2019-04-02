@@ -1,6 +1,6 @@
 {
   "name": "@prague/app-datastore",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague app model data store",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -18,17 +18,17 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-loader": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/loader-web": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
-    "@prague/routerlicious-host": "^0.2.0",
-    "@prague/routerlicious-socket-storage": "^0.2.0",
+    "@prague/container-loader": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/loader-web": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/routerlicious-host": "^0.3.0",
+    "@prague/routerlicious-socket-storage": "^0.3.0",
     "debug": "^3.1.0",
     "jsonwebtoken": "^8.4.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/jsonwebtoken": "^8.3.0",

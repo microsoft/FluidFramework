@@ -1,6 +1,6 @@
 {
   "name": "@prague/intelligence-runner",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Generates insights on distributed data structures",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
@@ -28,9 +28,9 @@
     "typescript": "^3.4.0"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/map": "^0.2.0",
-    "@prague/sequence": "^0.2.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/map": "^0.3.0",
+    "@prague/sequence": "^0.3.0",
     "@types/request": "^2.47.1",
     "debug": "^3.1.0"
   }

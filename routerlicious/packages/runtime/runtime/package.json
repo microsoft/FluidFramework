@@ -1,6 +1,6 @@
 {
   "name": "@prague/runtime",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague runtime API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "mocha": "^5.2.0",
@@ -30,10 +30,10 @@
     "typescript": "^3.4.0"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
-    "@prague/utils": "^0.2.0",
+    "@prague/gitresources": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/utils": "^0.3.0",
     "@types/async": "^2.0.50",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",

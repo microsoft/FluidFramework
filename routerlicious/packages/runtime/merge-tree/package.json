@@ -1,6 +1,6 @@
 {
   "name": "@prague/merge-tree",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Merge tree",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -40,7 +40,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
@@ -56,9 +56,9 @@
     "typescript": "^3.4.0"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/api-definitions": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "debug": "^3.1.0"

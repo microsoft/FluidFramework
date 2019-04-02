@@ -1,6 +1,6 @@
 {
   "name": "sequence",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague API sequence sample",
   "main": "index.js",
   "dependencies": {
@@ -13,7 +13,7 @@
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^4.2.0",

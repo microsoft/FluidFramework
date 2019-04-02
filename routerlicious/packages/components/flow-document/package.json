@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-document",
   "description": "Experimental flow editor for shared journaling.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -33,19 +33,19 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.0",
-    "@prague/app-datastore": "^0.2.0",
-    "@prague/component": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/map": "^0.2.0",
-    "@prague/merge-tree": "^0.2.0",
-    "@prague/runtime": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
-    "@prague/sequence": "^0.2.0",
-    "@prague/utils": "^0.2.0"
+    "@prague/app-component": "^0.3.0",
+    "@prague/app-datastore": "^0.3.0",
+    "@prague/component": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/map": "^0.3.0",
+    "@prague/merge-tree": "^0.3.0",
+    "@prague/runtime": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/sequence": "^0.3.0",
+    "@prague/utils": "^0.3.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",

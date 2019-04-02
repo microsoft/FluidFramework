@@ -1,6 +1,6 @@
 {
   "name": "@prague/container-loader",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prague container loader",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -39,9 +39,9 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/gitresources": "^0.2.0",
-    "@prague/utils": "^0.2.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/gitresources": "^0.3.0",
+    "@prague/utils": "^0.3.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
@@ -52,7 +52,7 @@
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "rimraf": "^2.6.2",

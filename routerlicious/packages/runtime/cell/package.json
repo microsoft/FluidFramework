@@ -1,6 +1,6 @@
 {
   "name": "@prague/cell",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -40,14 +40,14 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.2.0",
-    "@prague/container-definitions": "^0.2.0",
-    "@prague/runtime-definitions": "^0.2.0",
+    "@prague/api-definitions": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
     "debug": "^3.1.0",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.2.0",
+    "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",
