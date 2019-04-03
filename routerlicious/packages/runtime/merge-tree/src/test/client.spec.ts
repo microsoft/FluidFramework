@@ -9,7 +9,6 @@ describe("TestClient", () => {
 
     beforeEach(() => {
         client = new TestClient("");
-
         client.startCollaboration(localUserLongId);
     });
 
@@ -37,9 +36,7 @@ describe("TestClient", () => {
 
             assert.equal(tile.pos, 3, "Tile with label not at expected position");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should be able to find non preceding tile position based on label from client with single tile", () => {
             const tileLabel = "EOP";
             client.insertTextLocal(0, "abc d");
@@ -61,9 +58,7 @@ describe("TestClient", () => {
 
             assert.equal(tile.pos, 0, "Tile with label not at expected position");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
@@ -102,9 +97,7 @@ describe("TestClient", () => {
 
             assert.equal(tile.pos, 0, "Tile with label not at expected position");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should be able to find non preceding tile position from client with multiple tile", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
@@ -143,9 +136,7 @@ describe("TestClient", () => {
 
             assert.equal(tile.pos, 6, "Tile with label not at expected position");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should be able to find  tile from client with text length 1", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
@@ -172,9 +163,7 @@ describe("TestClient", () => {
 
             assert.equal(tile1.pos, 0, "Tile with label not at expected position");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should be able to find only preceding but not non preceeding tile with index out of bound", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
@@ -200,9 +189,7 @@ describe("TestClient", () => {
 
             assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should return undefined when trying to find tile from text without the specified tile", () => {
             const tileLabel = "EOP";
             client.insertTextLocal(0, "abc");
@@ -218,9 +205,7 @@ describe("TestClient", () => {
 
             assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
         });
-    });
 
-    describe(".findTile", () => {
         it("Should return undefined when trying to find tile from null text", () => {
             const tileLabel = "EOP";
 
@@ -231,6 +216,23 @@ describe("TestClient", () => {
             const tile1 = client.findTile(1, tileLabel, false);
 
             assert.equal(typeof (tile1), "undefined", "Returned tile should be undefined.");
+        });
+    });
+
+    describe(".annotateMarker", () => {
+        it("annotate valid marker", () => {
+            const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
+                [MergeTree.reservedMarkerIdKey]: "123"});
+            assert(insertOp);
+            const markerInfo = client.mergeTree.getContainingSegment(
+                0,
+                client.mergeTree.collabWindow.currentSeq,
+                client.mergeTree.collabWindow.clientId);
+            const marker = markerInfo.segment as MergeTree.Marker;
+            const annotateOp = client.annotateMarker(marker, { foo: "bar" }, undefined);
+            assert(annotateOp);
+            assert(marker.properties);
+            assert(marker.properties.foo, "bar");
         });
     });
 });
