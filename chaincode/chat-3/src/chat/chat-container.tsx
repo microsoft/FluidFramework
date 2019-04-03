@@ -31,27 +31,15 @@ interface IChatContainerState {
 }
 
 export class ChatContainer extends React.Component<IChatContainerProps, IChatContainerState> {
-  private selfLanguage = undefined;
-  private toLanguages = new Set<string>();
+  private selfLanguage = "en";
+  private toLanguages = new Set(["en"]);
   private alreadyLeader = false;
 
   public componentDidMount() {
-    this.selfLanguage = "en";
-    this.toLanguages.add("en");
     const quorum = this.props.runtime.getQuorum();
-
-    this.runTranslationIfLeader(quorum);
-
-    quorum.on("addMember", () => {
-      this.runTranslationIfLeader(quorum);
-    });
-
-    quorum.on("removeMember", () => {
-      this.runTranslationIfLeader(quorum);
-    });
+    this.initializeTranslator(quorum);
 
     this.setState({ messages: this.getInitialChat(this.props.history), inputMessage: "" });
-
     this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
       const chatProp = this.convertMessage(op);
       if (chatProp) {
@@ -129,39 +117,6 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
     });
   }
 
-  private runTranslationIfLeader(quorum: IQuorum) {
-    const clientId = this.props.runtime.clientId;
-    const members = [...quorum.getMembers()];
-
-    if (members && members.length > 0 && members[0][0] === clientId && !this.alreadyLeader) {
-      console.log(`Translation runner`);
-      this.alreadyLeader = true;
-
-      this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
-        const message = op.contents as IMessage;
-        if (!message.translated && !message.content.startsWith(transPrefix)) {
-          // tslint:disable max-line-length
-          translate("75ed7b5c411649eb895e03dae6a6f873", message.language, [...this.toLanguages], [message.content]).then((val) => {
-            if (val) {
-              console.log(`Translated`);
-              for (const languageTranslations of val) {
-                const language = languageTranslations[0];
-                const translations = languageTranslations[1];
-                this.props.runtime.submitMessage(MessageType.Operation, {
-                  author: message.author,
-                  content: translations[0],
-                  language,
-                  time: Date.now().toString(),
-                  translated: true,
-                });
-              }
-            }
-          });
-        }
-      });
-    }
-  }
-
   private convertMessage(op: ISequencedDocumentMessage): IChatProps {
     const message: IMessage = op.contents;
     if (message.content.startsWith(transPrefix)) {
@@ -178,5 +133,50 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
     } else if (message.language === this.selfLanguage) {
       return { message };
     }
+  }
+
+  private initializeTranslator(quorum: IQuorum) {
+    this.runTranslationIfLeader(quorum);
+    quorum.on("addMember", () => {
+      this.runTranslationIfLeader(quorum);
+    });
+    quorum.on("removeMember", () => {
+      this.runTranslationIfLeader(quorum);
+    });
+  }
+
+  private runTranslationIfLeader(quorum: IQuorum) {
+    const clientId = this.props.runtime.clientId;
+    const members = [...quorum.getMembers()];
+
+    if (members && members.length > 0 && members[0][0] === clientId && !this.alreadyLeader) {
+      this.alreadyLeader = true;
+      console.log(`${clientId} translating ops!`);
+      this.translateOp();
+    }
+  }
+
+  private translateOp() {
+    this.props.runtime.on("op", (op: ISequencedDocumentMessage) => {
+      const message = op.contents as IMessage;
+      if (!message.translated && !message.content.startsWith(transPrefix)) {
+        // tslint:disable max-line-length
+        translate("75ed7b5c411649eb895e03dae6a6f873", message.language, [...this.toLanguages], [message.content]).then((val) => {
+          if (val) {
+            for (const languageTranslations of val) {
+              const language = languageTranslations[0];
+              const translations = languageTranslations[1];
+              this.props.runtime.submitMessage(MessageType.Operation, {
+                author: message.author,
+                content: translations[0],
+                language,
+                time: Date.now().toString(),
+                translated: true,
+              });
+            }
+          }
+        });
+      }
+    });
   }
 }
