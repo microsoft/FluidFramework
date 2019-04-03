@@ -6,6 +6,6 @@
   "author": "Microsoft",
   "license": "ISC",
   "dependencies": {
-    "@chaincode/chat-3": "0.0.19"
+    "@chaincode/chat-3": "0.0.38"
   }
 }

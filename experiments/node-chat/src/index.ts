@@ -46,7 +46,9 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
             runtime.submitMessage("op", {
                 author: "Professor Node",
                 content: message,
+                language: "en",
                 time: Date.now().toString(),
+                translated: false,
               });
         }
     }
