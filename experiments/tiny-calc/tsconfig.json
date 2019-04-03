@@ -1,0 +1,10 @@
+{
+    "include": [
+        "src/index.ts"
+    ],   
+    "compilerOptions": {
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "target": "es6"
+    }
+}
