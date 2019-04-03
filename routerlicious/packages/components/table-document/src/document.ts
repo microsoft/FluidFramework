@@ -154,7 +154,7 @@ export class TableDocument extends Component implements ITable {
 
     public removeRows(startRow: number, numRows: number) {
         this.matrix.removeRows(startRow, numRows);
-        this.maybeRows!.remove(startRow, numRows);
+        this.maybeRows!.remove(startRow, startRow + numRows);
     }
 
     public insertCols(startCol: number, numCols: number) {
@@ -163,8 +163,8 @@ export class TableDocument extends Component implements ITable {
     }
 
     public removeCols(startCol: number, numCols: number) {
-        this.matrix.insertRows(startCol, numCols);
-        this.maybeCols!.removeRange(startCol, startCol + numCols);
+        this.matrix.removeCols(startCol, numCols);
+        this.maybeCols!.remove(startCol, startCol + numCols);
     }
 
     protected async create() {

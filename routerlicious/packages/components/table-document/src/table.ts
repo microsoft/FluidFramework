@@ -13,8 +13,8 @@ export interface ITable {
     getRowProperties(row: number): PropertySet;
     annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp);
     getColProperties(col: number): PropertySet;
-    insertRows(startRow: number, numRows: number);
-    removeRows(startRow: number, numRows: number);
-    insertCols(startCol: number, numCols: number);
-    removeCols(startCol: number, numCols: number);
+    insertRows(startRow: number, numRows: number): void;
+    removeRows(startRow: number, numRows: number): void;
+    insertCols(startCol: number, numCols: number): void;
+    removeCols(startCol: number, numCols: number): void;
 }

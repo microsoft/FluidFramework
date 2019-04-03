@@ -221,5 +221,19 @@ describe("TableDocument", () => {
             slice.annotateRows(2, 3, { id: "row1" });
             assert.deepEqual(slice.getRowProperties(2), { id: "row1" });
         });
+
+        it("Insert rows and columns work when proxied through table slice", async () => {
+            table.insertRows(0, 5);
+            table.insertCols(0, 7);    
+
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            assert.equal(slice.numCols, 2);
+            assert.equal(slice.numRows, 2);
+
+            slice.insertCols(1, 2);
+            assert.equal(slice.numCols, 4);
+            slice.insertRows(1, 2);
+            assert.equal(slice.numRows, 4);
+        });
     });
 });
