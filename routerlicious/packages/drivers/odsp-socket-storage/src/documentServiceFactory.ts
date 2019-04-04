@@ -2,6 +2,7 @@ import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolve
 import { DocumentService } from "./documentService";
 
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
+    constructor(private readonly bypassSnapshot = false) {}
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
@@ -12,12 +13,14 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         const storageUrl = pragueResolvedUrl.endpoints.storageUrl;
         const deltaStorageUrl = pragueResolvedUrl.endpoints.deltaStorageUrl;
         const ordererUrl = pragueResolvedUrl.endpoints.ordererUrl;
-        if (!storageUrl || !deltaStorageUrl || !ordererUrl) {
+
+        const invalidSnapshotUrl = !storageUrl && !this.bypassSnapshot;
+        if (invalidSnapshotUrl || !deltaStorageUrl || !ordererUrl) {
             // tslint:disable-next-line:max-line-length
             return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}][ordererUrl:${ordererUrl}]`);
         }
 
         return Promise.resolve(
-            new DocumentService(storageUrl, deltaStorageUrl, ordererUrl));
+            new DocumentService(storageUrl, deltaStorageUrl, ordererUrl, this.bypassSnapshot));
     }
 }

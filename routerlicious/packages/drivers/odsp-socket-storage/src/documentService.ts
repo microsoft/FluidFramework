@@ -11,7 +11,9 @@ export class DocumentService implements api.IDocumentService {
     constructor(
         private readonly snapshotUrl: string,
         private readonly deltaStorageUrl: string,
-        private readonly webSocketUrl: string) {
+        private readonly webSocketUrl: string,
+        private readonly bypassSnapshot = false,
+        ) {
     }
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
@@ -22,9 +24,9 @@ export class DocumentService implements api.IDocumentService {
         tenantId: string,
         id: string,
         tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
-        const documentManager = this.snapshotUrl ?
-            new StandardDocumentStorageManager(id, this.snapshotUrl, tokenProvider) :
-            new NoopDocumentStorageManager();
+        const documentManager = this.bypassSnapshot ?
+            new NoopDocumentStorageManager() :
+            new StandardDocumentStorageManager(id, this.snapshotUrl, tokenProvider);
         return new DocumentStorageService(documentManager);
     }
 
