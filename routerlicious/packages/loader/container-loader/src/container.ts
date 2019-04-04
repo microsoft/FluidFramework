@@ -956,7 +956,10 @@ export class Container extends EventEmitter implements IContainer {
     }
 
     private processSignal(message: ISignalMessage) {
-        const local = this._clientId === message.clientId;
-        this.context.processSignal(message, local);
+        // Signals don't get paused. Need to check context before handing over.
+        if (this.context) {
+            const local = this._clientId === message.clientId;
+            this.context.processSignal(message, local);
+        }
     }
 }
