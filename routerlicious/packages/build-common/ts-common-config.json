@@ -13,6 +13,7 @@
         "sourceMap": true,
         "inlineSources": true,
         "noImplicitAny": false,
-        "incremental": true
+        "incremental": true,
+        "types": []
     }
 }

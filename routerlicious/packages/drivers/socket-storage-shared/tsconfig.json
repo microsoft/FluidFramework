@@ -1,4 +1,4 @@
-{    
+{
     "extends": "@prague/build-common/ts-common-config.json",
     "exclude": [
         "dist",
@@ -6,7 +6,8 @@
     ],
     "compilerOptions": {
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types" : [ "socket.io-client" ]
     },
     "include": [
         "src/**/*"
