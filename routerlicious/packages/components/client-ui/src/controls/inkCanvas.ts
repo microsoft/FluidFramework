@@ -267,7 +267,7 @@ export class InkCanvas extends ui.Component {
         // Render all the dirty layers
         // tslint:disable-next-line:forin
         for (const id in dirtyLayers) {
-            let index = this.lastLayerRenderOp[id] || 0;
+            let index = this.lastLayerRenderOp[id] ? this.lastLayerRenderOp[id] : 0;
 
             const layer = this.model.getLayer(id);
             for (; index < layer.operations.length; index++) {

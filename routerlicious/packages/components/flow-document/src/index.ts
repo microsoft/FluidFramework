@@ -99,7 +99,7 @@ const accumAsLeafAction = {
 };
 
 class ServicePlatform extends EventEmitter implements IPlatform {
-    private qi: Map<string, Promise<any>>;
+    private readonly qi: Map<string, Promise<any>>;
 
     constructor(services: ReadonlyArray<[string, Promise<any>]>) {
         super();
@@ -121,9 +121,9 @@ export class FlowDocument extends Component {
         return this.readyDeferred.promise;
     }
 
-    private get sharedString() { return this.maybeSharedString as SharedString; }
-    private get mergeTree() { return this.maybeMergeTree as MergeTree; }
-    private get clientId() { return this.maybeClientId as number; }
+    private get sharedString() { return this.maybeSharedString; }
+    private get mergeTree() { return this.maybeMergeTree; }
+    private get clientId() { return this.maybeClientId; }
 
     public get length() {
         return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId);
@@ -142,7 +142,7 @@ export class FlowDocument extends Component {
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
-    private readyDeferred = new Deferred<void>();
+    private readonly readyDeferred = new Deferred<void>();
 
     constructor() {
         super([
@@ -253,7 +253,7 @@ export class FlowDocument extends Component {
     public findParagraphStart(position: number) {
         position = Math.min(position, this.length - 1);
         const maybePosAndTile = this.findTile(position, DocSegmentKind.Paragraph);
-        return (maybePosAndTile && maybePosAndTile.pos) || 0;
+        return maybePosAndTile ? maybePosAndTile.pos : 0;
     }
 
     public visitRange(callback: LeafAction, startPosition?: number, endPosition?: number) {

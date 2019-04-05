@@ -22,17 +22,17 @@ function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxSt
 }
 
 class Speller {
-    private static altMax = 7;
-    private static idleTimeMS = 500;
+    private static readonly altMax = 7;
+    private static readonly idleTimeMS = 500;
     private idleTimer = null;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
-    private tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
-    private verbose = false;
+    private readonly tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
+    private readonly verbose = false;
 
     constructor(
         public sharedString: Sequence.SharedString,
-        private dict: MergeTree.TST<number>) {
+        private readonly dict: MergeTree.TST<number>) {
     }
 
     public initialSpellCheck() {
@@ -249,8 +249,8 @@ export class Spellcheker {
     private speller: Speller;
 
     constructor(
-        private root: Sequence.SharedString,
-        private dict: MergeTree.TST<number>) {
+        private readonly root: Sequence.SharedString,
+        private readonly dict: MergeTree.TST<number>) {
     }
 
     public checkSharedString() {

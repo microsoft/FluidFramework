@@ -16,12 +16,12 @@ export interface IInclusionViewState extends IFlowViewComponentState { }
 //       'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
 const ignoreEventSym = "InclusionView.ignoreEvent";
 
-/** Reusable event handler used to mark events has having bubbled out of an inclusion. */
+// Reusable event handler used to mark events has having bubbled out of an inclusion.
 const markInclusionEvent = (e: Event) => {
     (e as any)[ignoreEventSym] = true;
 };
 
-/** List of events that the FlowEditor may try to hijack. */
+// List of events that the FlowEditor may try to hijack.
 const events: string[] = [
     "mousedown", "keydown", "keypress",
 ];
@@ -45,7 +45,7 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
             root.addEventListener(type, markInclusionEvent);
         }
 
-        return this.updating( props, { root, cursorTarget: props.child });
+        return this.updating(props, { root, cursorTarget: props.child });
     }
 
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {

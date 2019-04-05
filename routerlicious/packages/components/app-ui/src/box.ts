@@ -1,39 +1,39 @@
 export enum BoxKind {
-    /** Block elements force a paragraph break and take all remaining horizontal space. */
+    // Block elements force a paragraph break and take all remaining horizontal space.
     Block           = 0,
 
-    /** Inline are laid out inline in the current flow. */
+    // Inline are laid out inline in the current flow.
     Inline          = 1,
 }
 
 export enum BoxFlags {
-    /** Initial unmounted state. */
+    // Initial unmounted state.
     None            = 0,
 
-    /** Box is currently mounted into the DOM. */
+    // Box is currently mounted into the DOM.
     Mounted         = 1,
 }
 
-/** Private key for 'flags' property in BoxState. */
+// Private key for 'flags' property in BoxState.
 const flagsSymbol = Symbol();
 
 export abstract class BoxState {
-    /** The currently set BoxFlags, if any. */
+    // The currently set BoxFlags, if any
     public [flagsSymbol]: BoxFlags;
 }
 
-/** Used to specify modified CSS styles. */
+// Used to specify modified CSS styles. */
 export interface IBoxStyle {
-    /** See https://developer.mozilla.org/en-US/docs/Web/CSS/font */
+    // See https://developer.mozilla.org/en-US/docs/Web/CSS/font
     font?: string;
 }
 
-/** Used to retrieve the current effective CSS styles. */
+// Used to retrieve the current effective CSS styles.
 export interface IBoxStyleContext {
     readonly font: string;
 }
 
-/** Internal class used to calculate the current effective style. */
+// Internal class used to calculate the current effective style.
 class BoxStyle implements IBoxStyleContext {
     private readonly stack: IBoxStyle[] = [];
 
@@ -41,7 +41,7 @@ class BoxStyle implements IBoxStyleContext {
         this.stack.push(style);
     }
 
-    /** See https://developer.mozilla.org/en-US/docs/Web/CSS/font */
+    // See https://developer.mozilla.org/en-US/docs/Web/CSS/font
     public get font(): string {
         return this.memoizedLookup("font", "");
     }
@@ -77,7 +77,7 @@ class BoxStyle implements IBoxStyleContext {
     }
 }
 
-/** Layout/render context for the Box, used during mount/update/unmount. */
+// Layout/render context for the Box, used during mount/update/unmount.
 export abstract class BoxContext {
     private readonly styleContext: BoxStyle;
 
@@ -85,10 +85,10 @@ export abstract class BoxContext {
         this.styleContext = new BoxStyle(style);
     }
 
-    /** Current effective CSS style. */
+    // Current effective CSS style.
     public get style(): IBoxStyleContext { return this.styleContext; }
 
-    /** Measures the given 'text' using the current effective CSS style. */
+    // Measures the given 'text' using the current effective CSS style.
     public measureText(text: string) {
         // TODO: Consider push/pop state abstraction to help avoid state leaks.
         this.measure2d.font = this.style.font;
@@ -97,7 +97,7 @@ export abstract class BoxContext {
         return this.measure2d.measureText(text);
     }
 
-    /** Applies the given style modifications for the scope of the callback. */
+    // Applies the given style modifications for the scope of the callback.
     public withStyle(style: IBoxStyle, scope: () => void) {
         this.styleContext.push(style);
         try {
@@ -108,11 +108,11 @@ export abstract class BoxContext {
     }
 }
 
-/** Base class for Block/Inline components. */
+// Base class for Block/Inline components.
 export abstract class Box<TSelf extends BoxState> {
     constructor(public readonly boxKind: BoxKind) { }
 
-    /** Mounts this component if element is undefined, otherwise updates the existing component. */
+    // Mounts this component if element is undefined, otherwise updates the existing component.
     public upsert(self: TSelf, context: BoxContext, element: HTMLElement | undefined) {
         console.assert((element !== undefined) === this.isMounted(self));
 

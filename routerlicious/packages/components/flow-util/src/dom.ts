@@ -3,7 +3,7 @@ function isElement(node: Node): node is Element {
 }
 
 export class Dom {
-    /** Returns true if the given 'node' follows the specified 'previous' node in the 'parent' node's children. */
+    // Returns true if the given 'node' follows the specified 'previous' node in the 'parent' node's children.
     public static isAfterNode(parent: Node, node: Node, previous: Node | null) {
         return previous
             ? previous.nextSibling === node     // If we have a previous sibling, check if node follows it.

@@ -1,0 +1,41 @@
+{
+    "extends": ["tslint-microsoft-contrib", "tslint:recommended"], 
+    "rules": {
+        "no-increment-decrement": false,
+        "no-backbone-get-set-outside-model": false,
+        "newline-per-chained-call": false,
+        "max-classes-per-file": false,
+        "linebreak-style": false,
+        "export-name": false,
+        "no-console": [true, "log", "warn", "error"],
+        "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
+        "no-implicit-dependencies": [true, "dev"],
+
+        /**
+         * Security Rules. The following rules should be turned on because they find security issues
+         * or are recommended in the Microsoft Secure Development Lifecycle (SDL)
+         */
+        "insecure-random": true,
+        "no-banned-terms": true,
+        "no-cookies": true,
+        "no-delete-expression": true,
+        "no-disable-auto-sanitization": true,
+        "no-document-domain": true,
+        "no-document-write": true,
+        "no-eval": true,
+        "no-exec-script": true,
+        "no-function-constructor-with-string-args": true,
+        "no-http-string": [true, "http://.*"],
+        "no-inner-html": true,
+        "no-octal-literal": true,
+        "no-reserved-keywords": false,
+        "no-string-based-set-immediate": true,
+        "no-string-based-set-interval": true,
+        "no-string-based-set-timeout": true,
+        "non-literal-require": true,
+        "possible-timing-attack": true,
+        "react-anchor-blank-noopener": true,
+        "react-iframe-missing-sandbox": true,
+        "react-no-dangerous-html": true
+    }
+}

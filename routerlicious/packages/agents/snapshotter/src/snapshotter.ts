@@ -12,7 +12,7 @@ const MaxOpCountWithoutSnapshot = 1000;
 
 export class Snapshotter {
     private serializer: Serializer;
-    constructor(private runtime: Runtime) {
+    constructor(private readonly runtime: Runtime) {
     }
 
     public start() {

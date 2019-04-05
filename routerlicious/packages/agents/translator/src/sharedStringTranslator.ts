@@ -11,9 +11,9 @@ export class SharedStringTranslator {
     private typeInsights: map.ISharedMap;
 
     constructor(
-        private insights: map.ISharedMap,
-        private sharedString: Sequence.SharedString,
-        private apiKey: string) {
+        private readonly insights: map.ISharedMap,
+        private readonly sharedString: Sequence.SharedString,
+        private readonly apiKey: string) {
         }
 
     public get isTranslating() {
@@ -131,7 +131,7 @@ export class SharedStringTranslator {
             for (const languageTranslations of translationOutput) {
                 const language = languageTranslations[0];
                 const translations = languageTranslations[1];
-                if (translations.length > 0 ) {
+                if (translations.length > 0) {
                     const translation = translations[0];
                     const pos = this.sharedString.client.mergeTree.getOffset(
                         pgMarker,

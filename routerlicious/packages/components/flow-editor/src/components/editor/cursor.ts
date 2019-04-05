@@ -30,7 +30,7 @@ export class Cursor {
 
     private endContainer?: Node;
     private relativeEndOffset = NaN;
-    private cursorBounds?: ClientRect = undefined;
+    private cursorBounds?: ClientRect;
 
     private readonly domRange = document.createRange();
     private readonly highlightRootElement: Element;

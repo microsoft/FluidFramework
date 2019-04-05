@@ -44,7 +44,7 @@ export class OwnedMap extends Document {
     this.root.set("clicks", 0, CounterValueType.Name);
 
     this.root.set("ownedMap", this.createOwnedMap());
-    this.ownedMap = await this.root.get("ownedMap");
+    this.ownedMap = this.root.get("ownedMap");
     this.ownedMap.set("title", "Default Title");
   }
 

@@ -54,12 +54,12 @@ export class App extends React.Component<IProps, IState> {
               <figcaption>Figure 1 - Turbo Outrun by Jeroen Tel</figcaption>
             </div>,
         ) },
-        /*{ name: "Wedge Left", iconName: "CaretRight", onClick: () => this.cmds.insert(<div className={style.wedgeLeft}></div>) },*/
+        // { name: "Wedge Left", iconName: "CaretRight", onClick: () => this.cmds.insert(<div className={style.wedgeLeft}></div>) },
         { name: "Wedge Right", iconName: "CaretLeft", onClick: () => this.cmds.insert(<div className={style.wedgeRight}></div>) },
         { name: "Chart", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/chart-view") },
         { name: "Table", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent("@chaincode/table-view") },
         { name: "Table Slice", iconName: "CaretLeft", onClick: () => this.cmds.insertContainerComponent(TableSliceType) },
-        /*{ name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },*/
+        // { name: "Flow", iconName: "Text", onClick: () => this.cmds.insert(<FlowEditor cmds={this.cmds} docUrl="http://localhost:3000" docId={Math.random().toString(36).substr(2, 4)}></FlowEditor>) },
         { name: "Component", iconName: "Text", onClick: () => { this.chaincodeDlg.current.showDialog(); }},
     ].map(({name, iconName, onClick}) => { return {
         key: `insert${name}`,
@@ -106,12 +106,12 @@ export class App extends React.Component<IProps, IState> {
         );
     }
 
-    private addComponent = (docId: string, chaincode: string) => {
+    private readonly addComponent = (docId: string, chaincode: string) => {
         this.cmds.insert({ chaincode, docId });
     }
 
     // Data for CommandBar
-    private getItems = () => {
+    private readonly getItems = () => {
         return [
             {
                 key: "insertItem",
@@ -135,7 +135,7 @@ export class App extends React.Component<IProps, IState> {
         ];
     }
 
-    private getOverlflowItems = () => [] as ICommandBarItemProps[];
+    private readonly getOverlflowItems = () => [] as ICommandBarItemProps[];
 
-    private getFarItems = () => [] as ICommandBarItemProps[];
+    private readonly getFarItems = () => [] as ICommandBarItemProps[];
 }

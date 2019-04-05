@@ -90,7 +90,7 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
     }
 
     // tslint:disable-next-line:variable-name
-    private _onChange = (event: React.FormEvent<IComboBox>, option: IComboBoxOption, index: number, value: string): void => {
+    private readonly _onChange = (event: React.FormEvent<IComboBox>, option: IComboBoxOption, index: number, value: string): void => {
         if (option !== undefined) {
             this.setState({ chaincode: option.key.toString() });
         } else if (index !== undefined && index >= 0 && index < this.state.options.length) {
@@ -104,11 +104,11 @@ export class ChaincodeDialog extends React.Component<IProps, IState> {
         }
     }
 
-    private closeDialog = () => {
+    private readonly closeDialog = () => {
         this.setState({ hideDialog: true });
     }
 
-    private submit = () => {
+    private readonly submit = () => {
         this.props.addComponent(this.state.docId, this.state.chaincode);
         this.closeDialog();
     }

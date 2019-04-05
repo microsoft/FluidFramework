@@ -92,7 +92,7 @@ export function toColorStruct(color: string): IColor {
     // Ink colors
     case "Black": return { r: 0x00, g: 0x00, b: 0x00, a: 0xff };
     case "Blue": return { r: 0x00, g: 0x00, b: 0xff, a: 0xff };
-    case "Red": return { r: 0xff, g: 0x00, b: 0x00, a: 0xff };
+    case "Red": return { r: 0xFF, g: 0x00, b: 0x00, a: 0xff };
     case "Green": return { r: 0x00, g: 0xff, b: 0x00, a: 0xff };
     // Highlighting colors
     case "Yellow": return { r: 0xff, g: 0xff, b: 0x00, a: 0xff };
@@ -100,7 +100,7 @@ export function toColorStruct(color: string): IColor {
     case "Lime": return { r: 0x00, g: 0xff, b: 0x00, a: 0xff };
     // Select colors
     case "Gold": return { r: 0xff, g: 0xd7, b: 0x00, a: 0xff };
-    case "White": return { r: 0xff, g: 0xff, b: 0xff, a: 0xff };
+    case "White": return { r: 0xFF, g: 0xff, b: 0xff, a: 0xff };
     default:
       return hexStrToRGBA(color);
   }

@@ -37,8 +37,8 @@ export class GridView {
     private readonly cols = tableTemplate.get(this.root, "cols");
     private readonly tbody = tableTemplate.get(this.root, "body");
     private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
-    private tdText?: Node = undefined;
-    private selection = new BorderRect([
+    private tdText?: Node;
+    private readonly selection = new BorderRect([
         [ `${styles.selectedTL}`, `${styles.selectedT}`, `${styles.selectedTR}` ],
         [ `${styles.selectedL}`,  `${styles.selected}`,  `${styles.selectedR}`  ],
         [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ],
@@ -137,7 +137,7 @@ export class GridView {
                 this.selection.start = [0, col];
                 this.selection.end   = [this.numRows - 1, col];
                 this.refreshCells();
-            } else if ( col < 0 && row >= 0 ) {
+            } else if (col < 0 && row >= 0) {
                 this.selection.start = [row, 0];
                 this.selection.end   = [row, this.numCols - 1];
                 this.refreshCells();
@@ -272,6 +272,7 @@ export class GridView {
     }
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
+        // tslint:disable-next-line: switch-default
         switch (e.keyCode) {
             case KeyCode.Escape:     { this.cancelInput(); break; }
             case KeyCode.UpArrow:    { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
@@ -279,7 +280,7 @@ export class GridView {
             case KeyCode.DownArrow:  { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
             case KeyCode.LeftArrow:  { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
             case KeyCode.Tab:        { e.preventDefault(); /* fall-through */ }
-            case KeyCode.RightArrow: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); break; }
+            case KeyCode.RightArrow: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
         }
     }
 

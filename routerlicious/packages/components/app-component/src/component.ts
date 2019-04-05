@@ -50,7 +50,7 @@ class LegacyChaincode<T extends Component> implements IChaincode {
     // Returns the SharedObject factory for the given type id.
     public getModule(type: string): any {
         debug(`Chaincode.getModule(${type})`);
-        return this.component[typeToFactorySym].get(type) || console.assert(false);
+        return this.component[typeToFactorySym].get(type);
     }
 
     // NYI?

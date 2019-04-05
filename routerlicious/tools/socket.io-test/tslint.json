@@ -1,7 +1,6 @@
 {
-    "extends": "tslint:recommended",
+    "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "max-classes-per-file": [false],
-        "no-console": [false]
+        "no-console": false
     }
 }

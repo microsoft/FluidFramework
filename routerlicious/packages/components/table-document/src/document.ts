@@ -1,7 +1,6 @@
 import { Component } from "@prague/app-component";
 import { Workbook } from "@prague/client-ui/ext/calc2";
-import { CounterValueType } from "@prague/map";
-import { MapExtension, registerDefaultValueType  } from "@prague/map";
+import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
@@ -111,6 +110,7 @@ export class TableDocument extends Component implements ITable {
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
         await this.host.createAndAttachComponent(sliceId, TableSliceType);
+        // tslint:disable-next-line: no-return-await
         return await this.host.openComponent<TableSlice>(
             sliceId, true, [
                 ["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })],
@@ -139,7 +139,7 @@ export class TableDocument extends Component implements ITable {
         return segment.properties;
     }
 
-    /** For internal use by TableSlice: Please do not use. */
+    // For internal use by TableSlice: Please do not use.
     public createInterval(label: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
         const start = rowColToPosition(minRow, minCol);
         const end = rowColToPosition(maxRow, maxCol);

@@ -1,7 +1,17 @@
 {
-    "extends": "tslint:recommended",
+    "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "max-classes-per-file": [false],
-        "no-console": [false]
+        "completed-docs": false,
+        "newline-before-return": false,
+        "no-console": false,
+        "no-floating-promises": false,
+        "no-null-keyword": false,
+        "no-parameter-reassignment": false,
+        "no-relative-imports": false,
+        "no-reserved-keywords": false,
+        "no-unnecessary-local-variable": false,
+        "no-unnecessary-type-assertion": false,
+        "no-unsafe-any": false,
+        "prefer-type-cast": false
     }
 }

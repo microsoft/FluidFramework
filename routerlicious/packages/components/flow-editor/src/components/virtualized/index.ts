@@ -89,7 +89,7 @@ export class VirtualizedView extends View<IVirtualizedProps, IVirtualizedViewSta
         }
     }
 
-    private onScroll = (value: number) => {
+    private readonly onScroll = (value: number) => {
         this.state.paginator.startPosition = Math.floor(value);
         this.update(this.state.props);
     }

@@ -9,7 +9,7 @@ export class RateLimiter extends EventEmitter {
     private running = false;
     private triggerTimer = null;
 
-    constructor(private action: () => Promise<any>, private rate: number) {
+    constructor(private readonly action: () => Promise<any>, private readonly rate: number) {
         super();
     }
 
@@ -39,6 +39,7 @@ export class RateLimiter extends EventEmitter {
         });
 
         // Finally clause to start running tasks again once we finish
+        // tslint:disable-next-line: no-floating-promises
         completeP.then(() => {
             this.running = false;
             this.emit("done");

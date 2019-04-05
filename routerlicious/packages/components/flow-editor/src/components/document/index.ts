@@ -56,10 +56,10 @@ export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
      */
     segments: ISegment[];
 
-    /** The IView instance that rendered this set of segments. */
+    // The IView instance that rendered this set of segments.
     view: TView;
 
-    /** Cached ClientRects that bound this view. */
+    // Cached ClientRects that bound this view.
     clientRects?: ClientRectList | DOMRectList;
 }
 
@@ -70,13 +70,13 @@ type FindVerticalPredicate = (top: number, bottom: number, best: IRect, candidat
  * The state maintained by the DocumentView instance.
  */
 interface IDocumentViewState extends IViewState {
-    /** The root element into which segments are rendered. */
+    // The root element into which segments are rendered.
     slot: HTMLElement;
 
-    /** The root element into which overlays are attached. */
+    // The root element into which overlays are attached.
     overlay: Element;
 
-    /** Leading span */
+    // Leading span
     leadingSpan: Element;
     trailingSpan: Element;
 
@@ -93,7 +93,7 @@ interface IDocumentViewState extends IViewState {
     elementToViewInfo: Map<Element, IViewInfo<any, IFlowViewComponent<any>>>;
 }
 
-/** IView that renders a FlowDocument. */
+// IView that renders a FlowDocument.
 export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
 
     public  get root()       { return this.state.root; }
@@ -111,7 +111,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
                 && candidate.bottom >= best.bottom; // disqualify rects higher than best match
         }
 
-    /** Returns the { segment, offset } currently visible at the given x/y coordinates (if any). */
+    // Returns the { segment, offset } currently visible at the given x/y coordinates (if any).
     public hitTest(x: number, y: number) {
         const range = document.caretRangeFromPoint(x, y);
         const segmentAndOffset = this.nodeOffsetToSegmentOffset(range.startContainer, range.startOffset);
@@ -174,7 +174,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
 
     protected unmounting() { /* do nothing */ }
 
-    /** Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it. */
+    // Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it.
     private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
         const state = this.state;
         let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
@@ -198,7 +198,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         return segment && { segment, offset: segment.cachedLength };
     }
 
-    /** Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom. */
+    // Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom.
     private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
         // Note: Attempting to hit test using 'caretRangeFromPoint()' against a reported client rect's top/bottom
         //       produced inconsistent results, presumably due to internal fixed-point -> Float32 rounding discrepancies.
@@ -234,7 +234,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         return this.nodeOffsetToSegmentOffset(node, left);
     }
 
-    /** Get the ClientRects that define the boundary of the given 'element', using cached information if we have it. */
+    // Get the ClientRects that define the boundary of the given 'element', using cached information if we have it.
     private getClientRects(element: Element) {
         // Note: Caller must only request clientRects for elements we've previously rendered.
         const state = this.state;
@@ -303,10 +303,10 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
     }
 }
 
-/** Holds ephemeral state used during layout calculations. */
+// Holds ephemeral state used during layout calculations.
 class LayoutContext {
 
-    /** The next tracked position we're looking for. */
+    // The next tracked position we're looking for.
     private get nextTrackedPosition() {
         return this.pendingTrackedPositions[this.pendingTrackedPositions.length - 1];
     }
@@ -333,7 +333,7 @@ class LayoutContext {
      */
     private readonly pendingLayout: Set<Element>;
 
-    /** The IViewInfo for the last rendered inline view. */
+    // The IViewInfo for the last rendered inline view.
     // tslint:disable-next-line:variable-name
     private _currentInline: IViewInfo<any, IFlowViewComponent<any>> | null = null;
 
@@ -374,7 +374,7 @@ class LayoutContext {
         }
     }
 
-    /** Invoked at completion of the layout pass to unmount all IViews that are no longer in the rendered window. */
+    // Invoked at completion of the layout pass to unmount all IViews that are no longer in the rendered window.
     public unmount() {
         for (const toUnmount of this.pendingLayout) {
             const toUnmountInfo = this.elementToViewInfo(toUnmount)!;
@@ -417,14 +417,14 @@ class LayoutContext {
     }
 }
 
-/** State machine that synchronizes the DOM with the visible portion of the FlowDocument. */
+// State machine that synchronizes the DOM with the visible portion of the FlowDocument.
 export class DocumentLayout {
 
-    /** Runs state machine, starting with the paragraph at 'start'. */
+    // Runs state machine, starting with the paragraph at 'start'.
     public static sync(props: IDocumentProps, state: IDocumentViewState) {
         const paginator = props.paginator;
-        const desiredStart = (paginator && paginator.startPosition) || 0;
-        let start = (paginator && paginator.startingBlockPosition) || 0;
+        const desiredStart = paginator ? paginator.startPosition : 0;
+        let start = paginator ? paginator.startingBlockPosition : 0;
 
         debug(`Sync(${desiredStart}): [${start}..?)`);
 
@@ -518,7 +518,7 @@ export class DocumentLayout {
         return viewInfo;
     }
 
-    /** Ensures that the given inline 'view' is mounted and up to date. */
+    // Ensures that the given inline 'view' is mounted and up to date.
     private static syncInline<TProps, TView extends IFlowViewComponent<TProps>>(context: LayoutContext, position: number, segments: ISegment[], factory: () => TView, props: TProps) {
         const viewInfo = context.setCurrentInline(
             this.syncNode<TProps, TView>(
@@ -532,22 +532,22 @@ export class DocumentLayout {
         context.notifyTrackedPositionListeners(maybeCursorTarget || viewInfo.view.root, position, segments);
     }
 
-    /** Ensures that the paragraph's view is mounted and up to date. */
+    // Ensures that the paragraph's view is mounted and up to date.
     private static syncParagraph(context: LayoutContext, position: number, marker: Marker) {
         this.syncInline(context, position, [ marker ], ParagraphView.factory, {});
     }
 
-    /** Ensures that the lineBreak's view is mounted and up to date. */
+    // Ensures that the lineBreak's view is mounted and up to date.
     private static syncLineBreak(context: LayoutContext, position: number, marker: Marker) {
         this.syncInline(context, position, [ marker ], LineBreakView.factory, {});
     }
 
-    /** Ensures that the text's view is mounted and up to date. */
+    // Ensures that the text's view is mounted and up to date.
     private static syncText(context: LayoutContext, position: number, segments: ISegment[], text: string) {
        this.syncInline(context, position, segments, TextView.factory, { text });
     }
 
-    /** Ensures that a foreign inclusion's view is mounted and up to date. */
+    // Ensures that a foreign inclusion's view is mounted and up to date.
     private static syncInclusion(context: LayoutContext, position: number, marker: Marker) {
         let child: HTMLElement;
         const kind = getInclusionKind(marker);
@@ -568,7 +568,6 @@ export class DocumentLayout {
                     console.assert(kind === InclusionKind.Chaincode);
                     child = document.createElement("span");
                     context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
-                    break;
             }
             (marker.properties as any)[this.inclusionRootSym] = child;
         }

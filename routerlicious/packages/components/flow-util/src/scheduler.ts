@@ -2,7 +2,7 @@ type TaskCallback = () => void;
 
 export class Scheduler {
     private framePending = false;
-    private frameTasks: TaskCallback[] = [];
+    private readonly frameTasks: TaskCallback[] = [];
 
     public schedule(callback: TaskCallback) {
         // Record the new task.

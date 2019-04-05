@@ -129,7 +129,7 @@ export class TableSlice extends Component implements ITable {
         // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKeys.valuesKey, valuesRangeId);
-        await this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
+        this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
     }
 
     // Checks whether or not a specified row/column combination is within this slice and throws if not.

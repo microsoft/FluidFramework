@@ -69,17 +69,12 @@ export class ScrollbarView extends View<IScrollBarProps, IScrollBarViewState> {
         const bounds = state.root.getBoundingClientRect();
         const content = state.content;
 
-        switch (props.orientation) {
-            case ScrollbarOrientation.Horizontal: {
-                content.style.width = this.adjust(props, bounds.width);
-                content.style.height = "0px";
-                break;
-            }
-            case ScrollbarOrientation.Vertical: {
-                content.style.width = "0px";
-                content.style.height = this.adjust(props, bounds.height);
-                break;
-            }
+        if (props.orientation === ScrollbarOrientation.Horizontal) {
+            content.style.width = this.adjust(props, bounds.width);
+            content.style.height = "0px";
+        } else if (props.orientation === ScrollbarOrientation.Vertical) {
+            content.style.width = "0px";
+            content.style.height = this.adjust(props, bounds.height);
         }
 
         return state;

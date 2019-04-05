@@ -73,7 +73,7 @@ export function create(
         const speed = Number.parseFloat(request.query.speed) || defaultSpeed;
         const authors = Number.parseFloat(request.query.authors) || defaultAuthors;
         const text = request.query.text || defaultTemplate;
-        const languages = request.query.language || "";
+        const languages = request.query.language ? request.query.language : "";
 
         handleResponse(request, response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
     });

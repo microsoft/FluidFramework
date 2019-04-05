@@ -12,7 +12,7 @@ export interface IConfig {
 class TextAnalyticsIntelligentService implements IIntelligentService {
     public name: string = "TextAnalytics";
 
-    constructor(private key: string) {
+    constructor(private readonly key: string) {
     }
 
     public async run(value: string): Promise<any> {

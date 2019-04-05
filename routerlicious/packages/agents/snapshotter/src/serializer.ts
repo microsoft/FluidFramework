@@ -30,11 +30,11 @@ export class Serializer {
     private snapshotting = false;
 
     constructor(
-        private runtime: Runtime,
-        private idleTime: number,
-        private maxTimeWithoutSnapshot: number,
-        private retryTime: number,
-        private maxOpCountWithoutSnapshot: number) {
+        private readonly runtime: Runtime,
+        private readonly idleTime: number,
+        private readonly maxTimeWithoutSnapshot: number,
+        private readonly retryTime: number,
+        private readonly maxOpCountWithoutSnapshot: number) {
         }
 
     public run(op: ISequencedDocumentMessage) {
@@ -86,6 +86,7 @@ export class Serializer {
 
         // If we were able to snapshot - or we failed but the snapshot wasn't required - then resume the inbound
         // message flow. Otherwise attempt the snapshot again
+        // tslint:disable-next-line: no-floating-promises
         snapshotP.then((success) => {
             if (!success && required) {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);

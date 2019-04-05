@@ -11,10 +11,5 @@
   "dependencies": {
   },
   "devDependencies": {
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.4.0"
   }
 }

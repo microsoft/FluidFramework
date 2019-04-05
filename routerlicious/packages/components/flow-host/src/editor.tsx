@@ -1,6 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { VirtualizedView } from "@chaincode/flow-editor";
-import { IVirtualizedProps } from "@chaincode/flow-editor";
+import { IVirtualizedProps, VirtualizedView } from "@chaincode/flow-editor";
 import { Scheduler } from "@prague/flow-util";
 import * as React from "react";
 import * as ReactDOM from "react-dom";

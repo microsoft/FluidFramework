@@ -259,11 +259,10 @@ export class SparseMatrix extends SegmentSequence<MatrixSegment> {
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
-        switch (segment.getType()) {
-            case SegmentType.Run:
-                return (segment as RunSegment).items[offset];
-            case SegmentType.Custom:
-                return undefined;
+        if (segment.getType() === SegmentType.Run) {
+            return (segment as RunSegment).items[offset];
+        } else if (segment.getType() === SegmentType.Custom) {
+            return undefined;
         }
 
         throw new Error(`Unrecognized Segment type: ${segment.constructor}`);

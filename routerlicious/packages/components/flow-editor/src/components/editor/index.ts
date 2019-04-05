@@ -184,7 +184,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             }
             default: {
                 debug(`Key: ${ev.key} (${ev.keyCode})`);
-                break;
             }
         }
     }
@@ -208,7 +207,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
                 this.insertText(ev.key);
                 ev.stopPropagation();
                 ev.preventDefault();
-                break;
             }
         }
     }

@@ -8,11 +8,11 @@ import { RateLimiter } from "./rateLimiter";
 const defaultWaitTime = 10 * 1000;
 
 export class IntelligentServicesManager {
-    private services: IIntelligentService[] = [];
+    private readonly services: IIntelligentService[] = [];
     private rateLimiter: RateLimiter;
     private intelInvoked: boolean = false;
 
-    constructor(private sharedString: Sequence.SharedString, private documentInsights: ISharedMap) {}
+    constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) {}
 
     /**
      * Registers a new intelligent service

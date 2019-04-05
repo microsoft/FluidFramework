@@ -1,5 +1,4 @@
-import { Template } from "@prague/flow-util";
-import { Dom } from "@prague/flow-util";
+import { Dom, Template } from "@prague/flow-util";
 import { IViewState, View } from "..";
 import { debug } from "../../debug";
 import * as styles from "./index.css";

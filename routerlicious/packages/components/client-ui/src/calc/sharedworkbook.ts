@@ -31,7 +31,8 @@ export class SharedWorkbook extends Workbook {
                 const rowArray: string[] = [];
                 init.push(rowArray);
                 for (let col = 0; col < numCols; col++) {
-                    rowArray.push(cellText.get(`${row},${col}`) || "");
+                    const text = cellText.get(`${row},${col}`);
+                    text ? rowArray.push(text) : rowArray.push("");
                 }
             }
         } else {

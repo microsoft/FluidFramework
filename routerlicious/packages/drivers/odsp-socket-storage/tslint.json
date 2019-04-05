@@ -1,33 +1,16 @@
 {
-    "extends": ["tslint-microsoft-contrib", "tslint:recommended"],
+    "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "binary-expression-operand-order": false,
         "completed-docs": false,
-        "export-name": false,
-        "function-name": false,
-        "import-name": false,
-        "linebreak-style": [false],
-        "max-classes-per-file": [false],
-        "max-func-body-length": false,
-        "max-line-length": [ true, { "ignoreUrls": true }],
-        "missing-jsdoc": false,
+        "max-line-length": false,
         "newline-before-return": false,
         "no-console": false,
-        "no-default-export": false,
-        "no-empty-interface": false,
-        "no-for-in": false,
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
-        "no-unnecessary-local-variable": false,
         "no-unnecessary-type-assertion": false,
-        "prefer-array-literal": false,
-        "prefer-method-signature": false,
         "prefer-type-cast": false,
-        "promise-function-async": false,
-        "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
-        "underscore-consistent-invocation": false,
-        "no-implicit-dependencies": [true, "dev"]
+        "promise-function-async": false
     }
 }

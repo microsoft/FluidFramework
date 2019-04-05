@@ -23,7 +23,8 @@ export class Paginator {
 
     public get startingBlockPosition() {
         // Returns 'undefined' if there is no preceding paragraph marker.
-        return this.doc.findParagraphStart(this.startPosition) || 0;
+        const startBlockPosition = this.doc.findParagraphStart(this.startPosition);
+        return startBlockPosition ? startBlockPosition : 0;
     }
 
     public get trackedPositions(): ITrackedPosition[] {
