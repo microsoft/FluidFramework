@@ -1,3 +1,5 @@
+import { ISignalMessage } from "@prague/container-definitions";
+
 /**
  * An envelope wraps the contents with the intended target
  */
@@ -30,4 +32,10 @@ export interface IQueueMessage {
     documentId: string;
 
     token: string;
+}
+
+export interface IInboundSignalMessage extends ISignalMessage {
+
+    type: string;
+
 }

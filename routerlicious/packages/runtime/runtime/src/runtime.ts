@@ -25,6 +25,7 @@ import {
     IEnvelope,
     IHelpMessage,
     IHostRuntime,
+    IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
@@ -360,9 +361,10 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         assert(component);
         const innerContent = envelope.contents as { content: any, type: string };
 
-        const transformed: ISignalMessage = {
+        const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
-            content: innerContent,
+            content: innerContent.content,
+            type: innerContent.type,
         };
         component.processSignal(transformed, local);
     }

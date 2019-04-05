@@ -12,7 +12,6 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
-    ISignalMessage,
     ISnapshotTree,
     ITreeEntry,
     MessageType,
@@ -29,6 +28,7 @@ import {
     IComponentRuntime,
     IDistributedObjectServices,
     IEnvelope,
+    IInboundSignalMessage,
     IObjectStorageService,
     IRuntime,
 } from "@prague/runtime-definitions";
@@ -366,7 +366,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         this.emit("op", message, target);
     }
 
-    public processSignal(message: ISignalMessage, local: boolean) {
+    public processSignal(message: IInboundSignalMessage, local: boolean) {
         this.emit("signal", message, local);
     }
 

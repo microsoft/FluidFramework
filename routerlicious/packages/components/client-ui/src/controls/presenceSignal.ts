@@ -1,5 +1,4 @@
-import { ISignalMessage } from "@prague/container-definitions";
-import { IRuntime } from "@prague/runtime-definitions";
+import { IInboundSignalMessage, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 const presenceKey = "presence";
@@ -15,10 +14,8 @@ export class PresenceSignal extends EventEmitter {
     }
 
     private listenForPresence() {
-        this.runtime.on("signal", (message: ISignalMessage, local: boolean) => {
-            if (message.content.type === presenceKey) {
-                // Copy over nested content.
-                message.content = message.content.content;
+        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            if (message.type === presenceKey) {
                 this.emit("message", message, local);
             }
         });

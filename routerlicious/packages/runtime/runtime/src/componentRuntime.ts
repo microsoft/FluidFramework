@@ -12,7 +12,6 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
-    ISignalMessage,
     ISnapshotTree,
     ITree,
     MessageType,
@@ -24,6 +23,7 @@ import {
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
+    IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
@@ -188,7 +188,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.handler.process(message, local, context);
     }
 
-    public processSignal(message: ISignalMessage, local: boolean): void {
+    public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
         return this.handler.processSignal(message, local);
     }

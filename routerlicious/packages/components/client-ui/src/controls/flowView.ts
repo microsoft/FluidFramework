@@ -1,10 +1,11 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
-import { IGenericBlob, ISequencedDocumentMessage, ISignalMessage, IUser } from "@prague/container-definitions";
+import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
+import { IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
@@ -3277,7 +3278,7 @@ export class FlowView extends ui.Component {
     }
 
     public addPresenceSignal(presenceSignal: PresenceSignal) {
-        presenceSignal.on("message", (message: ISignalMessage, local: boolean) => {
+        presenceSignal.on("message", (message: IInboundSignalMessage, local: boolean) => {
             this.remotePresenceUpdate(message, local);
         });
 
@@ -5106,7 +5107,7 @@ export class FlowView extends ui.Component {
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
     }
 
-    private remotePresenceUpdate(message: ISignalMessage, local: boolean) {
+    private remotePresenceUpdate(message: IInboundSignalMessage, local: boolean) {
         if (local) {
             return;
         }
