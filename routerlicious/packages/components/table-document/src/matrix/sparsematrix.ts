@@ -11,7 +11,7 @@ import {
 } from "@prague/merge-tree";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import {
-    SegmentSequence,
+    SharedSegmentSequence,
 } from "@prague/sequence";
 import { UnboxedOper } from "../../../client-ui/ext/calc";
 
@@ -172,7 +172,7 @@ export function positionToRowCol(position: number) {
     return {row, col};
 }
 
-export class SparseMatrix extends SegmentSequence<MatrixSegment> {
+export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(
         document: IRuntime,
         public id: string,

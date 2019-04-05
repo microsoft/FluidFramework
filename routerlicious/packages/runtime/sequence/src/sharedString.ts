@@ -7,12 +7,12 @@ import {
     SharedStringExtension,
 } from "./extension";
 import {
-    SegmentSequence,
+    SharedSegmentSequence,
 } from "./sequence";
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
-export class SharedString extends SegmentSequence<SharedStringSegment> {
+export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     constructor(
         document: IRuntime,
         public id: string,

@@ -34,7 +34,7 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
-export abstract class SegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
+export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
 
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
@@ -556,7 +556,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 }
 
-export class SharedSequence<T extends MergeTree.SequenceItem> extends SegmentSequence<MergeTree.SubSequence<T>> {
+export class SharedSequence<T extends MergeTree.SequenceItem> extends SharedSegmentSequence<MergeTree.SubSequence<T>> {
     constructor(
         document: IRuntime,
         public id: string,
