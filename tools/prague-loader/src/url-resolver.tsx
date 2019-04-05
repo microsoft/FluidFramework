@@ -14,6 +14,7 @@ export interface ILoaderProps {
 
 export interface ILoaderUrl {
   url: string;
+  token?: string;
 }
 
 export function URLToLoaderProps(urlString: string): ILoaderProps {

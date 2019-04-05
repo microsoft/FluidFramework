@@ -1,28 +1,36 @@
 import { Component } from "react";
 import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
-import { RouterliciousDocumentServiceFactory  } from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { WebLoader } from "@prague/loader-web";
 import { ILoaderUrl, ILoaderProps, URLToLoaderProps } from "./url-resolver";
+import { loadSharepointPragueComponent } from '@ms/office-prague-container';
 
 export class Loader extends Component<ILoaderUrl, any> {
   dataStore: DataStore;
-  bag: ILoaderProps;
+  routerliciousBag: ILoaderProps;
   divRef: React.RefObject<HTMLDivElement>;
   constructor(props: ILoaderUrl) {
     super(props);
-    this.bag = URLToLoaderProps(this.props.url);
     this.divRef = React.createRef();
 
-    this.dataStore = new DataStore(
-      this.bag.ordererUrl,
-      this.bag.storageUrl,
-      new WebLoader(this.bag.registryUrl),
-      new RouterliciousDocumentServiceFactory(),
-      this.bag.token,
-      this.bag.tenant,
-      "anonymous-coward"
-    );
+    if (props.url.includes("weuprodprv")) {
+      console.log("SPO");
+    } else {
+      console.log("Routerlicious");
+
+      this.routerliciousBag = URLToLoaderProps(this.props.url);
+
+      this.dataStore = new DataStore(
+        this.routerliciousBag.ordererUrl,
+        this.routerliciousBag.storageUrl,
+        new WebLoader(this.routerliciousBag.registryUrl),
+        new RouterliciousDocumentServiceFactory(),
+        this.routerliciousBag.token,
+        this.routerliciousBag.tenant,
+        "anonymous-coward"
+      );
+    }
   }
 
   async componentDidMount() {
@@ -31,21 +39,23 @@ export class Loader extends Component<ILoaderUrl, any> {
       ["datastore", Promise.resolve(this.dataStore)]
     ];
 
-    this.dataStore.open(this.bag.containerId, this.bag.chaincode, this.bag.path, services);
+    if (!this.routerliciousBag) {
+      loadSharepointPragueComponent(this.props.url, this.props.token, this.divRef.current); 
+
+    } else {
+      this.dataStore.open(
+        this.routerliciousBag.containerId,
+        this.routerliciousBag.chaincode,
+        this.routerliciousBag.path,
+        services
+      );
+    }
   }
 
   render() {
-    if (!this.dataStore) {
-      return (
-        <>
-          <p>Error: Data Store Not Found</p>
-        </>
-      );
-    }
     return (
       <div>
-        <p>Rendering Container {this.bag.containerId} </p>
-        <div ref={this.divRef}/>
+        <div ref={this.divRef} />
       </div>
     );
   }

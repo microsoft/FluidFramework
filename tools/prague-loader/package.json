@@ -1,14 +1,15 @@
 {
   "name": "@prague/react-loader",
-  "version": "0.0.11",
+  "version": "0.0.16",
   "main": "dist/index.js",
   "dependencies": {
-    "@prague/app-component": "0.2.5915",
-    "@prague/app-datastore": "0.2.5915",
-    "@prague/loader-web": "0.2.5915",
-    "@prague/map": "0.2.5915",
-    "@prague/routerlicious-socket-storage": "0.2.5915",
-    "@prague/runtime-definitions": "0.2.5915",
+    "@ms/office-prague-container": "0.3.8",
+    "@prague/app-component": "^0.2.5915",
+    "@prague/app-datastore": "^0.2.5915",
+    "@prague/loader-web": "^0.2.5915",
+    "@prague/map": "^0.2.5915",
+    "@prague/routerlicious-socket-storage": "^0.2.5915",
+    "@prague/runtime-definitions": "^0.2.5915",
     "react": "^16.8.4",
     "url-parse": "^1.4.4"
   },
@@ -26,7 +27,7 @@
   "scripts": {
     "build": "tsc",
     "pack:dev": "webpack",
-    "publish": "npm publish --registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
+    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
   },
   "eslintConfig": {
     "extends": "react-app"
