@@ -161,6 +161,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     /**
+     * Returns the length of the current sequence for the client
+     */
+    public getLength() {
+        return this.client.getLength();
+    }
+
+    /**
      * Annotates the range with the provided properties
      *
      * @param start - The inclusive start postition of the range to annotate
