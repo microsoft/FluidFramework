@@ -225,45 +225,45 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             : { blobs: {}, commits: {}, trees: {} };
 
         // Iterate over each component and ask it to snapshot
-        const channelEntries = new Map<string, ITree>();
-        this.components.forEach((component, key) => channelEntries.set(key, component.snapshot()));
+        const componentEntries = new Map<string, ITree>();
+        this.components.forEach((component, key) => componentEntries.set(key, component.snapshot()));
 
         // Use base tree to know previous component snapshot and then snapshot each component
-        const channelCommitsP = new Array<Promise<{ id: string, commit: string }>>();
-        for (const [channelId, channelSnapshot] of channelEntries) {
+        const componentCommitsP = new Array<Promise<{ id: string, commit: string }>>();
+        for (const [componentId, componentSnapshot] of componentEntries) {
             // If sha exists then previous commit is still valid
-            if (channelSnapshot.sha) {
-                channelCommitsP.push(Promise.resolve({
-                    commit: tree.commits[channelId],
-                    id: channelId,
+            if (componentSnapshot.sha) {
+                componentCommitsP.push(Promise.resolve({
+                    commit: tree.commits[componentId],
+                    id: componentId,
                 }));
             } else {
-                const parent = channelId in tree.commits ? [tree.commits[channelId]] : [];
-                const channelCommitP = this.storage
-                    .write(channelSnapshot, parent, `${channelId} commit ${tagMessage}`, channelId)
+                const parent = componentId in tree.commits ? [tree.commits[componentId]] : [];
+                const componentCommitP = this.storage
+                    .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
                     .then((commit) => {
-                        this.components.get(channelId).updateBaseSha(commit.tree.sha);
-                        return { id: channelId, commit: commit.sha };
+                        this.components.get(componentId).updateBaseSha(commit.tree.sha);
+                        return { id: componentId, commit: commit.sha };
                     });
-                channelCommitsP.push(channelCommitP);
+                componentCommitsP.push(componentCommitP);
             }
         }
 
         const root: ITree = { entries: [], sha: null };
 
         // Add in module references to the component snapshots
-        const channelCommits = await Promise.all(channelCommitsP);
+        const componentCommits = await Promise.all(componentCommitsP);
         let gitModules = "";
-        for (const channelCommit of channelCommits) {
+        for (const componentCommit of componentCommits) {
             root.entries.push({
                 mode: FileMode.Commit,
-                path: channelCommit.id,
+                path: componentCommit.id,
                 type: TreeEntry[TreeEntry.Commit],
-                value: channelCommit.commit,
+                value: componentCommit.commit,
             });
 
             const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            gitModules += `[submodule "${channelCommit.id}"]\n\tpath = ${channelCommit.id}\n\turl = ${repoUrl}\n\n`;
+            gitModules += `[submodule "${componentCommit.id}"]\n\tpath = ${componentCommit.id}\n\turl = ${repoUrl}\n\n`;
         }
 
         // Write the module lookup details
