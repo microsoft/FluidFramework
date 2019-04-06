@@ -1,7 +1,7 @@
 import { Browser, IPragueResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { createDocumentService } from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
@@ -56,9 +56,22 @@ export async function startLoading(
     const documentUrl = `prague://${url.parse(routerlicious).host}` +
     `/${encodeURIComponent(tenantId)}` +
     `/${encodeURIComponent(id)}`;
+
+    const deltaStorageUrl = routerlicious +
+    "/deltas" +
+    `/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
+
+    const storageUrl =
+    historian +
+    "/repos" +
+    `/${encodeURIComponent(tenantId)}`;
+
     const resolved: IPragueResolvedUrl = {
-        ordererUrl: routerlicious,
-        storageUrl: historian,
+        endpoints: {
+            deltaStorageUrl,
+            ordererUrl: routerlicious,
+            storageUrl,
+        },
         tokens: { jwt: token },
         type: "prague",
         url: documentUrl,
@@ -68,12 +81,11 @@ export async function startLoading(
         routerlicious,
         hostToken,
         new Map([[documentUrl, resolved]]));
-    const documentServices = createDocumentService(routerlicious, historian);
     const codeLoader = new WebLoader(packageUrl);
 
     const loader = new Loader(
         { resolver },
-        documentServices,
+        new RouterliciousDocumentServiceFactory(),
         codeLoader,
         { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: loaderType } });
 
