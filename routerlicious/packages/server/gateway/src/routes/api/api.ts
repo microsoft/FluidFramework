@@ -38,7 +38,6 @@ async function getInternalComponent(
     const path = match[3];
 
     const orderer = config.get("worker:serverUrl");
-    const storage = config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001");
 
     const user: IAlfredUser = (request.user) ? {
         displayName: request.user.name,
@@ -47,14 +46,27 @@ async function getInternalComponent(
     } : undefined;
     const token = getToken(tenantId, documentId, appTenants, user);
 
+    const pragueUrl = `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
+
+    const deltaStorageUrl =
+        config.get("worker:serverUrl") +
+        "/deltas" +
+        `/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
+
+    const storageUrl =
+        config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
+        "/repos" +
+        `/${encodeURIComponent(tenantId)}`;
+
     return {
         endpoints: {
+            deltaStorageUrl,
             ordererUrl: orderer,
-            storageUrl: storage,
+            storageUrl,
         },
         tokens: { jwt: token },
         type: "prague",
-        url: `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`,
+        url: pragueUrl,
     } as IPragueResolvedUrl;
 }
 
