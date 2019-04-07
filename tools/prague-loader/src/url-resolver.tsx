@@ -23,6 +23,8 @@ export function URLToLoaderProps(urlString: string): ILoaderProps {
   const container = pathParts[3];
   const tenant = pathParts[2];
   const query = url.query;
+  const prePath = `${pathParts[0]}\\${pathParts[1]}\\${pathParts[2]}\\${pathParts[3]}`;
+  const path = url.pathname.substr(prePath.length);
 
   const propsWithoutDiv = {
     containerId: container,
@@ -31,7 +33,7 @@ export function URLToLoaderProps(urlString: string): ILoaderProps {
     registryUrl: "https://pragueauspkn-3873244262.azureedge.net",
     tenant: tenant,
     token: fetchSecret(tenant),
-    path: "",
+    path: path,
     chaincode: query["chaincode"]
   };
   return propsWithoutDiv;
