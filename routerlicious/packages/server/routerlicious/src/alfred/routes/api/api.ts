@@ -1,22 +1,14 @@
 import {
     IClient,
     IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
     ITokenClaims,
-    MessageType,
 } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-
-interface IOperation {
-    op: string;
-    path: string;
-    value: string;
-}
+import { craftMessage, craftOp, craftSystemMessage, IOperation } from "./restHelper";
 
 const Robot = "robot";
 export function create(
@@ -90,83 +82,4 @@ export function create(
     });
 
     return router;
-}
-
-function craftOp(reqOp: IOperation) {
-    // Craft and send op
-    const opContent = {
-        address: "root",
-        contents: {
-            key: reqOp.path,
-            type: "set",
-            value: {
-                type: "Plain",
-                value: reqOp.value,
-            },
-        },
-    };
-
-    const op = {
-        address: "root",
-        contents: {
-            clientSequenceNumber: 1,
-            content: opContent,
-            referenceSequenceNumber: 1,
-            type: "op",
-        },
-    };
-
-    return op;
-}
-
-function craftSystemMessage(
-    tenantId: string,
-    documentId: string,
-    contents: IClientJoin | string): core.IRawOperationMessage {
-        const type = (typeof contents === "string") ? MessageType.ClientLeave : MessageType.ClientJoin;
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(contents),
-            referenceSequenceNumber: -1,
-            traces: [],
-            type,
-        };
-
-        const message: core.IRawOperationMessage = {
-            clientId: null,
-            documentId,
-            operation,
-            tenantId,
-            timestamp: Date.now(),
-            type: core.RawOperationType,
-        };
-
-        return message;
-}
-
-function craftMessage(
-    tenantId: string,
-    documentId: string,
-    clientId: string,
-    contents: string,
-    clientSequenceNumber: number): core.IRawOperationMessage {
-        const operation: IDocumentMessage = {
-            clientSequenceNumber,
-            contents,
-            referenceSequenceNumber: -1,
-            traces: [],
-            type: MessageType.Operation,
-        };
-
-        const message: core.IRawOperationMessage = {
-            clientId,
-            documentId,
-            operation,
-            tenantId,
-            timestamp: Date.now(),
-            type: core.RawOperationType,
-        };
-
-        return message;
 }
