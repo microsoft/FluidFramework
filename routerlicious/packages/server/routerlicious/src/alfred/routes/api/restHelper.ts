@@ -7,26 +7,27 @@ import {
 } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 
-export interface IOperation {
+export interface IMapSetOperation {
     op: string;
     path: string;
     value: string;
 }
 
-export function craftOp(reqOp: IOperation) {
+// We only support top level keys in root map for now.
+export function craftMapSet(op: IMapSetOperation) {
     const opContent = {
         address: "root",
         contents: {
-            key: reqOp.path,
+            key: op.path,
             type: "set",
             value: {
                 type: "Plain",
-                value: reqOp.value,
+                value: op.value,
             },
         },
     };
 
-    const op = {
+    const opMessage = {
         address: "root",
         contents: {
             clientSequenceNumber: 1,
@@ -36,10 +37,10 @@ export function craftOp(reqOp: IOperation) {
         },
     };
 
-    return op;
+    return opMessage;
 }
 
-export function craftSystemMessage(
+export function craftClientJoinLeaveMessage(
     tenantId: string,
     documentId: string,
     contents: IClientJoin | string): core.IRawOperationMessage {
@@ -65,7 +66,7 @@ export function craftSystemMessage(
     return message;
 }
 
-export function craftMessage(
+export function craftOpMessage(
     tenantId: string,
     documentId: string,
     clientId: string,

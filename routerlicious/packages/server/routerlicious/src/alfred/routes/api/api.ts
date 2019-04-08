@@ -8,7 +8,11 @@ import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import { craftMessage, craftOp, craftSystemMessage, IOperation } from "./restHelper";
+import {
+    craftClientJoinLeaveMessage,
+    craftMapSet,
+    craftOpMessage,
+    IMapSetOperation } from "./restHelper";
 
 const Robot = "robot";
 export function create(
@@ -20,7 +24,7 @@ export function create(
 
     const router: Router = Router();
 
-    router.patch("/:tenantId?/:id", (request, response) => {
+    router.patch("/:tenantId?/:id", async (request, response) => {
         const token = request.headers["access-token"] as string;
         if (token) {
             const tenantId = request.params.tenantId || appTenants[0].id;
@@ -31,12 +35,12 @@ export function create(
             } else {
                 const tokenP = tenantManager.verifyToken(tenantId, token);
                 const docP = storage.getDocument(tenantId, documentId);
-                Promise.all([docP, tokenP]).then((data) => {
+                Promise.all([docP, tokenP]).then(([document, verify]) => {
                     // Check document existence.
-                    if (data[0]) {
+                    if (document) {
                         const clientId = moniker.choose();
 
-                        const reqOps = request.body as IOperation[];
+                        const reqOps = request.body as IMapSetOperation[];
 
                         const detail: IClient = {
                             permission: [],
@@ -49,23 +53,23 @@ export function create(
                         };
 
                         // Send join message.
-                        const joinMessage = craftSystemMessage(tenantId, documentId, clientDetail);
+                        const joinMessage = craftClientJoinLeaveMessage(tenantId, documentId, clientDetail);
                         producer.send(joinMessage, tenantId, documentId);
 
                         let clSeqNum = 1;
                         for (const reqOp of reqOps) {
-                            const op = craftOp(reqOp);
-                            const opMessage = craftMessage(
+                            const content = craftMapSet(reqOp);
+                            const opMessage = craftOpMessage(
                                 tenantId,
                                 documentId,
                                 clientId,
-                                JSON.stringify(op),
+                                JSON.stringify(content),
                                 clSeqNum++);
                             producer.send(opMessage, tenantId, documentId);
                         }
 
                         // Send leave message.
-                        const leaveMessage = craftSystemMessage(tenantId, documentId, clientId);
+                        const leaveMessage = craftClientJoinLeaveMessage(tenantId, documentId, clientId);
                         producer.send(leaveMessage, tenantId, documentId);
 
                         response.status(200).json();
