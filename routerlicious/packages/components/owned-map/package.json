@@ -12,7 +12,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build && npm run tsc",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist && rimraf lib",
+    "clean": "rimraf dist lib *.tsbuildinfo",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "pack": "webpack --env=\"production\"",

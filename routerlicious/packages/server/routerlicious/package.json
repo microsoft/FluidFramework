@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "clean": "rimraf dist public/scripts/dist",
+    "clean": "rimraf dist public/scripts/dist *.tsbuildinfo",
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc",
     "build:full": "concurrently npm:build",
