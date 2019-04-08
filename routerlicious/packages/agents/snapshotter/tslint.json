@@ -7,6 +7,7 @@
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-unsafe-any": false,
-        "no-void-expression": false
+        "no-void-expression": false,
+        "no-non-null-assertion": false
     }
 }

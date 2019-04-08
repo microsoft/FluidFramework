@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "strict": false,
         "noUnusedLocals": true,
         "module": "esnext",
         "outDir": "./dist",

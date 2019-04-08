@@ -16,7 +16,7 @@ const resumeAnalyticsConfig = {
 };
 
 export class IntelRunner {
-    private intelligenceManager: IntelligentServicesManager;
+    private intelligenceManager: IntelligentServicesManager | undefined;
 
     constructor(private readonly sharedString: Sequence.SharedString, private readonly insightsMap: ISharedMap) {
     }

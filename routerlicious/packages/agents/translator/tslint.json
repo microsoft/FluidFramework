@@ -12,6 +12,8 @@
         "no-unnecessary-local-variable": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "prefer-type-cast": false
+        "prefer-type-cast": false,
+        "no-non-null-assertion": false,
+        "strict-boolean-expressions": false
     }
 }

@@ -7,7 +7,7 @@ export class RateLimiter extends EventEmitter {
     private pending = false;
     private dirty = false;
     private running = false;
-    private triggerTimer = null;
+    private triggerTimer: NodeJS.Timeout | null = null;
 
     constructor(private readonly action: () => Promise<any>, private readonly rate: number) {
         super();

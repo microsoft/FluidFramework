@@ -7,8 +7,8 @@ import { translate } from "./translator";
 export class SharedStringTranslator {
     private pendingTranslation = false;
     private translating = false;
-    private translationTimer = null;
-    private typeInsights: map.ISharedMap;
+    private translationTimer: NodeJS.Timeout | null = null;
+    private typeInsights!: map.ISharedMap;
 
     constructor(
         private readonly insights: map.ISharedMap,
@@ -35,7 +35,9 @@ export class SharedStringTranslator {
         // Remove listener to stop inbound ops first.
         this.sharedString.removeAllListeners();
         // Cancel timer to stop invoking further translation.
-        clearTimeout(this.translationTimer);
+        if (this.translationTimer != null) {
+            clearTimeout(this.translationTimer);
+        }
     }
 
     private needsTranslation(op: any): boolean {

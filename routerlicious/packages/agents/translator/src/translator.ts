@@ -34,7 +34,7 @@ function processTranslationOutput(input: ITranslatorOutput[]): Map<string, strin
             if (!languageText.has(translation.to)) {
                 languageText.set(translation.to, []);
             }
-            languageText.get(translation.to).push(translation.text);
+            languageText.get(translation.to)!.push(translation.text);
         }
     }
     return languageText;

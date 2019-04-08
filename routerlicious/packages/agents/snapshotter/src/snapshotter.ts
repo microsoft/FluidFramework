@@ -11,7 +11,7 @@ const SnapshotRetryTime = 1000;
 const MaxOpCountWithoutSnapshot = 1000;
 
 export class Snapshotter {
-    private serializer: Serializer;
+    private serializer: Serializer | undefined;
     constructor(private readonly runtime: Runtime) {
     }
 
@@ -23,7 +23,9 @@ export class Snapshotter {
             SnapshotRetryTime,
             MaxOpCountWithoutSnapshot);
         const eventHandler = (op: ISequencedDocumentMessage) => {
-            this.serializer.run(op);
+            if (this.serializer) {
+                this.serializer.run(op);
+            }
         };
         this.runtime.on("op", eventHandler);
     }

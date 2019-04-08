@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "strict": false,
         "declaration": false,
         "declarationMap": false,
         "noUnusedLocals": true,

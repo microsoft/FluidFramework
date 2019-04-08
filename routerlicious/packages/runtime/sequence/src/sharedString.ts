@@ -188,7 +188,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         }
     }
 
-    public findTile(startPos: number, tileLabel: string, preceding = true) {
+    public findTile(startPos: number | undefined, tileLabel: string, preceding = true) {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 

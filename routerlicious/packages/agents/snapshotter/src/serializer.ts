@@ -23,10 +23,10 @@ export class Serializer {
     // Use the current time on initialization since we will be loading off a snapshot
     private lastSnapshotTime: number = Date.now();
     private lastSnapshotSeqNumber: number = 0;
-    private idleTimer = null;
-    private retryTimer = null;
-    private lastOp: ISequencedDocumentMessage = null;
-    private lastOpSnapshotDetails: IOpSnapshotDetails = null;
+    private idleTimer: NodeJS.Timeout | null = null;
+    private retryTimer: NodeJS.Timeout | null = null;
+    private lastOp: ISequencedDocumentMessage | null = null;
+    private lastOpSnapshotDetails: IOpSnapshotDetails | null = null;
     private snapshotting = false;
 
     constructor(
@@ -69,14 +69,14 @@ export class Serializer {
         this.snapshotting = true;
 
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
-        console.log(`Snapshotting ${this.runtime.id}@${this.lastOp.sequenceNumber}`);
+        console.log(`Snapshotting ${this.runtime.id}@${this.lastOp!.sequenceNumber}`);
         this.runtime.deltaManager.inbound.pause();
         const snapshotP = this.runtime.requestSnapshot(message).then(
             () => {
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
                 // attempt the snapshot again.
                 this.lastSnapshotTime = Date.now();
-                this.lastSnapshotSeqNumber = this.lastOp.sequenceNumber;
+                this.lastSnapshotSeqNumber = this.lastOp!.sequenceNumber;
                 return true;
             },
             (error) => {
@@ -139,7 +139,7 @@ export class Serializer {
         this.idleTimer = setTimeout(
             () => {
                 console.log("Snapshotting due to being idle");
-                this.snapshot(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
+                this.snapshot(this.lastOpSnapshotDetails!.message, this.lastOpSnapshotDetails!.required);
             },
             this.idleTime);
     }

@@ -9,7 +9,7 @@ const defaultWaitTime = 10 * 1000;
 
 export class IntelligentServicesManager {
     private readonly services: IIntelligentService[] = [];
-    private rateLimiter: RateLimiter;
+    private rateLimiter: RateLimiter | undefined;
     private intelInvoked: boolean = false;
 
     constructor(private readonly sharedString: Sequence.SharedString, private readonly documentInsights: ISharedMap) {}
@@ -41,7 +41,9 @@ export class IntelligentServicesManager {
                     defaultWaitTime);
                 this.intelInvoked = true;
             }
-            this.rateLimiter.trigger();
+            if (this.rateLimiter) {
+                this.rateLimiter.trigger();
+            }
         });
     }
 }

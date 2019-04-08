@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "strict": false,
         "rootDir": "./src",
         "outDir": "./dist",
         "jsx": "react"

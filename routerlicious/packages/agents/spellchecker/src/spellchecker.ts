@@ -3,7 +3,7 @@ import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 
 export interface IPgMarker {
-    tile: MergeTree.Marker;
+    tile: MergeTree.Marker | undefined;
 
     pos: number;
 }
@@ -24,7 +24,7 @@ function compareProxStrings(a: MergeTree.ProxString<number>, b: MergeTree.ProxSt
 class Speller {
     private static readonly altMax = 7;
     private static readonly idleTimeMS = 500;
-    private idleTimer = null;
+    private idleTimer: NodeJS.Timeout | null = null;
     private currentIdleTime: number = 0;
     private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
     private readonly tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
@@ -38,7 +38,7 @@ class Speller {
     public initialSpellCheck() {
         const spellParagraph = (startPG: number, endPG: number, text: string) => {
             const re = /\b\w+\b/g;
-            let result: RegExpExecArray;
+            let result: RegExpExecArray | null;
             do {
                 result = re.exec(text);
                 if (result) {
@@ -55,7 +55,7 @@ class Speller {
                 }
             } while (result);
         };
-        let prevPG: MergeTree.Marker;
+        let prevPG: MergeTree.Marker | null = null;
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
@@ -212,7 +212,7 @@ class Speller {
 
     private runtimeSpellCheck(beginPos: number, endPos: number, text: string) {
         const re = /\b\w+\b/g;
-        let result: RegExpExecArray;
+        let result: RegExpExecArray | null;
         let runningStart = beginPos;
         do {
             result = re.exec(text);
@@ -246,7 +246,7 @@ class Speller {
 }
 
 export class Spellcheker {
-    private speller: Speller;
+    private speller: Speller | undefined;
 
     constructor(
         private readonly root: Sequence.SharedString,
@@ -261,6 +261,8 @@ export class Spellcheker {
     }
 
     public stop() {
-        this.speller.stop();
+        if (this.speller) {
+            this.speller.stop();
+        }
     }
 }
