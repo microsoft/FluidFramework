@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat-3",
-  "description": "Prague Chat with custom runtime",
-  "version": "0.0.39",
+  "description": "Prague Chat with minimal runtime",
+  "version": "0.0.40",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -35,7 +35,7 @@
     }
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.3.6025",
+    "@prague/container-definitions": "^0.3.6085",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
