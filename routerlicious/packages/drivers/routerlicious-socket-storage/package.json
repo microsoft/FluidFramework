@@ -9,10 +9,11 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo",
     "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
@@ -43,6 +44,7 @@
     "debug": "^3.1.0",
     "isomorphic-ws": "^4.0.1",
     "jwt-decode": "^2.2.0",
+    "rimraf": "^2.6.2",
     "socket.io-client": "^2.1.1",
     "ws": "^6.1.2"
   }

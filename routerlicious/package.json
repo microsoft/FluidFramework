@@ -41,7 +41,7 @@
     "@microsoft/rush": "^5.5.4",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
-    "lerna": "^3.13.0",
+    "lerna": "^3.13.2",
     "typescript": "^3.4.0"
   },
   "dependencies": {}

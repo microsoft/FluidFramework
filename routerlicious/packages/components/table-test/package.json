@@ -12,6 +12,7 @@
     "build": "tsc",
     "build:compile": "npm run build",
     "build:full:compile": "npm run build",
+    "clean": "rimraf dist *.tsbuildinfo",
     "test": "mocha --recursive dist/**/*.spec.js --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit"
   },
@@ -48,6 +49,7 @@
     "@prague/build-common": "^0.3.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
+    "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
