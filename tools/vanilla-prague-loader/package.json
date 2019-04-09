@@ -1,0 +1,26 @@
+{
+  "name": "@prague/vanilla-loader",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@ms/office-prague-container": "0.3.8",
+    "@prague/app-datastore": "^0.2.5915",
+    "@prague/loader-web": "^0.2.5915",
+    "@prague/routerlicious-socket-storage": "^0.2.5915",
+    "url-parse": "^1.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "11.11.4",
+    "@types/url-parse": "^1.4.3",
+    "ts-loader": "^4.5.0",
+    "typescript": "3.3.4000",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "pack:dev": "webpack",
+    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
+  }
+}
