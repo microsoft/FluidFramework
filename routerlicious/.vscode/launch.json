@@ -172,7 +172,7 @@
             "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
-        },    
+        },
         {
             "type": "node",
             "request": "attach",
@@ -235,7 +235,10 @@
             "name": "Debug Current Test",
             "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
-            "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register", "${file}", ],
+            "env": {
+                "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",
+            },
+            "args": ["--no-timeouts", "--exit", "--require", "ts-node\\register","${file}", ],
             "cwd": "${workspaceFolder}"
         },
         {
@@ -258,6 +261,6 @@
             },
             "internalConsoleOptions": "openOnSessionStart"
         }
-        
+
     ]
 }

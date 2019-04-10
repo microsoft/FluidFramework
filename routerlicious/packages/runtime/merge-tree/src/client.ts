@@ -5,7 +5,7 @@ import * as Collections from "./collections";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 import {
     ClientIds, clock, compareStrings, elapsedMicroseconds, IConsensusInfo, ISegment,
-    IUndoInfo, Marker, MergeTree, RegisterCollection, SegmentGroup,
+    IUndoInfo, Marker, MergeTree, RegisterCollection,
     UnassignedSequenceNumber, UniversalSequenceNumber,
 } from "./mergeTree";
 import * as OpBuilder from "./opBuilder";
@@ -422,6 +422,44 @@ export class Client {
             this.getLongClientId(clientArgs.clientId), register, segs);
     }
 
+    private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
+        const ackOp = (deltaOpArgs: IMergeTreeDeltaOpArgs) => {
+            let clockStart: number | [ number, number ];
+            if (this.measureOps) {
+                clockStart = clock();
+            }
+            if (deltaOpArgs.op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
+                this.mergeTree.ackPendingSegment(deltaOpArgs, this.verboseOps);
+            } else {
+                if (deltaOpArgs.op.combiningOp && (deltaOpArgs.op.combiningOp.name === "consensus")) {
+                    this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage);
+                }
+            }
+            if (this.measureOps) {
+                this.accumTime += elapsedMicroseconds(clockStart);
+                this.accumOps++;
+                this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+            }
+
+            if (this.verboseOps) {
+                console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ` +
+                    `ack seq # ${deltaOpArgs.sequencedMessage.sequenceNumber}`);
+            }
+        };
+
+        if (opArgs.op.type === ops.MergeTreeDeltaType.GROUP) {
+            for (const memberOp of opArgs.op.ops) {
+                ackOp({
+                    groupOp: opArgs.op,
+                    op: memberOp,
+                    sequencedMessage: opArgs.sequencedMessage,
+                });
+            }
+        } else {
+            ackOp(opArgs);
+        }
+        this.mergeTree.collabWindow.currentSeq = opArgs.sequencedMessage.sequenceNumber;
+    }
 // tslint:disable
 // as functions are modified move them above the tslint: disabled waterline and lint them
 
@@ -539,8 +577,9 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    segmentToOps(segment: ISegment, opList: ops.IMergeTreeOp[]) {
-        // TODO: branches
+    segmentToOps(segment: ISegment): ops.IMergeTreeOp[] {
+        const opList: ops.IMergeTreeOp[] = [];
+        // TODO: branches & annotate
         if (segment.seq === UnassignedSequenceNumber) {
             let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
             let insertOp = <ops.IMergeTreeInsertMsg>{
@@ -559,6 +598,7 @@ export class Client {
             };
             opList.push(removeOp);
         }
+        return opList;
     }
     private transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
@@ -663,8 +703,7 @@ export class Client {
             return UniversalSequenceNumber;
         }
     }
-    localTransaction(groupOp: ops.IMergeTreeGroupMsg, segmentGroup?: SegmentGroup) {
-        segmentGroup = this.mergeTree.startGroupOperation(segmentGroup);
+    localTransaction(groupOp: ops.IMergeTreeGroupMsg) {
         for (let op of groupOp.ops) {
             const opArgs: IMergeTreeDeltaOpArgs = {
                 op,
@@ -680,13 +719,8 @@ export class Client {
                 case ops.MergeTreeDeltaType.REMOVE:
                     this.applyRemoveRangeOp(opArgs);
                     break;
-                case ops.MergeTreeDeltaType.GROUP:
-                    console.log("unhandled nested group op");
-                    break;
             }
         }
-        this.mergeTree.endGroupOperation();
-        return segmentGroup;
     }
     updateConsensusProperty(op: ops.IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
         let markerId = op.relativePos1.id;
@@ -697,23 +731,6 @@ export class Client {
         this.mergeTree.addMinSeqListener(msg.sequenceNumber, () => consensusInfo.callback(consensusInfo.marker));
     }
 
-    private ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
-        let clockStart: number | [ number, number ];
-        if (this.measureOps) {
-            clockStart = clock();
-        }
-        this.mergeTree.ackPendingSegment(opArgs, this.verboseOps);
-        const seq = opArgs.sequencedMessage.sequenceNumber;
-        this.mergeTree.getCollabWindow().currentSeq = seq;
-        if (this.measureOps) {
-            this.accumTime += elapsedMicroseconds(clockStart);
-            this.accumOps++;
-            this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
-        }
-        if (this.verboseOps) {
-            console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ack seq # ${seq}`);
-        }
-    }
     updateMinSeq(minSeq: number) {
         let clockStart: number | [ number, number ];
         if (this.measureOps) {

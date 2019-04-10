@@ -154,10 +154,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         }
     }
 
-    public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg): MergeTree.SegmentGroup {
-        const segmentGroup = this.client.localTransaction(groupOp);
+    public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
+        this.client.localTransaction(groupOp);
         this.submitIfAttached(groupOp);
-        return segmentGroup;
+
     }
 
     /**
@@ -263,29 +263,30 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             }
         });
 
-        /* tslint:disable:no-object-literal-type-assertion */
-        const segmentGroup = {
-            segments: [],
-        } as MergeTree.SegmentGroup;
-        const opList = [] as MergeTree.IMergeTreeOp[];
+        const opList: MergeTree.IMergeTreeOp[] = [];
         let prevSeg: MergeTree.ISegment;
         for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
-                segment.segmentGroups.clear();
-                segment.segmentGroups.enqueue(segmentGroup);
-                this.client.segmentToOps(segment, opList);
+                const ops = this.client.segmentToOps(segment);
+                if (ops.length > 0) {
+                    opList.push(...ops);
+                    const segmentGroup: MergeTree.SegmentGroup = { segments: [segment] };
+                    segment.segmentGroups.clear();
+                    segment.segmentGroups.enqueue(segmentGroup);
+                    this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
+                }
                 prevSeg = segment;
             }
         }
-        const groupOp = {
-            ops: opList,
-            type: MergeTree.MergeTreeDeltaType.GROUP,
-        } as MergeTree.IMergeTreeGroupMsg;
 
-        if (groupOp.ops.length > 0) {
-            this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
+        if (opList.length > 0) {
+            const groupOp: MergeTree.IMergeTreeGroupMsg = {
+                ops: opList,
+                type: MergeTree.MergeTreeDeltaType.GROUP,
+            };
             this.submitIfAttached(groupOp);
         }
+
     }
 
     protected async loadContent(

@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { TextSegment } from "@prague/merge-tree";
+import { TextSegment, createGroupOp } from "@prague/merge-tree";
 
 function clock() {
     return process.hrtime();
@@ -232,6 +232,7 @@ export function TestPack(verbose = true) {
         let overlapIntervalResults = 0;
         let testSyncload = false;
         let snapClient: TestClient;
+        let useGroupOperationsForMoveWord = false;
 
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -394,18 +395,32 @@ export function TestPack(verbose = true) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
-                server.enqueueMsg(client.makeOpMessage(removeOp, MergeTree.UnassignedSequenceNumber));
-
-                if (TestClient.useCheckQ) {
-                    client.enqueueTestString();
+                if (!useGroupOperationsForMoveWord){
+                    server.enqueueMsg(
+                        client.makeOpMessage(removeOp, MergeTree.UnassignedSequenceNumber));
+                    if (TestClient.useCheckQ) {
+                        client.enqueueTestString();
+                    }
                 }
+
                 let word2 = findRandomWord(client.mergeTree, client.getClientId());
                 while (!word2) {
                     word2 = findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
                 const insertOp = client.insertTextLocal(pos, word1.text);
-                server.enqueueMsg(client.makeOpMessage(insertOp, MergeTree.UnassignedSequenceNumber));
+                if (useGroupOperationsForMoveWord) {
+                    server.enqueueMsg(
+                        client.makeOpMessage(
+                            createGroupOp(
+                                removeOp,
+                                insertOp),
+                            MergeTree.UnassignedSequenceNumber));
+                } else {
+                    server.enqueueMsg(
+                        client.makeOpMessage(insertOp, MergeTree.UnassignedSequenceNumber));
+                }
+
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
                 }

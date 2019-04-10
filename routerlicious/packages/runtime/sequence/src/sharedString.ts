@@ -120,21 +120,12 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
      * @param props - Optional. The properties of the replacement text
      */
     public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
-        this.client.mergeTree.startGroupOperation();
-        try {
-            const removeOp = this.client.removeRangeLocal(start, end);
-            if (removeOp) {
-                const segment = MergeTree.TextSegment.make(text, props);
-                this.client.insertSegmentLocal(start, segment);
-                this.submitIfAttached(
-                    MergeTree.createGroupOp(
-                        removeOp,
-                        MergeTree.createInsertSegmentOp(start, segment)));
-            }
-        } finally {
-            this.client.mergeTree.endGroupOperation();
+        const removeOp = this.client.removeRangeLocal(start, end);
+        if (removeOp) {
+            const segment = MergeTree.TextSegment.make(text, props);
+            const insertOp = this.client.insertSegmentLocal(start, segment);
+            this.submitIfAttached(MergeTree.createGroupOp(removeOp, insertOp));
         }
-
     }
     public removeText(start: number, end: number) {
         return this.removeRange(start, end);

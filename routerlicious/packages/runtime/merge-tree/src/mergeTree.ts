@@ -656,7 +656,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return false;
 
             default:
-                assert(`${opArgs.op.type} is in unrecognised operation type`);
+                assert.fail(`${opArgs.op.type} is in unrecognised operation type`);
         }
     }
 
@@ -2140,7 +2140,6 @@ export class MergeTree {
     idToSegment = Properties.createMap<ISegment>();
     clientIdToBranchId: number[] = [];
     localBranchId = 0;
-    transactionSegmentGroup: SegmentGroup;
     minSeqListeners: Collections.Heap<MinListener>;
     minSeqPending = false;
     // for diagnostics
@@ -2213,25 +2212,6 @@ export class MergeTree {
     private segmentClone(segment: ISegment) {
         let b = segment.clone();
         return b;
-    }
-
-    startGroupOperation(liveSegmentGroup?: SegmentGroup) {
-        // TODO: assert undefined
-        if (this.collabWindow.collaborating) {
-            if (liveSegmentGroup) {
-                this.transactionSegmentGroup = liveSegmentGroup;
-            } else {
-                this.transactionSegmentGroup = <SegmentGroup>{ segments: [] };
-                this.pendingSegments.enqueue(this.transactionSegmentGroup);
-            }
-            return this.transactionSegmentGroup;
-        }
-    }
-
-    endGroupOperation() {
-        if (this.collabWindow.collaborating) {
-            this.transactionSegmentGroup = undefined;
-        }
     }
 
     localNetLength(segment: ISegment) {
@@ -3186,12 +3166,8 @@ export class MergeTree {
 
     private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup) {
         if (segmentGroup === undefined) {
-            if (this.transactionSegmentGroup) {
-                segmentGroup = this.transactionSegmentGroup;
-            } else {
-                segmentGroup = <SegmentGroup>{ segments: [] };
-                this.pendingSegments.enqueue(segmentGroup);
-            }
+            segmentGroup = <SegmentGroup>{ segments: [] };
+            this.pendingSegments.enqueue(segmentGroup);
         }
         // TODO: share this group with UNDO
         segment.segmentGroups.enqueue(segmentGroup);
