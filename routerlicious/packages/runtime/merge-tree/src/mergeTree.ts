@@ -3220,7 +3220,8 @@ export class MergeTree {
 
         this.blockInsert(pos, refSeq, clientId, seq, segments);
 
-        if (this.mergeTreeDeltaCallback) {
+        // opArgs == undefined => loading snapshot or test code
+        if (this.mergeTreeDeltaCallback && opArgs !== undefined) {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
@@ -3665,6 +3666,7 @@ export class MergeTree {
         }
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
 
+        // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback) {
             this.mergeTreeDeltaCallback(
                 opArgs,
@@ -3763,6 +3765,8 @@ export class MergeTree {
                     LocalClientId);
             }
         }
+
+        // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback) {
             this.mergeTreeDeltaCallback(
                 opArgs,

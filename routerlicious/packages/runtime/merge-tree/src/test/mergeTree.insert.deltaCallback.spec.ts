@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import {
     MergeTree,
+    MergeTreeDeltaType,
     ReferenceType,
     UnassignedSequenceNumber,
 } from "..";
@@ -37,7 +38,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                undefined);
+                {op: {type: MergeTreeDeltaType.INSERT}});
 
             assert.equal(eventCalled, 1);
         });
@@ -59,7 +60,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                undefined);
+                {op: {type: MergeTreeDeltaType.INSERT}});
 
             assert.equal(eventCalled, 1);
         });
@@ -80,7 +81,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 "more ",
                 undefined,
-                undefined);
+                {op: {type: MergeTreeDeltaType.INSERT}});
 
             assert.equal(eventCalled, 1);
         });
@@ -103,7 +104,7 @@ describe("MergeTree", () => {
                 ++remoteSequenceNumber,
                 "more ",
                 undefined,
-                undefined);
+                {op: {type: MergeTreeDeltaType.INSERT}});
 
             assert.equal(eventCalled, 1);
         });
@@ -125,7 +126,7 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 ReferenceType.Simple,
                 undefined,
-                undefined);
+                {op: {type: MergeTreeDeltaType.INSERT}});
 
             assert.equal(eventCalled, 1);
         });
