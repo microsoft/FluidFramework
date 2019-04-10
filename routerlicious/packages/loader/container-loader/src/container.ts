@@ -261,29 +261,7 @@ export class Container extends EventEmitter implements IContainer {
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storageService.getVersions(this.id, 1);
 
-        // Pull the sequence number stored with the previous version
-        let sequenceNumber = 0;
-        if (lastVersion.length > 0) {
-            const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
-            const decoded = Buffer.from(attributesAsString, "base64").toString();
-            const attributes = JSON.parse(decoded) as IDocumentAttributes;
-            sequenceNumber = attributes.sequenceNumber;
-        }
-
-        // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
-        // the snapshotSequenceNumber by 1 to include it.
-        // TODO We likely then want to filter the operation list to each component to use in its snapshot
-        const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
         const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
-        root.entries.push({
-            mode: FileMode.File,
-            path: "deltas",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(deltas),
-                encoding: "utf-8",
-            },
-        });
 
         // Write the full snapshot
         await this.storageService.write(root, parents, message, "");
