@@ -34,16 +34,6 @@ export function analyzeTasks(
     }
 }
 
-export function getLeaderCandidate(clients: Map<string, ISequencedClient>) {
-    const browserClients = [...clients].filter((client) => !isRobot(client[1]));
-    if (browserClients.length > 0) {
-        const candidate = browserClients.reduce((prev, curr) => {
-            return prev[1].sequenceNumber < curr[1].sequenceNumber ? prev : curr;
-        });
-        return candidate[0];
-    }
-}
-
 function isRobot(client: ISequencedClient): boolean {
     return client.client && client.client.type && client.client.type !== Browser;
 }
