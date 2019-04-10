@@ -494,7 +494,7 @@ export abstract class SegmentSequence<T extends MergeTree.ISegment> extends Shar
     }
 
     private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
-        assert(chunk1.chunkLengthChars <= chunk1.totalLengthChars);
+        // assert(chunk1.chunkLengthChars <= chunk1.totalLengthChars);
         assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);
         if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
             return;
