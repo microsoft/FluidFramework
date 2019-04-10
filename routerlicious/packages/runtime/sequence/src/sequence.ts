@@ -226,6 +226,41 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         }
     }
 
+    /**
+     * Resolves a remote client's position against the local sequence
+     * and returns the remote client's position relative to the local
+     * sequence
+     * @param remoteClientPosition - The remote client's position to resolve
+     * @param remoteClientRefSeq - The reference sequence number of the remote client
+     * @param remoteClientId - The client id of the remote client
+     */
+    public resolveRemoteClientPosition(
+        remoteClientPosition: number,
+        remoteClientRefSeq: number,
+        remoteClientId: string): number {
+
+        const shortRemoteClientId = this.client.getOrAddShortClientId(remoteClientId);
+
+        const segmentInfo = this.client.mergeTree.getContainingSegment(
+            remoteClientPosition,
+            remoteClientRefSeq,
+            shortRemoteClientId);
+
+        if (segmentInfo && segmentInfo.segment) {
+
+            const segmentPosition = this.client.mergeTree.getOffset(
+                segmentInfo.segment,
+                this.client.getCurrentSeq(),
+                this.client.getClientId());
+
+            return segmentPosition + segmentInfo.offset;
+        } else {
+            if (remoteClientPosition === this.client.mergeTree.getLength(remoteClientRefSeq, shortRemoteClientId)) {
+                return this.client.getLength();
+            }
+        }
+    }
+
     public getIntervalCollections(): ISharedMap {
         return this.intervalCollections;
     }
