@@ -21,8 +21,10 @@ async function fetchSnapshotTreeBlobs(storage: IDocumentStorageService, tree: IS
     for (const item of Object.keys(tree.blobs)) {
         const path = `${itemPrefix}${item}`;
         const sha = tree.blobs[item];
-        const blob = storage.read(sha);
-        result.push({ path, sha, blob });
+        if (sha !== null) {
+            const blob = storage.read(sha);
+            result.push({ path, sha, blob });
+        }
     }
     for (const component of Object.keys(tree.commits)) {
         const componentVersions = await storage.getVersions(tree.commits[component], 1);

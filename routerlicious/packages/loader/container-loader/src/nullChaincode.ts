@@ -10,9 +10,9 @@ import {
 } from "@prague/container-definitions";
 
 class NullRuntime implements IRuntime {
-    public ready: Promise<void>;
+    public ready: Promise<void> | undefined;
 
-    public snapshot(tagMessage: string): Promise<ITree> {
+    public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
     }
 

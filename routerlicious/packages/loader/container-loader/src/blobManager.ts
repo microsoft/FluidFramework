@@ -25,7 +25,7 @@ export class BlobManager implements IBlobManager {
         });
     }
 
-    public async getBlob(sha: string): Promise<IGenericBlob> {
+    public async getBlob(sha: string): Promise<IGenericBlob | undefined> {
 
         if (!this.blobs.has(sha)) {
             // tslint:disable-next-line:no-floating-promises
@@ -33,7 +33,7 @@ export class BlobManager implements IBlobManager {
         }
         const blob = this.blobs.get(sha);
         const blobContent = await this.storage.read(sha);
-        blob.content = Buffer.from(blobContent, "base64");
+        blob!.content = Buffer.from(blobContent, "base64");
         return blob;
     }
 
@@ -57,7 +57,7 @@ export class BlobManager implements IBlobManager {
         return blobMetaData;
     }
 
-    public async updateBlob(blob: IGenericBlob): Promise<void> {
+    public async updateBlob(blob: IGenericBlob): Promise<void | null> {
         // TODO: SABRONER Implement Update
         return null;
     }

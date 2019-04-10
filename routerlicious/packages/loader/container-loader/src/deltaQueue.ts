@@ -28,7 +28,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return !this.processing && this.q.length === 0;
     }
 
-    constructor(private worker: (value: T, callback: (error) => void) => void) {
+    constructor(private worker: (value: T | undefined, callback: (error) => void) => void) {
         super();
     }
 
@@ -37,7 +37,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.updatePause();
     }
 
-    public peek(): T {
+    public peek(): T | undefined {
         return this.q.peekFront();
     }
 

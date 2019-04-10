@@ -34,7 +34,7 @@ export class Heap<T> {
         this.swap(1, this.count());
         const x = this.L.pop();
         this.fixdown(1);
-        return x.value;
+        return x!.value;
     }
 
     public add(x: T): IHeapNode<T> {

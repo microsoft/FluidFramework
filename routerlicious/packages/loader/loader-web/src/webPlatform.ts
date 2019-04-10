@@ -24,7 +24,7 @@ export class WebPlatform extends EventEmitter implements IPlatform {
 
 export class WebPlatformFactory implements IPlatformFactory {
     // Very much a temporary thing as we flesh out the platform interfaces
-    private lastPlatform: WebPlatform;
+    private lastPlatform: WebPlatform | undefined;
 
     constructor(private div: HTMLElement) {
     }

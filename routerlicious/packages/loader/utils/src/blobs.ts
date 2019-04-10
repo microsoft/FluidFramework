@@ -82,7 +82,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
     return entries;
 }
 
-export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
+export function buildHierarchy(flatTree: git.ITree): ISnapshotTree | null {
     if (!flatTree) {
         return null;
     }

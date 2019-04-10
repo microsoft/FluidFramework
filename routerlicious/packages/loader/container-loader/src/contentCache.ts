@@ -15,16 +15,16 @@ export class ContentCache extends EventEmitter {
         if (!this.cache.has(clientId)) {
             this.cache.set(clientId, new RingBuffer(this.log2Capacity));
         }
-        this.cache.get(clientId).enqueue(message);
+        this.cache.get(clientId)!.enqueue(message);
         this.emit("content", clientId);
     }
 
-    public get(clientId: string): IContentMessage {
-        return this.cache.has(clientId) ? this.cache.get(clientId).dequeue() : undefined;
+    public get(clientId: string): IContentMessage | undefined {
+        return this.cache.has(clientId) ? this.cache.get(clientId)!.dequeue() : undefined;
     }
 
-    public peek(clientId: string): IContentMessage {
-        return this.cache.has(clientId) ? this.cache.get(clientId).peek() : undefined;
+    public peek(clientId: string): IContentMessage | undefined {
+        return this.cache.has(clientId) ? this.cache.get(clientId)!.peek() : undefined;
     }
 }
 
@@ -56,7 +56,7 @@ class RingBuffer {
         }
     }
 
-    public dequeue(): IContentMessage {
+    public dequeue(): IContentMessage | undefined {
         if (this.head === this.tail) {
             return undefined;
         } else {
@@ -66,7 +66,7 @@ class RingBuffer {
         }
     }
 
-    public peek(): IContentMessage {
+    public peek(): IContentMessage | undefined {
         if (this.head === this.tail) {
             return undefined;
         } else {
@@ -78,7 +78,7 @@ class RingBuffer {
     private resize() {
         debug(`Resizing content buffer from ${this.length}!`);
         assert.notStrictEqual(this.head, this.tail, "Content buffer size error");
-        let newBuffer = [];
+        let newBuffer: IContentMessage[] = [];
         if (this.head < this.tail) {
             newBuffer = this.buffer.slice(this.tail);
             newBuffer.push(...this.buffer.slice(0, this.head));

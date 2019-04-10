@@ -27,7 +27,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return p;
     }
 
-    public async getVersions(sha: string, count: number): Promise<ICommit[]> {
+    public async getVersions(sha: string | null, count: number): Promise<ICommit[]> {
         return this.storage.getVersions(sha, count);
     }
 
@@ -82,12 +82,17 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
     private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
         for (const blobKey of Object.keys(tree.blobs)) {
+            const blob = tree.blobs[blobKey];
             if (blobKey[0] === "." || blobKey === "header" || blobKey.indexOf("quorum") === 0) {
                 // We don't care if the prefetch succeed
                 // tslint:disable-next-line:no-floating-promises
-                this.cachedRead(tree.blobs[blobKey]);
+                if (blob !== null) {
+                    this.cachedRead(blob);
+                }
             } else if (blobKey[0] !== "deltas") {
-                secondary.push(tree.blobs[blobKey]);
+                if (blob !== null) {
+                    secondary.push(blob);
+                }
             }
         }
 

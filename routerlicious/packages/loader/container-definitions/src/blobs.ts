@@ -7,7 +7,7 @@ export interface IBlobManager {
     getBlobMetadata(): IGenericBlob[];
 
     // Retrieve the blob data
-    getBlob(sha: string): Promise<IGenericBlob>;
+    getBlob(sha: string): Promise<IGenericBlob | undefined>;
 
     // Add one blob's metadata to the local storage of blob metadata
     addBlob(blob: IGenericBlob): Promise<void>;
@@ -16,7 +16,7 @@ export interface IBlobManager {
     createBlob(blob: IGenericBlob): Promise<IGenericBlob>;
 
     // Update blob metadata
-    updateBlob(blob: IGenericBlob): Promise<void>;
+    updateBlob(blob: IGenericBlob): Promise<void | null>;
 
     // Remove blob from storage
     removeBlob(sha: string): Promise<void>;
@@ -25,7 +25,7 @@ export interface IBlobManager {
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {
-    content?: Buffer;
+    content?: Buffer | null;
     size: number;
     sha: string;
     fileName: string;

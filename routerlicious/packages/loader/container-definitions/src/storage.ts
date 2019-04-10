@@ -18,17 +18,17 @@ export interface IDocumentAttributes {
     /**
      * Sequence number at which the snapshot was taken
      */
-    sequenceNumber: number;
+    sequenceNumber: number | undefined | null;
 
     /**
      * Minimum sequence number when the snapshot was taken
      */
-    minimumSequenceNumber: number;
+    minimumSequenceNumber: number | undefined;
 
     /**
      * List of clients when the snapshot was taken
      */
-    partialOps: Array<[string, string[]]>;
+    partialOps: Array<[string, string[]]> | null;
 }
 
 export enum FileMode {
@@ -82,13 +82,13 @@ export interface ITree {
 
     // sha hash representing all entries in the tree. Can be used to optimize snapshotting in the case
     // it is known that the ITree has already been created and stored
-    sha: string;
+    sha: string | null;
 }
 
 export interface ISnapshotTree {
-    sha: string;
-    blobs: { [path: string]: string };
-    commits: { [path: string]: string };
+    sha: string | null;
+    blobs: { [path: string]: string | null};
+    commits: { [path: string]: string | null};
     trees: { [path: string]: ISnapshotTree };
 }
 
@@ -131,7 +131,7 @@ export interface IDocumentStorageService {
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head
      */
-    getVersions(sha: string, count: number): Promise<resources.ICommit[]>;
+    getVersions(sha: string | null, count: number): Promise<resources.ICommit[]>;
 
     /**
      * Retrieves the content for the given commit at the given path
@@ -151,7 +151,7 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
+    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse>;
 
     /**
      * Fetch image Data url

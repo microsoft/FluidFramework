@@ -49,7 +49,7 @@ export class Loader extends EventEmitter implements ILoader {
         }
     }
 
-    public async resolve(request: IRequest): Promise<Container> {
+    public async resolve(request: IRequest): Promise<Container | undefined> {
         debug(`Container resolve: ${now()} `);
 
         const resolved = await this.resolveCore(request);
@@ -60,28 +60,32 @@ export class Loader extends EventEmitter implements ILoader {
         debug(`Container loading: ${now()} `);
 
         const resolved = await this.resolveCore(request);
-        return resolved.container.request({ url: resolved.parsed.path });
+        return resolved.container!.request({ url: resolved.parsed!.path });
     }
 
-    private parseUrl(url: string): IParsedUrl {
+    private parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url);
-        const qs = querystring.parse(parsed.query);
+        const qs = querystring.parse(parsed.query!);
+        let qsVersion: string | string[] | null;
 
         // null is required later if you don't want to make the get latest version call.
         // there is no way to encode null in a query string
         if (qs.version === "null") {
-            qs.version = null;
+            qsVersion = null;
+        } else {
+            qsVersion = qs.version;
         }
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
-        const match = parsed.pathname.match(regex);
+        const match = parsed.pathname!.match(regex);
 
         return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version: qs.version as string }
+            ? { id: match[1], path: match[2], version: qsVersion as string }
             : null;
     }
 
-    private async resolveCore(request: IRequest): Promise<{ container: Container, parsed: IParsedUrl }> {
+    private async resolveCore(request: IRequest):
+        Promise<{ container: Container | undefined, parsed: IParsedUrl | null }> {
         // Resolve the given request to a URL
         const resolved = await this.containerHost.resolver.resolve(request);
         if (resolved.type !== "prague") {
@@ -92,8 +96,8 @@ export class Loader extends EventEmitter implements ILoader {
         const parsed = this.parseUrl(resolvedAsPrague.url);
 
         let canCache = true;
-        let connection = !parsed.version ? "open" : "close";
-        let version = parsed.version;
+        let connection = !parsed!.version ? "open" : "close";
+        let version = parsed!.version;
 
         if (request.headers) {
             if (request.headers.connect) {
@@ -111,13 +115,13 @@ export class Loader extends EventEmitter implements ILoader {
         // TODO: skjokiel - figure out if i want to handle this or not
         const documentService = await this.documentServiceFactory.createDocumentService(resolved);
 
-        let container: Container;
+        let container: Container | undefined;
         if (canCache) {
-            const versionedId = version ? `${parsed.id}@${version}` : parsed.id;
+            const versionedId = version ? `${parsed!.id}@${version}` : parsed!.id;
             if (!this.containers.has(versionedId)) {
                 const containerP =
                     this.loadContainer(
-                        parsed.id,
+                        parsed!.id,
                         version,
                         connection,
                         resolvedAsPrague.tokens,
@@ -129,7 +133,7 @@ export class Loader extends EventEmitter implements ILoader {
         } else {
             container =
                 await this.loadContainer(
-                    parsed.id,
+                    parsed!.id,
                     version,
                     connection,
                     resolvedAsPrague.tokens,

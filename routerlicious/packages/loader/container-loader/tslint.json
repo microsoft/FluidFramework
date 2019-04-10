@@ -6,6 +6,8 @@
         "max-func-body-length": false,
         "newline-before-return": false,
         "no-console": false,
+        "no-floating-promises": false,
+        "no-non-null-assertion": false,
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-require-imports": false,
@@ -18,6 +20,7 @@
         "prefer-readonly": false,
         "prefer-type-cast": false,
         "promise-function-async": false,
+        "strict-boolean-expressions": false,
         "type-literal-delimiter": false
     }
 }

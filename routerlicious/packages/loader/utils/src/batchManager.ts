@@ -2,7 +2,7 @@ const MaxBatchSize = 100;
 
 export class BatchManager<T> {
     private pendingWork = new Map<string, T[]>();
-    private pendingTimer: NodeJS.Timer;
+    private pendingTimer: NodeJS.Timer | undefined;
 
     constructor(private readonly process: (id: string, work: T[]) => void) {
     }
@@ -12,11 +12,13 @@ export class BatchManager<T> {
             this.pendingWork.set(id, []);
         }
 
-        this.pendingWork.get(id)
+        this.pendingWork.get(id)!
             .push(work);
 
-        if (this.pendingWork.get(id).length >= MaxBatchSize) {
-            clearTimeout(this.pendingTimer);
+        if (this.pendingWork.get(id)!.length >= MaxBatchSize) {
+            if (this.pendingTimer !== undefined) {
+                clearTimeout(this.pendingTimer);
+            }
             this.pendingTimer = undefined;
             this.startWork();
         } else if (this.pendingTimer === undefined) {

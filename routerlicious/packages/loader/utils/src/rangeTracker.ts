@@ -7,14 +7,14 @@ const cloneDeep = require("lodash/cloneDeep");
 
 export interface IRange {
     primary: number;
-    secondary: number;
+    secondary: number | undefined;
     length: number;
 }
 
 export interface IRangeTrackerSnapshot {
     ranges: IRange[];
     lastPrimary: number;
-    lastSecondary: number;
+    lastSecondary: number | undefined;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface IRangeTrackerSnapshot {
 export class RangeTracker {
     private ranges: IRange[];
     private lastPrimary: number;
-    private lastSecondary: number;
+    private lastSecondary: number | undefined;
 
     get base() {
         return this.ranges[0].primary;
@@ -70,14 +70,16 @@ export class RangeTracker {
         // Both values must continuously be increasing - we won't always track the last value we saw so we do so
         // below to check invariants
         assert(primary >= this.lastPrimary);
-        assert(secondary >= this.lastSecondary);
+        if (this.lastSecondary !== undefined) {
+            assert(secondary >= this.lastSecondary);
+        }
         this.lastPrimary = primary;
         this.lastSecondary = secondary;
 
         // Get quicker references to the head of the range
         const head = this.ranges[this.ranges.length - 1];
         const primaryHead = head.primary + head.length;
-        const secondaryHead = head.secondary + head.length;
+        const secondaryHead = head.secondary! + head.length;
 
         // Same secondary indicates this is not a true inflection point - we can ignore it
         if (secondary === secondaryHead) {
@@ -126,7 +128,7 @@ export class RangeTracker {
         // If the difference is within the stored range use it - otherwise add in the length - 1 as the highest
         // stored secondary value to use.
         const closestRange = this.ranges[index - 1];
-        return Math.min(primary - closestRange.primary, closestRange.length) + closestRange.secondary;
+        return Math.min(primary - closestRange.primary, closestRange.length) + closestRange.secondary!;
     }
 
     public updateBase(primary: number) {
@@ -147,7 +149,7 @@ export class RangeTracker {
         // Update the last range values
         const range = this.ranges[index - 1];
         const delta = primary - range.primary;
-        range.secondary = range.secondary + Math.min(delta, range.length);
+        range.secondary = range.secondary! + Math.min(delta, range.length);
         range.length = Math.max(range.length - delta, 0);
         range.primary = primary;
 

@@ -119,13 +119,13 @@ export interface ITreeEntry {
     mode: string;
     type: string;
     size: number;
-    sha: string;
+    sha: string | null;
     url: string;
 }
 
 export interface ITree {
-    sha: string;
-    url: string;
+    sha: string | null;
+    url: string | null;
     tree: ITreeEntry[];
 }
 export interface ITagger {

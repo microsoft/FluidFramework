@@ -42,7 +42,7 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { Quorum } from "./quorum";
 
 interface IConnectResult {
-    detailsP: Promise<IConnectionDetails>;
+    detailsP: Promise<IConnectionDetails | null>;
 
     handlerAttachedP: Promise<void>;
 }
@@ -78,28 +78,28 @@ export class Container extends EventEmitter implements IContainer {
 
     public runtime: any = null;
 
-    private pendingClientId: string;
+    private pendingClientId: string | undefined;
     private loaded = false;
-    private quorum: Quorum;
-    private blobManager: BlobManager;
+    private quorum: Quorum | undefined;
+    private blobManager: BlobManager | undefined;
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     // Active chaincode and associated runtime
-    private storageService: IDocumentStorageService;
+    private storageService: IDocumentStorageService | undefined | null;
 
     // tslint:disable:variable-name
-    private _clientId: string = "disconnected";
+    private _clientId: string | undefined = "disconnected";
     private _clientType: string = "disconnected";
-    private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    private _existing: boolean;
+    private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
+    private _existing: boolean | undefined;
     private _id: string;
-    private _parentBranch: string;
+    private _parentBranch: string | undefined | null;
     private _tenantId: string;
     private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
-    private context: Context;
-    private pkg: string = null;
+    private context: Context | undefined;
+    private pkg: string | null = null;
 
     // Local copy of incomplete received chunks.
     private chunkMap = new Map<string, string[]>();
@@ -115,7 +115,7 @@ export class Container extends EventEmitter implements IContainer {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined {
         return this._deltaManager;
     }
 
@@ -127,7 +127,7 @@ export class Container extends EventEmitter implements IContainer {
         return this.connectionState === ConnectionState.Connected;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this._clientId;
     }
 
@@ -135,21 +135,21 @@ export class Container extends EventEmitter implements IContainer {
         return this._clientType;
     }
 
-    public get chaincodePackage(): string {
+    public get chaincodePackage(): string | null {
         return this.pkg;
     }
 
     /**
      * Flag indicating whether the document already existed at the time of load
      */
-    public get existing(): boolean {
+    public get existing(): boolean | undefined {
         return this._existing;
     }
 
     /**
      * Returns the parent branch for this document
      */
-    public get parentBranch(): string {
+    public get parentBranch(): string | undefined | null {
         return this._parentBranch;
     }
 
@@ -171,7 +171,7 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): Quorum {
+    public getQuorum(): Quorum | undefined {
         return this.quorum;
     }
 
@@ -213,7 +213,7 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         // Only snapshot once a code quorum has been established
-        if (!this.quorum.has("code2")) {
+        if (!this.quorum!.has("code2")) {
             debug(`${this.tenantId}/${this.id} Skipping snapshot due to no code quorum`);
             return;
         }
@@ -221,7 +221,9 @@ export class Container extends EventEmitter implements IContainer {
         // Stop inbound message processing while we complete the snapshot
         // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
         try {
-            this.deltaManager.inbound.pause();
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.pause();
+            }
 
             await this.snapshotCore(tagMessage);
 
@@ -230,7 +232,9 @@ export class Container extends EventEmitter implements IContainer {
             throw ex;
 
         } finally {
-            this.deltaManager.inbound.resume();
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.resume();
+            }
         }
     }
 
@@ -239,13 +243,13 @@ export class Container extends EventEmitter implements IContainer {
             return { mimeType: "prague/container", status: 200, value: this };
         }
 
-        return this.context.request(path);
+        return this.context!.request(path);
     }
 
     private async snapshotCore(tagMessage: string) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
-        const componentEntries = await this.context.snapshot(tagMessage);
+        const componentEntries = await this.context!.snapshot(tagMessage);
 
         // And then combine
         if (componentEntries) {
@@ -253,18 +257,18 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         // Generate base snapshot message
-        const snapshotSequenceNumber = this._deltaManager.referenceSequenceNumber;
+        const snapshotSequenceNumber = this._deltaManager!.referenceSequenceNumber;
         const deltaDetails =
-            `${this._deltaManager.referenceSequenceNumber}:${this._deltaManager.minimumSequenceNumber}`;
+            `${this._deltaManager!.referenceSequenceNumber}:${this._deltaManager!.minimumSequenceNumber}`;
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.storageService.getVersions(this.id, 1);
+        const lastVersion = await this.storageService!.getVersions(this.id, 1);
 
         // Pull the sequence number stored with the previous version
-        let sequenceNumber = 0;
+        let sequenceNumber: number | undefined | null = 0;
         if (lastVersion.length > 0) {
-            const attributesAsString = await this.storageService.getContent(lastVersion[0], ".attributes");
+            const attributesAsString = await this.storageService!.getContent(lastVersion[0], ".attributes");
             const decoded = Buffer.from(attributesAsString, "base64").toString();
             const attributes = JSON.parse(decoded) as IDocumentAttributes;
             sequenceNumber = attributes.sequenceNumber;
@@ -273,7 +277,7 @@ export class Container extends EventEmitter implements IContainer {
         // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
         // the snapshotSequenceNumber by 1 to include it.
         // TODO We likely then want to filter the operation list to each component to use in its snapshot
-        const deltas = await this._deltaManager.getDeltas(sequenceNumber, snapshotSequenceNumber + 1);
+        const deltas = await this._deltaManager!.getDeltas(sequenceNumber!, snapshotSequenceNumber! + 1);
         const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
         root.entries.push({
             mode: FileMode.File,
@@ -286,7 +290,7 @@ export class Container extends EventEmitter implements IContainer {
         });
 
         // Write the full snapshot
-        await this.storageService.write(root, parents, message, "");
+        await this.storageService!.write(root, parents, message, "");
     }
 
     private async load(specifiedVersion: string, connection: string): Promise<void> {
@@ -309,19 +313,19 @@ export class Container extends EventEmitter implements IContainer {
                 return null;
             } else {
                 const versionSha = specifiedVersion ? specifiedVersion : this.id;
-                const versions = await storage.getVersions(versionSha, 1);
+                const versions = await storage!.getVersions(versionSha, 1);
                 return versions.length > 0 ? versions[0] : null;
             }
         });
 
         // Get the snapshot tree
         const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => storage.getSnapshotTree(version));
+            ([storage, version]) => storage!.getSnapshotTree(version!));
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
                 return tree !== null
-                    ? readAndParse<IDocumentAttributes>(storage, tree.blobs[".attributes"])
+                    ? readAndParse<IDocumentAttributes>(storage!, tree.blobs[".attributes"]!)
                     : {
                         branch: this.id,
                         clients: [],
@@ -339,13 +343,13 @@ export class Container extends EventEmitter implements IContainer {
 
         // ...load in the existing quorum
         const quorumP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage, tree));
+            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage!, tree));
 
         // ...instantiate the chaincode defined on the document
         const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
-            ([storage, tree]) => this.loadBlobManager(storage, tree));
+            ([storage, tree]) => this.loadBlobManager(storage!, tree));
 
         // Wait for all the loading promises to finish
         return Promise
@@ -380,8 +384,8 @@ export class Container extends EventEmitter implements IContainer {
                     this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
                 } else {
                     const details = await connectResult.detailsP;
-                    this._existing = details.existing;
-                    this._parentBranch = details.parentBranch;
+                    this._existing = details!.existing;
+                    this._parentBranch = details!.parentBranch;
                 }
 
                 this.context = await Context.Load(
@@ -400,14 +404,14 @@ export class Container extends EventEmitter implements IContainer {
                     (message) => this.submitSignal(message),
                     (message) => this.snapshot(message),
                     () => this.close());
-                this.context.changeConnectionState(this.connectionState, this.clientId);
+                this.context!.changeConnectionState(this.connectionState, this.clientId!);
 
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
                     if (!pause) {
                         debug("Connected - resuming inbound messages");
-                        this._deltaManager.inbound.resume();
-                        this._deltaManager.outbound.resume();
+                        this._deltaManager!.inbound.resume();
+                        this._deltaManager!.outbound.resume();
                     } else {
                         debug("Connected - waiting to process inbound messages");
                     }
@@ -424,7 +428,7 @@ export class Container extends EventEmitter implements IContainer {
     private snapshotBase(): ITree {
         const entries: ITreeEntry[] = [];
 
-        const blobMetaData = this.blobManager.getBlobMetadata();
+        const blobMetaData = this.blobManager!.getBlobMetadata();
         entries.push({
             mode: FileMode.File,
             path: ".blobs",
@@ -435,7 +439,7 @@ export class Container extends EventEmitter implements IContainer {
             },
         });
 
-        const quorumSnapshot = this.quorum.snapshot();
+        const quorumSnapshot = this.quorum!.snapshot();
         entries.push({
             mode: FileMode.File,
             path: "quorumMembers",
@@ -467,9 +471,9 @@ export class Container extends EventEmitter implements IContainer {
         // Save attributes for the document
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
-            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
             partialOps: [...this.chunkMap],
-            sequenceNumber: this._deltaManager.referenceSequenceNumber,
+            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
         entries.push({
             mode: FileMode.File,
@@ -501,9 +505,9 @@ export class Container extends EventEmitter implements IContainer {
 
         if (tree) {
             const snapshot = await Promise.all([
-                readAndParse<Array<[string, ISequencedClient]>>(storage, tree.blobs.quorumMembers),
-                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, tree.blobs.quorumProposals),
-                readAndParse<Array<[string, ICommittedProposal]>>(storage, tree.blobs.quorumValues),
+                readAndParse<Array<[string, ISequencedClient]>>(storage, tree.blobs.quorumMembers!),
+                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, tree.blobs.quorumProposals!),
+                readAndParse<Array<[string, ICommittedProposal]>>(storage, tree.blobs.quorumValues!),
             ]);
 
             members = snapshot[0];
@@ -531,11 +535,11 @@ export class Container extends EventEmitter implements IContainer {
                     debug(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages as we transition to the new code
-                    this.deltaManager.inbound.systemPause();
+                    this.deltaManager!.inbound.systemPause();
                     this.transitionRuntime(value).then(
                         () => {
                             // Resume once transition is complete
-                            this.deltaManager.inbound.systemResume();
+                            this.deltaManager!.inbound.systemResume();
                         },
                         (error) => {
                             this.emit("error", error);
@@ -548,7 +552,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
         const blobs: IGenericBlob[] = tree
-            ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"])
+            ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"]!)
             : [];
 
         const blobManager = new BlobManager(storage);
@@ -568,8 +572,8 @@ export class Container extends EventEmitter implements IContainer {
         // Load in the new host code and initialize the platform
         const chaincode = await this.loadCode(pkg);
 
-        const previousContextState = await this.context.stop();
-        let snapshotTree: ISnapshotTree;
+        const previousContextState = await this.context!.stop();
+        let snapshotTree: ISnapshotTree | null;
         const blobs = new Map();
         if (previousContextState) {
             const flattened = flatten(previousContextState.entries, blobs);
@@ -580,7 +584,7 @@ export class Container extends EventEmitter implements IContainer {
 
         const attributes: IDocumentAttributes = {
             branch: this.id,
-            minimumSequenceNumber: this._deltaManager.minimumSequenceNumber,
+            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
             partialOps: null,
             sequenceNumber: null,
         };
@@ -660,7 +664,7 @@ export class Container extends EventEmitter implements IContainer {
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load
             const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager.attachOpHandler(
+                this._deltaManager!.attachOpHandler(
                     attributes.sequenceNumber,
                     {
                         postProcess: (message, context) => {
@@ -682,7 +686,7 @@ export class Container extends EventEmitter implements IContainer {
             return { detailsP, handlerAttachedP };
         } else {
             const handlerAttachedP = attributesP.then((attributes) => {
-                this._deltaManager.attachOpHandler(
+                this._deltaManager!.attachOpHandler(
                     attributes.sequenceNumber,
                     {
                         postProcess: (message, context) => {
@@ -723,9 +727,9 @@ export class Container extends EventEmitter implements IContainer {
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
-            this._deltaManager.disableReadonlyMode();
+            this._deltaManager!.disableReadonlyMode();
             this._clientId = this.pendingClientId;
-            this._clientType = this._deltaManager.clientType;
+            this._clientType = this._deltaManager!.clientType;
         }
 
         if (!this.loaded) {
@@ -733,7 +737,7 @@ export class Container extends EventEmitter implements IContainer {
             return;
         }
 
-        this.context.changeConnectionState(value, this.clientId);
+        this.context!.changeConnectionState(value, this.clientId!);
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
@@ -746,7 +750,7 @@ export class Container extends EventEmitter implements IContainer {
             this.submitChunkedMessage(
                 message[1].type,
                 message[1].content,
-                this._deltaManager.maxMessageSize);
+                this._deltaManager!.maxMessageSize);
         }
     }
 
@@ -756,11 +760,11 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         const serializedContent = JSON.stringify(contents);
-        const maxOpSize = this._deltaManager.maxMessageSize;
+        const maxOpSize = this._deltaManager!.maxMessageSize;
 
         let clientSequenceNumber: number;
         if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this._deltaManager.submit(type, serializedContent);
+            clientSequenceNumber = this._deltaManager!.submit(type, serializedContent);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             this.unackedChunkedMessages.set(clientSequenceNumber,
@@ -786,7 +790,7 @@ export class Container extends EventEmitter implements IContainer {
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            clientSequenceNumber = this._deltaManager.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
+            clientSequenceNumber = this._deltaManager!.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
         }
         return clientSequenceNumber;
     }
@@ -818,7 +822,7 @@ export class Container extends EventEmitter implements IContainer {
                 }
 
             default:
-                return this.context.prepare(message, local);
+                return this.context!.prepare(message, local);
         }
     }
 
@@ -827,7 +831,7 @@ export class Container extends EventEmitter implements IContainer {
         const chunkedContent = message.contents as IChunkedOp;
         this.addChunk(clientId, chunkedContent.contents);
         if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const serializedContent = this.chunkMap.get(clientId).join("");
+            const serializedContent = this.chunkMap.get(clientId)!.join("");
             message.contents = JSON.parse(serializedContent);
             message.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
@@ -840,7 +844,7 @@ export class Container extends EventEmitter implements IContainer {
         if (!this.chunkMap.has(clientId)) {
             this.chunkMap.set(clientId, []);
         }
-        this.chunkMap.get(clientId).push(chunkedContent);
+        this.chunkMap.get(clientId)!.push(chunkedContent);
     }
 
     private clearPartialChunks(clientId: string) {
@@ -877,7 +881,7 @@ export class Container extends EventEmitter implements IContainer {
                     client: join.detail,
                     sequenceNumber: systemJoinMessage.sequenceNumber,
                 };
-                this.quorum.addMember(join.clientId, member);
+                this.quorum!.addMember(join.clientId, member);
 
                 // This is the only one that requires the pending client ID
                 if (join.clientId === this.pendingClientId) {
@@ -894,13 +898,13 @@ export class Container extends EventEmitter implements IContainer {
                 const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
                 this.clearPartialChunks(clientId);
-                this.quorum.removeMember(clientId);
+                this.quorum!.removeMember(clientId);
                 this.emit("clientLeave", clientId);
                 break;
 
             case MessageType.Propose:
                 const proposal = message.contents as IProposal;
-                this.quorum.addProposal(
+                this.quorum!.addProposal(
                     proposal.key,
                     proposal.value,
                     message.sequenceNumber,
@@ -910,12 +914,12 @@ export class Container extends EventEmitter implements IContainer {
 
             case MessageType.Reject:
                 const sequenceNumber = message.contents as number;
-                this.quorum.rejectProposal(message.clientId, sequenceNumber);
+                this.quorum!.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
             case MessageType.BlobUploaded:
                 // tslint:disable-next-line:no-floating-promises
-                this.blobManager.addBlob(message.contents);
+                this.blobManager!.addBlob(message.contents);
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
@@ -924,12 +928,12 @@ export class Container extends EventEmitter implements IContainer {
                 break;
 
             default:
-                this.context.process(message, local, context);
+                this.context!.process(message, local, context);
         }
 
         // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
         // want to move that logic to this class.
-        this.quorum.updateMinimumSequenceNumber(message);
+        this.quorum!.updateMinimumSequenceNumber(message);
 
         this.emit("op", ...eventArgs);
     }
@@ -947,12 +951,12 @@ export class Container extends EventEmitter implements IContainer {
             case MessageType.NoOp:
                 break;
             default:
-                await this.context.postProcess(message, local, context);
+                await this.context!.postProcess(message, local, context);
         }
     }
 
     private submitSignal(message: any) {
-        this._deltaManager.submitSignal(JSON.stringify(message));
+        this._deltaManager!.submitSignal(JSON.stringify(message));
     }
 
     private processSignal(message: ISignalMessage) {

@@ -7,7 +7,7 @@ export class RateLimitter {
     }
 
     public filter(clientId: string, messages: string[]): string[] {
-        const approvedList = [];
+        const approvedList: string[] = [];
         const currentTime = Date.now();
 
         for (const message of messages) {
@@ -15,7 +15,7 @@ export class RateLimitter {
             if (!this.requestMap.has(key)) {
                 this.requestMap.set(key, currentTime);
                 approvedList.push(message);
-            } else if (this.requestMap.get(key) + this.windowMSec > currentTime) {
+            } else if (this.requestMap.get(key)! + this.windowMSec > currentTime) {
                 continue;
             } else {
                 this.requestMap.set(key, currentTime);

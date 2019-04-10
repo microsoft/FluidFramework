@@ -55,51 +55,51 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly = true;
 
     // The minimum sequence number and last sequence number received from the server
-    private minSequenceNumber = 0;
+    private minSequenceNumber: number | undefined = 0;
 
-    private heartbeatTimer: NodeJS.Timer;
+    private heartbeatTimer: NodeJS.Timer | undefined;
 
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
     // * largestSequenceNumber is the largest seen sequence number
-    private lastQueuedSequenceNumber: number;
-    private largestSequenceNumber: number;
-    private baseSequenceNumber: number;
+    private lastQueuedSequenceNumber: number | undefined;
+    private largestSequenceNumber: number | undefined;
+    private baseSequenceNumber: number | undefined;
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private _outbound: DeltaQueue<IDocumentMessage>;
     // tslint:enable:variable-name
 
-    private connecting: Deferred<IConnectionDetails>;
-    private connection: DeltaConnection;
+    private connecting: Deferred<IConnectionDetails> | undefined | null;
+    private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private closed = false;
 
-    private handler: IDeltaHandlerStrategy;
-    private deltaStorageP: Promise<IDocumentDeltaStorageService>;
+    private handler: IDeltaHandlerStrategy | undefined;
+    private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
 
     private contentCache = new ContentCache(DefaultContentBufferSize);
 
-    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
+    public get inbound(): IDeltaQueue<ISequencedDocumentMessage | undefined> {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue<IDocumentMessage> {
+    public get outbound(): IDeltaQueue<IDocumentMessage | undefined> {
         return this._outbound;
     }
 
-    public get referenceSequenceNumber(): number {
+    public get referenceSequenceNumber(): number | undefined {
         return this.baseSequenceNumber;
     }
 
-    public get minimumSequenceNumber(): number {
+    public get minimumSequenceNumber(): number | undefined {
         return this.minSequenceNumber;
     }
 
     public get maxMessageSize(): number {
         assert(this.connection);
-        return this.connection.details.maxMessageSize || DefaultChunkSize;
+        return this.connection!.details.maxMessageSize || DefaultChunkSize;
     }
 
     // TODO (mdaumi): This should be instantiated as a part of connection protocol.
@@ -119,10 +119,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
         // Inbound message queue
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>((op, callback) => {
-            if (op.contents === undefined) {
-                this.handleOpContent(op, callback);
+            if (op!.contents === undefined) {
+                this.handleOpContent(op!, callback);
             } else {
-                this.processInboundOp(op, callback);
+                this.processInboundOp(op!, callback);
             }
         });
 
@@ -133,24 +133,24 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Outbound message queue
         this._outbound = new DeltaQueue<IDocumentMessage>(
             (message, callback: (error?) => void) => {
-                if (this.shouldSplit(message.contents as string)) {
+                if (this.shouldSplit(message!.contents as string)) {
                     debug(`Splitting content from envelope.`);
-                    this.connection.submitAsync(message).then(
+                    this.connection!.submitAsync(message!).then(
                         () => {
                             this.contentCache.set({
-                                clientId: this.connection.details.clientId,
-                                clientSequenceNumber: message.clientSequenceNumber,
-                                contents: message.contents as string,
+                                clientId: this.connection!.details.clientId,
+                                clientSequenceNumber: message!.clientSequenceNumber,
+                                contents: message!.contents as string,
                             });
-                            message.contents = undefined;
-                            this.connection.submit(message);
+                            message!.contents = undefined;
+                            this.connection!.submit(message);
                             callback();
                         },
                         (error) => {
                             callback(error);
                         });
                 } else {
-                    this.connection.submit(message);
+                    this.connection!.submit(message);
                     callback();
                 }
             });
@@ -167,7 +167,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
+    public attachOpHandler(sequenceNumber: number | undefined, handler: IDeltaHandlerStrategy, resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
         // The MSN starts at the base the manager is initialized to
@@ -208,7 +208,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connecting.promise;
     }
 
-    public submit(type: MessageType, contents: string): number {
+    public submit(type: MessageType, contents: string | null): number {
         // Start adding trace for the op.
         const traces: ITrace[] = [
             {
@@ -235,11 +235,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public submitSignal(content: any) {
-        this.connection.submitSignal(content);
+        this.connection!.submitSignal(content);
     }
 
     /* tslint:disable:promise-function-async */
-    public getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public getDeltas(from: number | undefined, to?: number): Promise<ISequencedDocumentMessage[]> {
         const deferred = new Deferred<ISequencedDocumentMessage[]>();
         this.getDeltasCore(from, to, [], deferred, 0);
 
@@ -294,20 +294,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getDeltasCore(
-        from: number,
-        to: number,
+        from: number | undefined,
+        to: number | undefined,
         allDeltas: ISequencedDocumentMessage[],
         deferred: Deferred<ISequencedDocumentMessage[]>,
         retry: number,
     ) {
-        if (this.closed) {
+        if (this.closed || from === undefined) {
             return;
         }
 
         const maxFetchTo = from + MaxBatchDeltas;
 
         // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
-        const deltasP = this.deltaStorageP.then((deltaStorage) => {
+        const deltasP = this.deltaStorageP!.then((deltaStorage) => {
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
             return deltaStorage.get(from, fetchTo);
         });
@@ -446,7 +446,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
     }
 
-    private processInitialOps(messages: ISequencedDocumentMessage[], contents: IContentMessage[]) {
+    private processInitialOps(
+            messages: ISequencedDocumentMessage[] | undefined,
+            contents: IContentMessage[] | undefined) {
         // confirm the status of the handler and inbound queue
         if (!this.handler || this._inbound.paused) {
             // process them once the queue is ready
@@ -458,7 +460,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private enqueInitalOps(messages: ISequencedDocumentMessage[], contents: IContentMessage[]) {
+    private enqueInitalOps(messages: ISequencedDocumentMessage[] | undefined, contents: IContentMessage[] | undefined) {
         if (contents && contents.length > 0) {
             for (const content of contents) {
                 this.contentCache.set(content);
@@ -489,10 +491,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 nextContent = this.contentCache.get(op.clientId);
             }
             assert(nextContent, "No content found");
-            assert.equal(op.clientSequenceNumber, nextContent.clientSequenceNumber, "Invalid op content order");
-            this.mergeAndProcess(op, nextContent, callback);
+            assert.equal(op.clientSequenceNumber, nextContent!.clientSequenceNumber, "Invalid op content order");
+            this.mergeAndProcess(op, nextContent!, callback);
         } else {
-            this.mergeAndProcess(op, this.contentCache.get(op.clientId), callback);
+            this.mergeAndProcess(op, this.contentCache.get(op.clientId)!, callback);
         }
     }
 
@@ -514,9 +516,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]) {
         for (const message of messages) {
-            this.largestSequenceNumber = Math.max(this.largestSequenceNumber, message.sequenceNumber);
+            if (this.largestSequenceNumber !== undefined) {
+                this.largestSequenceNumber = Math.max(this.largestSequenceNumber, message.sequenceNumber);
+            }
             // Check that the messages are arriving in the expected order
-            if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+            if (this.lastQueuedSequenceNumber !== undefined  &&
+                message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.handleOutOfOrderMessage(message);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
@@ -526,7 +531,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processMessage(message: ISequencedDocumentMessage): Promise<void> {
-        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+        if (this.baseSequenceNumber !== undefined) {
+            assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
+        }
         const startTime = Date.now();
 
         // Remove after SPO picks up the latest build.
@@ -535,7 +542,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         // TODO handle error cases, NACK, etc...
-        const contextP = this.handler.prepare(message);
+        const contextP = this.handler!.prepare(message);
         return contextP.then((context) => {
             // Add final ack trace.
             if (message.traces && message.traces.length > 0) {
@@ -550,7 +557,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.minSequenceNumber = message.minimumSequenceNumber;
             this.baseSequenceNumber = message.sequenceNumber;
 
-            this.handler.process(message, context);
+            this.handler!.process(message, context);
 
             // We will queue a message to update our reference sequence number upon receiving a server operation. This
             // allows the server to know our true reference sequence number and be able to correctly update the minimum
@@ -566,7 +573,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.emit("processTime", endTime - startTime);
 
             // Call the post-process function
-            return this.handler.postProcess(message, context);
+            return this.handler!.postProcess(message, context);
         });
     }
 
@@ -574,7 +581,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
-        if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
+        if (this.lastQueuedSequenceNumber !== undefined && message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             debug(`${this.tenantId}/${this.id} Received duplicate message ${message.sequenceNumber}`);
             return;
         }
@@ -582,13 +589,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // tslint:disable-next-line:max-line-length
         debug(`${this.tenantId}/${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.lastQueuedSequenceNumber, message.sequenceNumber);
+        this.fetchMissingDeltas(this.lastQueuedSequenceNumber!, message.sequenceNumber);
     }
 
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(from: number, to?: number) {
+    private fetchMissingDeltas(from: number | undefined, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
             return;
@@ -731,7 +738,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private stopHeartbeatSending() {
-        clearTimeout(this.heartbeatTimer);
+        if (this.heartbeatTimer !== undefined) {
+            clearTimeout(this.heartbeatTimer);
+        }
         this.heartbeatTimer = undefined;
     }
 }

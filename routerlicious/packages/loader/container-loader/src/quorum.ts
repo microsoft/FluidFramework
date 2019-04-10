@@ -67,7 +67,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     private localProposals = new Map<number, Deferred<void>>();
 
     constructor(
-        private minimumSequenceNumber: number,
+        private minimumSequenceNumber: number  | undefined,
         members: Array<[string, ISequencedClient]>,
         proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, ICommittedProposal]>,
@@ -120,7 +120,10 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Returns the consensus value for the given key
      */
     public get(key: string): any {
-        return this.values.get(key).value;
+        const keyMap = this.values.get(key);
+        if (keyMap !== undefined) {
+            return keyMap.value;
+        }
     }
 
     /**
@@ -151,7 +154,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     /**
      * Retrieves a specific member of the quorum
      */
-    public getMember(clientId: string): ISequencedClient {
+    public getMember(clientId: string): ISequencedClient | undefined {
         return this.members.get(clientId);
     }
 
@@ -212,7 +215,9 @@ export class Quorum extends EventEmitter implements IQuorum {
         assert(this.proposals.has(sequenceNumber));
 
         const proposal = this.proposals.get(sequenceNumber);
-        proposal.addRejection(clientId);
+        if (proposal !== undefined) {
+            proposal.addRejection(clientId);
+        }
 
         // We will emit approval and rejection messages once the MSN advances past the sequence number of the
         // proposal. This will allow us to convey all clients who rejected the proposal.
@@ -249,8 +254,9 @@ export class Quorum extends EventEmitter implements IQuorum {
      */
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage) {
         const value = message.minimumSequenceNumber;
-
-        assert(value >= this.minimumSequenceNumber);
+        if (this.minimumSequenceNumber !== undefined) {
+            assert(value >= this.minimumSequenceNumber);
+        }
         if (this.minimumSequenceNumber === value) {
             return;
         }

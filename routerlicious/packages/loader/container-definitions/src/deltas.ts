@@ -38,16 +38,16 @@ export interface IDeltaHandlerStrategy {
 
 export interface IDeltaManager<T, U> extends EventEmitter {
     // The queue of inbound delta messages
-    inbound: IDeltaQueue<T>;
+    inbound: IDeltaQueue<T | undefined>;
 
     // the queue of outbound delta messages
-    outbound: IDeltaQueue<U>;
+    outbound: IDeltaQueue<U | undefined>;
 
     // The current minimum sequence number
-    minimumSequenceNumber: number;
+    minimumSequenceNumber: number | undefined;
 
     // The last sequence number processed by the delta manager
-    referenceSequenceNumber: number;
+    referenceSequenceNumber: number | undefined;
 
     // Type of client
     clientType: string;
@@ -68,7 +68,7 @@ export interface IDeltaManager<T, U> extends EventEmitter {
 
     getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 
-    attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean);
+    attachOpHandler(sequenceNumber: number | undefined | null, handler: IDeltaHandlerStrategy, resume: boolean);
 
     submit(type: MessageType, contents: string): number;
 
@@ -104,7 +104,7 @@ export interface IDeltaQueue<T> extends EventEmitter {
     /**
      * Peeks at the next message in the queue
      */
-    peek(): T;
+    peek(): T | undefined;
 
     /**
      * System level pause

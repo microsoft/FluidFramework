@@ -24,14 +24,14 @@ export class Context implements IContainerContext {
     public static async Load(
         container: Container,
         chaincode: IChaincodeFactory,
-        baseSnapshot: ISnapshotTree,
+        baseSnapshot: ISnapshotTree | null,
         blobs: Map<string, string>,
         attributes: IDocumentAttributes,
-        blobManager: BlobManager,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        quorum: IQuorum,
+        blobManager: BlobManager | undefined,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined,
+        quorum: IQuorum | undefined,
         loader: ILoader,
-        storage: IDocumentStorageService,
+        storage: IDocumentStorageService | null | undefined,
         errorFn: (err: any) => void,
         submitFn: (type: MessageType, contents: any) => number,
         submitSignalFn: (contents: any) => void,
@@ -67,7 +67,7 @@ export class Context implements IContainerContext {
         return this.container.id;
     }
 
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.container.clientId;
     }
 
@@ -75,7 +75,7 @@ export class Context implements IContainerContext {
         return this.container.clientType;
     }
 
-    public get existing(): boolean {
+    public get existing(): boolean | undefined {
         return this.container.existing;
     }
 
@@ -83,11 +83,11 @@ export class Context implements IContainerContext {
         return this.attributes.branch;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | undefined | null {
         return this.container.parentBranch;
     }
 
-    public get minimumSequenceNumber(): number {
+    public get minimumSequenceNumber(): number | undefined {
         return this._minimumSequenceNumber;
     }
 
@@ -100,21 +100,21 @@ export class Context implements IContainerContext {
         return this.container.options;
     }
 
-    private runtime: IRuntime;
+    private runtime: IRuntime | undefined;
     // tslint:disable:variable-name allowing _ for params exposed with getter
-    private _minimumSequenceNumber: number;
+    private _minimumSequenceNumber: number | undefined;
     // tslint:enable:variable-name
 
     constructor(
         private container: Container,
         public readonly chaincode: IChaincodeFactory,
-        public readonly baseSnapshot: ISnapshotTree,
+        public readonly baseSnapshot: ISnapshotTree | null,
         public readonly blobs: Map<string, string>,
         private readonly attributes: IDocumentAttributes,
-        public readonly blobManager: BlobManager,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        public readonly quorum: IQuorum,
-        public readonly storage: IDocumentStorageService,
+        public readonly blobManager: BlobManager | undefined,
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined,
+        public readonly quorum: IQuorum | undefined,
+        public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: any) => void,
         public readonly submitFn: (type: MessageType, contents: any) => number,
@@ -125,39 +125,39 @@ export class Context implements IContainerContext {
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
     }
 
-    public async snapshot(tagMessage: string): Promise<ITree> {
-        return this.runtime.snapshot(tagMessage);
+    public async snapshot(tagMessage: string): Promise<ITree | null> {
+        return this.runtime!.snapshot(tagMessage);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
-        this.runtime.changeConnectionState(value, clientId);
+        this.runtime!.changeConnectionState(value, clientId);
     }
 
-    public async stop(): Promise<ITree> {
-        const snapshot = await this.runtime.snapshot("");
-        await this.runtime.stop();
+    public async stop(): Promise<ITree | null> {
+        const snapshot = await this.runtime!.snapshot("");
+        await this.runtime!.stop();
 
         return snapshot;
     }
 
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.runtime.prepare(message, local);
+        return this.runtime!.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.runtime.process(message, local, context);
+        this.runtime!.process(message, local, context);
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        return this.runtime.postProcess(message, local, context);
+        return this.runtime!.postProcess(message, local, context);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
-        this.runtime.processSignal(message, local);
+        this.runtime!.processSignal(message, local);
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return this.runtime.request(path);
+        return this.runtime!.request(path);
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {

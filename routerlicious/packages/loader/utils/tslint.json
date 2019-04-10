@@ -4,6 +4,7 @@
         "completed-docs": false,
         "newline-before-return": false,
         "no-console": false,
+        "no-non-null-assertion": false,
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-require-imports": false,
@@ -11,6 +12,7 @@
         "no-suspicious-comment": false,
         "prefer-array-literal": false,
         "prefer-template": false,
-        "prefer-type-cast": false
+        "prefer-type-cast": false,
+        "strict-boolean-expressions": false
     }
 }

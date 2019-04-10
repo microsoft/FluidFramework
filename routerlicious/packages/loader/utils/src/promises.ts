@@ -5,8 +5,8 @@ import * as assert from "assert";
  */
 export class Deferred<T> {
     private readonly p: Promise<T>;
-    private res: (value?: T | PromiseLike<T>) => void;
-    private rej: (reason?: any) => void;
+    private res: ((value?: T | PromiseLike<T>) => void) | undefined;
+    private rej: ((reason?: any) => void) | undefined;
 
     constructor() {
         /* tslint:disable:promise-must-complete */
@@ -27,14 +27,18 @@ export class Deferred<T> {
      * Resolves the promise
      */
     public resolve(value?: T | PromiseLike<T>) {
-        this.res(value);
+        if (this.res !== undefined) {
+            this.res(value);
+        }
     }
 
     /**
      * Rejects the promise
      */
     public reject(error: any) {
-        this.rej(error);
+        if (this.rej !== undefined) {
+            this.rej(error);
+        }
     }
 }
 

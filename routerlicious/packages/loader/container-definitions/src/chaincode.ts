@@ -89,7 +89,7 @@ export interface IRuntime {
     /**
      * Snapshots the runtime
      */
-    snapshot(tagMessage: string): Promise<ITree>;
+    snapshot(tagMessage: string): Promise<ITree | null>;
 
     /**
      * Notifies the runtime of a change in the connection state
@@ -126,24 +126,24 @@ export interface IRuntime {
 export interface IContainerContext {
     readonly tenantId: string;
     readonly id: string;
-    readonly existing: boolean;
+    readonly existing: boolean | undefined;
     readonly options: any;
-    readonly clientId: string;
+    readonly clientId: string | undefined;
     readonly clientType: string;
-    readonly parentBranch: string;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    readonly blobManager: IBlobManager;
-    readonly storage: IDocumentStorageService;
+    readonly parentBranch: string | undefined | null;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
+    readonly blobManager: IBlobManager | undefined;
+    readonly storage: IDocumentStorageService | undefined | null;
     readonly connectionState: ConnectionState;
     readonly branch: string;
-    readonly minimumSequenceNumber: number;
-    readonly baseSnapshot: ISnapshotTree;
+    readonly minimumSequenceNumber: number | undefined;
+    readonly baseSnapshot: ISnapshotTree | null;
     readonly blobs: Map<string, string>;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
-    readonly quorum: IQuorum;
+    readonly quorum: IQuorum | undefined;
     readonly loader: ILoader;
 
     error(err: any): void;

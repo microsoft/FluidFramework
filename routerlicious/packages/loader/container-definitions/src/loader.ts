@@ -63,13 +63,13 @@ export interface IResponse {
 }
 
 export interface IContainer extends EventEmitter {
-    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
 
-    getQuorum(): IQuorum;
+    getQuorum(): IQuorum | undefined;
 }
 
 export interface ILoader {
     request(request: IRequest): Promise<IResponse>;
 
-    resolve(request: IRequest): Promise<IContainer>;
+    resolve(request: IRequest): Promise<IContainer | undefined>;
 }
