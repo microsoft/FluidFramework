@@ -51,7 +51,7 @@ describe("client.applyMsg", () => {
                         },
                         undefined);
                     const msg = client.makeOpMessage(op, i + 1);
-                    changes.set(i, { msg, segmentGroup: { segments: [] } });
+                    changes.set(i, { msg, segmentGroup: client.mergeTree.pendingSegments.last()});
                     break;
                 }
                 default:
@@ -126,6 +126,8 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
+        assert.equal(client.mergeTree.pendingSegments.count(), 1);
+
         client.applyMsg(client.makeOpMessage(op, 17));
 
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
@@ -148,12 +150,12 @@ describe("client.applyMsg", () => {
             props,
             undefined);
 
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments.count(), 1);
 
         const removeOp = client.removeRangeLocal(start, end);
 
         assert.equal(segmentInfo.segment.removedSeq, UnassignedSequenceNumber);
-        assert.equal(client.mergeTree.pendingSegments.count(), 1);
+        assert.equal(client.mergeTree.pendingSegments.count(), 2);
 
         client.applyMsg(client.makeOpMessage(annotateOp, 17));
 
@@ -190,7 +192,7 @@ describe("client.applyMsg", () => {
 
             annotateEnd = Math.floor(annotateEnd / 2);
         }
-        assert.equal(client.mergeTree.pendingSegments.count(), 0);
+        assert.equal(client.mergeTree.pendingSegments.count(), messages.length);
 
         for (const msg of messages) {
             client.applyMsg(msg);

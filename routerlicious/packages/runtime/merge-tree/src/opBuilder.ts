@@ -4,6 +4,7 @@ import {
     IMergeTreeAnnotateMsg,
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
+    IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
  } from "./ops";
@@ -115,7 +116,7 @@ export function createInsertToRegisterOp(start: number, end: number, register: s
  * @param ops - The ops to group
  */
 export function createGroupOp(
-    ... ops: Array<IMergeTreeAnnotateMsg | IMergeTreeRemoveMsg | IMergeTreeInsertMsg>): IMergeTreeGroupMsg {
+    ... ops: IMergeTreeOp[]): IMergeTreeGroupMsg {
     return {
         ops,
         type: MergeTreeDeltaType.GROUP,

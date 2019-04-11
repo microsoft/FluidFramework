@@ -10,7 +10,7 @@ import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { TextSegment, createGroupOp } from "@prague/merge-tree";
+import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp } from "@prague/merge-tree";
 
 function clock() {
     return process.hrtime();
@@ -233,6 +233,8 @@ export function TestPack(verbose = true) {
         let testSyncload = false;
         let snapClient: TestClient;
         let useGroupOperationsForMoveWord = false;
+        let annotateProps: PropertySet;
+
 
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -253,6 +255,9 @@ export function TestPack(verbose = true) {
             clients[i].measureOps = true;
             if (startFile) {
                 loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
+            }
+            if (annotateProps) {
+                clients[i].annotateRangeLocal(0, clients[i].getLength(), annotateProps, undefined);
             }
             clients[i].startCollaboration(`Fred${i}`);
         }
@@ -394,13 +399,15 @@ export function TestPack(verbose = true) {
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
+                const ops: IMergeTreeOp[] = [];
                 const removeOp = client.removeRangeLocal(removeStart, removeEnd);
                 if (!useGroupOperationsForMoveWord){
-                    server.enqueueMsg(
-                        client.makeOpMessage(removeOp, MergeTree.UnassignedSequenceNumber));
+                    server.enqueueMsg(client.makeOpMessage(removeOp));
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
+                } else {
+                    ops.push(removeOp);
                 }
 
                 let word2 = findRandomWord(client.mergeTree, client.getClientId());
@@ -408,24 +415,36 @@ export function TestPack(verbose = true) {
                     word2 = findRandomWord(client.mergeTree, client.getClientId());
                 }
                 let pos = word2.pos + word2.text.length;
+
                 const insertOp = client.insertTextLocal(pos, word1.text);
-                if (useGroupOperationsForMoveWord) {
+                if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(
-                        client.makeOpMessage(
-                            createGroupOp(
-                                removeOp,
-                                insertOp),
-                            MergeTree.UnassignedSequenceNumber));
+                        client.makeOpMessage(insertOp));
+                    if (TestClient.useCheckQ) {
+                        client.enqueueTestString();
+                    }
                 } else {
-                    server.enqueueMsg(
-                        client.makeOpMessage(insertOp, MergeTree.UnassignedSequenceNumber));
+                    ops.push(insertOp);
                 }
 
-                if (TestClient.useCheckQ) {
-                    client.enqueueTestString();
+                if (annotateProps) {
+                    const annotateOp = client.annotateRangeLocal(pos, pos + word1.text.length, annotateProps, undefined);
+                    if (!useGroupOperationsForMoveWord) {
+                        server.enqueueMsg(client.makeOpMessage(annotateOp));
+                    } else {
+                        ops.push(annotateOp);
+                    }
+                }
+
+                if (useGroupOperationsForMoveWord) {
+                    server.enqueueMsg(client.makeOpMessage(createGroupOp(...ops)));
+                    if (TestClient.useCheckQ) {
+                        client.enqueueTestString();
+                    }
                 }
             }
         }
+
 
         let errorCount = 0;
 

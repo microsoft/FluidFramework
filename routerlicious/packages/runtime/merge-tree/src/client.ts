@@ -428,13 +428,14 @@ export class Client {
             if (this.measureOps) {
                 clockStart = clock();
             }
-            if (deltaOpArgs.op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
-                this.mergeTree.ackPendingSegment(deltaOpArgs, this.verboseOps);
-            } else {
+
+            this.mergeTree.ackPendingSegment(deltaOpArgs, this.verboseOps);
+            if (deltaOpArgs.op.type === ops.MergeTreeDeltaType.ANNOTATE) {
                 if (deltaOpArgs.op.combiningOp && (deltaOpArgs.op.combiningOp.name === "consensus")) {
                     this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage);
                 }
             }
+
             if (this.measureOps) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
@@ -680,14 +681,7 @@ export class Client {
                 sequencedMessage: msg,
             };
             if (opArgs.sequencedMessage.clientId === this.longClientId) {
-                if (opArgs.op.type !== ops.MergeTreeDeltaType.ANNOTATE) {
-                    this.ackPendingSegment(opArgs);
-                } else {
-                    const op = opArgs.op as ops.IMergeTreeAnnotateMsg;
-                    if (op.combiningOp && (op.combiningOp.name === "consensus")) {
-                        this.updateConsensusProperty(op, opArgs.sequencedMessage);
-                    }
-                }
+                this.ackPendingSegment(opArgs);
             }
             else {
                 this.applyRemoteOp(opArgs);

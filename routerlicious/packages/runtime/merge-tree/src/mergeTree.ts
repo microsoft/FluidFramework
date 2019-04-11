@@ -164,7 +164,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     properties?: Properties.PropertySet;
     addLocalRef(lref: LocalReference);
     removeLocalRef(lref: LocalReference);
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number);
+    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow);
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
@@ -495,6 +495,10 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 }
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
+
+    private pendingKeyUpdateCount: Properties.MapLike<number>;
+    private pendingRewriteCount: number;
+
     constructor(public seq?: number, public clientId?: number) {
         super();
     }
@@ -593,8 +597,73 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         leafSegment.localRefs = bRefs;
     }
 
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number) {
-        this.properties = Properties.addProperties(this.properties, newProps, op, seq);
+    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+
+        if (!this.properties) {
+            this.pendingRewriteCount = 0;
+            this.properties = Properties.createMap<any>();
+            this.pendingKeyUpdateCount = Properties.createMap<number>();
+        }
+
+        const collaborating =  collabWindow && collabWindow.collaborating;
+
+        // there are outstanding local rewrites, so block all non-local changes
+        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating)
+        {
+            return;
+        }
+
+        const rewrite = (op && op.name === "rewrite")
+        const combiningOp = !rewrite ? op ? op : undefined : undefined;
+
+        const shouldModifyKey = (key: string): boolean => {
+            if (seq === UnassignedSequenceNumber
+                || this.pendingKeyUpdateCount[key] === undefined
+                || combiningOp) {
+                return true;
+            }
+            return false;
+        };
+
+        if (rewrite) {
+            if (collaborating && seq === UnassignedSequenceNumber) {
+                this.pendingRewriteCount++;
+            }
+            // we are re-writting so delete all the properties
+            // not in the new props
+            for (const key in this.properties) {
+                if (!newProps[key] && shouldModifyKey(key)) {
+                    delete this.properties[key];
+                }
+            }
+        }
+
+        for (const key in newProps) {
+            if (collaborating) {
+                if(seq === UnassignedSequenceNumber){
+                    if(this.pendingKeyUpdateCount[key] === undefined){
+                        this.pendingKeyUpdateCount[key] = 0;
+                    }
+                    this.pendingKeyUpdateCount[key]++;
+                } else if (!shouldModifyKey(key)) {
+                    continue;
+                }
+            }
+
+            const oldValue = this.properties[key];
+            let newValue;
+            if (combiningOp) {
+                newValue = Properties.combine(op, oldValue, newValue, seq);
+            } else {
+                newValue = newProps[key];
+            }
+
+            if (newValue === null) {
+                delete this.properties[key];
+            } else {
+                this.properties[key] = newValue;
+            }
+        }
     }
 
     hasProperty(key: string) {
@@ -634,6 +703,22 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
         switch (opArgs.op.type) {
 
+            case ops.MergeTreeDeltaType.ANNOTATE:
+                const annotateOp = opArgs.op as ops.IMergeTreeAnnotateMsg;
+                if (annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite") {
+                    this.pendingRewriteCount--;
+                }
+                for (const key in annotateOp.props) {
+                    if (this.pendingKeyUpdateCount[key] !== undefined) {
+                        assert(this.pendingKeyUpdateCount[key] > 0)
+                        this.pendingKeyUpdateCount[key]--;
+                        if (this.pendingKeyUpdateCount[key] === 0) {
+                            delete this.pendingKeyUpdateCount[key];
+                        }
+                    }
+                }
+                return true;
+
             case ops.MergeTreeDeltaType.INSERT:
                 assert.equal(this.seq, UnassignedSequenceNumber);
                 this.seq = opArgs.sequencedMessage.sequenceNumber;
@@ -665,7 +750,15 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             const leafSegment = this.createSplitSegmentAt(pos);
             if (leafSegment) {
                 if (this.properties) {
-                    leafSegment.addProperties(Properties.extend(Properties.createMap<any>(), this.properties));
+                    leafSegment.pendingRewriteCount = this.pendingRewriteCount;
+                    leafSegment.properties = Properties.createMap<any>();
+                    for (const key in this.properties) {
+                        leafSegment.properties[key] = this.properties[key];
+                    }
+                    leafSegment.pendingKeyUpdateCount = Properties.createMap<number>();
+                    for (const key in this.pendingKeyUpdateCount) {
+                        leafSegment.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount[key];
+                    }
                 }
                 leafSegment.parent = this.parent;
                 leafSegment.removedClientId = this.removedClientId;
@@ -3658,12 +3751,28 @@ export class MergeTree {
         clientId: number, seq: number,  opArgs: IMergeTreeDeltaOpArgs) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
-        const annotatedSegments: ISegment[] = [];
+        let segmentGroup: SegmentGroup;
+        if (seq !== UnassignedSequenceNumber || !this.collabWindow.collaborating) {
+            segmentGroup = { segments: [] };
+        }
+
         const annotateSegment = (segment: ISegment) => {
-            annotatedSegments.push(segment);
-            segment.addProperties(props, combiningOp, seq);
+            segment.addProperties(props, combiningOp, seq, this.collabWindow);
+            if (this.collabWindow.collaborating){
+                if (seq === UnassignedSequenceNumber) {
+                    segmentGroup = this.addToPendingList(segment, segmentGroup);
+                } else {
+                    segmentGroup.segments.push(segment);
+                    if (MergeTree.options.zamboniSegments) {
+                        this.addToLRUSet(segment, segment.seq);
+                    }
+                }
+            } else {
+                segmentGroup.segments.push(segment);
+            };
             return true;
         }
+
         this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
 
         // opArgs == undefined => test code
@@ -3674,8 +3783,13 @@ export class MergeTree {
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.ANNOTATE,
                     mergeTree: this,
-                    segments: annotatedSegments
+                    segments: segmentGroup.segments
                 });
+        }
+        if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber)) {
+            if (MergeTree.options.zamboniSegments) {
+                this.zamboniSegments();
+            }
         }
     }
 
