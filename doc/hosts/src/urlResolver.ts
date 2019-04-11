@@ -4,16 +4,31 @@ import {
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,
+    IUser,
 } from "@prague/container-definitions";
 import * as jwt from "jsonwebtoken";
 
+/**
+ * As the name implies this is not secure and should not be used in production. It simply makes the example easier
+ * to get up and running.
+ *
+ * In our example we run a simple web server via webpack-dev-server. This defines a URL format of the form
+ * http://localhost:8080/<documentId>/<path>.
+ *
+ * We then need to map that to a Prague based URL. These are of the form
+ * prague://orderingUrl/<tenantId>/<documentId>/<path>.
+ *
+ * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
+ * part of the URL that the document interprets and maps to a component. It's exactlys similar to how a web service
+ * works or a router inside of a single page app framework.
+ */
 export class InsecureUrlResolver implements IUrlResolver {
     constructor(
         private readonly ordererUrl: string,
         private readonly storageUrl: string,
         private readonly tenantId: string,
         private readonly key: string,
-        private readonly user: string,
+        private readonly user: IUser,
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -48,7 +63,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             documentId,
             permission: "read:write",
             tenantId,
-            user: { id: this.user },
+            user: this.user,
         };
 
         return jwt.sign(claims, this.key);

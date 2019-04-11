@@ -4,6 +4,13 @@ import {
     IPraguePackage,
 } from "@prague/container-definitions";
 
+/**
+ * The CodeLoader is used to load quorumed NPM packages into the browser. It does so by querying a CDN that proxies
+ * access to the raw NPM package data. The loader starts by fetching the package's package.json. It then looks for a
+ * special 'prague' entry which defines the code designed to be run in the browser as well as the name of the entry
+ * point module. It then script includes these files on the page and once loaded makes use of the module entry point
+ * name to get access to the module.
+ */
 export class CodeLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<IChaincodeFactory>>();
 

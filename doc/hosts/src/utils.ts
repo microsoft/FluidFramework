@@ -2,6 +2,10 @@ import { IPlatform } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { parse } from "querystring";
 
+/**
+ * The initializeChaincode method takes in a document and a desired NPM package and establishes a code quorum
+ * on this package.
+ */
 export async function initializeChaincode(document: Container, pkg: string): Promise<void> {
     if (!pkg) {
         return;
@@ -22,7 +26,11 @@ export async function initializeChaincode(document: Container, pkg: string): Pro
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-export async function attach(loader: Loader, url: string, platform: IPlatform) {
+/**
+ * attachCore is used to make a request against the loader to load a prague component. And then attaches to it once
+ * found.
+ */
+async function attachCore(loader: Loader, url: string, platform: IPlatform) {
     const response = await loader.request({ url });
 
     if (response.status !== 200) {
@@ -37,10 +45,15 @@ export async function attach(loader: Loader, url: string, platform: IPlatform) {
     }
 }
 
-export async function registerAttach(loader: Loader, container: Container, uri: string, platform: IPlatform) {
-    attach(loader, uri, platform);
+/**
+ * attach is used to allow a host to attach to a Prague URL. Given that we may be establishing a new set of code
+ * on the document it listens for the "contextChanged" event which fires when a new code value is quorumed on. In this
+ * case it simply runs the attach method again.
+ */
+export async function attach(loader: Loader, container: Container, url: string, platform: IPlatform) {
+    attachCore(loader, url, platform);
     container.on("contextChanged", () => {
-        attach(loader, uri, platform);
+        attachCore(loader, url, platform);
     });
 }
 

@@ -1,6 +1,10 @@
 import { IPlatform } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
+/**
+ * Simple IPlatform that exposes access to the "div" interface. This provides attached components a node in the DOM
+ * to render to.
+ */
 export class HostPlatform extends EventEmitter implements IPlatform {
     constructor(private div: HTMLElement) {
         super();
