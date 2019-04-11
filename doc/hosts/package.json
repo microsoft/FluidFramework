@@ -1,0 +1,30 @@
+{
+  "name": "@prague/hosts-sample",
+  "version": "0.1.0",
+  "description": "Sample Prague container host",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && npm run tslint",
+    "tsc": "tsc",
+    "webpack": "webpack --config webpack.config.js",
+    "tslint": "tslint 'src/**/*.ts'",
+    "start": "webpack-dev-server --config webpack.config.js"
+  },
+  "author": "Microsoft",
+  "devDependencies": {
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.3",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.1"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.2.6121",
+    "@prague/container-loader": "^0.2.6121",
+    "@prague/routerlicious-socket-storage": "^0.2.6121",
+    "@types/jsonwebtoken": "^8.3.2",
+    "jsonwebtoken": "^8.5.1"
+  }
+}
