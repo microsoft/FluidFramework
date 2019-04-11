@@ -3,7 +3,7 @@ import * as React from "react";
 import { DataStore } from "@prague/app-datastore";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { WebLoader } from "@prague/loader-web";
-import { ILoaderUrl, ILoaderProps, URLToLoaderProps } from "./url-resolver";
+import { ILoaderUrl, ILoaderProps, URLToLoaderProps } from "./url-parser";
 import { loadSharepointPragueComponent } from '@ms/office-prague-container';
 
 export class Loader extends Component<ILoaderUrl, any> {
