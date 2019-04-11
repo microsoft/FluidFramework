@@ -4,15 +4,24 @@ import {
     ISnapshotTree,
     ITokenProvider,
 } from "@prague/container-definitions";
+import { ICommit } from "@prague/gitresources";
+import * as fs from "fs";
+import * as util from "util";
 import {
     dumpSnapshotBlobs,
     dumpSnapshotSha,
     dumpSnapshotStats,
     dumpSnapshotTrees,
+    dumpSnapshotVersions,
     dumpTotalStats,
+    paramNumSnapshotVersions,
+    paramSave,
+    paramSnapshotVersionIndex,
 } from "./pragueDumpArgs";
-async function fetchSnapshotTreeBlobs(storage: IDocumentStorageService, tree: ISnapshotTree, prefix: string = "") {
-    if (dumpSnapshotTrees) {
+
+async function fetchSnapshotTreeBlobs(
+    storage: IDocumentStorageService, tree: ISnapshotTree, prefix: string = "", saveTreeDir?: string) {
+    if (saveTreeDir === undefined && dumpSnapshotTrees) {
         console.log(tree);
     }
 
@@ -33,12 +42,19 @@ async function fetchSnapshotTreeBlobs(storage: IDocumentStorageService, tree: IS
             continue;
         }
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
-        const componentBlobs = await fetchSnapshotTreeBlobs(storage, componentSnapShotTree, `${prefix}[${component}]/`);
+        if (saveTreeDir !== undefined) {
+            const writeFile = util.promisify(fs.writeFile);
+            await writeFile(`${saveTreeDir}/${componentVersions[0].sha}.json`,
+                JSON.stringify(componentSnapShotTree, undefined, 2));
+        }
+        const componentBlobs =
+            await fetchSnapshotTreeBlobs(storage, componentSnapShotTree, `${prefix}[${component}]/`, saveTreeDir);
         result = result.concat(componentBlobs);
     }
 
     for (const subtree of Object.keys(tree.trees)) {
-        result = result.concat(await fetchSnapshotTreeBlobs(storage, tree.trees[subtree], `${prefix}${subtree}/`));
+        result = result.concat(
+            await fetchSnapshotTreeBlobs(storage, tree.trees[subtree], `${prefix}${subtree}/`, saveTreeDir));
     }
     return result;
 }
@@ -76,25 +92,75 @@ async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapsho
     return size;
 }
 
+async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, index?: number) {
+    const suffix = `${index !== undefined ? `${index}-` : ""}${version.sha}`;
+    console.log(`Saving snapshot ${suffix}`);
+    const outDir = `${paramSave}/${suffix}/`;
+    const snapshotTree = await storage.getSnapshotTree(version);
+    const mkdir = util.promisify(fs.mkdir);
+    const writeFile = util.promisify(fs.writeFile);
+
+    await mkdir(`${outDir}/decoded`, { recursive: true });
+    await writeFile(`${outDir}/tree.json`, JSON.stringify(snapshotTree, undefined, 2));
+    const blobs = await fetchSnapshotTreeBlobs(storage, snapshotTree, "", outDir);
+    await Promise.all(blobs.map(async (blob) => {
+        const data = await blob.blob;
+        // tslint:disable-next-line:non-literal-fs-path
+        await writeFile(`${outDir}/${blob.sha}`, data);
+
+        const decoded = Buffer.from(data, "base64").toString();
+        try {
+            const object = JSON.parse(decoded);
+            await writeFile(`${outDir}/decoded/${blob.sha}.json`, JSON.stringify(object, undefined, 2));
+        } catch (e) {
+            await writeFile(`${outDir}/decoded/${blob.sha}.txt`, decoded);
+        }
+    }));
+}
+
 export async function pragueDumpSnapshot(
     documentService: IDocumentService,
     tokenProvider: ITokenProvider,
     tenantId: string,
     id: string) {
-    if (dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats) {
+
+    const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
+    if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {
         const storage = await documentService.connectToStorage(tenantId, id, tokenProvider);
-        const snapshotTree = await storage.getSnapshotTree();
-        if (snapshotTree) {
-            const snapshotSize = await dumpSnapshotTree(storage, snapshotTree);
-            if (dumpSnapshotStats) {
-                console.log("-".repeat(100));
-                // tslint:disable-next-line:max-line-length
-                console.log(`Total snapshot size                                                        | ${snapshotSize}`);
-            } else if (dumpTotalStats) {
-                console.log(`Total snapshot size: ${snapshotSize}`);
+        let version: ICommit | undefined;
+        if (dumpSnapshotVersions || paramSnapshotVersionIndex !== undefined || paramSave !== undefined) {
+            const versions = await storage.getVersions("", paramNumSnapshotVersions);
+            if (dumpSnapshotVersions) {
+                console.log("Snapshot versions");
+                console.log(versions);
             }
-        } else {
-            console.log("No snapshot tree");
+            if (paramSnapshotVersionIndex !== undefined) {
+                version = versions[paramSnapshotVersionIndex];
+                if (paramSave !== undefined) {
+                    await saveSnapshot(storage, version);
+                }
+            } else if (paramSave !== undefined) {
+                await Promise.all(versions.map((v, i) => saveSnapshot(storage, v, i)));
+            }
+        }
+
+        if (dumpTree) {
+            if (version !== undefined) {
+                console.log(`Loading snapshot version ${JSON.stringify(version)}`);
+            }
+            const snapshotTree = await storage.getSnapshotTree(version);
+            if (snapshotTree) {
+                const snapshotSize = await dumpSnapshotTree(storage, snapshotTree);
+                if (dumpSnapshotStats) {
+                    console.log("-".repeat(100));
+                    // tslint:disable-next-line:max-line-length
+                    console.log(`Total snapshot size                                                        | ${snapshotSize}`);
+                } else if (dumpTotalStats) {
+                    console.log(`Total snapshot size: ${snapshotSize}`);
+                }
+            } else {
+                console.log("No snapshot tree");
+            }
         }
     }
 }

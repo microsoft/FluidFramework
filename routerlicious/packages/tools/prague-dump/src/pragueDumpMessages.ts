@@ -6,6 +6,8 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
+import * as fs from "fs";
+import * as util from "util";
 import {
     dumpChannelStats,
     dumpDataTypeStats,
@@ -13,6 +15,7 @@ import {
     dumpMessageStats,
     dumpTotalStats,
     messageTypeFilter,
+    paramSave,
 } from "./pragueDumpArgs";
 
 async function loadAllSequencedMessages(
@@ -91,8 +94,14 @@ export async function pragueDumpMessages(
     id: string) {
 
     const messageStats = dumpMessageStats || dumpChannelStats || dumpDataTypeStats || dumpTotalStats;
-    if (dumpMessages || messageStats) {
+    if (dumpMessages || messageStats || paramSave !== undefined) {
         const sequencedMessages = await loadAllSequencedMessages(tenantId, id, documentService, tokenProvider);
+
+        if (paramSave !== undefined) {
+            const writeFile = util.promisify(fs.writeFile);
+            console.log(`Saving messages`);
+            await writeFile(`${paramSave}/messages.json`, JSON.stringify(sequencedMessages, undefined, 2));
+        }
         if (dumpMessages) {
             for (const message of sequencedMessages) {
                 if (messageTypeFilter.size !== 0 && !messageTypeFilter.has(message.type)) {
