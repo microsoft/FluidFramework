@@ -9,7 +9,7 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return "";
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null | undefined> {
         return;
     }
 
@@ -17,11 +17,11 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return [];
     }
 
-    public async read(sha: string): Promise<string> {
+    public async read(sha: string): Promise<string | undefined> {
         return;
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+    public async getContent(version: resources.ICommit, path: string): Promise<string | undefined> {
         return;
     }
 
@@ -33,7 +33,7 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not create blob");
     }
 
-    public getRawUrl(sha: string): string {
+    public getRawUrl(sha: string): string | undefined {
         return;
     }
 }

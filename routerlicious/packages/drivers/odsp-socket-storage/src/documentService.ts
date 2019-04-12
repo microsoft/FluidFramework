@@ -47,11 +47,11 @@ export class DocumentService implements api.IDocumentService {
         return DocumentDeltaConnection.Create(tenantId, id, token, io, client, this.webSocketUrl);
     }
 
-    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
+    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string | null> {
         return null;
     }
 
-    public getErrorTrackingService() {
+    public getErrorTrackingService(): null {
         return null;
     }
 }

@@ -5,14 +5,14 @@ export class TokenProvider implements ITokenProvider {
     /**
      * Storage token - for snapshots and delta storage
      */
-    public readonly storageToken: string;
+    public readonly storageToken: string | null;
 
     /**
      * Socket token - for the delta stream (websockets)
      */
-    public readonly socketToken: string;
+    public readonly socketToken: string | null;
 
-    constructor(storageToken: string, socketToken: string) {
+    constructor(storageToken: string | null, socketToken: string | null) {
         this.storageToken = storageToken;
         this.socketToken = socketToken;
     }
@@ -25,7 +25,7 @@ export class TokenProvider implements ITokenProvider {
     /**
      * Returns the default headers to pass when calling storage apis
      */
-    public getStorageHeaders(): { [index: string]: string } {
+    public getStorageHeaders(): { [index: string]: string | undefined} {
         const headers: { Authorization?: string } = {};
 
         if (this.storageToken && this.storageToken.length > 0 && this.storageToken[0] !== "?") {

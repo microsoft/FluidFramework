@@ -37,7 +37,7 @@ export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.I
 export async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
     const encoded = await storage.read(sha);
     const decoded = Buffer
-        .from(encoded, "base64")
+        .from(encoded!, "base64")
         .toString();
     return JSON.parse(decoded) as T;
 }
@@ -82,7 +82,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
     return entries;
 }
 
-export function buildHierarchy(flatTree: git.ITree): ISnapshotTree | null {
+export function buildHierarchy(flatTree: git.ITree | null): ISnapshotTree | null {
     if (!flatTree) {
         return null;
     }

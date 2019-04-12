@@ -12,7 +12,7 @@ export class ReplayDocumentService implements api.IDocumentService {
     constructor(private replayFrom: number,
                 private replayTo: number,
                 private documentService: api.IDocumentService,
-                private unitIsTime: boolean) {
+                private unitIsTime: boolean | undefined) {
     }
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
@@ -44,7 +44,7 @@ export class ReplayDocumentService implements api.IDocumentService {
         return ReplayDocumentDeltaConnection.Create(tenantId, id, tokenProvider, documentDeltaStorageService,
             this.replayFrom, this.replayTo, this.unitIsTime);
     }
-    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
+    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string | null> {
         return null;
     }
     public getErrorTrackingService() {

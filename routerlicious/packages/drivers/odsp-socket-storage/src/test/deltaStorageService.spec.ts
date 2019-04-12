@@ -71,7 +71,7 @@ describe("DeltaStorageService", () => {
                 get: (url, config?) => new Promise<AxiosResponse>(
                     (resolve, reject) => {
                         const respone: AxiosResponse = {
-                            config,
+                            config: config ? config : {},
                             data: expectedDeltaFeedResponse,
                             headers: { "Access-Control-Allow-Origin": "*" },
                             request: "GET",
@@ -133,7 +133,7 @@ describe("DeltaStorageService", () => {
                 get: (url, config?) => new Promise<AxiosResponse>(
                     (resolve, reject) => {
                         const respone: AxiosResponse = {
-                            config,
+                            config: config ? config : {},
                             data: expectedDeltaFeedResponse,
                             headers: { "Access-Control-Allow-Origin": "*" },
                             request: "GET",

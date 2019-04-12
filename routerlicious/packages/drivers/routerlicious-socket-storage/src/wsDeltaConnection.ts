@@ -43,30 +43,30 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     private socket: ws;
     private submitManager: BatchManager<IDocumentMessage>;
-    private details: messages.IConnected;
+    private details: messages.IConnected | undefined;
 
     public get clientId(): string {
-        return this.details.clientId;
+        return this.details!.clientId;
     }
 
     public get existing(): boolean {
-        return this.details.existing;
+        return this.details!.existing;
     }
 
     public get parentBranch(): string {
-        return this.details.parentBranch;
+        return this.details!.parentBranch;
     }
 
     public get maxMessageSize(): number {
-        return this.details.maxMessageSize;
+        return this.details!.maxMessageSize;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] {
-        return this.details.initialMessages;
+    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
+        return this.details!.initialMessages;
     }
 
-    public get initialContents(): IContentMessage[] {
-        return this.details.initialContents;
+    public get initialContents(): IContentMessage[] | undefined {
+        return this.details!.initialContents;
     }
 
     constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {
@@ -111,7 +111,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         });
 
         this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
-            this.socket.send(JSON.stringify([submitType, this.details.clientId, work]));
+            this.socket.send(JSON.stringify([submitType, this.details!.clientId, work]));
         });
     }
 
@@ -132,7 +132,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.socket.send(JSON.stringify(["submitContent", this.details.clientId, message]), (error) => {
+            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, message]), (error) => {
                 if (error) {
                     reject();
                 } else {

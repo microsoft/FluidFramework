@@ -21,7 +21,7 @@ const ReplayMaxMessageSize = 16 * 1024;
 class Replayer {
     private replayCurrent = 0;
     private replayP = Promise.resolve();
-    private firstTimeStamp: number;
+    private firstTimeStamp: number | undefined;
     constructor(
         private deltaConnection: ReplayDocumentDeltaConnection,
         private tenantId: string,
@@ -30,7 +30,7 @@ class Replayer {
         private documentStorageService: IDocumentDeltaStorageService,
         private replayFrom: number,
         private replayTo: number,
-        private unitIsTime: boolean) {
+        private unitIsTime: boolean | undefined) {
     }
 
     public async start() {
@@ -62,7 +62,10 @@ class Replayer {
         if (this.replayTo >= 0) {
             if (this.unitIsTime === true) {
                 const lastTimeStamp = fetchedOps[fetchedOps.length].timestamp;
-                return (lastTimeStamp !== undefined && lastTimeStamp - this.firstTimeStamp < this.replayTo);
+                return (
+                    lastTimeStamp !== undefined
+                    && this.firstTimeStamp !== undefined
+                    && lastTimeStamp - this.firstTimeStamp < this.replayTo);
             }
             return fetchCurrent < this.replayTo;
         }
@@ -145,7 +148,8 @@ class Replayer {
                             current += 1;
                         }
 
-                        if (this.replayTo >= 0
+                        if (this.firstTimeStamp !== undefined
+                            && this.replayTo >= 0
                             && currentTimeStamp + nextInterval - this.firstTimeStamp > this.replayTo) {
                             nextInterval = -1;
                         }
@@ -177,7 +181,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
-        unitIsTime: boolean,
+        unitIsTime: boolean | undefined,
     ): Promise<IDocumentDeltaConnection> {
 
         const connection = {
@@ -205,7 +209,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
-        unitIsTime: boolean): Promise<void> {
+        unitIsTime: boolean | undefined): Promise<void> {
 
         const replayer =  new Replayer(
             deltaConnection,
@@ -227,15 +231,15 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.existing;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
-    public get initialContents(): IContentMessage[] {
+    public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] {
+    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
     }
 

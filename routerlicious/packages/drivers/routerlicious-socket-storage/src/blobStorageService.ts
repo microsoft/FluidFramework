@@ -14,12 +14,12 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     constructor(private id: string, public manager: gitStorage.GitManager) {
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
         let requestVerion = version;
         if (!requestVerion) {
             const versions = await this.getVersions(this.id, 1);
             if (versions.length === 0) {
-                return Promise.resolve<api.ISnapshotTree>(null);
+                return Promise.resolve<api.ISnapshotTree | null>(null);
             }
             requestVerion = versions[0];
         }

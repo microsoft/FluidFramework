@@ -34,8 +34,8 @@ export class DeltaStorageService implements api.IDeltaStorageService {
      * Retrieves all the delta operations within the inclusive sequence number range
      */
     public async get(
-        tenantId: string,
-        id: string,
+        tenantId: string | null,
+        id: string | null,
         tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number): Promise<api.ISequencedDocumentMessage[]> {

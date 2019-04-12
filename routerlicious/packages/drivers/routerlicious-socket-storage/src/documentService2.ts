@@ -15,7 +15,7 @@ export class DocumentService2 extends DocumentService {
         gitUrl: string,
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
-        directCredentials: ICredentials) {
+        directCredentials: ICredentials | undefined) {
         super(ordererUrl, deltaStorageUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials, null);
     }
     public async connectToDeltaStream(

@@ -20,8 +20,8 @@ export class DocumentService implements api.IDocumentService {
         private errorTracking: api.IErrorTrackingService,
         private disableCache: boolean,
         private historianApi: boolean,
-        private directCredentials: ICredentials,
-        private gitCache: IGitCache) {}
+        private directCredentials: ICredentials | undefined,
+        private gitCache: IGitCache | null | undefined) {}
 
     public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
         return new TokenProvider(tokens.jwt);
@@ -38,7 +38,7 @@ export class DocumentService implements api.IDocumentService {
 
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our
         // tenant token
-        let credentials: ICredentials;
+        let credentials: ICredentials | undefined;
         if (this.directCredentials) {
             credentials = this.directCredentials;
         } else {
@@ -99,7 +99,7 @@ export class DocumentService implements api.IDocumentService {
     }
 
     public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string> {
-        let headers = null;
+        let headers: {Authorization: string} | null = null;
         const token = (tokenProvider as TokenProvider).token;
         if (token) {
             headers = {

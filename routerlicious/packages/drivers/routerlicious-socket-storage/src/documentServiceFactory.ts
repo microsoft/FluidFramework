@@ -17,7 +17,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         private errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private disableCache: boolean = false,
         private historianApi: boolean = true,
-        private gitCache: IGitCache = null,
+        private gitCache: IGitCache | null = null,
         private credentials?: ICredentials) {}
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {

@@ -14,7 +14,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: IDocumentStorageManager) {
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
         const tree = await this.storageManager.getTree(version);
         return buildHierarchy(tree);
     }
@@ -33,11 +33,11 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return response.content;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined> {
         return this.storageManager.write(tree, parents, message);
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined> {
         return this.storageManager.createBlob(file);
     }
 

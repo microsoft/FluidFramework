@@ -11,7 +11,7 @@ export interface IConnect {
     id: string;
 
     // Authorization token
-    token: string;
+    token: string | null;
 
     // Type of the client trying to connect
     client: IClient;
@@ -33,7 +33,7 @@ export interface IConnected {
     maxMessageSize: number;
 
     // The parent branch for the document
-    parentBranch: string;
+    parentBranch: string | null;
 
     // Messages sent during the connection
     initialMessages?: ISequencedDocumentMessage[];

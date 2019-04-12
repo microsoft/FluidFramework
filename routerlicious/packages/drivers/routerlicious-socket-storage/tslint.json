@@ -5,6 +5,7 @@
         "function-name": false,
         "newline-before-return": false,
         "no-console": false,
+        "no-non-null-assertion": false,
         "no-null-keyword": false,
         "no-relative-imports": false,
         "no-reserved-keywords": false,
@@ -13,6 +14,7 @@
         "no-unnecessary-type-assertion": false,
         "prefer-readonly": false,
         "prefer-type-cast": false,
-        "promise-function-async": false
+        "promise-function-async": false,
+        "strict-boolean-expressions": false
     }
 }

@@ -10,7 +10,7 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return "";
     }
 
-    public getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
         return null;
     }
 
@@ -26,15 +26,15 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return "";
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | null> {
         return null;
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | null> {
         return null;
     }
 
-    public getRawUrl(sha: string): string {
+    public getRawUrl(sha: string): string | null {
         return null;
     }
 }

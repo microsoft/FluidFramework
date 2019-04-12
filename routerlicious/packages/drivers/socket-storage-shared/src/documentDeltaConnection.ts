@@ -18,7 +18,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     public static async Create(
         tenantId: string,
         id: string,
-        token: string,
+        token: string | null,
         io: SocketIOClientStatic,
         client: IClient,
         url: string): Promise<IDocumentDeltaConnection> {
@@ -128,7 +128,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return this.details.existing;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
@@ -136,11 +136,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return this.details.maxMessageSize;
     }
 
-    public get initialMessages(): ISequencedDocumentMessage[] {
+    public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
     }
 
-    public get initialContents(): IContentMessage[] {
+    public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
     }
 

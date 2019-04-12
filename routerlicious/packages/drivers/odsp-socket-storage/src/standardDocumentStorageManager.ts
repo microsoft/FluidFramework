@@ -5,13 +5,13 @@ import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";
 
 export interface IDocumentStorageManager {
-    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
+    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined>;
     getBlob(blobid: string): Promise<resources.IBlob>;
     getContent(version: resources.ICommit, path: string): Promise<resources.IBlob>;
     getRawUrl(blobid: string): string;
-    getTree(version?: resources.ICommit): Promise<resources.ITree>;
+    getTree(version?: resources.ICommit): Promise<resources.ITree | null>;
     getVersions(blobid: string, count: number): Promise<resources.ICommit[]>;
-    write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
+    write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined>;
 }
 
 export class StandardDocumentStorageManager implements IDocumentStorageManager {
@@ -29,16 +29,16 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             standardTokenProvider.getStorageQueryParams());
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined> {
         // TODO: Implement
         return undefined;
     }
 
-    public async getTree(version?: resources.ICommit): Promise<resources.ITree> {
+    public async getTree(version?: resources.ICommit): Promise<resources.ITree | null> {
         // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
         const id = (version && version.sha) ? version.sha : "latest";
         const tree = await this.restWrapper.get<resources.ITree>(`/trees/${id}`)
-            .catch((error) => (error === 400 || error === 404) ? undefined : Promise.reject(error));
+            .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
         if (!tree || !tree.tree) {
             return null;
         }
@@ -65,7 +65,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
         // fetch the latest snapshot versions for the document
         const versionsResponse = await this.restWrapper
             .get<IDocumentStorageGetVersionsResponse>("/versions", { count })
-            .catch((error) => (error === 400 || error === 404) ? undefined : Promise.reject(error));
+            .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
         if (versionsResponse && Array.isArray(versionsResponse.value)) {
             return versionsResponse.value;
         }
@@ -77,7 +77,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
         return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.sha, path });
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined> {
         // TODO: Implement
         return undefined;
     }

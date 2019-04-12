@@ -126,7 +126,7 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree>;
+    getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree | null | undefined>;
 
     /**
      * Retrieves all versions of the document starting at the specified sha - or null if from the head
@@ -136,27 +136,27 @@ export interface IDocumentStorageService {
     /**
      * Retrieves the content for the given commit at the given path
      */
-    getContent(version: resources.ICommit, path: string): Promise<string>;
+    getContent(version: resources.ICommit, path: string): Promise<string | undefined>;
 
     /**
      * Reads the object with the given ID
      */
-    read(sha: string): Promise<string>;
+    read(sha: string): Promise<string | undefined>;
 
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit | undefined | null>;
 
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse>;
+    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse | undefined | null>;
 
     /**
      * Fetch image Data url
      */
-    getRawUrl(sha: string): string;
+    getRawUrl(sha: string): string | null | undefined;
 }
 
 // Error tracking service.
@@ -186,7 +186,7 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * The parent branch for the document
      */
-    parentBranch: string;
+    parentBranch: string | null;
 
     /**
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
@@ -256,12 +256,12 @@ export interface IDocumentService {
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string>;
+    branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string | null>;
 
     /**
      * Returns the error tracking service
      */
-    getErrorTrackingService(): IErrorTrackingService;
+    getErrorTrackingService(): IErrorTrackingService | null;
 }
 
 export interface IDocumentServiceFactory {

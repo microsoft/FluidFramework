@@ -4,7 +4,7 @@ import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
-    parentBranch: string;
+    parentBranch: string | null;
     initialMessages?: ISequencedDocumentMessage[];
     initialContents?: IContentMessage[];
     maxMessageSize: number;

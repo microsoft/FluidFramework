@@ -10,7 +10,9 @@
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
+        "no-unsafe-any": false,
         "prefer-type-cast": false,
-        "promise-function-async": false
+        "promise-function-async": false,
+        "strict-boolean-expressions": false
     }
 }

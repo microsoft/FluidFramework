@@ -36,7 +36,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
         to?: number): Promise<api.ISequencedDocumentMessage[]> {
         const query = querystring.stringify({ from, to });
 
-        let headers = null;
+        let headers: {Authorization: string} | null = null;
 
         const token = (tokenProvider as TokenProvider).token;
 

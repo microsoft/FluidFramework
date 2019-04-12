@@ -269,7 +269,7 @@ export class Container extends EventEmitter implements IContainer {
         let sequenceNumber: number | undefined | null = 0;
         if (lastVersion.length > 0) {
             const attributesAsString = await this.storageService!.getContent(lastVersion[0], ".attributes");
-            const decoded = Buffer.from(attributesAsString, "base64").toString();
+            const decoded = Buffer.from(attributesAsString!, "base64").toString();
             const attributes = JSON.parse(decoded) as IDocumentAttributes;
             sequenceNumber = attributes.sequenceNumber;
         }
@@ -325,7 +325,7 @@ export class Container extends EventEmitter implements IContainer {
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
                 return tree !== null
-                    ? readAndParse<IDocumentAttributes>(storage!, tree.blobs[".attributes"]!)
+                    ? readAndParse<IDocumentAttributes>(storage!, tree!.blobs[".attributes"]!)
                     : {
                         branch: this.id,
                         clients: [],
@@ -343,13 +343,13 @@ export class Container extends EventEmitter implements IContainer {
 
         // ...load in the existing quorum
         const quorumP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage!, tree));
+            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage!, tree!));
 
         // ...instantiate the chaincode defined on the document
         const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
-            ([storage, tree]) => this.loadBlobManager(storage!, tree));
+            ([storage, tree]) => this.loadBlobManager(storage!, tree!));
 
         // Wait for all the loading promises to finish
         return Promise
@@ -391,7 +391,7 @@ export class Container extends EventEmitter implements IContainer {
                 this.context = await Context.Load(
                     this,
                     chaincode.chaincode,
-                    tree,
+                    tree!,
                     new Map(),
                     attributes,
                     this.blobManager,

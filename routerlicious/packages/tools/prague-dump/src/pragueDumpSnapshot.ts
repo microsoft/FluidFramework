@@ -20,12 +20,19 @@ import {
 } from "./pragueDumpArgs";
 
 async function fetchSnapshotTreeBlobs(
-    storage: IDocumentStorageService, tree: ISnapshotTree, prefix: string = "", saveTreeDir?: string) {
+    storage: IDocumentStorageService,
+    tree: ISnapshotTree | undefined,
+    prefix: string = "",
+    saveTreeDir?: string) {
     if (saveTreeDir === undefined && dumpSnapshotTrees) {
         console.log(tree);
     }
 
-    let result = new Array<{ path: string, sha: string, blob: Promise<string> }>();
+    if (tree === undefined) {
+        return;
+    }
+
+    let result = new Array<{ path: string, sha: string, blob: Promise<string | undefined> }>();
     const itemPrefix = prefix !== "" ? prefix : "!CONTAINER!/";
     for (const item of Object.keys(tree.blobs)) {
         const path = `${itemPrefix}${item}`;
@@ -47,20 +54,36 @@ async function fetchSnapshotTreeBlobs(
             await writeFile(`${saveTreeDir}/${componentVersions[0].sha}.json`,
                 JSON.stringify(componentSnapShotTree, undefined, 2));
         }
-        const componentBlobs =
-            await fetchSnapshotTreeBlobs(storage, componentSnapShotTree, `${prefix}[${component}]/`, saveTreeDir);
-        result = result.concat(componentBlobs);
+        if (componentSnapShotTree !== null) {
+            const componentBlobs = await fetchSnapshotTreeBlobs(
+                storage,
+                componentSnapShotTree,
+                `${prefix}[${component}]/`,
+                saveTreeDir);
+            if (componentBlobs !== undefined) {
+                result = result.concat(componentBlobs);
+            }
+        }
     }
 
     for (const subtree of Object.keys(tree.trees)) {
-        result = result.concat(
-            await fetchSnapshotTreeBlobs(storage, tree.trees[subtree], `${prefix}${subtree}/`, saveTreeDir));
+        const componentBlobs = await fetchSnapshotTreeBlobs(
+            storage, tree.trees[subtree],
+            `${prefix}${subtree}/`,
+            saveTreeDir);
+        if (componentBlobs !== undefined) {
+            result = result.concat(componentBlobs);
+        }
     }
     return result;
 }
 
 async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapshotTree) {
     const blobs = await fetchSnapshotTreeBlobs(storage, tree);
+
+    if (blobs === undefined) {
+        return;
+    }
 
     let size = 0;
     const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
@@ -72,6 +95,9 @@ async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapsho
     for (const item of sorted) {
         try {
             const blob = await item.blob;
+            if (blob === undefined) {
+                continue;
+            }
             if (dumpSnapshotStats || dumpSnapshotBlobs) {
                 console.log(`${item.path.padEnd(75)}| ${blob.length}`);
             }
