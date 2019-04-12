@@ -2,11 +2,11 @@ import {
     LocalClientId,
     Marker,
     ReferenceType,
-    SubSequence,
     TextSegment,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import * as assert from "assert";
+import { SubSequence } from "../sharedSequence";
 
 const segmentTypes = [
     {

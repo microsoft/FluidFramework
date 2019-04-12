@@ -180,6 +180,22 @@ export class Client {
         return undefined;
     }
 
+    public walkSegments(start: number, end: number, handler: (segment: ISegment) => void) {
+
+        this.mergeTree.mapRange(
+            {
+                leaf: (segment) => {
+                    handler(segment);
+                    return true;
+                },
+            },
+            this.getCurrentSeq(),
+            this.getClientId(),
+            undefined,
+            start,
+            (end === undefined) ? this.getLength() : end);
+    }
+
     /**
      * Performs the annotate based on the provided op
      * @param opArgs - The ops args for the op

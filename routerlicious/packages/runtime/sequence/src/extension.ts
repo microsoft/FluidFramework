@@ -1,6 +1,7 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
-import { SharedNumberSequence, SharedObjectSequence} from "./sequence";
+import { SharedNumberSequence} from "./sharedNumberSequence";
+import { SharedObjectSequence} from "./sharedObjectSequence";
 import { SharedString } from "./sharedString";
 
 export class SharedStringExtension implements ISharedObjectExtension {

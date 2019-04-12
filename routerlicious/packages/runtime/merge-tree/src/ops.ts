@@ -60,8 +60,6 @@ export interface IRelativePosition {
     offset?: number;
 }
 
-export type SequenceItem = object | number;
-
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
     type: MergeTreeDeltaType.INSERT;
     pos1?: number;

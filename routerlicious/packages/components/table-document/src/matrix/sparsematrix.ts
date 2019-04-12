@@ -6,12 +6,12 @@ import {
     LocalClientId,
     PropertySet,
     SegmentType,
-    SubSequence,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
 import {
     SharedSegmentSequence,
+    SubSequence,
 } from "@prague/sequence";
 import { UnboxedOper } from "../../../client-ui/ext/calc";
 

@@ -14,3 +14,6 @@ export {
 export * from "./sequence";
 export * from "./extension";
 export * from "./sequenceDeltaEvent";
+export {IJSONRunSegment, SubSequence} from "./sharedSequence";
+export * from "./sharedObjectSequence";
+export * from "./sharedNumberSequence";

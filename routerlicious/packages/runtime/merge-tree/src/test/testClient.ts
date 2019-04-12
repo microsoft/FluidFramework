@@ -1,9 +1,9 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import { Client } from "../client";
 import * as Collections from "../collections";
-import { Marker, SubSequence, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
+import { ISegment, Marker, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
-import { IMarkerDef, IMergeTreeOp, ReferenceType, SequenceItem } from "../ops";
+import { IJSONSegment, IMarkerDef, IMergeTreeOp, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 
 export function specToSegment(spec: any) {
@@ -15,11 +15,6 @@ export function specToSegment(spec: any) {
     const maybeMarker = Marker.fromJSONObject(spec);
     if (maybeMarker) {
         return maybeMarker;
-    }
-
-    const maybeSubSequence = SubSequence.fromJSONObject(spec);
-    if (maybeSubSequence) {
-        return maybeSubSequence;
     }
 
     throw new Error(`Unrecognized IJSONSegment type: '${JSON.stringify(spec)}'`);
@@ -35,8 +30,21 @@ export class TestClient extends Client {
     protected readonly q: Collections.List<ISequencedDocumentMessage> =
         Collections.ListMakeHead<ISequencedDocumentMessage>();
 
-    constructor(initText: string, options?: PropertySet) {
-        super(initText, specToSegment, options);
+    constructor(
+        initText: string,
+        options?: PropertySet,
+        ...handlers: Array<(spec: any) => ISegment>) {
+        super(
+            initText,
+            (spec: any) => {
+                for (const handler of handlers.concat(specToSegment)) {
+                    const segment = handler(spec);
+                    if (segment) {
+                        return segment;
+                    }
+                }
+            },
+        options);
     }
 
     public enqueueTestString() {
@@ -128,33 +136,8 @@ export class TestClient extends Client {
             clientId));
     }
 
-    public insertItemsRemote(
-        pos: number,
-        items: SequenceItem[],
-        props: PropertySet,
-        seq: number,
-        refSeq: number,
-        clientId: number,
-    ) {
-        const segment = new SubSequence(items);
-        if (props) {
-            segment.addProperties(props);
-        }
-        this.applyMsg(this.makeOpMessage(
-            createInsertSegmentOp(pos, segment),
-            seq,
-            refSeq,
-            clientId));
-    }
-
     public relText(clientId: number, refSeq: number) {
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.mergeTree.getText(refSeq, clientId)}`;
-    }
-
-    public relItems(clientId: number, refSeq: number) {
-        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ` +
-            `${this.mergeTree.getItems(refSeq, clientId)
-                .toString()}`;
     }
 
     public makeOpMessage(
