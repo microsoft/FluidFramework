@@ -8,6 +8,10 @@ import * as url from "url";
 import { LocalPlatform } from "./localPlatform";
 import { WebLoader } from "./webLoader";
 
+interface IWindow extends Window {
+    closeContainer(): void;
+}
+
 async function attach(loader: Loader, baseUrl: string, platform: LocalPlatform) {
     console.log(baseUrl);
     const response = await loader.request({ url: baseUrl });
@@ -111,14 +115,14 @@ function checkContainerActivity(container: Container) {
     const quorum = container.getQuorum();
     quorum.on("removeMember", (clientId: string) => {
         if (container.clientId === clientId) {
-            (window as any).closeContainer();
+            (window as IWindow).closeContainer();
         } else {
             for (const client of quorum.getMembers()) {
                 if (!client[1].client || !client[1].client.type || client[1].client.type === Browser) {
                     return;
                 }
             }
-            (window as any).closeContainer();
+            (window as IWindow).closeContainer();
         }
     });
 }
