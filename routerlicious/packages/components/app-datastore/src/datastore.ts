@@ -42,11 +42,16 @@ class InsecureUrlResolver implements IUrlResolver {
 
         // tslint:disable-next-line:no-http-string - Replacing protocol so URL will parse.
         const parsedUrl = new URL(request.url.replace(/^prague:\/\//, "http://"));
-        const [tenantId, documentId] = parsedUrl.pathname.substr(1).split("/");
+        const [tenantId, documentId, ...pathParts] = parsedUrl.pathname.substr(1).split("/");
+        let path = pathParts.join("/");
+        if (path.length > 0) {
+            path = `/${encodeURIComponent(path)}`;
+        }
 
         const documentUrl = `prague://${new URL(this.ordererUrl).host}` +
             `/${encodeURIComponent(tenantId)}` +
-            `/${encodeURIComponent(documentId)}`;
+            `/${encodeURIComponent(documentId)}` +
+            `${path}`;
 
         const deltaStorageUrl =
             `${this.ordererUrl}/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
@@ -153,10 +158,13 @@ export class DataStore {
             this.documentServiceFactory,
             this.codeLoader,
             { blockUpdateMarkers: true });
-
         const baseUrl =
             // tslint:disable-next-line:max-line-length
             `${this.ordererUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
+        const url = `${baseUrl}${
+                // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
+                (path && path.charAt(0)) !== "/" ? "/" : ""
+            }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);
         const container = await loader.resolve({ url: baseUrl });
@@ -167,11 +175,6 @@ export class DataStore {
         let acceptResultOut: (value: T) => void;
         // tslint:disable-next-line:promise-must-complete
         const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
-
-        const url = `${baseUrl}${
-            // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
-            (path && path.charAt(0)) !== "/" ? "/" : ""
-        }${path}`;
 
         debug(`attaching url = ${url}`);
         container.on("contextChanged", async () => {
@@ -185,6 +188,7 @@ export class DataStore {
         // package.
         if (!container.existing) {
             debug("initializing chaincode");
+
             await initializeChaincode(container, chaincodePackage)
                 .catch((error) => { console.assert(false, `chaincode error: ${error}`); });
             debug("chaincode initialized");
