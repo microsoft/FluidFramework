@@ -24,7 +24,7 @@
         "no-document-write": true,
         "no-eval": true,
         "no-exec-script": true,
-        "no-function-constructor-with-string-args": true,
+        "function-constructor": true,
         "no-http-string": [true, "http://.*"],
         "no-inner-html": true,
         "no-octal-literal": true,
@@ -36,6 +36,10 @@
         "possible-timing-attack": true,
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
-        "react-no-dangerous-html": true
+        "react-no-dangerous-html": true,
+
+        // Deprecated Rules. These rules are deprecated. Disabling them so that they don't get applied.
+        "no-function-constructor-with-string-args": false,
+        "no-unnecessary-bind": false
     }
 }

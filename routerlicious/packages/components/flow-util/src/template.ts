@@ -46,7 +46,7 @@ class Cursor {
     public end() {
         let pathFn = this.pathFns.get(this.pathName);
         if (!pathFn) {
-            // tslint:disable-next-line:no-function-constructor-with-string-args
+            // tslint:disable-next-line:function-constructor
             pathFn = new Function("root", this.path) as (element: Element) => Element;
             this.pathFns.set(this.pathName, pathFn);
         }

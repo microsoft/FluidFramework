@@ -10,6 +10,7 @@
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unnecessary-local-variable": false,
+        "no-unsafe-any": false,
         "prefer-array-literal": false,
         "prefer-readonly": false,
         "prefer-type-cast": false,
