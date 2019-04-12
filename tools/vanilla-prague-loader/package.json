@@ -1,12 +1,16 @@
 {
   "name": "@prague/vanilla-loader",
-  "version": "0.0.1",
+  "version": "0.0.13-office",
   "main": "dist/index.js",
+  "publishConfig": {
+    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry"
+  },
   "dependencies": {
-    "@ms/office-prague-container": "0.3.8",
-    "@prague/app-datastore": "^0.2.5915",
+    "@ms/office-prague-container": "0.3.20-demo",
+    "@prague/container-loader": "^0.2.5915",
     "@prague/loader-web": "^0.2.5915",
     "@prague/routerlicious-socket-storage": "^0.2.5915",
+    "@prague/container-definitions": "^0.2.5915",
     "url-parse": "^1.4.4"
   },
   "devDependencies": {

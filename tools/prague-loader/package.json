@@ -1,15 +1,13 @@
 {
   "name": "@prague/react-loader",
-  "version": "0.0.16",
+  "version": "0.0.28-office",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry"
+  },
   "dependencies": {
-    "@ms/office-prague-container": "0.3.8",
-    "@prague/app-component": "^0.2.5915",
-    "@prague/app-datastore": "^0.2.5915",
-    "@prague/loader-web": "^0.2.5915",
-    "@prague/map": "^0.2.5915",
-    "@prague/routerlicious-socket-storage": "^0.2.5915",
-    "@prague/runtime-definitions": "^0.2.5915",
+    "@prague/vanilla-loader": "0.0.13-office",
     "react": "^16.8.4",
     "url-parse": "^1.4.4"
   },
