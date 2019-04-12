@@ -7,7 +7,7 @@ import {
 import { ParsedPath, posix as pathutil } from "path";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
-import { ISharedDirectory } from "./interfaces";
+import { ISharedDirectory, IValueChanged } from "./interfaces";
 import { SharedMap } from "./map";
 import { DirectoryView, ILocalViewElement } from "./view";
 
@@ -92,7 +92,7 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve, reject) => {
-            const callback = (value: { key: string }) => {
+            const callback = (value: IValueChanged) => {
                 if (path === value.key) {
                     resolve(this.getPath(value.key));
                     this.removeListener("valueChanged", callback);
@@ -112,7 +112,8 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
         const parsedPath = pathutil.parse(relPath);
         const subdir = this.ensureSubDirectories(parsedPath);
         subdir.setKey(parsedPath.name, value);
-        this.emit("valueChanged", { path }, local, op);
+        const event: IValueChanged = { key: path };
+        this.emit("valueChanged", event, local, op);
     }
 
     public ensureSubDirectories(parsedPath: ParsedPath) {

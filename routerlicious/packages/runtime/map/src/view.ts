@@ -4,7 +4,7 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IRuntime } from "@prague/runtime-definitions";
 import { IMapOperation, IMapValue } from "./definitions";
 import { SharedDirectory } from "./directory";
-import { IValueOpEmitter, SerializeFilter } from "./interfaces";
+import { IValueChanged, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { SharedMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
@@ -22,7 +22,8 @@ class ValueOpEmitter implements IValueOpEmitter {
         };
 
         this.map.submitMapMessage(op);
-        this.map.emit("valueChanged", { key: this.key }, true, null);
+        const event: IValueChanged = { key: this.key };
+        this.map.emit("valueChanged", event, true, null);
     }
 }
 
@@ -194,7 +195,8 @@ export class MapView {
 
     public setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedDocumentMessage) {
         this.data.set(key, value);
-        this.map.emit("valueChanged", { key }, local, op);
+        const event: IValueChanged = { key };
+        this.map.emit("valueChanged", event, local, op);
     }
 
     public prepareSetCore(key: string, value: IMapValue): Promise<ILocalViewElement> {
@@ -208,7 +210,10 @@ export class MapView {
 
     public deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
         const successfullyRemoved = this.data.delete(key);
-        this.map.emit("valueChanged", { key }, local, op);
+        if (successfullyRemoved) {
+            const event: IValueChanged = { key };
+            this.map.emit("valueChanged", event, local, op);
+        }
         return successfullyRemoved;
     }
 

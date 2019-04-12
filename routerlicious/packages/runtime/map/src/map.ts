@@ -217,7 +217,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
                 const handler = getOpHandler(op);
                 const value = this.view.get(op.key);
                 handler.process(value, op.value.value, context, local, message);
-                this.emit("valueChanged", { key: op.key }, local, message);
+                const event: IValueChanged = { key: op.key };
+                this.emit("valueChanged", event, local, message);
             },
 
             submit: (op) => {

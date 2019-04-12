@@ -18,15 +18,6 @@ export interface IValueChanged {
     key: string;
 }
 
-/**
- * Type of "KeyValueChanged" event parameter
- */
-export interface IKeyValueChanged {
-    key: string;
-
-    value: any;
-}
-
 export interface IValueOpEmitter {
     emit(name: string, params: any);
 }
