@@ -44,6 +44,7 @@ const debug = require("debug")("prague:shared-text");
 import * as url from "url";
 import { controls, ui } from "./controls";
 import { Document } from "./document";
+import { createCacheHTML } from "./pageCacher";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
@@ -236,6 +237,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         return collabDoc;
     }
 
+    // Leader can run tasks directly.
     private listenForLeaderEvent() {
         if (this.runtime.leader) {
             this.runTask("intel");
@@ -262,6 +264,14 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             case "spell":
                 console.log(`@chaincode/shared-text running ${clientType}`);
                 Spellcheker.run(this.sharedString);
+                break;
+            case "cache":
+                console.log(`@chaincode/shared-text running ${clientType}`);
+                // Todo: Wrap this in a snapshot like scheduler
+                setInterval(() => {
+                    console.log(`Generated cached page in chaincode`);
+                    createCacheHTML();
+                }, 10000);
                 break;
             default:
                 break;
@@ -394,7 +404,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         }
     });
 
-    runtime.registerTasks(["snapshot", "spell", "translation"], "1.0");
+    // Registering for tasks to run in headless runner.
+    runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
 
     waitForFullConnection(runtime).then(() => {
         // Call snapshot directly from runtime.

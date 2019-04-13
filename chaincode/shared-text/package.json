@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/shared-text",
-  "version": "0.3.1003",
+  "version": "0.3.1005",
   "description": "Shared text",
   "main": "dist/index.js",
   "module": "lib/index.js",

@@ -2,11 +2,7 @@ import { EventEmitter } from "events";
 import * as puppeteer from "puppeteer";
 import * as winston from "winston";
 import { ICache } from "../redisCache";
-import { createCacheHTML } from "./cacheGenerator";
 import { generateLoaderHTML } from "./htmlGenerator";
-
-const cachingIntervalMS = 10000;
-const cachePiggybackType = "snapshot";
 
 export interface ICloseEvent {
     documentId: string;
@@ -96,17 +92,18 @@ export class PuppetMaster extends EventEmitter {
         });
     }
 
-    // todo (mdaumi): Right now we piggyback on a agent to cache the page.
-    // May be make this an independent agent?
-    private upsertPageCache() {
-        if (this.cache && this.agentType === cachePiggybackType) {
-            this.cachingTimer = setInterval(async () => {
-                this.cache.set(`${this.tenantId}-${this.documentId}`, await createCacheHTML(this.page)).then(() => {
+    // Code running inside Browser will invoke cachePage with the generated cached HTML.
+    // Puppeteer will cache that in redis.
+    private async upsertPageCache() {
+        await this.page.exposeFunction("cachePage", async (pageHTML: string) => {
+            winston.info(`Caching page for ${this.tenantId}/${this.documentId}/${this.agentType}`);
+            if (this.cache) {
+                this.cache.set(`${this.tenantId}-${this.documentId}`, pageHTML).then(() => {
                     winston.info(`Updated page cache for ${this.tenantId}/${this.documentId}`);
                 }, (err) => {
                     winston.error(err);
                 });
-            }, cachingIntervalMS);
-        }
+            }
+        });
     }
 }
