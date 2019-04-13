@@ -21,15 +21,11 @@ import {
 
 async function fetchSnapshotTreeBlobs(
     storage: IDocumentStorageService,
-    tree: ISnapshotTree | undefined,
+    tree: ISnapshotTree,
     prefix: string = "",
     saveTreeDir?: string) {
     if (saveTreeDir === undefined && dumpSnapshotTrees) {
         console.log(tree);
-    }
-
-    if (tree === undefined) {
-        return;
     }
 
     let result = new Array<{ path: string, sha: string, blob: Promise<string | undefined> }>();
@@ -54,15 +50,13 @@ async function fetchSnapshotTreeBlobs(
             await writeFile(`${saveTreeDir}/${componentVersions[0].sha}.json`,
                 JSON.stringify(componentSnapShotTree, undefined, 2));
         }
-        if (componentSnapShotTree !== null) {
+        if (componentSnapShotTree) {
             const componentBlobs = await fetchSnapshotTreeBlobs(
                 storage,
                 componentSnapShotTree,
                 `${prefix}[${component}]/`,
                 saveTreeDir);
-            if (componentBlobs !== undefined) {
-                result = result.concat(componentBlobs);
-            }
+            result = result.concat(componentBlobs);
         }
     }
 
@@ -71,20 +65,13 @@ async function fetchSnapshotTreeBlobs(
             storage, tree.trees[subtree],
             `${prefix}${subtree}/`,
             saveTreeDir);
-        if (componentBlobs !== undefined) {
-            result = result.concat(componentBlobs);
-        }
+        result = result.concat(componentBlobs);
     }
     return result;
 }
 
 async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapshotTree) {
     const blobs = await fetchSnapshotTreeBlobs(storage, tree);
-
-    if (blobs === undefined) {
-        return;
-    }
-
     let size = 0;
     const sorted = blobs.sort((a, b) => a.path.localeCompare(b.path));
 
@@ -123,6 +110,9 @@ async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, 
     console.log(`Saving snapshot ${suffix}`);
     const outDir = `${paramSave}/${suffix}/`;
     const snapshotTree = await storage.getSnapshotTree(version);
+    if (!snapshotTree) {
+        return Promise.reject("Failed to load snapshot tree");
+    }
     const mkdir = util.promisify(fs.mkdir);
     const writeFile = util.promisify(fs.writeFile);
 
@@ -131,6 +121,10 @@ async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, 
     const blobs = await fetchSnapshotTreeBlobs(storage, snapshotTree, "", outDir);
     await Promise.all(blobs.map(async (blob) => {
         const data = await blob.blob;
+        if (data === undefined) {
+            console.error(`ERROR: Unable to get data for blob ${blob.sha}`);
+            return;
+        }
         // tslint:disable-next-line:non-literal-fs-path
         await writeFile(`${outDir}/${blob.sha}`, data);
 
