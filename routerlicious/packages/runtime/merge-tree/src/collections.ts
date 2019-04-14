@@ -1214,6 +1214,23 @@ export class TST<T> {
         this.collect(x.mid, { text: prefix.text + x.c }, q);
         this.collect(x.right, prefix, q);
     }
+    
+    mapNode(x: TSTNode<T>, prefix: TSTPrefix, fn: (key:string, val: T) => void) {
+        if (x===undefined) {
+            return;
+        }
+        const key = prefix.text + x.c;
+        this.mapNode(x.left, prefix, fn);
+        if (x.val) {
+            fn(key, x.val);
+        }
+        this.mapNode(x.mid, { text: key }, fn);
+        this.mapNode(x.right, prefix, fn);
+    }
+
+    map(fn: (key:string, val: T) => void) {
+        this.mapNode(this.root, { text: "" }, fn);
+    }
 
     pairsWithPrefix(text: string) {
         let q = <TSTResult<T>[]>[];

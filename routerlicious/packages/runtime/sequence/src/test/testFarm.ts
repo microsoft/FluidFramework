@@ -2076,16 +2076,16 @@ export function tstSimpleCmd() {
     let tst = new MergeTree.TST<ICmd>();
     tst.put("zest", { description: "zesty" });
     tst.put("nest", { description: "nesty" });
-    tst.put("newt", { description: "nesty" });
-    tst.put("neither", { description: "nesty" });
-    tst.put("restitution", { description: "nesty" });
-    tst.put("restful", { description: "nesty" });
-    tst.put("fish", { description: "nesty" });
-    tst.put("nurf", { description: "nesty" });
-    tst.put("reify", { description: "resty" });
-    tst.put("pert", { description: "pesty" });
+    tst.put("newt", { description: "newty" });
+    tst.put("neither", { description: "neithery" });
+    tst.put("restitution", { description: "restitutiony" });
+    tst.put("restful", { description: "restfuly" });
+    tst.put("fish", { description: "fishy" });
+    tst.put("nurf", { description: "nurfy" });
+    tst.put("reify", { description: "reifyy" });
+    tst.put("pert", { description: "perty" });
     tst.put("jest", { description: "jesty" });
-    tst.put("jestcuz", { description: "jesty2" });
+    tst.put("jestcuz", { description: "jestcuzy" });
     let res = tst.pairsWithPrefix("je");
     console.log("trying je");
     for (let pair of res) {
@@ -2101,6 +2101,12 @@ export function tstSimpleCmd() {
     for (let pair of res) {
         console.log(`key: ${pair.key} val: ${pair.val.description}`);
     }
+    res=[];
+    tst.map((key,val)=> res.push({key, val}));
+    console.log("trying map");
+    for (let pair of res) {
+        console.log(`key: ${pair.key} val: ${pair.val.description}`);
+    }
 }
 
 let rangeTreeTest = false;
@@ -2108,8 +2114,8 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = true;
-let tstTest = false;
+let clientServerTest = false;
+let tstTest = true;
 let firstTest = false;
 let ivalTest = false;
 

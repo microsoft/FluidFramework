@@ -97,6 +97,15 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Farm",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js" ],
+            "protocol": "inspector",
+            "program": "${workspaceFolder}/packages/runtime/sequence/dist/test/testFarm.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "STroll",
             "sourceMaps": true,
             "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],

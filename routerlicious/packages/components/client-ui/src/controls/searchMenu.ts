@@ -1,19 +1,26 @@
 // tslint:disable:align
+import * as MergeTree from "@prague/merge-tree";
 import { CharacterCodes } from "../text";
 import * as ui from "../ui";
 import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 
-// tslint:disable-next-line:interface-name
-export interface Item {
-    key: string;
-    div?: HTMLDivElement;
-    iconURL?: string;
+export interface ISearchMenuParam {
+    possibleValues(): string[];
+    defaultValue(): string;
 }
 
-export function namesToItems(names: string[]): Item[] {
-    const items: Item[] = new Array(names.length);
+export interface ISearchMenuCommand<TContext = any> {
+    div?: HTMLDivElement;
+    exec?: (context?: TContext) => void;
+    enabled?: (context?: TContext) => boolean;
+    iconHTML?: string;
+    key: string;
+}
+
+export function namesToItems(names: string[]): ISearchMenuCommand[] {
+    const items: ISearchMenuCommand[] = new Array(names.length);
 
     for (let i = 0, len = names.length; i < len; i++) {
         items[i] = { key: names[i] };
@@ -29,11 +36,11 @@ export interface ISelectionListBox {
     prevItem();
     nextItem();
     removeHighlight();
-    showSelectionList(selectionItems: Item[], hintSelection?: string);
+    showSelectionList(selectionItems: ISearchMenuCommand[], hintSelection?: string);
     selectItem(key: string);
-    items(): Item[];
+    items(): ISearchMenuCommand[];
     getSelectedKey(): string;
-    getSelectedItem(): Item;
+    getSelectedItem(): ISearchMenuCommand;
     getSelectionIndex(): number;
     setSelectionIndex(indx: number);
     keydown(e: KeyboardEvent);
@@ -48,7 +55,7 @@ export function selectionListBoxCreate(
     varHeight?: number): ISelectionListBox {
 
     const listContainer = document.createElement("div");
-    let items: Item[];
+    let items: ISearchMenuCommand[];
     let itemCapacity: number;
     let selectionIndex = -1;
     let topSelection = 0;
@@ -223,18 +230,17 @@ export function selectionListBoxCreate(
         itemSpan.innerText = "  " + item.key;
         itemDiv.appendChild(itemSpan);
 
-        if (item.iconURL) {
-            const icon = document.createElement("img");
-            icon.style.cssFloat = "left";
-            icon.style.height = itemHeight + "px";
-            icon.style.width = itemHeight + "px";
-            icon.setAttribute("src", item.iconURL);
+        if (item.iconHTML) {
+            const icon = document.createElement("span");
+            // tslint:disable:no-inner-html
+            icon.innerHTML = item.iconHTML;
+            icon.style.marginRight = "2px";
             itemDiv.insertBefore(icon, itemSpan);
         }
         return itemDiv;
     }
 
-    function showSelectionList(selectionItems: Item[], hintSelection?: string) {
+    function showSelectionList(selectionItems: ISearchMenuCommand[], hintSelection?: string) {
         topSelection = 0;
         items = selectionItems;
         domutils.clearSubtree(listContainer);
@@ -279,13 +285,14 @@ export function selectionListBoxCreate(
 }
 
 export interface ISearchBox {
-    showSelectionList(selectionItems: Item[]);
+    showAllItems();
+    showSelectionList(selectionItems: ISearchMenuCommand[]);
     dismiss(): void;
-    keydown(e: KeyboardEvent);
-    keypress(e: KeyboardEvent);
+    keydown(e: KeyboardEvent): void;
+    keypress(e: KeyboardEvent): boolean;
     getSearchString(): string;
     getSelectedKey(): string;
-    getSelectedItem(): Item;
+    getSelectedItem(): ISearchMenuCommand;
     updateText();
 }
 
@@ -391,8 +398,10 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
     }
 }
 
-export function searchBoxCreate(boundingElm: HTMLElement,
-    searchStringChanged: (searchString: string) => void): ISearchBox {
+export function searchBoxCreate(context: any, boundingElm: HTMLElement,
+    cmdTree: MergeTree.TST<ISearchMenuCommand>,
+    foldCase = true,
+    cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): ISearchBox {
     const container = document.createElement("div");
     const inputElmHeight = 32;
     const itemHeight = 24;
@@ -409,9 +418,40 @@ export function searchBoxCreate(boundingElm: HTMLElement,
         getSelectedKey,
         keydown,
         keypress,
-        showSelectionList: (items) => selectionListBox.showSelectionList(items),
+        showAllItems,
+        showSelectionList,
         updateText,
     };
+
+    function showSelectionList(items: ISearchMenuCommand[]) {
+        if (selectionListBox) {
+            selectionListBox.showSelectionList(items);
+        }
+    }
+
+    function showAllItems() {
+        const items = [] as ISearchMenuCommand[];
+        cmdTree.map((k, v) => items.push(v));
+        if (items.length > 0) {
+            showSelectionList(items);
+            if (selectionListBox) {
+                showListContainer(selectionListBox.items().length === 0);
+            }
+        }
+    }
+
+    function lookup(text: string) {
+        let prefix = text;
+        if (foldCase) {
+            prefix = prefix.toLowerCase();
+        }
+        const items = cmdTree.pairsWithPrefix(prefix).map((res) => {
+            return res.val;
+        }).filter((cmd) => {
+            return (!cmd.enabled) || cmd.enabled(context);
+        });
+        showSelectionList(items);
+    }
 
     function getSelectedKey() {
         return selectionListBox.getSelectedKey();
@@ -448,8 +488,21 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     }
 
     function keypress(e: KeyboardEvent) {
-        if (e.charCode >= 32) {
+        if (e.charCode === CharacterCodes.cr) {
+            const cmd = getSelectedItem();
+
+            // If the searchbox successfully resolved to a simple command, execute it.
+            if (cmd && cmd.exec) {
+                cmd.exec(context);
+            } else {
+                if (cmdParser) {
+                    cmdParser(getSearchString(), cmd);
+                }
+            }
+            return true;
+        } else if (e.charCode >= 32) {
             inputBox.keypress(e);
+            return false;
         }
     }
 
@@ -473,7 +526,7 @@ export function searchBoxCreate(boundingElm: HTMLElement,
     function updateText() {
         const text = inputBox.getText();
         if (text.length > 0) {
-            searchStringChanged(text);
+            lookup(text);
             if (selectionListBox) {
                 const items = selectionListBox.items();
                 if (items) {

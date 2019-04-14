@@ -24,6 +24,7 @@ import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
+import * as MathMenu from "./mathMenu";
 import { PresenceSignal } from "./presenceSignal";
 import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
@@ -93,9 +94,7 @@ function altsToItems(alts: Alt[]) {
     return alts.map((v) => ({ key: v.text }));
 }
 
-export interface IFlowViewCmd extends SearchMenu.Item {
-    exec?: (flowView: FlowView) => void;
-    enabled?: (flowView: FlowView) => boolean;
+export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 }
 
 let viewOptions: Object;
@@ -717,7 +716,7 @@ function renderSegmentIntoLine(
                 lineContext.span = makeMathSpan(lineContext.mathSegpos, 0);
                 Katex.render(lineContext.mathBuffer, lineContext.span,
                     { throwOnError: false });
-                lineContext.span.style.borderBottom = "solid blue 1px";
+                // lineContext.span.style.borderBottom = "solid blue 1px";
                 lineContext.span.style.marginLeft = "2px";
                 lineContext.span.style.marginRight = "2px";
                 lineContext.contentDiv.appendChild(lineContext.span);
@@ -2822,7 +2821,7 @@ export interface IReferenceDoc {
 }
 
 export interface IListReferenceDoc extends IReferenceDoc {
-    items: SearchMenu.Item[];
+    items: SearchMenu.ISearchMenuCommand[];
     selectionIndex: number;
 }
 
@@ -4073,35 +4072,9 @@ export class FlowView extends ui.Component {
             if (this.focusChild) {
                 this.focusChild.keypressHandler(e);
             } else if (this.activeSearchBox) {
-                if (e.charCode === CharacterCodes.cr) {
-                    const cmd = this.activeSearchBox.getSelectedItem() as IFlowViewCmd;
-
-                    // If the searchbox successfully resolved to a simple command, execute it.
-                    if (cmd && cmd.exec) {
-                        cmd.exec(this);
-                    } else {
-                        // TODO: A micro-language for inserting components would be helpful here.
-                        const searchString = this.activeSearchBox.getSearchString();
-
-                        // If it starts with "=", assume it's a formula definition.
-                        if (searchString.startsWith("=")) {
-                            this.insertFormula(searchString);
-                        }
-
-                        // If it starts with "*", assume it's a slider definition.
-                        if (searchString.startsWith("*")) {
-                            this.insertSlider("=" + searchString.substring(1));
-                        }
-
-                        // If it starts with &, assume it's a document ID
-                        if (searchString.startsWith("&")) {
-                            this.insertDocument(searchString.substring(1));
-                        }
-                    }
+                if (this.activeSearchBox.keypress(e)) {
                     this.activeSearchBox.dismiss();
                     this.activeSearchBox = undefined;
-                } else {
-                    this.activeSearchBox.keypress(e);
                 }
             } else {
                 const pos = this.cursor.pos;
@@ -4109,6 +4082,16 @@ export class FlowView extends ui.Component {
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
                     this.insertParagraph(pos);
+                } else if ((code === CharacterCodes.backslash) && this.inMath()) {
+                    this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
+                        (s,cmd) => {
+                            if (cmd) {
+                            this.sharedString.insertText(cmd.texString, pos);
+                            } else {
+                                this.sharedString.insertText("\\"+s, pos);
+                            }
+                        });
+                    this.activeSearchBox.showAllItems();
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
                 }
@@ -4124,6 +4107,11 @@ export class FlowView extends ui.Component {
         this.on("keypress", keypressHandler);
         this.keypressHandler = keypressHandler;
         this.keydownHandler = keydownHandler;
+    }
+
+    public inMath() {
+        const tileInfo = findTile(this, this.cursor.pos, "math");
+        return tileInfo && (tileInfo.tile.properties.mathEnd);
     }
 
     public endOfMathRegion(posInRegion: number) {
@@ -4444,7 +4432,7 @@ export class FlowView extends ui.Component {
     }
 
     public insertList() {
-        const testList: SearchMenu.Item[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
+        const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
             selectionIndex: 0,
@@ -4748,16 +4736,25 @@ export class FlowView extends ui.Component {
                 break;
             }
             case CharacterCodes.M: {
-                this.activeSearchBox = SearchMenu.searchBoxCreate(this.viewportDiv, (searchString) => {
-                    const prefix = this.activeSearchBox.getSearchString().toLowerCase();
-                    const items = this.cmdTree.pairsWithPrefix(prefix).map((res) => {
-                        return res.val;
-                    }).filter((cmd) => {
-                        return (!cmd.enabled) || cmd.enabled(this);
-                    });
-                    this.activeSearchBox.showSelectionList(items);
-                    // TODO: consolidate with the cr case
-                });
+                const cmdParser = (searchString: string) => {
+                    // TODO: A micro-language for inserting components would be helpful here.
+                    // If it starts with "=", assume it's a formula definition.
+                    if (searchString.startsWith("=")) {
+                        this.insertFormula(searchString);
+                    }
+
+                    // If it starts with "*", assume it's a slider definition.
+                    if (searchString.startsWith("*")) {
+                        this.insertSlider("=" + searchString.substring(1));
+                    }
+
+                    // If it starts with &, assume it's a document ID
+                    if (searchString.startsWith("&")) {
+                        this.insertDocument(searchString.substring(1));
+                    }
+                };
+                this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
+                    this.cmdTree, true, cmdParser);
                 break;
             }
             case CharacterCodes.L:
