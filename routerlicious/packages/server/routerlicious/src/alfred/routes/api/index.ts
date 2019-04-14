@@ -17,7 +17,7 @@ export function create(
     const router: Router = Router();
     const deltasRoute = deltas.create(config, mongoManager, appTenants);
     const documentsRoute = documents.create(storage, appTenants);
-    const apiRoute = api.create(config, producer, appTenants, tenantManager, storage);
+    const apiRoute = api.create(producer, tenantManager, storage);
 
     router.use(cors());
     router.use("/deltas", deltasRoute);

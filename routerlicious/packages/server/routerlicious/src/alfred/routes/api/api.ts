@@ -4,86 +4,129 @@ import {
     ITokenClaims,
 } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
-import { Provider } from "nconf";
 import {
-    craftClientJoinLeaveMessage,
+    craftClientJoinMessage,
+    craftClientLeaveMessage,
     craftMapSet,
     craftOpMessage,
     IMapSetOperation } from "./restHelper";
 
 const Robot = "robot";
 export function create(
-    config: Provider,
     producer: core.IProducer,
-    appTenants: core.IAlfredTenant[],
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage): Router {
 
     const router: Router = Router();
 
-    router.patch("/:tenantId?/:id", async (request, response) => {
-        const token = request.headers["access-token"] as string;
-        if (token) {
-            const tenantId = request.params.tenantId || appTenants[0].id;
+    function returnResponse<T>(
+        resultP: Promise<T>,
+        request: Request,
+        response: Response,
+        opBuilder: (request: Request) => any[]) {
+        resultP.then(() => {
+            const tenantId = request.params.tenantId;
             const documentId = request.params.id;
-            const claims = jwt.decode(token) as ITokenClaims;
-            if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
-                response.status(400).json( {error: "Invalid access token"} );
-            } else {
-                const tokenP = tenantManager.verifyToken(tenantId, token);
-                const docP = storage.getDocument(tenantId, documentId);
-                Promise.all([docP, tokenP]).then(([document, verify]) => {
-                    // Check document existence.
-                    if (document) {
-                        const clientId = moniker.choose();
+            const clientId = moniker.choose();
+            sendJoin(tenantId, documentId, clientId, producer);
+            sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+            sendLeave(tenantId, documentId, clientId, producer);
+            response.status(200).json();
+        },
+        (error) => response.status(400).end(error.toString()));
+    }
 
-                        const reqOps = request.body as IMapSetOperation[];
+    router.patch("/:tenantId/:id/root", async (request, response) => {
+        const validP = verifyRequest(request, tenantManager, storage);
+        returnResponse(validP, request, response, mapSetBuilder);
+    });
 
-                        const detail: IClient = {
-                            permission: [],
-                            type: Robot,
-                            user: claims.user,
-                        };
-                        const clientDetail: IClientJoin = {
-                            clientId,
-                            detail,
-                        };
-
-                        // Send join message.
-                        const joinMessage = craftClientJoinLeaveMessage(tenantId, documentId, clientDetail);
-                        producer.send(joinMessage, tenantId, documentId);
-
-                        let clSeqNum = 1;
-                        for (const reqOp of reqOps) {
-                            const content = craftMapSet(reqOp);
-                            const opMessage = craftOpMessage(
-                                tenantId,
-                                documentId,
-                                clientId,
-                                JSON.stringify(content),
-                                clSeqNum++);
-                            producer.send(opMessage, tenantId, documentId);
-                        }
-
-                        // Send leave message.
-                        const leaveMessage = craftClientJoinLeaveMessage(tenantId, documentId, clientId);
-                        producer.send(leaveMessage, tenantId, documentId);
-
-                        response.status(200).json();
-                    } else {
-                        response.status(400).json( {error: "Document not found"} );
-                    }
-                }, () => {
-                    response.status(401).json();
-                });
-            }
-        } else {
-            response.status(400).json( {error: "Missing access token"} );
-        }
+    router.post("/:tenantId/:id/blobs", async (request, response) => {
+        // upload blob here
+        response.status(200).json();
     });
 
     return router;
+}
+
+function mapSetBuilder(request: Request): any[] {
+    const reqOps = request.body as IMapSetOperation[];
+    const ops = [];
+    for (const reqOp of reqOps) {
+        ops.push(craftMapSet(reqOp));
+    }
+    return ops;
+}
+
+function sendJoin(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
+    const detail: IClient = {
+        permission: [],
+        type: Robot,
+        user: {id: "Rest-Client"},
+    };
+    const clientDetail: IClientJoin = {
+        clientId,
+        detail,
+    };
+
+    const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
+    producer.send(joinMessage, tenantId, documentId);
+}
+
+function sendLeave(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
+    const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
+    producer.send(leaveMessage, tenantId, documentId);
+}
+
+function sendOp(
+    request: Request,
+    tenantId: string,
+    documentId: string,
+    clientId: string,
+    producer: core.IProducer,
+    opBuilder: (request: Request) => any[]) {
+    const opContents = opBuilder(request);
+    let clientSequenceNumber = 1;
+    for (const content of opContents) {
+        const opMessage = craftOpMessage(
+            tenantId,
+            documentId,
+            clientId,
+            JSON.stringify(content),
+            clientSequenceNumber++);
+        producer.send(opMessage, tenantId, documentId);
+    }
+}
+
+async function verifyRequest(
+    request: Request,
+    tenantManager: core.ITenantManager,
+    storage: core.IDocumentStorage) {
+        return Promise.all([verifyToken(request, tenantManager), checkDocumentExistence(request, storage)]);
+}
+
+async function verifyToken(request: Request, tenantManager: core.ITenantManager): Promise<void> {
+    const token = request.headers["access-token"] as string;
+    if (!token) {
+        return Promise.reject("Missing access token");
+    }
+    const tenantId = request.params.tenantId;
+    const documentId = request.params.id;
+    const claims = jwt.decode(token) as ITokenClaims;
+    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
+        return Promise.reject("Invalid access token");
+    }
+    return tenantManager.verifyToken(tenantId, token);
+}
+
+async function checkDocumentExistence(request: Request, storage: core.IDocumentStorage): Promise<any> {
+    const tenantId = request.params.tenantId;
+    const documentId = request.params.id;
+    if (!tenantId || !documentId) {
+        return Promise.reject("Invalid tenant or document id");
+    }
+    return storage.getDocument(tenantId, documentId);
 }
