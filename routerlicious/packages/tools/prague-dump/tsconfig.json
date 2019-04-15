@@ -8,6 +8,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "strict": true, /* Enable all strict type-checking options. */
+    "strictNullChecks": false
   },
   "include": [
     "src/**/*.ts"
