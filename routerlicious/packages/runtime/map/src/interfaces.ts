@@ -16,10 +16,11 @@ export interface ISet<T> {
  */
 export interface IValueChanged {
     key: string;
+    previousValue: any;
 }
 
 export interface IValueOpEmitter {
-    emit(name: string, params: any);
+    emit(name: string, previousValue: any, params: any);
 }
 
 /**

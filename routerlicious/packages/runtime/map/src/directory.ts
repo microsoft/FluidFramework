@@ -111,8 +111,9 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
         }
         const parsedPath = pathutil.parse(relPath);
         const subdir = this.ensureSubDirectories(parsedPath);
+        const previousValue = subdir.getKey(parsedPath.name);
         subdir.setKey(parsedPath.name, value);
-        const event: IValueChanged = { key: path };
+        const event: IValueChanged = { key: path, previousValue };
         this.emit("valueChanged", event, local, op);
     }
 

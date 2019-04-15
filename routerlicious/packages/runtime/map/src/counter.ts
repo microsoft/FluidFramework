@@ -27,9 +27,10 @@ export class Counter {
     public onIncrement = (value: number) => { return; };
 
     public increment(value: number, submit = true) {
+        const previousValue = this._value;
         this._value = this._value + value;
         if (submit) {
-            this.emitter.emit("increment", value);
+            this.emitter.emit("increment", previousValue, value);
         }
 
         this.onIncrement(value);

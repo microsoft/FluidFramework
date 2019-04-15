@@ -11,18 +11,18 @@ class ValueOpEmitter implements IValueOpEmitter {
     constructor(private readonly type: string, private readonly key: string, private readonly map: SharedMap) {
     }
 
-    public emit(name: string, params: any) {
+    public emit(operation: string, previousValue: any, params: any) {
         const op: IMapOperation = {
             key: this.key,
             type: this.type,
             value: {
-                type: name,
+                type: operation,
                 value: params,
             },
         };
 
         this.map.submitMapMessage(op);
-        const event: IValueChanged = { key: this.key };
+        const event: IValueChanged = { key: this.key, previousValue };
         this.map.emit("valueChanged", event, true, null);
     }
 }
@@ -194,8 +194,9 @@ export class MapView {
     }
 
     public setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedDocumentMessage) {
+        const previousValue = this.get(key);
         this.data.set(key, value);
-        const event: IValueChanged = { key };
+        const event: IValueChanged = { key, previousValue };
         this.map.emit("valueChanged", event, local, op);
     }
 
@@ -209,9 +210,10 @@ export class MapView {
     }
 
     public deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
+        const previousValue = this.get(key);
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
-            const event: IValueChanged = { key };
+            const event: IValueChanged = { key, previousValue };
             this.map.emit("valueChanged", event, local, op);
         }
         return successfullyRemoved;

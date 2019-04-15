@@ -604,7 +604,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                this.emitter.emit("add", serializedInterval);
+                this.emitter.emit("add", undefined, serializedInterval);
             } else {
                 if (this.onDeserialize) {
                     this.onDeserialize(interval, context);

@@ -24,25 +24,29 @@ export class DistributedSet<T> {
     public onDelete = (value: T) => { return; };
 
     public add(value: T, submitEvent = true): DistributedSet<T> {
-        this.internalSet.add(value);
+        if (!this.internalSet.has(value)) {
+            this.internalSet.add(value);
 
-        if (submitEvent) {
-            this.emitter.emit("add", value);
+            if (submitEvent) {
+                this.emitter.emit("add", undefined, value);
+            }
+
+            this.onAdd(value);
         }
-
-        this.onAdd(value);
 
         return this;
     }
 
     public delete(value: T, submitEvent = true): DistributedSet<T> {
-        this.internalSet.delete(value);
+        if (this.internalSet.has(value)) {
+            this.internalSet.delete(value);
 
-        if (submitEvent) {
-            this.emitter.emit("delete", value);
+            if (submitEvent) {
+                this.emitter.emit("delete", value, value);
+            }
+
+            this.onDelete(value);
         }
-
-        this.onDelete(value);
 
         return this;
     }
