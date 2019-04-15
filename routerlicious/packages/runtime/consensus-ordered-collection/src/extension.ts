@@ -10,6 +10,7 @@ export class ConsensusQueueExtension implements IConsensusOrderedCollectionExten
     public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
     public type: string = ConsensusQueueExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,
@@ -37,6 +38,7 @@ export class ConsensusStackExtension implements IConsensusOrderedCollectionExten
     public static Type = "https://graph.microsoft.com/types/consensus-stack";
 
     public type: string = ConsensusStackExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,

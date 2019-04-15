@@ -1,3 +1,4 @@
+import { ISharedObjectExtension } from "@prague/api-definitions";
 import {
     ConnectionState,
     FileMode,
@@ -37,6 +38,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
+import { debug } from "./debug";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 
 export interface IChannelState {
@@ -382,6 +384,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
                 // Add in the object attributes to the returned tree
                 const objectAttributes: IChannelAttributes = {
+                    snapshotFormatVersion: object.object.snapshotFormatVersion,
                     type: object.object.type,
                 };
                 snapshot.entries.push({
@@ -539,6 +542,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const value = await this.loadChannel(
             attachMessage.id,
             attachMessage.type,
+            undefined,
             message.minimumSequenceNumber,
             services,
             origin);
@@ -557,6 +561,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         const channelDetails = await this.loadChannel(
             id,
             channelAttributes.type,
+            channelAttributes.snapshotFormatVersion,
             this.deltaManager.minimumSequenceNumber,
             services,
             branch);
@@ -569,12 +574,20 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private async loadChannel(
         id: string,
         type: string,
+        snapshotFormatVersion: string | undefined,
         minSequenceNumber: number,
         services: IObjectServices,
         originBranch: string): Promise<IChannelState> {
 
         // Pass the transformedMessages - but the object really should be storing this
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
+        const extension = this.chaincode.getModule(type) as ISharedObjectExtension;
+
+        // compare snapshot version to collaborative object version
+        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== extension.snapshotFormatVersion) {
+            debug(`Snapshot version mismatch. Type: ${type}, ` +
+                    `Snapshot format version: ${snapshotFormatVersion}, ` +
+                    `client format version: ${extension.snapshotFormatVersion}`);
+        }
 
         // TODO need to fix up the SN vs. MSN stuff here. If want to push messages to object also need
         // to store the mappings from channel ID to doc ID.

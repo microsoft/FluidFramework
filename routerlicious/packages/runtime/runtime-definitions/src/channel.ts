@@ -14,6 +14,8 @@ export interface IChannel {
 
     readonly type: string;
 
+    readonly snapshotFormatVersion?: string;
+
     snapshot(): ITree;
 
     isLocal(): boolean;

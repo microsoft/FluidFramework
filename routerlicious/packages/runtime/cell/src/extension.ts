@@ -10,6 +10,7 @@ export class CellExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/cell";
 
     public type: string = CellExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,

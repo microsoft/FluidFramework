@@ -16,6 +16,7 @@ export class OwnedMapExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/ownedmap";
 
     public type: string = OwnedMapExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         runtime: IRuntime,

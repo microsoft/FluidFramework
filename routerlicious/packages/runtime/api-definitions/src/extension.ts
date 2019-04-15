@@ -12,6 +12,7 @@ export interface IExtension {
  * Definitions of a shared extensions. Extensions follow a common model but enable custom behavior.
  */
 export interface ISharedObjectExtension extends IChaincodeModule, IExtension {
+    readonly snapshotFormatVersion: string;
 }
 
 export interface IContentModelExtension extends IExtension {

@@ -16,6 +16,7 @@ export class MapExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/map";
 
     public type: string = MapExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         runtime: IRuntime,

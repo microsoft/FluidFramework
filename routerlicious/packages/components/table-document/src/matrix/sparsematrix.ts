@@ -355,6 +355,7 @@ export class SparseMatrixExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
     public type: string = SparseMatrixExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,

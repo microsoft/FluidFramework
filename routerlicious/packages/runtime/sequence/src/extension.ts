@@ -10,6 +10,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
     public type: string = SharedStringExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,
@@ -34,6 +35,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
     public type: string = SharedObjectSequenceExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,
@@ -58,6 +60,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
     public type: string = SharedNumberSequenceExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
         document: IRuntime,
