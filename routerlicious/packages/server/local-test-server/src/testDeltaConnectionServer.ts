@@ -159,6 +159,7 @@ export function register(
             const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
             const connection = await orderer.connect(socket, message.client);
             connectionsMap.set(connection.clientId, connection);
+            roomMap.set(connection.clientId, `${claims.tenantId}/${claims.documentId}`);
 
             // And return the connection information to the client
             const connectedMessage: socketStorage.IConnected = {
