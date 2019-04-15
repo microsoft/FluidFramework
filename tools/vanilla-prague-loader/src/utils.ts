@@ -11,6 +11,7 @@ export async function initializeChaincode(document: Container, pkg: string): Pro
 
     // Wait for connection so that proposals can be sent
     if (!document.connected) {
+        // tslint:disable-next-line: no-unnecessary-callback-wrapper
         await new Promise<void>((resolve) => document.on("connected", () => resolve()));
     }
 
@@ -29,10 +30,13 @@ export async function attach(loader: Loader, url: string, platform: IPlatform) {
         return;
     }
 
+    // tslint:disable-next-line: switch-default
     switch (response.mimeType) {
         case "prague/component":
             const component = response.value;
+            // tslint:disable-next-line: no-unsafe-any
             component.attach(platform);
+            // tslint:disable-next-line: switch-final-break
             break;
     }
 }

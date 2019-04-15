@@ -1,9 +1,14 @@
 import { Component } from "react";
 import * as React from "react";
-import { ILoaderUrl } from "./url-parser";
 import { LoadPragueComponent } from "@prague/vanilla-loader";
 
-export class Loader extends Component<ILoaderUrl, any> {
+interface ILoaderUrl {
+  url: string;
+  appId: string;
+  getToken: () => Promise<string>;
+}
+
+export class PragueLoader extends Component<ILoaderUrl, any> {
   divRef: React.RefObject<HTMLDivElement>;
   constructor(props: ILoaderUrl) {
     super(props);
@@ -11,7 +16,7 @@ export class Loader extends Component<ILoaderUrl, any> {
   }
 
   async componentDidMount() {
-    LoadPragueComponent(this.props.url, this.props.token, this.divRef.current);
+    LoadPragueComponent(this.props.url, this.props.getToken, this.divRef.current, this.props.appId);
   }
 
   render() {

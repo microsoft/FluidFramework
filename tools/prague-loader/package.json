@@ -1,39 +1,28 @@
 {
   "name": "@prague/react-loader",
-  "version": "0.0.28-office",
+  "version": "0.0.29",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
   "publishConfig": {
-    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry"
+    "registry": "https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
   },
   "dependencies": {
-    "@prague/vanilla-loader": "0.0.13-office",
-    "react": "^16.8.4",
-    "url-parse": "^1.4.4"
+    "@prague/vanilla-loader": "0.0.14",
+    "react": "^16.8.4"
   },
   "devDependencies": {
-    "@types/jest": "24.0.11",
     "@types/node": "11.11.4",
     "@types/react": "16.8.8",
-    "@types/url-parse": "^1.4.3",
     "ts-loader": "^4.5.0",
-    "typescript": "3.3.4000",
+    "typescript": "^3.4.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
   },
   "scripts": {
     "build": "tsc",
-    "pack:dev": "webpack",
-    "deploy": "npm publish --registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+    "pack:dev": "webpack"
+  }
 }

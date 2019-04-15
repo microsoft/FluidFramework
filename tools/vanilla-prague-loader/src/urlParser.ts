@@ -27,29 +27,34 @@ export function URLToLoaderProps(urlString: string): ILoaderProps {
   const path = url.pathname.substr(prePath.length);
 
   const propsWithoutDiv = {
+    chaincode: query.chaincode,
     containerId: container,
-    ordererUrl: "https://" + url.host.replace("www", "alfred"),
-    storageUrl: "https://" + url.host.replace("www", "historian"),
+    ordererUrl: `https://${url.host.replace("www", "alfred")}`,
+    path,
     registryUrl: "https://pragueauspkn-3873244262.azureedge.net",
-    tenant: tenant,
+    storageUrl: `https://${url.host.replace("www", "historian")}`,
+    tenant,
     token: fetchSecret(tenant),
-    path: path,
-    chaincode: query["chaincode"]
   };
   return propsWithoutDiv;
 }
 
-
 function fetchSecret(tenant: string): string {
-    switch(tenant) {
+    switch (tenant) {
         case "stupefied-kilby": {
-            return "4a9211594f7c3daebca3deb8d6115fe2"
+            return "4a9211594f7c3daebca3deb8d6115fe2";
         }
         case "prague": {
             return "43cfc3fbf04a97c0921fd23ff10f9e4b";
         }
+        case "elastic-dijkstra": {
+            return "9f29be02664c7e3fa1f470faa05104ca";
+        }
+        case "github": {
+            return "0bea3f87c186991a69245a29dc3f61d2";
+        }
         default: {
-            throw new Error("Tenant Not Recognized. Use stupefied kilby.")
+            throw new Error("Tenant Not Recognized. Use stupefied kilby.");
         }
     }
 }
