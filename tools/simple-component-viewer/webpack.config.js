@@ -31,8 +31,8 @@ module.exports = {
     devServer: {
         host: '0.0.0.0', // This makes the server public so that others can test by http://hostname ...
         disableHostCheck: true,
-        port: 3000,
-        public: 'localhost:' + 3000,
+        port: 3030,
+        public: 'localhost:' + 3030,
         open: true,
         headers: {
             "Access-Control-Allow-Origin": "*",

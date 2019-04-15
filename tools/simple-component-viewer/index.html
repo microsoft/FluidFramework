@@ -1,0 +1,85 @@
+<html>
+<body>
+<div style='padding: 3px; display: inline-block;'><a>Link:</a><input style='min-width: 800px;' id='link'> </input></div>
+<div style='padding: 3px; display: inline-block;'><a>Token (SPO only):</a><input style='min-width: 800px;' id='token'> </input></div>
+<button id='go' onclick='go()'>go</button>
+<div id='container'></div>
+<script>
+function go() {
+    storeThings();
+    const iframe = document.createElement('iframe');
+    const container = document.getElementById('container');
+    iframe.id = `theframe${container.childElementCount}`;
+    iframe.style.height = '45vw';
+    iframe.style.width = '45vw';
+    iframe.style.maxHeight = '1000px';
+    iframe.style.maxWidth = iframe.style.maxHeight;
+    iframe.style.display = 'block';
+
+    const iFrameContainerDiv = document.createElement('div');
+    iFrameContainerDiv.id = `thediv${container.childElementCount}`;
+    iFrameContainerDiv.style.display = 'inline-block';
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'CLOSE';
+    closeButton.style.width = '45vw';
+    closeButton.style.maxWidth = iframe.style.maxWidth;
+    closeButton.style.display = 'block';
+    closeButton.onclick = () => {
+        document.getElementById(iframe.id).remove();
+        const removeDiv = document.getElementById(iFrameContainerDiv.id);
+        removeDiv.style.visibility = 'hidden';
+        removeDiv.style.width = '0px';
+        removeDiv.style.height = '0px';
+    }
+
+    iFrameContainerDiv.appendChild(iframe);
+    iFrameContainerDiv.appendChild(closeButton);
+    container.appendChild(iFrameContainerDiv);
+
+    container.app
+    
+    const rawframe = document.getElementById(iframe.id);
+    const framedoc = rawframe.contentDocument;
+    if (!framedoc && rawframe.contentWindow) {
+        framedoc = rawframe.contentWindow.document;
+    }
+    var loadPragueScript = document.createElement('script');
+    loadPragueScript.type = "text/javascript";
+    loadPragueScript.src = "dist/loadPrague.js";
+    loadPragueScript.onload = () => {
+        const runScript = document.createElement('script');
+        runScript.text = `
+            loadPrague.default(
+                    "${document.getElementById('link').value}",
+                    "${document.getElementById('token').value}",
+                    document.getElementById('prague-component'));`;
+        framedoc.body.appendChild(runScript);
+    }
+
+    framedoc.body.appendChild(loadPragueScript);
+    
+    const newdiv = document.createElement('div');
+    newdiv.id = 'prague-component';
+    framedoc.body.appendChild(newdiv);
+}
+
+function fillThings() {
+    const token = localStorage.getItem('token');
+    const link = localStorage.getItem('link');
+    if(token) document.getElementById('token').value = token;
+    if(link) document.getElementById('link').value = link;
+}
+function storeThings() {
+    localStorage.setItem('token', document.getElementById('token').value);
+    localStorage.setItem('link', document.getElementById('link').value);
+}
+
+fillThings();   
+
+</script>
+<style>
+    iframe { border: 1px dotted darkgray; }
+</style>
+</body>
+</html>
