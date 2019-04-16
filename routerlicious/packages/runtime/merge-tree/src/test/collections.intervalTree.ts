@@ -32,10 +32,10 @@ class TestInterval implements IInterval {
 }
 
 describe("Collections.IntervalTree", () => {
-    let intervalTree: IntervalTree<IInterval>;
+    let intervalTree: IntervalTree<TestInterval>;
 
     beforeEach(() => {
-       intervalTree = new IntervalTree<IInterval>();
+       intervalTree = new IntervalTree<TestInterval>();
     });
 
     describe(".map", () => {

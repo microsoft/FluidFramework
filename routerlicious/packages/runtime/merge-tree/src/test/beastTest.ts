@@ -190,9 +190,9 @@ export function fileTest1() {
     }
 }
 
-function printTextSegment(textSegment: MergeTree.TextSegment, pos: number) {
+function printTextSegment(textSegment: MergeTree.ISegment, pos: number) {
     console.log(textSegment.toString());
-    console.log(`at [${pos}, ${pos + textSegment.text.length})`);
+    console.log(`at [${pos}, ${pos + textSegment.cachedLength})`);
     return true;
 }
 

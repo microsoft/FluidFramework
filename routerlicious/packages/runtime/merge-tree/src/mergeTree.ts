@@ -1171,7 +1171,7 @@ function incrementalGatherText(segment: ISegment, state: IncrementalMapState<Tex
         let textSegment = <TextSegment>segment;
 
         if (MergeTree.traceGatherText) {
-            console.log(`@cli ${this.collabWindow ? this.collabwindow.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            console.log(`@cli ${state.clientId ? state.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
         }
         if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
             state.context.text += textSegment.text;
@@ -2248,7 +2248,7 @@ export class MergeTree {
     reloadFromSegments(segments: ISegment[]) {
         let segCap = MaxNodesInBlock - 1;
         const measureReloadTime = false;
-        let buildMergeBlock: (nodes: IMergeNode[]) => IMergeBlock = (nodes: ISegment[]) => {
+        let buildMergeBlock: (nodes: IMergeNode[]) => IMergeBlock = (nodes: IMergeNode[]) => {
             const nodeCount = Math.ceil(nodes.length / segCap);
             const blocks: IMergeBlock[] = [];
             let nodeIndex = 0;
