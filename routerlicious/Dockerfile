@@ -18,6 +18,7 @@ WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
+COPY .npmrc .
 
 COPY packages/agents/intelligence-runner/package*.json packages/agents/intelligence-runner/
 COPY packages/agents/snapshotter/package*.json packages/agents/snapshotter/
@@ -33,6 +34,7 @@ COPY packages/components/flow-editor/package*.json packages/components/flow-edit
 COPY packages/components/flow-host/package*.json packages/components/flow-host/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
+COPY packages/components/shared-text/package*.json packages/components/shared-text/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/

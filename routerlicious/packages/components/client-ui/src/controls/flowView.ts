@@ -5,7 +5,7 @@ import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/containe
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { findRandomWord } from "@prague/merge-tree-utils";
-import { IInboundSignalMessage } from "@prague/runtime-definitions";
+import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
@@ -415,6 +415,33 @@ const commands: IFlowViewCmd[] = [
             f.insertChart();
         },
         key: "insert chart",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
+        },
+        key: "insert map",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerComponent("chart", "@chaincode/charts");
+        },
+        key: "insert chart",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerComponent("code", "@chaincode/monaco");
+        },
+        key: "insert monaco",
+    },
+    {
+        exec: (f) => {
+            (navigator as any).clipboard.readText().then((text) => {
+                console.log(`Inserting ${text}`);
+                f.insertDocument(text);
+            });
+        },
+        key: "paste component",
     },
 ];
 
@@ -4414,6 +4441,16 @@ export class FlowView extends ui.Component {
     /** Insert a Chart. */
     public insertChart() {
         this.insertComponent("chart", {});
+    }
+
+    public insertInnerComponent(prefix: string, chaincode: string) {
+        const id = `${prefix}${Date.now()}`;
+
+        const documentRuntime = this.collabDocument.runtime as unknown;
+        const runtime = documentRuntime as IComponentRuntime;
+        runtime.createAndAttachComponent(id, chaincode);
+
+        this.insertComponent("innerComponent", { id, chaincode });
     }
 
     /** Insert an external Document */

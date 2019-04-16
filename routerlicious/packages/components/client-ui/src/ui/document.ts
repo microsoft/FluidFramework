@@ -3,66 +3,10 @@ import * as api from "@prague/client-api";
 import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { WebPlatform } from "@prague/loader-web";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { EventEmitter } from "events";
+import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
 
 const platformSym = Symbol("Document.platform");
-
-class DefinitionGuide extends EventEmitter {
-    private dts: string = "";
-    private components = new Map<string, { root: { entry: any, type: string }, dts: string }>();
-    private value: any;
-
-    constructor() {
-        super();
-    }
-
-    public getDefinition(): string {
-        return this.dts;
-    }
-
-    public getValue(): any {
-        return this.value;
-    }
-
-    public async addComponent(id: string, platform: IPlatform) {
-        const rootP = platform ? platform.queryInterface("root") : Promise.resolve(null);
-        const dtsP = platform ? platform.queryInterface("dts") : Promise.resolve(null);
-        const [root, dts] = await Promise.all([rootP, dtsP]);
-        const details: any = { root, dts };
-
-        this.components.set(id, details);
-        this.generateDts();
-    }
-
-    private generateDts() {
-        let dts = "";
-        const value = {} as any;
-
-        for (const component of this.components) {
-            if (component[1].dts) {
-                dts += component[1].dts;
-                dts += "\n";
-            }
-        }
-
-        dts += "declare interface IComponents {\n";
-        for (const component of this.components) {
-            const type = component[1].root ? component[1].root.type : "any";
-            dts += `    ${component[0]}: ${type}\n`;
-            value[component[0]] = component[1].root ? component[1].root.entry : null;
-        }
-        dts += "}\n";
-        dts += "declare var host: IComponents\n";
-
-        this.dts = dts;
-        this.value = value;
-
-        this.emit("definitionsChanged");
-    }
-}
-
-const definitionGuide = new DefinitionGuide();
 
 export class DocumentState extends BoxState {
     public url: string;
@@ -154,27 +98,7 @@ export class Document extends Block<DocumentState> {
         };
 
         const platformFactory = new PlatformFactory(div, invalidateLayout);
-        const responseP = collabDocument.runtime.loader.request({ url: self.url });
-        const mountedP = responseP.then(async (response) => {
-            self[platformSym] = platformFactory;
-            console.log("Document loaded");
-
-            if (response.status !== 200) {
-                return;
-            }
-
-            switch (response.mimeType) {
-                case "prague/component":
-                    const component = response.value as IComponentRuntime;
-                    const platform = await platformFactory.create();
-                    const componentPlatform = await component.attach(platform);
-                    // query the runtime for its definition - if it exists
-                    definitionGuide.addComponent(component.id, componentPlatform);
-                    break;
-            }
-        });
-
-        mountedP.catch((error) => console.error("Failed to load document"));
+        this.attach(collabDocument, self.url, platformFactory, 0);
 
         // Call 'updating' to update the contents of the div with the updated chart.
         return this.updating(self, context, mountDiv);
@@ -190,5 +114,40 @@ export class Document extends Block<DocumentState> {
         }
 
         return element;
+    }
+
+    private attach(collabDocument: api.Document, url: string, platformFactory: PlatformFactory, tryCount: number) {
+        const responseP = collabDocument.runtime.loader.request({ url });
+        const mountedP = responseP.then(async (response) => {
+            self[platformSym] = platformFactory;
+            console.log("Document loaded");
+
+            // The below retry is a temporary measure until we are able to return an object that can notify
+            // clients of an update to the URL route
+            if (response.status !== 200) {
+                if (tryCount < 3) {
+                    console.log(`Failed to load, trying again ${tryCount}`);
+                    setTimeout(
+                        () => {
+                            this.attach(collabDocument, url, platformFactory, tryCount + 1);
+                        },
+                        1000);
+                } else {
+                    console.log(`Failed to load ${tryCount}`);
+                }
+            }
+
+            switch (response.mimeType) {
+                case "prague/component":
+                    const component = response.value as IComponentRuntime;
+                    const platform = await platformFactory.create();
+                    const componentPlatform = await component.attach(platform);
+                    // query the runtime for its definition - if it exists
+                    definitionGuide.addComponent(component.documentId, componentPlatform);
+                    break;
+            }
+        });
+
+        mountedP.catch((error) => console.error("Failed to load document"));
     }
 }

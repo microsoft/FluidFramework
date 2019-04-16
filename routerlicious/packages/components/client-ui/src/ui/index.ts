@@ -1,6 +1,7 @@
 export * from "./chart";
 export * from "./document";
 export * from "./formula";
+export * from "./innie";
 export * from "./sheetlet";
 export * from "./slider";
 export * from "./flowViewContext";
