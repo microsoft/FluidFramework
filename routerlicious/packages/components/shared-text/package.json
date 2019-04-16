@@ -15,6 +15,7 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"production\"",
+    "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"developement\"",
     "webpack": "webpack --env=\"developement\"",
     "webpack:dev": "webpack --env=\"developement\"",
     "webpack:full": "webpack --env=\"production\""
@@ -43,9 +44,9 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@chaincode/charts": "^0.3.5351",
-    "@chaincode/monaco": "^0.3.5291",
-    "@chaincode/pinpoint-editor": "^0.3.5292",
+    "@chaincode/charts": "^0.3.6236",
+    "@chaincode/monaco": "^0.3.6237",
+    "@chaincode/pinpoint-editor": "^0.3.6239",
     "@prague/api-definitions": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-ui": "^0.3.0",
