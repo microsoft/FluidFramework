@@ -1,0 +1,26 @@
+{
+  "name": "rest-api-tester",
+  "version": "0.0.1",
+  "description": "An utility to test Prague rest api.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run tsc && npm run tslint",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "commander": "^2.19.0",
+    "jsonwebtoken": "^8.4.0",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^8.3.0",
+    "@types/request": "^2.48.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.2.2"
+  }
+}
