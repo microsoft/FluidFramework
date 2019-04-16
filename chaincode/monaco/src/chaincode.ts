@@ -179,7 +179,7 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
                     if (change.rangeLength === 0) {
                         text.insertText(change.text, change.rangeOffset);
                     } else {
-                        text.replaceText(change.text, change.rangeOffset, change.rangeOffset + change.rangeLength);
+                        text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
                     }
                 } else {
                     text.removeText(change.rangeOffset, change.rangeOffset + change.rangeLength);
@@ -238,13 +238,13 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
 
     private mergeInsertDelta(delta: IMergeTreeInsertMsg): void {
         if (typeof delta.pos1 !== "number" ||
-            typeof delta.text !== "string"
+            typeof delta.seg !== "string"
         ) {
             return;
         }
 
         const range = this.offsetsToRange(delta.pos1, delta.pos2);
-        const text = delta.text || "";
+        const text = delta.seg || "";
         this.codeEditor.executeEdits("remote", [ { range, text } ]);
     }
 
