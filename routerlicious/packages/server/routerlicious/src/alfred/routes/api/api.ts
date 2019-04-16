@@ -3,19 +3,24 @@ import {
     IClientJoin,
     ITokenClaims,
 } from "@prague/container-definitions";
+import * as git from "@prague/gitresources";
 import * as core from "@prague/services-core";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
+import { Provider } from "nconf";
+import * as requestAPI from "request";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
     craftMapSet,
     craftOpMessage,
+    IBlobData,
     IMapSetOperation } from "./restHelper";
 
 const Robot = "robot";
 export function create(
+    config: Provider,
     producer: core.IProducer,
     tenantManager: core.ITenantManager,
     storage: core.IDocumentStorage): Router {
@@ -45,8 +50,20 @@ export function create(
     });
 
     router.post("/:tenantId/:id/blobs", async (request, response) => {
-        // upload blob here
-        response.status(200).json();
+        const tenantId = request.params.tenantId;
+        const blobData = request.body as IBlobData;
+        const historian = config.get("worker:blobStorageUrl") as string;
+        const requestToken = Buffer.from(tenantId).toString("base64");
+        const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
+        const requestBody: git.ICreateBlobParams = {
+            content: blobData.content,
+            encoding: "base64",
+        };
+        uploadBlob(uri, requestBody).then((data: git.ICreateBlobResponse) => {
+            response.status(200).json(data);
+        }, (err) => {
+            response.status(400).end(err.toString());
+        });
     });
 
     return router;
@@ -129,4 +146,26 @@ async function checkDocumentExistence(request: Request, storage: core.IDocumentS
         return Promise.reject("Invalid tenant or document id");
     }
     return storage.getDocument(tenantId, documentId);
+}
+
+async function uploadBlob(uri: string, blobData: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+    return new Promise<git.ICreateBlobResponse>((resolve, reject) => {
+        requestAPI(
+            {
+                body: blobData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                json: true,
+                method: "POST",
+                uri,
+            },
+            (err, resp, body) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(body as git.ICreateBlobResponse);
+                }
+            });
+    });
 }

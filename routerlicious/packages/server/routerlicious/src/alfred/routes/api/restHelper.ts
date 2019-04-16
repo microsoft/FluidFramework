@@ -5,12 +5,19 @@ import {
     IDocumentSystemMessage,
     MessageType,
 } from "@prague/container-definitions";
+import * as git from "@prague/gitresources";
 import * as core from "@prague/services-core";
 
 export interface IMapSetOperation {
     op: string;
     path: string;
     value: string;
+}
+
+export interface IBlobData {
+    content: string;
+
+    metadata: git.ICreateBlobParams;
 }
 
 export function craftClientJoinMessage(
