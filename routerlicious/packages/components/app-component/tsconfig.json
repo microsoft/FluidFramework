@@ -5,7 +5,8 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "strict": false,
+        "strict": true,
+        "strictNullChecks": false,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist"

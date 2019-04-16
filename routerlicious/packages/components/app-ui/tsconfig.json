@@ -6,6 +6,7 @@
     ],
     "compilerOptions": {
         "strict": true,
+        "strictNullChecks": false,
         "rootDir": "./src",
         "outDir": "./dist",
         "noFallthroughCasesInSwitch": true,

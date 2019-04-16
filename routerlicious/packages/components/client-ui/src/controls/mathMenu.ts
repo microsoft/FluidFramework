@@ -4,7 +4,7 @@ import * as Katex from "katex";
 import * as SearchMenu from "./searchMenu";
 
 export interface IMathCommand extends SearchMenu.ISearchMenuCommand {
-    arity: number;
+    arity?: number;
     infix?: boolean;
     sub?: boolean;
     exp?: boolean;
