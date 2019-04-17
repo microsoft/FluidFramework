@@ -33,7 +33,7 @@ import { ComponentRuntime } from "./componentRuntime";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
-import { analyzeTasks, getLeaderCandidate } from "./taskAnalyzer";
+import { analyzeTasks } from "./taskAnalyzer";
 
 export interface IComponentRegistry {
     get(name: string): Promise<IComponentFactory>;
@@ -599,13 +599,11 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     }
 
     private proposeLeadership() {
-        if (getLeaderCandidate(this.getQuorum().getMembers()) === this.clientId) {
-            this.leaderElector.proposeLeadership().then(() => {
-                debug(`Leadership proposal accepted for ${this.clientId}`);
-            }, (err) => {
-                debug(`Leadership proposal rejected ${err}`);
-            });
-        }
+        this.leaderElector.proposeLeadership().then(() => {
+            debug(`Leadership proposal accepted for ${this.clientId}`);
+        }, (err) => {
+            debug(`Leadership proposal rejected ${err}`);
+        });
     }
 
     /**
