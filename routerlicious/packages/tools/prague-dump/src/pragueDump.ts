@@ -15,7 +15,6 @@ import { pragueDumpMessages } from "./pragueDumpMessages";
 import { pragueDumpSnapshot } from "./pragueDumpSnapshot";
 
 async function pragueDumpMain() {
-
     await pragueDumpInit();
     if (paramSave !== undefined) {
         const mkdir = util.promisify(fs.mkdir);
