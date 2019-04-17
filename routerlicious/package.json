@@ -4,6 +4,7 @@
   "scripts": {
     "build": "npm run build:compile && npm run tslint",
     "build:compile": "lerna run build:compile --stream",
+    "build:docs": "lerna run build:docs --stream",
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
     "build:full": "npm run build:full:compile && npm run tslint",
     "build:full:compile": "lerna run build:full:compile --stream",
@@ -38,6 +39,7 @@
     "watch:webpack": "lerna run --parallel webpack -- -- --watch"
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.0.41",
     "@microsoft/rush": "^5.5.4",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",

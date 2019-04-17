@@ -110,6 +110,10 @@ You can use the --grep parameter of mocha to limit to a particilar test or suite
 To debug simply add the mocha --inspect-brk parameter `npm run test -- --inspect-brk`. After which you can
 attach to the running tests with VS Code or any other node debugger.
 
+### Documentation
+
+If you want to build API documentation locally, see [Building Documentation](../docs/building-documentation.md).
+
 ## CI/CD
 
 We make use of continuous integration and deployment via VSTS at https://offnet.visualstudio.com/officenet/

@@ -11,3 +11,6 @@ common/temp
 package-deps.json
 
 *.tsbuildinfo
+
+# Temporary api-extractor build artifacts
+packages/_api-extractor-temp/**

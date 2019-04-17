@@ -1,0 +1,25 @@
+{
+  "build": {
+    "content": [
+      {
+        "files": ["**.md", "**.yml"],
+        "exclude": ["old/**", "_site/**", "_template/**"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["images/**", "examples/**/*.html"]
+      }
+    ],
+    "dest": "_site",
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
+    "template": ["default", "_template"],
+    "postProcessors": [],
+    "markdownEngineName": "dfm-latest", // "markdig",
+    "noLangKeyword": false,
+    "keepFileLink": false,
+    "cleanupCacheHistory": false,
+    "disableGitFeatures": false
+  }
+}
