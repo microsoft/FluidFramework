@@ -1,8 +1,10 @@
 import { IDocumentService } from "@prague/container-definitions";
+import { TokenProvider } from "@prague/routerlicious-socket-storage";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { TestDocumentService } from "./testDocumentService";
 
-export function createTestDocumentService(testDeltaConnectionServer: ITestDeltaConnectionServer): IDocumentService {
-    const service = new TestDocumentService(testDeltaConnectionServer);
-    return service;
+export function createTestDocumentService(
+    testDeltaConnectionServer: ITestDeltaConnectionServer,
+    tokenProvider: TokenProvider): IDocumentService {
+        return new TestDocumentService(testDeltaConnectionServer, tokenProvider);
 }

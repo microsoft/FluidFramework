@@ -57,7 +57,6 @@ export class Container extends EventEmitter implements IContainer {
     public static async Load(
         id: string,
         version: string,
-        tokenProvider: ITokenProvider,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
@@ -67,7 +66,6 @@ export class Container extends EventEmitter implements IContainer {
         const container = new Container(
             id,
             options,
-            tokenProvider,
             service,
             codeLoader,
             loader);
@@ -156,7 +154,6 @@ export class Container extends EventEmitter implements IContainer {
     constructor(
         id: string,
         public readonly options: any,
-        private tokenProvider: ITokenProvider,
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         private loader: ILoader,
@@ -302,8 +299,7 @@ export class Container extends EventEmitter implements IContainer {
         // TODO connect to storage needs the token provider
         const storageP = this.service.connectToStorage(
             this.tenantId,
-            this.id,
-            this.tokenProvider)
+            this.id)
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
@@ -631,7 +627,6 @@ export class Container extends EventEmitter implements IContainer {
         this._deltaManager = new DeltaManager(
             this.id,
             this.tenantId,
-            this.tokenProvider,
             this.service,
             clientDetails);
 

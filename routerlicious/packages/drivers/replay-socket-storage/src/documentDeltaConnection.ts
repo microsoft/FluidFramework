@@ -26,7 +26,6 @@ class Replayer {
         private deltaConnection: ReplayDocumentDeltaConnection,
         private tenantId: string,
         private id: string,
-        private tokenProvider: ITokenProvider,
         private documentStorageService: IDocumentDeltaStorageService,
         private replayFrom: number,
         private replayTo: number,
@@ -177,7 +176,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public static async Create(
         tenantId: string,
         id: string,
-        tokenProvider: ITokenProvider,
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -196,7 +194,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
         // tslint:disable-next-line:no-floating-promises
         this.FetchAndEmitOps(
-            deltaConnection, tenantId, id, tokenProvider, documentStorageService, replayFrom, replayTo, unitIsTime);
+            deltaConnection, tenantId, id, documentStorageService, replayFrom, replayTo, unitIsTime);
 
         return deltaConnection;
     }
@@ -205,7 +203,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         deltaConnection: ReplayDocumentDeltaConnection,
         tenantId: string,
         id: string,
-        tokenProvider: ITokenProvider,
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -215,7 +212,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             deltaConnection,
             tenantId,
             id,
-            tokenProvider,
             documentStorageService,
             replayFrom,
             replayTo,

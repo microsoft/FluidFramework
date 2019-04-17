@@ -21,9 +21,8 @@ import {
 async function loadAllSequencedMessages(
     tenantId: string,
     id: string,
-    documentService: IDocumentService,
-    tokenProvider: ITokenProvider): Promise<ISequencedDocumentMessage[]> {
-    const deltaStorage = await documentService.connectToDeltaStorage(tenantId, id, tokenProvider);
+    documentService: IDocumentService): Promise<ISequencedDocumentMessage[]> {
+    const deltaStorage = await documentService.connectToDeltaStorage(tenantId, id);
     const sequencedMessages = new Array<ISequencedDocumentMessage>();
     let curr = 0;
     const batch = 2000;
@@ -41,7 +40,7 @@ async function loadAllSequencedMessages(
     }
 
     const client: IClient = { permission: [], type: "browser", user: { id: "blah" } };
-    const deltaStream = await documentService.connectToDeltaStream(tenantId, id, tokenProvider, client);
+    const deltaStream = await documentService.connectToDeltaStream(tenantId, id, client);
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();
 
@@ -89,13 +88,12 @@ function getObjectId(componentId: string, id: string) {
 
 export async function pragueDumpMessages(
     documentService: IDocumentService,
-    tokenProvider: ITokenProvider,
     tenantId: string,
     id: string) {
 
     const messageStats = dumpMessageStats || dumpChannelStats || dumpDataTypeStats || dumpTotalStats;
     if (dumpMessages || messageStats || paramSave !== undefined) {
-        const sequencedMessages = await loadAllSequencedMessages(tenantId, id, documentService, tokenProvider);
+        const sequencedMessages = await loadAllSequencedMessages(tenantId, id, documentService);
 
         if (paramSave !== undefined) {
             const writeFile = util.promisify(fs.writeFile);

@@ -15,15 +15,23 @@ export class DocumentService2 extends DocumentService {
         gitUrl: string,
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
-        directCredentials: ICredentials | undefined) {
-        super(ordererUrl, deltaStorageUrl, gitUrl, errorTracking, disableCache, historianApi, directCredentials, null);
+        directCredentials: ICredentials | undefined,
+        tokenProvider: TokenProvider) {
+        super(
+            ordererUrl,
+            deltaStorageUrl,
+            gitUrl,
+            errorTracking,
+            disableCache,
+            historianApi,
+            directCredentials,
+            null,
+            tokenProvider);
     }
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        const token = (tokenProvider as TokenProvider).token;
-        return WSDeltaConnection.Create(tenantId, id, token, client, this.ordererUrl);
+        return WSDeltaConnection.Create(tenantId, id, this.tokenProvider.token, client, this.ordererUrl);
     }
 }

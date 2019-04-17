@@ -2,11 +2,13 @@ import { IDocumentService, IErrorTrackingService } from "@prague/container-defin
 import { ICredentials } from "@prague/services-client";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
+import { TokenProvider } from "./tokens";
 
 export function createDocumentService2(
     ordererUrl: string,
     deltaStorageUrl: string,
     gitUrl: string,
+    tokenProvider: TokenProvider,
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
@@ -18,5 +20,6 @@ export function createDocumentService2(
         errorTracking,
         disableCache,
         historianApi,
-        credentials);
+        credentials,
+        tokenProvider);
 }

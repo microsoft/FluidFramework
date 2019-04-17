@@ -37,7 +37,19 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
             Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        return Promise.resolve(socketStorage.createDocumentService(ordererUrl, deltaStorageUrl, storageUrl));
+        const jwtToken = urlAsPragueUrl.tokens.token;
+        if (!jwtToken) {
+            return Promise.reject(`Token was not provided.`);
+        }
+
+        const tokenProvider = new socketStorage.TokenProvider(jwtToken);
+
+        return Promise.resolve(
+            socketStorage.createDocumentService(
+                ordererUrl,
+                deltaStorageUrl,
+                storageUrl,
+                tokenProvider));
     }
 }
 

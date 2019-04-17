@@ -11,7 +11,6 @@ import { paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 
 export let paramDocumentService: IDocumentService;
-export let paramTokenProvider: ITokenProvider;
 export let paramTenantId: string;
 export let paramId: string;
 
@@ -208,11 +207,13 @@ async function initializeODSPCore(server: string, prefix: string, drive: string,
         const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
         return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
     }
-
-    paramDocumentService = new odsp.DocumentService(
-        parsedBody.snapshotStorageUrl, parsedBody.deltaStorageUrl, parsedBody.deltaStreamSocketUrl);
-    paramTokenProvider = await paramDocumentService.createTokenProvider(
-        { storageToken: parsedBody.storageToken, socketToken: parsedBody.socketToken });
+    const tokenProvider = new odsp.TokenProvider(parsedBody.storageToken, parsedBody.socketToken);
+    paramDocumentService =
+        new odsp.DocumentService(
+            parsedBody.snapshotStorageUrl,
+            parsedBody.deltaStorageUrl,
+            parsedBody.deltaStreamSocketUrl,
+            tokenProvider);
     paramTenantId = parsedBody.runtimeTenantId;
     paramId = parsedBody.id;
 }
@@ -266,11 +267,12 @@ async function initializeR11s(server: string, pathname: string) {
 
     const serverSuffix = server.substring(4);
     console.log(`Connecting to r11s: tenantId=${paramTenantId} id:${paramId}`);
+    const tokenProvider = new r11s.TokenProvider(paramJWT);
     paramDocumentService = r11s.createDocumentService(
         `https://alfred.${serverSuffix}`,
         `https://alfred.${serverSuffix}/deltas/${paramTenantId}/${paramId}`,
-        `https://historian.${serverSuffix}/repos/${paramTenantId}`);
-    paramTokenProvider = await paramDocumentService.createTokenProvider({ jwt: paramJWT });
+        `https://historian.${serverSuffix}/repos/${paramTenantId}`,
+        tokenProvider);
 }
 
 const officeServers = [

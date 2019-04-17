@@ -111,8 +111,6 @@ export class Loader extends EventEmitter implements ILoader {
         }
 
         debug(`${canCache} ${connection} ${version}`);
-
-        // TODO: skjokiel - figure out if i want to handle this or not
         const documentService = await this.documentServiceFactory.createDocumentService(resolved);
 
         let container: Container | undefined;
@@ -124,7 +122,6 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed!.id,
                         version,
                         connection,
-                        resolvedAsPrague.tokens,
                         documentService);
                 this.containers.set(versionedId, containerP);
             }
@@ -136,7 +133,6 @@ export class Loader extends EventEmitter implements ILoader {
                     parsed!.id,
                     version,
                     connection,
-                    resolvedAsPrague.tokens,
                     documentService);
         }
 
@@ -147,14 +143,11 @@ export class Loader extends EventEmitter implements ILoader {
         id: string,
         version: string,
         connection: string,
-        tokens: { [key: string]: string },
         documentService: IDocumentService,
     ): Promise<Container> {
-        const tokenProvider = await documentService.createTokenProvider(tokens);
         const container = await Container.Load(
             id,
             version,
-            tokenProvider,
             documentService,
             this.codeLoader,
             this.options,

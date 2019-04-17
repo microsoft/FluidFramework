@@ -7,9 +7,5 @@ export function createReplayDocumentService(
     documentService: IDocumentService,
     unitIsTime?: boolean,
 ): IDocumentService {
-
-    const service = new ReplayDocumentService(
-        replayFrom, replayTo, documentService, unitIsTime);
-
-    return service;
+    return new ReplayDocumentService(replayFrom, replayTo, documentService, unitIsTime);
 }

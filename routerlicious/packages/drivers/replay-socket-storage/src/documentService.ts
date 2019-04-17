@@ -15,36 +15,29 @@ export class ReplayDocumentService implements api.IDocumentService {
                 private unitIsTime: boolean | undefined) {
     }
 
-    public async createTokenProvider(tokens: { [name: string]: string }): Promise<api.ITokenProvider> {
-        return this.documentService.createTokenProvider(tokens);
-    }
-
     public async connectToStorage(
         tenantId: string,
-        id: string,
-        tokenProvider: api.ITokenProvider): Promise<api.IDocumentStorageService> {
+        id: string): Promise<api.IDocumentStorageService> {
 
         return new ReplayDocumentStorageService();
     }
     public async connectToDeltaStorage(
         tenantId: string,
-        id: string,
-        tokenProvider: api.ITokenProvider): Promise<api.IDocumentDeltaStorageService> {
+        id: string): Promise<api.IDocumentDeltaStorageService> {
 
         return new ReplayDeltaStorageService();
     }
     public async connectToDeltaStream(
         tenantId: string,
         id: string,
-        tokenProvider: api.ITokenProvider,
         client: api.IClient): Promise<api.IDocumentDeltaConnection> {
 
         const documentDeltaStorageService: api.IDocumentDeltaStorageService =
-            await this.documentService.connectToDeltaStorage(tenantId, id, tokenProvider);
-        return ReplayDocumentDeltaConnection.Create(tenantId, id, tokenProvider, documentDeltaStorageService,
+            await this.documentService.connectToDeltaStorage(tenantId, id);
+        return ReplayDocumentDeltaConnection.Create(tenantId, id, documentDeltaStorageService,
             this.replayFrom, this.replayTo, this.unitIsTime);
     }
-    public async branch(tenantId: string, id: string, tokenProvider: api.ITokenProvider): Promise<string | null> {
+    public async branch(tenantId: string, id: string): Promise<string | null> {
         return null;
     }
     public getErrorTrackingService() {

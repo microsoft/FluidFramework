@@ -227,22 +227,16 @@ export interface IDocumentDeltaConnection extends EventEmitter {
 
 export interface IDocumentService {
     /**
-     * Converts a raw set of tokens into a token provider
-     */
-    createTokenProvider(tokens: { [name: string]: string }): Promise<ITokenProvider>;
-
-    /**
      * Access to storage associated with the document...
      */
-    connectToStorage(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<IDocumentStorageService>;
+    connectToStorage(tenantId: string, id: string): Promise<IDocumentStorageService>;
 
     /**
      * Access to delta storage associated with the document
      */
     connectToDeltaStorage(
         tenantId: string,
-        id: string,
-        tokenProvider: ITokenProvider): Promise<IDocumentDeltaStorageService>;
+        id: string): Promise<IDocumentDeltaStorageService>;
 
     /**
      * Subscribes to the document delta stream
@@ -250,13 +244,12 @@ export interface IDocumentService {
     connectToDeltaStream(
         tenantId: string,
         id: string,
-        tokenProvider: ITokenProvider,
         client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(tenantId: string, id: string, tokenProvider: ITokenProvider): Promise<string | null>;
+    branch(tenantId: string, id: string): Promise<string | null>;
 
     /**
      * Returns the error tracking service

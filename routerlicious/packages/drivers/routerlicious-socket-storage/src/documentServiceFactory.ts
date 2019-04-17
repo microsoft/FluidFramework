@@ -8,7 +8,8 @@ import {
 import { ICredentials, IGitCache } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
-import {DefaultErrorTracking } from "./errorTracking";
+import { DefaultErrorTracking } from "./errorTracking";
+import { TokenProvider } from "./tokens";
 
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 
@@ -35,6 +36,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
+        const jwtToken = pragueResolvedUrl.tokens.jwt;
+        if (!jwtToken) {
+            return Promise.reject(`Token was not provided.`);
+        }
+
+        const tokenProvider = new TokenProvider(jwtToken);
+
         if (this.useDocumentService2) {
             return Promise.resolve(new DocumentService2(
                 ordererUrl,
@@ -44,7 +52,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.disableCache,
                 this.historianApi,
                 this.credentials,
-            ));
+                tokenProvider));
         }
 
         return Promise.resolve(new DocumentService(
@@ -55,6 +63,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.disableCache,
             this.historianApi,
             this.credentials,
-            this.gitCache));
+            this.gitCache,
+            tokenProvider));
     }
 }

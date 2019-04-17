@@ -1,5 +1,6 @@
 import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import { DocumentService } from "./documentService";
+import { TokenProvider } from "./token";
 
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(private readonly bypassSnapshot = false) {}
@@ -20,7 +21,14 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}][ordererUrl:${ordererUrl}]`);
         }
 
+        const storageToken = pragueResolvedUrl.tokens.storageToken;
+        const socketToken = pragueResolvedUrl.tokens.socketToken;
+        if (!storageToken || !socketToken) {
+            return Promise.reject(`All tokens must be provided. [storageToken:${storageToken}][socketToken:${socketToken}]`);
+        }
+
+        const tokenProvider = new TokenProvider(storageToken, socketToken);
         return Promise.resolve(
-            new DocumentService(storageUrl, deltaStorageUrl, ordererUrl, this.bypassSnapshot));
+            new DocumentService(storageUrl, deltaStorageUrl, ordererUrl, tokenProvider, this.bypassSnapshot));
     }
 }

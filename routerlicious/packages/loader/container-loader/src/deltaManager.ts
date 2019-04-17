@@ -110,7 +110,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     constructor(
         private id: string,
         private tenantId: string,
-        private tokenProvider: ITokenProvider,
         private service: IDocumentService,
         private client: IClient) {
         super();
@@ -192,7 +191,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Connect to the delta storage endpoint
         const storageDeferred = new Deferred<IDocumentDeltaStorageService>();
         this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage(this.tenantId, this.id, this.tokenProvider).then(
+        this.service.connectToDeltaStorage(this.tenantId, this.id).then(
             (deltaStorage) => {
                 storageDeferred.resolve(deltaStorage);
             },
@@ -363,7 +362,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         DeltaConnection.Connect(
             this.tenantId,
             this.id,
-            this.tokenProvider,
             this.service,
             this.client).then(
             (connection) => {
