@@ -1,3 +1,5 @@
+import { EMLINK } from "constants";
+
 // Called from a few contexts, inclusions are called render
 export function clearSubtree(elm: HTMLElement) {
     const removeList: Node[] = [];
@@ -8,6 +10,22 @@ export function clearSubtree(elm: HTMLElement) {
     }
     for (const node of removeList) {
         elm.removeChild(node);
+    }
+}
+
+export function findFirstMatch(root: HTMLElement, match: (elm: HTMLElement) => boolean): HTMLElement {
+    if (match(root)) {
+        return root;
+    } else {
+        let childElement = root.firstElementChild as HTMLElement;
+        while (childElement) {
+            const result = findFirstMatch(childElement, match);
+            if (result) {
+                return result;
+            } else {
+                childElement = childElement.nextElementSibling as HTMLElement;
+            }
+        }
     }
 }
 

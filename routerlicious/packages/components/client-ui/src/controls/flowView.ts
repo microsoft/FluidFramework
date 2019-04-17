@@ -1,4 +1,5 @@
-// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types no-angle-bracket-type-assertion
+// tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
+// tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
@@ -664,6 +665,10 @@ function allowDOMEvents(element: HTMLElement) {
     return element;
 }
 
+interface IMathEndMarker extends MergeTree.Marker {
+    outerSpan: HTMLSpanElement;
+}
+
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -741,15 +746,36 @@ function renderSegmentIntoLine(
                 lineContext.mathSegpos = segpos;
             } else {
                 lineContext.span = makeMathSpan(lineContext.mathSegpos, 0);
+                lineContext.span.style.marginLeft = "2px";
+                lineContext.span.style.marginTop = "4px";
+                lineContext.span.style.marginRight = "2px";
+
+                const cpos = lineContext.flowView.cursor.pos;
+                let cursorPresent = false;
+                if ((cpos > lineContext.mathSegpos) && (cpos <= segpos)) {
+                    lineContext.span.style.borderLeft = "solid orange 2px";
+                    lineContext.span.style.borderRight = "solid orange 2px";
+                    lineContext.mathBuffer += " \\textcolor{#0000FE}{\\cdots}";
+                    cursorPresent = true;
+                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight,
+                        lineContext.lineDiv, false);
+                }
                 Katex.render(lineContext.mathBuffer, lineContext.span,
                     { throwOnError: false });
-                // lineContext.span.style.borderBottom = "solid blue 1px";
-                lineContext.span.style.marginLeft = "2px";
-                lineContext.span.style.marginRight = "2px";
+                if (cursorPresent) {
+                    const cursorElement = domutils.findFirstMatch(lineContext.span, elm => {
+                        return elm.style && (elm.style.color === "rgb(0, 0, 254)");
+                    });
+                    if (cursorElement) {
+                        cursorElement.classList.add("blinking");
+                    }
+                }
                 lineContext.contentDiv.appendChild(lineContext.span);
                 lineContext.lineDiv.lineEnd += lineContext.mathBuffer.length;
                 lineContext.mathBuffer = "";
                 lineContext.mathMode = false;
+                const mathEndMarker = marker as IMathEndMarker;
+                mathEndMarker.outerSpan = lineContext.span;
             }
         }
 
@@ -1374,7 +1400,7 @@ function renderTree(
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
     } else {
-        const previousTileInfo = findTile(flowView, requestedPosition, "pg");
+        const previousTileInfo = findTile(flowView, requestedPosition, "pg", true);
         if (previousTileInfo) {
             layoutContext.startPos = previousTileInfo.pos + 1;
         } else {
@@ -2587,7 +2613,7 @@ export class FlowCursor extends Cursor {
         }
     }
 
-    public assignToLine(x: number, h: number, lineDiv: HTMLDivElement) {
+    public assignToLine(x: number, h: number, lineDiv: HTMLDivElement, show = true) {
         this.editSpan.style.left = `${x}px`;
         this.editSpan.style.height = `${h}px`;
         if (this.editSpan.parentElement) {
@@ -2612,7 +2638,11 @@ export class FlowCursor extends Cursor {
             if (this.blinkTimer) {
                 clearTimeout(this.blinkTimer);
             }
-            this.blinkCursor();
+            if (show) {
+                this.blinkCursor();
+            } else {
+                this.hide();
+            }
         }
     }
 
@@ -2805,7 +2835,7 @@ function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
         flowView.client.getClientId());
 }
 
-function findTile(flowView: FlowView, startPos: number, tileType: string, preceding = true) {
+function findTile(flowView: FlowView, startPos: number, tileType: string, preceding: boolean) {
     return flowView.sharedString.findTile(startPos, tileType, preceding);
 }
 
@@ -3530,6 +3560,16 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public getSegSpan(span: ISegSpan): ISegSpan {
+        while (span.tagName === "SPAN") {
+            if (span.segPos) {
+                return span;
+            } else {
+                span = span.parentElement as ISegSpan;
+            }
+        }
+    }
+
     public getPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         let position: number;
 
@@ -3563,17 +3603,21 @@ export class FlowView extends ui.Component {
                 }
 
             } else if (elm.tagName === "SPAN") {
-                const span = elm as ISegSpan;
-                const elmOff = pointerToElementOffsetWebkit(x, y);
-                if (elmOff) {
-                    let computed = elmOffToSegOff(elmOff, span);
-                    if (span.offset) {
-                        computed += span.offset;
+                const span = this.getSegSpan(elm as ISegSpan);
+                if (span) {
+                    const elmOff = pointerToElementOffsetWebkit(x, y);
+                    if (elmOff) {
+                        let computed = elmOffToSegOff(elmOff, span);
+                        if (span.offset) {
+                            computed += span.offset;
+                        }
+                        position = span.segPos + computed;
+                        if (position === targetLineDiv.lineEnd) {
+                            position--;
+                        }
                     }
-                    position = span.segPos + computed;
-                    if (position === targetLineDiv.lineEnd) {
-                        position--;
-                    }
+                } else {
+                    position = 0;
                 }
             }
         }
@@ -3593,12 +3637,17 @@ export class FlowView extends ui.Component {
     }
 
     public getCanonicalX() {
-        const cursorRect = this.cursor.rect();
+        let rect = this.cursor.rect();
+        const mathTileInfo = this.inMath();
+        if (mathTileInfo) {
+            const mathEndMarker = mathTileInfo.tile as IMathEndMarker;
+            rect = mathEndMarker.outerSpan.getBoundingClientRect();
+        }
         let x: number;
         if (this.lastVerticalX >= 0) {
             x = this.lastVerticalX;
         } else {
-            x = Math.floor(cursorRect.left);
+            x = Math.floor(rect.left);
             this.lastVerticalX = x;
         }
         return x;
@@ -4018,31 +4067,39 @@ export class FlowView extends ui.Component {
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
-                        if (this.cursor.pos === this.viewportEndPos) {
-                            this.scroll(false, true);
-                        }
-                        if (e.shiftKey) {
-                            this.cursor.tryMark();
+                        if (this.inMath()) {
+                            this.mathCursorFwd();
                         } else {
-                            this.clearSelection();
+                            if (this.cursor.pos === this.viewportEndPos) {
+                                this.scroll(false, true);
+                            }
+                            if (e.shiftKey) {
+                                this.cursor.tryMark();
+                            } else {
+                                this.clearSelection();
+                            }
+                            this.cursorFwd();
+                            this.broadcastPresence();
+                            this.cursor.updateView(this);
                         }
-                        this.cursorFwd();
-                        this.broadcastPresence();
-                        this.cursor.updateView(this);
                     }
                 } else if (e.keyCode === KeyCode.leftArrow) {
                     if (this.cursor.pos > FlowView.docStartPosition) {
-                        if (this.cursor.pos === this.viewportStartPos) {
-                            this.scroll(true, true);
-                        }
-                        if (e.shiftKey) {
-                            this.cursor.tryMark();
+                        if (this.inMath()) {
+                            this.mathCursorRev();
                         } else {
-                            this.clearSelection();
+                            if (this.cursor.pos === this.viewportStartPos) {
+                                this.scroll(true, true);
+                            }
+                            if (e.shiftKey) {
+                                this.cursor.tryMark();
+                            } else {
+                                this.clearSelection();
+                            }
+                            this.cursorRev();
+                            this.broadcastPresence();
+                            this.cursor.updateView(this);
                         }
-                        this.cursorRev();
-                        this.broadcastPresence();
-                        this.cursor.updateView(this);
                     }
                 } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
                     this.lastVerticalX = saveLastVertX;
@@ -4061,6 +4118,10 @@ export class FlowView extends ui.Component {
                     }
                     const vpEnd = this.viewportEndPos;
                     if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
+                        let fromMath = false;
+                        if (this.inMath()) {
+                            fromMath = true;
+                        }
                         if (!this.verticalMove(lineCount)) {
                             if (((this.viewportStartPos > 0) && (lineCount < 0)) ||
                                 ((this.viewportEndPos < maxPos) && (lineCount > 0))) {
@@ -4082,6 +4143,13 @@ export class FlowView extends ui.Component {
                         }
                         this.broadcastPresence();
                         this.cursor.updateView(this);
+                        if (this.inMath()) {
+                            this.mathNormalizeCursor();
+                            fromMath = true;
+                        }
+                        if (fromMath) {
+                            this.localQueueRender(this.cursor.pos);
+                        }
                     }
                 } else {
                     if (!e.ctrlKey) {
@@ -4111,11 +4179,11 @@ export class FlowView extends ui.Component {
                     this.insertParagraph(pos);
                 } else if ((code === CharacterCodes.backslash) && this.inMath()) {
                     this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
-                        (s,cmd) => {
+                        (s, cmd) => {
                             if (cmd) {
-                            this.sharedString.insertText(cmd.texString, pos);
+                                this.sharedString.insertText(cmd.texString, pos);
                             } else {
-                                this.sharedString.insertText("\\"+s, pos);
+                                this.sharedString.insertText("\\" + s, pos);
                             }
                         });
                     this.activeSearchBox.showAllItems();
@@ -4136,13 +4204,43 @@ export class FlowView extends ui.Component {
         this.keydownHandler = keydownHandler;
     }
 
+    public mathCursorFwd() {
+        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
+        // const beginTileInfo = findTile(this, this.cursor.pos, "math", true);
+        // for now just go past
+        this.cursor.pos = endTileInfo.pos + 1;
+        this.broadcastPresence();
+        this.cursor.updateView(this);
+    }
+
+    public mathCursorRev() {
+        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
+        let pos = this.cursor.pos;
+        if (pos === endTileInfo.pos) {
+            pos--;
+        }
+        const beginTileInfo = findTile(this, pos, "math", true);
+        // for now just go past
+        this.cursor.pos = beginTileInfo.pos;
+        this.broadcastPresence();
+        this.cursor.updateView(this);
+    }
+
+    // put the cursor at ... (but for now put it at end)
+    public mathNormalizeCursor() {
+        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
+        this.cursor.pos = endTileInfo.pos;
+    }
+
     public inMath() {
-        const tileInfo = findTile(this, this.cursor.pos, "math");
-        return tileInfo && (tileInfo.tile.properties.mathEnd);
+        const tileInfo = findTile(this, this.cursor.pos, "math", false);
+        if (tileInfo && (tileInfo.tile.properties.mathEnd)) {
+            return tileInfo;
+        }
     }
 
     public endOfMathRegion(posInRegion: number) {
-        const tileInfo = findTile(this, posInRegion, "math");
+        const tileInfo = findTile(this, posInRegion, "math", false);
         return tileInfo.pos;
     }
 
