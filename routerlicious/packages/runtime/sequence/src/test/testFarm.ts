@@ -234,7 +234,7 @@ export function TestPack(verbose = true) {
         let snapClient: TestClient;
         let useGroupOperationsForMoveWord = false;
         let annotateProps: PropertySet;
-
+        let insertAsSibling = false;
 
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
@@ -416,7 +416,12 @@ export function TestPack(verbose = true) {
                 }
                 let pos = word2.pos + word2.text.length;
 
-                const insertOp = client.insertTextLocal(pos, word1.text);
+                const insertOp = insertAsSibling ?
+                    client.insertTextLocal(pos, word1.text) :
+                        client.insertSiblingSegment(
+                            client.mergeTree.getContainingSegment(pos, client.getCurrentSeq(), client.getClientId()).segment,
+                            TextSegment.make(word1.text))
+
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(
                         client.makeOpMessage(insertOp));
@@ -2114,7 +2119,7 @@ let testPropCopy = false;
 let overlayTree = false;
 let docTree = false;
 let chktst = false;
-let clientServerTest = false;
+let clientServerTest = true;
 let tstTest = true;
 let firstTest = false;
 let ivalTest = false;

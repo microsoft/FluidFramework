@@ -1,10 +1,12 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import * as assert from "assert";
 import { Client } from "../client";
 import * as Collections from "../collections";
 import { ISegment, Marker, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
-import { IJSONSegment, IMarkerDef, IMergeTreeOp, ReferenceType } from "../ops";
+import { IMarkerDef, IMergeTreeOp, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
+import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 export function specToSegment(spec: any) {
     const maybeText = TextSegment.fromJSONObject(spec);
@@ -158,5 +160,9 @@ export class TestClient extends Client {
             type: MessageType.Operation,
         };
         return msg;
+    }
+
+    public validate() {
+        assert(nodeOrdinalsHaveIntegrity(this.mergeTree.root));
     }
 }

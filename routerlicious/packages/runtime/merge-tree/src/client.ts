@@ -5,8 +5,8 @@ import * as Collections from "./collections";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 import {
     ClientIds, clock, compareStrings, elapsedMicroseconds, IConsensusInfo, ISegment,
-    IUndoInfo, Marker, MergeTree, RegisterCollection,
-    UnassignedSequenceNumber, UniversalSequenceNumber,
+    IUndoInfo, Marker, MergeTree, ReferencePosition,
+    RegisterCollection, UnassignedSequenceNumber, UniversalSequenceNumber,
 } from "./mergeTree";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
@@ -152,6 +152,33 @@ export class Client {
             return insertOp;
         }
         return undefined;
+    }
+
+    /**
+     * @param leftSibling - The segment that should be the left sibling of the inserted segment
+     * @param segment - The segment to insert
+     */
+    public insertSiblingSegment(leftSibling: ISegment, segment: ISegment): ops.IMergeTreeInsertMsg {
+        // generate the op for the expected position of the new sibling segment
+        const opPos =
+            this.mergeTree.getOffset(leftSibling, this.getCurrentSeq(), this.getClientId()) + leftSibling.cachedLength;
+        const insertOp = OpBuilder.createInsertSegmentOp(opPos, segment);
+
+        let clockStart: number | [ number, number ];
+        if (this.measureOps) {
+            clockStart = clock();
+        }
+        const opArgs = { op: insertOp };
+        this.mergeTree.insertSiblingSegment(
+            leftSibling,
+            segment,
+            UnassignedSequenceNumber,
+            this.getClientId(),
+            opArgs);
+
+        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), {start: opPos, end: undefined}, clockStart);
+
+        return insertOp;
     }
 
     /**

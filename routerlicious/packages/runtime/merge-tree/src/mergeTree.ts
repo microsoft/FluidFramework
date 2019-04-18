@@ -3023,7 +3023,7 @@ export class MergeTree {
         }
     }
 
-    private updateRoot(splitNode: IMergeBlock, refSeq: number, clientId: number, seq: number) {
+    private updateRoot(splitNode: IMergeBlock) {
         if (splitNode !== undefined) {
             let newRoot = this.makeBlock(2);
             newRoot.index = 0;
@@ -3110,10 +3110,11 @@ export class MergeTree {
         return pos;
     }
 
-    insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
+    public insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
         // const tt = MergeTree.traceTraversal;
         // MergeTree.traceTraversal = true;
         this.ensureIntervalBoundary(pos, refSeq, clientId);
+
         if (MergeTree.traceOrdinals) {
             this.ordinalIntegrity();
         }
@@ -3121,7 +3122,7 @@ export class MergeTree {
         this.blockInsert(pos, refSeq, clientId, seq, segments);
 
         // opArgs == undefined => loading snapshot or test code
-        if (this.mergeTreeDeltaCallback && opArgs !== undefined) {
+        if (this.mergeTreeDeltaCallback && opArgs !== undefined){
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
@@ -3141,6 +3142,100 @@ export class MergeTree {
             this.zamboniSegments();
         }
     }
+
+    public insertSiblingSegment(leftSibling: ISegment, insertSegment: ISegment, seq: number, clientId: number, opArgs: IMergeTreeDeltaOpArgs ){
+
+        insertSegment.seq = seq;
+        insertSegment.clientId = clientId;
+
+        if (insertSegment instanceof Marker) {
+            const markerId = insertSegment.getId();
+            if (markerId) {
+                this.mapIdToSegment(markerId, insertSegment);
+            }
+        }
+
+        insertSegment.seq = seq;
+        insertSegment.clientId = clientId;
+
+        if (insertSegment instanceof Marker) {
+            const markerId = insertSegment.getId();
+            if (markerId) {
+                this.mapIdToSegment(markerId, insertSegment);
+            }
+        }
+
+        this.insertChildNode(leftSibling.parent, insertSegment, leftSibling.index + 1);
+
+        // blocks should never be left full
+        // if the inserts makes the block full
+        // then we need to walk up the chain of parents
+        // and split the blocks until we find a block with
+        // room
+        let ordinalUpdateNode: IMergeBlock;
+        let block = leftSibling.parent;
+        while (block !== undefined) {
+            if (block.childCount >= MaxNodesInBlock) {
+                const splitNode = this.split(block);
+                if (block === this.root) {
+                    this.updateRoot(splitNode);
+                    // update root already updates all it's childrens
+                    // oridnals
+                    ordinalUpdateNode = undefined;
+                } else {
+                    this.insertChildNode(block.parent, splitNode, block.index + 1);
+                    ordinalUpdateNode = splitNode;
+                    this.blockUpdateLength(block.parent, seq, clientId);
+                }
+            } else {
+                this.blockUpdateLength(block, seq, clientId);
+            }
+            block = block.parent;
+        }
+        // only update oridinals once, for all children,
+        // on the path
+        if (ordinalUpdateNode){
+            this.nodeUpdateOrdinals(ordinalUpdateNode);
+        }
+
+        if (this.collabWindow.collaborating) {
+            if (seq === UnassignedSequenceNumber) {
+                this.addToPendingList(insertSegment);
+            } else {
+                this.addToLRUSet(insertSegment, seq);
+            }
+        }
+
+        if (this.mergeTreeDeltaCallback) {
+            this.mergeTreeDeltaCallback(
+                opArgs,
+                {
+                    mergeTreeClientId: clientId,
+                    operation: ops.MergeTreeDeltaType.INSERT,
+                    mergeTree: this,
+                    segments: [insertSegment],
+                });
+        }
+
+        if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
+            (seq != UnassignedSequenceNumber)) {
+            this.zamboniSegments();
+        }
+    }
+
+    private insertChildNode(block: IMergeBlock, child: IMergeNode, childIndex: number) {
+
+        assert(block.childCount < MaxNodesInBlock);
+
+        for (let i = block.childCount; i > childIndex; i--) {
+            block.children[i] = block.children[i - 1];
+            block.children[i].index = i;
+        }
+
+        block.childCount++;
+        block.assignChild(child, childIndex, true);
+    }
+
 
     private blockInsert<T extends ISegment>(pos: number, refSeq: number, clientId: number, seq: number, newSegments: T[]) {
         let segIsLocal = false;
@@ -3210,24 +3305,23 @@ export class MergeTree {
             const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq,
                 { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
 
-            this.updateRoot(splitNode, refSeq, clientId, seq);
+            this.updateRoot(splitNode);
 
             insertPos += newSegment.cachedLength;
         }
     }
-
     private splitLeafSegment = (segment: ISegment, pos: number) => {
         let segmentChanges = <ISegmentChanges>{};
         if (pos > 0) {
             segmentChanges.next = segment.splitAt(pos);
         }
-        return segmentChanges;
+        return segmentChanges
     }
 
     private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {
         let splitNode = this.insertingWalk(this.root, pos, refSeq, clientId, TreeMaintenanceSequenceNumber,
             { leaf: this.splitLeafSegment });
-        this.updateRoot(splitNode, refSeq, clientId, TreeMaintenanceSequenceNumber);
+        this.updateRoot(splitNode);
     }
 
     // assume called only when pos == len

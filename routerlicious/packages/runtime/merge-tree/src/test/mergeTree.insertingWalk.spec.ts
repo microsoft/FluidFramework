@@ -6,7 +6,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "..";
-import { insertText } from "./testUtils";
+import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {
     readonly create: () => ITestData;
@@ -151,6 +151,10 @@ describe("MergeTree.insertingWalk", () => {
             let testData: ITestData;
             beforeEach(() => {
                 testData = treeFactory.create();
+                assert(nodeOrdinalsHaveIntegrity(testData.mergeTree.root));
+            });
+            afterEach(() => {
+                assert(nodeOrdinalsHaveIntegrity(testData.mergeTree.root));
             });
             describe("insertText", () => {
                 it("at beginning", () => {

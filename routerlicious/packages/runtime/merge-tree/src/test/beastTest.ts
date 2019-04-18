@@ -14,6 +14,7 @@ import { TestServer } from "./testServer";
 import {
     insertText,
     loadTextFromFile,
+    nodeOrdinalsHaveIntegrity,
 } from "./testUtils";
 
 // tslint:disable
@@ -971,6 +972,12 @@ export function TestPack(verbose = true) {
                 console.log(`mismatch @${checkSeq}:`)
                 console.log(aText);
                 console.log(bText);
+                error = true;
+            }
+            if (!nodeOrdinalsHaveIntegrity(cliA.mergeTree.root)) {
+                error = true;
+            }
+            if (!nodeOrdinalsHaveIntegrity(cliB.mergeTree.root)) {
                 error = true;
             }
             return error;

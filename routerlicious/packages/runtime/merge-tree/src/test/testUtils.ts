@@ -1,5 +1,6 @@
+import * as assert from "assert";
 import * as fs from "fs";
-import { IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment} from "..";
+import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment} from "..";
 import * as ops from "../ops";
 import * as Properties from "../properties";
 import { loadText } from "../text";
@@ -38,4 +39,29 @@ export function insertText(
     opArgs: IMergeTreeDeltaOpArgs,
 ) {
     mergeTree.insertSegments(pos, [TextSegment.make(text, props, seq, clientId)], refSeq, clientId, seq, opArgs);
+}
+
+export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
+    const olen = block.ordinal.length;
+    for (let i = 0; i < block.childCount; i++) {
+        if (block.children[i].ordinal) {
+            if (olen !== (block.children[i].ordinal.length - 1)) {
+                console.log("node integrity issue");
+                return false;
+            }
+            if (i > 0) {
+                if (block.children[i].ordinal <= block.children[i - 1].ordinal) {
+                    console.log("node sib integrity issue");
+                    return false;
+                }
+            }
+            if (!block.children[i].isLeaf()) {
+                return nodeOrdinalsHaveIntegrity(block.children[i] as IMergeBlock);
+            }
+        } else {
+            console.log(`node child ordinal not set ${i}`);
+            return false;
+        }
+    }
+    return true;
 }
