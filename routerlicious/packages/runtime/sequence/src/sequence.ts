@@ -63,7 +63,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                 case "sequenceDelta":
                     if (!this.client.mergeTree.mergeTreeDeltaCallback) {
                         this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
-                            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, this.client, deltaArgs), this);
+                            this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
                         };
                     }
                     break;

@@ -1,26 +1,19 @@
-import { ITree } from "@prague/container-definitions";
-import { createRemoveRangeOp, IMergeTreeDeltaCallbackArgs, TextSegment } from "@prague/merge-tree";
+import { createRemoveRangeOp, IMergeTreeDeltaCallbackArgs } from "@prague/merge-tree";
 import {
-    MockStorage,
     TestClient,
 // tslint:disable-next-line:no-submodule-imports
 } from "@prague/merge-tree/dist/test/";
 import * as assert from "assert";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
-import { SharedString } from "../sharedString";
-import * as mocks from "./mocks";
 
 describe("SequenceDeltaEvent", () => {
 
-    const documentId = "fakeId";
     const localUserLongId = "localUser";
-    let runtime: mocks.MockRuntime;
     let client: TestClient;
 
     beforeEach(() => {
         client = new TestClient("");
         client.startCollaboration(localUserLongId);
-        runtime = new mocks.MockRuntime();
     });
 
     describe(".ranges", () => {
@@ -31,16 +24,16 @@ describe("SequenceDeltaEvent", () => {
             client.insertTextLocal(0, insertText);
 
             assert(deltaArgs);
-            assert.equal(deltaArgs.segments.length, 1);
+            assert.equal(deltaArgs.deltaSegments.length, 1);
 
-            const event = new SequenceDeltaEvent(undefined, client, deltaArgs);
+            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, 1);
             assert.equal(event.start, 0);
-            assert.equal(event.ranges[0].start, 0);
-            assert.equal(event.ranges[0].length, insertText.length);
+            assert.equal(event.ranges[0].offset, 0);
+            assert.equal(event.ranges[0].segment.cachedLength, insertText.length);
             assert.equal(event.end, insertText.length);
         });
 
@@ -62,16 +55,22 @@ describe("SequenceDeltaEvent", () => {
                 undefined);
 
             assert(deltaArgs);
-            assert.equal(deltaArgs.segments.length, segmentCount);
+            assert.equal(deltaArgs.deltaSegments.length, segmentCount);
 
-            const event = new SequenceDeltaEvent(undefined, client, deltaArgs);
+            const event = new SequenceDeltaEvent(undefined, deltaArgs, client);
 
             assert(event.isLocal);
             assert(!event.isEmpty);
-            assert.equal(event.ranges.length, 1);
+            assert.equal(event.ranges.length, segmentCount);
             assert.equal(event.start, insertText.length);
-            assert.equal(event.ranges[0].start, insertText.length);
-            assert.equal(event.ranges[0].length, client.getLength() - insertText.length * 2);
+            assert.equal(event.ranges[0].offset, insertText.length);
+            for (let i = 0; i < segmentCount; i = i + 1) {
+                assert.equal(event.ranges[i].offset, (i + 1) * insertText.length);
+                assert.equal(event.ranges[i].segment.cachedLength, insertText.length);
+                assert.equal(event.ranges[i].propertyDeltas.length, 1);
+                assert.equal(event.ranges[i].propertyDeltas[0].key, "foo");
+                assert.equal(event.ranges[i].propertyDeltas[0].previousValue, undefined);
+            }
             assert.equal(event.end, client.getLength() - insertText.length);
         });
 
@@ -97,7 +96,7 @@ describe("SequenceDeltaEvent", () => {
 
             let event: SequenceDeltaEvent;
             client.mergeTree.mergeTreeDeltaCallback = (clientArgs, mergeTreeArgs) => {
-                event = new SequenceDeltaEvent(clientArgs, client, mergeTreeArgs);
+                event = new SequenceDeltaEvent(clientArgs, mergeTreeArgs, client);
             };
             client.applyMsg(remoteRemoveMessage);
 
@@ -105,60 +104,10 @@ describe("SequenceDeltaEvent", () => {
             assert(!event.isEmpty);
             assert.equal(event.ranges.length, segmentCount);
             for (let i = 0; i < segmentCount; i = i + 1) {
-                assert.equal(event.ranges[i].start,  (i + 1) * textCount);
-                assert.equal(event.ranges[i].length, textCount);
+                assert.equal(event.ranges[i].offset, (i + 1) * textCount);
+                assert.equal(event.ranges[i].segment.cachedLength, textCount);
+                assert.equal(event.ranges[i].propertyDeltas.length, 0);
             }
         });
-
-        it("snapshots", async () => {
-            const insertText = "text";
-            const segmentCount = 1000;
-
-            const sharedString = new SharedString(runtime, documentId);
-            sharedString.client.mergeTree.collabWindow.collaborating = false;
-
-            for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
-            }
-
-            let tree = sharedString.snapshot();
-            assert(tree.entries.length === 2);
-            assert(tree.entries[0].path === "header");
-            assert(tree.entries[1].path === "content");
-            let subTree = tree.entries[1].value as ITree;
-            assert(subTree.entries.length === 2);
-            assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "tardis");
-
-            await CreateStringAndCompare(sharedString, tree);
-
-            for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}-${i}`));
-            }
-
-            tree = sharedString.snapshot();
-            assert(tree.entries.length === 2);
-            assert(tree.entries[0].path === "header");
-            assert(tree.entries[1].path === "content");
-            subTree = tree.entries[1].value as ITree;
-            assert(subTree.entries.length === 3);
-            assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "body");
-            assert(subTree.entries[2].path === "tardis");
-
-            await CreateStringAndCompare(sharedString, tree);
-        });
-
-        async function CreateStringAndCompare(sharedString: SharedString, tree: ITree): Promise<void> {
-            const services = {
-                deltaConnection: new mocks.MockDeltaConnection(),
-                objectStorage: new MockStorage(tree),
-            };
-
-            const sharedString2 = new SharedString(runtime, documentId, services);
-            await sharedString2.load(0, null/*headerOrigin*/, services);
-
-            assert(sharedString.getText() === sharedString2.getText());
-        }
     });
 });

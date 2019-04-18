@@ -196,6 +196,10 @@ export class Client {
             (end === undefined) ? this.getLength() : end);
     }
 
+    public getOffset(segment: ISegment): number {
+        return this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
+    }
+
     /**
      * Performs the annotate based on the provided op
      * @param opArgs - The ops args for the op

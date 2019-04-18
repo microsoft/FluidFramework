@@ -10,7 +10,17 @@ export interface IMergeTreeDeltaCallbackArgs {
     readonly mergeTreeClientId: number;
     readonly mergeTree: MergeTree;
     readonly operation: MergeTreeDeltaOperationType;
-    readonly segments: ISegment[];
+    readonly deltaSegments: IMergeTreeSegmentDelta[];
+}
+
+export interface IMergeTreeSegmentDelta {
+    segment: ISegment;
+    propertyDeltas: IMergeTreeSegmentPropertyDelta[];
+}
+
+export interface IMergeTreeSegmentPropertyDelta {
+    key: string;
+    previousValue: string;
 }
 
 export interface IMergeTreeDeltaOpArgs {

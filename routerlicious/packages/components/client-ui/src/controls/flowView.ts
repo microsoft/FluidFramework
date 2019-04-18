@@ -3039,9 +3039,8 @@ export class FlowView extends ui.Component {
             // For each incoming delta, save any referenced Marker segments.
             // (see comments at 'modifiedMarkers' decl for more info.)
             this.modifiedMarkers = event
-                .deltaArgs
-                .segments
-                .filter((segment) => segment.getType() === MergeTree.SegmentType.Marker);
+                .ranges
+                .filter((range) => range.segment.getType() === MergeTree.SegmentType.Marker);
 
             this.handleSharedStringDelta(event, target);
         });
@@ -5369,11 +5368,11 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.ANNOTATE:
                 opCursorPos = event.end;
                 event.ranges.forEach((range) => {
-                    if (range.type === MergeTree.SegmentType.Marker) {
-                        this.updatePGInfo(range.start - 1);
-                    } else if (range.type === MergeTree.SegmentType.Text) {
-                        this.updatePGInfo(range.start);
-                        this.updatePGInfo(range.start + range.length);
+                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.offset - 1);
+                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.offset);
+                        this.updatePGInfo(range.offset + range.segment.cachedLength);
                     }
                 });
                 break;
@@ -5381,13 +5380,13 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.INSERT:
                 opCursorPos = event.end;
                 event.ranges.forEach((range) => {
-                    if (range.type === MergeTree.SegmentType.Marker) {
-                        this.updatePGInfo(range.start - 1);
-                    } else if (range.type === MergeTree.SegmentType.Text) {
-                        this.updatePGInfo(range.start);
-                        this.updatePGInfo(range.start + range.length);
-                        if (!event.isLocal && range.start <= this.cursor.pos) {
-                            this.cursor.pos += range.length;
+                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.offset - 1);
+                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.offset);
+                        this.updatePGInfo(range.offset + range.segment.cachedLength);
+                        if (!event.isLocal && range.offset <= this.cursor.pos) {
+                            this.cursor.pos += range.segment.cachedLength;
                         }
                     }
                 });
@@ -5396,12 +5395,12 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.REMOVE:
                 opCursorPos = event.start;
                 event.ranges.forEach((range) => {
-                    if (range.type === MergeTree.SegmentType.Marker) {
-                        this.updatePGInfo(range.start - 1);
-                    } else if (range.type === MergeTree.SegmentType.Text) {
-                        this.updatePGInfo(range.start);
-                        if (!event.isLocal && range.start <= this.cursor.pos) {
-                            this.cursor.pos -= range.length;
+                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                        this.updatePGInfo(range.offset - 1);
+                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                        this.updatePGInfo(range.offset);
+                        if (!event.isLocal && range.offset <= this.cursor.pos) {
+                            this.cursor.pos -= range.segment.cachedLength;
                         }
                     }
                 });
