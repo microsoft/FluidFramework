@@ -7,11 +7,14 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     component: "{{ .Values.gitrest.name }}"
     release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
-  annotations:
-    volume.beta.kubernetes.io/storage-class: {{ .Values.gitrest.persistence.storageClass | quote }}
+  {{ if and .Values.gitrest.mode (eq .Values.gitrest.mode "legacy") }}
+    annotations:
+      volume.beta.kubernetes.io/storage-class: {{ .Values.gitrest.persistence.storageClass | quote }}
+  {{ end }}
 spec:
-  storageClassName: managed-premium
+  {{ if and .Values.gitrest.mode (eq .Values.gitrest.mode "latest") }}
+    storageClassName: managed-premium
+  {{ end }}
   accessModes:
     - {{ .Values.gitrest.persistence.accessMode | quote }}
   resources:

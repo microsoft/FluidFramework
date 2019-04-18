@@ -14,6 +14,7 @@ historian:
 gitrest:
   name: gitrest
   image: prague.azurecr.io/gitrest:4048
+  mode: latest
   persistence:
     storageClass: managed-premium
     size: 1024Gi
@@ -26,6 +27,7 @@ gitssh:
 cobalt:
   name: cobalt
   image: prague.azurecr.io/cobalt:1544
+  mode: latest
   persistence:
     storageClass: managed-premium
     size: 128Gi
