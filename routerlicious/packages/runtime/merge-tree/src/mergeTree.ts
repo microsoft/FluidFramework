@@ -3210,10 +3210,10 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
+                    deltaSegments:[{segment: insertSegment, propertyDeltas:[]}],
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
                     mergeTree: this,
-                    segments: [insertSegment],
                 });
         }
 
