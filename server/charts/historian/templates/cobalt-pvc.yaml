@@ -8,6 +8,8 @@ metadata:
     component: "{{ .Values.cobalt.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ .Values.cobalt.persistence.storageClass | quote }}
 spec:
   storageClassName: managed-premium
   accessModes:
