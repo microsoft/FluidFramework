@@ -1,4 +1,4 @@
-import { IClient, IContentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IClient, IContentMessage, ISequencedDocumentMessage, ISignalMessage } from "@prague/container-definitions";
 
 /**
  * Message sent to connect to the given object
@@ -37,6 +37,9 @@ export interface IConnected {
 
     // Contents sent during the connection
     initialContents?: IContentMessage[];
+
+    // Signals sent during the connection
+    initialSignals?: ISignalMessage[];
 
     // Maximum size of a message that can be sent to the service
     maxMessageSize: number;

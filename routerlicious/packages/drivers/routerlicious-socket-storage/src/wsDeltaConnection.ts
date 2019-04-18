@@ -4,6 +4,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
 } from "@prague/container-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -67,6 +68,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get initialContents(): IContentMessage[] | undefined {
         return this.details!.initialContents;
+    }
+
+    public get initialSignals(): ISignalMessage[] | undefined {
+        return this.details!.initialSignals;
     }
 
     constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {

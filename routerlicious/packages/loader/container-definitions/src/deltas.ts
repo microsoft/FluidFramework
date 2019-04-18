@@ -7,6 +7,7 @@ export interface IConnectionDetails {
     parentBranch: string | null;
     initialMessages?: ISequencedDocumentMessage[];
     initialContents?: IContentMessage[];
+    initialSignals?: ISignalMessage[];
     maxMessageSize: number;
 }
 

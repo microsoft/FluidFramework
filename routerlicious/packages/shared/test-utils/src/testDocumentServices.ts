@@ -6,6 +6,7 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ISnapshotTree,
     ITokenProvider,
     ITree,
@@ -21,6 +22,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     public clientId: string;
     public initialMessages: ISequencedDocumentMessage[] | undefined;
     public initialContents: IContentMessage[] | undefined;
+    public initialSignals: ISignalMessage[] | undefined;
     public documentId: string;
     public encrypted: boolean;
     public privateKey: string;

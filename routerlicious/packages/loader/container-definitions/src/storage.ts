@@ -6,6 +6,7 @@ import {
     IContentMessage,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
 } from "./protocol";
 import { ITokenProvider } from "./tokens";
 
@@ -202,6 +203,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Messages sent during the connection
      */
     initialContents?: IContentMessage[];
+
+    /**
+     * Signals sent during the connection
+     */
+    initialSignals?: ISignalMessage[];
 
     /**
      * Submit a new message to the server

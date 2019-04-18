@@ -84,7 +84,7 @@ export class TestDocumentService implements IDocumentService {
         tenantId: string,
         id: string): Promise<IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", undefined, undefined);
+        return new TestDocumentDeltaConnection(id, "test-client", false, "", undefined, undefined, undefined);
     }
 
     public branch(tenantId: string, id: string): Promise<string> {

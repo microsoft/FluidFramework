@@ -5,6 +5,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
 } from "@prague/container-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -45,6 +46,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
+            const queuedSignals: ISignalMessage[] = [];
 
             const earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
                 debug("Queued early ops", msgs.length);
@@ -57,6 +59,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 queuedContents.push(msg);
             };
             socket.on("op-content", earlyContentHandler);
+
+            const earlySignalHandler = (msg: ISignalMessage) => {
+                debug("Queued early signals");
+                queuedSignals.push(msg);
+            };
+            socket.on("signal", earlySignalHandler);
 
             // Listen for connection issues
             socket.on("connect_error", (error) => {
@@ -73,6 +81,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             socket.on("connect_document_success", (response: messages.IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
                 socket.removeListener("op-content", earlyContentHandler);
+                socket.removeListener("signal", earlySignalHandler);
 
                 if (queuedMessages.length > 0) {
                     // some messages were queued.
@@ -96,6 +105,16 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialContents.push(...queuedContents);
 
                     response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId)? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
+                }
+
+                if (queuedSignals.length > 0) {
+                    // some signals were queued.
+                    // add them to the list of initialSignals to be processed
+                    if (!response.initialSignals) {
+                        response.initialSignals = [];
+                    }
+
+                    response.initialSignals.push(...queuedSignals);
                 }
 
                 resolve(response);
@@ -142,6 +161,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
+    }
+
+    public get initialSignals(): ISignalMessage[] | undefined {
+        return this.details.initialSignals;
     }
 
     constructor(

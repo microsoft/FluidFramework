@@ -4,6 +4,7 @@ import {
     IDocumentDeltaStorageService,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
     ITokenProvider,
 } from "@prague/container-definitions";
 import * as messages from "@prague/socket-storage-shared";
@@ -187,6 +188,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             existing: true,
             initialContents: [],
             initialMessages: [],
+            initialSignals: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
             user: null,
@@ -237,6 +239,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
+    }
+
+    public get initialSignals(): ISignalMessage[] | undefined {
+        return this.details.initialSignals;
     }
 
     public readonly maxMessageSize = ReplayMaxMessageSize;

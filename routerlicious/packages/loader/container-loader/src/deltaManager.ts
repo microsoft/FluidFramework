@@ -429,7 +429,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.emit("pong", latency);
                 });
 
-                this.processInitialOps(connection.details.initialMessages, connection.details.initialContents);
+                this.processInitialOps(
+                    connection.details.initialMessages,
+                    connection.details.initialContents,
+                    connection.details.initialSignals);
 
                 // Notify of the connection
                 this.emit("connect", connection.details);
@@ -446,7 +449,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private processInitialOps(
             messages: ISequencedDocumentMessage[] | undefined,
-            contents: IContentMessage[] | undefined) {
+            contents: IContentMessage[] | undefined,
+            signals: ISignalMessage[] | undefined) {
         // confirm the status of the handler and inbound queue
         if (!this.handler || this._inbound.paused) {
             // process them once the queue is ready
