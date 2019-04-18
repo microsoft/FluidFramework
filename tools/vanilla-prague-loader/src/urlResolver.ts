@@ -36,9 +36,7 @@ export class InsecureUrlResolver implements IUrlResolver {
       tenantId,
     )}/${encodeURIComponent(documentId)}`;
 
-    const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(
-      tenantId,
-    )}`;
+    const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(tenantId)}`;
 
     // tslint:disable-next-line:no-unnecessary-local-variable
     const response: IPragueResolvedUrl = {

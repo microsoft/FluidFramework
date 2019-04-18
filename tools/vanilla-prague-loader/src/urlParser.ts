@@ -17,7 +17,7 @@ export interface ILoaderUrl {
   token?: string;
 }
 
-export function URLToLoaderProps(urlString: string): ILoaderProps {
+export async function URLToLoaderProps(urlString: string, getToken?: () => Promise<string>): Promise<ILoaderProps> {
   const url = UrlParse(urlString, true);
   const pathParts = url.pathname.split("/");
   const container = pathParts[3];
@@ -34,12 +34,12 @@ export function URLToLoaderProps(urlString: string): ILoaderProps {
     registryUrl: "https://pragueauspkn-3873244262.azureedge.net",
     storageUrl: `https://${url.host.replace("www", "historian")}`,
     tenant,
-    token: fetchSecret(tenant),
+    token: await fetchSecret(tenant),
   };
   return propsWithoutDiv;
 }
 
-function fetchSecret(tenant: string): string {
+async function fetchSecret(tenant: string, getToken?: () => Promise<string>): Promise<string> {
     switch (tenant) {
         case "stupefied-kilby": {
             return "4a9211594f7c3daebca3deb8d6115fe2";
@@ -54,7 +54,11 @@ function fetchSecret(tenant: string): string {
             return "0bea3f87c186991a69245a29dc3f61d2";
         }
         default: {
-            throw new Error("Tenant Not Recognized. Use stupefied kilby.");
+            if (!getToken) {
+              throw new Error("Tenant Not Recognized. No getToken function provided.");
+
+            }
+            return getToken();
         }
     }
 }

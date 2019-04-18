@@ -7,6 +7,37 @@ import { URLToLoaderProps } from "./urlParser";
 import { InsecureUrlResolver } from "./urlResolver";
 import { initializeChaincode, registerAttach } from "./utils";
 
+const spoRegex = "^http(s)?:\/\/\w{2,6}prodprv\.www\.office\.com\/content\/bohemia\?.*";
+const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
+
+/**
+ * Simple function to test if a URL is a valid SPO or Routerlicious Prague link
+ *
+ * const spoRegex = "^http(s)?:\/\/\w{3}prodprv\.www\.office\.com\/content\/bohemia\?.*";
+ *
+ * const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*"
+ *
+ * @param url Url to Test
+ */
+export function isPragueURL(url: string): boolean {
+  if (isRouterliciousUrl(url)) {
+    return true;
+  } else if (isSpoUrl(url)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * A single line, basic function for loading Prague Components.
+ *
+ * This function purposefully does not expose all functionality.
+ *
+ * @param url Url of the Prague component to be loaded
+ * @param getToken A function that either returns an SPO token, or a Routerlicious tenant token
+ * @param div The div to load the component into
+ * @param appId The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ */
 export function LoadPragueComponent(
     url: string,
     getToken: () => Promise<string>,
@@ -15,18 +46,22 @@ export function LoadPragueComponent(
   ): Promise<any> {
 
   let componentP: Promise<any>;
-  if (url.match("^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*")) {
+  if (isRouterliciousUrl(url)) {
     console.log("Routerlicious");
     componentP = LoadPragueRouterliciousComponent(url, div);
-  } else if ((url.includes("weuprodprv") || url.includes("ncuprodprv")) && url.includes("bohemia")) {
+  } else if (isSpoUrl(url)) {
     console.log("SPO");
     componentP = loadSharepointPragueComponent(div, url, getToken, undefined, appId);
   }
   return componentP;
 }
 
-async function LoadPragueRouterliciousComponent(url: string, div: HTMLDivElement): Promise<any> {
-  const loaderParams = URLToLoaderProps(url);
+async function LoadPragueRouterliciousComponent(
+    url: string,
+    div: HTMLDivElement,
+    getToken?: () => Promise<string>,
+  ): Promise<any> {
+  const loaderParams = await URLToLoaderProps(url, getToken);
 
   const insecureResolver = new InsecureUrlResolver(
     loaderParams.ordererUrl,
@@ -36,12 +71,11 @@ async function LoadPragueRouterliciousComponent(url: string, div: HTMLDivElement
   );
 
   const containerUrl =
-    `${loaderParams.ordererUrl.replace(/^[^:]+/, "prague")}
-    /${encodeURIComponent(loaderParams.tenant)}
-    /${encodeURIComponent(loaderParams.containerId)}`;
+  // tslint:disable-next-line: max-line-length
+    `${loaderParams.ordererUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(loaderParams.tenant)}/${encodeURIComponent(loaderParams.containerId)}`;
 
+  // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
   const baseUrl = `${containerUrl}${
-    // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
     (loaderParams.path && loaderParams.path.charAt(0)) !== "/" ? "/" : ""
   }${loaderParams.path}`;
 
@@ -65,4 +99,12 @@ async function LoadPragueRouterliciousComponent(url: string, div: HTMLDivElement
     await initializeChaincode(container, loaderParams.chaincode)
         .catch((error) => console.error("chaincode error", error));
   }
+}
+
+function isRouterliciousUrl(url: string): boolean {
+  return url.match(routerliciousRegex) ? true : false;
+}
+
+function isSpoUrl(url: string): boolean {
+  return url.match(spoRegex) ? true : false;
 }
