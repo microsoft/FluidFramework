@@ -24,7 +24,7 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
-    "@prague/prague-dev-server": "^3.3.2",
+    "@prague/prague-dev-server": "^3.3.3",
     "css-loader": "^1.0.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",
