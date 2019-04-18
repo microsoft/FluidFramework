@@ -1,6 +1,6 @@
 {
   "name": "@prague/vanilla-loader",
-  "version": "0.0.17",
+  "version": "0.0.19",
   "main": "dist/index.js",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -8,7 +8,7 @@
     "registry": "https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
   },
   "dependencies": {
-    "@ms/office-prague-container": "0.3.24-demo",
+    "@ms/office-prague-container": "0.3.25-demo.2",
     "@prague/container-definitions": "^0.2.5915",
     "@prague/container-loader": "^0.2.5915",
     "@prague/loader-web": "^0.2.5915",

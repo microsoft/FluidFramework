@@ -7,7 +7,7 @@ import { URLToLoaderProps } from "./urlParser";
 import { InsecureUrlResolver } from "./urlResolver";
 import { initializeChaincode, registerAttach } from "./utils";
 
-const spoRegex = "^http(s)?:\/\/\w{2,6}prodprv\.www\.office\.com\/content\/bohemia\?.*";
+const spoRegex = "^http(s)?:\/\/\\w{2,6}prodprv\.www\.office\.com\/content\/bohemia\?.*";
 const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
 
 /**

@@ -2,6 +2,8 @@ import { Component } from "react";
 import * as React from "react";
 import { LoadPragueComponent } from "@prague/vanilla-loader";
 
+export { isPragueURL } from "@prague/vanilla-loader";
+
 interface ILoaderProps {
   /**
    * URL of the Prague component
