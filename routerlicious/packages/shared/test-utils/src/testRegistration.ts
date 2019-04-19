@@ -18,7 +18,7 @@ class TestDocumentServiceFactory implements IDocumentServiceFactory {
             return Promise.reject("Only Prague components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
-        const jwtToken = url.tokens.token;
+        const jwtToken = url.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
         }

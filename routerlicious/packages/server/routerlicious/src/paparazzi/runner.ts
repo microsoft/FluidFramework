@@ -37,7 +37,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
             Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const jwtToken = urlAsPragueUrl.tokens.token;
+        const jwtToken = urlAsPragueUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
         }
