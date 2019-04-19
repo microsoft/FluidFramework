@@ -68,6 +68,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<ISequencedDocumentMessage>;
+    private _inboundSignal: DeltaQueue<ISignalMessage>;
     private _outbound: DeltaQueue<IDocumentMessage>;
     // tslint:enable:variable-name
 
@@ -87,6 +88,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get outbound(): IDeltaQueue<IDocumentMessage | undefined> {
         return this._outbound;
+    }
+
+    public get inboundSignal(): IDeltaQueue<ISignalMessage | undefined> {
+        return this._inboundSignal;
     }
 
     public get referenceSequenceNumber(): number | undefined {
@@ -158,9 +163,22 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.emit("error", error);
         });
 
+        // Inbound signal queue
+        this._inboundSignal = new DeltaQueue<ISignalMessage>((message, callback: (error?) => void) => {
+            // tslint:disable no-unsafe-any
+            message!.content = JSON.parse(message!.content);
+            this.handler!.processSignal(message!);
+            callback();
+        });
+
+        this._inboundSignal.on("error", (error) => {
+            this.emit("error", error);
+        });
+
         // Require the user to start the processing
         this._inbound.pause();
         this._outbound.pause();
+        this._inboundSignal.pause();
     }
 
     /**
@@ -179,6 +197,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // We are ready to process inbound messages
         if (resume) {
             this._inbound.systemResume();
+            this._inboundSignal.systemResume();
             this.fetchMissingDeltas(sequenceNumber);
         }
     }
@@ -267,6 +286,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         this._inbound.clear();
         this._outbound.clear();
+        this._inboundSignal.clear();
         this.removeAllListeners();
     }
 
@@ -378,14 +398,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
-                    // Need to buffer messages we receive before having the point set
                     if (this.handler) {
                         this.enqueueMessages(messages);
                     }
                 });
 
                 connection.on("op-content", (message: IContentMessage) => {
-                    // Need to buffer messages we receive before having the point set
                     if (this.handler) {
                         this.contentCache.set(message);
                     }
@@ -393,9 +411,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 connection.on("signal", (message: ISignalMessage) => {
                     if (this.handler) {
-                        // tslint:disable no-unsafe-any
-                        message.content = JSON.parse(message.content);
-                        this.handler.processSignal(message);
+                        this._inboundSignal.push(message);
                     }
                 });
 
@@ -407,6 +423,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     if (!reconnect) {
                         this._inbound.systemPause();
                         this._inbound.clear();
+                        this._inboundSignal.systemPause();
+                        this._inboundSignal.clear();
                     } else {
                         this.connectCore("Reconnecting on nack", InitialReconnectDelay);
                     }
@@ -420,6 +438,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     if (!reconnect) {
                         this._inbound.systemPause();
                         this._inbound.clear();
+                        this._inboundSignal.systemPause();
+                        this._inboundSignal.clear();
                     } else {
                         this.connectCore("Reconnecting on disconnect", InitialReconnectDelay);
                     }
@@ -429,7 +449,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.emit("pong", latency);
                 });
 
-                this.processInitialOps(
+                this.processInitialMessages(
                     connection.details.initialMessages,
                     connection.details.initialContents,
                     connection.details.initialSignals);
@@ -447,7 +467,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
     }
 
-    private processInitialOps(
+    private processInitialMessages(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
             signals: ISignalMessage[] | undefined) {
@@ -460,6 +480,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         } else {
             this.enqueInitalOps(messages, contents);
         }
+        if (!this.handler || this._inboundSignal.paused) {
+            // process them once the queue is ready
+            this._inboundSignal.once("resume", () => {
+                this.enqueInitalSignals(signals);
+            });
+        } else {
+            this.enqueInitalSignals(signals);
+        }
     }
 
     private enqueInitalOps(messages: ISequencedDocumentMessage[] | undefined, contents: IContentMessage[] | undefined) {
@@ -470,6 +498,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         if (messages && messages.length > 0) {
             this.catchUp(messages);
+        }
+    }
+
+    private enqueInitalSignals(signals: ISignalMessage[] | undefined) {
+        if (signals && signals.length > 0) {
+            for (const signal of signals) {
+                this._inboundSignal.push(signal);
+            }
         }
     }
 

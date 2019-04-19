@@ -44,6 +44,9 @@ export interface IDeltaManager<T, U> extends EventEmitter {
     // the queue of outbound delta messages
     outbound: IDeltaQueue<U | undefined>;
 
+    // The queue of inbound delta signals
+    inboundSignal: IDeltaQueue<ISignalMessage | undefined>;
+
     // The current minimum sequence number
     minimumSequenceNumber: number | undefined;
 

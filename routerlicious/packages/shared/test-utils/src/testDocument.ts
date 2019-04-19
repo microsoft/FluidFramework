@@ -6,6 +6,7 @@ import {
     IDeltaQueue,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISignalMessage,
     MessageType,
 } from "@prague/container-definitions";
 import * as utils from "@prague/utils";
@@ -63,6 +64,8 @@ export class TestDeltaManager
     public inbound = new TestDeltaQueue<ISequencedDocumentMessage>();
 
     public outbound = new TestDeltaQueue<IDocumentMessage>();
+
+    public inboundSignal = new TestDeltaQueue<ISignalMessage>();
 
     public clientType = "Browser";
 

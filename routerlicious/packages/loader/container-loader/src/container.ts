@@ -408,6 +408,7 @@ export class Container extends EventEmitter implements IContainer {
                         debug("Connected - resuming inbound messages");
                         this._deltaManager!.inbound.resume();
                         this._deltaManager!.outbound.resume();
+                        this._deltaManager!.inboundSignal.resume();
                     } else {
                         debug("Connected - waiting to process inbound messages");
                     }
@@ -530,12 +531,14 @@ export class Container extends EventEmitter implements IContainer {
                 if (key === "code2") {
                     debug(`loadCode ${JSON.stringify(value)}`);
 
-                    // Stop processing inbound messages as we transition to the new code
+                    // Stop processing inbound messages/signals as we transition to the new code
                     this.deltaManager!.inbound.systemPause();
+                    this.deltaManager!.inboundSignal.systemPause();
                     this.transitionRuntime(value).then(
                         () => {
                             // Resume once transition is complete
                             this.deltaManager!.inbound.systemResume();
+                            this.deltaManager!.inboundSignal.systemResume();
                         },
                         (error) => {
                             this.emit("error", error);
@@ -955,10 +958,7 @@ export class Container extends EventEmitter implements IContainer {
     }
 
     private processSignal(message: ISignalMessage) {
-        // Signals don't get paused. Need to check context before handing over.
-        if (this.context) {
-            const local = this._clientId === message.clientId;
-            this.context.processSignal(message, local);
-        }
+        const local = this._clientId === message.clientId;
+        this.context!.processSignal(message, local);
     }
 }
