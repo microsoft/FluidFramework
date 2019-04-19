@@ -16,12 +16,12 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"developement\"",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"developement\"",
     "webpack:full": "webpack --env=\"production\"",
-    "dev": "node ../../../common/tools/node_modules/@prague/prague-dev-server/bin/prague-dev-server.js --config webpack.config.js --package package.json",
     "publish-local": "npm publish --registry http://localhost:4873",
     "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
     "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local"
@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
+    "@prague/prague-dev-server": "^3.3.3",
     "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
