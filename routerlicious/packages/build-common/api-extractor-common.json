@@ -114,7 +114,7 @@
         // "addToApiReviewFile": false
       },
       "ae-extra-release-tag": {
-        "logLevel": "none"
+        "logLevel": "warning"
       },
       "ae-missing-release-tag": {
         "logLevel": "none"
