@@ -57,8 +57,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number | undefined = 0;
 
-    private heartbeatTimer: NodeJS.Timer | undefined;
-
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
     // * largestSequenceNumber is the largest seen sequence number
@@ -265,7 +263,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public enableReadonlyMode() {
-        this.stopHeartbeatSending();
         this.stopSequenceNumberUpdate();
         this.readonly = true;
     }
@@ -279,7 +276,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     public close() {
         this.closed = true;
-        this.stopHeartbeatSending();
         this.stopSequenceNumberUpdate();
         if (this.connection) {
             this.connection.close();
@@ -733,17 +729,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
-        // The server maintains a time based window for the min sequence number. As such we want to periodically
-        // send a heartbeat to get the latest sequence number once the window has moved past where we currently are.
-        if (!this.heartbeatTimer) {
-            this.heartbeatTimer = setTimeout(
-                () => {
-                    this.submit(MessageType.NoOp, null);
-                    this.heartbeatTimer = undefined;
-                },
-                2000 + 1000);
-        }
-
         // If an update has already been requeested then mark this fact. We will wait until no updates have
         // been requested before sending the updated sequence number.
         if (this.updateSequenceNumberTimer) {
@@ -773,12 +758,5 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.updateHasBeenRequested = false;
         this.updateSequenceNumberTimer = undefined;
-    }
-
-    private stopHeartbeatSending() {
-        if (this.heartbeatTimer !== undefined) {
-            clearTimeout(this.heartbeatTimer);
-        }
-        this.heartbeatTimer = undefined;
     }
 }
