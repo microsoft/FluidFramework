@@ -12,6 +12,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:docs": "api-extractor run --local",
     "clean": "rimraf dist lib *.tsbuildinfo",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
