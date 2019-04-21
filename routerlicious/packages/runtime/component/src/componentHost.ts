@@ -314,8 +314,8 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         file.sha = sha;
         file.url = this.storageService.getRawUrl(sha);
 
-        await this.blobManager.createBlob(file);
-        this.submit(MessageType.BlobUploaded, await this.blobManager.createBlob(file));
+        const blob = await this.blobManager.createBlob(file);
+        this.submit(MessageType.BlobUploaded, blob);
 
         return file;
     }
