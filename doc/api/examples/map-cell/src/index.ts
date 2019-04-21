@@ -1,7 +1,7 @@
 import { ICell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { ISharedMap, IValueChanged } from "@prague/map";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as URL from "url-parse";
 import { InsecureUrlResolver } from "./urlResolver";
 
@@ -23,15 +23,15 @@ const secret = "4a9211594f7c3daebca3deb8d6115fe2";
 
 const userId = "test";
 
-const documentId = "cell-test-03072019-01";
+const docId = "cell-map-test-04202019-15";
 
-// Register endpoint connection
-const documentServices = socketStorage.createDocumentService(routerlicious, historian);
-API.registerDocumentService(documentServices);
+API.registerDocumentServiceFactory(new RouterliciousDocumentServiceFactory());
 
 async function run(id: string): Promise<void> {
+    const deltaUrl = routerlicious + `/deltas/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
     const resolver = new InsecureUrlResolver(
         routerlicious,
+        deltaUrl,
         historian,
         userId,
         secret);
@@ -43,8 +43,7 @@ async function run(id: string): Promise<void> {
 
     const collabDoc = await API.load(
         documentUrl,
-        apiHost,
-        { blockUpdateMarkers: true });
+        apiHost);
 
     const rootMap = await collabDoc.getRoot();
 
@@ -76,6 +75,6 @@ async function run(id: string): Promise<void> {
     });
 }
 
-run(documentId).catch((error) => {
+run(docId).catch((error) => {
     console.error(error);
 });

@@ -12,6 +12,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 
     constructor(
         private readonly ordererUrl: string,
+        private readonly deltaStorageUrl: string,
         private readonly storageUrl: string,
         private readonly user: string,
         private readonly key: string,
@@ -30,8 +31,11 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         // tslint:disable-next-line:no-unnecessary-local-variable
         const response: IPragueResolvedUrl = {
-            ordererUrl: this.ordererUrl,
-            storageUrl: this.storageUrl,
+            endpoints: {
+                deltaStorageUrl: this.deltaStorageUrl,
+                ordererUrl: this.ordererUrl,
+                storageUrl: this.storageUrl,
+            },
             tokens: { jwt: this.auth(tenantId, documentId) },
             type: "prague",
             url: documentUrl,

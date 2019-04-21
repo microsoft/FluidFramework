@@ -1,14 +1,14 @@
 {
-  "name": "sequence",
+  "name": "prague-map-cell",
   "version": "0.1.0",
-  "description": "Prague API sequence sample",
+  "description": "Test for map and cell",
   "main": "index.js",
   "dependencies": {
-    "@prague/cell": "0.2.5524",
-    "@prague/client-api": "0.2.5524",
-    "@prague/container-definitions": "0.2.5524",
-    "@prague/map": "0.2.5524",
-    "@prague/routerlicious-socket-storage": "0.2.5524",
+    "@prague/cell": "0.3.6412",
+    "@prague/client-api": "0.3.6412",
+    "@prague/container-definitions": "0.3.6412",
+    "@prague/map": "0.3.6412",
+    "@prague/routerlicious-socket-storage": "0.3.6412",
     "jsonwebtoken": "^8.2.1",
     "url-parse": "^1.4.4"
   },
