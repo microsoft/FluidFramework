@@ -10,7 +10,7 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
     }
 
     public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null | undefined> {
-        return;
+        return null;
     }
 
     public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {

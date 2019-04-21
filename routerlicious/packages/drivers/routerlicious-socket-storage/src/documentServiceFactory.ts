@@ -31,9 +31,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const storageUrl = pragueResolvedUrl.endpoints.storageUrl;
         const ordererUrl = pragueResolvedUrl.endpoints.ordererUrl;
         const deltaStorageUrl = pragueResolvedUrl.endpoints.deltaStorageUrl;
-        if (!storageUrl || !ordererUrl || !deltaStorageUrl) {
+        if (!ordererUrl || !deltaStorageUrl) {
             // tslint:disable-next-line:max-line-length
-            return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
+            return Promise.reject(`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         const jwtToken = pragueResolvedUrl.tokens.jwt;
