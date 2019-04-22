@@ -65,29 +65,38 @@ class TestDocumentStorageService implements IDocumentStorageService {
 export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
 
-    constructor(private deltaStorage: IDeltaStorageService, private tokenProvider: ITokenProvider) {
+    constructor(
+        private deltaStorage: IDeltaStorageService,
+        private tokenProvider: ITokenProvider,
+        private tenantId: string,
+        private documentId: string) {
     }
 
-    public async connectToStorage(
-        tenantId: string,
-        id: string): Promise<IDocumentStorageService> {
+    public async connectToStorage(): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(
-        tenantId: string,
-        id: string): Promise<IDocumentDeltaStorageService> {
-        return new socketStorage.DocumentDeltaStorageService(tenantId, id, this.tokenProvider, this.deltaStorage);
+    public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+        return new socketStorage.DocumentDeltaStorageService(
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider,
+            this.deltaStorage);
     }
 
-    public async connectToDeltaStream(
-        tenantId: string,
-        id: string): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(): Promise<IDocumentDeltaConnection> {
 
-        return new TestDocumentDeltaConnection(id, "test-client", false, "", undefined, undefined, undefined);
+        return new TestDocumentDeltaConnection(
+            this.documentId,
+            "test-client",
+            false,
+            "",
+            undefined,
+            undefined,
+            undefined);
     }
 
-    public branch(tenantId: string, id: string): Promise<string> {
+    public branch(): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

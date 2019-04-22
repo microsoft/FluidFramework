@@ -11,31 +11,31 @@ export class TestDocumentService implements api.IDocumentService {
     constructor(
         private testDeltaConnectionServer: ITestDeltaConnectionServer,
         private tokenProvider: socketStorage.TokenProvider,
+        private tenantId: string,
+        private documentId: string,
     ) {}
 
-    public async connectToStorage(tenantId: string, id: string): Promise<api.IDocumentStorageService> {
-
+    public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(tenantId: string, id: string): Promise<api.IDocumentDeltaStorageService> {
-
-        return new TestDeltaStorageService(tenantId, id, this.testDeltaConnectionServer.databaseManager);
+    public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+        return new TestDeltaStorageService(
+            this.tenantId,
+            this.documentId,
+            this.testDeltaConnectionServer.databaseManager);
     }
 
-    public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
-        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return TestDocumentDeltaConnection.Create(
-            tenantId,
-            id,
+            this.tenantId,
+            this.documentId,
             this.tokenProvider.token,
             client,
             this.testDeltaConnectionServer.webSocketServer);
     }
 
-    public async branch(tenantId: string, id: string): Promise<string> {
+    public async branch(): Promise<string> {
         return null;
     }
 

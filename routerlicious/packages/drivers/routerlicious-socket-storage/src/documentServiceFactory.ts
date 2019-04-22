@@ -6,6 +6,7 @@ import {
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { ICredentials, IGitCache } from "@prague/services-client";
+import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
@@ -36,6 +37,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             return Promise.reject(`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
+        const parsedUrl = parse(pragueResolvedUrl.url);
+        const [, tenantId, documentId] = parsedUrl.path!.split("/");
+        if (!documentId || !tenantId) {
+            // tslint:disable-next-line:max-line-length
+            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+        }
+
         const jwtToken = pragueResolvedUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
@@ -52,7 +60,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 this.disableCache,
                 this.historianApi,
                 this.credentials,
-                tokenProvider));
+                tokenProvider,
+                tenantId,
+                documentId));
         }
 
         return Promise.resolve(new DocumentService(
@@ -64,6 +74,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.historianApi,
             this.credentials,
             this.gitCache,
-            tokenProvider));
+            tokenProvider,
+            tenantId,
+            documentId));
     }
 }

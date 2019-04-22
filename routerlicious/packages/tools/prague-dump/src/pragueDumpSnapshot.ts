@@ -138,14 +138,11 @@ async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, 
     }));
 }
 
-export async function pragueDumpSnapshot(
-    documentService: IDocumentService,
-    tenantId: string,
-    id: string) {
+export async function pragueDumpSnapshot(documentService: IDocumentService) {
 
     const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
     if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {
-        const storage = await documentService.connectToStorage(tenantId, id);
+        const storage = await documentService.connectToStorage();
         let version: ICommit | undefined;
         if (dumpSnapshotVersions || paramSnapshotVersionIndex !== undefined || paramSave !== undefined) {
             const versions = await storage.getVersions("", paramNumSnapshotVersions);

@@ -208,7 +208,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Connect to the delta storage endpoint
         const storageDeferred = new Deferred<IDocumentDeltaStorageService>();
         this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage(this.tenantId, this.id).then(
+        this.service.connectToDeltaStorage().then(
             (deltaStorage) => {
                 storageDeferred.resolve(deltaStorage);
             },
