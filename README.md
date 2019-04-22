@@ -2,6 +2,10 @@
 
 ![Prague](http://wallpapers-best.com/uploads/posts/2015-09/18_prague.jpg)
 
+Prague enables distributed, collaborative applications by providing developers with eventually consistent "Distributed Data Types", a flexible component and app model ("Chaincode"), and a reference server implementation ("Routerlicious.")
+
+Teams are using Prague for low latency collaboration, zero setup data persistance, and on-by-default cross app compatibility. Among other projects, our partner teams are building components for text editing, gaming, command line tooling, and IOT.
+
 ## Build with Prague
 
 Use [Yo Prague](./tools/generator-prague/README.md) to get set up quickly.
