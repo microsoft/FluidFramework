@@ -31,6 +31,9 @@ const MaxFetchDelay = 10000;
 const MaxBatchDeltas = 2000;
 const DefaultChunkSize = 16 * 1024;
 
+// This can be anything other than null
+const ImmediateNoOpResponse = "";
+
 // TODO (mdaumi): These two should come from connect protocol. For now, splitting will never occur since
 // it's bigger than DefaultChunkSize
 const DefaultMaxContentSize = 32 * 1024;
@@ -600,7 +603,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             // update, etc...).
             if (message.type === MessageType.Operation ||
                 message.type === MessageType.Propose) {
-                this.updateSequenceNumber();
+                this.updateSequenceNumber(message.type);
             }
 
             const endTime = Date.now();
@@ -723,9 +726,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Acks the server to update the reference sequence number
      */
-    private updateSequenceNumber() {
+    private updateSequenceNumber(type: MessageType) {
         // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
         if (this.readonly) {
+            return;
+        }
+
+        // On a quorum proposal, immediately send a response to expedite the approval.
+        if (type === MessageType.Propose) {
+            this.submit(MessageType.NoOp, ImmediateNoOpResponse);
             return;
         }
 
@@ -746,7 +755,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.submit(MessageType.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
-                this.updateSequenceNumber();
+                this.updateSequenceNumber(type);
             }
         }, 100);
     }

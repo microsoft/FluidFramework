@@ -378,11 +378,20 @@ export class DeliLambda implements IPartitionLambda {
             this.noActiveClients = false;
         }
 
+        // Sequence number was never rev'd for NoOps. We will decide now based on heuristics.
         let sendType = SendType.Immediate;
         if (message.operation.type === MessageType.NoOp) {
             // Set up delay sending of client sent no-ops
             if (message.clientId) {
-                sendType = SendType.Later;
+                if (message.operation.contents === null) {
+                    sendType = SendType.Later;
+                } else {
+                    if (this.minimumSequenceNumber <= this.lastSentMSN) {
+                        sendType = SendType.Later;
+                    } else {
+                        sequenceNumber = this.revSequenceNumber();
+                    }
+                }
             } else {
                 if (this.minimumSequenceNumber <= this.lastSentMSN) {
                     sendType = SendType.Never;
