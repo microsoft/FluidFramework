@@ -261,7 +261,6 @@ class LocalOrdererConnection implements IOrdererConnection {
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
 export class LocalOrderer implements IOrderer {
-
     public static async Load(
         storage: IDocumentStorage,
         databaseManager: IDatabaseManager,
@@ -271,6 +270,11 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        pubSub = new PubSub(),
+        broadcasterContext = new LocalContext(),
+        scriptoriumContext = new LocalContext(),
+        foremanContext = new LocalContext(),
+        deliContext = new LocalContext(),
         clientTimeout: number = ClientSequenceTimeout,
         clientIdStamper: IOrdererClientIdStamper = ordererClientIdStamper) {
 
@@ -290,17 +294,16 @@ export class LocalOrderer implements IOrderer {
             tenantManager,
             permission,
             maxMessageSize,
+            pubSub,
+            broadcasterContext,
+            scriptoriumContext,
+            foremanContext,
+            deliContext,
             clientTimeout,
             clientIdStamper);
     }
 
-    private static pubSub = new PubSub();
-    private static socketPublisher = new LocalSocketPublisher(LocalOrderer.pubSub);
-
-    private static broadcasterContext = new LocalContext();
-    private static scriptoriumContext = new LocalContext();
-    private static foremanContext = new LocalContext();
-    private static deliContext = new LocalContext();
+    private socketPublisher: LocalSocketPublisher;
 
     private scriptoriumLambda: ScriptoriumLambda;
     private foremanLambda: ForemanLambda;
@@ -322,10 +325,16 @@ export class LocalOrderer implements IOrderer {
         private tenantManager: ITenantManager,
         private permission: any,
         private maxMessageSize: number,
+        private pubSub,
+        private broadcasterContext,
+        private scriptoriumContext,
+        private foremanContext,
+        private deliContext,
         clientTimeout: number,
-        private clientIdStamper: IOrdererClientIdStamper) {
-
+        private clientIdStamper: IOrdererClientIdStamper,
+    ) {
         this.existing = details.existing;
+        this.socketPublisher = new LocalSocketPublisher(this.pubSub);
 
         // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
         // like what happens when the service goes down.
@@ -335,19 +344,19 @@ export class LocalOrderer implements IOrderer {
         this.deliToScriptoriumKafka = new InMemoryKafka();
 
         // Scriptorium + Broadcaster Lambda
-        this.scriptoriumLambda = new ScriptoriumLambda(deltasCollection, undefined, LocalOrderer.scriptoriumContext);
-        this.broadcasterLambda = new BroadcasterLambda(LocalOrderer.socketPublisher, LocalOrderer.broadcasterContext);
+        this.scriptoriumLambda = new ScriptoriumLambda(deltasCollection, undefined, this.scriptoriumContext);
+        this.broadcasterLambda = new BroadcasterLambda(this.socketPublisher, this.broadcasterContext);
 
         // Foreman lambda
         this.foremanLambda = new ForemanLambda(
             this.taskMessageSender,
             this.tenantManager,
             this.permission,
-            LocalOrderer.foremanContext);
+            this.foremanContext);
 
         // Deli lambda
         this.deliLambda = new DeliLambda(
-            LocalOrderer.deliContext,
+            this.deliContext,
             tenantId,
             documentId,
             details.value,
@@ -375,7 +384,7 @@ export class LocalOrderer implements IOrderer {
         client: IClient): IOrdererConnection {
         // Create the connection
         const connection = new LocalOrdererConnection(
-            LocalOrderer.pubSub,
+            this.pubSub,
             subscriber,
             this.existing,
             this.details.value,
