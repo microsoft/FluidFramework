@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/canvas",
   "description": "Prague ink canvas",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -15,18 +15,18 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "3.2.2",
-    "@types/node": "10.11.5",
+    "@prague/prague-dev-server": "^3.3.5",
+    "@types/node": "^10.11.5",
     "css-loader": "^2.1.0",
     "less": "^3.9.0",
     "less-loader": "^4.1.0",
     "style-loader": "^0.23.1",
-    "ts-loader": "4.4.2",
-    "typescript": "3.0.1",
+    "ts-loader": "^5.4.3",
+    "typescript": "^3.4.4",
     "url-loader": "^1.1.2",
-    "webpack": "4.16.5",
-    "webpack-cli": "3.1.0",
-    "webpack-merge": "4.1.4"
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-merge": "^4.1.4"
   },
   "prague": {
     "browser": {
@@ -37,10 +37,10 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "0.2.5246",
-    "@prague/client-api": "^0.2.5378",
-    "@prague/client-ui": "^0.2.5378",
-    "@prague/container-definitions": "0.2.5246",
-    "@prague/map": "0.2.5246"
+    "@prague/app-component": "^0.3.0",
+    "@prague/client-api": "^0.3.0",
+    "@prague/client-ui": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/map": "^0.3.0"
   }
 }

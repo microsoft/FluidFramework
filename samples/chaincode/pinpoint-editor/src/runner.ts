@@ -1,7 +1,7 @@
 import { Pinpoint } from "@kurtb/pinpoint";
 import { IPlatform } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
@@ -295,16 +295,24 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter implements IPlatform {
+    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
+        const runner = new PinpointRunner(runtime);
+        await runner.initialize();
+
+        return runner;
+    }
+
+    public get id(): string {
+        return this.runtime.id;
+    }
+
     private rootView: ISharedMap;
     private editor: boolean = false;
     private mapHost: HTMLElement;
     private collabDocDeferred = new Deferred<Document>();
 
-    public async run(runtime: IRuntime, platform: IPlatform) {
-        this.initialize(runtime).then(
-            (doc) => this.collabDocDeferred.resolve(doc),
-            (error) => this.collabDocDeferred.reject(error));
-        return this;
+    constructor(private runtime: IComponentRuntime) {
+        super();
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
@@ -354,8 +362,8 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         }
     }
 
-    private async initialize(runtime: IRuntime): Promise<Document> {
-        const collabDoc = await Document.Load(runtime);
+    private async initialize(): Promise<Document> {
+        const collabDoc = await Document.Load(this.runtime);
         this.rootView = await collabDoc.getRoot();
 
         // Add in the text string if it doesn't yet exist

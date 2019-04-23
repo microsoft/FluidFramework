@@ -1,5 +1,5 @@
 import { ISharedMap, MapExtension } from "@prague/map";
-import { IChannel, IRuntime } from "@prague/runtime-definitions";
+import { IChannel, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as uuid from "uuid/v4";
 
@@ -9,7 +9,7 @@ const rootMapId = "root";
  * A document is a collection of collaborative types.
  */
 export class Document {
-    public static async Load(runtime: IRuntime): Promise<Document> {
+    public static async Load(runtime: IComponentRuntime): Promise<Document> {
         let root: ISharedMap;
 
         if (!runtime.existing) {
@@ -34,7 +34,7 @@ export class Document {
     /**
      * Constructs a new document from the provided details
      */
-    private constructor(public runtime: IRuntime, private root: ISharedMap) {
+    private constructor(public runtime: IComponentRuntime, private root: ISharedMap) {
     }
 
     public getRoot(): ISharedMap {

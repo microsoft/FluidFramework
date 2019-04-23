@@ -15,7 +15,7 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.2.4",
+    "@prague/prague-dev-server": "^3.3.5",
     "@types/react-dom": "^16.8.3",
     "angular-router-loader": "^0.8.5",
     "angular2-template-loader": "^0.6.2",
@@ -52,9 +52,9 @@
     "@angular/platform-browser-dynamic": "^7.2.7",
     "@angular/router": "^7.2.7",
     "@angular/upgrade": "^7.2.7",
-    "@prague/app-component": "^0.2.5246",
-    "@prague/container-definitions": "^0.2.5246",
-    "@prague/map": "^0.2.5246",
+    "@prague/app-component": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/map": "^0.3.0",
     "@types/double-ended-queue": "^2.1.0",
     "@types/graphql": "^14.0.7",
     "@types/react": "^16.8.10",

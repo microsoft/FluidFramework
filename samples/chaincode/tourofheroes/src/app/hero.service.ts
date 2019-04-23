@@ -122,7 +122,7 @@ export class GraphQLService {
                     },
                     subscribe: () => {
                         const iterator = this.heroPubSub.asyncIterator("valueChanged");
-                        this.heroEmitter.emit("valueChanged", { local: false });
+                        process.nextTick(() => this.heroEmitter.emit("valueChanged", { local: false }));
 
                         return iterator;
                     },
@@ -147,13 +147,15 @@ export class GraphQLService {
                         // Synthesize an emit to trigger an initial value to the iterator. This will cause a
                         // subscribe event across any other existing subscriptions. Better would be to create
                         // a custom iterator.
-                        this.heroEmitter.emit(
-                            key,
-                            {
+                        process.nextTick(() => {
+                            this.heroEmitter.emit(
                                 key,
-                                local: false,
-                                value: this.root.get(key),
-                            });
+                                {
+                                    key,
+                                    local: false,
+                                    value: this.root.get(key),
+                                });
+                        });
 
                         return iterator;
                     },

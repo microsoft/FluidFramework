@@ -1,13 +1,6 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { ComponentHost } from "@prague/component";
-import { IPlatform, ITree } from "@prague/container-definitions";
-import {
-    CounterValueType,
-    DistributedSetValueType,
-    ISharedMap,
-    MapExtension,
-    registerDefaultValueType,
-} from "@prague/map";
+import { IPlatform } from "@prague/container-definitions";
+import { ISharedMap } from "@prague/map";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -15,17 +8,9 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import {
-    IChaincode,
-    IChaincodeComponent,
-    IComponentDeltaHandler,
-    IComponentRuntime,
-    IRuntime as ILegacyRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
-import * as sequence from "@prague/sequence";
 import { Deferred } from "@prague/utils";
-import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
 import { Document } from "./document";
@@ -66,17 +51,21 @@ const defaultCompilerOptions = {
 // tslint:enable
 
 export class MonacoRunner extends EventEmitter implements IPlatform {
+    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
+        const runner = new MonacoRunner(runtime);
+        await runner.initialize();
+
+        return runner;
+    }
+
     private mapHost: HTMLElement;
     private codeModel: monaco.editor.ITextModel;
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
     private rootView: ISharedMap;
     private collabDocDeferred = new Deferred<Document>();
 
-    public async run(runtime: ILegacyRuntime, platform: IPlatform) {
-        this.initialize(runtime).then(
-            (doc) => this.collabDocDeferred.resolve(doc),
-            (error) => this.collabDocDeferred.reject(error));
-        return this;
+    constructor(private runtime: IComponentRuntime) {
+        super();
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
@@ -203,17 +192,15 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
         return this;
     }
 
-    private async initialize(runtime: ILegacyRuntime): Promise<Document> {
-        const collabDoc = await Document.Load(runtime);
+    private async initialize(): Promise<void> {
+        const collabDoc = await Document.Load(this.runtime);
         this.rootView = await collabDoc.getRoot();
 
-        if (!runtime.existing) {
+        if (!this.runtime.existing) {
             const codeString = collabDoc.createString();
             codeString.insertText('console.log("Hello, world!");', 0);
             this.rootView.set("text", codeString);
         }
-
-        return collabDoc;
     }
 
     private mergeDelta(delta: IMergeTreeOp) {
@@ -275,85 +262,5 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
 
     private async exec(host: any, code: string) {
         eval(code);
-    }
-}
-
-class Chaincode extends EventEmitter implements IChaincode {
-    private modules = new Map<string, any>();
-
-    /**
-     * Constructs a new document from the provided details
-     */
-    constructor(private runner: any) {
-        super();
-
-        // Register default map value types
-        registerDefaultValueType(new DistributedSetValueType());
-        registerDefaultValueType(new CounterValueType());
-        registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-        registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
-
-        // Create channel extensions
-        const mapExtension = new MapExtension();
-        const sharedStringExtension = new sequence.SharedStringExtension();
-        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
-
-        this.modules.set(MapExtension.Type, mapExtension);
-        this.modules.set(sharedStringExtension.type, sharedStringExtension);
-        this.modules.set(objectSequenceExtension.type, objectSequenceExtension);
-        this.modules.set(numberSequenceExtension.type, numberSequenceExtension);
-    }
-
-    public getModule(type: string): any {
-        assert(this.modules.has(type));
-        return this.modules.get(type);
-    }
-
-    /**
-     * Stops the instantiated chaincode from running
-     */
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    public async run(runtime: ILegacyRuntime, platform: IPlatform): Promise<IPlatform> {
-        return this.runner.run(runtime, platform);
-    }
-}
-
-export class MonacoComponent implements IChaincodeComponent {
-    private sharedText = new MonacoRunner();
-    private chaincode: Chaincode;
-    private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = new Chaincode(this.sharedText);
-    }
-
-    public getModule(type: string) {
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const chaincode = this.chaincode;
-
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.sharedText.attach(platform);
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries, sha: null };
     }
 }

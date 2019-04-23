@@ -17,7 +17,10 @@ export class canvas extends Document {
 
     await this.root.wait("ink");
 
-    const canvas = new controls.FlexView(host, new api.Document(this.runtime, this.root), this.root);
+    const canvas = new controls.FlexView(
+      host,
+      new api.Document(this.runtime, null, this.root),
+      this.root);
     browserHost.attach(canvas);
   }
 
@@ -34,7 +37,7 @@ export class canvas extends Document {
 }
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/canvas", [
-    ["@chaincode/canvas", canvas]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/canvas", new Map([
+    ["@chaincode/canvas", Promise.resolve(Component.createComponentFactory(canvas))],
+  ]));
 }

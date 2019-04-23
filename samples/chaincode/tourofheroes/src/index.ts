@@ -1,10 +1,10 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { Document } from "@prague/app-component";
-import { IContainerContext, IRuntime, IRequest, ITree, IPlatform } from "@prague/container-definitions";
+import { Component, Document } from "@prague/app-component";
+import { IContainerContext, IRuntime, IRequest, IPlatform } from "@prague/container-definitions";
 import { ISharedMap } from '@prague/map';
 import { Runtime } from "@prague/runtime";
-import { IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime } from '@prague/runtime-definitions';
+import { IComponent } from '@prague/runtime-definitions';
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
@@ -78,7 +78,11 @@ export class TourOfHeroes extends Document {
     }
 }
 
-class TourOfHeroesComponentView extends EventEmitter implements IChaincodeComponent, IPlatform {
+class TourOfHeroesComponentView extends EventEmitter implements IComponent, IPlatform {
+    public get id() {
+        return this.path;
+    }
+
     constructor(private realComponent: TourOfHeroes, private path: string) {
         super();
     }
@@ -91,14 +95,6 @@ class TourOfHeroesComponentView extends EventEmitter implements IChaincodeCompon
         return;
     }
 
-    public async close(): Promise<void> {
-        return;
-    }
-    
-    public run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        throw new Error("This is a runtime component and should not be run directly");
-    }
-
     public async attach(platform: IPlatform): Promise<IPlatform> {
         // To get the base component to fully initialize we attach (so opened is called) and then await the
         // component interface to make sure it has been fully created.
@@ -108,10 +104,6 @@ class TourOfHeroesComponentView extends EventEmitter implements IChaincodeCompon
 
         this.renderPath(platform);
         return this;
-    }
-
-    public snapshot(): ITree {
-        throw new Error("This is a runtime component and should not be snapshot");
     }
 
     private async renderPath(platform: IPlatform) {
@@ -140,17 +132,11 @@ class TourOfHeroesComponentView extends EventEmitter implements IChaincodeCompon
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-class GraphIQLView extends EventEmitter implements IChaincodeComponent, IPlatform {
+class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
+    public readonly id = "graphiql";
+
     constructor(private realComponent: TourOfHeroes) {
         super();
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-    
-    public run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        throw new Error("This is a runtime component and should not be run directly");
     }
 
     public async queryInterface<T>(id: string): Promise<T> {
@@ -198,17 +184,13 @@ class GraphIQLView extends EventEmitter implements IChaincodeComponent, IPlatfor
 
         return this;
     }
-
-    public snapshot(): ITree {
-        throw new Error("This is a runtime component and should not be snapshot");
-    }
 }
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
         [
             "@chaincode/tourofheroes",
-            { instantiateComponent: () => Promise.resolve(new TourOfHeroes()) }
+            Promise.resolve(Component.createComponentFactory(TourOfHeroes)),
         ],
     ]);
 
@@ -216,16 +198,15 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {
-        const component = await runtime.getComponent("app", true);
+        const componentRuntime = await runtime.getComponent("app", true);
+        const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
 
         // Root entry we will use the full component. Otherwise we will proxy to a view
         if (!request.url) {
-            return { status: 200, mimeType: "prague/component", value: component };
+            return { status: 200, mimeType: "prague/component", value: tourOfHeroes };
         } else if (request.url === "/graphiql") {
-            const tourOfHeroes = component.chaincode as TourOfHeroes;
             return { status: 200, mimeType: "prague/component", value: new GraphIQLView(tourOfHeroes) };
         } else {
-            const tourOfHeroes = component.chaincode as TourOfHeroes;
             const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
             return { status: 200, mimeType: "prague/component", value: view };
         }
