@@ -11,6 +11,7 @@ print <<'END';
   "nodeSupportedVersionRange": ">=8.0.0",
   "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 999,
+  "ensureConsistentVersions": true,
   "projects": [
 END
 

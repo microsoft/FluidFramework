@@ -63,6 +63,10 @@
       "projectFolder": "packages/components/owned-map/"
     },
     {
+      "packageName": "@chaincode/shared-text",
+      "projectFolder": "packages/components/shared-text/"
+    },
+    {
       "packageName": "@chaincode/table-document",
       "projectFolder": "packages/components/table-document/"
     },
@@ -217,6 +221,10 @@
     {
       "packageName": "@prague/tools-core",
       "projectFolder": "packages/shared/tools-core/"
+    },
+    {
+      "packageName": "@prague/prague-dump",
+      "projectFolder": "packages/tools/prague-dump/"
     },
     {
       "packageName": "@prague/build-common",

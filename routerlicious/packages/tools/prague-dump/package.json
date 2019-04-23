@@ -3,23 +3,6 @@
   "version": "0.3.0",
   "description": "",
   "main": "dist/pragueDump.js",
-  "dependencies": {
-    "@prague/build-common": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
-    "@prague/odsp-socket-storage": "^0.3.0",
-    "@prague/routerlicious-socket-storage": "^0.3.0",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "request": "^2.88.0"
-  },
-  "devDependencies": {
-    "concurrently": "^4.1.0",
-    "rimraf": "^2.6.2",
-    "typescript": "^3.4.0",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.1.0",
-    "@types/request": "^2.47.1"
-  },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "tsc",
@@ -29,5 +12,23 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@prague/build-common": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/gitresources": "^0.3.0",
+    "@prague/odsp-socket-storage": "^0.3.0",
+    "@prague/routerlicious-socket-storage": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.12",
+    "@types/request": "^2.47.1",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.4.0"
+  }
 }

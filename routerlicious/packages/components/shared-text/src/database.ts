@@ -224,7 +224,7 @@ export class GraphQLService {
         return queryP;
     }
 
-    public runQuery(query, variables) {
+    public runQuery<T>(query, variables): Promise<ExecutionResult<T>> {
         return graphql({
             schema: this.schema,
             source: query,
