@@ -71,7 +71,8 @@ export class Historian implements IHistorian {
 
     public getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
         return this.restWrapper.get<git.ICommitDetails[]>(`/commits`, { count, sha })
-            .catch((error) => error === 400 ? [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
+            .catch((error) => (error === 400 || error === 404) ?
+            [] as git.ICommitDetails[] : Promise.reject<git.ICommitDetails[]>(error));
     }
 
     public getCommit(sha: string): Promise<git.ICommit> {
