@@ -16,7 +16,9 @@ export class DocumentService2 extends DocumentService {
         errorTracking: api.IErrorTrackingService,
         disableCache: boolean, historianApi: boolean,
         directCredentials: ICredentials | undefined,
-        tokenProvider: TokenProvider) {
+        tokenProvider: TokenProvider,
+        tenantId: string,
+        documentId: string) {
         super(
             ordererUrl,
             deltaStorageUrl,
@@ -26,12 +28,16 @@ export class DocumentService2 extends DocumentService {
             historianApi,
             directCredentials,
             null,
-            tokenProvider);
+            tokenProvider,
+            tenantId,
+            documentId);
     }
-    public async connectToDeltaStream(
-        tenantId: string,
-        id: string,
-        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return WSDeltaConnection.Create(tenantId, id, this.tokenProvider.token, client, this.ordererUrl);
+    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+        return WSDeltaConnection.Create(
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider.token,
+            client,
+            this.ordererUrl);
     }
 }

@@ -5,8 +5,6 @@ import { paramSave, parseArguments } from "./pragueDumpArgs";
 import {
     connectionInfo,
     paramDocumentService,
-    paramId,
-    paramTenantId,
     pragueDumpInit,
 } from "./pragueDumpInit";
 
@@ -26,8 +24,8 @@ async function pragueDumpMain() {
         await writeFile(`${paramSave}/info.json`, JSON.stringify(info, undefined, 2));
     }
 
-    await pragueDumpMessages(paramDocumentService, paramTenantId, paramId);
-    await pragueDumpSnapshot(paramDocumentService, paramTenantId, paramId);
+    await pragueDumpMessages(paramDocumentService);
+    await pragueDumpSnapshot(paramDocumentService);
 }
 
 parseArguments();

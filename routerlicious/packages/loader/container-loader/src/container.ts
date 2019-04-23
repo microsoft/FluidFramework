@@ -297,9 +297,7 @@ export class Container extends EventEmitter implements IContainer {
         const pause = connectionValues.indexOf("pause") !== -1;
 
         // TODO connect to storage needs the token provider
-        const storageP = this.service.connectToStorage(
-            this.tenantId,
-            this.id)
+        const storageP = this.service.connectToStorage()
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
         // If a version is specified we will load it directly - otherwise will query historian for the latest
