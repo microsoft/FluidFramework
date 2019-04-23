@@ -48,8 +48,8 @@
   },
   "dependencies": {
     "@chaincode/charts": "^0.3.6461",
-    "@chaincode/monaco": "^0.3.6462",
-    "@chaincode/pinpoint-editor": "^0.3.6463",
+    "@chaincode/monaco": "^0.3.6474",
+    "@chaincode/pinpoint-editor": "^0.3.6475",
     "@prague/api-definitions": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-ui": "^0.3.0",

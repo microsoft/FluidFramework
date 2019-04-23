@@ -46,24 +46,24 @@ import { GraphQLService } from "./database";
 import { Document } from "./document";
 import { createCacheHTML } from "./pageCacher";
 
-// const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
-// const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
-// const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
+const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
+const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
 // tslint:disable
-// (self as any).MonacoEnvironment = {
-// 	getWorkerUrl: function (moduleId, label) {
-// 		switch (label) {
-// 			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
-// 			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
-// 			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
-// 			case 'typescript':
-// 			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
-// 			default:
-// 				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
-// 		}
-// 	}
-// };
+(self as any).MonacoEnvironment = {
+	getWorkerUrl: function (moduleId, label) {
+		switch (label) {
+			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
+			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
+			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
+			case 'typescript':
+			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+			default:
+				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+		}
+	}
+};
 // tslint:enable
 
 // first script loaded
@@ -430,9 +430,9 @@ export async function instantiateComponent(context: IComponentContext): Promise<
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
-        // ["@chaincode/charts", charts],
-        // ["@chaincode/monaco", monaco],
-        // ["@chaincode/pinpoint-editor", pinpoint],
+        ["@chaincode/charts", charts],
+        ["@chaincode/monaco", monaco],
+        ["@chaincode/pinpoint-editor", pinpoint],
         ["@chaincode/shared-text", { instantiateComponent }],
     ]);
 
