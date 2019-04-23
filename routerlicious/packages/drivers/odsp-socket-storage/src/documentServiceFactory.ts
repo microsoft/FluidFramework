@@ -3,10 +3,7 @@ import { DocumentService } from "./documentService";
 import { TokenProvider } from "./token";
 
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(
-        private readonly tenantId: string,
-        private readonly documentId: string,
-        private readonly bypassSnapshot = false) {}
+    constructor(private readonly bypassSnapshot = false) {}
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
@@ -32,13 +29,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
         const tokenProvider = new TokenProvider(storageToken, socketToken);
         return Promise.resolve(
-            new DocumentService(
-                storageUrl,
-                deltaStorageUrl,
-                ordererUrl,
-                tokenProvider,
-                this.tenantId,
-                this.documentId,
-                this.bypassSnapshot));
+            new DocumentService(storageUrl, deltaStorageUrl, ordererUrl, tokenProvider, this.bypassSnapshot));
     }
 }

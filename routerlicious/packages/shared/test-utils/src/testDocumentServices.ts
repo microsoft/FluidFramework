@@ -96,19 +96,19 @@ export class TestDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 export class TestDocumentService implements IDocumentService {
     private errorTracking = new socketStorage.DefaultErrorTracking();
 
-    public async connectToStorage(): Promise<IDocumentStorageService> {
+    public async connectToStorage(id: string, token: string): Promise<IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
-    public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(id: string, token: string): Promise<IDocumentDeltaStorageService> {
         return new TestDocumentDeltaStorageService();
     }
 
-    public async connectToDeltaStream(): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(id: string, token: string): Promise<IDocumentDeltaConnection> {
         return new TestDocumentDeltaConnection();
     }
 
-    public branch(): Promise<string> {
+    public branch(id: string, token: string): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

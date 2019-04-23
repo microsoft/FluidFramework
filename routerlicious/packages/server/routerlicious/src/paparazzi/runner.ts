@@ -37,13 +37,6 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
             Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = url.parse(urlAsPragueUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path.split("/");
-        if (!documentId || !tenantId) {
-            // tslint:disable-next-line:max-line-length
-            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
-        }
-
         const jwtToken = urlAsPragueUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
@@ -56,9 +49,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
                 ordererUrl,
                 deltaStorageUrl,
                 storageUrl,
-                tokenProvider,
-                tenantId,
-                documentId));
+                tokenProvider));
     }
 }
 

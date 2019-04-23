@@ -13,29 +13,30 @@ export class DocumentService implements api.IDocumentService {
         private readonly deltaStorageUrl: string,
         private readonly webSocketUrl: string,
         private readonly tokenProvider: TokenProvider,
-        private readonly tenantId: string,
-        private readonly documentId: string,
         private readonly bypassSnapshot = false,
         ) {
     }
 
-    public async connectToStorage(): Promise<api.IDocumentStorageService> {
+    public async connectToStorage(tenantId: string, id: string): Promise<api.IDocumentStorageService> {
         const documentManager = this.bypassSnapshot ?
             new NoopDocumentStorageManager() :
-            new StandardDocumentStorageManager(this.documentId, this.snapshotUrl, this.tokenProvider);
+            new StandardDocumentStorageManager(id, this.snapshotUrl, this.tokenProvider);
         return new DocumentStorageService(documentManager);
     }
 
-    public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
+    public async connectToDeltaStorage(tenantId: string, id: string): Promise<api.IDocumentDeltaStorageService> {
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
-        return new DocumentDeltaStorageService(this.tenantId, this.documentId, this.tokenProvider, deltaStorage);
+        return new DocumentDeltaStorageService(tenantId, id, this.tokenProvider, deltaStorage);
     }
 
-    public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return DocumentDeltaConnection.Create(this.tenantId, this.documentId, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
+    public async connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+        return DocumentDeltaConnection.Create(tenantId, id, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
     }
 
-    public async branch(): Promise<string | null> {
+    public async branch(tenantId: string, id: string): Promise<string | null> {
         return null;
     }
 

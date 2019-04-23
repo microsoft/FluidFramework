@@ -5,7 +5,6 @@ import {
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { TokenProvider } from "@prague/routerlicious-socket-storage";
-import { parse } from "url";
 import { createTestDocumentService } from "./registration";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
@@ -13,20 +12,13 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
 
     constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {}
 
-    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type !== "prague") {
+    public createDocumentService(url: IResolvedUrl): Promise<IDocumentService> {
+        if (url.type !== "prague") {
             // tslint:disable-next-line:max-line-length
             return Promise.reject("Only Prague components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
-        const parsedUrl = parse(resolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path.split("/");
-        if (!documentId || !tenantId) {
-            // tslint:disable-next-line:max-line-length
-            return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
-        }
-
-        const pragueResolvedUrl = resolvedUrl as IPragueResolvedUrl;
+        const pragueResolvedUrl = url as IPragueResolvedUrl;
         const jwtToken = pragueResolvedUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
@@ -34,7 +26,6 @@ export class TestDocumentServiceFactory implements IDocumentServiceFactory {
 
         const tokenProvider = new TokenProvider(jwtToken);
 
-        return Promise.resolve(
-            createTestDocumentService(this.testDeltaConnectionServer, tokenProvider, tenantId, documentId));
+        return Promise.resolve(createTestDocumentService(this.testDeltaConnectionServer, tokenProvider));
     }
 }

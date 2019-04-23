@@ -18,7 +18,7 @@ export class DeltaConnection extends EventEmitter {
         id: string,
         service: IDocumentService,
         client: IClient) {
-        const connection = await service.connectToDeltaStream(client);
+        const connection = await service.connectToDeltaStream(tenantId, id, client);
         return new DeltaConnection(connection);
     }
 

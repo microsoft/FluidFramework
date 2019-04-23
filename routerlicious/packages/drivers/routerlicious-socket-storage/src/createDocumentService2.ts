@@ -9,8 +9,6 @@ export function createDocumentService2(
     deltaStorageUrl: string,
     gitUrl: string,
     tokenProvider: TokenProvider,
-    tenantId: string,
-    documentId: string,
     errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
     disableCache = false,
     historianApi = true,
@@ -23,7 +21,5 @@ export function createDocumentService2(
         disableCache,
         historianApi,
         credentials,
-        tokenProvider,
-        tenantId,
-        documentId);
+        tokenProvider);
 }

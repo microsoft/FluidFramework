@@ -175,6 +175,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     clientId: string;
 
     /**
+     * DocumentId for the connection
+     */
+    documentId: string;
+
+    /**
      * Whether the connection was made to a new or existing document
      */
     existing: boolean;
@@ -230,22 +235,27 @@ export interface IDocumentService {
     /**
      * Access to storage associated with the document...
      */
-    connectToStorage(): Promise<IDocumentStorageService>;
+    connectToStorage(tenantId: string, id: string): Promise<IDocumentStorageService>;
 
     /**
      * Access to delta storage associated with the document
      */
-    connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
+    connectToDeltaStorage(
+        tenantId: string,
+        id: string): Promise<IDocumentDeltaStorageService>;
 
     /**
      * Subscribes to the document delta stream
      */
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+    connectToDeltaStream(
+        tenantId: string,
+        id: string,
+        client: IClient): Promise<IDocumentDeltaConnection>;
 
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(): Promise<string | null>;
+    branch(tenantId: string, id: string): Promise<string | null>;
 
     /**
      * Returns the error tracking service

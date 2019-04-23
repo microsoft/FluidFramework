@@ -25,6 +25,8 @@ class Replayer {
     private firstTimeStamp: number | undefined;
     constructor(
         private deltaConnection: ReplayDocumentDeltaConnection,
+        private tenantId: string,
+        private id: string,
         private documentStorageService: IDocumentDeltaStorageService,
         private replayFrom: number,
         private replayTo: number,
@@ -70,8 +72,8 @@ class Replayer {
         return false;
     }
 
-    private emit(ops: ISequencedDocumentMessage[]) {
-        ops.map((op) => this.deltaConnection.emit("op", op.clientId, op));
+    private emit(ops: any) {
+        this.deltaConnection.emit("op", this.id, ops);
     }
 
     private skipToReplayFrom(fetchedOps: ISequencedDocumentMessage[]) {
@@ -173,6 +175,8 @@ class Replayer {
 
 export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async Create(
+        tenantId: string,
+        id: string,
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -189,16 +193,18 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             parentBranch: null,
             user: null,
         };
-        const deltaConnection = new ReplayDocumentDeltaConnection(connection);
+        const deltaConnection = new ReplayDocumentDeltaConnection(id, connection);
         // tslint:disable-next-line:no-floating-promises
         this.FetchAndEmitOps(
-            deltaConnection, documentStorageService, replayFrom, replayTo, unitIsTime);
+            deltaConnection, tenantId, id, documentStorageService, replayFrom, replayTo, unitIsTime);
 
         return deltaConnection;
     }
 
     private static FetchAndEmitOps(
         deltaConnection: ReplayDocumentDeltaConnection,
+        tenantId: string,
+        id: string,
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -206,6 +212,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
         const replayer =  new Replayer(
             deltaConnection,
+            tenantId,
+            id,
             documentStorageService,
             replayFrom,
             replayTo,
@@ -240,6 +248,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     public readonly maxMessageSize = ReplayMaxMessageSize;
 
     constructor(
+        public documentId: string,
         public details: messages.IConnected,
     ) {
         super();
