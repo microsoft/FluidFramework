@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
-    "@prague/prague-dev-server": "^3.3.3",
+    "@prague/prague-dev-server": "^3.3.5",
     "concurrently": "^4.1.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",

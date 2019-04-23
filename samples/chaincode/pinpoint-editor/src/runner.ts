@@ -2,7 +2,6 @@ import { Pinpoint } from "@kurtb/pinpoint";
 import { IPlatform } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -306,10 +305,10 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         return this.runtime.id;
     }
 
+    private collabDoc: Document;
     private rootView: ISharedMap;
     private editor: boolean = false;
     private mapHost: HTMLElement;
-    private collabDocDeferred = new Deferred<Document>();
 
     constructor(private runtime: IComponentRuntime) {
         super();
@@ -325,8 +324,6 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        const collabDoc = await this.collabDocDeferred.promise;
-
         // If headless return early
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
         if (!this.mapHost) {
@@ -346,7 +343,7 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
             this.mapHost.innerHTML = "<div ng-view></div>";
 
             pinpointTool.factory("mapDetailsSvc", ["$rootScope", ($rootScope) => {
-                return new MapDetailsService($rootScope, collabDoc.getRoot(), this.rootView);
+                return new MapDetailsService($rootScope, this.collabDoc.getRoot(), this.rootView);
             }]);
 
             await googleP;
@@ -358,16 +355,16 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            embed(this.mapHost, collabDoc, this.rootView, platform);
+            embed(this.mapHost, this.collabDoc, this.rootView, platform);
         }
     }
 
-    private async initialize(): Promise<Document> {
-        const collabDoc = await Document.Load(this.runtime);
-        this.rootView = await collabDoc.getRoot();
+    private async initialize(): Promise<void> {
+        this.collabDoc = await Document.Load(this.runtime);
+        this.rootView = await this.collabDoc.getRoot();
 
         // Add in the text string if it doesn't yet exist
-        if (!collabDoc.existing) {
+        if (!this.collabDoc.existing) {
             const data = {
                 "aspect-ratio": "tall",
                 "dek": "This is a test map.",
@@ -392,7 +389,5 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         } else {
             await this.rootView.wait("map");
         }
-
-        return collabDoc;
     }
 }

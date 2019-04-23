@@ -10,7 +10,6 @@ import {
 } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
-import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
 import { Document } from "./document";
@@ -62,7 +61,6 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
     private codeModel: monaco.editor.ITextModel;
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
     private rootView: ISharedMap;
-    private collabDocDeferred = new Deferred<Document>();
 
     constructor(private runtime: IComponentRuntime) {
         super();
@@ -79,8 +77,6 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
 
     // TODO can remove ? once document is fixed in main package
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        await this.collabDocDeferred.promise;
-
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
         if (!this.mapHost) {
             return;

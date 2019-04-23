@@ -10,6 +10,9 @@ module.exports = env => {
     return merge(
         {
             entry: './src/index.ts',
+            resolve: {
+                extensions: [".mjs", ".ts", ".tsx", ".js"],
+            },
             devtool: 'source-map',
             mode: "production",
             module: {
@@ -65,9 +68,6 @@ module.exports = env => {
                 net: 'empty',
                 tls: 'empty',
                 child_process: 'empty',
-            },
-            resolve: {
-                extensions: [ '.tsx', '.ts', '.js' ]
             },
             resolveLoader: {
                 alias: {

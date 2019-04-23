@@ -27,72 +27,76 @@ import { EventEmitter } from "events";
 
 export class ComponentContext extends EventEmitter implements IComponentContext {
     public get tenantId(): string {
-        return this.hostRuntime.tenantId;
+        return this._hostRuntime.tenantId;
     }
 
     public get documentId(): string {
-        return this.hostRuntime.id;
+        return this._hostRuntime.id;
     }
 
     public get parentBranch(): string {
-        return this.hostRuntime.parentBranch;
+        return this._hostRuntime.parentBranch;
     }
 
     // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
-        return this.hostRuntime.options;
+        return this._hostRuntime.options;
     }
 
     public get clientId(): string {
-        return this.hostRuntime.clientId;
+        return this._hostRuntime.clientId;
     }
 
     public get clientType(): string {
-        return this.hostRuntime.clientType;
+        return this._hostRuntime.clientType;
     }
 
     public get blobManager(): IBlobManager {
-        return this.hostRuntime.blobManager;
+        return this._hostRuntime.blobManager;
     }
 
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this.hostRuntime.deltaManager;
+        return this._hostRuntime.deltaManager;
     }
 
     public get connected(): boolean {
-        return this.hostRuntime.connected;
+        return this._hostRuntime.connected;
     }
 
     public get leader(): boolean {
-        return this.hostRuntime.leader;
+        return this._hostRuntime.leader;
     }
 
     public get connectionState(): ConnectionState {
-        return this.hostRuntime.connectionState;
+        return this._hostRuntime.connectionState;
     }
 
     public get submitFn(): (type: MessageType, contents: any) => void {
-        return this.hostRuntime.submitFn;
+        return this._hostRuntime.submitFn;
     }
 
     public get submitSignalFn(): (contents: any) => void {
-        return this.hostRuntime.submitSignalFn;
+        return this._hostRuntime.submitSignalFn;
     }
 
     public get snapshotFn(): (message: string) => Promise<void> {
-        return this.hostRuntime.snapshotFn;
+        return this._hostRuntime.snapshotFn;
     }
 
     public get closeFn(): () => void {
-        return this.hostRuntime.closeFn;
+        return this._hostRuntime.closeFn;
     }
 
     public get branch(): string {
-        return this.hostRuntime.branch;
+        return this._hostRuntime.branch;
     }
 
     public get loader(): ILoader {
-        return this.hostRuntime.loader;
+        return this._hostRuntime.loader;
+    }
+
+    public get hostRuntime(): IHostRuntime {
+        return this._hostRuntime;
     }
 
     public get component(): IComponentRuntime {
@@ -108,7 +112,8 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     private baseSha = null;
 
     constructor(
-        private readonly hostRuntime: IHostRuntime,
+        // tslint:disable-next-line:variable-name
+        private readonly _hostRuntime: IHostRuntime,
         private readonly pkg: string,
         public readonly id: string,
         public readonly existing: boolean,
@@ -119,11 +124,11 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this.hostRuntime.createAndAttachComponent(id, pkg);
+        return this._hostRuntime.createAndAttachComponent(id, pkg);
     }
 
     public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this.hostRuntime.getComponent(id, wait);
+        return this._hostRuntime.getComponent(id, wait);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -155,7 +160,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
 
     public getQuorum(): IQuorum {
         this.verifyNotClosed();
-        return this.hostRuntime.getQuorum();
+        return this._hostRuntime.getQuorum();
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {
@@ -171,7 +176,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public close(): void {
-        this.hostRuntime.closeFn();
+        this._hostRuntime.closeFn();
     }
 
     public snapshot(): ITree {
@@ -215,7 +220,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
                 type,
             },
         };
-        return this.hostRuntime.submitSignalFn(envelope);
+        return this._hostRuntime.submitSignalFn(envelope);
     }
 
     public error(err: any): void {
@@ -223,7 +228,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public async start(): Promise<IComponentRuntime> {
-        const factory = await this.hostRuntime.getPackage(this.pkg);
+        const factory = await this._hostRuntime.getPackage(this.pkg);
         this._component = await factory.instantiateComponent(this);
         return this._component;
     }
@@ -241,7 +246,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
                 type,
             },
         };
-        return this.hostRuntime.submitFn(MessageType.Operation, envelope);
+        return this._hostRuntime.submitFn(MessageType.Operation, envelope);
     }
 
     private verifyNotClosed() {

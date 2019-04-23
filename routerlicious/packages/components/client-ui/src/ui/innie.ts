@@ -84,7 +84,7 @@ export class InnerComponent extends Block<InnerDocumentState> {
             context.services.get("invalidateLayout")();
         };
 
-        const attachedP = collabDocument.context.request({ url: `/{${self.id}}`}).then(async (response) => {
+        const attachedP = collabDocument.context.hostRuntime.request({ url: `/${self.id}`}).then(async (response) => {
             if (response.status !== 200 || response.mimeType !== "prague/component") {
                 return Promise.reject(response);
             }

@@ -124,6 +124,7 @@ export interface IComponentContext extends EventEmitter {
     readonly branch: string;
     readonly baseSnapshot: ISnapshotTree;
     readonly loader: ILoader;
+    readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 

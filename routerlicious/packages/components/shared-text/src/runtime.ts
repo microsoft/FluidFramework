@@ -21,7 +21,7 @@ import * as MergeTree from "@prague/merge-tree";
 import {
     Runtime,
 } from "@prague/runtime";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
@@ -31,7 +31,10 @@ import * as stream from "@prague/stream";
 import * as Translator from "@prague/translator";
 import { default as axios } from "axios";
 import { EventEmitter } from "events";
+import * as GraphiQL from "graphiql";
 import { parse } from "querystring";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
@@ -39,6 +42,7 @@ const performanceNow = require("performance-now");
 const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
+import { GraphQLService } from "./database";
 import { Document } from "./document";
 import { createCacheHTML } from "./pageCacher";
 
@@ -47,19 +51,19 @@ import { createCacheHTML } from "./pageCacher";
 // const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
 // tslint:disable
-(self as any).MonacoEnvironment = {
-	getWorkerUrl: function (moduleId, label) {
-		switch (label) {
-			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
-			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
-			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
-			case 'typescript':
-			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
-			default:
-				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
-		}
-	}
-};
+// (self as any).MonacoEnvironment = {
+// 	getWorkerUrl: function (moduleId, label) {
+// 		switch (label) {
+// 			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
+// 			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
+// 			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
+// 			case 'typescript':
+// 			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+// 			default:
+// 				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+// 		}
+// 	}
+// };
 // tslint:enable
 
 // first script loaded
@@ -111,6 +115,16 @@ async function waitForFullConnection(runtime: any): Promise<void> {
                 resolve();
             });
         });
+    }
+}
+
+class ViewPlatform extends EventEmitter implements IPlatform {
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+
+    public async detach() {
+        return;
     }
 }
 
@@ -218,6 +232,12 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             theFlow.loadFinished(clockStart);
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
+
+        return this;
+    }
+
+    public getRoot(): ISharedMap {
+        return this.rootView;
     }
 
     private async initialize(): Promise<void> {
@@ -306,6 +326,67 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
     }
 }
 
+// Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
+// these synthetic components don't need it. We may want this to just be "attach"
+class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
+    public readonly id = "graphiql";
+
+    constructor(private realComponent: SharedTextRunner) {
+        super();
+    }
+
+    public async close(): Promise<void> {
+        return;
+    }
+
+    public async queryInterface<T>(id: string): Promise<T> {
+        return null;
+    }
+
+    public async detach() {
+        return;
+    }
+
+    public async attach(platform: IPlatform): Promise<IPlatform> {
+        // If the host provided a <div>, render the component into that Div
+        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
+        if (!maybeDiv) {
+            return;
+        }
+
+        maybeDiv.style.width = "100vw";
+        maybeDiv.style.height = "100vh";
+
+        // tslint:disable-next-line:no-submodule-imports
+        const css = require("graphiql/graphiql.css");
+        const styleTag = document.createElement("style");
+        styleTag.innerText = css;
+        document.head.appendChild(styleTag);
+
+        // To get the base component to fully initialize we attach (so opened is called) and then await the
+        // component interface to make sure it has been fully created.
+        // TODO should be an easier and cleaner way to do this
+        await this.realComponent.attach(new ViewPlatform());
+        // await realPlatform.queryInterface("component");
+
+        const graphQLServer = new GraphQLService(this.realComponent.getRoot().get("text"));
+
+        function graphQLFetcher(graphQLParams) {
+            return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
+        }
+
+        ReactDOM.render(
+            React.createElement(
+                GraphiQL,
+                { fetcher: graphQLFetcher },
+            ),
+            maybeDiv,
+        );
+
+        return this;
+    }
+}
+
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const modules = new Map<string, any>();
 
@@ -360,17 +441,24 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {
         console.log(request.url);
-        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
 
-        const componentId = requestUrl
-            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-            : "text";
-        const component = await runtime.getComponent(componentId, true);
+        if (request.url === "/graphiql") {
+            const sharedText = (await runtime.request({ url: "/" })).value as SharedTextRunner;
+            return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
+        } else {
+            console.log(request.url);
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const trailingSlash = requestUrl.indexOf("/");
 
-        return component.request({ url: requestUrl.substr(trailingSlash === -1 ? 0 : trailingSlash) });
+            const componentId = requestUrl
+                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                : "text";
+            const component = await runtime.getComponent(componentId, true);
+
+            return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash) });
+        }
     });
 
     // Registering for tasks to run in headless runner.
