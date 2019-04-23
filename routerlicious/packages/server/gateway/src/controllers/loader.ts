@@ -11,7 +11,7 @@ import {
     DefaultErrorTracking,
     RouterliciousDocumentServiceFactory,
 } from "@prague/routerlicious-socket-storage";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
 
 export class WebLoader implements ICodeLoader {
@@ -119,7 +119,7 @@ async function attach(loader: Loader, url: string, platform: LocalPlatform) {
 
     switch (response.mimeType) {
         case "prague/component":
-            const component = response.value as IComponentRuntime;
+            const component = response.value as IComponent;
             component.attach(platform);
             break;
     }

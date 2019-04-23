@@ -30,7 +30,7 @@ import {
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ComponentRuntime } from "./componentRuntime";
+import { ComponentContext } from "./componentContext";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
@@ -160,8 +160,8 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     }
 
     // Components tracked by the Domain
-    private components = new Map<string, ComponentRuntime>();
-    private componentsDeferred = new Map<string, Deferred<ComponentRuntime>>();
+    private components = new Map<string, ComponentContext>();
+    private componentsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
@@ -185,21 +185,23 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        const componentP = ComponentRuntime.LoadFromSnapshot(
+        // Create and store the unstarted component
+        const component = new ComponentContext(
             this,
-            id,
             details.pkg,
+            id,
+            true,
             runtimeStorage,
             snapshotTree);
-        const deferred = new Deferred<ComponentRuntime>();
-        deferred.resolve(componentP);
-        this.componentsDeferred.set(id, deferred);
-
-        const component = await componentP;
-
         this.components.set(id, component);
 
-        await component.start();
+        // Create a promise to refer to the started component
+        const startedP = component.start().then(() => component);
+        const deferred = new Deferred<ComponentContext>();
+        deferred.resolve(startedP);
+        this.componentsDeferred.set(id, deferred);
+
+        await startedP;
     }
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
@@ -322,7 +324,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: ComponentRuntime) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: ComponentContext) {
         switch (message.type) {
             case MessageType.Operation:
                 this.processOperation(message, local, context);
@@ -346,7 +348,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     public async postProcess(
         message: ISequencedDocumentMessage,
         local: boolean,
-        context: ComponentRuntime,
+        context: ComponentContext,
     ): Promise<void> {
         switch (message.type) {
             case MessageType.Attach:
@@ -369,7 +371,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         component.processSignal(transformed, local);
     }
 
-    public getComponent(id: string, wait = true): Promise<IComponentRuntime> {
+    public async getComponent(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         if (!this.componentsDeferred.has(id)) {
@@ -378,21 +380,24 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             }
 
             // Add in a deferred that will resolve once the process ID arrives
-            this.componentsDeferred.set(id, new Deferred<ComponentRuntime>());
+            this.componentsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
-        return this.componentsDeferred.get(id).promise;
+        const componentRuntime = await this.componentsDeferred.get(id).promise;
+        return componentRuntime.component;
     }
 
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = await ComponentRuntime.create(
+        const component = new ComponentContext(
             this,
-            id,
             pkg,
-            runtimeStorage);
+            id,
+            false,
+            runtimeStorage,
+            null);
 
         // Generate the attach message. This may include ownership
         const message: IAttachMessage = {
@@ -403,22 +408,16 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         this.pendingAttach.set(id, message);
         this.submit(MessageType.Attach, message);
 
-        // Start the component
-        await component.start();
-
         // Store off the component
+        const deferred = new Deferred<ComponentContext>();
+        this.componentsDeferred.set(id, deferred);
         this.components.set(id, component);
 
-        // Resolve any pending requests for the component
-        if (this.componentsDeferred.has(id)) {
-            this.componentsDeferred.get(id).resolve(component);
-        } else {
-            const deferred = new Deferred<ComponentRuntime>();
-            deferred.resolve(component);
-            this.componentsDeferred.set(id, deferred);
-        }
+        // Start the component
+        await component.start();
+        deferred.resolve(component);
 
-        return component;
+        return component.component;
     }
 
     public getQuorum(): IQuorum {
@@ -458,7 +457,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentRuntime> {
+    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentContext> {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);
@@ -502,7 +501,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         component.process(transformed, local, context);
     }
 
-    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentRuntime> {
+    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentContext> {
         this.verifyNotClosed();
 
         // the local object has already been attached
@@ -519,17 +518,18 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = await ComponentRuntime.LoadFromSnapshot(
+        const component = new ComponentContext(
             this,
-            attachMessage.id,
             attachMessage.type,
+            attachMessage.id,
+            true,
             runtimeStorage,
             snapshotTree);
 
         return component;
     }
 
-    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: ComponentRuntime): void {
+    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: ComponentContext): void {
         this.verifyNotClosed();
         debug("processAttach");
     }
@@ -537,7 +537,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
     private async postProcessAttach(
         message: ISequencedDocumentMessage,
         local: boolean,
-        context: ComponentRuntime,
+        context: ComponentContext,
     ): Promise<void> {
         const attachMessage = message.contents as IAttachMessage;
 
@@ -546,15 +546,16 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             assert(this.pendingAttach.has(attachMessage.id));
             this.pendingAttach.delete(attachMessage.id);
         } else {
-            await context.start();
-
             this.components.set(attachMessage.id, context);
+
+            // Fully start the component
+            await context.start();
 
             // Resolve pending gets and store off any new ones
             if (this.componentsDeferred.has(attachMessage.id)) {
                 this.componentsDeferred.get(attachMessage.id).resolve(context);
             } else {
-                const deferred = new Deferred<ComponentRuntime>();
+                const deferred = new Deferred<ComponentContext>();
                 deferred.resolve(context);
                 this.componentsDeferred.set(attachMessage.id, deferred);
             }

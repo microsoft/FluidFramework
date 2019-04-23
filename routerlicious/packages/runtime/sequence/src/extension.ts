@@ -1,5 +1,5 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { SharedNumberSequence} from "./sharedNumberSequence";
 import { SharedObjectSequence} from "./sharedObjectSequence";
 import { SharedString } from "./sharedString";
@@ -13,7 +13,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -24,7 +24,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
         return sharedString;
     }
 
-    public create(document: IRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): ISharedObject {
         const sharedString = new SharedString(document, id);
         sharedString.initializeLocal();
         return sharedString;
@@ -38,7 +38,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -49,7 +49,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
         return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): ISharedObject {
         const sharedString = new SharedObjectSequence(document, id);
         sharedString.initializeLocal();
         return sharedString;
@@ -63,7 +63,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -74,7 +74,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
         return sharedSeq;
     }
 
-    public create(document: IRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): ISharedObject {
         const sharedString = new SharedNumberSequence(document, id);
         sharedString.initializeLocal();
         return sharedString;

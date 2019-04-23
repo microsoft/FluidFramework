@@ -1,23 +1,15 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
-import { ComponentHost } from "@prague/component";
+import { ComponentRuntime } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
     IRequest,
     IResponse,
     IRuntime,
-    ITree,
 } from "@prague/container-definitions";
 import { ISharedMap, MapExtension } from "@prague/map";
-import { Runtime } from "@prague/runtime";
-import {
-    IChaincode,
-    IChaincodeComponent,
-    IComponentDeltaHandler,
-    IComponentFactory,
-    IComponentRuntime,
-    IRuntime as IOldRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentRegistry, Runtime } from "@prague/runtime";
+import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
@@ -34,7 +26,7 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
 
         return id === "component"
             ? this.component as any
-            : Promise.reject(`Unknown 'id': ${id}`);
+            : null;
     }
 
     public detach() {
@@ -43,37 +35,20 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
     }
 }
 
-// Internal/reusable IChaincode implementation returned by DataStore.instantiate().
-class LegacyChaincode<T extends Component> implements IChaincode {
-    constructor(private readonly component: T) { }
-
-    // Returns the SharedObject factory for the given type id.
-    public getModule(type: string): any {
-        debug(`Chaincode.getModule(${type})`);
-        return this.component[typeToFactorySym].get(type);
-    }
-
-    // NYI?
-    public close() { return Promise.resolve(); }
-
-    public async run(): Promise<IPlatform> {
-        debug("Chaincode.run()");
-        return new ComponentPlatform(Promise.resolve(this.component));
-    }
-}
-
 /**
  * Base class for chainloadable Prague components.
  */
-export abstract class Component extends EventEmitter implements IChaincodeComponent {
+export abstract class Component extends EventEmitter implements IComponent {
     private get dbgName() {
         return `${this.constructor.name}${this.host ? `:'${this.host.id}'` : ""}`;
     }
 
-    protected get runtime(): IOldRuntime { return this._host; }
+    protected get runtime(): IComponentRuntime { return this._host; }
     protected get platform() { return this._platform; }
     protected get host() { return this._host; }
     protected get root() { return this._root; }
+
+    public get id() { return this._host.id; }
 
     /**
      * Returns a promise that resolves once the component is synchronized with its date store.
@@ -95,56 +70,49 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     }
 
     /**
-     * Constructs an IChaincode from a Component instance.  All chaincode components must
-     * export an 'instantiate()' function from their module that returns an IChaincode as
-     * shown in the following example:
-     *
-     * @example
-     * const pkg = require("../package.json")
-     *
-     * export async function instantiateRuntime(context: IContainerContext) {
-     *     return Component.instantiateRuntime(context, pkg.name,
-     *          [[pkg.name, Promise.resolve({ instantiateComponent })]]);
-     * }
-     * @example
+     * Helper function to instantiate a new default runtime
      */
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]>,
+        registry: IComponentRegistry,
     ): Promise<IRuntime> {
-        const runtimeId = encodeURIComponent(chaincode);
-
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await Runtime.Load(
-            new Map(registry.map<[string, Promise<IComponentFactory>]>(([name, ctorFnP]) => [
-                name,
-                ctorFnP.then((ctorFn) => ({ instantiateComponent: () => Promise.resolve(new ctorFn()) })),
-            ])),
-            context);
+        const runtime = await Runtime.Load(registry, context);
         debug("runtime loaded.");
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {
             debug(`request(url=${request.url})`);
-            debug(`awaiting root component`);
-            const componentRuntime = await runtime.getComponent(runtimeId, /* wait: */ true);
-            debug(`have root component`);
 
-            if (request.url && request.url !== "/") {
-                debug(`delegating to ${request.url}`);
-                const component = (componentRuntime.chaincode as Component);
-                return component.request(componentRuntime, { url: request.url });
-            } else {
-                debug(`resolved ${runtimeId}`);
-                return { status: 200, mimeType: "prague/component", value: componentRuntime };
-            }
+            // Trim off an opening slash if it exists
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+
+            // Get the next slash to identify the componentID (if it exists)
+            const trailingSlash = requestUrl.indexOf("/");
+
+            // retrieve the component ID. If from a URL we need to decode the URI component
+            const componentId = requestUrl
+                ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
+                : chaincode;
+
+            // Pull the part of the URL after the component ID
+            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+
+            debug(`awaiting component ${componentId}`);
+            const component = await runtime.getComponent(componentId, true);
+            debug(`have component ${componentId}`);
+
+            // And then defer the handling of the request to the component
+            return component.request({ url: pathForComponent });
         });
 
         // On first boot create the base component
         if (!runtime.existing) {
             debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createAndAttachComponent(runtimeId, chaincode).catch((error) => {
+            runtime.createAndAttachComponent(chaincode, chaincode).catch((error) => {
                 context.error(error);
             });
         }
@@ -152,11 +120,23 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
         return runtime;
     }
 
+    /**
+     * Helper function to create the component factory method for a given component
+     */
+    public static createComponentFactory<T extends Component>(ctor: new () => T): IComponentFactory {
+        return {
+            instantiateComponent: (context) => {
+                const component = new ctor();
+                return component.initialize(context);
+            },
+        };
+    }
+
     private static readonly rootMapId = "root";
     private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
 
     // tslint:disable-next-line:variable-name
-    private _host: ComponentHost = null;
+    private _host: ComponentRuntime;
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform = null;
@@ -166,7 +146,7 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
 
     private ensureOpenedPromise: Promise<Component> = null;
 
-    constructor(types: ReadonlyArray<[string, ISharedObjectExtension]>) {
+    constructor(types?: ReadonlyArray<[string, ISharedObjectExtension]>) {
         super();
 
         // Construct a map of extension types to their corresponding factory.
@@ -182,19 +162,6 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
         this[typeToFactorySym] = typeToFactory;
     }
 
-    public async close() {
-        debug(`${this.dbgName}.close()`);
-        this.host.close();
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        debug(`${this.dbgName}.run()`);
-        debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
-        this._host = await ComponentHost.LoadFromSnapshot(runtime, new LegacyChaincode(this));
-        debug(`${this.dbgName}.LoadFromSnapshot() - end`);
-        return this._host;
-    }
-
     public async attach(platform: IPlatform): Promise<IPlatform> {
         debug(`${this.dbgName}.attach()`);
         this._platform = platform;
@@ -202,13 +169,9 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
         if (!this.ensureOpenedPromise) {
             this.ensureOpenedPromise = this.ensureOpened();
         }
+        await this.ensureOpenedPromise;
 
         return new ComponentPlatform(this.ensureOpenedPromise);
-    }
-
-    public snapshot(): ITree {
-        debug(`${this.dbgName}.snapshot()`);
-        return { entries: this._host.snapshotInternal(), sha: null };
     }
 
     /**
@@ -224,9 +187,36 @@ export abstract class Component extends EventEmitter implements IChaincodeCompon
     /**
      * Subclasses may override request to internally route requests.
      */
-    protected request(runtime: IComponentRuntime, request: IRequest): Promise<IResponse> {
+    protected async request(request: IRequest): Promise<IResponse> {
         debug(`${this.dbgName}.request(${JSON.stringify(request)})`);
-        return runtime.request(request);
+        return {
+            mimeType: "text/plain",
+            status: 404,
+            value: `${request.url} not found`,
+        };
+    }
+
+    /**
+     * Fully initializes the component and returns the component runtime
+     */
+    private async initialize(context: IComponentContext): Promise<IComponentRuntime> {
+        debug(`${this.dbgName}.instantiateComponent()`);
+
+        // Instantiation of underlying data model for the component
+        debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
+        this._host = await ComponentRuntime.LoadFromSnapshot(context, new Map(this[typeToFactorySym]));
+        debug(`${this.dbgName}.LoadFromSnapshot() - end`);
+
+        // Load the app specific code. We do not await on it because it is not needed to begin inbounding operations.
+        // The promise is awaited on when URL request are made against the component.
+        this._host.registerRequestHandler(async (request: IRequest) => {
+            debug(`request(url=${request.url})`);
+            return request.url && request.url !== "/"
+                ? this.request(request)
+                : { status: 200, mimeType: "prague/component", value: this };
+        });
+
+        return this._host;
     }
 
     /**

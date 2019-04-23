@@ -2,10 +2,6 @@ import { EventEmitter } from "events";
 import * as ws from "ws";
 import { debug } from "./debug";
 
-// I want this thing to compute statistics
-// import * as utils from "../../core-utils";
-// private counter = new utils.RateCounter();
-
 export class Socket<T> extends EventEmitter {
     public static async Connect<T>(address: string, path: string): Promise<Socket<T>> {
         const socket = new ws(`ws://${address}/${path}`);

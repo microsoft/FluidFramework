@@ -1,5 +1,5 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { Cell } from "./cell";
 import { ICell } from "./interfaces";
 
@@ -13,7 +13,7 @@ export class CellExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -24,7 +24,7 @@ export class CellExtension implements ISharedObjectExtension {
         return cell;
     }
 
-    public create(document: IRuntime, id: string): ICell {
+    public create(document: IComponentRuntime, id: string): ICell {
         const cell = new Cell(id, document);
         cell.initializeLocal();
         return cell;

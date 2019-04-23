@@ -3,13 +3,13 @@
 import "./publicpath";
 
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 
 const entryP = import(/* webpackChunkName: "runtime", webpackPreload: true */"./runtime");
 
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const entry = await entryP;
-    return entry.instantiateComponent();
+    return entry.instantiateComponent(context);
 }
 
 /**

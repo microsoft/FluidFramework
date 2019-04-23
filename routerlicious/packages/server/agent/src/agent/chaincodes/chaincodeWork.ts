@@ -6,7 +6,7 @@ import {
     IPlatform,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";
@@ -92,7 +92,7 @@ export class ChaincodeWork extends EventEmitter {
         }
         switch (response.mimeType) {
             case "prague/component":
-                const component = response.value as IComponentRuntime;
+                const component = response.value as IComponent;
                 component.attach(platform);
                 break;
         }

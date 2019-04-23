@@ -1,5 +1,5 @@
 import { IUser } from "@prague/container-definitions";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { ISharedObject } from "./types";
 
@@ -45,7 +45,7 @@ export interface IDocument {
 
     options: any;
 
-    runtime: IRuntime;
+    runtime: IComponentRuntime;
 
     attach(object: ISharedObject): IDistributedObjectServices;
 

@@ -7,8 +7,8 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import {
+    IComponentRuntime,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
@@ -60,7 +60,7 @@ export class Cell extends SharedObject implements ICell {
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
      */
-    constructor(id: string, runtime: IRuntime) {
+    constructor(id: string, runtime: IComponentRuntime) {
         super(id, runtime, CellExtension.Type);
     }
 

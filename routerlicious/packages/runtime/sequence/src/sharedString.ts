@@ -1,7 +1,7 @@
 import * as MergeTree from "@prague/merge-tree";
 import {
+    IComponentRuntime,
     IDistributedObjectServices,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import {
     SharedStringExtension,
@@ -14,7 +14,7 @@ export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | Mer
 
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     constructor(
-        document: IRuntime,
+        document: IComponentRuntime,
         public id: string,
         services?: IDistributedObjectServices) {
 

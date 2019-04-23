@@ -2,7 +2,7 @@ import { Block, BoxState } from "@prague/app-ui";
 import * as api from "@prague/client-api";
 import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { WebPlatform } from "@prague/loader-web";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent } from "@prague/runtime-definitions";
 import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
 
@@ -139,11 +139,11 @@ export class Document extends Block<DocumentState> {
 
             switch (response.mimeType) {
                 case "prague/component":
-                    const component = response.value as IComponentRuntime;
+                    const component = response.value as IComponent;
                     const platform = await platformFactory.create();
                     const componentPlatform = await component.attach(platform);
                     // query the runtime for its definition - if it exists
-                    definitionGuide.addComponent(component.documentId, componentPlatform);
+                    definitionGuide.addComponent(component.id, componentPlatform);
                     break;
             }
         });

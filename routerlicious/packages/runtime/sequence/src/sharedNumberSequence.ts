@@ -1,10 +1,10 @@
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { SharedNumberSequenceExtension } from "./extension";
 import { SharedSequence } from "./sharedSequence";
 
 export class SharedNumberSequence extends SharedSequence<number> {
     constructor(
-        document: IRuntime,
+        document: IComponentRuntime,
         public id: string,
         services?: IDistributedObjectServices) {
         super(document, id, SharedNumberSequenceExtension.Type, services);

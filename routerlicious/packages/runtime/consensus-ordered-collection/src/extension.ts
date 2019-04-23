@@ -1,4 +1,4 @@
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { ConsensusStack } from "./consensusStack";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionExtension } from "./interfaces";
@@ -13,7 +13,7 @@ export class ConsensusQueueExtension implements IConsensusOrderedCollectionExten
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -24,7 +24,7 @@ export class ConsensusQueueExtension implements IConsensusOrderedCollectionExten
         return collection;
     }
 
-    public create(document: IRuntime, id: string): IConsensusOrderedCollection {
+    public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
         const collection = new ConsensusQueue(id, document);
         collection.initializeLocal();
         return collection;
@@ -41,7 +41,7 @@ export class ConsensusStackExtension implements IConsensusOrderedCollectionExten
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -52,7 +52,7 @@ export class ConsensusStackExtension implements IConsensusOrderedCollectionExten
         return collection;
     }
 
-    public create(document: IRuntime, id: string): IConsensusOrderedCollection {
+    public create(document: IComponentRuntime, id: string): IConsensusOrderedCollection {
         const collection = new ConsensusStack(id, document);
         collection.initializeLocal();
         return collection;

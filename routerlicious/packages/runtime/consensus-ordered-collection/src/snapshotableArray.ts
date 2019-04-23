@@ -4,7 +4,7 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
-import { IObjectStorageService, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { ConsensusValueType, IConsensusOrderedCollectionValue } from "./values";
 
@@ -52,7 +52,7 @@ export class SnapshotableArray<T> extends Array {
     }
 
     public async load(
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         storage: IObjectStorageService): Promise<void> {
 
         assert(this.data.length === 0, "Loading snapshot into a non-empty collection");

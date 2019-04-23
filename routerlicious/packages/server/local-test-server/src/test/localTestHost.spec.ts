@@ -1,10 +1,9 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
+import { IComponentFactory } from "@prague/runtime-definitions";
+import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
 import { DocumentDeltaEventManager, TestHost } from "..";
-import { SharedString, SharedStringExtension } from "../../../../runtime/sequence/dist";
 
 export class TestComponent extends Component {
     public static readonly type = "@chaincode/test-component";
@@ -32,13 +31,8 @@ export class TestComponent extends Component {
 }
 
 // tslint:disable-next-line:mocha-no-side-effect-code
-const testComponents: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]> = [
-    [TestComponent.type, Promise.resolve(TestComponent)],
-];
-
-// tslint:disable-next-line:mocha-no-side-effect-code
-const testTypes: ReadonlyArray<[string, ISharedObjectExtension]> = [
-    [SharedStringExtension.Type, new SharedStringExtension()],
+const testComponents: ReadonlyArray<[string, Promise<IComponentFactory>]> = [
+    [TestComponent.type, Promise.resolve(Component.createComponentFactory(TestComponent))],
 ];
 
 describe("TestHost", () => {
@@ -52,7 +46,6 @@ describe("TestHost", () => {
         });
 
         afterEach(async () => {
-            await comp.close();
             await host.close();
         });
 
@@ -87,8 +80,6 @@ describe("TestHost", () => {
             assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
 
             // Close components & hosts after test completes.
-            await comp1.close();
-            await comp2.close();
             await host1.close();
             await host2.close();
         });
@@ -114,12 +105,10 @@ describe("TestHost", () => {
             await TestHost.sync(host1, host2);
 
             // Close second TestComponent instance as soon as we're finished with it.
-            await comp2.close();
             await host2.close();
 
             assert.equal(comp1.value, 2, "Remote update by 'comp2' must be observable to 'comp1' after sync.");
 
-            await comp1.close();
             await host1.close();
         });
     });
@@ -130,7 +119,7 @@ describe("TestHost", () => {
             let text: SharedString;
 
             beforeEach(async () => {
-                host = new TestHost([], testTypes);
+                host = new TestHost([]);
                 text = await host.createType("text", SharedStringExtension.Type);
             });
 
@@ -150,7 +139,7 @@ describe("TestHost", () => {
             let text2: SharedString;
 
             beforeEach(async () => {
-                host1 = new TestHost([], testTypes);
+                host1 = new TestHost([]);
                 text1 = await host1.createType("text", SharedStringExtension.Type);
 
                 host2 = host1.clone();

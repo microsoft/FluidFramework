@@ -1,4 +1,3 @@
-
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -13,9 +12,9 @@ import {
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
+    IComponentRuntime,
     IDistributedObjectServices,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -49,7 +48,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     constructor(
-        document: IRuntime,
+        document: IComponentRuntime,
         public id: string,
         extensionType: string,
         services?: IDistributedObjectServices) {
@@ -351,7 +350,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     protected snapshotContent(): ITree {
         // Catch up to latest MSN, if we have not had a chance to do it.
-        // Required for case where ComponentHost.attachChannel() generates snapshot right after loading component.
+        // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
         // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (this.runtime.deltaManager) {
             this.processMinSequenceNumberChanged(this.runtime.deltaManager.minimumSequenceNumber);

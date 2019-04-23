@@ -1,9 +1,7 @@
 // tslint:disable:align
 
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import {
-    IRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ParsedPath, posix as pathutil } from "path";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
@@ -20,7 +18,7 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
      */
     constructor(
         id: string,
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         type = MapExtension.Type) {
 
         super(id, runtime, type);

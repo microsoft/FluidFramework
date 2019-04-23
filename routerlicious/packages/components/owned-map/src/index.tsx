@@ -91,7 +91,11 @@ export class OwnedMap extends Document {
 export async function instantiateRuntime(
   context: IContainerContext,
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", Promise.resolve(OwnedMap)],
-  ]);
+  return Component.instantiateRuntime(
+    context,
+    "@chaincode/counter",
+    new Map(
+    [
+      ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(OwnedMap))],
+    ]));
 }

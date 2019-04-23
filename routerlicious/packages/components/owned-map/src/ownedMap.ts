@@ -8,8 +8,8 @@ import {
 } from "@prague/container-definitions";
 import { IMapOperation, ISharedMap, IValueChanged, IValueOperation, IValueType, MapView, SerializeFilter, SharedMap } from "@prague/map";
 import {
+    IComponentRuntime,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { OwnedMapExtension } from "./extension";
@@ -53,7 +53,7 @@ export class OwnedSharedMap extends OwnedSharedObject implements ISharedMap {
      */
     constructor(
         id: string,
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         type = OwnedMapExtension.Type) {
 
         super(id, runtime, type);

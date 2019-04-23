@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@chaincode/table-document": "^0.3.0",
+    "@prague/app-component": "^0.3.0",
     "@prague/app-datastore": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
     "@prague/local-test-server": "^0.3.0",

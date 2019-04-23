@@ -1,5 +1,5 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { ISharedMap, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
 
@@ -19,7 +19,7 @@ export class MapExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -32,7 +32,7 @@ export class MapExtension implements ISharedObjectExtension {
         return map;
     }
 
-    public create(document: IRuntime, id: string): ISharedMap {
+    public create(document: IComponentRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, document, MapExtension.Type);
         this.registerValueTypes(map, defaultValueTypes);
         map.initializeLocal();

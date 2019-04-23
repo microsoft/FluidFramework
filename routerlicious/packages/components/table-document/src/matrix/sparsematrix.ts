@@ -1,4 +1,5 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
+import { UnboxedOper } from "@prague/client-ui/ext/calc";
 import {
     BaseSegment,
     IJSONSegment,
@@ -8,12 +9,11 @@ import {
     SegmentType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import {
     SharedSegmentSequence,
     SubSequence,
 } from "@prague/sequence";
-import { UnboxedOper } from "../../../client-ui/ext/calc";
 
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
@@ -174,7 +174,7 @@ export function positionToRowCol(position: number) {
 
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(
-        document: IRuntime,
+        document: IComponentRuntime,
         public id: string,
         services?: IDistributedObjectServices,
     ) {
@@ -358,7 +358,7 @@ export class SparseMatrixExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -369,7 +369,7 @@ export class SparseMatrixExtension implements ISharedObjectExtension {
         return sharedObject;
     }
 
-    public create(document: IRuntime, id: string): ISharedObject {
+    public create(document: IComponentRuntime, id: string): ISharedObject {
         const sharedObject = new SparseMatrix(document, id);
         sharedObject.initializeLocal();
         return sharedObject;

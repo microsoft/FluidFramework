@@ -7,8 +7,8 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import {
+    IComponentRuntime,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
@@ -63,7 +63,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      */
     constructor(
         id: string,
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         type = MapExtension.Type) {
 
         super(id, runtime, type);

@@ -12,7 +12,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap, MapExtension } from "@prague/map";
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
@@ -105,7 +105,11 @@ export class Document extends EventEmitter {
     /**
      * Constructs a new document from the provided details
      */
-    constructor(public readonly runtime: IRuntime, private root: ISharedMap) {
+    constructor(
+        public readonly runtime: IComponentRuntime,
+        public readonly context: IComponentContext,
+        private root: ISharedMap,
+    ) {
         super();
 
         this.runtime.getQuorum().on("removeMember", (leftClientId) => {
@@ -205,7 +209,7 @@ export class Document extends EventEmitter {
      * Closes the document and detaches all listeners
      */
     public close() {
-        this.runtime.close();
+        return this.runtime.close();
     }
 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -248,11 +252,11 @@ export async function load(
     serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory): Promise<Document> {
 
     // const classicPlatform = new PlatformFactory();
-    const runDeferred = new Deferred<{ runtime: IRuntime; platform: IPlatform }>();
+    const runDeferred = new Deferred<{ runtime: IComponentRuntime; context: IComponentContext }>();
     const codeLoader = new CodeLoader(
-        async (r, p) => {
+        async (r, c) => {
             debug("Code loaded and resolved");
-            runDeferred.resolve({ runtime: r, platform: p });
+            runDeferred.resolve({ runtime: r, context: c });
             return null;
         });
 
@@ -269,7 +273,7 @@ export async function load(
     }
 
     // Wait for loader to start us
-    const { runtime } = await runDeferred.promise;
+    const { runtime, context } = await runDeferred.promise;
 
     // Initialize core data structures
     let root: ISharedMap;
@@ -284,7 +288,7 @@ export async function load(
     }
 
     // Return the document
-    const document = new Document(runtime, root);
+    const document = new Document(runtime, context, root);
 
     return document;
 }

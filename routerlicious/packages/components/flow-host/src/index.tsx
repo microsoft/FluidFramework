@@ -49,13 +49,16 @@ export class FlowHost extends Component {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(context, pkg.name, [
-        ["@chaincode/chart-view", Promise.resolve(chartView.ChartView)],
-        ["@chaincode/flow-document", Promise.resolve(flowDocument.FlowDocument)],
-        [pkg.name, Promise.resolve(FlowHost)],
-        ["@chaincode/flow-editor", Promise.resolve(flowEditor.FlowEditor)],
-        [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument)],
-        [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice)],
-        ["@chaincode/table-view", Promise.resolve(tableView.TableView)],
-    ]);
+    return Component.instantiateRuntime(
+        context,
+        pkg.name,
+        new Map([
+            ["@chaincode/chart-view", Promise.resolve(Component.createComponentFactory(chartView.ChartView))],
+            ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
+            [pkg.name, Promise.resolve(Component.createComponentFactory(FlowHost))],
+            ["@chaincode/flow-editor", Promise.resolve(Component.createComponentFactory(flowEditor.FlowEditor))],
+            [TableDocumentType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableDocument))],
+            [TableSliceType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableSlice))],
+            ["@chaincode/table-view", Promise.resolve(Component.createComponentFactory(tableView.TableView))],
+        ]));
 }

@@ -11,7 +11,7 @@ import {
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
@@ -238,7 +238,7 @@ async function attach<T>(
     debug(`loader.request(url=${url}) -> ${mimeType}`);
     switch (mimeType) {
         case "prague/component":
-            const componentRuntime = response.value as IComponentRuntime;
+            const componentRuntime = response.value as IComponent;
             const platformOut = await componentRuntime.attach(platformIn);
             resultOut(await platformOut.queryInterface("component"));
             break;

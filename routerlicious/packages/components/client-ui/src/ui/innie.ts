@@ -1,8 +1,10 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { Document } from "@prague/client-api";
 import { IPlatform } from "@prague/container-definitions";
+import { IComponent } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
+import { debug } from "./debug";
 import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
 
@@ -75,7 +77,6 @@ export class InnerComponent extends Block<InnerDocumentState> {
 
         // This is my access to the document
         const collabDocument = context.services.get("document") as Document;
-        const runtime = collabDocument.runtime;
 
         const invalidateLayout = (width: number, height: number) => {
             div.style.width = `${width}px`;
@@ -83,13 +84,19 @@ export class InnerComponent extends Block<InnerDocumentState> {
             context.services.get("invalidateLayout")();
         };
 
-        (runtime as any).getComponent(self.id, true).then((process) => {
-            console.log("Got me a pinpoint!");
+        const attachedP = collabDocument.context.request({ url: `/{${self.id}}`}).then(async (response) => {
+            if (response.status !== 200 || response.mimeType !== "prague/component") {
+                return Promise.reject(response);
+            }
+
+            const component = response.value as IComponent;
             const platform = new InnerPlatform(div, invalidateLayout);
-            process.attach(platform).then((innerPlatform) => {
-                console.log("Attached and got its inner platform!");
-                definitionGuide.addComponent(process.id, innerPlatform);
-            });
+            const innerPlatform = await component.attach(platform);
+            definitionGuide.addComponent(component.id, innerPlatform);
+        });
+
+        attachedP.catch((error) => {
+            debug(`Attachment error`, error);
         });
 
         // Call 'updating' to update the contents of the div with the updated chart.

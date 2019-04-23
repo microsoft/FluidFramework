@@ -21,9 +21,7 @@ describe("SparseMatrix", () => {
         let matrix: SparseMatrix;
         
         before(async () => {
-            host = new TestHost([], [
-                [SparseMatrixExtension.Type, new SparseMatrixExtension()],
-            ]);
+            host = new TestHost([]);
              
             matrix = await host.createType("matrix", SparseMatrixExtension.Type);
         });
@@ -132,9 +130,7 @@ describe("SparseMatrix", () => {
         };
 
         beforeEach(async () => {
-            host1 = new TestHost([], [
-                [SparseMatrixExtension.Type, new SparseMatrixExtension()],
-            ]);
+            host1 = new TestHost([]);
             host2 = host1.clone();
             
             matrix1 = await host1.createType("matrix", SparseMatrixExtension.Type);

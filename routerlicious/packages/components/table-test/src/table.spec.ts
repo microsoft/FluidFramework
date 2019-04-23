@@ -1,17 +1,22 @@
-import "mocha";
-import { TableDocument, TableDocumentType, TableSliceType, SparseMatrixExtension, TableSlice } from "@chaincode/table-document";
-import * as assert from "assert";
+import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
+import "mocha";
+import {
+    TableDocument,
+    TableDocumentType,
+    TableSliceType,
+} from "@chaincode/table-document";
+import * as assert from "assert";
 
 describe("TableDocument", () => {
     let host: TestHost;
 
     before(() => {
         host = new TestHost([
-            [TableDocumentType, Promise.resolve(TableDocument)],
-            [TableSliceType, Promise.resolve(TableSlice)],
-        ], [
-            [SparseMatrixExtension.Type, new SparseMatrixExtension()],            
+            [TableDocumentType, import("@chaincode/table-document").then(
+                (m) => Component.createComponentFactory(m.TableDocument))],
+            [TableSliceType, import("@chaincode/table-document").then(
+                (m) => Component.createComponentFactory(m.TableSlice))],
         ]);
     });
     
@@ -28,8 +33,9 @@ describe("TableDocument", () => {
     }
 
     let table: TableDocument;    
-    beforeEach(async () => { table = await createTable() as TableDocument});
-    afterEach(async () => { await table.close(); });
+    beforeEach(async () => {
+        table = await createTable() as TableDocument;
+    });
 
     const extract = (table: TableDocument) => {
         const rows = [];

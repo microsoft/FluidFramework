@@ -1,5 +1,6 @@
 import { Component } from "@prague/app-component";
 import { Workbook } from "@prague/client-ui/ext/calc2";
+import { ServicePlatform } from "@prague/component";
 import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
 import {
     ICombiningOp,
@@ -110,11 +111,10 @@ export class TableDocument extends Component implements ITable {
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
         await this.host.createAndAttachComponent(sliceId, TableSliceType);
-        // tslint:disable-next-line: no-return-await
-        return await this.host.openComponent<TableSlice>(
-            sliceId, true, [
-                ["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })],
-            ]);
+        return this.host.openComponent<TableSlice>(
+            sliceId,
+            true,
+            [["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })]]);
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {

@@ -1,7 +1,7 @@
 import { Component } from "@prague/app-component";
+import { UnboxedOper } from "@prague/client-ui/ext/calc";
 import { MapExtension } from "@prague/map";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
-import { UnboxedOper } from "../../client-ui/ext/calc";
 import { CellInterval, parseRange } from "./cellinterval";
 import { ConfigKeys } from "./configKeys";
 import { TableDocument } from "./document";

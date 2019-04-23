@@ -1,13 +1,12 @@
 import * as cell from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { ComponentHost } from "@prague/component";
+import { ComponentRuntime } from "@prague/component";
 import {
     IContainerContext,
     IPlatform,
     IRequest,
     IRuntime,
-    ITree,
 } from "@prague/container-definitions";
 import * as Intelligence from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
@@ -22,9 +21,7 @@ import * as MergeTree from "@prague/merge-tree";
 import {
     Runtime,
 } from "@prague/runtime";
-import {
-    IChaincode, IChaincodeComponent, IComponentDeltaHandler, IComponentRuntime, IRuntime as ILegacyRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
@@ -32,8 +29,6 @@ import * as Spellcheker from "@prague/spellchecker";
 import { IStream } from "@prague/stream";
 import * as stream from "@prague/stream";
 import * as Translator from "@prague/translator";
-import { Deferred } from "@prague/utils";
-import * as assert from "assert";
 import { default as axios } from "axios";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
@@ -48,8 +43,8 @@ import { Document } from "./document";
 import { createCacheHTML } from "./pageCacher";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
-const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
-const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+// const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
+// const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -120,18 +115,20 @@ async function waitForFullConnection(runtime: any): Promise<void> {
 }
 
 export class SharedTextRunner extends EventEmitter implements IPlatform {
+    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
+        const runner = new SharedTextRunner(runtime, context);
+        await runner.initialize();
+
+        return runner;
+    }
+
     private sharedString: SharedString.SharedString;
     private insightsMap: DistributedMap.ISharedMap;
     private rootView: ISharedMap;
-    private runtime: ILegacyRuntime;
-    private collabDocDeferred = new Deferred<Document>();
+    private collabDoc: Document;
 
-    public async run(runtime: ILegacyRuntime, platform: IPlatform) {
-        this.runtime = runtime;
-        this.initialize(runtime).then(
-            (doc) => this.collabDocDeferred.resolve(doc),
-            (error) => this.collabDocDeferred.reject(error));
-        return this;
+    private constructor(private runtime: IComponentRuntime, private context: IComponentContext) {
+        super();
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
@@ -144,8 +141,6 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        const collabDoc = await this.collabDocDeferred.promise;
-
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
@@ -158,7 +153,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         debug(`Partial load fired: ${performanceNow()}`);
 
         waitForFullConnection(this.runtime).then(() => {
-            this.runTask(this.runtime.clientType);
+            this.runTask(this.context.clientType);
         });
 
         this.listenForLeaderEvent();
@@ -188,7 +183,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
-            new API.Document(this.runtime, this.rootView),
+            new API.Document(this.runtime, this.context, this.rootView),
             this.sharedString,
             inkPlane,
             image,
@@ -199,7 +194,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
 
         const options = parse(window.location.search.substr(1));
         addTranslation(
-            collabDoc,
+            this.collabDoc,
             this.sharedString.id,
             options.translationFromLanguage as string,
             options.translationToLanguage as string)
@@ -225,24 +220,24 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         });
     }
 
-    private async initialize(runtime: ILegacyRuntime): Promise<Document> {
-        const collabDoc = await Document.Load(runtime);
-        this.rootView = await collabDoc.getRoot();
+    private async initialize(): Promise<void> {
+        this.collabDoc = await Document.Load(this.runtime);
+        this.rootView = await this.collabDoc.getRoot();
 
-        if (!runtime.existing) {
+        if (!this.runtime.existing) {
             const insightsMapId = "insights";
 
-            const insights = collabDoc.createMap(insightsMapId);
+            const insights = this.collabDoc.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights);
 
-            debug(`Not existing ${runtime.id} - ${performanceNow()}`);
-            this.rootView.set("users", collabDoc.createMap());
+            debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
+            this.rootView.set("users", this.collabDoc.createMap());
             this.rootView.set("calendar", undefined, SharedString.SharedIntervalCollectionValueType.Name);
-            const seq = collabDoc.createChannel(
+            const seq = this.collabDoc.createChannel(
                 uuid(), SharedString.SharedNumberSequenceExtension.Type) as
                 SharedString.SharedNumberSequence;
             this.rootView.set("sequence-test", seq);
-            const newString = collabDoc.createString() as SharedString.SharedString;
+            const newString = this.collabDoc.createString() as SharedString.SharedString;
 
             const template = parse(window.location.search.substr(1)).template;
             const starterText = template
@@ -263,17 +258,15 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
                 }
             }
             this.rootView.set("text", newString);
-            this.rootView.set("ink", collabDoc.createMap());
+            this.rootView.set("ink", this.collabDoc.createMap());
 
-            insights.set(newString.id, collabDoc.createMap());
+            insights.set(newString.id, this.collabDoc.createMap());
         }
-
-        return collabDoc;
     }
 
     // Leader can run tasks directly.
     private listenForLeaderEvent() {
-        if (this.runtime.leader) {
+        if (this.context.leader) {
             this.runTask("intel");
         } else {
             this.runtime.on("leader", (clientId) => {
@@ -313,95 +306,42 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
     }
 }
 
-/**
- * A document is a collection of collaborative types.
- */
-class Chaincode extends EventEmitter implements IChaincode {
-    private modules = new Map<string, any>();
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    const modules = new Map<string, any>();
 
-    /**
-     * Constructs a new document from the provided details
-     */
-    constructor(private runner: any) {
-        super();
+    // Register default map value types
+    registerDefaultValueType(new DistributedSetValueType());
+    registerDefaultValueType(new CounterValueType());
+    registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
+    registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
-        // Register default map value types
-        registerDefaultValueType(new DistributedSetValueType());
-        registerDefaultValueType(new CounterValueType());
-        registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-        registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+    // Create channel extensions
+    const mapExtension = new MapExtension();
+    const sharedStringExtension = new sequence.SharedStringExtension();
+    const streamExtension = new stream.StreamExtension();
+    const cellExtension = new cell.CellExtension();
+    const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
+    const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
 
-        // Create channel extensions
-        const mapExtension = new MapExtension();
-        const sharedStringExtension = new sequence.SharedStringExtension();
-        const streamExtension = new stream.StreamExtension();
-        const cellExtension = new cell.CellExtension();
-        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
+    modules.set(MapExtension.Type, mapExtension);
+    modules.set(sharedStringExtension.type, sharedStringExtension);
+    modules.set(streamExtension.type, streamExtension);
+    modules.set(cellExtension.type, cellExtension);
+    modules.set(objectSequenceExtension.type, objectSequenceExtension);
+    modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-        this.modules.set(MapExtension.Type, mapExtension);
-        this.modules.set(sharedStringExtension.type, sharedStringExtension);
-        this.modules.set(streamExtension.type, streamExtension);
-        this.modules.set(cellExtension.type, cellExtension);
-        this.modules.set(objectSequenceExtension.type, objectSequenceExtension);
-        this.modules.set(numberSequenceExtension.type, numberSequenceExtension);
-    }
+    const runtime = await ComponentRuntime.LoadFromSnapshot(context, modules);
+    const runnerP = SharedTextRunner.Load(runtime, context);
 
-    public getModule(type: string): any {
-        assert(this.modules.has(type));
-        return this.modules.get(type);
-    }
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        debug(`request(url=${request.url})`);
+        const runner = await runnerP;
+        return request.url && request.url !== "/"
+            ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
+            : { status: 200, mimeType: "prague/component", value: runner };
+    });
 
-    /**
-     * Stops the instantiated chaincode from running
-     */
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    public async run(runtime: ILegacyRuntime, platform: IPlatform): Promise<IPlatform> {
-        return this.runner.run(runtime, platform);
-    }
-}
-
-export class SharedTextComponent implements IChaincodeComponent {
-    private sharedText = new SharedTextRunner();
-    private chaincode: Chaincode;
-    private component: ComponentHost;
-
-    constructor() {
-        this.chaincode = new Chaincode(this.sharedText);
-    }
-
-    public getModule(type: string) {
-        return null;
-    }
-
-    public async close(): Promise<void> {
-        return;
-    }
-
-    public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
-        const chaincode = this.chaincode;
-
-        const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
-        this.component = component;
-
-        return component;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.sharedText.attach(platform);
-    }
-
-    public snapshot(): ITree {
-        const entries = this.component.snapshotInternal();
-        return { entries, sha: null };
-    }
-}
-
-export async function instantiateComponent(): Promise<IChaincodeComponent> {
-    return new SharedTextComponent();
+    return runtime;
 }
 
 /**
@@ -410,8 +350,8 @@ export async function instantiateComponent(): Promise<IChaincodeComponent> {
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
         ["@chaincode/charts", charts],
-        ["@chaincode/monaco", monaco],
-        ["@chaincode/pinpoint-editor", pinpoint],
+        // ["@chaincode/monaco", monaco],
+        // ["@chaincode/pinpoint-editor", pinpoint],
         ["@chaincode/shared-text", { instantiateComponent }],
     ]);
 
@@ -430,12 +370,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             : "text";
         const component = await runtime.getComponent(componentId, true);
 
-        // If there is a trailing slash forward to the component. Otherwise handle directly.
-        if (trailingSlash === -1) {
-            return { status: 200, mimeType: "prague/component", value: component };
-        } else {
-            return component.request({ url: requestUrl.substr(trailingSlash) });
-        }
+        return component.request({ url: requestUrl.substr(trailingSlash === -1 ? 0 : trailingSlash) });
     });
 
     // Registering for tasks to run in headless runner.

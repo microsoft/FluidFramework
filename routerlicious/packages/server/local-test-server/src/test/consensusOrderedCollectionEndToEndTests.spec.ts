@@ -220,9 +220,11 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         });
 
         afterEach(async () => {
-            user1Document.close();
-            user2Document.close();
-            user3Document.close();
+            await Promise.all([
+                user1Document.close(),
+                user2Document.close(),
+                user3Document.close(),
+            ]);
             await testDeltaConnectionServer.webSocketServer.close();
         });
     });

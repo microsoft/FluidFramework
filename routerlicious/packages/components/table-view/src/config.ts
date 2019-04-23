@@ -1,5 +1,5 @@
 import { TableDocumentType } from "@chaincode/table-document";
-import { ComponentHost } from "@prague/component";
+import { ComponentRuntime } from "@prague/component";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
 import { ConfigKeys } from "./configKeys";
@@ -75,7 +75,7 @@ export class ConfigView {
     private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
-    constructor(private readonly host: ComponentHost, private readonly map: ISharedMap) {
+    constructor(private readonly host: ComponentRuntime, private readonly map: ISharedMap) {
         this.caption.innerText = `Table View ${this.host.id}`;
 
         this.done = new Promise<void>((accept) => {

@@ -1,5 +1,5 @@
 import { TableSliceType } from "@chaincode/table-document";
-import { ComponentHost } from "@prague/component";
+import { ComponentRuntime } from "@prague/component";
 import { initializeIcons } from "@uifabric/icons";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
 import * as React from "react";
@@ -8,7 +8,7 @@ import { FlowEditor } from "./editor";
 import * as style from "./index.css";
 
 export interface IAppConfig {
-    host: ComponentHost;
+    host: ComponentRuntime;
     verdaccioUrl: string;           // Url of Verdaccio npm server (e.g., "http://localhost:4873")
 }
 

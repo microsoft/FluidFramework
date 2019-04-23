@@ -1,4 +1,4 @@
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusQueueExtension } from "./extension";
 import { IOrderedCollection } from "./interfaces";
@@ -27,7 +27,7 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * Constructs a new consensus queue. If the object is non-local an id and service interfaces will
      * be provided
      */
-    public constructor(id: string, runtime: IRuntime) {
+    public constructor(id: string, runtime: IComponentRuntime) {
         super(id, runtime, ConsensusQueueExtension.Type, new SnapshotableQueue<T>());
     }
 }

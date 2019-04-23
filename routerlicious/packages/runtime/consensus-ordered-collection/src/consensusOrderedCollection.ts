@@ -1,6 +1,6 @@
 import { SharedObject } from "@prague/api-definitions";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/container-definitions";
-import { IObjectStorageService, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";
@@ -57,7 +57,12 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
      * be provided
      */
-    protected constructor(id: string, runtime: IRuntime, type: string, private readonly data: IOrderedCollection<T>) {
+    protected constructor(
+        id: string,
+        runtime: IComponentRuntime,
+        type: string,
+        private readonly data: IOrderedCollection<T>,
+    ) {
         super(id, runtime, type);
     }
 

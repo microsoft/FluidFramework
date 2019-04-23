@@ -1,4 +1,4 @@
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 import { ConsensusStackExtension } from "./extension";
 import { IOrderedCollection } from "./interfaces";
@@ -27,7 +27,7 @@ export class ConsensusStack<T> extends ConsensusOrderedCollection<T> {
      * Constructs a new consensus stack. If the object is non-local an id and service interfaces will
      * be provided
      */
-    public constructor(id: string, runtime: IRuntime) {
+    public constructor(id: string, runtime: IComponentRuntime) {
         super(id, runtime, ConsensusStackExtension.Type, new SnapshotableStack<T>());
     }
 }

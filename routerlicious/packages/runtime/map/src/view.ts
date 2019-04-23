@@ -1,7 +1,7 @@
 // tslint:disable:align
 import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { IMapOperation, IMapValue } from "./definitions";
 import { SharedDirectory } from "./directory";
 import { IValueChanged, IValueOpEmitter, SerializeFilter } from "./interfaces";
@@ -38,7 +38,7 @@ export interface ILocalViewElement {
 export class MapView {
     public readonly data = new Map<string, ILocalViewElement>();
 
-    constructor(private readonly map: SharedMap, private readonly runtime: IRuntime, id: string) {
+    constructor(private readonly map: SharedMap, private readonly runtime: IComponentRuntime, id: string) {
     }
 
     public async populate(data: { [key: string]: IMapValue }): Promise<void> {
@@ -283,7 +283,7 @@ export class MapView {
 }
 
 export class DirectoryView extends MapView {
-    constructor(directory: SharedDirectory, runtime: IRuntime,
+    constructor(directory: SharedDirectory, runtime: IComponentRuntime,
         id: string) {
         super(directory, runtime, id);
     }

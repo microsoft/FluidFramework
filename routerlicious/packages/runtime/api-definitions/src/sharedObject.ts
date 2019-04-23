@@ -5,9 +5,9 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import {
+    IComponentRuntime,
     IDistributedObjectServices,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
@@ -32,7 +32,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         return this._state;
     }
 
-    constructor(public id: string, protected runtime: IRuntime, public type: string) {
+    constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
     }
 

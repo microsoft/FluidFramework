@@ -3,8 +3,8 @@ import {
     ISequencedDocumentMessage,
 } from "@prague/container-definitions";
 import {
+    IComponentRuntime,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 
@@ -14,7 +14,7 @@ export abstract class OwnedSharedObject extends SharedObject {
 
     public owner: string;
 
-    constructor(public id: string, protected runtime: IRuntime, public type: string) {
+    constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super(id, runtime, type);
     }
 

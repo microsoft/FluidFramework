@@ -4543,9 +4543,7 @@ export class FlowView extends ui.Component {
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
 
-        const documentRuntime = this.collabDocument.runtime as unknown;
-        const runtime = documentRuntime as IComponentRuntime;
-        runtime.createAndAttachComponent(id, chaincode);
+        this.collabDocument.context.createAndAttachComponent(id, chaincode);
 
         this.insertComponent("innerComponent", { id, chaincode });
     }
@@ -5098,7 +5096,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
+        this.presenceSignal = new PresenceSignal(this.collabDocument.context);
         this.addPresenceSignal(this.presenceSignal);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections;

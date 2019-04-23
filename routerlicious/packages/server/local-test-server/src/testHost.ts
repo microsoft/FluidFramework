@@ -1,7 +1,9 @@
-import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
+import { SparseMatrixExtension } from "@chaincode/table-document";
+import { ISharedObject } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IChaincodeComponent } from "@prague/runtime-definitions";
+import { IComponent, IComponentFactory } from "@prague/runtime-definitions";
+import { SharedStringExtension } from "@prague/sequence";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,
@@ -13,20 +15,22 @@ import {
 class TestRootComponent extends Component {
     public static readonly type = "@chaincode/test-root-component";
 
-    constructor(types: ReadonlyArray<[string, ISharedObjectExtension]>) {
-        super(types);
+    constructor() {
+        super([
+            [SharedStringExtension.Type, new SharedStringExtension()],
+            [SparseMatrixExtension.Type, new SparseMatrixExtension()],
+        ]);
     }
 
     public async createComponent(id: string, type: string) {
         await this.host.createAndAttachComponent(id, type);
     }
 
-    public openComponent<T extends IChaincodeComponent>(
+    public openComponent<T extends IComponent>(
         id: string,
         wait: boolean,
-        services?: ReadonlyArray<[string, Promise<any>]>,
     ) {
-        return this.host.openComponent<T>(id, wait, services);
+        return this.host.openComponent<T>(id, wait);
     }
 
     public createType<T extends ISharedObject>(id: string, type: string) {
@@ -88,11 +92,10 @@ export class TestHost {
     // tslint:disable-next-line:promise-must-complete
     private root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
 
-    private components: IChaincodeComponent[] = [];
+    private components: IComponent[] = [];
 
     constructor(
-        private readonly componentRegistry: ReadonlyArray<[string, Promise<new () => IChaincodeComponent>]>,
-        private readonly types?: ReadonlyArray<[string, ISharedObjectExtension]>,
+        private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
         deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.Create();
@@ -106,14 +109,14 @@ export class TestHost {
                     instantiateRuntime: (context) => Component.instantiateRuntime(
                         context,
                         TestRootComponent.type,
-                        componentRegistry.concat([[
-                            TestRootComponent.type,
-                            // tslint:disable:no-function-expression
-                            // tslint:disable:only-arrow-functions
-                            Promise.resolve(function(): IChaincodeComponent {
-                                return new TestRootComponent(types || []);
-                            } as any),
-                        ]])),
+                        new Map(componentRegistry.concat([
+                            [
+                                TestRootComponent.type,
+                                // tslint:disable:no-function-expression
+                                // tslint:disable:only-arrow-functions
+                                Promise.resolve(Component.createComponentFactory(TestRootComponent)),
+                            ],
+                        ]))),
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
@@ -129,26 +132,21 @@ export class TestHost {
     public clone() {
         return new TestHost(
             this.componentRegistry,
-            this.types,
             this.deltaConnectionServer);
     }
 
-    public async createComponent<T extends IChaincodeComponent>(
+    public async createComponent<T extends IComponent>(
         id: string,
         type: string,
-        services?: ReadonlyArray<[string, Promise<any>]>,
     ) {
         const root = await this.root;
         await root.createComponent(id, type);
-        return this.openComponent<T>(id, services);
+        return this.openComponent<T>(id);
     }
 
-    public async openComponent<T extends IChaincodeComponent>(
-        id: string,
-        services?: ReadonlyArray<[string, Promise<any>]>,
-    ) {
+    public async openComponent<T extends IComponent>(id: string) {
         const root = await this.root;
-        const component = await root.openComponent<T>(id, /* wait: */ true, services);
+        const component = await root.openComponent<T>(id, /* wait: */ true);
         this.components.push(component);
         return component;
     }
@@ -169,8 +167,6 @@ export class TestHost {
     }
 
     public async close() {
-        this.components.forEach((component) => component.close);
-        await (await this.root).close();
         await this.deltaConnectionServer.webSocketServer.close();
     }
 

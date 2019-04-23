@@ -1,6 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IPlatform } from "@prague/container-definitions";
+import { ServicePlatform } from "@prague/component";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
@@ -17,7 +17,6 @@ import {
 } from "@prague/merge-tree";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
-import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 export enum DocSegmentKind {
@@ -98,24 +97,6 @@ const accumAsLeafAction = {
     ) => (accum as LeafAction)(position, segment, start, end),
 };
 
-class ServicePlatform extends EventEmitter implements IPlatform {
-    private readonly qi: Map<string, Promise<any>>;
-
-    constructor(services: ReadonlyArray<[string, Promise<any>]>) {
-        super();
-
-        this.qi = new Map(services);
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        return this.qi.get(id);
-    }
-
-    public detach() {
-        return;
-    }
-}
-
 export class FlowDocument extends Component {
     public get ready() {
         return this.readyDeferred.promise;
@@ -170,9 +151,9 @@ export class FlowDocument extends Component {
             "",
             services.concat([["datastore", Promise.resolve(store)]]));
     }
+
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const component = await this.host.getComponent(marker.properties.docId, true);
-        await component.attach(new ServicePlatform(services));
+        await this.host.openComponent(marker.properties.docId, true, services);
     }
 
     public getSegmentAndOffset(position: number) {

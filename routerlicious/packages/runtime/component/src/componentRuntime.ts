@@ -20,18 +20,15 @@ import {
 } from "@prague/container-definitions";
 import {
     IAttachMessage,
-    IChaincode,
-    IChaincodeComponent,
-    IChaincodeModule,
     IChannel,
     IChannelAttributes,
-    IComponentDeltaHandler,
+    IComponent,
+    IComponentContext,
     IComponentRuntime,
     IDistributedObjectServices,
     IEnvelope,
     IInboundSignalMessage,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { Deferred, gitHashFile, readAndParse } from "@prague/utils";
 import * as assert from "assert";
@@ -54,7 +51,7 @@ interface IObjectServices {
     baseSha: string;
 }
 
-class ServicePlatform extends EventEmitter implements IPlatform {
+export class ServicePlatform extends EventEmitter implements IPlatform {
     private readonly qi: Map<string, Promise<any>>;
 
     constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
@@ -63,7 +60,7 @@ class ServicePlatform extends EventEmitter implements IPlatform {
     }
 
     public queryInterface<T>(id: string): Promise<T> {
-        return this.qi.get(id) || Promise.reject(`queryInterface() failed - Unknown id '${id}'.`);
+        return this.qi.has(id) ? this.qi.get(id) : null;
     }
 
     public detach() {
@@ -71,30 +68,36 @@ class ServicePlatform extends EventEmitter implements IPlatform {
     }
 }
 
+export interface IComponentRegistry {
+    // TODO consider making this async. A consequence is that either the creation of a distributed data type
+    // is async or we need a new API to split the synchronous vs. asynchronous creation.
+    get(name: string): ISharedObjectExtension;
+}
+
 /**
  * Base component class
  */
-export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, IRuntime {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
     public static async LoadFromSnapshot(
-        componentRuntime: IComponentRuntime,
-        chaincode: IChaincode,
+        context: IComponentContext,
+        registry: IComponentRegistry,
     ) {
-        const tree = componentRuntime.baseSnapshot;
-        const runtime = new ComponentHost(
-            componentRuntime,
-            componentRuntime.tenantId,
-            componentRuntime.documentId,
-            componentRuntime.id,
-            componentRuntime.parentBranch,
-            componentRuntime.existing,
-            componentRuntime.options,
-            componentRuntime.blobManager,
-            componentRuntime.deltaManager,
-            componentRuntime.getQuorum(),
-            chaincode,
-            componentRuntime.storage,
-            componentRuntime.snapshotFn,
-            componentRuntime.closeFn);
+        const tree = context.baseSnapshot;
+        const runtime = new ComponentRuntime(
+            context,
+            context.tenantId,
+            context.documentId,
+            context.id,
+            context.parentBranch,
+            context.existing,
+            context.options,
+            context.blobManager,
+            context.deltaManager,
+            context.getQuorum(),
+            context.storage,
+            context.snapshotFn,
+            context.closeFn,
+            registry);
 
         // Must always receive the component type inside of the attributes
         if (tree && tree.trees) {
@@ -108,15 +111,12 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
                 return runtime.loadSnapshotChannel(
                     path,
                     tree.trees[path],
-                    componentRuntime.storage,
-                    componentRuntime.branch);
+                    context.storage,
+                    context.branch);
             });
 
             await Promise.all(loadSnapshotsP);
         }
-
-        // Start the runtime
-        await runtime.start();
 
         return runtime;
     }
@@ -150,13 +150,14 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
+    private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
     // tslint:enable-next-line:variable-name
 
     private constructor(
-        private readonly componentRuntime: IComponentRuntime,
+        private readonly componentRuntime: IComponentContext,
         public readonly tenantId: string,
         public readonly documentId: string,
         public readonly id: string,
@@ -166,10 +167,10 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         private blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private quorum: IQuorum,
-        private readonly chaincode: IChaincode,
         private storageService: IDocumentStorageService,
         private snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void) {
+        private closeFn: () => void,
+        private registry: IComponentRegistry) {
         super();
         this.attachListener();
     }
@@ -178,28 +179,51 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return this.componentRuntime.createAndAttachComponent(id, pkg);
     }
 
-    public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
+    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
         return this.componentRuntime.getComponent(id, wait);
     }
 
     /**
-     * Opens the component with the given 'id'.  Once the component is retrieved, it is attached
-     * with the given list of services.
+     * Opens the component with the given 'id'.
      */
-    public async openComponent<T extends IChaincodeComponent>(
+    public async openComponent<T extends IComponent>(
         id: string,
         wait: boolean,
         services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
         const runtime = await this.componentRuntime.getComponent(id, wait);
-        const platform = await runtime.attach(new ServicePlatform(services));
-        return platform.queryInterface("component");
+        const component = await runtime.request({ url: "/" });
+
+        if (component.status !== 200 || component.mimeType !== "prague/component") {
+            return Promise.reject("Not found");
+        }
+
+        const result = component.value as T;
+        await result.attach(new ServicePlatform(services));
+
+        return result;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
+        // Parse out the leading slash
         const id = request.url.substr(1);
-        const value = await this.getChannel(id);
-        return { mimeType: "prague/dataType", status: 200, value };
+
+        // Check for a data type reference first
+        if (this.channelsDeferred.has(id)) {
+            const value = await this.channelsDeferred.get(id).promise;
+            return { mimeType: "prague/dataType", status: 200, value };
+        }
+
+        // Otherwise defer to an attached request handler
+        if (!this.requestHandler) {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        } else {
+            return this.requestHandler(request);
+        }
+    }
+
+    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
+        this.requestHandler = handler;
     }
 
     public getChannel(id: string): Promise<IChannel> {
@@ -218,7 +242,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     public createChannel(id: string, type: string): IChannel {
         this.verifyNotClosed();
 
-        const extension = this.chaincode.getModule(type) as IChaincodeModule;
+        const extension = this.registry.get(type);
         if (!extension) {
             throw new Error(`Channel Extension ${type} not registered`);
         }
@@ -264,11 +288,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return services;
     }
 
-    public async start(): Promise<void> {
-        this.verifyNotClosed();
-        this._platform = await this.chaincode.run(this, null);
-    }
-
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
@@ -298,7 +317,6 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
     public snapshot(message: string): Promise<void> {
         this.verifyNotClosed();
-
         return this.snapshotFn(message);
     }
 
@@ -338,7 +356,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return this.snapshotInternal();
     }
 
-    public close(): void {
+    public async close(): Promise<void> {
         this.closeFn();
     }
 
@@ -580,7 +598,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         originBranch: string): Promise<IChannelState> {
 
         // Pass the transformedMessages - but the object really should be storing this
-        const extension = this.chaincode.getModule(type) as ISharedObjectExtension;
+        const extension = this.registry.get(type);
 
         // compare snapshot version to collaborative object version
         if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== extension.snapshotFormatVersion) {

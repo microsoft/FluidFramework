@@ -99,8 +99,10 @@ describe("LocalTestServer", () => {
   });
 
   afterEach(async () => {
-    user1Document.close();
-    user2Document.close();
+    await Promise.all([
+      user1Document.close(),
+      user2Document.close(),
+    ]);
     await testDeltaConnectionServer.webSocketServer.close();
   });
 });

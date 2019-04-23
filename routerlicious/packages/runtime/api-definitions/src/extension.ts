@@ -15,10 +15,6 @@ export interface ISharedObjectExtension extends IChaincodeModule, IExtension {
     readonly snapshotFormatVersion: string;
 }
 
-export interface IContentModelExtension extends IExtension {
-    exec(message: ISequencedDocumentMessage, instance: types.ISharedObject);
-}
-
 /**
  * Class that contains a collection of collaboration extensions
  */

@@ -7,7 +7,6 @@ import {
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
@@ -18,8 +17,7 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import {
-    IChaincodeComponent,
-    IComponentDeltaHandler,
+    IComponentContext,
     IComponentRuntime,
     IEnvelope,
     IHostRuntime,
@@ -27,50 +25,7 @@ import {
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
-// tslint:disable:no-unsafe-any
-
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
-    public static async create(
-        hostRuntime: IHostRuntime,
-        id: string,
-        pkg: string,
-        storage: IDocumentStorageService,
-    ) {
-        const factory = await hostRuntime.getPackage(pkg);
-        const extension = await factory.instantiateComponent();
-        const component = new ComponentRuntime(
-            hostRuntime,
-            pkg,
-            id,
-            false,
-            extension,
-            storage,
-            null);
-
-        return component;
-    }
-
-    public static async LoadFromSnapshot(
-        hostRuntime: IHostRuntime,
-        id: string,
-        pkg: string,
-        storage: IDocumentStorageService,
-        channels: ISnapshotTree,
-    ): Promise<ComponentRuntime> {
-        const factory = await hostRuntime.getPackage(pkg);
-        const extension = await factory.instantiateComponent();
-        const component = new ComponentRuntime(
-            hostRuntime,
-            pkg,
-            id,
-            true,
-            extension,
-            storage,
-            channels);
-
-        return component;
-    }
-
+export class ComponentContext extends EventEmitter implements IComponentContext {
     public get tenantId(): string {
         return this.hostRuntime.tenantId;
     }
@@ -83,6 +38,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.parentBranch;
     }
 
+    // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.hostRuntime.options;
     }
@@ -139,19 +95,23 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.hostRuntime.loader;
     }
 
+    public get component(): IComponentRuntime {
+        return this._component;
+    }
+
     private closed = false;
-    private handler: IComponentDeltaHandler;
+    // tslint:disable-next-line:variable-name
+    private _component: IComponentRuntime;
 
     // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
     // snapshot call
     private baseSha = null;
 
-    private constructor(
+    constructor(
         private readonly hostRuntime: IHostRuntime,
         private readonly pkg: string,
         public readonly id: string,
         public readonly existing: boolean,
-        public readonly chaincode: IChaincodeComponent,
         public readonly storage: IDocumentStorageService,
         public readonly baseSnapshot: ISnapshotTree) {
         super();
@@ -168,7 +128,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
-        this.handler.changeConnectionState(value, clientId);
+        this._component.changeConnectionState(value, clientId);
     }
 
     // Called after a snapshot to update the base sha
@@ -178,19 +138,19 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         this.verifyNotClosed();
-        return this.handler.prepare(message, local);
+        return this._component.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
         // component has been modified and will need to regenerate its snapshot
         this.baseSha = null;
-        return this.handler.process(message, local, context);
+        return this._component.process(message, local, context);
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
-        return this.handler.processSignal(message, local);
+        return this._component.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -217,7 +177,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public snapshot(): ITree {
         const componentAttributes = { pkg: this.pkg };
 
-        const snapshot = this.chaincode.snapshot();
+        const entries = this._component.snapshotInternal();
+        const snapshot = { entries, sha: undefined };
+
         snapshot.entries.push({
             mode: FileMode.File,
             path: ".component",
@@ -237,7 +199,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return this.handler.request(request);
+        return this._component.request(request);
     }
 
     public submitMessage(type: MessageType, content: any): number {
@@ -260,13 +222,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return;
     }
 
-    public async start(): Promise<void> {
-        this.verifyNotClosed();
-        this.handler = await this.chaincode.run(this);
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this.chaincode.attach(platform);
+    public async start(): Promise<IComponentRuntime> {
+        const factory = await this.hostRuntime.getPackage(this.pkg);
+        this._component = await factory.instantiateComponent(this);
+        return this._component;
     }
 
     public updateLeader(clientId: string) {

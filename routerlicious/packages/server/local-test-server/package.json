@@ -41,6 +41,7 @@
   },
   "repository": "microsoft/prague",
   "dependencies": {
+    "@chaincode/table-document": "^0.3.0",
     "@prague/api-definitions": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-datastore": "^0.3.0",
@@ -52,6 +53,7 @@
     "@prague/map": "^0.3.0",
     "@prague/memory-orderer": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
+    "@prague/runtime": "^0.3.0",
     "@prague/runtime-definitions": "^0.3.0",
     "@prague/services": "^0.3.0",
     "@prague/services-core": "^0.3.0",

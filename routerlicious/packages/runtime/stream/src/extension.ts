@@ -1,5 +1,5 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
-import { IDistributedObjectServices, IRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
 import { Stream } from "./stream";
 
 export class StreamExtension implements ISharedObjectExtension {
@@ -9,7 +9,7 @@ export class StreamExtension implements ISharedObjectExtension {
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
-        runtime: IRuntime,
+        runtime: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
@@ -21,7 +21,7 @@ export class StreamExtension implements ISharedObjectExtension {
         return stream;
     }
 
-    public create(runtime: IRuntime, id: string): ISharedObject {
+    public create(runtime: IComponentRuntime, id: string): ISharedObject {
         const stream = new Stream(runtime, id);
         stream.initializeLocal();
 

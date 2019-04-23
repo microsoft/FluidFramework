@@ -6,15 +6,18 @@ import {
     ILoader,
     IPlatform,
     IQuorum,
+    IRequest,
+    IResponse,
     ISequencedDocumentMessage,
+    ITreeEntry,
     MessageType,
 } from "@prague/container-definitions";
 import {
     IChannel,
+    IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
     IDistributedObjectServices,
-    IRuntime,
 } from "@prague/runtime-definitions";
 
 // Mock implementaiton IDeltaConnection that does nothing
@@ -29,7 +32,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 }
 
 // Mock implementaiton of IRuntime
-export class MockRuntime implements IRuntime {
+export class MockRuntime implements IComponentRuntime {
     public readonly tenantId: string;
     public readonly documentId: string;
     public readonly id: string;
@@ -62,7 +65,7 @@ export class MockRuntime implements IRuntime {
     public save(message: string) {
         return;
     }
-    public close(): void {
+    public async close(): Promise<void> {
         return null;
     }
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
@@ -128,6 +131,35 @@ export class MockRuntime implements IRuntime {
         return null;
     }
     public listenerCount(type: string | symbol): number {
+        return null;
+    }
+
+    // new handler things - maybe not needed
+    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        return null;
+    }
+
+    public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+        return;
+    }
+
+    public processSignal(message: any, local: boolean) {
+        return;
+    }
+
+    public updateMinSequenceNumber(value: number): void {
+        return;
+    }
+
+    public changeConnectionState(value: ConnectionState, clientId: string) {
+        return null;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return null;
+    }
+
+    public snapshotInternal(): ITreeEntry[] {
         return null;
     }
 }

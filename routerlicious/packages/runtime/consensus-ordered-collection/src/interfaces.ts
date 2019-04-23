@@ -1,6 +1,10 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { ITree } from "@prague/container-definitions";
-import { IDistributedObjectServices, IObjectStorageService, IRuntime } from "@prague/runtime-definitions";
+import {
+    IComponentRuntime,
+    IDistributedObjectServices,
+    IObjectStorageService,
+} from "@prague/runtime-definitions";
 
 /**
  * Consensus Ordered Collection channel extension interface
@@ -10,13 +14,13 @@ import { IDistributedObjectServices, IObjectStorageService, IRuntime } from "@pr
  */
 export interface IConsensusOrderedCollectionExtension extends ISharedObjectExtension {
     load(
-        document: IRuntime,
+        document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
         services: IDistributedObjectServices,
         headerOrigin: string): Promise<IConsensusOrderedCollection>;
 
-    create(document: IRuntime, id: string): IConsensusOrderedCollection;
+    create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
 }
 
 /**
@@ -66,7 +70,7 @@ export interface ISnapshotable {
     /**
      * Load from snapshot in the storage
      */
-    load(runtime: IRuntime, storage: IObjectStorageService): Promise<void>;
+    load(runtime: IComponentRuntime, storage: IObjectStorageService): Promise<void>;
 
     /**
      * Generate a snapshot

@@ -7,8 +7,8 @@ import {
 } from "@prague/container-definitions";
 import { SharedMap } from "@prague/map";
 import {
+    IComponentRuntime,
     IObjectStorageService,
-    IRuntime,
 } from "@prague/runtime-definitions";
 import { StreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";
@@ -31,7 +31,7 @@ export class Stream extends SharedMap implements IStream {
     // The current ink snapshot
     private inkSnapshot: Snapshot;
 
-    constructor(runtime: IRuntime, id: string) {
+    constructor(runtime: IComponentRuntime, id: string) {
         super(id, runtime, StreamExtension.Type);
     }
 

@@ -1,7 +1,7 @@
 {
     "extends": "../tsconfig.shared.json",
     "include": [
-        "src/index.tsx"
+        "src/**/*.ts*"
     ],   
     "compilerOptions": {
         "rootDir": "./src",

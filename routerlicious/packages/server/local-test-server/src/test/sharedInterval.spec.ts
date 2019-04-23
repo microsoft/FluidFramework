@@ -1,4 +1,3 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import { registerDefaultValueType } from "@prague/map";
 import { IntervalType } from "@prague/merge-tree";
 import {
@@ -11,11 +10,6 @@ import {
 } from "@prague/sequence";
 import * as assert from "assert";
 import { TestHost } from "..";
-
-// tslint:disable-next-line:mocha-no-side-effect-code
-const testTypes: ReadonlyArray<[string, ISharedObjectExtension]> = [
-    [SharedStringExtension.Type, new SharedStringExtension()],
-];
 
 registerDefaultValueType(new SharedStringIntervalCollectionValueType());
 registerDefaultValueType(new SharedIntervalCollectionValueType());
@@ -58,7 +52,7 @@ describe("SharedInterval", () => {
         };
 
         beforeEach(async () => {
-            host = new TestHost([], testTypes);
+            host = new TestHost([]);
             sharedString = await host.createType("text", SharedStringExtension.Type);
             sharedString.insertText("012", 0);
             intervals = await sharedString.getSharedIntervalCollection("intervals").getView();
@@ -152,7 +146,7 @@ describe("SharedInterval", () => {
 
     describe("multiple clients", () => {
         it("propagates", async () => {
-            const host1 = new TestHost([], testTypes);
+            const host1 = new TestHost([]);
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringExtension.Type);
             sharedString1.insertText("0123456789", 0);
             const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
