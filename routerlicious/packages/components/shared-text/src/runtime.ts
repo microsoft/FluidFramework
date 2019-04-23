@@ -42,7 +42,7 @@ import * as url from "url";
 import { Document } from "./document";
 import { createCacheHTML } from "./pageCacher";
 
-const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
+// const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 // const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
 // const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
@@ -349,7 +349,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const registry = new Map<string, any>([
-        ["@chaincode/charts", charts],
+        // ["@chaincode/charts", charts],
         // ["@chaincode/monaco", monaco],
         // ["@chaincode/pinpoint-editor", pinpoint],
         ["@chaincode/shared-text", { instantiateComponent }],
