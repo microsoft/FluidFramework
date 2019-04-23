@@ -6,7 +6,7 @@ import * as Properties from "./properties";
 import * as assert from "assert";
 import { IRelativePosition } from "./index";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta, IMergeTreeSegmentPropertyDelta } from "./mergeTreeDeltaCallback";
+import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta } from "./mergeTreeDeltaCallback";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 
 export interface ReferencePosition {
@@ -166,7 +166,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     properties?: Properties.PropertySet;
     addLocalRef(lref: LocalReference);
     removeLocalRef(lref: LocalReference);
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): IMergeTreeSegmentPropertyDelta[];
+    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): Properties.PropertySet;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
@@ -3129,7 +3129,7 @@ export class MergeTree {
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
                     mergeTree: this,
-                    deltaSegments: segments.map((segment)=>({segment, propertyDeltas: []})),
+                    deltaSegments: segments.map((segment)=>({segment})),
                 });
         }
 
@@ -3210,7 +3210,7 @@ export class MergeTree {
             this.mergeTreeDeltaCallback(
                 opArgs,
                 {
-                    deltaSegments:[{segment: insertSegment, propertyDeltas:[]}],
+                    deltaSegments:[{segment: insertSegment}],
                     mergeTreeClientId: clientId,
                     operation: ops.MergeTreeDeltaType.INSERT,
                     mergeTree: this,
@@ -3720,7 +3720,7 @@ export class MergeTree {
                 else {
                     removalInfo.removedClientId = clientId;
                     removalInfo.removedSeq = seq;
-                    removedSegments.push({segment , propertyDeltas: []});
+                    removedSegments.push({segment});
                     if (segment.localRefs && (brid === this.localBranchId)) {
                         savedLocalRefs.push(segment.localRefs);
                         segment.localRefs = undefined;

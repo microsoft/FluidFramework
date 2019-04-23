@@ -10,3 +10,4 @@ export * from "./segmentGroupCollection";
 export * from "./mergeTreeDeltaCallback";
 export * from "./opBuilder";
 export * from "./segmentPropertiesManager";
+export * from "./sortedSegmentSet";

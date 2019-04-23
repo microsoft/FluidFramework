@@ -4,7 +4,6 @@ import {
     ISegment,
     UnassignedSequenceNumber,
 } from "./mergeTree";
-import { IMergeTreeSegmentPropertyDelta } from "./mergeTreeDeltaCallback";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 
@@ -36,7 +35,7 @@ export class SegmentPropertiesManager {
         newProps: Properties.PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): IMergeTreeSegmentPropertyDelta[] {
+        collabWindow?: CollaborationWindow): Properties.PropertySet {
 
         if (!this.segment.properties) {
             this.pendingRewriteCount = 0;
@@ -48,7 +47,7 @@ export class SegmentPropertiesManager {
 
         // there are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
-            return;
+            return undefined;
         }
 
         const rewrite = (op && op.name === "rewrite");
@@ -63,18 +62,18 @@ export class SegmentPropertiesManager {
             return false;
         };
 
-        const deltas: IMergeTreeSegmentPropertyDelta[] = [];
+        const deltas: Properties.PropertySet = {};
         if (rewrite) {
             if (collaborating && seq === UnassignedSequenceNumber) {
                 this.pendingRewriteCount++;
             }
-            this.segment.properties = Properties.createMap<any>();
             // we are re-writting so delete all the properties
             // not in the new props
             for (const key of  Object.keys(this.segment.properties)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
-                    // tslint:disable-next-line: no-unsafe-any
-                    deltas.push({ key, previousValue: this.segment.properties[key]});
+                    deltas[key] = this.segment.properties[key];
+                    // tslint:disable-next-line: no-dynamic-delete
+                    delete this.segment.properties[key];
                 }
             }
         }
@@ -92,14 +91,14 @@ export class SegmentPropertiesManager {
             }
 
             const previousValue: any = this.segment.properties[key];
+            // the delta should be null if undefined, as thats how we encode delete
+            deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {
                 newValue = Properties.combine(op, previousValue, newValue, seq);
             } else {
                 newValue = newProps[key];
             }
-            // tslint:disable-next-line: no-unsafe-any
-            deltas.push({ key, previousValue});
             if (newValue === null) {
                 // tslint:disable-next-line: no-dynamic-delete
                 delete this.segment.properties[key];

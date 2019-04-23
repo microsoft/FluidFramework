@@ -2,9 +2,10 @@ import {
     Client,
     IMergeTreeDeltaCallbackArgs,
     IMergeTreeDeltaOpArgs,
-    IMergeTreeSegmentPropertyDelta,
     ISegment,
     MergeTreeDeltaOperationType,
+    PropertySet,
+    SortedSegmentSet,
 } from "@prague/merge-tree";
 
 /**
@@ -25,7 +26,7 @@ export class SequenceDeltaEvent {
     public readonly deltaOperation: MergeTreeDeltaOperationType;
     private readonly pStart: Lazy<number>;
     private readonly pEnd: Lazy<number>;
-    private readonly sortedRanges: Lazy<ReadonlyArray<ISequenceDeltaRange>>;
+    private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange>>;
 
     constructor(
         public readonly opArgs: IMergeTreeDeltaOpArgs,
@@ -38,60 +39,27 @@ export class SequenceDeltaEvent {
         this.isEmpty = deltaArgs.deltaSegments.length === 0;
         this.deltaOperation = deltaArgs.operation;
 
-        const findInsertionPoint =
-            (ranges: ISequenceDeltaRange[], segment: ISegment, start?: number, end?: number): number => {
-                if (ranges.length === 0) {
-                    return 0;
-                }
-                if (start === undefined || end === undefined) {
-                    return findInsertionPoint(ranges, segment, 0, ranges.length - 1);
-                }
-                const insertPoint = start + Math.floor((end - start) / 2);
-                if (ranges[insertPoint].segment.ordinal > segment.ordinal) {
-                    if (start === insertPoint) {
-                        return insertPoint;
-                    }
-                    return findInsertionPoint(ranges, segment, start, insertPoint - 1);
-                } else if (ranges[insertPoint].segment.ordinal < segment.ordinal) {
-                    if (insertPoint === end) {
-                        return insertPoint + 1;
-                    }
-                    return findInsertionPoint(ranges, segment, insertPoint + 1, end);
-                }
-                return insertPoint;
-            };
-
-        this.sortedRanges = new Lazy<ReadonlyArray<ISequenceDeltaRange>>(
-            () => this.deltaArgs
-                .deltaSegments
-                .reduce<ISequenceDeltaRange[]>((pv, cv) => {
-                    if (cv) {
-                        const insertionPoint = findInsertionPoint(pv, cv.segment);
-                        // see if the segment is new
-                        const existing: ISequenceDeltaRange = pv[insertionPoint];
-                        if (existing && existing.segment === cv.segment) {
-                            existing.propertyDeltas.push(...cv.propertyDeltas);
-                        } else {
-                            const offset = this.mergeTreeClient.getOffset(cv.segment);
-                            const newRange: ISequenceDeltaRange = {
-                                offset,
-                                operation: this.deltaArgs.operation,
-                                propertyDeltas: cv.propertyDeltas,
-                                segment: cv.segment,
-                            };
-                            pv.splice(insertionPoint, 0, newRange);
-                        }
-                    }
-                    return pv;
-                },
-                    []));
+        this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange>>(
+            () => {
+                const set = new SortedSegmentSet<ISequenceDeltaRange>();
+                this.deltaArgs.deltaSegments.forEach((delta) => {
+                    const newRange: ISequenceDeltaRange = {
+                        offset: this.mergeTreeClient.getOffset(delta.segment),
+                        operation: this.deltaArgs.operation,
+                        propertyDeltas: delta.propertyDeltas,
+                        segment: delta.segment,
+                    };
+                    set.addOrUpdate(newRange);
+                });
+                return set;
+            });
 
         this.pStart = new Lazy<number>(
             () => {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                return this.sortedRanges.value[0].offset;
+                return this.sortedRanges.value.items[0].offset;
             });
 
         this.pEnd = new Lazy<number>(
@@ -100,7 +68,7 @@ export class SequenceDeltaEvent {
                     return undefined;
                 }
                 const lastRange =
-                    this.sortedRanges.value[this.sortedRanges.value.length - 1];
+                    this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
 
                 return lastRange.offset + lastRange.segment.cachedLength;
             });
@@ -111,7 +79,7 @@ export class SequenceDeltaEvent {
      * These may not be continous.
      */
     public get ranges(): ReadonlyArray<Readonly<ISequenceDeltaRange>> {
-        return this.sortedRanges.value;
+        return this.sortedRanges.value.items;
     }
 
     /**
@@ -134,7 +102,7 @@ export interface ISequenceDeltaRange {
     operation: MergeTreeDeltaOperationType;
     offset: number;
     segment: ISegment;
-    propertyDeltas: IMergeTreeSegmentPropertyDelta[];
+    propertyDeltas: PropertySet;
  }
 
 class Lazy<T> {

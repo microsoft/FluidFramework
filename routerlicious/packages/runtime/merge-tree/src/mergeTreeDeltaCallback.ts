@@ -2,6 +2,7 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IMergeTreeOp, ISegment, MergeTreeDeltaType } from ".";
 import { MergeTree } from "./mergeTree";
 import { IMergeTreeGroupMsg } from "./ops";
+import { PropertySet } from "./properties";
 
 export type MergeTreeDeltaOperationType =
     MergeTreeDeltaType.ANNOTATE | MergeTreeDeltaType.INSERT | MergeTreeDeltaType.REMOVE;
@@ -15,12 +16,7 @@ export interface IMergeTreeDeltaCallbackArgs {
 
 export interface IMergeTreeSegmentDelta {
     segment: ISegment;
-    propertyDeltas: IMergeTreeSegmentPropertyDelta[];
-}
-
-export interface IMergeTreeSegmentPropertyDelta {
-    key: string;
-    previousValue: string;
+    propertyDeltas?: PropertySet;
 }
 
 export interface IMergeTreeDeltaOpArgs {
