@@ -32,8 +32,7 @@ WORKDIR /routerlicious
 # and be able to change them.
 RUN npm install --unsafe-perm
 
-#RUN npm run build:compile
-RUN npx lerna run build:compile --stream --scope=@prague/consensus-ordered-collection
+RUN npm run build:compile
 
 #############################
 FROM r11s AS docs
