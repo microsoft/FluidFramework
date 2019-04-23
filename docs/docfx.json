@@ -12,11 +12,19 @@
       }
     ],
     "dest": "_site",
+    "globalMetadata": {
+      "_appTitle": "Prague Documentation",
+      "_enableSearch": true,
+      "_gitContribute": {
+        "repo": "https://github.com/Microsoft/Prague",
+        "branch": "master"
+      }
+    },
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
     "template": ["default", "_template"],
     "postProcessors": [],
-    "markdownEngineName": "dfm-latest", // "markdig",
+    "markdownEngineName": "markdig",
     "noLangKeyword": false,
     "keepFileLink": false,
     "cleanupCacheHistory": false,
