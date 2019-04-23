@@ -1,10 +1,10 @@
-import { IComponentContext, IInboundSignalMessage } from "@prague/runtime-definitions";
+import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
 const presenceKey = "presence";
 
 export class PresenceSignal extends EventEmitter {
-    constructor(private runtime: IComponentContext) {
+    constructor(private runtime: IComponentRuntime) {
         super();
         this.listenForPresence();
     }

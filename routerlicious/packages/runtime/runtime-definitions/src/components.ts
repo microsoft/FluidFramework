@@ -87,6 +87,8 @@ export interface IComponentRuntime extends EventEmitter {
 
     uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
 
+    submitSignal(type: string, content: any): void;
+
     getBlob(sha: string): Promise<IGenericBlob>;
 
     getBlobMetadata(): Promise<IGenericBlob[]>;

@@ -5096,7 +5096,7 @@ export class FlowView extends ui.Component {
             // tslint:disable-next-line:max-line-length
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.collabDocument.context);
+        this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
         this.addCalendarMap();
         const intervalMap = this.sharedString.intervalCollections;
