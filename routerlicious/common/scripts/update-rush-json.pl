@@ -6,8 +6,8 @@ open(my $inFile,  "<Dockerfile") || die "Unable to open './Dockerfile'.";
 
 print <<'END';
 {
-  "pnpmVersion": "2.15.1",
-  "rushVersion": "5.5.2",
+  "pnpmVersion": "3.1.0",
+  "rushVersion": "5.7.0",
   "nodeSupportedVersionRange": ">=8.0.0",
   "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 999,

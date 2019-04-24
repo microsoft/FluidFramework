@@ -16,7 +16,7 @@
     "registryAuth": "docker login -u prague -p /vM3i=D+K4+vj+pgha=cg=55OQLDWj3w prague.azurecr.io",
     "rush": "node ./common/tools/node_modules/@microsoft/rush/bin/rush",
     "rush:build": "npm run rush -- build",
-    "rush:repair": "git clean -Xfd && npm run install:common && cp .npmrc common/config/rush/ && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update",
+    "rush:repair": "npm run install:common && cp .npmrc common/config/rush/ && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update -- --purge --recheck",
     "rush:install": "npm run rush -- install",
     "rush:rebuild": "npm run rush -- rebuild",
     "rush:update": "npm run rush -- update",
@@ -42,7 +42,6 @@
   "devDependencies": {
     "@microsoft/api-documenter": "^7.1.1",
     "@microsoft/api-extractor": "^7.1.0",
-    "@microsoft/rush": "^5.5.4",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.13.2",

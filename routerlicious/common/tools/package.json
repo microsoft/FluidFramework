@@ -2,13 +2,10 @@
   "name": "tools",
   "private": true,
   "devDependencies": {
-    "@microsoft/rush": "^5.5.4",
-    "@prague/prague-dev-server": "^3.2.7",
+    "@microsoft/rush": "^5.7.0",
     "@types/mocha": "^5.2.6",
     "mocha": "^5.2.0",
     "ts-node": "^8.0.2",
-    "typescript": "^3.4.0",
-    "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "typescript": "^3.4.0"
   }
 }
