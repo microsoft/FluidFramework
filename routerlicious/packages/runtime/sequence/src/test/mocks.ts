@@ -19,26 +19,88 @@ import {
     IDeltaHandler,
     IDistributedObjectServices,
 } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
+// tslint:disable-next-line: no-submodule-imports
+import * as uuid from "uuid/v4";
+
+export class MockDeltaConnectionFactory {
+    public sequenceNumber = 0;
+    private messages: ISequencedDocumentMessage[] = [];
+    private deltaConnections: MockDeltaConnection[] = [];
+    public createDeltaConnection(runtime: IComponentRuntime): IDeltaConnection {
+        const delta = new MockDeltaConnection(this, runtime);
+        this.deltaConnections.push(delta);
+        return delta;
+    }
+
+    public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+        this.messages.push(msg as ISequencedDocumentMessage);
+    }
+
+    public async processMessages(): Promise<void> {
+        while (this.messages.length > 0) {
+            const msg = this.messages.shift();
+            msg.sequenceNumber = ++this.sequenceNumber;
+            for (const dc of this.deltaConnections) {
+                for (const h of dc.handlers) {
+                    await h.prepare(msg, true);
+                    h.process(msg, true, msg.contents);
+                }
+            }
+        }
+        return Promise.resolve();
+    }
+}
 
 // Mock implementaiton IDeltaConnection that does nothing
-export class MockDeltaConnection implements IDeltaConnection {
-    public state: ConnectionState = ConnectionState.Connecting;
-    public submit(messageContent: any): number {
-        return 1;
+class MockDeltaConnection implements IDeltaConnection {
+    public get state(): ConnectionState {
+        return this.connectionState;
     }
+
+    public set state(state: ConnectionState) {
+        this.connectionState = state;
+        this.handlers.forEach((h) => {
+            h.setConnectionState(this.state);
+        });
+    }
+    public readonly handlers: IDeltaHandler[] = [];
+    private connectionState: ConnectionState = ConnectionState.Connected;
+    private clientSequenceNumber: number = 0;
+
+    constructor(
+        private readonly factory: MockDeltaConnectionFactory,
+        private readonly runtime: IComponentRuntime) { }
+
+    public submit(messageContent: any): number {
+        this.clientSequenceNumber++;
+        const msg: Partial<ISequencedDocumentMessage> = {
+            clientId: this.runtime.clientId,
+            clientSequenceNumber: this.clientSequenceNumber,
+            contents: messageContent,
+            referenceSequenceNumber: this.factory.sequenceNumber,
+            type: MessageType.Operation,
+
+        };
+        this.factory.pushMessage(msg);
+
+        return msg.clientSequenceNumber;
+    }
+
     public attach(handler: IDeltaHandler): void {
-        return;
+        this.handlers.push(handler);
+        handler.setConnectionState(this.state);
     }
 }
 
 // Mock implementaiton of IRuntime
-export class MockRuntime implements IComponentRuntime {
+export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public readonly tenantId: string;
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
     public readonly options: any;
-    public readonly clientId: string = "1";
+    public readonly clientId: string = uuid();
     public readonly clientType: string = "browser";
     public readonly parentBranch: string;
     public readonly connected: boolean;
@@ -53,9 +115,9 @@ export class MockRuntime implements IComponentRuntime {
     public createChannel(id: string, type: string): IChannel {
         return null;
     }
-    public attachChannel(channel: IChannel): IDistributedObjectServices {
-        return null;
-    }
+
+    public attachChannel: (channel: IChannel) => IDistributedObjectServices = () => null;
+
     public getQuorum(): IQuorum {
         return null;
     }
@@ -82,55 +144,6 @@ export class MockRuntime implements IComponentRuntime {
     }
 
     public submitSignal(type: string, content: any) {
-        return null;
-    }
-
-    public addListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public once(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public off(event: string | symbol, listener: (...args: any[]) => void): this {
-        return null;
-    }
-    public removeAllListeners(event?: string | symbol): this {
-        return null;
-    }
-    public setMaxListeners(n: number): this {
-        return null;
-    }
-    public getMaxListeners(): number {
-        return null;
-    }
-
-    // tslint:disable-next-line:ban-types
-    public listeners(event: string | symbol): Function[] {
-        return null;
-    }
-    // tslint:disable-next-line:ban-types
-    public rawListeners(event: string | symbol): Function[] {
-        return null;
-    }
-    public emit(event: string | symbol, ...args: any[]): boolean {
-        return null;
-    }
-    public eventNames(): Array<string | symbol> {
-        return null;
-    }
-    public listenerCount(type: string | symbol): number {
         return null;
     }
 

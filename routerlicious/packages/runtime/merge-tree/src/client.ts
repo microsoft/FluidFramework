@@ -4,9 +4,19 @@ import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 import {
-    ClientIds, clock, compareStrings, elapsedMicroseconds, IConsensusInfo, ISegment,
-    IUndoInfo, Marker, MergeTree, ReferencePosition,
-    RegisterCollection, UnassignedSequenceNumber, UniversalSequenceNumber,
+    ClientIds,
+    clock,
+    compareStrings,
+    elapsedMicroseconds,
+    IConsensusInfo,
+    ISegment,
+    IUndoInfo,
+    Marker,
+    MergeTree,
+    RegisterCollection,
+    SegmentGroup,
+    UnassignedSequenceNumber,
+    UniversalSequenceNumber,
 } from "./mergeTree";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
@@ -625,29 +635,59 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    segmentToOps(segment: ISegment): ops.IMergeTreeOp[] {
-        const opList: ops.IMergeTreeOp[] = [];
-        // TODO: branches & annotate
-        if (segment.seq === UnassignedSequenceNumber) {
-            let pos = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
-            let insertOp = <ops.IMergeTreeInsertMsg>{
-                pos1: pos,
-                seg: segment.toJSONObject(),
-                type: ops.MergeTreeDeltaType.INSERT,
-            };
-            opList.push(insertOp);
+    resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
+        let op: ops.IMergeTreeOp;
+        if (!segment.segmentGroups.empty) {
+            segment.segmentGroups.clear();
+
+            // the segment was added and removed, so we don't need to send any ops for it
+            if (segment.seq === UnassignedSequenceNumber && segment.removedSeq === UnassignedSequenceNumber) {
+                // set to the universal sequence number so it can be zambonied
+                segment.removedSeq = UniversalSequenceNumber;
+                segment.seq = UniversalSequenceNumber
+                return undefined;
+            }
+
+            const segmentOffset = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
+
+            // if removed we only need to send a remove op
+            // if inserted, we only need to send insert, as that will contain props
+            // if pending properties send annotate
+            if (segment.removedSeq === UnassignedSequenceNumber) {
+
+                op = OpBuilder.createRemoveRangeOp(
+                    segmentOffset,
+                    segmentOffset + segment.cachedLength);
+
+            } else if (segment.seq === UnassignedSequenceNumber) {
+
+                op = OpBuilder.createInsertSegmentOp(
+                    segmentOffset,
+                    segment);
+
+                if (segment.propertyManager) {
+                    segment.propertyManager.clearPendingProperties();
+                }
+
+            } else if (segment.propertyManager && segment.propertyManager.hasPendingProperties()) {
+
+                const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
+                op = OpBuilder.createAnnotateRangeOp(
+                    segmentOffset,
+                    segmentOffset + segment.cachedLength,
+                    annotateInfo.props,
+                    annotateInfo.combiningOp);
+            }
+
+            if (op) {
+                const segmentGroup: SegmentGroup = { segments: [] };
+                segment.segmentGroups.enqueue(segmentGroup);
+                this.mergeTree.pendingSegments.enqueue(segmentGroup);
+            }
         }
-        if (segment.removedSeq === UnassignedSequenceNumber) {
-            let start = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
-            let removeOp = <ops.IMergeTreeRemoveMsg>{
-                pos1: start,
-                pos2: start + segment.cachedLength,
-                type: ops.MergeTreeDeltaType.REMOVE,
-            };
-            opList.push(removeOp);
-        }
-        return opList;
+        return op;
     }
+
     private transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number) {
         if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
             (op.type == ops.MergeTreeDeltaType.REMOVE)) {

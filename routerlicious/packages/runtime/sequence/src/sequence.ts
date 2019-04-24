@@ -23,10 +23,6 @@ const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import {
-    SharedNumberSequenceExtension,
-    SharedObjectSequenceExtension,
-} from "./extension";
-import {
     SharedIntervalCollection,
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
@@ -301,13 +297,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         let prevSeg: MergeTree.ISegment;
         for (const segment of orderedSegments) {
             if (prevSeg !== segment) {
-                const ops = this.client.segmentToOps(segment);
-                if (ops.length > 0) {
-                    opList.push(...ops);
-                    const segmentGroup: MergeTree.SegmentGroup = { segments: [segment] };
-                    segment.segmentGroups.clear();
-                    segment.segmentGroups.enqueue(segmentGroup);
-                    this.client.mergeTree.pendingSegments.enqueue(segmentGroup);
+                const op = this.client.resetPendingSegmentToOp(segment);
+                if (op) {
+                    opList.push(op);
                 }
                 prevSeg = segment;
             }
@@ -320,7 +312,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             };
             this.submitIfAttached(groupOp);
         }
-
     }
 
     protected async loadContent(
