@@ -1,0 +1,8 @@
+- name: Contributing
+  href: index.md
+- name: Coding guidelines
+  href: coding-guidelines.md
+- name: Contributing to documentation
+  href: contributing-to-documentation.md
+- name: Building documentation locally
+  href: building-documentation.md

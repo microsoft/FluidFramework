@@ -64,7 +64,7 @@ Package documentation: <xref:consensus-ordered-collection>
 
 ### Writing a Distributed Data Structure
 
-## Contributing
+## [Contributing](./contributing/index.md)
 
 ### How to Contribute
 

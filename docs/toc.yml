@@ -1,4 +1,4 @@
-- name: Building Documentation
-  href: building-documentation.md
+- name: Contributing
+  href: contributing/
 - name: Packages
   href: api/
