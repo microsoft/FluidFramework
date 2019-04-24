@@ -65,7 +65,8 @@
     "@prague/utils": "^0.3.0",
     "@types/jsonwebtoken": "^8.3.0",
     "axios": "^0.18.0",
-    "jsonwebtoken": "^8.4.0"
+    "jsonwebtoken": "^8.4.0",
+    "moniker": "^0.1.2"
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",

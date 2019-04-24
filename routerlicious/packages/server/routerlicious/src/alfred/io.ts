@@ -10,7 +10,7 @@ import {
 } from "@prague/container-definitions";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as core from "@prague/services-core";
-import { getRandomInt } from "@prague/services-utils";
+import { generateClientId, getRandomInt } from "@prague/services-utils";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";
@@ -71,26 +71,46 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
+            const clientId = generateClientId();
+
+            // Subscribe to channels.
+            await Promise.all([
+                socket.join(`${claims.tenantId}/${claims.documentId}`),
+                socket.join(`client#${clientId}`)]);
+
             // todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
 
-            // And then connect to the orderer
-            const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-            const connection = await orderer.connect(socket, messageClient as IClient);
-            connectionsMap.set(connection.clientId, connection);
-            roomMap.set(connection.clientId, `${claims.tenantId}/${claims.documentId}`);
+            // Join the room to receive signals.
+            roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
 
-            // And return the connection information to the client
-            const connectedMessage: socketStorage.IConnected = {
-                clientId: connection.clientId,
-                existing: connection.existing,
-                maxMessageSize: connection.maxMessageSize,
-                parentBranch: connection.parentBranch,
-            };
+            // Readonly clients don't need an orderer.
+            if (messageClient.mode !== "readonly") {
+                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                connectionsMap.set(clientId, connection);
 
-            return connectedMessage;
+                const connectedMessage: socketStorage.IConnected = {
+                    clientId,
+                    existing: connection.existing,
+                    maxMessageSize: connection.maxMessageSize,
+                    parentBranch: connection.parentBranch,
+                };
+
+                return connectedMessage;
+            } else {
+                // Todo (mdaumi): We should split storage stuff from orderer to get the following fields right.
+                const connectedMessage: socketStorage.IConnected = {
+                    clientId,
+                    existing: true, // Readonly client can only open an existing document.
+                    maxMessageSize: 1024, // Readonly client can't send ops.
+                    parentBranch: null, // Does not matter for now.
+                };
+
+                return connectedMessage;
+            }
         }
 
         // todo: remove this handler once clients onboard "connect_document"
@@ -122,9 +142,9 @@ export function register(
         socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
             // TODO validate message size within bounds
 
-            // Verify the user has connected on this object id
+            // Verify the user has an orderer connection.
             if (!connectionsMap.has(clientId)) {
-                return response("Invalid client ID", null);
+                return response("Invalid client ID or readonly client", null);
             }
 
             const connection = connectionsMap.get(clientId);
@@ -146,9 +166,9 @@ export function register(
 
         // Message sent when a new splitted operation is submitted to the router
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
-            // Verify the user has connected on this object id
-            if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
-                return response("Invalid client ID", null);
+            // Verify the user has an orderer connection.
+            if (!connectionsMap.has(clientId)) {
+                return response("Invalid client ID or readonly client", null);
             }
 
             const broadCastMessage: IContentMessage = {
@@ -179,9 +199,9 @@ export function register(
 
         // Message sent when a new signal is submitted to the router
         socket.on("submitSignal", (clientId: string, contents: any[], response) => {
-            // Verify the user has connected on this object id
-            if (!roomMap.has(clientId)) {
-                return response("Invalid client ID", null);
+            // Verify the user has an orderer connection and subscription to the room.
+            if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
+                return response("Invalid client ID or readonly client", null);
             }
 
             const roomId = roomMap.get(clientId);

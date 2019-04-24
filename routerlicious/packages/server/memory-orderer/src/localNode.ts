@@ -12,6 +12,7 @@ import {
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
+import * as moniker from "moniker";
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import {
@@ -171,6 +172,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // Create a new socket and bind it to a relay on the node
                         const connection = orderer.connectInternal(
                             subscriber,
+                            moniker.choose(),
                             connectMessage.client);
 
                         // Need to subscribe to both channels. Then broadcast subscription across pipe

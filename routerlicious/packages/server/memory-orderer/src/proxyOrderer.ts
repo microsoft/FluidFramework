@@ -14,6 +14,7 @@ export class ProxyOrderer implements IOrderer {
 
     public async connect(
         socket: IWebSocket,
+        clientId: string,
         client: IClient): Promise<IOrdererConnection> {
 
         const proxiedSocket = await this.factory.connect(socket, client);

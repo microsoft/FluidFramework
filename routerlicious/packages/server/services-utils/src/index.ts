@@ -1,3 +1,4 @@
+export * from "./clientIdGenerator";
 export * from "./conversion";
 export * from "./dns";
 export * from "./errorTrackingService";

@@ -40,15 +40,11 @@ export interface IOrdererConnection {
 }
 
 export interface IOrderer {
-    connect(socket: IWebSocket, client: IClient): Promise<IOrdererConnection>;
+    connect(socket: IWebSocket, clientId: string, client: IClient): Promise<IOrdererConnection>;
 
     close(): Promise<void>;
 }
 
 export interface IOrdererManager {
     getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
-}
-
-export interface IOrdererClientIdStamper {
-    getClientId(client: IClient): string;
 }

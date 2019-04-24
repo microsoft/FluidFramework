@@ -25,7 +25,6 @@ import {
     IDocumentStorage,
     IKafkaMessage,
     IOrderer,
-    IOrdererClientIdStamper,
     IOrdererConnection,
     IProducer,
     IPublisher,
@@ -38,15 +37,8 @@ import {
 } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import * as moniker from "moniker";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
-
-const ordererClientIdStamper: IOrdererClientIdStamper = {
-    getClientId: (client: IClient) => {
-        return moniker.choose();
-    },
-};
 
 export interface ISubscriber {
     id: string;
@@ -166,6 +158,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         this.parentBranch = document.parent ? document.parent.documentId : null;
 
         // Subscribe to the message channels
+        // Todo: We probably don't need this.
         this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
         this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
 
@@ -229,6 +222,7 @@ class LocalOrdererConnection implements IOrdererConnection {
         };
         this.submitRawOperation(message);
 
+        // Todo: We probably don't need this either.
         this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
         this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
     }
@@ -275,8 +269,7 @@ export class LocalOrderer implements IOrderer {
         scriptoriumContext = new LocalContext(),
         foremanContext = new LocalContext(),
         deliContext = new LocalContext(),
-        clientTimeout: number = ClientSequenceTimeout,
-        clientIdStamper: IOrdererClientIdStamper = ordererClientIdStamper) {
+        clientTimeout: number = ClientSequenceTimeout) {
 
         const [details, documentCollection, deltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
@@ -299,8 +292,7 @@ export class LocalOrderer implements IOrderer {
             scriptoriumContext,
             foremanContext,
             deliContext,
-            clientTimeout,
-            clientIdStamper);
+            clientTimeout);
     }
 
     private socketPublisher: LocalSocketPublisher;
@@ -331,7 +323,6 @@ export class LocalOrderer implements IOrderer {
         private foremanContext,
         private deliContext,
         clientTimeout: number,
-        private clientIdStamper: IOrdererClientIdStamper,
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
@@ -372,15 +363,17 @@ export class LocalOrderer implements IOrderer {
 
     public async connect(
         socket: IWebSocket,
+        clientId: string,
         client: IClient): Promise<IOrdererConnection> {
 
-        const socketSubscriber = new WebSocketSubscriber(socket);
-        const orderer = this.connectInternal(socketSubscriber, client);
-        return orderer;
+            const socketSubscriber = new WebSocketSubscriber(socket);
+            const orderer = this.connectInternal(socketSubscriber, clientId, client);
+            return orderer;
     }
 
     public connectInternal(
         subscriber: ISubscriber,
+        clientId: string,
         client: IClient): IOrdererConnection {
         // Create the connection
         const connection = new LocalOrdererConnection(
@@ -391,7 +384,7 @@ export class LocalOrderer implements IOrderer {
             this.alfredToDeliKafka,
             this.tenantId,
             this.documentId,
-            this.clientIdStamper.getClientId(client),
+            clientId,
             client,
             this.maxMessageSize);
 

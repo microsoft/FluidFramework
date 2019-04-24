@@ -3,6 +3,7 @@ import { IUser } from "./users";
 export const Browser = "browser";
 
 export interface IClient {
+    mode?: "readonly" | undefined;
     type: string;
     permission: string[];
     user: IUser;

@@ -34,6 +34,7 @@ import {
     TestWebSocketServer,
 } from "@prague/test-utils";
 import * as jwt from "jsonwebtoken";
+import * as moniker from "moniker";
 
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
@@ -157,7 +158,7 @@ export function register(
 
             // And then connect to the orderer
             const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-            const connection = await orderer.connect(socket, message.client);
+            const connection = await orderer.connect(socket, moniker.choose(), message.client);
             connectionsMap.set(connection.clientId, connection);
             roomMap.set(connection.clientId, `${claims.tenantId}/${claims.documentId}`);
 

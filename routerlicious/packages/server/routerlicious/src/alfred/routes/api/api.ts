@@ -80,6 +80,7 @@ function mapSetBuilder(request: Request): any[] {
 
 function sendJoin(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
     const detail: IClient = {
+        mode: undefined,
         permission: [],
         type: Robot,
         user: {id: "Rest-Client"},
