@@ -153,7 +153,7 @@ export class FlowDocument extends Component {
     }
 
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        await this.host.openComponent(marker.properties.docId, true, services);
+        await this.runtime.openComponent(marker.properties.docId, true, services);
     }
 
     public getSegmentAndOffset(position: number) {
@@ -220,7 +220,7 @@ export class FlowDocument extends Component {
     public insertInclusionComponent(position: number, docId: string, pkg: string) {
         const docInfo = { kind: InclusionKind.Component, docId };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-        this.host.createAndAttachComponent(docId, pkg);
+        this.runtime.createAndAttachComponent(docId, pkg);
     }
 
     public annotate(start: number, end: number, props: PropertySet) {

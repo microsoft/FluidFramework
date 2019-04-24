@@ -121,7 +121,7 @@ export class TableSlice extends Component implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKeys.docId);
-            this.maybeDoc = await this.host.openComponent(docId, true);
+            this.maybeDoc = await this.runtime.openComponent(docId, true);
         }
     }
 
@@ -149,7 +149,7 @@ export class TableSlice extends Component implements ITable {
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
 
         const { ConfigView } = await import(/* webpackPreload: true */ "./config");
-        const configView = new ConfigView(this.host, this.root);
+        const configView = new ConfigView(this.runtime, this.root);
         maybeDiv.appendChild(configView.root);
         await configView.done;
 

@@ -110,11 +110,11 @@ export class TableDocument extends Component implements ITable {
     }
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
-        await this.host.createAndAttachComponent(sliceId, TableSliceType);
-        return this.host.openComponent<TableSlice>(
+        await this.runtime.createAndAttachComponent(sliceId, TableSliceType);
+        return this.runtime.openComponent<TableSlice>(
             sliceId,
             true,
-            [["config", Promise.resolve({ docId: this.host.id, name, minRow, minCol, maxRow, maxCol })]]);
+            [["config", Promise.resolve({ docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol })]]);
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {

@@ -34,7 +34,7 @@ export class TableView extends Component {
         {
             const docId = await this.root.get(ConfigKeys.docId);
             if (!docId) {
-                const configView = new ConfigView(this.host, this.root);
+                const configView = new ConfigView(this.runtime, this.root);
                 maybeDiv.appendChild(configView.root);
                 await configView.done;
                 while (maybeDiv.lastChild) {
@@ -46,7 +46,7 @@ export class TableView extends Component {
         if (maybeDiv) {
             // tslint:disable-next-line:no-shadowed-variable
             const docId = await this.root.get(ConfigKeys.docId);
-            const doc = await this.host.openComponent<TableDocument>(docId, true);
+            const doc = await this.runtime.openComponent<TableDocument>(docId, true);
             const root = template.clone();
             const grid = template.get(root, "grid");
             grid.appendChild(new GridView(doc).root);

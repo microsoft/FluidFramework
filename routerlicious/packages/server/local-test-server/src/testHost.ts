@@ -23,14 +23,14 @@ class TestRootComponent extends Component {
     }
 
     public async createComponent(id: string, type: string) {
-        await this.host.createAndAttachComponent(id, type);
+        await this.runtime.createAndAttachComponent(id, type);
     }
 
     public openComponent<T extends IComponent>(
         id: string,
         wait: boolean,
     ) {
-        return this.host.openComponent<T>(id, wait);
+        return this.runtime.openComponent<T>(id, wait);
     }
 
     public createType<T extends ISharedObject>(id: string, type: string) {

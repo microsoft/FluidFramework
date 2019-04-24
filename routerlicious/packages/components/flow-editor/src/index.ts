@@ -14,7 +14,7 @@ export class FlowEditor extends Component {
     public async opened() {
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (maybeDiv) {
-            const doc = await this.host.openComponent<FlowDocument>(await this.root.wait("docId"), true);
+            const doc = await this.runtime.openComponent<FlowDocument>(await this.root.wait("docId"), true);
             const editor = new Editor();
             const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
             maybeDiv.appendChild(root);
@@ -24,7 +24,7 @@ export class FlowEditor extends Component {
     protected async create() {
         // tslint:disable-next-line:insecure-random
         const docId = Math.random().toString(36).substr(2, 4);
-        this.host.createAndAttachComponent(docId, "@chaincode/flow-document");
+        this.runtime.createAndAttachComponent(docId, "@chaincode/flow-document");
         this.root.set("docId", docId);
     }
 }

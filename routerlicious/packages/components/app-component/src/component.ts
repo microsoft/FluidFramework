@@ -40,29 +40,28 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
  */
 export abstract class Component extends EventEmitter implements IComponent {
     private get dbgName() {
-        return `${this.constructor.name}${this.host ? `:'${this.host.id}'` : ""}`;
+        return `${this.constructor.name}${this.runtime ? `:'${this.runtime.id}'` : ""}`;
     }
 
-    protected get runtime(): IComponentRuntime { return this._host; }
+    protected get runtime() { return this._runtime; }
     protected get platform() { return this._platform; }
-    protected get host() { return this._host; }
     protected get root() { return this._root; }
 
-    public get id() { return this._host.id; }
+    public get id() { return this._runtime.id; }
 
     /**
      * Returns a promise that resolves once the component is synchronized with its date store.
      * If the component is already connected, returns a resolved promise.
      */
     protected get connected(): Promise<void> {
-        if (this.host.connected) {
+        if (this.runtime.connected) {
             debug(`${this.dbgName}.connected: Already connected.`);
             return Promise.resolve();
         }
 
         debug(`${this.dbgName}.connected: Waiting...`);
         return new Promise((accept) => {
-            this.host.on("connected", () => {
+            this.runtime.on("connected", () => {
                 debug(`${this.dbgName}.connected: Now connected.`);
                 accept();
             });
@@ -136,7 +135,7 @@ export abstract class Component extends EventEmitter implements IComponent {
     private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
 
     // tslint:disable-next-line:variable-name
-    private _host: ComponentRuntime;
+    private _runtime: ComponentRuntime;
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform = null;
@@ -204,19 +203,19 @@ export abstract class Component extends EventEmitter implements IComponent {
 
         // Instantiation of underlying data model for the component
         debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
-        this._host = await ComponentRuntime.LoadFromSnapshot(context, new Map(this[typeToFactorySym]));
+        this._runtime = await ComponentRuntime.LoadFromSnapshot(context, new Map(this[typeToFactorySym]));
         debug(`${this.dbgName}.LoadFromSnapshot() - end`);
 
         // Load the app specific code. We do not await on it because it is not needed to begin inbounding operations.
         // The promise is awaited on when URL request are made against the component.
-        this._host.registerRequestHandler(async (request: IRequest) => {
+        this._runtime.registerRequestHandler(async (request: IRequest) => {
             debug(`request(url=${request.url})`);
             return request.url && request.url !== "/"
                 ? this.request(request)
                 : { status: 200, mimeType: "prague/component", value: this };
         });
 
-        return this._host;
+        return this._runtime;
     }
 
     /**
@@ -231,18 +230,18 @@ export abstract class Component extends EventEmitter implements IComponent {
             return this;
         }
 
-        if (this.host.existing) {
+        if (this.runtime.existing) {
             debug(`${this.dbgName}.ensureOpened() - already exists`);
 
             // If the component already exists, open it's root map.
-            this._root = await this.host.getChannel(Component.rootMapId) as ISharedMap;
+            this._root = await this.runtime.getChannel(Component.rootMapId) as ISharedMap;
         } else {
             debug(`${this.dbgName}.ensureOpened() - new component`);
 
             // If this is the first client to attempt opening the component, create the component's
             // root map and call 'create()' to give the component author a chance to initialize the
             // component's shared data structures.
-            this._root = this.host.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
+            this._root = this.runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
             this._root.attach();
             debug(`${this.dbgName}.create() - begin`);
             await this.create();

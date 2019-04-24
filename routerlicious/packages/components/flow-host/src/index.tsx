@@ -35,7 +35,7 @@ export class FlowHost extends Component {
         }
 
         const appConfig: IAppConfig = {
-            host: this.host,
+            runtime: this.runtime,
             verdaccioUrl: "http://localhost:4873",
         };
 

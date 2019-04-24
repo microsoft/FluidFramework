@@ -8,7 +8,7 @@ import { FlowEditor } from "./editor";
 import * as style from "./index.css";
 
 export interface IAppConfig {
-    host: ComponentRuntime;
+    runtime: ComponentRuntime;
     verdaccioUrl: string;           // Url of Verdaccio npm server (e.g., "http://localhost:4873")
 }
 

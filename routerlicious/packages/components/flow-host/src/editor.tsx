@@ -36,11 +36,11 @@ export class FlowEditor extends React.Component<IProps, IState> {
     public componentWillMount() {
         const { config } = this.props;
 
-        if (!config.host.existing) {
-            config.host.createAndAttachComponent("document", "@chaincode/flow-document");
+        if (!config.runtime.existing) {
+            config.runtime.createAndAttachComponent("document", "@chaincode/flow-document");
         }
 
-        config.host.openComponent<FlowDocument>("document", true).then((doc) => {
+        config.runtime.openComponent<FlowDocument>("document", true).then((doc) => {
             // TODO getProcess happens after run is called not before the component is ready. May want to formalize
             // this ready call.
             doc.ready.then(() => {
