@@ -419,12 +419,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.3.1");
-        },
-        key: "insert map",
-    },
-    {
-        exec: (f) => {
             f.insertInnerComponent("chart", "@chaincode/charts");
         },
         key: "insert chart",
@@ -4882,7 +4876,8 @@ export class FlowView extends ui.Component {
 
                     // If it starts with &, assume it's a document ID
                     if (searchString.startsWith("&")) {
-                        this.insertDocument(searchString.substring(1));
+                        const [id, pkg] = searchString.substring(1).split(" ");
+                        this.insertInnerComponent(id, pkg);
                     }
                 };
                 this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
