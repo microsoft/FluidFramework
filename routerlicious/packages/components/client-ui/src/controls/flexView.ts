@@ -47,7 +47,7 @@ export class FlexView extends ui.Component {
     private components: IFlexViewComponent[] = [];
     private insightsMap: ISharedMap;
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: ISharedMap) {
+    constructor(element: HTMLDivElement, private doc: api.Document, root: ISharedMap, image?: CanvasImageSource) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -60,7 +60,7 @@ export class FlexView extends ui.Component {
         // Add the ink canvas to the dock
         // Add blob Upload Handler
         const inkCanvasElement = document.createElement("div");
-        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"));
+        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"), image);
         this.dock.addContent(this.ink);
         blobUploadHandler(inkCanvasElement, doc, (file) => {return; });
 

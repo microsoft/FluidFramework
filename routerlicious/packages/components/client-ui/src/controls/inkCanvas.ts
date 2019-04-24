@@ -39,7 +39,7 @@ export class InkCanvas extends ui.Component {
     private lastLayerRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(element: HTMLDivElement, private model: types.IStream) {
+    constructor(element: HTMLDivElement, private model: types.IStream, private image?: CanvasImageSource) {
         super(element);
 
         this.model.on("op", (op) => {
@@ -191,6 +191,9 @@ export class InkCanvas extends ui.Component {
      */
     private clearCanvas() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.image) {
+            this.context.drawImage(this.image, 0, 0);
+        }
     }
 
     private redraw() {
