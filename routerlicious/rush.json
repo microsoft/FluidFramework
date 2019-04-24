@@ -1,5 +1,5 @@
 {
-  "pnpmVersion": "3.1.0",
+  "pnpmVersion": "2.25.7",
   "rushVersion": "5.7.0",
   "nodeSupportedVersionRange": ">=8.0.0",
   "projectFolderMinDepth": 1,
@@ -61,6 +61,10 @@
     {
       "packageName": "@chaincode/owned-map",
       "projectFolder": "packages/components/owned-map/"
+    },
+    {
+      "packageName": "@chaincode/shared-text",
+      "projectFolder": "packages/components/shared-text/"
     },
     {
       "packageName": "@chaincode/table-document",
