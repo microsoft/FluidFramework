@@ -38,7 +38,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         const parsedUrl = parse(pragueResolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.path!.split("/");
+        const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
             // tslint:disable-next-line:max-line-length
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);

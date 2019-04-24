@@ -22,7 +22,7 @@ export class WebLoader implements ICodeLoader {
     constructor(private baseUrl: string) {
     }
 
-    public async load(source: string): Promise<IChaincodeFactory> {
+    public async load<T>(source: string): Promise<T> {
         const components = source.match(/(.*)\/(.*)@(.*)/);
         if (!components) {
             return Promise.reject("Invalid package");

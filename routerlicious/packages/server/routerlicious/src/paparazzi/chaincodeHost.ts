@@ -13,7 +13,7 @@ const packagesBase = `/tmp/chaincode`;
 const signalFileName = "dummy";
 
 export class NodeCodeLoader implements ICodeLoader {
-    public async load(pkg: string): Promise<IChaincodeFactory> {
+    public async load<T>(pkg: string): Promise<T> {
         const codeEntrypoint = await this.installOrWaitForPackages(pkg);
         const entry = import(codeEntrypoint);
         // tslint:disable:no-unsafe-any

@@ -7,13 +7,13 @@ export class TestLoader implements ICodeLoader {
         this.typeToFactory = new Map(factories);
     }
 
-    public load(source: string): Promise<IChaincodeFactory> {
+    public load<T>(source: string): Promise<T> {
         const factory = this.typeToFactory.get(source);
 
         if (factory === undefined) {
             throw new Error(`TestLoader: Missing IChainCodeFactory for '${source}'.`);
         }
 
-        return Promise.resolve(factory);
+        return Promise.resolve(factory as any);
     }
 }

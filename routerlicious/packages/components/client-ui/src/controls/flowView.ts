@@ -419,7 +419,7 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor@0.3.1");
         },
         key: "insert map",
     },

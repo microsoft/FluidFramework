@@ -18,10 +18,8 @@ import {
     registerDefaultValueType,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import {
-    Runtime,
-} from "@prague/runtime";
-import { IComponent, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRegistry, Runtime } from "@prague/runtime";
+import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
@@ -48,7 +46,7 @@ import { createCacheHTML } from "./pageCacher";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
-const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+// const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -425,18 +423,30 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     return runtime;
 }
 
+class MyRegistry implements IComponentRegistry {
+    constructor(private context: IContainerContext) {
+    }
+
+    public async get(name: string): Promise<IComponentFactory> {
+        if (name === "@chaincode/charts") {
+            return charts;
+        } else if (name === "@chaincode/monaco") {
+            return monaco;
+        } else if (name === "@chaincode/shared-text") {
+            return { instantiateComponent };
+        } else if (name === "@chaincode/pinpoint-editor@0.3.1") {
+            return this.context.codeLoader.load<IComponentFactory>("@chaincode/pinpoint-editor@0.3.1");
+        } else {
+            return Promise.reject("Not found");
+        }
+    }
+}
+
 /**
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const registry = new Map<string, any>([
-        ["@chaincode/charts", charts],
-        ["@chaincode/monaco", monaco],
-        ["@chaincode/pinpoint-editor", pinpoint],
-        ["@chaincode/shared-text", { instantiateComponent }],
-    ]);
-
-    const runtime = await Runtime.Load(registry, context);
+    const runtime = await Runtime.Load(new MyRegistry(context), context);
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {

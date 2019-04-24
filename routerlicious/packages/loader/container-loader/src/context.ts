@@ -1,6 +1,7 @@
 import {
     ConnectionState,
     IChaincodeFactory,
+    ICodeLoader,
     IContainerContext,
     IDeltaManager,
     IDocumentAttributes,
@@ -23,6 +24,7 @@ import { Container } from "./container";
 export class Context implements IContainerContext {
     public static async Load(
         container: Container,
+        codeLoader: ICodeLoader,
         chaincode: IChaincodeFactory,
         baseSnapshot: ISnapshotTree | null,
         blobs: Map<string, string>,
@@ -40,6 +42,7 @@ export class Context implements IContainerContext {
     ): Promise<Context> {
         const context = new Context(
             container,
+            codeLoader,
             chaincode,
             baseSnapshot,
             blobs,
@@ -107,6 +110,7 @@ export class Context implements IContainerContext {
 
     constructor(
         private container: Container,
+        public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IChaincodeFactory,
         public readonly baseSnapshot: ISnapshotTree | null,
         public readonly blobs: Map<string, string>,

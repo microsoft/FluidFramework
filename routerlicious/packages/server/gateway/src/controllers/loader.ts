@@ -15,7 +15,7 @@ import { IComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
 
 export class WebLoader implements ICodeLoader {
-    private entryCache = new Map<string, Promise<IChaincodeFactory>>();
+    private entryCache = new Map<string, Promise<any>>();
 
     constructor(private baseUrl: string, pkg: string, entrypoint: string, scriptIds: string[]) {
         if (entrypoint) {
@@ -43,7 +43,7 @@ export class WebLoader implements ICodeLoader {
         }
     }
 
-    public async load(source: string): Promise<IChaincodeFactory> {
+    public async load<T>(source: string): Promise<T> {
         if (!this.entryCache.has(source)) {
             const entryP = this.loadCore(source);
             this.entryCache.set(source, entryP);

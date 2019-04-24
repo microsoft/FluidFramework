@@ -1,5 +1,4 @@
 import { EventEmitter } from "events";
-import { IChaincodeFactory } from "./chaincode";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
@@ -15,7 +14,7 @@ export interface ICodeLoader {
      * package then goes and refers to other stuff. The base package will have the ability to pull in, install
      * data contained in the document.
      */
-    load(source: string): Promise<IChaincodeFactory>;
+    load<T>(source: string): Promise<T>;
 }
 
 export type IResolvedUrl = IWebResolvedUrl | IPragueResolvedUrl;

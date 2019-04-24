@@ -125,7 +125,7 @@ export class CodeLoader implements ICodeLoader {
         this.factory = new ChaincodeFactory(runFn);
     }
 
-    public load(source: string): Promise<IChaincodeFactory> {
-        return Promise.resolve(this.factory);
+    public load<T>(source: string): Promise<T> {
+        return Promise.resolve(this.factory as any);
     }
 }

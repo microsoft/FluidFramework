@@ -8,11 +8,12 @@
   "sideEffects": "false",
   "author": "Microsoft",
   "scripts": {
-    "build": "tsc && tsc --outDir lib --m esnext && npm run tslint",
+    "build": "tsc && tsc --outDir lib --m esnext && npm run tslint && npm run webpack",
     "start": "prague-dev-server --config webpack.config.js --package package.json --component --live",
     "start:local": "prague-dev-server --config webpack.config.js --package package.json --component",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'"
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
     "@kurtb/pinpoint": "^0.1.2",

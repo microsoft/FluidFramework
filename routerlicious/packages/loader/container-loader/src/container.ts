@@ -384,6 +384,7 @@ export class Container extends EventEmitter implements IContainer {
 
                 this.context = await Context.Load(
                     this,
+                    this.codeLoader,
                     chaincode.chaincode,
                     tree!,
                     new Map(),
@@ -588,6 +589,7 @@ export class Container extends EventEmitter implements IContainer {
 
         const newContext = await Context.Load(
             this,
+            this.codeLoader,
             chaincode,
             snapshotTree,
             blobs,
