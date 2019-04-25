@@ -24,7 +24,7 @@
     "fileMetadataFiles": [],
     "template": ["default", "_template"],
     "postProcessors": [],
-    "markdownEngineName": "markdig",
+    "markdownEngineName": "dfm-latest",
     "noLangKeyword": false,
     "keepFileLink": false,
     "cleanupCacheHistory": false,

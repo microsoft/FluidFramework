@@ -37,12 +37,8 @@ RUN npm run build:compile
 #############################
 FROM r11s AS docs
 
-# Build docs
+# Build docs; runs both api-extractor and api-documenter
 RUN npm run build:docs
-
-# Run api-documenter
-WORKDIR /docs
-RUN api-documenter yaml -i ../routerlicious/packages/_api-extractor-temp/doc-models/ -o ./api/
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api
