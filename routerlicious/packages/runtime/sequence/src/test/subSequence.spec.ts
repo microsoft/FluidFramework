@@ -20,7 +20,7 @@ class SubSequeceTestClient extends TestClient {
         props: PropertySet,
         seq: number,
         refSeq: number,
-        clientId: number,
+        longClientId: string,
     ) {
         const segment = new SubSequence(items);
         if (props) {
@@ -31,7 +31,7 @@ class SubSequeceTestClient extends TestClient {
                 createInsertSegmentOp(pos, segment),
                 seq,
                 refSeq,
-                clientId));
+                longClientId));
     }
 
     public relItems(clientId: number, refSeq: number) {
@@ -57,12 +57,12 @@ describe("SubSequece", () => {
         for (const cname of clientNames) {
             cli.addLongClientId(cname);
         }
-        cli.insertItemsRemote(0, [2, 11], undefined, 1, 0, 1);
+        cli.insertItemsRemote(0, [2, 11], undefined, 1, 0, "1");
 
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        cli.insertItemsRemote(0, [4, 5, 6], undefined, 2, 0, 2);
+        cli.insertItemsRemote(0, [4, 5, 6], undefined, 2, 0, "2");
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
@@ -79,8 +79,8 @@ describe("SubSequece", () => {
             }
         }
         cli.applyMsg(cli.makeOpMessage(insert));
-        cli.insertItemsRemote(6, [1, 5, 6, 2, 3], undefined, 4, 2, 2);
-        cli.insertItemsRemote(0, [9], undefined, 5, 0, 2);
+        cli.insertItemsRemote(6, [1, 5, 6, 2, 3], undefined, 4, 2, "2");
+        cli.insertItemsRemote(0, [9], undefined, 5, 0, "2");
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -93,7 +93,7 @@ describe("SubSequece", () => {
             createRemoveRangeOp(3, 6),
             6,
             5,
-            3));
+            "3"));
         cli.updateMinSeq(6);
         if (verbose) {
             console.log(cli.mergeTree.toString());

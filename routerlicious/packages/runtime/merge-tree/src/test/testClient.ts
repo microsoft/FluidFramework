@@ -94,7 +94,7 @@ export class TestClient extends Client {
         props: PropertySet,
         seq: number,
         refSeq: number,
-        clientId: number,
+        longClientId: string,
     ) {
         const segment = new TextSegment(text);
         if (props) {
@@ -104,7 +104,7 @@ export class TestClient extends Client {
             createInsertSegmentOp(pos, segment),
             seq,
             refSeq,
-            clientId));
+            longClientId));
     }
 
     public insertMarkerLocal(
@@ -125,7 +125,7 @@ export class TestClient extends Client {
         props: PropertySet,
         seq: number,
         refSeq: number,
-        clientId: number,
+        longClientId: string,
     ) {
         const segment = new Marker(markerDef.refType);
         if (props) {
@@ -135,7 +135,7 @@ export class TestClient extends Client {
             createInsertSegmentOp(pos, segment),
             seq,
             refSeq,
-            clientId));
+            longClientId));
     }
 
     public relText(clientId: number, refSeq: number) {
@@ -146,9 +146,9 @@ export class TestClient extends Client {
         op: IMergeTreeOp,
         seq: number = UnassignedSequenceNumber,
         refSeq: number = this.getCurrentSeq(),
-        shortClientId?: number) {
+        longClientId?: string) {
         const msg: ISequencedDocumentMessage = {
-            clientId: shortClientId === undefined ? this.longClientId : this.getLongClientId(shortClientId),
+            clientId: longClientId === undefined ? this.longClientId : longClientId,
             clientSequenceNumber: 1,
             contents: op,
             minimumSequenceNumber: undefined,

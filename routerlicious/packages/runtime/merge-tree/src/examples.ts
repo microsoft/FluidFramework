@@ -48,10 +48,9 @@ function overlappingInsert(bSeesTheCat = false) {
     console.log(clientA.mergeTree.toString());
     // propagate client A's op to client B
     const referenceSequenceNumber = 0;
-    const bLocalIdForA = clientB.getOrAddShortClientId("A", null);
     /* tslint:disable:no-unsafe-any */
     clientB.insertTextRemote(0, "cat ", properties, sequenceNumber,
-        referenceSequenceNumber, bLocalIdForA);
+        referenceSequenceNumber, "A");
     console.log(clientB.mergeTree.toString());
     // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
@@ -63,9 +62,8 @@ function overlappingInsert(bSeesTheCat = false) {
         } as ISequencedDocumentMessage,
     });
     console.log(clientB.mergeTree.toString());
-    const aLocalIdForB = clientA.getOrAddShortClientId("B", null);
     clientA.insertTextRemote(0, "big ", properties, sequenceNumber,
-        referenceSequenceNumber, aLocalIdForB);
+        referenceSequenceNumber, "B");
     console.log(clientA.mergeTree.toString());
 
     // tslint:disable-next-line:no-increment-decrement
@@ -83,11 +81,11 @@ function overlappingInsert(bSeesTheCat = false) {
     console.log(clientB.mergeTree.toString());
     if (bSeesTheCat) {
         clientA.insertTextRemote(8 /* insert after cat */, "furry ", properties, sequenceNumber,
-            2 /* ref seq sees cat*/, aLocalIdForB);
+            2 /* ref seq sees cat*/, "B");
         console.log(clientA.mergeTree.toString());
     } else {
         clientA.insertTextRemote(4, "furry ", properties, sequenceNumber,
-            referenceSequenceNumber, aLocalIdForB);
+            referenceSequenceNumber, "B");
         console.log(clientA.mergeTree.toString());
     }
 }

@@ -1,9 +1,12 @@
-import { ISegment, List, ListMakeHead, SegmentGroup } from ".";
+import { List, ListMakeHead } from "./collections";
+import { ISegment, SegmentGroup } from "./mergeTree";
 
 export class SegmentGroupCollection {
-    private readonly segmentGroups: List<SegmentGroup> = ListMakeHead<SegmentGroup>();
+    private readonly segmentGroups: List<SegmentGroup>;
 
-    constructor(private readonly segment: ISegment) {}
+    constructor(private readonly segment: ISegment) {
+        this.segmentGroups = ListMakeHead<SegmentGroup>();
+    }
 
     public get size() {
         return this.segmentGroups.count();
