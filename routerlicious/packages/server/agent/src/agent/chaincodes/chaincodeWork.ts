@@ -64,7 +64,7 @@ export class ChaincodeWork extends EventEmitter {
             // Remove all listeners and close the document.
             this.document.removeAllListeners();
             this.document.close();
-            debug(`Closed document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
+            debug(`Closed document ${this.tenantId}/${this.docId} for task ${this.task}`);
         }
     }
 
@@ -121,9 +121,9 @@ export class ChaincodeWork extends EventEmitter {
     // call stop() to stop the task on the document.
     private requestStop() {
         const stopEvent: IDocumentTaskInfo = {
-            docId: this.document.id,
+            docId: this.docId,
             task: this.task,
-            tenantId: this.document.tenantId,
+            tenantId: this.tenantId,
         };
         this.events.emit("stop", stopEvent);
     }

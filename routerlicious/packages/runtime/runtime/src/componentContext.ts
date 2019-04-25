@@ -26,9 +26,6 @@ import {
 import { EventEmitter } from "events";
 
 export class ComponentContext extends EventEmitter implements IComponentContext {
-    public get tenantId(): string {
-        return this._hostRuntime.tenantId;
-    }
 
     public get documentId(): string {
         return this._hostRuntime.id;

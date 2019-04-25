@@ -2876,7 +2876,7 @@ export interface IListReferenceDoc extends IReferenceDoc {
     selectionIndex: number;
 }
 
-export function makeBlobRef(blob: IGenericBlob, tenant: string, cb: (irdoc: IReferenceDoc) => void) {
+export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => void) {
     switch (blob.type) {
         case "image": {
             const image = document.createElement("img");
@@ -4598,7 +4598,7 @@ export class FlowView extends ui.Component {
     private insertBlobInternal(blob: IGenericBlob) {
         this.collabDocument.getBlob(blob.sha)
             .then((finalBlob) => {
-                makeBlobRef(finalBlob, this.collabDocument.tenantId, (irdoc) => {
+                makeBlobRef(finalBlob, (irdoc) => {
                     const refProps = {
                         [Paragraph.referenceProperty]: irdoc,
                     };

@@ -8,14 +8,11 @@ import {
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
-    ITokenProvider,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
     public static async Connect(
-        tenantId: string,
-        id: string,
         service: IDocumentService,
         client: IClient) {
         const connection = await service.connectToDeltaStream(client);

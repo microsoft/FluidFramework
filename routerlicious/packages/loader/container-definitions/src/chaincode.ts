@@ -124,7 +124,6 @@ export interface IRuntime {
 }
 
 export interface IContainerContext {
-    readonly tenantId: string;
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;

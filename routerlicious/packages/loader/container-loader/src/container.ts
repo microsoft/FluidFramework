@@ -92,7 +92,6 @@ export class Container extends EventEmitter implements IContainer {
     private _existing: boolean | undefined;
     private _id: string;
     private _parentBranch: string | undefined | null;
-    private _tenantId: string;
     private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
@@ -104,10 +103,6 @@ export class Container extends EventEmitter implements IContainer {
 
     // Local copy of sent but unacknowledged chunks.
     private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
-
-    public get tenantId(): string {
-        return this._tenantId;
-    }
 
     public get id(): string {
         return this._id;
@@ -160,8 +155,7 @@ export class Container extends EventEmitter implements IContainer {
     ) {
         super();
 
-        const [tenantId, documentId] = id.split("/");
-        this._tenantId = decodeURIComponent(tenantId);
+        const [, documentId] = id.split("/");
         this._id = decodeURI(documentId);
     }
 
@@ -205,13 +199,13 @@ export class Container extends EventEmitter implements IContainer {
     public async snapshot(tagMessage: string): Promise<void> {
         // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
         if (this.parentBranch) {
-            debug(`${this.tenantId}/${this.id} Skipping snapshot due to being branch of ${this.parentBranch}`);
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
 
         // Only snapshot once a code quorum has been established
         if (!this.quorum!.has("code2")) {
-            debug(`${this.tenantId}/${this.id} Skipping snapshot due to no code quorum`);
+            debug(`Skipping snapshot due to no code quorum`);
             return;
         }
 
@@ -628,8 +622,6 @@ export class Container extends EventEmitter implements IContainer {
         // Create the DeltaManager and begin listening for connection events
         const clientDetails = this.options ? this.options.client : null;
         this._deltaManager = new DeltaManager(
-            this.id,
-            this.tenantId,
             this.service,
             clientDetails);
 

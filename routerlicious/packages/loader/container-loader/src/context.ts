@@ -62,10 +62,6 @@ export class Context implements IContainerContext {
         return context;
     }
 
-    public get tenantId(): string {
-        return this.container.tenantId;
-    }
-
     public get id(): string {
         return this.container.id;
     }

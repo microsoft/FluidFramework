@@ -141,10 +141,17 @@ async function loadDocument(
         apiHost,
         { blockUpdateMarkers: true, client: config.client });
 
+    const parsedUrl = url.parse(resolved.url);
+    const [, tenantId, documentId] = parsedUrl.path.split("/");
+    if (!documentId || !tenantId) {
+        // tslint:disable-next-line:max-line-length
+        return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+    }
+
     // Register to run task only if the client type is browser.
     const client = config.client as IClient;
     if (client && client.type === Browser) {
-        agent.registerToWork(document.location.origin, collabDoc, client, apiHost, config);
+        agent.registerToWork(document.location.origin, collabDoc, client, apiHost, config, tenantId, documentId);
     }
 
     console.log(`Document loaded ${resolved.url}: ${performanceNow()}`);

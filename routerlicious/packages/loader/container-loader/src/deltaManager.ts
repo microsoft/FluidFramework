@@ -114,8 +114,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     constructor(
-        private id: string,
-        private tenantId: string,
         private service: IDocumentService,
         private client: IClient) {
         super();
@@ -379,8 +377,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const reconnect = this.clientType === Browser;
 
         DeltaConnection.Connect(
-            this.tenantId,
-            this.id,
             this.service,
             this.client).then(
             (connection) => {
@@ -619,12 +615,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
         if (this.lastQueuedSequenceNumber !== undefined && message.sequenceNumber <= this.lastQueuedSequenceNumber) {
-            debug(`${this.tenantId}/${this.id} Received duplicate message ${message.sequenceNumber}`);
+            debug(`Received duplicate message ${message.sequenceNumber}`);
             return;
         }
 
         // tslint:disable-next-line:max-line-length
-        debug(`${this.tenantId}/${this.id} out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
+        debug(`Out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
         this.fetchMissingDeltas(this.lastQueuedSequenceNumber!, message.sequenceNumber);
     }

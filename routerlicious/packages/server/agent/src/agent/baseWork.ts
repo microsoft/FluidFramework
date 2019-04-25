@@ -21,13 +21,14 @@ export class BaseWork extends EventEmitter {
 
     constructor(
         alfred: string,
-        id: string,
-        tenantId: string,
+        private documentId: string,
+        private tenantId: string,
         private host: IHost,
         private conf: any) {
         super();
         this.config = this.conf;
-        this.url = `prague://${parse(alfred).host}/${encodeURIComponent(tenantId)}/${encodeURIComponent(id)}`;
+        // tslint:disable-next-line:max-line-length
+        this.url = `prague://${parse(alfred).host}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
     }
 
     public async loadDocument(
@@ -91,7 +92,7 @@ export class BaseWork extends EventEmitter {
     }
 
     private closeDocument() {
-        debug(`Closing document ${this.document.tenantId}/${this.document.id} for task ${this.task}`);
+        debug(`Closing document ${this.tenantId}/${this.documentId} for task ${this.task}`);
 
         // Remove all listeners from the document.
         this.document.removeAllListeners();
@@ -104,9 +105,9 @@ export class BaseWork extends EventEmitter {
     // Emits a stop request message to the caller.
     private requestStop() {
         const stopEvent: IDocumentTaskInfo = {
-            docId: this.document.id,
+            docId: this.documentId,
             task: this.task,
-            tenantId: this.document.tenantId,
+            tenantId: this.tenantId,
         };
         this.events.emit("stop", stopEvent);
     }

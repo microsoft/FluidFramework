@@ -85,7 +85,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const tree = context.baseSnapshot;
         const runtime = new ComponentRuntime(
             context,
-            context.tenantId,
             context.documentId,
             context.id,
             context.parentBranch,
@@ -158,7 +157,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     private constructor(
         private readonly componentRuntime: IComponentContext,
-        public readonly tenantId: string,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string,

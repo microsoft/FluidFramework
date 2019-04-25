@@ -30,8 +30,6 @@ export interface IComponentRuntime extends EventEmitter {
 
     readonly documentId: string;
 
-    readonly tenantId: string;
-
     readonly existing: boolean;
 
     readonly parentBranch: string;
@@ -109,7 +107,6 @@ export interface IComponent {
 }
 
 export interface IComponentContext extends EventEmitter {
-    readonly tenantId: string;
     readonly documentId: string;
     readonly id: string;
     readonly existing: boolean;
@@ -146,7 +143,6 @@ export interface IComponentContext extends EventEmitter {
 }
 
 export interface IHostRuntime extends IRuntime {
-    readonly tenantId: string;
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;

@@ -95,7 +95,6 @@ class MockDeltaConnection implements IDeltaConnection {
 
 // Mock implementaiton of IRuntime
 export class MockRuntime extends EventEmitter implements IComponentRuntime  {
-    public readonly tenantId: string;
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;

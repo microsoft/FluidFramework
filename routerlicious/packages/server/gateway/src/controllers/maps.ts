@@ -12,6 +12,7 @@ import {
 } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as $ from "jquery";
+import { parse } from "url";
 // tslint:disable-next-line:no-var-requires
 import { registerDocumentServiceFactory } from "./utils";
 
@@ -158,6 +159,13 @@ export async function load(resolved: IPragueResolvedUrl, jwt: string, config: an
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
     const host = { resolver };
 
+    const parsedUrl = parse(resolved.url);
+    const [, tenantId, documentId] = parsedUrl.path.split("/");
+    if (!documentId || !tenantId) {
+        // tslint:disable-next-line:max-line-length
+        return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
+    }
+
     registerDocumentServiceFactory(config);
 
     $(document).ready(() => {
@@ -174,7 +182,14 @@ export async function load(resolved: IPragueResolvedUrl, jwt: string, config: an
             // Register to run task only if the client type is browser.
             const client = config.client as IClient;
             if (client && client.type === Browser) {
-                agent.registerToWork(config.serverUrl, doc, client, host, config);
+                agent.registerToWork(
+                    config.serverUrl,
+                    doc,
+                    client,
+                    host,
+                    config,
+                    tenantId,
+                    documentId);
             }
         }, (err) => {
             // TODO (auth): Display an error page here.

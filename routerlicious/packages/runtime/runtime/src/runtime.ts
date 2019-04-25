@@ -76,10 +76,6 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         return this.context.connectionState;
     }
 
-    public get tenantId(): string {
-        return this.context.tenantId;
-    }
-
     public get id(): string {
         return this.context.id;
     }
