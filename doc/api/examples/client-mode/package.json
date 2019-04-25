@@ -1,0 +1,37 @@
+{
+  "name": "client-mode",
+  "version": "0.0.1",
+  "description": "Test for readonly clients",
+  "main": "index.js",
+  "dependencies": {
+    "@prague/cell": "0.3.6561",
+    "@prague/client-api": "0.3.6561",
+    "@prague/container-definitions": "0.3.6561",
+    "@prague/map": "0.3.6561",
+    "@prague/routerlicious-socket-storage": "0.3.6561",
+    "commander": "^2.19.0",
+    "jsonwebtoken": "^8.2.1",
+    "url-parse": "^1.4.4"
+  },
+  "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/debug": "0.0.30",
+    "@types/jquery": "^3.3.1",
+    "@types/jsonwebtoken": "^7.2.7",
+    "@types/node": "^8.10.10",
+    "@types/url-parse": "^1.4.3",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^4.2.0",
+    "tslint": "^5.9.1",
+    "typescript": "^3.2.2",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2"
+  },
+  "scripts": {
+    "build": "npm run tslint && npm run tsc",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/**/*.ts'"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague"
+}
