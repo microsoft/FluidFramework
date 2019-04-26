@@ -76,10 +76,10 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
                     const incl: IImageBlob = {
+                        blobId: gitHashFile(arrayBuffer),
                         content: arrayBuffer,
                         fileName: file.name,
                         height: (blob as IImageBlob).height,
-                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "image",
                         url: blob.url,
@@ -93,11 +93,11 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
             return Promise.all([arrayBufferP, blobP])
                 .then(([arrayBuffer, blob]) => {
                     const incl: IVideoBlob = {
+                        blobId: gitHashFile(arrayBuffer),
                         content: arrayBuffer,
                         fileName: file.name,
                         height: blob.height,
                         length: blob.length,
-                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "video",
                         url: blob.url,
@@ -110,9 +110,9 @@ async function fileToInclusion(file: File): Promise<IGenericBlob> {
             return Promise.all([arrayBufferP])
                 .then(([arrayBuffer]) => {
                     const incl: IGenericBlob = {
+                        blobId: gitHashFile(arrayBuffer),
                         content: arrayBuffer,
                         fileName: file.name,
-                        sha: gitHashFile(arrayBuffer),
                         size: arrayBuffer.byteLength,
                         type: "generic",
                         url: baseInclusion.url,

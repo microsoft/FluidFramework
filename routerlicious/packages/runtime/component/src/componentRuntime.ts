@@ -327,7 +327,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.verifyNotClosed();
 
         const sha = gitHashFile(file.content);
-        file.sha = sha;
+        file.blobId = sha;
         file.url = this.storageService.getRawUrl(sha);
 
         const blob = await this.blobManager.createBlob(file);

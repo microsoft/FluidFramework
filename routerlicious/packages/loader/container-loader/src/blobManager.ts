@@ -7,10 +7,10 @@ export class BlobManager implements IBlobManager {
         this.blobs = new Map<string, IGenericBlob>();
     }
 
-    public async loadBlobMetadata(hashes: IGenericBlob[]) {
+    public async loadBlobMetadata(blobs: IGenericBlob[]) {
         try {
-            for (const hash of hashes) {
-                this.blobs.set(hash.sha, hash);
+            for (const blob of blobs) {
+                this.blobs.set(blob.blobId, blob);
             }
         } catch (error) {
             console.log("Error in Blob Snapshot Load");
@@ -25,14 +25,14 @@ export class BlobManager implements IBlobManager {
         });
     }
 
-    public async getBlob(sha: string): Promise<IGenericBlob | undefined> {
+    public async getBlob(blobId: string): Promise<IGenericBlob | undefined> {
 
-        if (!this.blobs.has(sha)) {
+        if (!this.blobs.has(blobId)) {
             // tslint:disable-next-line:no-floating-promises
             Promise.reject("Blob does not exist");
         }
-        const blob = this.blobs.get(sha);
-        const blobContent = await this.storage.read(sha);
+        const blob = this.blobs.get(blobId);
+        const blobContent = await this.storage.read(blobId);
         if (blobContent === undefined) {
             return undefined;
         }
@@ -41,7 +41,7 @@ export class BlobManager implements IBlobManager {
     }
 
     public async addBlob(blob: IGenericBlob): Promise<void> {
-        this.blobs.set(blob.sha, blob);
+        this.blobs.set(blob.blobId, blob);
     }
 
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
@@ -50,13 +50,13 @@ export class BlobManager implements IBlobManager {
         /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
         const blobMetaData = {
+            blobId: blob.blobId,
             fileName: blob.fileName,
-            sha: blob.sha,
             size: blob.size,
             type: blob.type,
             url: blob.url,
         } as IGenericBlob;
-        this.blobs.set(blob.sha, blobMetaData);
+        this.blobs.set(blob.blobId, blobMetaData);
         return blobMetaData;
     }
 
@@ -65,8 +65,8 @@ export class BlobManager implements IBlobManager {
         return null;
     }
 
-    public async removeBlob(sha: string): Promise<void> {
+    public async removeBlob(blobId: string): Promise<void> {
         // TODO: SABRONER implement removal
-        this.blobs.delete(sha);
+        this.blobs.delete(blobId);
     }
 }
