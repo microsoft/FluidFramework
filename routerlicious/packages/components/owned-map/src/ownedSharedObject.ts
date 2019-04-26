@@ -20,7 +20,7 @@ export abstract class OwnedSharedObject extends SharedObject {
 
     // This is a convenience method that should probably go
     public isOwner(clientId: string): boolean {
-        if (clientId === "disconnected") {
+        if (clientId === undefined) {
             return false;
         }
         const quorum = this.runtime.getQuorum();
@@ -52,13 +52,13 @@ export abstract class OwnedSharedObject extends SharedObject {
         this.owner = (await storage.read(ownerPath));
     }
 
-    protected setOwner(): string {
+    protected setOwner(): string | undefined {
         if (this.owner !== undefined) {
             return this.owner;
-        } else if (this.runtime.clientId === "disconnected") {
+        } else if (this.runtime.clientId === undefined) {
             // tslint:disable-next-line:no-console
             debug("Attempted to set owner, but no clientId");
-            return "disconnected";
+            return undefined;
         }
 
         const clientId = this.runtime.clientId;

@@ -890,9 +890,9 @@ export class Client {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
-    startCollaboration(longClientId: string,  minSeq = 0, branchId = 0) {
-        this.longClientId = longClientId;
-        this.addLongClientId(longClientId, branchId);
+    startCollaboration(longClientId: string | undefined,  minSeq = 0, branchId = 0) {
+        this.longClientId = longClientId ? longClientId : "original";
+        this.addLongClientId(this.longClientId , branchId);
         this.mergeTree.startCollaboration(this.getShortClientId(this.longClientId), minSeq, branchId);
     }
     updateCollaboration(longClientId: string) {

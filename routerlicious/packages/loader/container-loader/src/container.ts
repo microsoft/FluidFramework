@@ -86,8 +86,7 @@ export class Container extends EventEmitter implements IContainer {
     private storageService: IDocumentStorageService | undefined | null;
 
     // tslint:disable:variable-name
-    private _clientId: string | undefined = "disconnected";
-    private _clientType: string = "disconnected";
+    private _clientId: string | undefined;
     private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
     private _existing: boolean | undefined;
     private _id: string;
@@ -120,12 +119,16 @@ export class Container extends EventEmitter implements IContainer {
         return this.connectionState === ConnectionState.Connected;
     }
 
+    /**
+     * The server provided id of the client.
+     * Set once this.connected is true, otherwise undefined
+     */
     public get clientId(): string | undefined {
         return this._clientId;
     }
 
     public get clientType(): string {
-        return this._clientType;
+        return this._deltaManager!.clientType;
     }
 
     public get chaincodePackage(): string | null {
@@ -714,12 +717,15 @@ export class Container extends EventEmitter implements IContainer {
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
+        // This is especially important in the reconnect case. It's possible there could be outstanding
+        // ops sent by this client, so we should keep the old client id until we see our own client's
+        // join message. after we see the join message for out new connection with our new client id,
+        // we know there can no longer be outstanding ops that we sent with the previous client id.
         if (value === ConnectionState.Connecting) {
             this.pendingClientId = context;
         } else if (value === ConnectionState.Connected) {
             this._deltaManager!.disableReadonlyMode();
             this._clientId = this.pendingClientId;
-            this._clientType = this._deltaManager!.clientType;
         }
 
         if (!this.loaded) {
