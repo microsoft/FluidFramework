@@ -24,19 +24,18 @@ async function getExternalComponent(
     request: Request,
     hostUrl: string,
     requestUrl: string): Promise<IResolvedUrl> {
-    const postUrl = `${hostUrl}/api/v1/load`;
-    winston.info(`Posting to:${postUrl}`);
-    winston.info(`URL to resolve:${requestUrl}`);
+    winston.info(`Requesting ${requestUrl} to ${hostUrl}`);
     const result = await Axios.post<IResolvedUrl>(
-        postUrl,
+        hostUrl,
         {
             url: requestUrl,
         },
         {
-            headers: request.headers,
+            headers: {
+                // We probably want to sign this bearer token with endpoint specific secret key
+                Authorization: request.header("Authorization"),
+            },
         });
-    winston.info(`Resolved URL`);
-    winston.info(`${JSON.stringify(result.data)}`);
     return result.data;
 }
 
@@ -109,7 +108,7 @@ export function create(
         const resultP = (alfred.host === url.host || gateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants)
             : (url.host === "www.eu2.prague.office-int.com")
-            ? getExternalComponent(request, `${url.protocol}//${url.host}`, request.body.url as string)
+            ? getExternalComponent(request, `${url.protocol}//${url.host}/api/v1/load`, request.body.url as string)
             : getWebComponent(url);
 
         resultP.then(
