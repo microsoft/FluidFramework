@@ -6,16 +6,38 @@ import * as safeStringify from "json-stringify-safe";
 import { Provider } from "nconf";
 import passport = require("passport");
 import { parse, UrlWithStringQuery } from "url";
+import * as winston from "winston";
 import { getToken, IAlfredUser } from "../../utils";
 
 // Although probably the case we want a default behavior here. Maybe just the URL?
-async function getExternalComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
+async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     const result = await Axios.get(url.href);
 
     return {
         data: result.data,
         type: "web",
     } as IWebResolvedUrl;
+}
+
+// Resolves from other Prague endpoints.
+async function getExternalComponent(
+    request: Request,
+    hostUrl: string,
+    requestUrl: string): Promise<IResolvedUrl> {
+    const postUrl = `${hostUrl}/api/v1/load`;
+    winston.info(`Posting to:${postUrl}`);
+    winston.info(`URL to resolve:${requestUrl}`);
+    const result = await Axios.post<IResolvedUrl>(
+        postUrl,
+        {
+            url: requestUrl,
+        },
+        {
+            headers: request.headers,
+        });
+    winston.info(`Resolved URL`);
+    winston.info(`${JSON.stringify(result.data)}`);
+    return result.data;
 }
 
 async function getInternalComponent(
@@ -30,7 +52,7 @@ async function getInternalComponent(
     const match = url.path.match(regex);
 
     if (!match) {
-        return getExternalComponent(url);
+        return getWebComponent(url);
     }
 
     const tenantId = match[1];
@@ -82,9 +104,13 @@ export function create(
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         const url = parse(request.body.url);
 
-        const resultP = alfred.host === url.host || gateway.host === url.host
+        // Testing only against eu2
+        // Todo: Make this configurable.
+        const resultP = (alfred.host === url.host || gateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants)
-            : getExternalComponent(url);
+            : (url.host === "www.eu2.prague.office-int.com")
+            ? getExternalComponent(request, `${url.protocol}//${url.host}`, request.body.url as string)
+            : getWebComponent(url);
 
         resultP.then(
             (result) => response.status(200).json(result),
