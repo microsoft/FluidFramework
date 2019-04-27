@@ -91,6 +91,11 @@ async function getInternalComponent(
     } as IPragueResolvedUrl;
 }
 
+// Checks whether the url belongs to other Prague endpoints.
+function isExternalComponent(url: string, endpoints: string[]) {
+    return endpoints.indexOf(url) !== -1;
+}
+
 export function create(
     config: Provider,
     appTenants: core.IAlfredTenant[],
@@ -99,16 +104,16 @@ export function create(
 
     const gateway = parse(config.get("gateway:url"));
     const alfred = parse(config.get("worker:serverUrl"));
+    const federatedEndpoints = config.get("gateway:federation:endpoints") as string[];
 
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         const url = parse(request.body.url);
+        const urlPrefix = `${url.protocol}//${url.host}`;
 
-        // Testing only against eu2
-        // Todo: Make this configurable.
         const resultP = (alfred.host === url.host || gateway.host === url.host)
             ? getInternalComponent(request, config, url, appTenants)
-            : (url.host === "www.eu2.prague.office-int.com")
-            ? getExternalComponent(request, `${url.protocol}//${url.host}/api/v1/load`, request.body.url as string)
+            : isExternalComponent(urlPrefix, federatedEndpoints)
+            ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string)
             : getWebComponent(url);
 
         resultP.then(

@@ -44,7 +44,15 @@ data:
                     "id": "local",
                     "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
                 }
-            ]
+            ],
+            "federation": {
+                "endpoints": [
+                    "https://www.wu2-ppe.prague.office-int.com",
+                    "https://www.wu2.prague.office-int.com",
+                    "https://www.eu2.prague.office-int.com",
+                    "https://www.we.prague.office-int.com"
+                ]
+            }
         },
         "login": {
             "enabled": true,
