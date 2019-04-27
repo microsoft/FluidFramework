@@ -11,7 +11,7 @@ import * as winston from "winston";
 import * as app from "./app";
 import { IAlfred } from "./interfaces";
 
-export class AlfredRunner implements utils.IRunner {
+export class GatewayRunner implements utils.IRunner {
     private server: IWebServer;
     private runningDeferred: Deferred<void>;
 
@@ -28,14 +28,14 @@ export class AlfredRunner implements utils.IRunner {
         this.runningDeferred = new Deferred<void>();
 
         // Create the HTTP server and attach alfred to it
-        const alfred = app.create(
+        const gateway = app.create(
             this.config,
             this.alfred,
             this.appTenants,
             this.cache);
-        alfred.set("port", this.port);
+        gateway.set("port", this.port);
 
-        this.server = this.serverFactory.create(alfred);
+        this.server = this.serverFactory.create(gateway);
         const httpServer = this.server.httpServer;
 
         // Listen on provided port, on all network interfaces.

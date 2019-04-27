@@ -1,14 +1,16 @@
 import { IPragueResolvedUrl } from "@prague/container-definitions";
-import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
+import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import * as path from "path";
 import { parse } from "url";
-import * as uuid from "uuid/v4";
+
+import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
+import { gatewayResolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getToken, IAlfredUser } from "../utils";
+import { getConfig, getToken } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
@@ -167,19 +169,12 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId?/:id", ensureLoggedIn(), async (request, response, next) => {
+    router.get("/:tenantId?/:id", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         const start = Date.now();
 
         const disableCache = "disableCache" in request.query;
 
-        let celaUser: IAlfredUser = null;
-        if ("cela" in request.query) {
-            const celaName = chooseCelaName();
-            celaUser = { id: uuid(), name: celaName, displayName: celaName };
-        }
-
         const tenantId = request.params.tenantId || appTenants[0].id;
-        const token = getToken(tenantId, request.params.id, appTenants, celaUser);
 
         const from = +request.query.from;
         const to = +request.query.to;
@@ -195,17 +190,14 @@ export function create(
             tenantId,
             config.get("error:track"));
 
-        const fullTreeP = alfred.getFullTree(tenantId, request.params.id);
-
-        // Track timing
+        const [resolvedP, fullTreeP] =
+            gatewayResolveUrl(config, alfred, appTenants, tenantId, request.params.id, "sharedText", request);
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
-        const timingsP = Promise.all([treeTimeP]);
 
-        Promise.all([fullTreeP, timingsP]).then(([fullTree, timings]) => {
+        Promise.all([resolvedP, fullTreeP, treeTimeP]).then(([resolved, fullTree, treeTime]) => {
             const parsedTemplate = path.parse(request.query.template ? request.query.template : defaultTemplate);
             const template =
                 parsedTemplate.base !== "empty" ? `/public/literature/${parsedTemplate.base}` : undefined;
-
             const parsedSpellchecking =
                 path.parse(request.query.spellchecking ? request.query.spellchecking : defaultSpellChecking);
             const spellchecker = parsedSpellchecking.base === "disabled" ? `disabled` : defaultSpellChecking;
@@ -215,38 +207,11 @@ export function create(
                 translationToLanguage: "languageTo" in request.query ? request.query.languageTo : undefined,
             };
 
-            timings.push(Date.now() - start);
-
-            const pragueUrl = "prague://" +
-                `${parse(config.get("worker:serverUrl")).host}/` +
-                `${encodeURIComponent(tenantId)}/` +
-                `${encodeURIComponent(request.params.id)}`;
-
-            const deltaStorageUrl =
-                config.get("worker:serverUrl") +
-                "/deltas" +
-                `/${encodeURIComponent(tenantId)}/${encodeURIComponent(request.params.id)}`;
-
-            const storageUrl =
-                config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
-                "/repos" +
-                `/${encodeURIComponent(tenantId)}`;
-
-            const resolved: IPragueResolvedUrl = {
-                endpoints: {
-                    deltaStorageUrl,
-                    ordererUrl: config.get("worker:serverUrl"),
-                    storageUrl,
-                },
-                tokens: { jwt: token },
-                type: "prague",
-                url: pragueUrl,
-            };
-
+            const timings = [treeTime, Date.now() - start];
             response.render(
                 "sharedText",
                 {
-                    cache: JSON.stringify(fullTree.cache),
+                    cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
                     config: workerConfig,
                     disableCache,
                     from,
@@ -260,8 +225,10 @@ export function create(
                     title: request.params.id,
                     to,
                 });
-            }, (error) => {
-                response.status(400).json(safeStringify(error));
+        }, (error) => {
+            response.status(400).json(safeStringify(error));
+        }).catch((error) => {
+            response.status(500).json(error);
         });
     });
 

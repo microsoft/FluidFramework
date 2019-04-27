@@ -6,13 +6,12 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { WebPlatform } from "@prague/loader-web";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import {
-    DefaultErrorTracking,
-    RouterliciousDocumentServiceFactory,
-} from "@prague/routerlicious-socket-storage";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
+import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 
 export class WebLoader implements ICodeLoader {
     private entryCache = new Map<string, Promise<any>>();
@@ -161,8 +160,13 @@ async function start(
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
-    const documentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-
+    const r11sDocumentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
+    const odspDocumentServiceFactory = new OdspDocumentServiceFactory();
+    const documentServiceFactory = new MultiDocumentServiceFactory(
+        {
+            "prague-odsp:": odspDocumentServiceFactory,
+            "prague:": r11sDocumentServiceFactory,
+        });
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
     codeLoader.load(code).catch((error) => console.error("script load error", error));

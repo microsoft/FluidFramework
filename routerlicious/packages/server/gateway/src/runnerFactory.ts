@@ -4,7 +4,7 @@ import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import { Alfred } from "./alfred";
-import { AlfredRunner } from "./runner";
+import { GatewayRunner } from "./runner";
 
 export class GatewayResources implements utils.IResources {
     public webServerFactory: core.IWebServerFactory;
@@ -57,7 +57,7 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
 
 export class GatewayRunnerFactory implements utils.IRunnerFactory<GatewayResources> {
     public async create(resources: GatewayResources): Promise<utils.IRunner> {
-        return new AlfredRunner(
+        return new GatewayRunner(
             resources.webServerFactory,
             resources.config,
             resources.port,

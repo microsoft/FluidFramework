@@ -27,6 +27,30 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
     ));
 
     router.get(
+        "/login_spo",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "profile",
+                "email",
+                "offline_access",
+                "https://microsoft-my.sharepoint.com/AllSites.Write",
+            ],
+        },
+    ));
+
+    router.get(
+        "/login_spo-df",
+        passport.authenticate("openidconnect", {
+            scope: [
+                "profile",
+                "email",
+                "offline_access",
+                "https://microsoft-my.sharepoint-df.com/AllSites.Write",
+            ],
+        },
+    ));
+
+    router.get(
         "/auth/callback",
         passport.authenticate("openidconnect", {
             failureRedirect: "/login",

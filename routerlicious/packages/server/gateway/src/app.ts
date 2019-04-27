@@ -21,8 +21,9 @@ import * as favicon from "serve-favicon";
 const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
+import { saveSpoTokens } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
-import * as alfredRoutes from "./routes";
+import * as gatewayRoutes from "./routes";
 
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
@@ -112,6 +113,7 @@ export function create(
                 tokenURL: "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
             },
             (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
+                saveSpoTokens(req, params, accessToken, refreshToken);
                 return done(null, jwtClaims);
             },
         ),
@@ -208,7 +210,7 @@ export function create(
     }
 
     // bind routes
-    const routes = alfredRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
+    const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

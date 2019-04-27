@@ -1,4 +1,3 @@
-import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -7,8 +6,10 @@ import * as _ from "lodash";
 import { Provider } from "nconf";
 import { parse } from "url";
 import * as winston from "winston";
+import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
+import { gatewayResolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getScriptsForCode, getToken, IAlfredUser } from "../utils";
+import { getConfig, getScriptsForCode } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -23,7 +24,7 @@ export function create(
     /**
      * Loading of a specific shared text.
      */
-    router.get("/:tenantId/*", ensureLoggedIn(), async (request, response, next) => {
+    router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         const start = Date.now();
 
         const jwtToken = jwt.sign(
@@ -32,71 +33,41 @@ export function create(
             },
             jwtKey);
 
-        const rawPath =  request.params[0] as string;
+        const rawPath = request.params[0] as string;
         const slash = rawPath.indexOf("/");
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
         const tenantId = request.params.tenantId;
+
+        // SPO will always depends on the passed in chaincode since we don't get the fullTree on the server.
         const chaincode = request.query.chaincode;
-
-        const user: IAlfredUser = (request.user) ? {
-            displayName: request.user.name,
-            id: request.user.oid,
-            name: request.user.name,
-        } : undefined;
-
-        const token = getToken(tenantId, documentId, appTenants, user);
+        const search = parse(request.url).search;
+        const spoSuffix = chaincode.replace(/[^A-Za-z0-9-]/g, "_");
+        const [resolvedP, fullTreeP] =
+            gatewayResolveUrl(config, alfred, appTenants, tenantId, documentId,
+                spoSuffix, request);
 
         const workerConfig = getConfig(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
 
-        const fullTreeP = alfred.getFullTree(tenantId, documentId);
         const pkgP = fullTreeP.then((fullTree) => {
             winston.info(`getScriptsForCode ${tenantId}/${documentId} +${Date.now() - start}`);
             return getScriptsForCode(
                 config.get("worker:npm"),
                 config.get("worker:clusterNpm"),
-                fullTree.code ? fullTree.code : chaincode);
+                fullTree && fullTree.code ? fullTree.code : chaincode);
         });
 
         // Track timing
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
         const pkgTimeP = pkgP.then(() => Date.now() - start);
         const timingsP = Promise.all([treeTimeP, pkgTimeP]);
-        const search = parse(request.url).search;
 
-        const pragueUrl = "prague://" +
-            `${parse(config.get("worker:serverUrl")).host}/` +
-            `${encodeURIComponent(tenantId)}/` +
-            `${encodeURIComponent(documentId)}` +
-            path +
-            (search ? search : "");
-
-        const deltaStorageUrl =
-            config.get("worker:serverUrl") +
-            "/deltas" +
-            `/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
-
-        const storageUrl =
-            config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
-            "/repos" +
-            `/${encodeURIComponent(tenantId)}`;
-
-        const resolved: IPragueResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl,
-                ordererUrl: config.get("worker:serverUrl"),
-                storageUrl,
-            },
-            tokens: { jwt: token },
-            type: "prague",
-            url: pragueUrl,
-        };
-
-        Promise.all([fullTreeP, pkgP, timingsP]).then(([fullTree, pkg, timings]) => {
+        Promise.all([resolvedP, fullTreeP, pkgP, timingsP]).then(([resolved, fullTree, pkg, timings]) => {
+            resolved.url += path + (search ? search : "");
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
             timings.push(Date.now() - start);
@@ -104,8 +75,8 @@ export function create(
             response.render(
                 "loader",
                 {
-                    cache: JSON.stringify(fullTree.cache),
-                    chaincode: fullTree.code ? fullTree.code : chaincode,
+                    cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
+                    chaincode: fullTree && fullTree.code ? fullTree.code : chaincode,
                     config: workerConfig,
                     jwt: jwtToken,
                     partials: defaultPartials,
@@ -113,10 +84,11 @@ export function create(
                     resolved: JSON.stringify(resolved),
                     timings: JSON.stringify(timings),
                     title: documentId,
-                    token,
                 });
-            }, (error) => {
-                response.status(400).end(safeStringify(error));
+        }, (error) => {
+            response.status(400).end(safeStringify(error));
+        }).catch((error) => {
+            response.status(500).end(safeStringify(error));
         });
     });
 

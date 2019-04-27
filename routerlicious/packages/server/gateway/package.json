@@ -57,6 +57,8 @@
     "@prague/loader-web": "^0.3.0",
     "@prague/map": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
+    "@prague/odsp-socket-storage": "^0.3.0",
+    "@prague/odsp-utils": "^0.3.0",
     "@prague/replay-socket-storage": "^0.3.0",
     "@prague/routerlicious-host": "^0.3.0",
     "@prague/routerlicious-socket-storage": "^0.3.0",

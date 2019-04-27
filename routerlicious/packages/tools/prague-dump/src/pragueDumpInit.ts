@@ -1,10 +1,15 @@
 // tslint:disable:object-literal-sort-keys
-import { IDocumentService, ITokenProvider } from "@prague/container-definitions";
+import { IDocumentService } from "@prague/container-definitions";
 import * as odsp from "@prague/odsp-socket-storage";
+import {
+    getODSPPragueResolvedUrl,
+    IClientConfig,
+    IODSPTokens,
+    postTokenRequest,
+} from "@prague/odsp-utils";
 import * as r11s from "@prague/routerlicious-socket-storage";
 
 import * as http from "http";
-import * as request from "request";
 import { URL } from "url";
 
 import { paramJWT, paramURL } from "./pragueDumpArgs";
@@ -14,17 +19,19 @@ export let paramDocumentService: IDocumentService;
 
 export let connectionInfo: any;
 
-const clientId = "3d642166-9884-4463-8248-78961b8c1300";
-
 // TODO: put this somewhere else
-const clientSecret = "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=";
+const clientConfig: IClientConfig = {
+    clientId: "3d642166-9884-4463-8248-78961b8c1300",
+    clientSecret: "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
+};
+
 const redirectUri = "http://localhost:7000/auth/callback";
 
 async function getAuthorizationCode(server: string): Promise<string> {
     console.log("Please open browser and navigate to this URL:");
     console.log(`  https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
-        + `client_id=${clientId}`
-        + `&scope=https://${server}/MyFiles.Write`
+        + `client_id=${clientConfig.clientId}`
+        + `&scope=https://${server}/AllSites.Write`
         + `&response_type=code`
         + `&redirect_uri=${redirectUri}`);
     return new Promise((resolve, reject) => {
@@ -48,172 +55,100 @@ async function getAuthorizationCode(server: string): Promise<string> {
     });
 }
 
-async function loadAccessToken(server: string): Promise<string | undefined> {
+async function loadODSPTokens(server: string): Promise<IODSPTokens | undefined> {
     const rc = await loadRC();
     const tokens = rc.tokens;
     if (!tokens) {
         return undefined;
     }
-    const serverTokens = tokens[server];
-    if (!serverTokens) {
+    const odspTokens = tokens[server];
+    if (!odspTokens) {
         return undefined;
     }
-    return serverTokens.accessToken;
+    return odspTokens;
 }
 
-async function loadRefreshToken(server: string): Promise<string | undefined> {
-    const rc = await loadRC();
-    const tokens = rc.tokens;
-    if (!tokens) {
-        return undefined;
-    }
-    const serverTokens = tokens[server];
-    if (!serverTokens) {
-        return undefined;
-    }
-    return serverTokens.refreshToken;
-}
-
-async function saveAccessToken(server: string, accessToken: string, refreshToken: string) {
+async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
     const rc = await loadRC();
     let tokens = rc.tokens;
     if (!tokens) {
         tokens = {};
         rc.tokens = tokens;
     }
-    tokens[server] = { accessToken, refreshToken };
+    tokens[server] = odspTokens;
     return saveRC(rc);
 }
 
-function getRefreshAccessTokenBody(server: string, lastRefreshToken: string) {
-    return `scope=offline_access https://${server}/MyFiles.Write`
-        + `&client_id=${clientId}`
-        + `&client_secret=${clientSecret}`
-        + `&grant_type=refresh_token`
-        + `&refresh_token=${lastRefreshToken}`;
-}
-
 async function getRequestAccessTokenBody(server: string) {
-    return `scope=offline_access https://${server}/MyFiles.Write`
-        + `&client_id=${clientId}`
-        + `&client_secret=${clientSecret}`
+    return `scope=offline_access https://${server}/AllSites.Write`
+        + `&client_id=${clientConfig.clientId}`
+        + `&client_secret=${clientConfig.clientSecret}`
         + `&grant_type=authorization_code`
         + `&code=${await getAuthorizationCode(server)}`
         + `&redirect_uri=${redirectUri}`;
 }
 
-async function postTokenRequest(postBody: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const tokenUrl = "https://login.microsoftonline.com/organizations/oauth2/v2.0/token";
-
-        request.post({ url: tokenUrl, body: postBody },
-            (error, response, body) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                const parsed = JSON.parse(body);
-                resolve(parsed);
-            });
-    });
-}
-
-async function processTokenBody(server: string, parsed: any) {
-    const accessToken = parsed.access_token;
-    const refreshToken = parsed.refresh_token;
-    if (accessToken === undefined || refreshToken === undefined) {
-        return undefined;
-    }
-    await saveAccessToken(server, accessToken, refreshToken);
-    return accessToken;
-}
-async function refreshAccessToken(server: string, lastRefreshToken: string): Promise<string | undefined> {
-    console.log("Refreshing access token");
-    const parsed = await postTokenRequest(getRefreshAccessTokenBody(server, lastRefreshToken));
-    return processTokenBody(server, parsed);
-}
-
-async function requestAccessToken(server: string): Promise<string> {
-    const lastRefreshToken = await loadRefreshToken(server);
-    let parsed;
-    if (lastRefreshToken !== undefined) {
-        const token = await refreshAccessToken(server, lastRefreshToken);
-        if (token !== undefined) {
-            return token;
-        }
-    }
+async function acquireTokens(server: string): Promise<IODSPTokens> {
     console.log("Acquiring tokens");
-    parsed = await postTokenRequest(await getRequestAccessTokenBody(server));
-    const accessToken = await processTokenBody(server, parsed);
-    if (accessToken === undefined) {
-        return Promise.reject(`Unable to get token\n${JSON.stringify(parsed, undefined, 2)} `);
-    }
-    return accessToken;
+    const tokens = await postTokenRequest(await getRequestAccessTokenBody(server));
+    await saveAccessToken(server, tokens);
+    return tokens;
 }
 
-async function getAccessToken(server: string): Promise<string> {
-    const accessToken = await loadAccessToken(server);
-    if (accessToken === undefined) {
-        return requestAccessToken(server);
+async function getODSPTokens(server: string): Promise<IODSPTokens> {
+    const odspTokens = await loadODSPTokens(server);
+    if (odspTokens === undefined || odspTokens.refreshToken === undefined) {
+        return acquireTokens(server);
     }
-    return accessToken;
+    return odspTokens;
 }
 
-async function postAsync(uri: string, token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        request.post(uri, { auth: { bearer: token } }, (error, response, body) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(JSON.parse(body));
-        });
-    });
-}
 async function joinODSPSession(
     server: string,
-    prefix: string,
     documentDrive: string,
-    documentItem: string): Promise<any> {
+    documentItem: string) {
 
-    // TODO: Detect token expire and refresh
-    const joinSessionUri =
-        `https://${server}${prefix}/_api/v2.1/drives/` +
-        `${documentDrive}/items/${documentItem}/opStream/joinSession`;
-
-    const parsedBody = await postAsync(joinSessionUri, await getAccessToken(server));
-
-    if (parsedBody.error && parsedBody.error.innerError && parsedBody.error.innerError.code === "expiredToken") {
-        return postAsync(joinSessionUri, await requestAccessToken(server));
+    const odspTokens = await getODSPTokens(server);
+    try {
+        const oldAccessToken = odspTokens.accessToken;
+        const resolvedUrl = await getODSPPragueResolvedUrl(server,
+            `drives/${documentDrive}/items/${documentItem}`, odspTokens, clientConfig);
+        if (oldAccessToken !== odspTokens.accessToken) {
+            await saveAccessToken(server, odspTokens);
+        }
+        return resolvedUrl;
+    } catch (e) {
+        const parsedBody = JSON.parse(e.data);
+        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
+        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
     }
-    return parsedBody;
 }
 
-async function initializeODSPCore(server: string, prefix: string, drive: string, item: string) {
-
+async function initializeODSPCore(server: string, drive: string, item: string) {
     connectionInfo = {
         server,
-        prefix,
         drive,
         item,
     };
 
-    console.log(`Connecting to ODSP:\n  prefix=${prefix}\n  drive=${drive}\n  item=${item}`);
+    console.log(`Connecting to ODSP:\n  drive=${drive}\n  item=${item}`);
 
-    const parsedBody = await joinODSPSession(server, prefix, drive, item);
-    if (parsedBody.error) {
-        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
-        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
-    }
-    const tokenProvider = new odsp.TokenProvider(parsedBody.storageToken, parsedBody.socketToken);
+    const resolvedUrl = await joinODSPSession(server, drive, item);
+
+    const tokenProvider = new odsp.TokenProvider(resolvedUrl.tokens.storageToken, resolvedUrl.tokens.socketToken);
+
+    const url = new URL(resolvedUrl.url);
+    const split = url.pathname.split("/");
+    const tenantId = split[1];
+    const documentId = split[2];
     paramDocumentService =
         new odsp.DocumentService(
-            parsedBody.snapshotStorageUrl,
-            parsedBody.deltaStorageUrl,
-            parsedBody.deltaStreamSocketUrl,
+            resolvedUrl.endpoints.storageUrl,
+            resolvedUrl.endpoints.deltaStorageUrl,
+            resolvedUrl.endpoints.ordererUrl,
             tokenProvider,
-            parsedBody.runtimeTenantId,
-            parsedBody.id);
+            tenantId,
+            documentId);
 }
 
 async function initializeOfficeODSP(searchParams: URLSearchParams) {
@@ -231,8 +166,7 @@ async function initializeOfficeODSP(searchParams: URLSearchParams) {
     }
     const url = new URL(site);
     const server = url.host;
-    const prefix = url.pathname;
-    return initializeODSPCore(server, prefix, drive, item);
+    return initializeODSPCore(server, drive, item);
 }
 
 async function initializeODSP(
@@ -245,11 +179,10 @@ async function initializeODSP(
     if (odspMatch === null) {
         return Promise.reject("Unable to parse ODSP URL path");
     }
-    const prefix = odspMatch[1];
     const drive = odspMatch[2];
     const item = odspMatch[3];
 
-    return initializeODSPCore(server, prefix, drive, item);
+    return initializeODSPCore(server, drive, item);
 }
 
 async function initializeR11s(server: string, pathname: string) {

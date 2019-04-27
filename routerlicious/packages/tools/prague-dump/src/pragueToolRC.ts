@@ -1,15 +1,11 @@
+import { IODSPTokens } from "@prague/odsp-utils";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as util from "util";
 
-interface ITokens {
-    accessToken: string;
-    refreshToken: string;
-}
-
 interface IResources {
-    tokens?: { [key: string]: ITokens };
+    tokens?: { [key: string]: IODSPTokens };
 }
 
 function getRCFileName() {

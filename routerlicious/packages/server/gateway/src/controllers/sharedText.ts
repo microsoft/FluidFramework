@@ -2,14 +2,17 @@
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { Browser,
-        IClient,
-        IDocumentServiceFactory,
-        IPragueResolvedUrl,
-        IResolvedUrl,
-        ISequencedClient } from "@prague/container-definitions";
+import {
+    Browser,
+    IClient,
+    IDocumentServiceFactory,
+    IPragueResolvedUrl,
+    IResolvedUrl,
+    ISequencedClient,
+} from "@prague/container-definitions";
 import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
@@ -20,6 +23,7 @@ import { IStream } from "@prague/stream";
 const performanceNow = require("performance-now");
 import * as request from "request";
 import * as url from "url";
+import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 import { BrowserErrorTrackingService } from "./errorTracking";
 
 // first script loaded
@@ -112,13 +116,19 @@ async function loadDocument(
         ? new BrowserErrorTrackingService()
         : new DefaultErrorTracking();
     const replayMode = (from >= 0) && (to >= 0);
-    let documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
+    const r11sDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
         false,
         errorService,
         disableCache,
         config.historianApi,
         seedData,
         config.credentials);
+    const odspDocumentServiceFactory = new OdspDocumentServiceFactory();
+    let documentServiceFactory: IDocumentServiceFactory = new MultiDocumentServiceFactory(
+        {
+            "prague-odsp:": odspDocumentServiceFactory,
+            "prague:": r11sDocumentServiceFactory,
+        });
     if (replayMode) {
         documentServiceFactory =
             new ReplayDocumentServiceFactory(
@@ -232,8 +242,8 @@ async function loadDocument(
         sharedString.id,
         options[translationFromLanguage],
         options[translationToLanguage]).catch((error) => {
-        console.error("Problem adding translation", error);
-    });
+            console.error("Problem adding translation", error);
+        });
 
     getInsights(collabDoc.getRoot(), sharedString.id).then(
         (insightsMap) => {

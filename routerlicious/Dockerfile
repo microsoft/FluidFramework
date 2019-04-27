@@ -72,6 +72,7 @@ COPY packages/server/services/package*.json packages/server/services/
 COPY packages/server/services-client/package*.json packages/server/services-client/
 COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
+COPY packages/shared/odsp-utils/package*.json packages/shared/odsp-utils/
 COPY packages/shared/test-utils/package*.json packages/shared/test-utils/
 COPY packages/shared/tools-core/package*.json packages/shared/tools-core/
 COPY packages/tools/prague-dump/package*.json packages/tools/prague-dump/

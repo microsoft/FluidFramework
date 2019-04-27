@@ -1,12 +1,10 @@
 import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./token";
 
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(
-        private readonly tenantId: string,
-        private readonly documentId: string,
-        private readonly bypassSnapshot = false) {}
+    constructor(private readonly bypassSnapshot = false) { }
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
@@ -20,14 +18,24 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
         const invalidSnapshotUrl = !storageUrl && !this.bypassSnapshot;
         if (invalidSnapshotUrl || !deltaStorageUrl || !ordererUrl) {
-            // tslint:disable-next-line:max-line-length
-            return Promise.reject(`All endpoints urls must be provided. [storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}][ordererUrl:${ordererUrl}]`);
+            return Promise.reject(`All endpoints urls must be provided.`
+                + `[storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}][ordererUrl:${ordererUrl}]`);
         }
 
         const storageToken = pragueResolvedUrl.tokens.storageToken;
         const socketToken = pragueResolvedUrl.tokens.socketToken;
         if (!storageToken || !socketToken) {
             return Promise.reject(`All tokens must be provided. [storageToken:${storageToken}][socketToken:${socketToken}]`);
+        }
+
+        const parsedUrl = parse(pragueResolvedUrl.url);
+        if (!parsedUrl.pathname) {
+            return Promise.reject(`Couldn't parse resolved url. [url:${pragueResolvedUrl.url}]`);
+        }
+
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
+        if (!documentId || !tenantId) {
+            return Promise.reject(`Couldn't parse documentId and/or tenantId. [url:${pragueResolvedUrl.url}]`);
         }
 
         const tokenProvider = new TokenProvider(storageToken, socketToken);
@@ -37,8 +45,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
                 deltaStorageUrl,
                 ordererUrl,
                 tokenProvider,
-                this.tenantId,
-                this.documentId,
+                tenantId,
+                documentId,
                 this.bypassSnapshot));
     }
 }

@@ -22,7 +22,6 @@
         var cache = {{{ cache }}};
         var timings = "{{ timings }}";
 
-        var token = "{{ token }}";
         var chaincode = "{{ chaincode }}";
 
         var url = "{{ url }}";
