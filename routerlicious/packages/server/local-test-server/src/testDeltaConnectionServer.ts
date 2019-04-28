@@ -1,5 +1,6 @@
 import { RoundTrip } from "@prague/client-api";
 import {
+    IClient,
     IContentMessage,
     IDocumentMessage,
     ISignalMessage,
@@ -156,21 +157,39 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            // And then connect to the orderer
-            const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
-            const connection = await orderer.connect(socket, moniker.choose(), message.client);
-            connectionsMap.set(connection.clientId, connection);
-            roomMap.set(connection.clientId, `${claims.tenantId}/${claims.documentId}`);
+            const clientId = moniker.choose();
 
-            // And return the connection information to the client
-            const connectedMessage: socketStorage.IConnected = {
-                clientId: connection.clientId,
-                existing: connection.existing,
-                maxMessageSize: connection.maxMessageSize,
-                parentBranch: connection.parentBranch,
-            };
+            const messageClient: Partial<IClient> = message.client ? message.client : {};
+            messageClient.user = claims.user;
 
-            return connectedMessage;
+            // Join the room to receive signals.
+            roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
+
+            // Readonly clients don't need an orderer.
+            if (messageClient.mode !== "readonly") {
+                const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient);
+                connectionsMap.set(clientId, connection);
+
+                const connectedMessage: socketStorage.IConnected = {
+                    clientId,
+                    existing: connection.existing,
+                    maxMessageSize: connection.maxMessageSize,
+                    parentBranch: connection.parentBranch,
+                };
+
+                return connectedMessage;
+            } else {
+                // Todo (mdaumi): We should split storage stuff from orderer to get the following fields right.
+                const connectedMessage: socketStorage.IConnected = {
+                    clientId,
+                    existing: true, // Readonly client can only open an existing document.
+                    maxMessageSize: 1024, // Readonly client can't send ops.
+                    parentBranch: null, // Does not matter for now.
+                };
+
+                return connectedMessage;
+            }
         }
 
         // todo: remove this handler once clients onboard "connect_document"
