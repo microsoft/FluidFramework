@@ -8,7 +8,8 @@
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
     "build:full": "npm run build:full:compile && npm run tslint",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "clean": "lerna run clean --stream --parallel",
+    "clean": "lerna run clean --stream --parallel && npm run clean:docs",
+    "clean:docs": "rimraf packages/_api-extractor-temp",
     "install:common": "cd common/tools && npm install",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:r11s || true)",
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
@@ -46,6 +47,7 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.13.4",
+    "rimraf": "^2.6.2",
     "typescript": "^3.4.0"
   },
   "dependencies": {}
