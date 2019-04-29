@@ -1,0 +1,11 @@
+*
+!*.json
+!.npmrc
+!.gitignore
+!packages/**
+!server/routerlicious
+!docs/**
+**/node_modules
+**/dist
+**/lib
+**/nyc

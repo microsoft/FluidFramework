@@ -1,7 +1,9 @@
 version: '3'
 services:
     delieh:
-        build: .
+        build:
+            context: ../..
+            dockerfile: server/routerlicious/Dockerfile
         ports:
             - "5867:5858"
         command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/event-hub/deli/index.js
@@ -9,19 +11,23 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - .:/usr/src/server
+            - ../../packages:/usr/src/server/packages
         restart: always
     scriptoriumeh:
-        build: .
+        build:
+            context: ../..
+            dockerfile: server/routerlicious/Dockerfile
         command: node dist/event-hub-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - .:/usr/src/server
+            - ../../packages:/usr/src/server/packages
         restart: always
     broadcastereh:
-        build: .
+        build:
+            context: ../..
+            dockerfile: server/routerlicious/Dockerfile
         ports:
             - "5868:5858"
         command: node --inspect=0.0.0.0:5858 dist/event-hub-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
@@ -29,5 +35,5 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - .:/usr/src/server
+            - ../../packages:/usr/src/server/packages
         restart: always

@@ -72,35 +72,36 @@ COPY packages/server/services/package*.json packages/server/services/
 COPY packages/server/services-client/package*.json packages/server/services-client/
 COPY packages/server/services-core/package*.json packages/server/services-core/
 COPY packages/server/services-utils/package*.json packages/server/services-utils/
-COPY packages/shared/odsp-utils/package*.json packages/shared/odsp-utils/
-COPY packages/shared/test-utils/package*.json packages/shared/test-utils/
-COPY packages/shared/tools-core/package*.json packages/shared/tools-core/
+COPY packages/utils/odsp-utils/package*.json packages/utils/odsp-utils/
+COPY packages/utils/build-common/package*.json packages/utils/build-common/
+COPY packages/server/test-utils/package*.json packages/server/test-utils/
+COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/tools/prague-dump/package*.json packages/tools/prague-dump/
-COPY packages/build-common/package*.json packages/build-common/
     
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
-COPY chaincode/* /tmp/chaincode/
+COPY server/routerlicious/chaincode/* /tmp/chaincode/
 
 # Give write permission to node user.
 RUN chown -R node:node /tmp/chaincode/
 RUN chmod -R 755 /tmp/chaincode/*
+
+# Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
+# as well as the root
+RUN for d in ./*/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
+RUN mkdir nyc && chown node: nyc
+
+# Expose the port the app runs under
+EXPOSE 3000
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 RUN npm install --unsafe-perm
 
-# Expose the port the app runs under
-EXPOSE 3000
-
-# Give node user access to nyc in order to run and store coverage tests. Do this in all packages directory
-# as well as the root
-RUN for d in ./packages/*/*/ ; do (cd "$d" && mkdir nyc && chown node: nyc); done
-RUN mkdir nyc && chown node: nyc
-
 # And now copy over our actual code and build
-COPY . .
+COPY .gitignore .
+COPY packages/ packages/
 RUN npm run build:full
 
 # Partial Build Target for publishing

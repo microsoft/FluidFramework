@@ -216,11 +216,11 @@
     },
     {
       "packageName": "@prague/test-utils",
-      "projectFolder": "packages/shared/test-utils/"
+      "projectFolder": "packages/server/test-utils/"
     },
     {
       "packageName": "@prague/tools-core",
-      "projectFolder": "packages/shared/tools-core/"
+      "projectFolder": "packages/server/tools-core/"
     },
     {
       "packageName": "@prague/prague-dump",
@@ -228,7 +228,11 @@
     },
     {
       "packageName": "@prague/build-common",
-      "projectFolder": "packages/build-common/"
+      "projectFolder": "packages/utils/build-common/"
+    },
+    {
+      "packageName": "@prague/odsp-utils",
+      "projectFolder": "packages/utils/odsp-utils/"
     }
   ]
 }
