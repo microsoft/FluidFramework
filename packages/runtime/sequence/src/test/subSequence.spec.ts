@@ -7,7 +7,7 @@ import {SubSequence } from "../sharedSequence";
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 const verbose = true;
 
-class SubSequeceTestClient extends TestClient {
+class SubSequenceTestClient extends TestClient {
     constructor() {
         super("",
             undefined,
@@ -50,9 +50,9 @@ class SubSequeceTestClient extends TestClient {
     }
 }
 
-describe("SubSequece", () => {
+describe("SubSequence", () => {
     it("firstItemTest", () => {
-        const cli = new SubSequeceTestClient();
+        const cli = new SubSequenceTestClient();
         cli.startCollaboration("Fred1");
         for (const cname of clientNames) {
             cli.addLongClientId(cname);

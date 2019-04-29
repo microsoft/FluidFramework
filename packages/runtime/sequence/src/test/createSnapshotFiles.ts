@@ -1,0 +1,9 @@
+import * as fs from "fs";
+import { generateStrings } from "./generateSharedStrings";
+
+const filename: string = "src/test/sequenceTestSnapshot";
+let i = 1;
+for (const s of generateStrings()) {
+    // tslint:disable-next-line:non-literal-fs-path
+    fs.writeFileSync(`${filename}${i++}.json`, JSON.stringify(s.snapshot()));
+}

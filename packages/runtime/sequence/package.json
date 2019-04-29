@@ -18,7 +18,8 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "test": "mocha --recursive dist/test/**/*.spec.js",
     "testfarm": "node dist/test/testFarm.js",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml"
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:newsnapfiles": "node dist/test/createSnapshotFiles.js"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -44,7 +45,9 @@
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
+    "@prague/gitresources": "^0.3.0",
     "@prague/merge-tree-utils": "^0.3.0",
+    "@prague/services-client": "^0.3.0",
     "@types/diff": "^3.5.1",
     "@types/random-js": "^1.0.31",
     "@types/xmldoc": "^1.1.3",

@@ -12,6 +12,7 @@ import {
     ITreeEntry,
     MessageType,
 } from "@prague/container-definitions";
+import * as git from "@prague/gitresources";
 import {
     IChannel,
     IComponentRuntime,
@@ -19,6 +20,8 @@ import {
     IDeltaHandler,
     IDistributedObjectServices,
 } from "@prague/runtime-definitions";
+import { IHistorian } from "@prague/services-client";
+import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
 import * as uuid from "uuid/v4";
@@ -172,6 +175,135 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     }
 
     public snapshotInternal(): ITreeEntry[] {
+        return null;
+    }
+}
+
+export class MockHistorian implements IHistorian {
+    public endpoint: string;
+
+    private idCounter: number = 0;
+    private blobMap = new Map();
+    private tree: git.ICreateTreeParams;
+
+    public async read(path: string) {
+        const content =  await this.read_r(path, this.tree);
+        return Buffer.from(content).toString("base64");
+    }
+
+    public async read_r(path: string, baseBlob) {
+        if (!path.includes("/")) {
+            for (const blob of baseBlob.tree) {
+                if (blob.path === path) {
+                    return this.blobMap.get(blob.sha).content;
+                }
+            }
+            assert(false, `historian.read() blob not found (base case): ${path}`);
+        } else {
+            const head = path.substr(0, path.indexOf("/"));
+            const tail = path.substr(path.indexOf("/") + 1);
+
+            for (const blob of baseBlob.tree) {
+                if (blob.path === head) {
+                    return this.read_r(tail, this.blobMap.get(blob.sha));
+                }
+
+            }
+            assert(false, `historian.read() blob not found (recursive): ${head}`);
+        }
+    }
+
+    public async getBlob(sha: string): Promise<git.IBlob> {
+        return this.blobMap.get(sha);
+    }
+    public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+        const newBlob = {
+            sha: `id${this.idCounter}`,
+            url: `id${this.idCounter}`,
+        };
+        this.blobMap.set(`id${this.idCounter++}`, {
+            content: blob.content,
+            encoding: blob.encoding,
+            sha: newBlob.sha,
+            size: 0,
+            url: newBlob.url,
+        });
+        return newBlob;
+    }
+    public async getContent(path: string, ref: string): Promise<any> {
+        assert(false, "getContent");
+        return null;
+    }
+    public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+        assert(false);
+        return null;
+    }
+    public async getCommit(sha: string): Promise<git.ICommit> {
+        assert(false);
+        return null;
+    }
+    public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
+        assert(false);
+        return null;
+    }
+    public async getRefs(): Promise<git.IRef[]> {
+        assert(false);
+        return null;
+    }
+    public async getRef(ref: string): Promise<git.IRef> {
+        assert(false);
+        return null;
+    }
+    public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
+        assert(false);
+        return null;
+    }
+    public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
+        assert(false);
+        return null;
+    }
+    public async deleteRef(ref: string): Promise<void> {
+        assert(false);
+        return null;
+    }
+    public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
+        assert(false);
+        return null;
+    }
+    public async getTag(tag: string): Promise<git.ITag> {
+        assert(false);
+        return null;
+    }
+    public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
+        this.tree = tree;
+        const newTree =  {
+            sha: `id${this.idCounter}`,
+            tree: tree.tree.map((treeEntry) => ({
+                mode: treeEntry.mode,
+                path: treeEntry.path,
+                sha: treeEntry.sha,
+                size: 0,
+                type: treeEntry.type,
+                url: "website.com",
+            })),
+            url: `id${this.idCounter}`,
+        };
+        this.blobMap.set(`id${this.idCounter++}`, newTree);
+        return newTree;
+    }
+    public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
+        return this.blobMap.get(sha);
+    }
+
+    /**
+     * Retrieves the header for the given document
+     */
+    public async getHeader(sha: string): Promise<git.IHeader> {
+        assert(false, "getHeader");
+        return null;
+    }
+    public async getFullTree(sha: string): Promise<any> {
+        assert(false, "getFullTree");
         return null;
     }
 }
