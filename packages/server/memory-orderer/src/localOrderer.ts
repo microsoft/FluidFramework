@@ -42,20 +42,20 @@ const now = require("performance-now");
 
 export interface ISubscriber {
     id: string;
-
+    readonly webSocket?: IWebSocket;
     send(topic: string, ...args: any[]): void;
 }
 
 class WebSocketSubscriber implements ISubscriber {
     public get id(): string {
-        return this.socket.id;
+        return this.webSocket.id;
     }
 
-    constructor(private socket: IWebSocket) {
+    constructor(public readonly webSocket: IWebSocket) {
     }
 
     public send(topic: string, ...args: any[]): void {
-        this.socket.emit(args[0], ...args.slice(1));
+        this.webSocket.emit(args[0], ...args.slice(1));
     }
 }
 
@@ -264,11 +264,11 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
-        pubSub = new PubSub(),
-        broadcasterContext = new LocalContext(),
-        scriptoriumContext = new LocalContext(),
-        foremanContext = new LocalContext(),
-        deliContext = new LocalContext(),
+        pubSub: IPubSub = new PubSub(),
+        broadcasterContext: IContext = new LocalContext(),
+        scriptoriumContext: IContext = new LocalContext(),
+        foremanContext: IContext = new LocalContext(),
+        deliContext: IContext = new LocalContext(),
         clientTimeout: number = ClientSequenceTimeout) {
 
         const [details, documentCollection, deltasCollection] = await Promise.all([
@@ -317,11 +317,11 @@ export class LocalOrderer implements IOrderer {
         private tenantManager: ITenantManager,
         private permission: any,
         private maxMessageSize: number,
-        private pubSub,
-        private broadcasterContext,
-        private scriptoriumContext,
-        private foremanContext,
-        private deliContext,
+        private pubSub: IPubSub,
+        private broadcasterContext: IContext,
+        private scriptoriumContext: IContext,
+        private foremanContext: IContext,
+        private deliContext: IContext,
         clientTimeout: number,
     ) {
         this.existing = details.existing;

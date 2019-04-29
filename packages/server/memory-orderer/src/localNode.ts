@@ -27,7 +27,7 @@ import { Socket } from "./socket";
 class RemoteSubscriber implements ISubscriber {
     public id = uuid();
 
-    constructor(private socket: Socket<INodeMessage>) {
+    constructor(private readonly socket: Socket<INodeMessage>) {
     }
 
     public send(topic: string, event: string, ...args: any[]): void {
