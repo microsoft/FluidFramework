@@ -128,7 +128,7 @@ export class TenantManager extends React.Component<ITableProps, ITableState > {
     public render() {
       const { dataSource } = this.state;
       const columns = this.columns;
-      const TenantCreateModal = Form.create()(CreateTenantModal);
+      const TenantCreateModal = Form.create()(CreateTenantModal) as any;
       return (
         <div>
           <Table bordered dataSource={dataSource} columns={columns} rowKey="id" />

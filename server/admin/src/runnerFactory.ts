@@ -1,4 +1,5 @@
 import * as services from "@prague/services";
+import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Provider } from "nconf";
 import { AdminRunner } from "./runner";
@@ -9,7 +10,7 @@ export class AdminResources implements utils.IResources {
 
     constructor(
         public config: Provider,
-        public mongoManager: utils.MongoManager,
+        public mongoManager: core.MongoManager,
         public port: any) {
 
         this.webServerFactory = new WebServerFactory();
@@ -26,7 +27,7 @@ export class AdminResourcesFactory implements utils.IResourcesFactory<AdminResou
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
         const mongoFactory = new services.MongoDbFactory(mongoUrl);
-        const mongoManager = new utils.MongoManager(mongoFactory);
+        const mongoManager = new core.MongoManager(mongoFactory);
 
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");

@@ -1,4 +1,4 @@
-import * as utils from "@prague/services-utils";
+import * as core from "@prague/services-core";
 import * as moniker from "moniker";
 import * as request from "request-promise-native";
 import { IOrderer, ITenant, ITenantInput, ITenantStorage } from "./definitions";
@@ -47,7 +47,7 @@ export class TenantManager {
     private riddlerManager: RiddlerManager;
 
     constructor(
-        private mongoManager: utils.MongoManager,
+        private mongoManager: core.MongoManager,
         private userOrgCollection: string,
         private orgTenantCollection: string,
         private tenantCollection: string,

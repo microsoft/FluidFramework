@@ -1,4 +1,4 @@
-import * as utils from "@prague/services-utils";
+import * as core from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -11,7 +11,7 @@ export interface IRoutes {
     api: Router;
 }
 
-export function create(config: Provider, mongoManager: utils.MongoManager, manager: TenantManager): IRoutes {
+export function create(config: Provider, mongoManager: core.MongoManager, manager: TenantManager): IRoutes {
     return {
         api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn, manager),
         home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn, manager),

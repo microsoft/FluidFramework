@@ -1,3 +1,4 @@
+import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
@@ -13,7 +14,7 @@ export class AdminRunner implements utils.IRunner {
         private serverFactory: IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private mongoManager: utils.MongoManager) {
+        private mongoManager: core.MongoManager) {
     }
 
     public start(): Promise<void> {

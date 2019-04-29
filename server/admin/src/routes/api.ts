@@ -1,4 +1,4 @@
-import * as utils from "@prague/services-utils";
+import * as core from "@prague/services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
 import { ITenantInput } from "../definitions";
@@ -6,7 +6,7 @@ import { TenantManager } from "../tenantManager";
 
 export function create(
     config: Provider,
-    mongoManager: utils.MongoManager,
+    mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     manager: TenantManager,
 ): Router {

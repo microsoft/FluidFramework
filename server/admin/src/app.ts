@@ -1,4 +1,4 @@
-import * as utils from "@prague/services-utils";
+import * as core from "@prague/services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -62,7 +62,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider, mongoManager: utils.MongoManager) {
+export function create(config: Provider, mongoManager: core.MongoManager) {
     const manager = new TenantManager(
         mongoManager,
         config.get("mongo:collectionNames:users"),
