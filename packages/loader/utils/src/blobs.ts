@@ -34,8 +34,8 @@ export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.I
     };
 }
 
-export async function readAndParse<T>(storage: IDocumentStorageService, sha: string): Promise<T> {
-    const encoded = await storage.read(sha);
+export async function readAndParse<T>(storage: IDocumentStorageService, id: string): Promise<T> {
+    const encoded = await storage.read(id);
     const decoded = Buffer
         .from(encoded!, "base64")
         .toString();
