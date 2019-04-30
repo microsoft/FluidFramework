@@ -1,4 +1,4 @@
-import { AzureFunction } from "@azure/functions";
+import { AzureFunction, Context as AzContext } from "@azure/functions";
 import { BroadcasterLambda } from "@prague/lambdas";
 import { IPartitionLambdaFactory, IPublisher, ITopic, IContext, IPartitionLambda } from "@prague/services-core";
 import { Provider } from "nconf";
@@ -24,6 +24,7 @@ class SocketIoRedisPublisher implements IPublisher {
 
     // TODO update the publisher to support SSL
     constructor(port: number, host: string, key: string) {
+        console.log(`${host} ${port} ${key}`)
         this.redisClient = redis.createClient(
             port,
             host,
@@ -86,15 +87,35 @@ async function create(config: Provider): Promise<IPartitionLambdaFactory> {
     return new BroadcasterLambdaFactory(publisher);
 }
 
+let lookup = new Map<string, { lambda: IPartitionLambda, context: Context }>();
+let lastContext: AzContext;
+
 const lambda: AzureFunction = async (context, eventHubMessages) => {
-    // hack of the redis config
+    lastContext = context;
     const config = (new Provider({})).defaults(settings).use("memory");
 
-    const pragueContext = new Context(context);
+    context.log("Hello!");
 
-    const broadcaster = await create(config);
-    const broadcasterLambda = await broadcaster.create(config, pragueContext);
+    const partitionContext = context.bindingData.partitionContext;
+    const partitionId = partitionContext.runtimeInformation.partitionId;
 
+    if (!lookup.has(partitionId)) {
+        context.log(`Can't find ${partitionId}`);
+        const pragueContext = new Context(context);
+        context.log(`Creating deli factory`);
+        const broadcaster = await create(config);
+        context.log(`Creating partition`);
+        const newLambda = await broadcaster.create(config, pragueContext);
+        context.log(`Ready to do stuff`);
+        lookup.set(partitionId, { lambda: newLambda, context: pragueContext });
+    } else {
+        context.log(`Active and reusing!`);    
+        lookup.get(partitionId).context.updateContext(context);
+    }
+
+    const broadcasterLambda = lookup.get(partitionId).lambda;
+    const pragueContext = lookup.get(partitionId).context;
+    
     const sequenceNumberArray = context.bindingData.sequenceNumberArray;
     const target = sequenceNumberArray
         ? sequenceNumberArray[sequenceNumberArray.length - 1]
