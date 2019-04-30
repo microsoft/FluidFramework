@@ -1,0 +1,21 @@
+{
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "eventHubMessages",
+      "direction": "in",
+      "eventHubName": "rawdeltas",
+      "connection": "praguefunctions_RawDeltasSharedAccessPolicy_EVENTHUB",
+      "cardinality": "many",
+      "consumerGroup": "deli"
+    },
+    {
+      "type": "eventHub",
+      "name": "outputEventHubMessage",
+      "connection": "praguefunctions_DeltasSharedAccessPolicy_EVENTHUB",
+      "eventHubName": "deltas",
+      "direction": "out"
+    }
+  ],
+  "scriptFile": "../dist/Deli/index.js"
+}

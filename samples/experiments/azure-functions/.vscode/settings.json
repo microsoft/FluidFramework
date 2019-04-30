@@ -1,0 +1,11 @@
+{
+  "azureFunctions.projectRuntime": "~2",
+  "azureFunctions.projectLanguage": "TypeScript",
+  "azureFunctions.deploySubpath": ".",
+  "azureFunctions.preDeployTask": "npm prune",
+  "files.exclude": {
+    "obj": true,
+    "bin": true
+  },
+  "debug.internalConsoleOptions": "neverOpen"
+}

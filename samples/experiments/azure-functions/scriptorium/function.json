@@ -1,0 +1,14 @@
+{
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "eventHubMessages",
+      "direction": "in",
+      "eventHubName": "deltas",
+      "connection": "praguefunctions_DeltasSharedAccessPolicy_EVENTHUB",
+      "cardinality": "many",
+      "consumerGroup": "scriptorium"
+    }
+  ],
+  "scriptFile": "../dist/scriptorium/index.js"
+}

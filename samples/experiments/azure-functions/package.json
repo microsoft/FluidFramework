@@ -1,0 +1,32 @@
+{
+  "name": "",
+  "version": "",
+  "scripts": {
+    "build": "tsc",
+    "build:production": "npm run prestart && npm prune --production",
+    "watch": "tsc --w",
+    "prestart": "npm run build && func extensions install",
+    "start:host": "func start",
+    "start": "npm run start:host & npm run watch",
+    "test": "echo \"No tests yet...\""
+  },
+  "description": "",
+  "devDependencies": {
+    "@azure/functions": "^1.0.1-beta1",
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "@prague/lambdas": "^0.3.6570",
+    "@prague/lambdas-driver": "^0.3.6581",
+    "@prague/services": "^0.3.6645",
+    "@prague/services-core": "^0.3.6645",
+    "@prague/utils": "^0.3.6645",
+    "@types/json-stringify-safe": "^5.0.0",
+    "@types/redis": "^2.8.12",
+    "json-stringify-safe": "^5.0.1",
+    "jsonwebtoken": "^8.5.1",
+    "nconf": "^0.10.0",
+    "redis": "^2.8.0",
+    "socket.io-emitter": "^3.1.1"
+  }
+}
