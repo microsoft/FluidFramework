@@ -1,15 +1,15 @@
 {
   "name": "@prague/react-loader",
-  "version": "0.0.32",
+  "version": "0.0.35",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "publishConfig": {
-    "registry": "https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
+    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/"
   },
   "dependencies": {
-    "@prague/vanilla-loader": "0.0.19",
+    "@prague/vanilla-loader": "0.0.22",
     "react": "^16.8.4"
   },
   "devDependencies": {

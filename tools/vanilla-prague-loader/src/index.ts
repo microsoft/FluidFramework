@@ -7,13 +7,13 @@ import { URLToLoaderProps } from "./urlParser";
 import { InsecureUrlResolver } from "./urlResolver";
 import { initializeChaincode, registerAttach } from "./utils";
 
-const spoRegex = "^http(s)?:\/\/\\w{2,6}prodprv\.www\.office\.com\/content\/bohemia\?.*";
+const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";
 const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
 
 /**
  * Simple function to test if a URL is a valid SPO or Routerlicious Prague link
  *
- * const spoRegex = "^http(s)?:\/\/\w{3}prodprv\.www\.office\.com\/content\/bohemia\?.*";
+ * const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";
  *
  * const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*"
  *

@@ -1,14 +1,14 @@
 {
   "name": "@prague/vanilla-loader",
-  "version": "0.0.19",
+  "version": "0.0.22",
   "main": "dist/index.js",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "publishConfig": {
-    "registry": "https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
+    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/"
   },
   "dependencies": {
-    "@ms/office-prague-container": "0.3.25-demo.2",
+    "@ms/office-prague-container": "0.3.25-demo.12",
     "@prague/container-definitions": "^0.2.5915",
     "@prague/container-loader": "^0.2.5915",
     "@prague/loader-web": "^0.2.5915",
