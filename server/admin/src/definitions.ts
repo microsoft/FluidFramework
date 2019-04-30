@@ -68,3 +68,11 @@ export interface ITenant {
     // Historian URL endpoint
     historianUrl: string;
 }
+
+export interface IPackage {
+    // Package name
+    name: string;
+
+    // Package version
+    version: string;
+}

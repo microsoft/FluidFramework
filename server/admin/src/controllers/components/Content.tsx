@@ -5,6 +5,7 @@ import { ITenant, IUser } from "../../definitions";
 import { About } from "./About";
 import { Analytics } from "./Analytics";
 import { MenuWrap } from "./MenuWrap";
+import { Packages } from "./Packages";
 import { Tenants } from "./Tenants";
 
 export interface IContentState {
@@ -40,13 +41,19 @@ export class Content extends React.Component<IContentProps, IContentState> {
             <span>Tenants</span>
           </a>
         </NavLink>,
-        <NavLink onClick={() => this.closeMenu()} key="2" to="/analytics">
+        <NavLink onClick={() => this.closeMenu()} key="2" to="/packages">
+          <a>
+            <i className="fa fa-fw fa-bar-chart-o" />
+            <span>Packages</span>
+          </a>
+        </NavLink>,
+        <NavLink onClick={() => this.closeMenu()} key="3" to="/analytics">
           <a>
             <i className="fa fa-fw fa-bar-chart-o" />
             <span>Analytics</span>
           </a>
         </NavLink>,
-        <NavLink onClick={() => this.closeMenu()} key="3" to="/about">
+        <NavLink onClick={() => this.closeMenu()} key="4" to="/about">
           <a>
             <i className="fa fa-fw fa-envelope-o" />
             <span>About</span>
@@ -85,6 +92,7 @@ export class Content extends React.Component<IContentProps, IContentState> {
                       component={
                         () => <Tenants data={this.props.data} />
                       }/>
+                    <Route path="/packages" component={Packages}/>
                     <Route path="/analytics" component={Analytics}/>
                     <Route path="/about" component={About}/>
                 </div>
