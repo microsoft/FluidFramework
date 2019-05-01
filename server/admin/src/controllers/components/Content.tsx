@@ -1,7 +1,7 @@
 import * as React from "react";
 import { slide as Menu} from "react-burger-menu";
 import { HashRouter, NavLink, Route } from "react-router-dom";
-import { ITenant, IUser } from "../../definitions";
+import { IData, IUser } from "../../definitions";
 import { About } from "./About";
 import { Analytics } from "./Analytics";
 import { MenuWrap } from "./MenuWrap";
@@ -13,7 +13,7 @@ export interface IContentState {
 }
 
 export interface IContentProps {
-    data: ITenant[];
+    data: IData;
     user: IUser;
 }
 
@@ -89,10 +89,16 @@ export class Content extends React.Component<IContentProps, IContentState> {
                 <div>
                     <Route exact
                       path={"/"}
-                      component={
-                        () => <Tenants data={this.props.data} />
-                      }/>
-                    <Route path="/packages" component={Packages}/>
+                      component = {
+                        () => <Tenants data={this.props.data.tenants} />
+                      }
+                      />
+                    <Route
+                      path="/packages"
+                      component = {
+                        () => <Packages data={this.props.data.packages} />
+                      }
+                      />
                     <Route path="/analytics" component={Analytics}/>
                     <Route path="/about" component={About}/>
                 </div>

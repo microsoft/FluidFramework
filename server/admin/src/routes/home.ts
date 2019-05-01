@@ -3,6 +3,8 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
+import { IData } from "../definitions";
+import { PackageManager } from "../packageManager";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -10,7 +12,8 @@ export function create(
     config: Provider,
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
-    manager: TenantManager,
+    tenantManager: TenantManager,
+    packageManager: PackageManager,
 ): Router {
 
     const router: Router = Router();
@@ -19,13 +22,17 @@ export function create(
      * Route to retrieve the home page for the app
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
-        const tenantsP = manager.getTenantsforUser(request.user.oid);
+        const tenantsP = tenantManager.getTenantsforUser(request.user.oid);
         tenantsP.then(
             (tenants) => {
+                const data: IData = {
+                    packages: packageManager.getPackages(),
+                    tenants,
+                };
                 response.render(
                     "admin",
                     {
-                        data: JSON.stringify(tenants),
+                        data: JSON.stringify(data),
                         partials: defaultPartials,
                         title: "Admin Portal",
                         user: JSON.stringify(request.user),

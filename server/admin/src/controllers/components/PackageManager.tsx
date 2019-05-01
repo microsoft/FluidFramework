@@ -9,12 +9,12 @@ import "antd/lib/popconfirm/style/css";
 import "antd/lib/table/style/css";
 import * as React from "react";
 import { IPackage } from "../../definitions";
-// import * as utils from "../utils";
+import * as utils from "../utils";
 
 interface ICellProps {
     dataIndex: number;
     editable: boolean;
-    handleSave;
+    handleEdit;
     index: number;
     record;
     title: string;
@@ -52,14 +52,14 @@ class EditableCell extends React.Component<ICellProps, ICellState> {
     });
   }
 
-  public save = (e) => {
-    const { record, handleSave } = this.props;
+  public toggle = (e) => {
+    const { record, handleEdit } = this.props;
     this.form.validateFields((error, values) => {
       if (error && error[e.currentTarget.id]) {
         return;
       }
       this.toggleEdit();
-      handleSave({ ...record, ...values });
+      handleEdit({ ...record, ...values });
     });
   }
 
@@ -71,7 +71,7 @@ class EditableCell extends React.Component<ICellProps, ICellState> {
       title,
       record,
       index,
-      handleSave,
+      handleEdit,
       ...restProps
     } = this.props;
     return (
@@ -92,8 +92,8 @@ class EditableCell extends React.Component<ICellProps, ICellState> {
                     })(
                       <Input
                         ref={(node) => (this.input = node)}
-                        onPressEnter={this.save}
-                        onBlur={this.save}
+                        onPressEnter={this.toggle}
+                        onBlur={this.toggle}
                       />,
                     )}
                   </FormItem>
@@ -117,7 +117,7 @@ class EditableCell extends React.Component<ICellProps, ICellState> {
 
 interface ITableState {
     count: number;
-    dataSource: any[];
+    dataSource: IPackage[];
 }
 
 export interface ITableProps {
@@ -126,64 +126,60 @@ export interface ITableProps {
 
 export class PackageManager extends React.Component<ITableProps, ITableState> {
   public columns: any;
+  public edited = new Map<string, string>();
   constructor(props) {
     super(props);
     this.columns = [{
       dataIndex: "name",
       editable: true,
-      title: "name",
+      title: "Package Name",
       width: "30%",
     },
     {
-      dataIndex: "age",
-      title: "age",
-    },
-    {
-      dataIndex: "address",
-      title: "address",
+      dataIndex: "version",
+      editable: true,
+      title: "Version",
     },
     {
       dataIndex: "operation",
-      render: (text, record) => (
-        this.state.dataSource.length >= 1
+      render: (text, record: IPackage) => {
+        console.log(`${record}`);
+        const needSave = this.edited.has(record.name);
+        const saveButton = needSave ? <a onClick={() => this.handleSave(record)}>Save</a> : null;
+        return this.state.dataSource.length >= 0
           ? (
-            <Popconfirm title="Sure to delete?" onConfirm={() => this.handleDelete(record.key)}>
-              <a href="javascript:;">Delete</a>
-            </Popconfirm>
-          ) : null
-      ),
+            <div>
+              {saveButton}
+              <Popconfirm title="Sure to delete?" onConfirm={() => this.handleDelete(record.name)}>
+              <span> | </span>
+              <a>Delete</a>
+              </Popconfirm>
+            </div>
+          ) : null;
+        },
       title: "operation",
     }];
 
     this.state = {
-      count: 2,
-      dataSource: [{
-        address: "London, Park Lane no. 0",
-        age: "32",
-        key: "0",
-        name: "Edward King 0",
-      },
-      {
-        address: "London, Park Lane no. 1",
-        age: "32",
-        key: "1",
-        name: "Edward King 1",
-      }],
+      count: this.props.data.length,
+      dataSource: this.props.data,
     };
   }
 
-  public handleDelete = (key) => {
-    const dataSource = [...this.state.dataSource];
-    this.setState({ dataSource: dataSource.filter((item) => item.key !== key) });
+  public handleDelete = (key: string) => {
+    utils.deletePackage(document.location.origin, key).then((res) => {
+      const dataSource = [...this.state.dataSource];
+      this.setState({ dataSource: dataSource.filter((item) => item.name !== key) });
+    }, (err) => {
+      console.error(err);
+    });
   }
 
   public handleAdd = () => {
     const { count, dataSource } = this.state;
     const newData = {
-      address: `London, Park Lane no. ${count}`,
-      age: 32,
-      key: count,
-      name: `Edward King ${count}`,
+      name: `Package ${count}`,
+      version: `0.0.0`,
     };
     this.setState({
       count: count + 1,
@@ -191,9 +187,21 @@ export class PackageManager extends React.Component<ITableProps, ITableState> {
     });
   }
 
-  public handleSave = (row) => {
+  public handleSave = (newPackage: IPackage) => {
+    utils.addPackage(document.location.origin, newPackage).then((res: IPackage) => {
+      console.log(`Saved ${res.name}:${res.version}`);
+      this.edited.delete(res.name);
+      this.setState({ dataSource: [...this.state.dataSource] });
+    }, (error) => {
+      console.error(error);
+    });
+  }
+
+  public handleEdit = (row: IPackage) => {
+    console.log(`Name: ${row.name}, Version: ${row.version}`);
+    this.edited.set(row.name, row.version);
     const newData = [...this.state.dataSource];
-    const index = newData.findIndex((item) => row.key === item.key);
+    const index = newData.findIndex((item) => row.name === item.name);
     const newItem = newData[index];
     newData.splice(index, 1, {
       ...newItem,
@@ -219,7 +227,7 @@ export class PackageManager extends React.Component<ITableProps, ITableState> {
         onCell: (record) => ({
           dataIndex: col.dataIndex,
           editable: col.editable,
-          handleSave: this.handleSave,
+          handleEdit: this.handleEdit,
           record,
           title: col.title,
         }),
@@ -241,157 +249,3 @@ export class PackageManager extends React.Component<ITableProps, ITableState> {
     );
   }
 }
-
-/*
-export interface ITableState {
-    dataSource: IPackage[];
-    count: number;
-    modalVisible: boolean;
-    modalConfirmLoading: boolean;
-    infoVisible: boolean;
-    currentInfo: any;
-}
-
-export interface ITableProps {
-    data: IPackage[];
-}
-
-export class PackageManager extends React.Component<ITableProps, ITableState > {
-    public columns: any;
-    public form: any;
-
-    constructor(props: ITableProps) {
-      super(props);
-
-      this.columns = [
-        {
-          dataIndex: "name",
-          title: "Name",
-        },
-        {
-          dataIndex: "version",
-          title: "Version",
-        },
-        {
-          dataIndex: "operation",
-          render: (text, record: IPackage) => {
-            return (
-              <div>
-                <a onClick={() => this.showInfo(record)}>View</a>
-                <Popconfirm title="Sure to delete?" onConfirm={() => this.onDelete(record.name)}>
-                <span> | </span>
-                <a>Delete</a>
-                </Popconfirm>
-              </div>
-            );
-          },
-          title: "Operation",
-        }];
-
-      this.state = {
-        count: this.props.data.length,
-        currentInfo: null,
-        dataSource: this.props.data,
-        infoVisible: false,
-        modalConfirmLoading: false,
-        modalVisible: false,
-      };
-    }
-
-    public onDelete = (id) => {
-      utils.deleteTenant(document.location.origin, id).then((res) => {
-        const dataSource = [...this.state.dataSource];
-        this.setState(
-            {
-                dataSource: dataSource.filter((item) => item.id !== id),
-            });
-      }, (err) => {
-        console.error(err);
-      });
-    }
-
-    public showModal = () => {
-        this.setState({ modalVisible: true });
-    }
-
-    public showInfo = (record: any) => {
-      this.setState({ infoVisible: true, currentInfo: record });
-    }
-
-    public hideInfo = () => {
-      this.setState({ infoVisible: false });
-    }
-
-    public handleCancel = () => {
-        this.setState({ modalVisible: false });
-    }
-
-    public handleCreate = () => {
-        console.log("Begin create");
-        const form = this.form;
-        form.validateFields((err, tenant) => {
-          if (err) {
-            return;
-          }
-
-          this.setState({
-            modalConfirmLoading: true,
-          });
-
-          utils.addTenant(document.location.origin, tenant).then(
-            (res) => {
-              form.resetFields();
-              this.setState({
-                modalConfirmLoading: false,
-                modalVisible: false,
-              });
-              this.addNewTenant(res);
-            },
-            (addTenantError) => {
-              console.error(addTenantError);
-            });
-        });
-    }
-
-    public saveFormRef = (form) => {
-        this.form = form;
-    }
-
-    public render() {
-      const { dataSource } = this.state;
-      const columns = this.columns;
-      const TenantCreateModal = Form.create()(CreateTenantModal) as any;
-      return (
-        <div>
-          <Table bordered dataSource={dataSource} columns={columns} rowKey="id" />
-          <nav className="add-buttons">
-                <a onClick={this.showModal}>
-                Add new tenant
-                </a>
-          </nav>
-          <TenantCreateModal
-            ref={this.saveFormRef}
-            visible={this.state.modalVisible}
-            onCancel={this.handleCancel}
-            onCreate={this.handleCreate}
-            confirmLoading={this.state.modalConfirmLoading}
-            githubSelected={false}
-          />
-          <TenantInfoModal
-            visible={this.state.infoVisible}
-            onOk={this.hideInfo}
-            record={this.state.currentInfo}
-          />
-        </div>
-      );
-    }
-
-    private addNewTenant(tenant: IPackage) {
-        const { count, dataSource } = this.state;
-        this.setState({
-          count: count + 1,
-          dataSource: [...dataSource, tenant],
-        });
-    }
-  }
-  */

@@ -76,3 +76,10 @@ export interface IPackage {
     // Package version
     version: string;
 }
+
+export interface IData {
+
+    tenants: ITenant[];
+
+    packages: IPackage[];
+}
