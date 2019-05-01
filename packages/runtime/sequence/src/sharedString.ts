@@ -41,7 +41,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -64,7 +64,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
 
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
         return insertOp;
     }
@@ -89,7 +89,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -108,7 +108,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
 
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
     /**
@@ -158,7 +158,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
 
         const annotateOp = this.client.annotateMarkerNotifyConsensus(marker, props, callback);
         if (annotateOp) {
-            this.submitIfAttached(annotateOp);
+            this.submitSequenceMessage(annotateOp);
         }
     }
 
@@ -175,7 +175,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         combiningOp?: MergeTree.ICombiningOp) {
         const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
         if (annotateOp) {
-            this.submitIfAttached(annotateOp);
+            this.submitSequenceMessage(annotateOp);
         }
     }
 
@@ -183,7 +183,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
-    protected segmentFromSpec(spec: any) {
+    public segmentFromSpec(spec: any) {
         const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 

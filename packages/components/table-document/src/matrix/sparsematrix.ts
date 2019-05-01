@@ -200,7 +200,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     //     } as IMergeTreeInsertMsg;
 
     //     this.client.insertSegmentLocal(start, segment, { op: insertMessage });
-    //     this.submitIfAttached(insertMessage);
+    //     this.submitSequenceMessage(insertMessage);
     // }
 
     // "Group" ops are currently not correctly handled by 'BaseSegment.ack()'
@@ -252,7 +252,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.removeRange(start, end);
         const insertOp = this.client.insertSegmentLocal(start, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -291,7 +291,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -309,7 +309,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.moveAsPadding(col, maxCol - numCols, numCols);
     }
 
-    protected segmentFromSpec(spec: IJSONSegment): ISegment {
+    public segmentFromSpec(spec: IJSONSegment): ISegment {
         const maybePadding = PaddingSegment.fromJSONObject(spec);
         if (maybePadding) {
             return maybePadding;
@@ -340,7 +340,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
             const insertOp = this.client.insertSegmentLocal(insertPos, segment);
             if (insertOp) {
-                this.submitIfAttached(insertOp);
+                this.submitSequenceMessage(insertOp);
             }
         }
     }

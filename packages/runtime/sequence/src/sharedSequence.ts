@@ -130,7 +130,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
         }
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -170,7 +170,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
         return items;
     }
 
-    protected segmentFromSpec(segSpec: IJSONRunSegment<T>) {
+    public segmentFromSpec(segSpec: IJSONRunSegment<T>) {
         const seg = new SubSequence<T>(segSpec.items);
         if (segSpec.props) {
             seg.addProperties(segSpec.props);

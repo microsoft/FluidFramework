@@ -101,7 +101,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public removeRange(start: number, end: number) {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
-            this.submitIfAttached(removeOp);
+            this.submitSequenceMessage(removeOp);
         }
         return removeOp;
     }
@@ -116,7 +116,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public cut(start: number, end: number, register: string) {
         const removeOp = this.client.removeRangeLocal(start, end, register);
         if (removeOp) {
-            this.submitIfAttached(removeOp);
+            this.submitSequenceMessage(removeOp);
         }
     }
 
@@ -145,7 +145,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         const insertOp = this.client.copyLocal(start, end, register);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
     }
 
@@ -180,7 +180,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const annotateOp =
             this.client.annotateRangeLocal(start, end, props, combiningOp);
         if (annotateOp) {
-            this.submitIfAttached(annotateOp);
+            this.submitSequenceMessage(annotateOp);
         }
     }
 
@@ -310,8 +310,18 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                 ops: opList,
                 type: MergeTree.MergeTreeDeltaType.GROUP,
             };
-            this.submitIfAttached(groupOp);
+            this.submitSequenceMessage(groupOp);
         }
+    }
+
+    public abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
+
+    public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
+        if (this.isLocal()) {
+            return;
+        }
+
+        this.submitLocalMessage(message);
     }
 
     protected async loadContent(
@@ -410,8 +420,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         this.submitLocalMessage(message);
     }
-
-    protected abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
 
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
         return segSpecs.map(this.segmentFromSpec.bind(this));
