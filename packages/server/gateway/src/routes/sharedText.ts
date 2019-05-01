@@ -106,7 +106,7 @@ export function create(
                 `${parse(config.get("worker:serverUrl")).host}/` +
                 `${encodeURIComponent(tenantId)}/` +
                 `${encodeURIComponent(request.params.id)}` +
-                `?version=${version.sha}`;
+                `?version=${version.commitId}`;
 
             const deltaStorageUrl =
                 config.get("worker:serverUrl") +

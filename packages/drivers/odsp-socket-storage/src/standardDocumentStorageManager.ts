@@ -36,7 +36,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
 
     public async getTree(version?: resources.ICommit): Promise<resources.ITree | null> {
         // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
-        const id = (version && version.sha) ? version.sha : "latest";
+        const id = (version && version.commitId) ? version.commitId : "latest";
         const tree = await this.restWrapper.get<resources.ITree>(`/trees/${id}`)
             .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
         if (!tree || !tree.tree) {
@@ -74,7 +74,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getContent(version: resources.ICommit, path: string): Promise<resources.IBlob> {
-        return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.sha, path });
+        return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.commitId, path });
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined> {

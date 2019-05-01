@@ -43,10 +43,10 @@ export class DocumentStorage implements IDocumentStorage {
         const latest = versions[0];
         return {
             author: latest.commit.author,
+            commitId: latest.commitId,
             committer: latest.commit.committer,
             message: latest.commit.message,
             parents: latest.parents,
-            sha: latest.sha,
             tree: latest.commit.tree,
             url: latest.url,
         };
@@ -73,7 +73,7 @@ export class DocumentStorage implements IDocumentStorage {
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
         }
 
-        const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
+        const fullTree = await tenant.gitManager.getFullTree(versions[0].commitId);
 
         let code: string = null;
         if (fullTree.quorumValues) {
@@ -99,7 +99,7 @@ export class DocumentStorage implements IDocumentStorage {
             cache: {
                 blobs: fullTree.blobs,
                 commits: fullTree.commits,
-                refs: { [documentId]: versions[0].sha },
+                refs: { [documentId]: versions[0].commitId },
                 trees: fullTree.trees,
             },
             code,

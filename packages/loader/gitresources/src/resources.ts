@@ -26,7 +26,7 @@ export interface ICreateCommitParams {
 }
 
 export interface ICommit {
-    sha: string;
+    commitId: string;
     url: string;
     author: IAuthor;
     committer: ICommitter;
@@ -45,7 +45,7 @@ export interface ICommit {
  */
 export interface ICommitDetails {
     url: string;
-    sha: string;
+    commitId: string;
     commit: {
         url: string;
         author: IAuthor;

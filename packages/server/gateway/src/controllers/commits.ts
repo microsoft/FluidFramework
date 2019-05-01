@@ -71,7 +71,7 @@ function generateGraph(
                 const url = `${document.location.origin}/${encodeURIComponent(type)}/${path}?version=${encodeURIComponent(commit.sha1)}`;
                 window.open(url, "_blank");
             },
-            sha1: version.sha,
+            sha1: version.commitId,
             tag: commitTag.length >= 2 ? commitTag[1] : "",
             tooltipDisplay: true,
         });

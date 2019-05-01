@@ -36,10 +36,10 @@ class TestDocumentStorageService implements IDocumentStorageService {
     public async write(root: ITree, parents: string[], message: string): Promise<resources.ICommit> {
         const commit: resources.ICommit = {
             author: { date: "", email: "", name: ""},
+            commitId: "test",
             committer: { date: "", email: "", name: ""},
             message: "",
             parents: [],
-            sha: "test",
             tree: {
                 sha: "test",
                 url: "test",

@@ -47,7 +47,7 @@ async function fetchSnapshotTreeBlobs(
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
         if (saveTreeDir !== undefined) {
             const writeFile = util.promisify(fs.writeFile);
-            await writeFile(`${saveTreeDir}/${componentVersions[0].sha}.json`,
+            await writeFile(`${saveTreeDir}/${componentVersions[0].commitId}.json`,
                 JSON.stringify(componentSnapShotTree, undefined, 2));
         }
         if (componentSnapShotTree) {
@@ -106,7 +106,7 @@ async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapsho
 }
 
 async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, index?: number) {
-    const suffix = `${index !== undefined ? `${index}-` : ""}${version.sha}`;
+    const suffix = `${index !== undefined ? `${index}-` : ""}${version.commitId}`;
     console.log(`Saving snapshot ${suffix}`);
     const outDir = `${paramSave}/${suffix}/`;
     const snapshotTree = await storage.getSnapshotTree(version);
