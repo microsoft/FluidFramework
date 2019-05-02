@@ -1,0 +1,39 @@
+{
+  "name": "@prague/local-loader",
+  "version": "0.0.2",
+  "main": "dist/index.js",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "publishConfig": {
+    "registry": "https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.2.5915",
+    "@prague/container-loader": "^0.2.5915",
+    "@prague/loader-web": "^0.2.5915",
+    "@prague/routerlicious-socket-storage": "^0.2.5915",
+    "jsonwebtoken": "^8.5.1",
+    "url-parse": "^1.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "11.11.4",
+    "@types/url-parse": "^1.4.3",
+    "concurrently": "^4.1.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.4.0",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2",
+    "@prague/build-common": "^0.3.0",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0"
+  },
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\"",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "node getRoute.js",
+    "tsc": "tsc"
+  }
+}

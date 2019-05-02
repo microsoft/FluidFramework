@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <script src="https://pragueauspkn-3873244262.azureedge.net/@chaincode/fiddleskeleton@0.0.6/dist/skeleton.bundle.js"></script>
+    </head>
+    <body>
+        <div id="prague-component"></div>
+    </body>
+</html>
+
+<script>
+    var loadPragueScript = document.createElement('script');
+    loadPragueScript.type = "text/javascript";
+    loadPragueScript.src = "https://pragueauspkn-3873244262.azureedge.net/@prague/local-loader@0.0.2/dist/loader.bundle.js";
+    loadPragueScript.onload = () => {
+        window.loader.default(document.getElementById('prague-component'), window.documentId);
+    }
+    document.body.appendChild(loadPragueScript);
+</script>
+
+<style>
+    body {
+        overflow: hidden;
+    }
+</style>

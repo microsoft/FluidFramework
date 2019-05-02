@@ -1,0 +1,52 @@
+{
+  "name": "@chaincode/fiddle-app",
+  "description": "Prague Fiddle Application",
+  "version": "0.0.4",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\"",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "node getRoute.js",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "^3.2.7",
+    "@types/node": "10.11.5",
+    "@types/react-dom": "^16.0.11",
+    "css-loader": "^2.1.1",
+    "monaco-editor-webpack-plugin": "^1.5.4",
+    "raw-loader": "^2.0.0",
+    "style-loader": "^0.23.1",
+    "ts-loader": "4.4.2",
+    "typescript": "3.0.1",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-merge": "4.1.4"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@chaincode/monaco": "^0.3.5291",
+    "@chaincode/praguedraw": "0.0.6368",
+    "@prague/app-component": "^0.2.5246",
+    "@prague/container-definitions": "^0.2.5246",
+    "@prague/map": "^0.2.5246",
+    "monaco-editor": "^0.15.6",
+    "react": "^16.8.3",
+    "react-codemirror": "^1.0.0",
+    "react-dom": "^16.8.3"
+  }
+}
