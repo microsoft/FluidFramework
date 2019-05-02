@@ -1939,10 +1939,9 @@ function printOverlayTree(client: MergeTree.Client) {
         return attrStrbuf;
     }
     function leaf(segment: MergeTree.ISegment) {
-        if (segment.getType() == MergeTree.SegmentType.Text) {
-            let textSegment = <MergeTree.TextSegment>segment;
+        if (segment instanceof MergeTree.TextSegment) {
             strbuf += MergeTree.internedSpaces(indentAmt);
-            strbuf += textSegment.text;
+            strbuf += segment.text;
             strbuf += "\n";
         } else {
             let marker = <MergeTree.Marker>segment;

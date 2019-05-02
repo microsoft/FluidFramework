@@ -6,7 +6,6 @@ import {
     ISegment,
     LocalClientId,
     PropertySet,
-    SegmentType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
@@ -44,8 +43,6 @@ export class PaddingSegment extends BaseSegment {
         return b;
     }
 
-    public getType() { return SegmentType.Custom; }
-
     public canAppend(segment: ISegment) {
         return segment instanceof PaddingSegment;
     }
@@ -55,7 +52,7 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (segment.getType() !== SegmentType.Custom) {
+        if (!(segment instanceof PaddingSegment)) {
             throw new Error("can only append padding segment");
         }
 
@@ -259,9 +256,9 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
         const { segment, offset } = this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
-        if (segment.getType() === SegmentType.Run) {
-            return (segment as RunSegment).items[offset];
-        } else if (segment.getType() === SegmentType.Custom) {
+        if (segment instanceof RunSegment) {
+            return segment.items[offset];
+        } else if (segment instanceof PaddingSegment) {
             return undefined;
         }
 

@@ -310,7 +310,7 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
     if (pos > 0) {
         let segoff = sharedString.client.mergeTree.getContainingSegment(pos - 1, MergeTree.UniversalSequenceNumber,
             sharedString.client.getClientId());
-        if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+        if (segoff.segment instanceof MergeTree.Marker) {
             let marker = <MergeTree.Marker>segoff.segment;
             if (marker.hasTileLabel("pg")) {
                 pgAtStart = false;
@@ -581,7 +581,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 sharedString.client.getClientId());
             // TODO: model error checking
             let segment = segoff.segment;
-            if (segment.getType() === MergeTree.SegmentType.Marker) {
+            if (segment instanceof MergeTree.Marker) {
                 let marker = <MergeTree.Marker>segoff.segment;
                 if (marker.hasRangeLabel("table")) {
                     let tableMarker = <ITableMarker>marker;
@@ -675,7 +675,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
     let nextPos = pos;
     function addColumn(segment: MergeTree.ISegment, segpos: number) {
         nextPos = segpos;
-        if (segment.getType() === MergeTree.SegmentType.Marker) {
+        if (segment instanceof MergeTree.Marker) {
             let marker = <IColumnMarker>segment;
             if (marker.hasProperty("columnId")) {
                 table.addGridColumn(marker);
@@ -700,7 +700,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     let lastWasCO = false;
     let reqPos = true;
     function printTableSegment(segment: MergeTree.ISegment, segpos: number) {
-        if (segment.getType() === MergeTree.SegmentType.Marker) {
+        if (segment instanceof MergeTree.Marker) {
             let marker = <MergeTree.Marker>segment;
             let endLine = false;
             if (reqPos) {

@@ -61,37 +61,33 @@ class Speller {
         let endMarkerFound = false;
         const mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
-                    const marker = segment as MergeTree.Marker;
-                    if (mergeTree.localNetLength(segment)) {
-                        if (marker.hasTileLabel("pg")) {
-                            if (prevPG) {
-                                // TODO: send paragraph to service
-                                spellParagraph(startPGPos, segpos, pgText);
-                                endMarkerFound = true;
-                            }
-                            startPGPos = segpos + mergeTree.localNetLength(segment);
-                            prevPG = marker;
-                            pgText = "";
-                            if (endMarkerFound) {
-                                return false;
-                            }
-                        } else {
-                            for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
-                                pgText += " ";
-                            }
+            if (segment instanceof MergeTree.Marker) {
+                if (mergeTree.localNetLength(segment)) {
+                    if (segment.hasTileLabel("pg")) {
+                        if (prevPG) {
+                            // TODO: send paragraph to service
+                            spellParagraph(startPGPos, segpos, pgText);
+                            endMarkerFound = true;
+                        }
+                        startPGPos = segpos + mergeTree.localNetLength(segment);
+                        prevPG = segment;
+                        pgText = "";
+                        if (endMarkerFound) {
+                            return false;
+                        }
+                    } else {
+                        for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
+                            pgText += " ";
                         }
                     }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    const textSegment = segment as MergeTree.TextSegment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        pgText += textSegment.text;
-                    }
-                    break;
-                default:
-                    throw new Error("Unknown SegmentType");
+                }
+            } else if (segment instanceof MergeTree.TextSegment) {
+                if (mergeTree.localNetLength(segment)) {
+                    pgText += segment.text;
+                }
+            } else {
+
+                throw new Error("Unknown SegmentType");
             }
             return true;
         }

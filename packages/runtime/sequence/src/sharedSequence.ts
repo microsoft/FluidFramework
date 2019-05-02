@@ -4,7 +4,6 @@ import {
     ISegment,
     LocalClientId,
     PropertySet,
-    SegmentType,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
@@ -53,12 +52,8 @@ export class SubSequence<T> extends BaseSegment {
         return b;
     }
 
-    public getType() {
-        return SegmentType.Run;
-    }
-
     public canAppend(segment: ISegment) {
-        return segment.getType() === SegmentType.Run
+        return segment instanceof SubSequence
             && (this.cachedLength <= MaxRun || segment.cachedLength <= MaxRun);
     }
 
@@ -67,7 +62,7 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (segment.getType() !== SegmentType.Run) {
+        if (!(segment instanceof SubSequence)) {
             throw new Error("can only append another run segment");
         }
 

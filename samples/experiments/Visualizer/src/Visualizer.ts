@@ -175,18 +175,16 @@ export class Visualizer {
         const createVisNodes = (segment: mergeTree.Segment, pos: number,
                                 refSeq: number, clientId: number, segStart: number,
                                 segEnd: number) => {
-                if (segment.getType() === mergeTree.SegmentType.Text) {
-                    const textSegment = segment as mergeTree.TextSegment;
-                    const propBagContext = this.GetPropertyBagLabel(textSegment.properties);
-                    handleSegments(textSegment.text, NodeType.TextSegment, propBagContext);
-                } else if (segment.getType() === mergeTree.SegmentType.Marker) {
-                    const markerSegment = segment as mergeTree.Marker;
-                    const labels = markerSegment.getTileLabels();
+                if (segment instanceof mergeTree.TextSegment) {
+                    const propBagContext = this.GetPropertyBagLabel(segment.properties);
+                    handleSegments(segment.text, NodeType.TextSegment, propBagContext);
+                } else if (segment instanceof mergeTree.Marker) {
+                    const labels = segment.getTileLabels();
                     let label: string = "Tile";
                     if (labels.length > 0) {
                         label = labels[0];
                     }
-                    const propBagContext = this.GetPropertyBagLabel(markerSegment.properties);
+                    const propBagContext = this.GetPropertyBagLabel(segment.properties);
                     handleSegments(label, NodeType.MarkerSegment, propBagContext);
                 }
                 return true;

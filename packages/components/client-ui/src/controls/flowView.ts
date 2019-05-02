@@ -670,13 +670,11 @@ function renderSegmentIntoLine(
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
-    const segType = segment.getType();
-    if (segType === MergeTree.SegmentType.Text) {
-        const textSegment = segment as MergeTree.TextSegment;
+    if (segment instanceof MergeTree.TextSegment) {
         if (lineContext.mathMode) {
             // will be whole segment
             // TODO: show math box if cursor in math
-            lineContext.mathBuffer += textSegment.text;
+            lineContext.mathBuffer += segment.text;
         } else {
             if (start < 0) {
                 start = 0;
@@ -684,10 +682,10 @@ function renderSegmentIntoLine(
             if (end > segment.cachedLength) {
                 end = segment.cachedLength;
             }
-            const text = textSegment.text.substring(start, end);
+            const text = segment.text.substring(start, end);
             const textStartPos = segpos + start;
             const textEndPos = segpos + end;
-            lineContext.span = makeSegSpan(lineContext.flowView, text, textSegment, start, segpos);
+            lineContext.span = makeSegSpan(lineContext.flowView, text, segment, start, segpos);
             if ((lineContext.lineDiv.endPGMarker) && (lineContext.lineDiv.endPGMarker.properties.header)) {
                 lineContext.span.style.color = wordHeadingColor;
             }
@@ -701,14 +699,13 @@ function renderSegmentIntoLine(
                 showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
             }
         }
-    } else if (segType === MergeTree.SegmentType.Marker) {
-        const marker = segment as MergeTree.Marker;
+    } else if (segment instanceof MergeTree.Marker) {
         // console.log(`marker pos: ${segpos}`);
 
         // If the marker is a simple reference, see if it's types is registered as an external
         // component.
-        if (marker.refType === MergeTree.ReferenceType.Simple) {
-            const typeName = marker.properties.ref && marker.properties.ref.type.name;
+        if (segment.refType === MergeTree.ReferenceType.Simple) {
+            const typeName = segment.properties.ref && segment.properties.ref.type.name;
             const maybeComponent = ui.refTypeNameToComponent.get(typeName);
             // If it is a registered external component, ask it to render itself to HTML and
             // insert the divs here.
@@ -720,13 +717,13 @@ function renderSegmentIntoLine(
                 );
 
                 const newElement = maybeComponent.upsert(
-                    marker.properties.state,
+                    segment.properties.state,
                     context,
-                    marker.properties.cachedElement,
+                    segment.properties.cachedElement,
                 );
 
-                if (newElement !== marker.properties.cachedElement) {
-                    marker.properties.cachedElement = newElement;
+                if (newElement !== segment.properties.cachedElement) {
+                    segment.properties.cachedElement = newElement;
                     allowDOMEvents(newElement);
                 }
 
@@ -734,8 +731,8 @@ function renderSegmentIntoLine(
             }
         }
 
-        if (marker.hasTileLabel("math")) {
-            if (marker.properties.mathStart) {
+        if (segment.hasTileLabel("math")) {
+            if (segment.properties.mathStart) {
                 lineContext.mathMode = true;
                 lineContext.mathSegpos = segpos;
             } else {
@@ -768,12 +765,12 @@ function renderSegmentIntoLine(
                 lineContext.lineDiv.lineEnd += lineContext.mathBuffer.length;
                 lineContext.mathBuffer = "";
                 lineContext.mathMode = false;
-                const mathEndMarker = marker as IMathEndMarker;
+                const mathEndMarker = segment as IMathEndMarker;
                 mathEndMarker.outerSpan = lineContext.span;
             }
         }
 
-        if (endRenderSegments(marker)) {
+        if (endRenderSegments(segment)) {
             if (lineContext.flowView.cursor.pos === segpos) {
                 showPositionEndOfLine(lineContext);
             } else {
@@ -1413,7 +1410,7 @@ function gatherOverlayLayer(
     end: number,
     context: IOverlayMarker[]) {
 
-    if (segment.getType() === MergeTree.SegmentType.Marker) {
+    if (segment instanceof MergeTree.Marker) {
         const marker = segment as MergeTree.Marker;
         if ((marker.refType === MergeTree.ReferenceType.Simple) &&
             (marker.hasSimpleType("inkOverlay"))) {
@@ -2180,7 +2177,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             break;
         }
 
-        const asMarker = segoff.segment.getType() === MergeTree.SegmentType.Marker
+        const asMarker = segoff.segment instanceof MergeTree.Marker
             ? segoff.segment as MergeTree.Marker
             : undefined;
 
@@ -2247,7 +2244,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
         } else {
-            if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+            if (segoff.segment instanceof MergeTree.Marker) {
                 // empty paragraph
                 curPGMarker = segoff.segment as Paragraph.IParagraphMarker;
                 if (fetchLog) {
@@ -2317,7 +2314,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
-                    if (segoff.segment.getType() === MergeTree.SegmentType.Marker) {
+                    if (segoff.segment instanceof MergeTree.Marker) {
                         const marker = segoff.segment as MergeTree.Marker;
                         if (marker.hasRangeLabel("cell") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
@@ -2761,45 +2758,39 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordBackward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
+            if (segment instanceof MergeTree.TextSegment) {
+                const innerOffset = segment.text.length - 1;
+                const maxWord = maximalWord(segment, innerOffset);
+                if (maxWord.wordStart < maxWord.wordEnd) {
+                    wordStart -= (maxWord.wordEnd - maxWord.wordStart);
+                    return (maxWord.wordStart === 0);
+                } else {
                     return false;
-                case MergeTree.SegmentType.Text:
-                    const textSegment = segment as MergeTree.TextSegment;
-                    const innerOffset = textSegment.text.length - 1;
-                    const maxWord = maximalWord(textSegment, innerOffset);
-                    if (maxWord.wordStart < maxWord.wordEnd) {
-                        wordStart -= (maxWord.wordEnd - maxWord.wordStart);
-                        return (maxWord.wordStart === 0);
-                    } else {
-                        return false;
-                    }
+                }
             }
+            return false;
         }
         return true;
     };
 
     const expandWordForward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
-                    return false;
-                case MergeTree.SegmentType.Text:
-                    const textSegment = segment as MergeTree.TextSegment;
-                    const innerOffset = 0;
-                    const maxWord = maximalWord(textSegment, innerOffset);
-                    if (maxWord.wordEnd > innerOffset) {
-                        wordEnd += (maxWord.wordEnd - innerOffset);
-                    }
-                    return (maxWord.wordEnd === textSegment.text.length);
+            if (segment instanceof MergeTree.TextSegment) {
+                const innerOffset = 0;
+                const maxWord = maximalWord(segment, innerOffset);
+                if (maxWord.wordEnd > innerOffset) {
+                    wordEnd += (maxWord.wordEnd - innerOffset);
+                }
+                return (maxWord.wordEnd === segment.text.length);
             }
+            return false;
         }
         return true;
     };
 
     const segoff = mergeTree.getContainingSegment(pos,
         MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
-    if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
+    if (segoff.segment && (segoff.segment instanceof MergeTree.TextSegment)) {
         const textSegment = segoff.segment as MergeTree.TextSegment;
         const maxWord = maximalWord(textSegment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
@@ -3034,7 +3025,7 @@ export class FlowView extends ui.Component {
             // (see comments at 'modifiedMarkers' decl for more info.)
             this.modifiedMarkers = event
                 .ranges
-                .filter((range) => range.segment.getType() === MergeTree.SegmentType.Marker);
+                .filter((range) => range.segment instanceof MergeTree.Marker);
 
             this.handleSharedStringDelta(event, target);
         });
@@ -3652,9 +3643,8 @@ export class FlowView extends ui.Component {
                 this.cursor.pos--;
             }
             const segoff = getContainingSegment(this, this.cursor.pos);
-            if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
-                // REVIEW: assume marker for now (could be external later)
-                const marker = segoff.segment as MergeTree.Marker;
+            if (segoff.segment instanceof MergeTree.Marker) {
+                const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
                     if (marker.hasTileLabel("pg")) {
                         if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -3689,9 +3679,9 @@ export class FlowView extends ui.Component {
 
             const segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
                 this.client.getClientId());
-            if (segoff.segment.getType() !== MergeTree.SegmentType.Text) {
+            if (segoff.segment instanceof MergeTree.Marker) {
                 // REVIEW: assume marker for now
-                const marker = segoff.segment as MergeTree.Marker;
+                const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
                     if (marker.hasTileLabel("pg")) {
                         if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
@@ -4382,7 +4372,7 @@ export class FlowView extends ui.Component {
 
     public copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
-        if (segoff.segment && (segoff.segment.getType() === MergeTree.SegmentType.Text)) {
+        if (segoff.segment && (segoff.segment instanceof MergeTree.TextSegment)) {
             const textSegment = segoff.segment as MergeTree.TextSegment;
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), textSegment.properties);
         }
@@ -4431,7 +4421,7 @@ export class FlowView extends ui.Component {
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
-            if (segment.getType() === MergeTree.SegmentType.Text) {
+            if (segment instanceof MergeTree.TextSegment) {
                 const textSegment = segment as MergeTree.TextSegment;
                 if (textSegment.properties && textSegment.properties[name] === valueOn) {
                     someSet = true;
@@ -5361,9 +5351,9 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.ANNOTATE:
                 opCursorPos = event.end;
                 event.ranges.forEach((range) => {
-                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                    if (range.segment instanceof MergeTree.Marker) {
                         this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                    } else if (range.segment instanceof MergeTree.TextSegment) {
                         this.updatePGInfo(range.offset);
                         this.updatePGInfo(range.offset + range.segment.cachedLength);
                     }
@@ -5373,9 +5363,9 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.INSERT:
                 opCursorPos = event.end;
                 event.ranges.forEach((range) => {
-                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                    if (range.segment instanceof MergeTree.Marker) {
                         this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                    } else if (range.segment instanceof MergeTree.TextSegment) {
                         this.updatePGInfo(range.offset);
                         this.updatePGInfo(range.offset + range.segment.cachedLength);
                         if (!event.isLocal && range.offset <= this.cursor.pos) {
@@ -5388,9 +5378,9 @@ export class FlowView extends ui.Component {
             case MergeTree.MergeTreeDeltaType.REMOVE:
                 opCursorPos = event.start;
                 event.ranges.forEach((range) => {
-                    if (range.segment.getType() === MergeTree.SegmentType.Marker) {
+                    if (range.segment instanceof MergeTree.Marker) {
                         this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment.getType() === MergeTree.SegmentType.Text) {
+                    } else if (range.segment instanceof MergeTree.TextSegment) {
                         this.updatePGInfo(range.offset);
                         if (!event.isLocal && range.offset <= this.cursor.pos) {
                             this.cursor.pos -= range.segment.cachedLength;

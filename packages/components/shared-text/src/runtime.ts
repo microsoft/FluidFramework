@@ -266,7 +266,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
 
             const segments = MergeTree.loadSegments(starterText, 0, true);
             for (const segment of segments) {
-                if (segment.getType() === MergeTree.SegmentType.Text) {
+                if (segment instanceof MergeTree.TextSegment) {
                     const textSegment = segment as MergeTree.TextSegment;
                     newString.insertText(textSegment.text, newString.client.getLength(),
                         textSegment.properties);

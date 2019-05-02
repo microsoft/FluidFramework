@@ -1,6 +1,5 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { ServicePlatform } from "@prague/component";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
@@ -12,7 +11,7 @@ import {
     ReferencePosition,
     ReferenceType,
     reservedTileLabelsKey,
-    SegmentType,
+    TextSegment,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
@@ -48,33 +47,28 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
 };
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    const segmentType = segment.getType();
-    switch (segmentType) {
-        case SegmentType.Text:
-            return DocSegmentKind.Text;
-        case SegmentType.Marker: {
-            const asMarker = segment as Marker;
-            const markerType = asMarker.refType;
-
-            switch (markerType) {
-                case ReferenceType.Tile:
-                    const tileLabel = asMarker.getTileLabels()[0];
-                    switch (tileLabel) {
-                        case DocSegmentKind.Paragraph:
-                        case DocSegmentKind.LineBreak:
-                        case DocSegmentKind.EOF:
-                            return tileLabel;
-                        default:
-                            throw new Error(`Unknown Marker.tileLabel '${tileLabel}'.`);
-                    }
-                case ReferenceType.Simple:
-                    return DocSegmentKind.Inclusion;
-                default:
-                    throw new Error(`Unknown Marker.refType '${markerType}'.`);
-            }
+    if (segment instanceof TextSegment) {
+        return DocSegmentKind.Text;
+    } else if (segment instanceof Marker) {
+        const markerType = segment.refType;
+        switch (markerType) {
+            case ReferenceType.Tile:
+                const tileLabel = segment.getTileLabels()[0];
+                switch (tileLabel) {
+                    case DocSegmentKind.Paragraph:
+                    case DocSegmentKind.LineBreak:
+                    case DocSegmentKind.EOF:
+                        return tileLabel;
+                    default:
+                        throw new Error(`Unknown Marker.tileLabel '${tileLabel}'.`);
+                }
+            case ReferenceType.Simple:
+                return DocSegmentKind.Inclusion;
+            default:
+                throw new Error(`Unknown Marker.refType '${markerType}'.`);
         }
-        default:
-            throw new Error(`Unknown SegmentType '${segmentType}'.`);
+    } else {
+        throw new Error(`Unknown Segment Type.`);
     }
 };
 

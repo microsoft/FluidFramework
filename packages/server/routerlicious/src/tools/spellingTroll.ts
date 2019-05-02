@@ -7,6 +7,7 @@ import * as Sequence from "@prague/sequence";
 import * as fs from "fs";
 import * as path from "path";
 import * as commander from "commander";
+import { Marker, TextSegment } from "@prague/merge-tree";
 
 function clock() {
     return process.hrtime();
@@ -115,36 +116,31 @@ class Speller {
         let endMarkerFound = false;
         let mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
-                    let marker = <MergeTree.Marker>segment;
-                    if (mergeTree.localNetLength(marker)) {
-                        if (marker.hasTileLabel("pg")) {
-                            if (prevPG) {
-                                // TODO: send paragraph to service
-                                spellParagraph(startPGPos, segpos, pgText);
-                                endMarkerFound = true;
-                            }
-                            startPGPos = segpos + mergeTree.localNetLength(marker);
-                            prevPG = marker;
-                            pgText = "";
-                            if (endMarkerFound) {
-                                return false;
-                            }
+            if (segment instanceof Marker) {
+                if (mergeTree.localNetLength(segment)) {
+                    if (segment.hasTileLabel("pg")) {
+                        if (prevPG) {
+                            // TODO: send paragraph to service
+                            spellParagraph(startPGPos, segpos, pgText);
+                            endMarkerFound = true;
                         }
-                        else {
-                            for (let i = 0; i < mergeTree.localNetLength(marker); i++) {
-                                pgText += " ";
-                            }
+                        startPGPos = segpos + mergeTree.localNetLength(segment);
+                        prevPG = segment;
+                        pgText = "";
+                        if (endMarkerFound) {
+                            return false;
                         }
                     }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        pgText += textSegment.text;
+                    else {
+                        for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
+                            pgText += " ";
+                        }
                     }
-                    break;
+                }
+            } else if (segment instanceof TextSegment) {
+                if (mergeTree.localNetLength(segment)) {
+                    pgText += segment.text;
+                }
             }
             return true;
         }
@@ -183,28 +179,23 @@ class Speller {
         let mergeTree = this.sharedString.client.mergeTree;
 
         let gatherReverse = (segment: MergeTree.ISegment) => {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
+            if (segment instanceof Marker) {
+                if (!wordsFound) {
+                    words = " " + words;
+                }
+                sentence = " " + sentence;
+                if (segment.hasTileLabel("pg")) {
+                    return false;
+                }
+            } else if (segment instanceof TextSegment) {
+                if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
-                        words = " " + words;
+                        words = segment.text + words;
                     }
-                    sentence = " " + sentence;
-                    let marker = <MergeTree.Marker>segment;
-                    if (marker.hasTileLabel("pg")) {
-                        return false;
-                    }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        if (!wordsFound) {
-                            words = textSegment.text + words;
-                        }
-                        sentence = textSegment.text + sentence;
-                    }
-                    break;
-                // TODO: component
+                    sentence = segment.text + sentence;
+                }
             }
+            // TODO: component
             // console.log(`rev: -${text}-`);
             if (/\s+\w+/.test(words)) {
                 wordsFound = true;
@@ -216,28 +207,23 @@ class Speller {
         };
 
         let gatherForward = (segment: MergeTree.ISegment) => {
-            switch (segment.getType()) {
-                case MergeTree.SegmentType.Marker:
+            if (segment instanceof Marker) {
+                if (!wordsFound) {
+                    fwdWords = fwdWords + " ";
+                }
+                fwdSentence = fwdSentence + " ";
+                if (segment.hasTileLabel("pg")) {
+                    return false;
+                }
+            } else if (segment instanceof TextSegment) {
+                if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
-                        fwdWords = fwdWords + " ";
+                        fwdWords = fwdWords + segment.text;
                     }
-                    fwdSentence = fwdSentence + " ";
-                    let marker = <MergeTree.Marker>segment;
-                    if (marker.hasTileLabel("pg")) {
-                        return false;
-                    }
-                    break;
-                case MergeTree.SegmentType.Text:
-                    let textSegment = <MergeTree.TextSegment>segment;
-                    if (mergeTree.localNetLength(textSegment)) {
-                        if (!wordsFound) {
-                            fwdWords = fwdWords + textSegment.text;
-                        }
-                        fwdSentence = fwdSentence + textSegment.text;
-                    }
-                    break;
-                // TODO: component
+                    fwdSentence = fwdSentence + segment.text;
+                }
             }
+            // TODO: component
             if (/\w+\s+/.test(fwdWords)) {
                 wordsFound = true;
             }

@@ -21,14 +21,13 @@ function lcToPos(mergeTree: SharedString.MergeTree, line: number, column: number
         return line < getLineCount(node);
     }
     let leaf = (segment: SharedString.Segment, segpos: number) => {
-        if (segment.getType() == SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segment;
-            if (marker.type == "line") {
+        if (segment instanceof SharedString.Marker) {
+            if (segment.type == "line") {
                 pos = column + segpos + 1;
             }
         }
         else {
-            console.log(`expected marker; got ${segment.getType()}`);
+            console.log(`expected marker; got ${segment}`);
         }
         return false;
     }
@@ -78,9 +77,8 @@ function posToLc(mergeTree: SharedString.MergeTree, pos: number) {
 function getLineCount(node: SharedString.Node) {
     if (node.isLeaf()) {
         let segment = <SharedString.Segment>node;
-        if (segment.getType() == SharedString.SegmentType.Marker) {
-            let marker = <SharedString.Marker>segment;
-            if (marker.type == "line") {
+        if (segment instanceof SharedString.Marker) {
+            if (segment.type == "line") {
                 return 1;
             }
         }
@@ -278,13 +276,12 @@ class FlowAdapter {
 
             function renderSegment(segment: SharedString.Segment, segPos: number, refSeq: number,
                 clientId: number, start: number, end: number) {
-                if (segment.getType() == SharedString.SegmentType.Text) {
-                    let textSegment = <SharedString.TextSegment>segment;
+                if (segment instanceof SharedString.TextSegment) {
                     let vspos = new vscode.Position(line, col);
-                    editBuilder.insert(vspos, textSegment.text);
-                    col += textSegment.text.length;
+                    editBuilder.insert(vspos, segment.text);
+                    col += segment.text.length;
                 }
-                else if (segment.getType() == SharedString.SegmentType.Marker) {
+                else if (segment instanceof SharedString.Marker) {
                     // assume line marker
                     if (line >= 0) {
                         let vspos = new vscode.Position(line, col);

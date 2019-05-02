@@ -4,6 +4,7 @@ import * as Sequence from "@prague/sequence";
 import { CharacterCodes } from "./characterCodes";
 import * as ui from "../ui";
 import { isInline } from "@prague/app-ui";
+import { TextSegment } from "@prague/merge-tree";
 
 type SharedString = Sequence.SharedString;
 
@@ -515,7 +516,7 @@ export function textToMathItem(mathText: string, itemsContext: IItemsContext) {
     const hw = itemsContext.fontInfo.getMathWidthHeight(mathText, pgFontstr);
     if ((itemsContext.itemInfo.maxHeight===undefined)||(hw.h > itemsContext.itemInfo.maxHeight)) {
         itemsContext.itemInfo.maxHeight = hw.h;
-    } 
+    }
     if (hw.w>itemsContext.itemInfo.minWidth) {
         itemsContext.itemInfo.minWidth = hw.w;
     }
@@ -593,18 +594,16 @@ export function isReference(marker: MergeTree.Marker) {
 export function segmentToItems(
     segment: MergeTree.ISegment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
-    if (segment.getType() === MergeTree.SegmentType.Text) {
-        let textSegment = <MergeTree.TextSegment>segment;
-        context.paragraphLexer.lex(textSegment);
-    } else if (segment.getType() === MergeTree.SegmentType.Marker) {
-        let marker = <MergeTree.Marker>segment;
-        if (isReference(marker)) {
-            context.paragraphLexer.mark(marker);
-        } else if (marker.hasTileLabel("pg") || isEndBox(marker)) {
+    if (segment instanceof MergeTree.TextSegment) {
+        context.paragraphLexer.lex(segment);
+    } else if (segment instanceof MergeTree.Marker) {
+        if (isReference(segment)) {
+            context.paragraphLexer.mark(segment);
+        } else if (segment.hasTileLabel("pg") || isEndBox(segment)) {
             context.nextPGPos = segpos;
             return false;
-        } else if (marker.hasTileLabel("math")) {
-            context.paragraphLexer.mathBoundary(marker.properties.mathStart);
+        } else if (segment.hasTileLabel("math")) {
+            context.paragraphLexer.mathBoundary(segment.properties.mathStart);
         }
     }
     return true;

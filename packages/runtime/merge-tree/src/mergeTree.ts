@@ -142,14 +142,6 @@ export class LocalReference implements ReferencePosition {
     }
 }
 
-export enum SegmentType {
-    Text,
-    Marker,
-    External,
-    Custom,
-    Run,
-}
-
 export interface IRemovalInfo {
     removedSeq?: number;
     removedClientId?: number;
@@ -170,7 +162,6 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
     append(segment: ISegment): void;
-    getType(): SegmentType;
     removeRange(start: number, end: number): boolean;
     splitAt(pos: number): ISegment;
     toJSONObject(): any;
@@ -347,26 +338,25 @@ function addNodeReferences(mergeTree: MergeTree, node: IMergeNode,
     if (node.isLeaf()) {
         let segment = <ISegment>node;
         if (mergeTree.localNetLength(segment) > 0) {
-            if (segment.getType() == SegmentType.Marker) {
-                let marker = <Marker>node;
-                let markerId = marker.getId();
+            if (segment instanceof Marker) {
+                let markerId = segment.getId();
                 // also in insertMarker but need for reload segs case
                 // can add option for this only from reload segs
                 if (markerId) {
-                    mergeTree.mapIdToSegment(markerId, marker);
+                    mergeTree.mapIdToSegment(markerId, segment);
                 }
-                if (marker.refType & ops.ReferenceType.Tile) {
-                    addTile(marker, rightmostTiles);
-                    addTileIfNotPresent(marker, leftmostTiles);
+                if (segment.refType & ops.ReferenceType.Tile) {
+                    addTile(segment, rightmostTiles);
+                    addTileIfNotPresent(segment, leftmostTiles);
                 }
-                if (marker.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
-                    for (let label of marker.getRangeLabels()) {
-                        updateRangeInfo(label, marker);
+                if (segment.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
+                    for (let label of segment.getRangeLabels()) {
+                        updateRangeInfo(label, segment);
                     }
                 }
             } else {
                 // TODO: generalize to other segment types
-                let textSegment = <TextSegment>node;
+                const textSegment = node as TextSegment;
                 if (textSegment.localRefs && (textSegment.hierRefCount !== undefined) &&
                     (textSegment.hierRefCount > 0)) {
                     for (let lref of textSegment.localRefs) {
@@ -709,7 +699,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     abstract clone(): ISegment;
     abstract append(segment: ISegment): void;
-    abstract getType(): SegmentType;
     abstract removeRange(start: number, end: number): boolean;
     protected abstract createSplitSegmentAt(pos: number): BaseSegment
 }
@@ -743,10 +732,6 @@ export class ExternalSegment extends BaseSegment {
 
     append() {
         throw new Error('Can not append to external segment');
-    }
-
-    getType(): SegmentType {
-        return SegmentType.External;
     }
 
     removeRange(start: number, end: number): boolean {
@@ -960,10 +945,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
         return `M ${bbuf}: ${lbuf} ${pbuf}`;
     }
 
-    getType() {
-        return SegmentType.Marker;
-    }
-
     removeRange(start: number, end: number): boolean {
         console.log("remove range called on marker");
         return false;
@@ -1040,13 +1021,10 @@ export class TextSegment extends BaseSegment {
         return b;
     }
 
-    getType() {
-        return SegmentType.Text;
-    }
 
     canAppend(segment: ISegment) {
         return this.text.charAt(this.text.length - 1) !== '\n'
-            && segment.getType() === SegmentType.Text
+            && segment instanceof TextSegment
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
                 segment.cachedLength <= MergeTree.TextSegmentGranularity);
     }
@@ -1056,16 +1034,16 @@ export class TextSegment extends BaseSegment {
     }
 
     append(segment: ISegment) {
-        if (segment.getType() !== SegmentType.Text) {
+        if (segment instanceof TextSegment) {
+            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
+            //'this.cachedLength' is used to adjust the offsets of the local refs.
+            this.appendLocalRefs(segment);
+
+            this.text += segment.text;
+            this.cachedLength = this.text.length;
+        } else {
             throw new Error("can only append text segment");
         }
-
-        // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-        //       'this.cachedLength' is used to adjust the offsets of the local refs.
-        this.appendLocalRefs(segment);
-
-        this.text += (<TextSegment>segment).text;
-        this.cachedLength = this.text.length;
     }
 
     // TODO: retain removed text for undo
@@ -1086,21 +1064,20 @@ export class TextSegment extends BaseSegment {
 }
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-    if (segment.getType() == SegmentType.Text) {
-        let textSegment = <TextSegment>segment;
+    if (segment instanceof TextSegment) {
 
         if (MergeTree.traceGatherText) {
-            console.log(`@cli ${state.clientId ? state.clientId : -1} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+            console.log(`@cli ${state.clientId ? state.clientId : -1} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
         }
-        if ((state.start <= 0) && (state.end >= textSegment.text.length)) {
-            state.context.text += textSegment.text;
+        if ((state.start <= 0) && (state.end >= segment.text.length)) {
+            state.context.text += segment.text;
         }
         else {
-            if (state.end >= textSegment.text.length) {
-                state.context.text += textSegment.text.substring(state.start);
+            if (state.end >= segment.text.length) {
+                state.context.text += segment.text.substring(state.start);
             }
             else {
-                state.context.text += textSegment.text.substring(state.start, state.end);
+                state.context.text += segment.text.substring(state.start, state.end);
             }
         }
     }
@@ -1933,11 +1910,10 @@ function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo
 function recordRangeLeaf(segment: ISegment, segpos: number,
     refSeq: number, clientId: number, start: number, end: number,
     searchInfo: IMarkerSearchRangeInfo) {
-    if (segment.getType() === SegmentType.Marker) {
-        let marker = <Marker>segment;
-        if (marker.refType &
+    if (segment instanceof Marker) {
+        if (segment.refType &
             (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
-            applyLeafRangeMarker(marker, searchInfo);
+            applyLeafRangeMarker(segment, searchInfo);
         }
     }
     return false;
@@ -1947,11 +1923,10 @@ function rangeShift(node: IMergeNode, segpos: number, refSeq: number, clientId: 
     offset: number, end: number, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         let seg = <ISegment>node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg.getType() === SegmentType.Marker)) {
-            let marker = <Marker>seg;
-            if (marker.refType &
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg instanceof Marker)) {
+            if (seg.refType &
                 (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
-                applyLeafRangeMarker(marker, searchInfo);
+                applyLeafRangeMarker(seg, searchInfo);
             }
         }
     } else {
@@ -1964,10 +1939,9 @@ function rangeShift(node: IMergeNode, segpos: number, refSeq: number, clientId: 
 function recordTileStart(segment: ISegment, segpos: number,
     refSeq: number, clientId: number, start: number, end: number,
     searchInfo: IReferenceSearchInfo) {
-    if (segment.getType() === SegmentType.Marker) {
-        let marker = <Marker>segment;
-        if (marker.hasTileLabel(searchInfo.tileLabel)) {
-            searchInfo.tile = marker;
+    if (segment instanceof Marker) {
+        if (segment.hasTileLabel(searchInfo.tileLabel)) {
+            searchInfo.tile = segment;
         }
     }
     return false;
@@ -1977,10 +1951,9 @@ function tileShift(node: IMergeNode, segpos: number, refSeq: number, clientId: n
     offset: number, end: number, searchInfo: IReferenceSearchInfo) {
     if (node.isLeaf()) {
         let seg = <ISegment>node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg.getType() === SegmentType.Marker)) {
-            let marker = <Marker>seg;
-            if (marker.hasTileLabel(searchInfo.tileLabel)) {
-                searchInfo.tile = marker;
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg instanceof Marker)) {
+            if (seg.hasTileLabel(searchInfo.tileLabel)) {
+                searchInfo.tile = seg;
             }
         }
     } else {
@@ -2575,11 +2548,10 @@ export class MergeTree {
         if (end > segment.cachedLength) {
             end = segment.cachedLength;
         }
-        if (segment.getType() === SegmentType.Text) {
-            let textSegment = <TextSegment>segment;
-            accumSegments.segments.push(textSegment.clone(start, end));
+        if (segment instanceof TextSegment) {
+            accumSegments.segments.push(segment.clone(start, end));
         } else {
-            let marker = <Marker>segment;
+            const marker = segment as Marker;
             accumSegments.segments.push(marker.clone());
         }
         return true;
@@ -2587,10 +2559,9 @@ export class MergeTree {
 
     private gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: TextAccumulator) => {
-        if (segment.getType() == SegmentType.Text) {
-            let textSegment = <TextSegment>segment;
+        if (segment instanceof TextSegment) {
             if (MergeTree.traceGatherText) {
-                console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${textSegment.seq} rseq ${textSegment.removedSeq} text ${textSegment.text}`);
+                console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
             }
             let beginTags = "";
             let endTags = "";
@@ -2599,10 +2570,10 @@ export class MergeTree {
                 let tags = <string[]>[];
                 let initTags = <string[]>[];
 
-                if (textSegment.properties && (textSegment.properties["font-weight"])) {
+                if (segment.properties && (segment.properties["font-weight"])) {
                     tags.push("b");
                 }
-                if (textSegment.properties && (textSegment.properties["text-decoration"])) {
+                if (segment.properties && (segment.properties["text-decoration"])) {
                     tags.push("u");
                 }
                 let remTags = <string[]>[];
@@ -2637,18 +2608,18 @@ export class MergeTree {
             }
             accumText.textSegment.text += endTags;
             accumText.textSegment.text += beginTags;
-            if ((start <= 0) && (end >= textSegment.text.length)) {
-                accumText.textSegment.text += textSegment.text;
+            if ((start <= 0) && (end >= segment.text.length)) {
+                accumText.textSegment.text += segment.text;
             }
             else {
                 if (start < 0) {
                     start = 0;
                 }
-                if (end >= textSegment.text.length) {
-                    accumText.textSegment.text += textSegment.text.substring(start);
+                if (end >= segment.text.length) {
+                    accumText.textSegment.text += segment.text.substring(start);
                 }
                 else {
-                    accumText.textSegment.text += textSegment.text.substring(start, end);
+                    accumText.textSegment.text += segment.text.substring(start, end);
                 }
             }
         }

@@ -67,10 +67,9 @@ export async function onLoad(
                 const starterText = template ? await downloadRawText(template) : " ";
                 const segments = api.MergeTree.loadSegments(starterText, 0, true);
                 for (const segment of segments) {
-                    if (segment.getType() === api.MergeTree.SegmentType.Text) {
-                        const textSegment = segment as api.MergeTree.TextSegment;
-                        newString.insertText(textSegment.text, newString.client.getLength(),
-                            textSegment.properties);
+                    if (segment instanceof api.MergeTree.TextSegment) {
+                        newString.insertText(segment.text, newString.client.getLength(),
+                            segment.properties);
                     } else {
                         // assume marker
                         const marker = segment as api.MergeTree.Marker;

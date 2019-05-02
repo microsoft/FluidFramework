@@ -1,5 +1,5 @@
 import { getStyle } from "@chaincode/flow-document";
-import { ISegment, SegmentType, TextSegment } from "@prague/merge-tree";
+import { ISegment, TextSegment } from "@prague/merge-tree";
 
 /**
  * Used by the DocumentView to concatenate adjacent text segments that share the same style.  These should be
@@ -27,22 +27,21 @@ export class TextAccumulator {
         console.assert(position === this._nextPosition);
 
         // Terminate if the next segment is not a text segment.
-        if (segment.getType() !== SegmentType.Text) {
+        if (!(segment instanceof TextSegment)) {
             return false;
         }
 
         // Terminate if the next text segment uses a different style (i.e., needs a separate <span>.)
-        const asText = segment as TextSegment;
-        if (getStyle(asText) !== this.style) {
+        if (getStyle(segment) !== this.style) {
             return false;
         }
 
-        this.segments.push(asText);
+        this.segments.push(segment);
 
         // Clamp the relative start/end offsets to the range of offsets included in the current TextSegment.
         const startOffset = Math.max(0, relativeStartOffset);
-        const endOffset = Math.min(relativeEndOffset, asText.text.length);
-        this._text += asText.text.slice(startOffset, endOffset);
+        const endOffset = Math.min(relativeEndOffset, segment.text.length);
+        this._text += segment.text.slice(startOffset, endOffset);
         this._nextPosition = position + endOffset;
         return true;
     }

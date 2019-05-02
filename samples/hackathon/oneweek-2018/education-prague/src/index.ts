@@ -43,10 +43,9 @@ async function run(id: string): Promise<void> {
         const starterText = " ";
         const segments = prague.MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (segment.getType() === prague.MergeTree.SegmentType.Text) {
-                const textSegment = segment as prague.MergeTree.TextSegment;
-                newString.insertText(textSegment.text, newString.client.getLength(),
-                    textSegment.properties);
+            if (segment instanceof prague.MergeTree.TextSegment) {
+                newString.insertText(segment.text, newString.client.getLength(),
+                    segment.properties);
             } else {
                 // assume marker
                 const marker = segment as prague.MergeTree.Marker;
