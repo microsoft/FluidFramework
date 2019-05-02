@@ -27,13 +27,13 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return buildHierarchy(tree);
     }
 
-    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
-        const commits = await this.manager.getCommits(sha, count);
+    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+        const commits = await this.manager.getCommits(commitId, count);
         return commits.map((commit) => this.translateCommit(commit));
     }
 
-    public async read(sha: string): Promise<string> {
-        const value = await this.manager.getBlob(sha);
+    public async read(blobId: string): Promise<string> {
+        const value = await this.manager.getBlob(blobId);
         return value.content;
     }
 
@@ -51,8 +51,8 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return this.manager.createBlob(file.toString("base64"), "base64");
     }
 
-    public getRawUrl(sha: string): string {
-        return this.manager.getRawUrl(sha);
+    public getRawUrl(blobId: string): string {
+        return this.manager.getRawUrl(blobId);
     }
 
     private translateCommit(details: resources.ICommitDetails): resources.ICommit {

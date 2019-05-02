@@ -19,12 +19,12 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return buildHierarchy(tree);
     }
 
-    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
-        return this.storageManager.getVersions(sha, count);
+    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+        return this.storageManager.getVersions(commitId, count);
     }
 
-    public async read(sha: string): Promise<string> {
-        const response = await this.storageManager.getBlob(sha);
+    public async read(blobId: string): Promise<string> {
+        const response = await this.storageManager.getBlob(blobId);
         return response.content;
     }
 
@@ -41,7 +41,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return this.storageManager.createBlob(file);
     }
 
-    public getRawUrl(sha: string): string {
-        return this.storageManager.getRawUrl(sha);
+    public getRawUrl(blobId: string): string {
+        return this.storageManager.getRawUrl(blobId);
     }
 }

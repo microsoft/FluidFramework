@@ -130,9 +130,9 @@ export interface IDocumentStorageService {
     getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree | null | undefined>;
 
     /**
-     * Retrieves all versions of the document starting at the specified sha - or null if from the head
+     * Retrieves all versions of the document starting at the specified commitId - or null if from the head
      */
-    getVersions(sha: string | null, count: number): Promise<resources.ICommit[]>;
+    getVersions(commitId: string | null, count: number): Promise<resources.ICommit[]>;
 
     /**
      * Retrieves the content for the given commit at the given path
@@ -142,7 +142,7 @@ export interface IDocumentStorageService {
     /**
      * Reads the object with the given ID
      */
-    read(sha: string): Promise<string | undefined>;
+    read(id: string): Promise<string | undefined>;
 
     /**
      * Writes to the object with the given ID
@@ -155,9 +155,9 @@ export interface IDocumentStorageService {
     createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse | undefined | null>;
 
     /**
-     * Fetch image Data url
+     * Fetch blob Data url
      */
-    getRawUrl(sha: string): string | null | undefined;
+    getRawUrl(blobId: string): string | null | undefined;
 }
 
 // Error tracking service.

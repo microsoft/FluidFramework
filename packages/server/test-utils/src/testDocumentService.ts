@@ -21,11 +21,11 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return null;
     }
 
-    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
         return [];
     }
 
-    public async read(path: string): Promise<string> {
+    public async read(blobId: string): Promise<string> {
         return "";
     }
 
@@ -53,11 +53,11 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return null;
     }
 
-    public async getBlob(sha: string): Promise<resources.IBlob> {
+    public async getBlob(blobId: string): Promise<resources.IBlob> {
         return null;
     }
 
-    public getRawUrl(sha: string): string {
+    public getRawUrl(blobId: string): string {
         return null;
     }
 }

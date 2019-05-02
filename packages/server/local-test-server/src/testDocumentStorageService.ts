@@ -14,11 +14,11 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return null;
     }
 
-    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
        return [];
     }
 
-    public async read(sha: string): Promise<string> {
+    public async read(id: string): Promise<string> {
         return "";
     }
 
@@ -34,7 +34,7 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return null;
     }
 
-    public getRawUrl(sha: string): string {
+    public getRawUrl(blobId: string): string {
         return null;
     }
 }

@@ -13,11 +13,11 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return null;
     }
 
-    public async getVersions(sha: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
         return [];
     }
 
-    public async read(sha: string): Promise<string | undefined> {
+    public async read(blobId: string): Promise<string | undefined> {
         return;
     }
 
@@ -33,7 +33,7 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not create blob");
     }
 
-    public getRawUrl(sha: string): string | undefined {
+    public getRawUrl(blobId: string): string | undefined {
         return;
     }
 }

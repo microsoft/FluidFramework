@@ -3,7 +3,7 @@ import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
-    // SHA -> blob prefetchCache cache
+    // blobId -> blob prefetchCache cache
     private prefetchCache = new Map<string, Promise<string | undefined>>();
     private prefetchEnabled = true;
 
@@ -27,12 +27,12 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return p;
     }
 
-    public async getVersions(sha: string | null, count: number): Promise<ICommit[]> {
-        return this.storage.getVersions(sha, count);
+    public async getVersions(commitId: string | null, count: number): Promise<ICommit[]> {
+        return this.storage.getVersions(commitId, count);
     }
 
-    public async read(sha: string): Promise<string | undefined> {
-        return this.cachedRead(sha);
+    public async read(blobId: string): Promise<string | undefined> {
+        return this.cachedRead(blobId);
     }
 
     public async getContent(version: ICommit, path: string): Promise<string | undefined> {
@@ -47,8 +47,8 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.createBlob(file);
     }
 
-    public getRawUrl(sha: string): string | undefined | null {
-        return this.storage.getRawUrl(sha);
+    public getRawUrl(blobId: string): string | undefined | null {
+        return this.storage.getRawUrl(blobId);
     }
 
     public stopPrefetch() {
@@ -56,17 +56,17 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         this.prefetchCache.clear();
     }
 
-    private cachedRead(sha: string): Promise<string | undefined> {
+    private cachedRead(blobId: string): Promise<string | undefined> {
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: Promise<string | undefined> | undefined = this.prefetchCache.get(sha);
+            const prefetchedBlobP: Promise<string | undefined> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP) {
                 return prefetchedBlobP;
             }
-            const prefetchedBlobPFromStorage = this.storage.read(sha);
-            this.prefetchCache.set(sha, prefetchedBlobPFromStorage);
+            const prefetchedBlobPFromStorage = this.storage.read(blobId);
+            this.prefetchCache.set(blobId, prefetchedBlobPFromStorage);
             return prefetchedBlobPFromStorage;
         }
-        return this.storage.read(sha);
+        return this.storage.read(blobId);
     }
 
     private prefetchTree(tree: ISnapshotTree) {

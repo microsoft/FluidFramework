@@ -58,7 +58,7 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         throw new Error("Method not implemented.");
     }
 
-    public getVersions(sha: string, count: number): Promise<git.ICommit[]> {
+    public getVersions(commitId: string, count: number): Promise<git.ICommit[]> {
         throw new Error("Method not implemented.");
     }
 
@@ -66,7 +66,7 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public read(path: string): Promise<string> {
+    public read(blobId: string): Promise<string> {
         throw new Error("Method not implemented.");
     }
 
@@ -78,11 +78,11 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         return null;
     }
 
-    public async getBlob(sha: string): Promise<git.IBlob> {
+    public async getBlob(blobId: string): Promise<git.IBlob> {
         return null;
     }
 
-    public getRawUrl(sha: string): string {
+    public getRawUrl(blobId: string): string {
         return null;
     }
 }
