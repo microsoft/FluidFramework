@@ -1591,7 +1591,7 @@ export class Viewport {
                 }
                 y += lineHeight;
                 y = Math.floor(y + dy);
-                const exclu = makeExcludedRectangle(x, y, w, h, irdoc.sha);
+                const exclu = makeExcludedRectangle(x, y, w, h, irdoc.referenceDocId);
                 // This logic eventually triggers the marker to get moved based on the requiresUL property
                 if (movingMarker) {
                     exclu.requiresUL = true;
@@ -1599,7 +1599,7 @@ export class Viewport {
                         exclu.floatL = true;
                     }
                 }
-                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.sha);
+                let excluDiv = <IRefDiv>this.viewHasInclusion(irdoc.referenceDocId);
 
                 // Move the inclusion
                 if (excluDiv) {
@@ -1614,7 +1614,7 @@ export class Viewport {
 
                     excluDiv = <IRefDiv>document.createElement("div");
                     excluDiv.classList.add("preserve");
-                    excluDiv.classList.add(irdoc.sha);
+                    excluDiv.classList.add(irdoc.referenceDocId);
                     const innerDiv = document.createElement("div");
                     exclu.conformElement(excluDiv);
                     excluDiv.style.backgroundColor = "#DDDDDD";
@@ -1649,8 +1649,8 @@ export class Viewport {
                         showImage.src = irdoc.url;
                     } else if (irdoc.type.name === "video") {
                         let showVideo: HTMLVideoElement;
-                        if (irdoc.sha && this.inclusions.has(irdoc.sha)) {
-                            showVideo = this.inclusions.get(irdoc.sha) as HTMLVideoElement;
+                        if (irdoc.referenceDocId && this.inclusions.has(irdoc.referenceDocId)) {
+                            showVideo = this.inclusions.get(irdoc.referenceDocId) as HTMLVideoElement;
                         } else {
                             showVideo = document.createElement("video");
                         }
@@ -1662,7 +1662,7 @@ export class Viewport {
                         showVideo.controls = true;
                         showVideo.muted = true;
                         showVideo.load();
-                        this.inclusions.set(irdoc.sha, showVideo);
+                        this.inclusions.set(irdoc.referenceDocId, showVideo);
                     } else if (irdoc.type.name === "list") {
                         const listRefMarker = marker as IListRefMarker;
                         let selectionIndex = 0;
@@ -2866,7 +2866,7 @@ export interface IRefLayoutSpec {
 
 export interface IReferenceDoc {
     type: IReferenceDocType;
-    sha: string;
+    referenceDocId: string;
     url: string;
     layout?: IRefLayoutSpec;
 }
@@ -2884,7 +2884,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
                 name: "image",
             };
             const irdoc = <IReferenceDoc>{
-                sha: blob.blobId,
+                referenceDocId: blob.blobId,
                 type: irdocType,
                 url: blob.url,
             };
@@ -2902,7 +2902,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
                 name: "video",
             };
             const irdoc = <IReferenceDoc>{
-                sha: blob.blobId,
+                referenceDocId: blob.blobId,
                 type: irdocType,
                 url: blob.url,
             };
@@ -3142,7 +3142,7 @@ export class FlowView extends ui.Component {
             name: "childFlow",
         };
         const irdoc = <IReferenceDoc>{
-            sha: "C",
+            referenceDocId: "C",
             type: rdocType,
         };
         const refProps = {
@@ -4561,8 +4561,8 @@ export class FlowView extends ui.Component {
         const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
             items: testList,
+            referenceDocId: "L",
             selectionIndex: 0,
-            sha: "L",
             type: { name: "list" },
             url: "",
         };
@@ -5219,7 +5219,7 @@ export class FlowView extends ui.Component {
 
         const props = {
             [Paragraph.referenceProperty]: {
-                sha: "",                        // 'sha' not used
+                referenceDocId: "",                        // 'referenceDocId' not used
                 type: {
                     name: type,
                 } as IReferenceDocType,
