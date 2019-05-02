@@ -7,65 +7,57 @@ Welcome to Prague!
 
 We built Prague to make it simpler for developers to build collaborative experiences using Web technology.
 
-Prague's distributed data structures and accompanying abstractions make it easy to write apps that are collaborative just like you would build single-user applications and experiences. Prague handles keeping your data in sync across multiple clients, so you can focus on your app's business logic. Prague's data synchronization is fast, efficient, and requires very little bandwidth. Prague is extensible, too. You can write components which can be re-used or you can even create new Distributed Data Structures.
+Prague enables distributed, collaborative applications by providing developers with eventually consistent <xref:dds>, a
+flexible component and app model ("Chaincode"), and a reference server implementation ("Routerlicious.")
 
-# Table of Contents
+Teams across Microsoft are using Prague for low latency collaboration, zero setup data persistence, and on-by-default
+cross app compatibility. Among other projects, our partner teams are building components for text editing, gaming,
+command line tooling, and IOT.
 
-## Overview/Introduction
+Prague's [distributed data structures](xref:dds) make it easy to write apps that are collaborative just like you would build
+single-user applications and experiences. Prague handles keeping your data in sync across multiple clients, so you can
+focus on your app's business logic. Prague's data synchronization is fast, efficient, and requires very little
+bandwidth. Prague is extensible, too. You can write components which can be re-used or you can even create new
+distributed data structures.
 
-* What makes Prague different?
-* Benefits
-    * You can focus on your app's business logic; Prague takes care of data consistency between all clients
-    * It's easy to build 'version history' experiences with your data
-    * Components can be embedded in multiple places; reduce, reuse, recycle!
-* Features
-    * Runtime ensures data consistency between all clients
-    * Data persistence including automatic change tracking for all of your data
-    * Data synchronization is ludicrously fast
-    * Easy to plug in custom components
+## Benefits
 
+* You can focus on your app's business logic; Prague takes care of data consistency between all clients
+* It's easy to build 'version history' experiences with your data
+* Components can be embedded in multiple places; reduce, reuse, recycle!
 
-## Getting Started
+## Features
 
-### Build a Component
+* Runtime ensures data consistency between all clients
+* Data persistence including automatic change tracking for all of your data
+* Data synchronization is ludicrously fast
+* Easy to plug in custom components
 
-* Walkthrough of a sample component, created using `yo prague`, along with the source code that the generator creates
-* Explain what each piece of the sample does, and link to deeper topics as needed (e.g. Distributed Data Structures)
+## Build with Prague
 
-## Concepts
+Use <xref:yo-prague> to get set up quickly.
 
-* This section will contain deeper information about the key concepts that developers should understand to be effective with Prague.
+First, do these one time steps:
 
-### Distributed Data Structures
+````bash
+npm install -g yo
 
-* Overview of what a DDS is
+cd .../Prague/tools/generator-prague
 
-#### Map
+npm install
+npm link
+````
 
-#### Sequence
+Yo Prague is now ready. Try it!
 
-#### Consensus Ordered Collection
+````bash
+yo prague
+````
 
-Package documentation: <xref:consensus-ordered-collection>
+\* For Yo Prague setup issues: [Unauthorized - Stack
+Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
-### Components and Containers
+## Stack Overflow
 
-## Examples
-
-### Using `yo prague`
-
-### React and Prague
-
-* Should include a good example of converting an existing React component to use a Prague data model
-
-## Advanced Topics
-
-### Prague Internals and Architecture
-
-### Writing a Distributed Data Structure
-
-## [Contributing](./contributing/index.md)
-
-### How to Contribute
-
-### Issues and Suggestions
+The Prague team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using
+the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)

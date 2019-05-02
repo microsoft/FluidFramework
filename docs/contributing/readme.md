@@ -19,3 +19,5 @@ the issue in the pull request. Never merge multiple requests in one unless they 
 to follow our [coding guidelines](./coding-guidelines.md) and keep code changes as small as possible.
 Avoid pure formatting changes to code that has not been modified otherwise. Pull requests should contain tests
 whenever possible.
+
+## Issues and Suggestions

@@ -2,10 +2,9 @@
 
 ## Generating API documentation
 
-To build the API documentation, do the following:
+To build the API documentation, do the following from the root of the repository:
 
-```
-cd routerlicious
+```bash
 npm install
 npm run build
 npm run build:docs
@@ -28,9 +27,9 @@ This will create many YAML files under `docs/api/`.
 >           - name: Interval
 >             uid: sequence.Interval
 > ```
-> 
+>
 > You need to manually remove the first 3 lines, so you end up with something like this:
-> 
+>
 > ```yaml
 > items:
 >   - name: sequence

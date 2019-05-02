@@ -3,12 +3,12 @@
     "content": [
       {
         "files": ["**.md", "**.yml"],
-        "exclude": ["old/**", "_site/**", "_template/**"]
+        "exclude": ["_site/**", "_template/**"]
       }
     ],
     "resource": [
       {
-        "files": ["images/**", "examples/**/*.html"]
+        "files": ["images/**", "examples/**/*.html", "**.png", "**.jpg"]
       }
     ],
     "dest": "_site",

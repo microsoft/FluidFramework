@@ -18,7 +18,7 @@ RUN unzip docfx.zip
 WORKDIR /
 
 # Install api-documenter
-RUN npm install -g @microsoft/api-documenter
+RUN npm install -g @microsoft/api-documenter@7.1.3
 
 #############################
 FROM base AS r11s
@@ -60,5 +60,5 @@ RUN rsync docs/_site/ praguedocs/ -rv --exclude '.git'
 
 WORKDIR /praguedocs
 RUN git add .
-RUN git commit -m "automated build"
+RUN git diff --quiet && git diff --staged --quiet || git commit -am 'Automated build'
 RUN git push

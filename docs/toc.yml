@@ -1,4 +1,17 @@
+- name: Get Started
+  href: get-started/
+  topicHref: get-started/yo-prague.md
+- name: Examples
+  href: examples/
+  topicHref: examples/readme.md
+- name: Architecture
+  href: architecture/
+  topicHref: architecture/readme.md
+- name: Advanced Topics
+  href: advanced/
+  topicHref: advanced/readme.md
 - name: Contributing
   href: contributing/
-- name: Packages
+  topicHref: contributing/readme.md
+- name: API Documentation
   href: api/

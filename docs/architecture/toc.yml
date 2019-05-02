@@ -1,0 +1,10 @@
+- name: Architecture
+  href: readme.md
+  items:
+    - name: Components
+      href: components/readme.md
+      items:
+        - name: Web Component Model
+          href: components/web-component-model.md
+        - name: Component Mechanism
+          href: components/component-mechanism.md
