@@ -2,28 +2,28 @@ version: '3'
 services:
     gateway:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     alfred:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     deli:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     scriptorium:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     broadcaster:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     foreman:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     paparazzi:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     routemaster:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     riddler:
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server

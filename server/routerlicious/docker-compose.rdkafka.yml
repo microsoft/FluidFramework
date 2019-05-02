@@ -15,7 +15,7 @@ services:
         restart: always
         volumes:
             - ./functions/deli/dist:/usr/src/server/functions/deli/dist
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     deli2:
         build:
             context: .
@@ -29,7 +29,7 @@ services:
         restart: always
         volumes:
             - ./functions/deli/dist:/usr/src/server/functions/deli/dist
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     scriptorium2:
         build:
             context: .
@@ -43,7 +43,7 @@ services:
         restart: always
         volumes:
             - ./functions/deli/dist:/usr/src/server/functions/deli/dist
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
     broadcaster2:
         build:
             context: .
@@ -57,4 +57,4 @@ services:
         restart: always
         volumes:
             - ./functions/deli/dist:/usr/src/server/functions/deli/dist
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server

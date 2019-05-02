@@ -11,7 +11,7 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
         restart: always
     scriptoriumeh:
         build:
@@ -22,7 +22,7 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
         restart: always
     broadcastereh:
         build:
@@ -35,5 +35,5 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         volumes:
-            - ../../packages:/usr/src/server/packages
+            - ../..:/usr/src/server
         restart: always
