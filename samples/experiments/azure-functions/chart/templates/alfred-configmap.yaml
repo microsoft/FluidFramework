@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "alfred.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": true,
+            "morganFormat": "dev",
+            "json": false,
+            "level": "info",
+            "timestamp": true,
+            "label": "winston"
+        },
+        "mongo": {
+            "endpoint": "mongodb://praguefunctions:JYfJyAUDWabe1dKOqJL4NznmDW6we410f3yWyOvKLrES07BTvwcXbB9XSNjUnPt9UAaz07mag525MTthD1KXcw==@praguefunctions.documents.azure.com:10255/?ssl=true&replicaSet=globaldb",
+            "collectionNames": {
+                "deltas": "deltas",
+                "documents": "documents",
+                "partitions": "partitions",
+                "tenants": "tenants",
+                "nodes": "nodes",
+                "reservations": "reservations"
+            }
+        },
+        "alfred": {
+            "maxMessageSize": "16KB",
+            "topic": "rawdeltas",
+            "restJsonSize": "50mb",
+            "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+            "url": "https://alfredfn.wu2-2.prague.office-int.com"
+        },
+        "redis": {
+            "host": "praguelambdas.redis.cache.windows.net",
+            "key": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
+            "pass": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
+            "port": 6380,
+            "tls": true
+        },
+        "eventHub": {
+            "endpoint": "Endpoint=sb://praguefunctions.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=wG+GMs96eqaD5pqTQYzxZuI1pkRI90JcshAw3QUWI4k="
+        },
+        "error": {
+            "track": false,
+            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+        },
+        "tenantConfig": {
+            "id": "eventhub",
+            "key": "0bea3f87c186991a936c7e7e9c79478c",
+            "storage": {
+                "url": "https://api.github.com",
+                "owner": "kurtb",
+                "repository": "praguedocs",
+                "direct": "https://api.github.com",
+                "credentials": {
+                    "user": "praguegit",
+                    "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                }
+            },
+            "orderer": {
+                "type": "eventHub",
+                "url": "https://alfredfn.wu2-2.prague.office-int.com"
+            }
+        }
+    }

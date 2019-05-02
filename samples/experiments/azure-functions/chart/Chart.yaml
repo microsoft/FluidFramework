@@ -1,0 +1,5 @@
+## Generated from a tool - do not edit directly
+name: alfway-functions
+version: 0.1.0
+description: Alfred and gateway services for use with serverless lambdas
+home: https://github.com/microsoft/prague

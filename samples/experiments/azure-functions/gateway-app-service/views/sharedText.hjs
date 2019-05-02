@@ -1,0 +1,40 @@
+{{<layout}}
+    {{$styles}}
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.1/dist/katex.css"
+    integrity="sha384-b/NoaeRXkMxyKcrDw2KtVtYKkVg3dA0rTRgLoV7W2df3MzeR1eHLTi+l4//4fMwk" crossorigin="anonymous">
+ 
+        <link href="{{#hfurl}}/public/stylesheets/dist/style.css{{/hfurl}}" rel="stylesheet" />
+    {{/styles}}
+
+    {{$content}}
+    {{/content}}
+
+    {{$scripts}}
+        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script>
+            var config = {{{ config }}};
+            var options = {{{ options }}};
+            var cache = {{{ cache }}};
+            var timings = "{{ timings }}";
+
+            var from = {{ from }};
+            var to = {{ to }};
+            var resolved = {{{ resolved }}};
+            var jwt = "{{ jwt }}";
+                   
+            console.log(`Starting load at - ${performance.now()}`);
+            controller.sharedText.load(
+                resolved,
+                jwt,
+                cache,
+                {{ pageInk }},
+                {{ disableCache }},
+                config,
+                "{{ template }}",
+                options,
+                from,
+                to);
+        </script>          
+        </script>
+    {{/scripts}}
+{{/layout}}

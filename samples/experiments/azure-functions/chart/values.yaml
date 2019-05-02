@@ -1,0 +1,26 @@
+## Specify a imagePullPolicy
+## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+imagePullPolicy: IfNotPresent
+
+name: routerlicious
+
+alfred:
+  image: praguefunctions.azurecr.io/alfred-app-service:0.1.2
+  name: alfred
+  replicas: 2
+  externalUrl: https://alfredfn.wu2-2.prague.office-int.com
+  host: alfredfn.wu2-2.prague.office-int.com
+  cert: wu2-2-tls-certificate
+  tenants: []
+  key: VBQyoGpEYrTn3XQPtXW3K8fFDd
+
+gateway:
+  image: praguefunctions.azurecr.io/gateway-app-service:0.1.2
+  name: gateway
+  replicas: 2
+  externalUrl: https://gatewayfn.wu2-2.prague.office-int.com
+  host: gatewayfn.wu2-2.prague.office-int.com
+  cert: wu2-2-tls-certificate
+
+ingress:
+  class: nginx-prod

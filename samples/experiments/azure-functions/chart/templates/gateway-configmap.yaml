@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "gateway.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |
+    {
+        "logger": {
+            "colorize": true,
+            "morganFormat": "dev",
+            "json": false,
+            "level": "info",
+            "timestamp": true,
+            "label": "winston"
+        },
+        "gateway": {
+            "maxMessageSize": "16KB",
+            "restJsonSize": "50mb",
+            "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+            "url": "https://gatewayfn.wu2-2.prague.office-int.com",
+            "tenants": [
+                {
+                    "id": "eventhub",
+                    "key": "0bea3f87c186991a936c7e7e9c79478c"
+                }
+            ],
+            "federation": {
+                "endpoints": [
+                    "https://www.wu2-ppe.prague.office-int.com",
+                    "https://www.wu2.prague.office-int.com",
+                    "https://www.eu2.prague.office-int.com",
+                    "https://www.we.prague.office-int.com"
+                ]
+            }
+        },
+        "login": {
+            "enabled": true,
+            "microsoft": {
+                "clientId": "3d642166-9884-4463-8248-78961b8c1300",
+                "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            },
+            "accounts": [
+                {
+                    "username": "test",
+                    "password": "mRTvhfDTE3FYbVc"
+                }
+            ]
+        },
+        "redis": {
+            "host": "praguelambdas.redis.cache.windows.net",
+            "key": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
+            "pass": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
+            "port": 6380,
+            "tls": true
+        },
+        "error": {
+            "track": false,
+            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+        },
+        "worker": {
+            "alfredUrl": "https://alfredfn.wu2-2.prague.office-int.com",
+            "serverUrl": "https://alfredfn.wu2-2.prague.office-int.com",
+            "blobStorageUrl": "https://api.github.com",
+            "repository": "kurtb/praguedocs",
+            "npm": "https://pragueauspkn-3873244262.azureedge.net",
+            "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
+            "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
+        }
+    }
