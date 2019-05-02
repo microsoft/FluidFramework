@@ -1,8 +1,8 @@
 import * as core from "@prague/services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
-import { IPackage, ITenantInput } from "../definitions";
-import { PackageManager } from "../packageManager";
+import { IKeyValue, ITenantInput } from "../definitions";
+import { KeyValueManager } from "../keyValueManager";
 import { TenantManager } from "../tenantManager";
 
 export function create(
@@ -10,7 +10,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    packageManager: PackageManager,
+    keyValueManager: KeyValueManager,
 ): Router {
     const router: Router = Router();
 
@@ -38,20 +38,21 @@ export function create(
     });
 
     /**
-     * Creates a new package
+     * Creates a new Key-Value
      */
-    router.post("/packages", ensureLoggedIn(), (request, response) => {
-        const packageInput = request.body as IPackage;
-        const newPackage = packageManager.addPackage(packageInput);
-        response.status(200).json(newPackage);
+    router.post("/keyValues", ensureLoggedIn(), (request, response) => {
+        const keyValueInput = request.body as IKeyValue;
+        const newKeyValue = keyValueManager.addKeyValue(keyValueInput);
+        response.status(200).json(newKeyValue);
     });
 
     /**
-     * Deletes an existing package
+     * Deletes an existing Key-Value
      */
-    router.delete("/packages/:id", ensureLoggedIn(), (request, response) => {
-        const packageId = packageManager.removePackage(request.params.id);
-        response.status(200).json(packageId);
+    router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
+        const key = request.params[0] as string;
+        const keyValueId = keyValueManager.removeKeyValue(key);
+        response.status(200).json(keyValueId);
     });
 
     return router;

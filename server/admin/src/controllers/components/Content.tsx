@@ -4,8 +4,8 @@ import { HashRouter, NavLink, Route } from "react-router-dom";
 import { IData, IUser } from "../../definitions";
 import { About } from "./About";
 import { Analytics } from "./Analytics";
+import { KeyValues } from "./KeyValues";
 import { MenuWrap } from "./MenuWrap";
-import { Packages } from "./Packages";
 import { Tenants } from "./Tenants";
 
 export interface IContentState {
@@ -41,10 +41,10 @@ export class Content extends React.Component<IContentProps, IContentState> {
             <span>Tenants</span>
           </a>
         </NavLink>,
-        <NavLink onClick={() => this.closeMenu()} key="2" to="/packages">
+        <NavLink onClick={() => this.closeMenu()} key="2" to="/keyValues">
           <a>
             <i className="fa fa-fw fa-bar-chart-o" />
-            <span>Packages</span>
+            <span>Key-value Store</span>
           </a>
         </NavLink>,
         <NavLink onClick={() => this.closeMenu()} key="3" to="/analytics">
@@ -94,9 +94,9 @@ export class Content extends React.Component<IContentProps, IContentState> {
                       }
                       />
                     <Route
-                      path="/packages"
+                      path="/keyValues"
                       component = {
-                        () => <Packages data={this.props.data.packages} />
+                        () => <KeyValues data={this.props.data.keyValues} />
                       }
                       />
                     <Route path="/analytics" component={Analytics}/>

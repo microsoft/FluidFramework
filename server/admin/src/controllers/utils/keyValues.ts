@@ -1,23 +1,23 @@
 import * as request from "request-promise-native";
-import { IPackage } from "../../definitions";
+import { IKeyValue } from "../../definitions";
 
-export async function addPackage(url: string, packageToAdd: IPackage): Promise<IPackage> {
-    const newPackage = await request.post(
-        `${url}/api/packages`,
+export async function addKeyValue(url: string, keyValueToAdd: IKeyValue): Promise<IKeyValue> {
+    const newKeyValue = await request.post(
+        `${url}/api/keyValues`,
         {
-            body: packageToAdd,
+            body: keyValueToAdd,
             headers: {
                 "Accept": "application/json",
                 "Content-Type": "application/json",
             },
             json: true,
         });
-    return newPackage;
+    return newKeyValue;
 }
 
-export async function deletePackage(url: string, name: string): Promise<string> {
+export async function deleteKey(url: string, key: string): Promise<string> {
     await request.delete(
-        `${url}/api/packages/${name}`,
+        `${url}/api/keyValues/${key}`,
         {
             headers: {
                 "Accept": "application/json",
@@ -26,5 +26,5 @@ export async function deletePackage(url: string, name: string): Promise<string> 
             json: true,
         },
     );
-    return name;
+    return key;
 }

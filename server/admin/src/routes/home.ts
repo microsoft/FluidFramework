@@ -4,7 +4,7 @@ import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
 import { IData } from "../definitions";
-import { PackageManager } from "../packageManager";
+import { KeyValueManager } from "../keyValueManager";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
 
@@ -13,7 +13,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    packageManager: PackageManager,
+    keyValueManager: KeyValueManager,
 ): Router {
 
     const router: Router = Router();
@@ -26,7 +26,7 @@ export function create(
         tenantsP.then(
             (tenants) => {
                 const data: IData = {
-                    packages: packageManager.getPackages(),
+                    keyValues: keyValueManager.getKeyValues(),
                     tenants,
                 };
                 response.render(

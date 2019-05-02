@@ -69,17 +69,17 @@ export interface ITenant {
     historianUrl: string;
 }
 
-export interface IPackage {
-    // Package name
-    name: string;
+export interface IKeyValue {
+    // Key
+    key: string;
 
-    // Package version
-    version: string;
+    // Value
+    value: string;
 }
 
 export interface IData {
 
     tenants: ITenant[];
 
-    packages: IPackage[];
+    keyValues: IKeyValue[];
 }

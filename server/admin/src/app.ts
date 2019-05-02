@@ -17,7 +17,7 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { PackageManager } from "./packageManager";
+import { KeyValueManager } from "./keyValueManager";
 import * as appRoutes from "./routes";
 import { TenantManager } from "./tenantManager";
 
@@ -76,7 +76,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         config.get("app:alfredUrl"),
         config.get("app:jarvisUrl"));
 
-    const packageManager = new PackageManager();
+    const keyValueManager = new KeyValueManager();
 
     // Create a redis session store.
     const redisStore = connectRedis(expressSession);
@@ -170,7 +170,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         }
     });
 
-    const routes = appRoutes.create(config, mongoManager, tenantManager, packageManager);
+    const routes = appRoutes.create(config, mongoManager, tenantManager, keyValueManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
 

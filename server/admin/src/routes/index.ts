@@ -2,7 +2,7 @@ import * as core from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { PackageManager } from "../packageManager";
+import { KeyValueManager } from "../keyValueManager";
 import { TenantManager } from "../tenantManager";
 import * as api from "./api";
 import * as home from "./home";
@@ -16,9 +16,9 @@ export function create(
     config: Provider,
     mongoManager: core.MongoManager,
     tenantManager: TenantManager,
-    packageManager: PackageManager): IRoutes {
+    keyValueManager: KeyValueManager): IRoutes {
     return {
-        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, packageManager),
-        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, packageManager),
+        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, keyValueManager),
+        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, keyValueManager),
     };
 }
