@@ -46,7 +46,6 @@
     "@prague/build-common": "^0.3.0",
     "concurrently": "^4.1.0",
     "@prague/gitresources": "^0.3.0",
-    "@prague/merge-tree-utils": "^0.3.0",
     "@prague/services-client": "^0.3.0",
     "@types/diff": "^3.5.1",
     "@types/random-js": "^1.0.31",

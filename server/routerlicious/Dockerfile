@@ -55,7 +55,6 @@ COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/map/package*.json packages/runtime/map/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
-COPY packages/runtime/merge-tree-utils/package*.json packages/runtime/merge-tree-utils/
 COPY packages/runtime/runtime/package*.json packages/runtime/runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
@@ -77,7 +76,7 @@ COPY packages/utils/build-common/package*.json packages/utils/build-common/
 COPY packages/server/test-utils/package*.json packages/server/test-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/tools/prague-dump/package*.json packages/tools/prague-dump/
-    
+
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
 COPY server/routerlicious/chaincode/* /tmp/chaincode/

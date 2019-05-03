@@ -147,10 +147,6 @@
       "projectFolder": "packages/runtime/merge-tree/"
     },
     {
-      "packageName": "@prague/merge-tree-utils",
-      "projectFolder": "packages/runtime/merge-tree-utils/"
-    },
-    {
       "packageName": "@prague/runtime",
       "projectFolder": "packages/runtime/runtime/"
     },

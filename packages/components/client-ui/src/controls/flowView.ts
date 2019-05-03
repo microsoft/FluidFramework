@@ -5,7 +5,6 @@ import * as api from "@prague/client-api";
 import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { findRandomWord } from "@prague/merge-tree-utils";
 import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import * as assert from "assert";
@@ -5089,34 +5088,6 @@ export class FlowView extends ui.Component {
             this.queueRender(undefined, true);
         });
         // this.testWordInfo();
-    }
-
-    public randomWordMove() {
-        const client = this.sharedString.client;
-        const word1 = findRandomWord(client.mergeTree, client.getClientId());
-        if (word1) {
-            const removeStart = word1.pos;
-            const removeEnd = removeStart + word1.text.length;
-            this.sharedString.removeText(removeStart, removeEnd);
-            let word2 = findRandomWord(client.mergeTree, client.getClientId());
-            while (!word2) {
-                word2 = findRandomWord(client.mergeTree, client.getClientId());
-            }
-            const pos = word2.pos + word2.text.length;
-            this.sharedString.insertText(word1.text, pos);
-        }
-    }
-
-    public randomWordMoveStart() {
-        this.randWordTimer = setInterval(() => {
-            for (let i = 0; i < 3; i++) {
-                this.randomWordMove();
-            }
-        }, 10);
-    }
-
-    public randomWordMoveEnd() {
-        clearInterval(this.randWordTimer);
     }
 
     public updateTableInfo(changePos: number) {

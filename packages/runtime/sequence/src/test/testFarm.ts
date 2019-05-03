@@ -1,6 +1,5 @@
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
-import { findRandomWord } from "@prague/merge-tree-utils";
 import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@prague/merge-tree/dist/overlayTree";
 import { loadTextFromFile, TestClient, TestServer } from "@prague/merge-tree/dist/test/";
 import * as JsDiff from "diff";
@@ -395,7 +394,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: TestClient) {
-            let word1 = findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = client.findRandomWord();
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -410,9 +409,9 @@ export function TestPack(verbose = true) {
                     ops.push(removeOp);
                 }
 
-                let word2 = findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = client.findRandomWord();
                 while (!word2) {
-                    word2 = findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = client.findRandomWord();
                 }
                 let pos = word2.pos + word2.text.length;
 
@@ -1001,7 +1000,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: TestClient, server: TestServer) {
-            let word1 = findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = client.findRandomWord();
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -1010,9 +1009,9 @@ export function TestPack(verbose = true) {
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = client.findRandomWord();
                 while (!word2) {
-                    word2 = findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = client.findRandomWord();
                 }
                 let pos = word2.pos + word2.text.length;
                 const insertOp = client.insertTextLocal(pos, word1.text);

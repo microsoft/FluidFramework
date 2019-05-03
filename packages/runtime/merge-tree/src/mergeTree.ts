@@ -1999,7 +1999,6 @@ export class MergeTree {
         measureWindowTime: true,
         measureOrdinalTime: true,
     };
-    static searchChunkSize = 256;
     static traceAppend = false;
     static traceZRemove = false;
     static traceOrdinals = false;
@@ -2516,28 +2515,6 @@ export class MergeTree {
             parent = parent.parent;
         }
         return totalOffset;
-    }
-
-    searchFromPos(pos: number, target: RegExp) {
-        let start = pos;
-        let end = pos + MergeTree.searchChunkSize;
-        let chunk = "";
-        let found = false;
-        while (!found) {
-            if (end > this.root.cachedLength) {
-                end = this.root.cachedLength;
-            }
-            chunk += this.getText(UniversalSequenceNumber, this.collabWindow.clientId, "", start, end);
-            let result = chunk.match(target);
-            if (result !== null) {
-                return { text: result[0], pos: result.index };
-            }
-            start += MergeTree.searchChunkSize;
-            if (start >= this.root.cachedLength) {
-                break;
-            }
-            end += MergeTree.searchChunkSize;
-        }
     }
 
     private gatherSegment = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,

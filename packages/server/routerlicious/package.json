@@ -69,7 +69,6 @@
     "@prague/map": "^0.3.0",
     "@prague/memory-orderer": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
-    "@prague/merge-tree-utils": "^0.3.0",
     "@prague/replay-socket-storage": "^0.3.0",
     "@prague/routerlicious-host": "^0.3.0",
     "@prague/routerlicious-socket-storage": "^0.3.0",

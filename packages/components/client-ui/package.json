@@ -67,7 +67,6 @@
     "@prague/loader-web": "^0.3.0",
     "@prague/map": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
-    "@prague/merge-tree-utils": "^0.3.0",
     "@prague/routerlicious-socket-storage": "^0.3.0",
     "@prague/runtime-definitions": "^0.3.0",
     "@prague/sequence": "^0.3.0",

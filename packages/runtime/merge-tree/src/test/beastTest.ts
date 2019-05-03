@@ -37,22 +37,6 @@ function printStringNumProperty(p: Base.Property<string, number>) {
     return true;
 }
 
-const mt = random.engines.mt19937();
-mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-
-function findRandomWord(mergeTree: MergeTree.MergeTree, clientId: number) {
-    const len = mergeTree.getLength(MergeTree.UniversalSequenceNumber, clientId);
-    const pos = random.integer(0, len)(mt);
-    // let textAtPos = mergeTree.getText(MergeTree.UniversalSequenceNumber, clientId, pos, pos + 10);
-    // console.log(textAtPos);
-    const nextWord = mergeTree.searchFromPos(pos, /\s\w+\b/);
-    if (nextWord) {
-        nextWord.pos += pos;
-        // console.log(`next word is '${nextWord.text}' len ${nextWord.text.length} at pos ${nextWord.pos}`);
-    }
-    return nextWord;
-}
-
 export function simpleTest() {
     let a = [
         "Aardvark", "cute",
@@ -723,7 +707,7 @@ export function TestPack(verbose = true) {
         }
 
         function randomWordMove(client: TestClient) {
-            let word1 = findRandomWord(client.mergeTree, client.getClientId());
+            let word1 = client.findRandomWord();
             if (word1) {
                 let removeStart = word1.pos;
                 let removeEnd = removeStart + word1.text.length;
@@ -732,9 +716,9 @@ export function TestPack(verbose = true) {
                 if (TestClient.useCheckQ) {
                     client.enqueueTestString();
                 }
-                let word2 = findRandomWord(client.mergeTree, client.getClientId());
+                let word2 = client.findRandomWord();
                 while (!word2) {
-                    word2 = findRandomWord(client.mergeTree, client.getClientId());
+                    word2 = client.findRandomWord();
                 }
                 let pos = word2.pos + word2.text.length;
                 const insertOp = client.insertTextLocal(pos, word1.text);

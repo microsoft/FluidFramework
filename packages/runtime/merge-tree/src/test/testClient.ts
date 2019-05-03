@@ -1,5 +1,6 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
+import * as random from "random-js";
 import { Client } from "../client";
 import * as Collections from "../collections";
 import { ISegment, Marker, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
@@ -22,7 +23,13 @@ export function specToSegment(spec: any) {
     throw new Error(`Unrecognized IJSONSegment type: '${JSON.stringify(spec)}'`);
 }
 
+const mt = random.engines.mt19937();
+mt.seedWithArray([0xDEADBEEF, 0xFEEDBED]);
+
 export class TestClient extends Client {
+
+    public static searchChunkSize = 256;
+
     /**
      * Used for in-memory testing.  This will queue a reference string for each client message.
      */
@@ -164,5 +171,26 @@ export class TestClient extends Client {
 
     public validate() {
         assert(nodeOrdinalsHaveIntegrity(this.mergeTree.root));
+    }
+
+    public searchFromPos(pos: number, target: RegExp) {
+        let start = pos;
+        let chunk = "";
+        while (start < this.getLength()) {
+            chunk = this.getText(start, start + TestClient.searchChunkSize);
+
+            const result = chunk.match(target);
+            if (result !== null) {
+                return { text: result[0], pos: (result.index + start) };
+            }
+            start += TestClient.searchChunkSize;
+        }
+    }
+
+    public findRandomWord() {
+        const len = this.getLength();
+        const pos = random.integer(0, len)(mt);
+        const nextWord = this.searchFromPos(pos, /\s\w+\b/);
+        return nextWord;
     }
 }
