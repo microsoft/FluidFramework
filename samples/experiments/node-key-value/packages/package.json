@@ -1,0 +1,11 @@
+{
+  "name": "key-value-loader",
+  "version": "0.0.1",
+  "description": "Node loader for key-value chaincode",
+  "main": "index.js",
+  "author": "Microsoft",
+  "license": "ISC",
+  "dependencies": {
+    "@chaincode/key-value": "^0.3.2"
+  }
+}

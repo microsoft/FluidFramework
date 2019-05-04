@@ -5,24 +5,13 @@ import { MapDocument as Document } from "./mapDocument";
 
 export class KeyValue extends Document {
 
-  public set(key: string, value: string): void {
-    this.root.set(key, value);
-  }
-
-  public get(key: string): string {
-    return this.root.get(key);
-  }
-
-  public entries() {
-    return this.root.entries;
-  }
-
-  public delete(key: string) {
-    this.root.delete(key);
-  }
-
   public async opened() {
     // May be we want to render the root map?
+    this.root.on("valueChanged", (changed, local, op) => {
+      console.log(`Key: ${changed.key}`);
+      console.log(`New Value: ${this.root.get(changed.key)}`);
+      console.log(`Prev Value: ${local}`);
+    });
   }
 
   protected async create() {
@@ -38,6 +27,6 @@ export async function instantiateRuntime(
     "@chaincode/key-value",
     new Map(
     [
-      ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(KeyValue))],
+      ["@chaincode/key-value", Promise.resolve(Component.createComponentFactory(KeyValue))],
     ]));
 }
