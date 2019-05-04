@@ -8,6 +8,7 @@ import {
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
+import { NodeCodeLoader } from "@prague/services";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
@@ -17,7 +18,8 @@ import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
 import * as winston from "winston";
-import { NodeCodeLoader } from "./chaincodeHost";
+
+const npmRegistry = "https://packages.wu2.prague.office-int.com";
 
 class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -83,7 +85,7 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl),
-            new NodeCodeLoader());
+            new NodeCodeLoader(npmRegistry));
     }
 
     public async start(): Promise<void> {

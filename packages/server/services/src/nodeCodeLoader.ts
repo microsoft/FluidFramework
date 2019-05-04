@@ -1,18 +1,22 @@
-import { IChaincodeFactory, ICodeLoader, IPlatform, IPlatformFactory } from "@prague/container-definitions";
+import { ICodeLoader } from "@prague/container-definitions";
 import { exec } from "child_process";
-import { EventEmitter } from "events";
 import * as fs from "fs";
 import { promisify } from "util";
 import * as winston from "winston";
 
 const asyncExec = promisify(exec);
 
-const packageWaitTimeoutMS = 30000;
-const npmRegistry = "https://packages.wu2.prague.office-int.com";
+// Timeout for npm install to complete.
+const packageWaitTimeoutMS = 60000;
+// Directory for running npm install. This directory needs to have a .npmrc and package.json file.
 const packagesBase = `/tmp/chaincode`;
+// A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
+// tslint:disable non-literal-fs-path
 export class NodeCodeLoader implements ICodeLoader {
+    constructor(private registry: string) {
+    }
     public async load<T>(pkg: string): Promise<T> {
         const codeEntrypoint = await this.installOrWaitForPackages(pkg);
         const entry = import(codeEntrypoint);
@@ -48,7 +52,7 @@ export class NodeCodeLoader implements ICodeLoader {
             fs.copyFileSync(`${packagesBase}/.npmrc`, `${packageDirectory}/.npmrc`);
 
             // Run npm install
-            await asyncExec(`npm install ${pkg} --registry ${npmRegistry}`, { cwd: packageDirectory });
+            await asyncExec(`npm install ${pkg} --registry ${this.registry}`, { cwd: packageDirectory });
 
             // Write dummy signal file to indicate package installation success.
             fs.closeSync(fs.openSync(signalPath, "w"));
@@ -84,21 +88,5 @@ export class NodeCodeLoader implements ICodeLoader {
                 resolve();
             }
         });
-    }
-}
-
-class NodePlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
-    }
-
-    public detach() {
-        return;
-    }
-}
-
-export class NodePlatformFactory implements IPlatformFactory {
-    public async create(): Promise<IPlatform> {
-        return new NodePlatform();
     }
 }
