@@ -26,7 +26,7 @@ Yo Prague is now ready. Try it!
 yo prague
 ````
 
-[Chaincode](./chaincode/README.md) has additional examples of building components with Prague.
+[Chaincode](./samples/chaincode/README.md) has additional examples of building components with Prague.
 
 \* For Yo Prague setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
@@ -75,25 +75,21 @@ Developers looking to make deep/advanced Prague changes can find our latest impl
 
 ## Source Code Overview
 
-[Chaincode](./chaincode) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Prague.
+[Chaincode](./samples/chaincode) contains our latest component and chaincode demos. This is the right place to get started checking out the world of Prague.
 
-[Routerlicious](./routerlicious) contains our latest prototype around new approaches to collaborative objects as well as a server backend to enable them with minimal COGS. This is probably where you want to start.
+[Packages](./packages) is the service we call Routerlicious. This folder is our prototype around new approaches to collaborative objects as well as a server backend to enable them with minimal COGS.
 
-[Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
+[Service Architecture](./docs/architecture) has documentation and diagrams of the service architecture.
 
-[Augmentation](./augmentation) provides a set of augmentation loop services exposed via Docker containers.
+[Components Architecture](./docs/architecture/components) has documentation and diagrams for the component architecture.
 
-[Collab-Editor](./collab-editor) is a Visual Studio Code plugin that enables collaborative editing of source code.
+[Doc](./docs) provides documentation for the project.
 
-[Experiments](./experiments) contains experimental code or other prototypes.
+[Historian](./server/historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
-[Doc](./doc) provides documentation for the project.
+[Gitssh](./server/gitssh) is a git ssh server client container.
 
-[Gitssh](./gitssh) is a git ssh server client container.
-
-[Intelligence](./intelligence) contains a starter container for developing Python based intelligent services.
-
-[legacy](./legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
+[legacy](./samples/experiments/legacy) folder contains a set of legacy prototypes around a collaborative canvas. As well as MUIs that load within the browser or within an enlightened host.
 
 
 ## Build Status
