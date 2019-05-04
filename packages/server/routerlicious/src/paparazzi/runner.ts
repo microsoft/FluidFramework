@@ -20,6 +20,10 @@ import * as url from "url";
 import * as winston from "winston";
 
 const npmRegistry = "https://packages.wu2.prague.office-int.com";
+// Timeout for package installation.
+const packageWaitTimeoutMS = 60000;
+// Directory for running npm install. This directory needs to have a .npmrc and package.json file.
+const packagesBase = `/tmp/chaincode`;
 
 class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -85,7 +89,7 @@ export class PaparazziRunner implements utils.IRunner {
             this.workerConfig,
             alfredUrl,
             this.initLoadModule(alfredUrl),
-            new NodeCodeLoader(npmRegistry));
+            new NodeCodeLoader(npmRegistry, packagesBase, packageWaitTimeoutMS));
     }
 
     public async start(): Promise<void> {

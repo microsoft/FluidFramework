@@ -6,16 +6,15 @@ import * as winston from "winston";
 
 const asyncExec = promisify(exec);
 
-// Timeout for npm install to complete.
-const packageWaitTimeoutMS = 60000;
-// Directory for running npm install. This directory needs to have a .npmrc and package.json file.
-const packagesBase = `/tmp/chaincode`;
 // A sentinel file to indicate install completion.
 const signalFileName = "dummy";
 
 // tslint:disable non-literal-fs-path
 export class NodeCodeLoader implements ICodeLoader {
-    constructor(private registry: string) {
+    constructor(
+        private registry: string,
+        private packageDirectory: string,
+        private waitTimeoutMSec: number) {
     }
     public async load<T>(pkg: string): Promise<T> {
         const codeEntrypoint = await this.installOrWaitForPackages(pkg);
@@ -31,7 +30,7 @@ export class NodeCodeLoader implements ICodeLoader {
         }
         const [, scope, name] = components;
 
-        const packageDirectory = `${packagesBase}/${pkg}`;
+        const packageDirectory = `${this.packageDirectory}/${pkg}`;
         const signalPath = `${packageDirectory}/${signalFileName}`;
         const codeEntrypoint = `${packageDirectory}/node_modules/${scope}/${name}`;
 
@@ -39,8 +38,8 @@ export class NodeCodeLoader implements ICodeLoader {
             // Our node verison (8.15) does not support recursive directory creation.
             // Need to create each subdirectories manually.
             const dirs = pkg.split("/");
-            if (!fs.existsSync(`${packagesBase}/${dirs[0]}`)) {
-                fs.mkdirSync(`${packagesBase}/${dirs[0]}`);
+            if (!fs.existsSync(`${this.packageDirectory}/${dirs[0]}`)) {
+                fs.mkdirSync(`${this.packageDirectory}/${dirs[0]}`);
             }
             if (!fs.existsSync(packageDirectory)) {
                 fs.mkdirSync(packageDirectory);
@@ -48,8 +47,8 @@ export class NodeCodeLoader implements ICodeLoader {
 
             // Copy over template package.json and .npmrc file to the directory where
             // npm install will be executed.
-            fs.copyFileSync(`${packagesBase}/package.json`, `${packageDirectory}/package.json`);
-            fs.copyFileSync(`${packagesBase}/.npmrc`, `${packageDirectory}/.npmrc`);
+            fs.copyFileSync(`${this.packageDirectory}/package.json`, `${packageDirectory}/package.json`);
+            fs.copyFileSync(`${this.packageDirectory}/.npmrc`, `${packageDirectory}/.npmrc`);
 
             // Run npm install
             await asyncExec(`npm install ${pkg} --registry ${this.registry}`, { cwd: packageDirectory });
@@ -60,7 +59,7 @@ export class NodeCodeLoader implements ICodeLoader {
             winston.info(`Installed ${pkg} in ${packageDirectory} directory`);
             return codeEntrypoint;
         } else {
-            await this.waitForPackageFiles(packageDirectory, signalFileName, packageWaitTimeoutMS);
+            await this.waitForPackageFiles(packageDirectory, signalFileName, this.waitTimeoutMSec);
             winston.info(`Package ${pkg} is already installed`);
             return codeEntrypoint;
         }
