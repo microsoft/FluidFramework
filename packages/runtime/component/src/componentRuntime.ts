@@ -121,11 +121,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public get connected(): boolean {
-        return this.componentRuntime.connected;
+        return this.componentContext.connected;
     }
 
     public get leader(): boolean {
-        return this.componentRuntime.leader;
+        return this.componentContext.leader;
     }
 
     // Interface used to access the runtime code
@@ -134,15 +134,15 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public get clientId(): string {
-        return this.componentRuntime.clientId;
+        return this.componentContext.clientId;
     }
 
     public get clientType(): string {
-        return this.componentRuntime.clientType;
+        return this.componentContext.clientType;
     }
 
     public get loader(): ILoader {
-        return this.componentRuntime.loader;
+        return this.componentContext.loader;
     }
 
     private channels = new Map<string, IChannelState>();
@@ -156,7 +156,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     // tslint:enable-next-line:variable-name
 
     private constructor(
-        private readonly componentRuntime: IComponentContext,
+        private readonly componentContext: IComponentContext,
         public readonly documentId: string,
         public readonly id: string,
         public readonly parentBranch: string,
@@ -174,11 +174,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this.componentRuntime.createAndAttachComponent(id, pkg);
+        return this.componentContext.createAndAttachComponent(id, pkg);
     }
 
     public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this.componentRuntime.getComponent(id, wait);
+        return this.componentContext.getComponent(id, wait);
     }
 
     /**
@@ -189,7 +189,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         wait: boolean,
         services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
-        const runtime = await this.componentRuntime.getComponent(id, wait);
+        const runtime = await this.componentContext.getComponent(id, wait);
         const component = await runtime.request({ url: "/" });
 
         if (component.status !== 200 || component.mimeType !== "prague/component") {
@@ -437,12 +437,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
-        return this.componentRuntime.submitSignal(type, content);
+        return this.componentContext.submitSignal(type, content);
     }
 
     private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
-        return this.componentRuntime.submitMessage(type, content);
+        return this.componentContext.submitMessage(type, content);
     }
 
     private reserve(id: string) {
@@ -538,7 +538,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const localStorage = new LocalChannelStorageService(attachMessage.snapshot);
         const connection = new ChannelDeltaConnection(
             attachMessage.id,
-            this.componentRuntime.connectionState,
+            this.componentContext.connectionState,
             (submitMessage) => {
                 const submitEnvelope: IEnvelope = {
                     address: attachMessage.id,
@@ -629,7 +629,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
         const deltaConnection = new ChannelDeltaConnection(
             id,
-            this.componentRuntime.connectionState,
+            this.componentContext.connectionState,
             (message) => {
                 const envelope: IEnvelope = { address: id, contents: message };
                 return this.submit(MessageType.Operation, envelope);
@@ -646,7 +646,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     // Ideally the component runtime should drive this. But the interface change just for this
     // is probably an overkill.
     private attachListener() {
-        this.componentRuntime.on("leader", (clientId: string) => {
+        this.componentContext.on("leader", (clientId: string) => {
             this.emit("leader", clientId);
         });
     }

@@ -97,12 +97,12 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public get component(): IComponentRuntime {
-        return this._component;
+        return this._componentRuntime;
     }
 
     private closed = false;
     // tslint:disable-next-line:variable-name
-    private _component: IComponentRuntime;
+    private _componentRuntime: IComponentRuntime;
 
     // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
     // snapshot call
@@ -130,7 +130,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
-        this._component.changeConnectionState(value, clientId);
+        this._componentRuntime.changeConnectionState(value, clientId);
     }
 
     // Called after a snapshot to update the base sha
@@ -140,19 +140,19 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         this.verifyNotClosed();
-        return this._component.prepare(message, local);
+        return this._componentRuntime.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
         // component has been modified and will need to regenerate its snapshot
         this.baseSha = null;
-        return this._component.process(message, local, context);
+        return this._componentRuntime.process(message, local, context);
     }
 
     public processSignal(message: IInboundSignalMessage, local: boolean): void {
         this.verifyNotClosed();
-        return this._component.processSignal(message, local);
+        return this._componentRuntime.processSignal(message, local);
     }
 
     public getQuorum(): IQuorum {
@@ -179,7 +179,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     public snapshot(): ITree {
         const componentAttributes = { pkg: this.pkg };
 
-        const entries = this._component.snapshotInternal();
+        const entries = this._componentRuntime.snapshotInternal();
         const snapshot = { entries, sha: undefined };
 
         snapshot.entries.push({
@@ -201,7 +201,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        return this._component.request(request);
+        return this._componentRuntime.request(request);
     }
 
     public submitMessage(type: MessageType, content: any): number {
@@ -226,8 +226,8 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
 
     public async start(): Promise<IComponentRuntime> {
         const factory = await this._hostRuntime.getPackage(this.pkg);
-        this._component = await factory.instantiateComponent(this);
-        return this._component;
+        this._componentRuntime = await factory.instantiateComponent(this);
+        return this._componentRuntime;
     }
 
     public updateLeader(clientId: string) {
