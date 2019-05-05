@@ -24,11 +24,13 @@
 		"typescript": "^3.2.2"
 	},
 	"dependencies": {
-		"@prague/routerlicious-host": "^0.3.6735",
-		"@prague/routerlicious-socket-storage": "^0.3.6735",
-		"@prague/container-loader": "^0.3.6735",
-		"@prague/container-definitions": "^0.3.6735",
-		"@prague/runtime-definitions": "^0.3.6735",
+		"@prague/routerlicious-host": "^0.3.6760",
+		"@prague/routerlicious-socket-storage": "^0.3.6760",
+		"@prague/container-loader": "^0.3.6760",
+		"@prague/container-definitions": "^0.3.6760",
+		"@prague/map": "^0.3.6760",
+		"@prague/runtime-definitions": "^0.3.6760",
+		"@prague/services": "^0.3.6760",
 		"@types/commander": "^2.12.2",
 		"@types/jsonwebtoken": "^8.3.0",
 		"@types/node": "^10.12.12",

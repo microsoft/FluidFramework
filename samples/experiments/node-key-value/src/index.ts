@@ -1,24 +1,19 @@
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IPlatform, IPragueResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
+import { ISharedMap } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-// import { IComponent } from "@prague/runtime-definitions";
+import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { NodeCodeLoader, NodePlatform } from "@prague/services";
 import * as commander from "commander";
 import * as jwt from "jsonwebtoken";
 import * as ora from "ora";
 import * as process from "process";
-// import * as readline from "readline";
 import * as url from "url";
-import { NodeCodeLoader } from "./nodeCodeLoader";
-import { NodeDocumentServiceFactory } from "./nodeDocumentServiceFactory";
-import { NodePlatform } from "./nodePlatformFactory";
 
-// tslint:disable:no-unsafe-any
-// async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
-//     return new Promise<string>((resolve) => {
-        // tslint:disable-next-line:no-unnecessary-callback-wrapper
-//         input.question(prompt, (answer) => resolve(answer));
-//     });
-// }
+interface ISharedMapWrapper {
+    root: ISharedMap;
+    attach(platform: IPlatform): Promise<IPlatform>;
+}
 
 function registerAttach(loader: Loader, container: Container, uri: string, platform: NodePlatform) {
     attach(loader, uri, platform);
@@ -32,30 +27,14 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
     if (response.status !== 200) {
         return;
     }
-    console.log(response.mimeType);
     if (response.mimeType === "prague/component") {
-        const keyValueComponent = response.value as any;
+        const keyValueComponent = response.value as ISharedMapWrapper;
         await keyValueComponent.attach(platform);
-        keyValueComponent.root.set("something", "nothing");
+        const rootMap = keyValueComponent.root as ISharedMap;
+        rootMap.set("something", "1");
+        rootMap.set("something2", "2");
+        rootMap.set("something3", "3");
         console.log("Done");
-        // console.log("");
-        // console.log("Enter message (ctrl+c to quit)");
-        // console.log("");
-        // console.log(runtime);
-        /*
-        const input = readline.createInterface(process.stdin, process.stdout);
-        // tslint:disable-next-line:no-constant-condition
-        while (true) {
-            const message = await readlineAsync(input, "Message: ");
-            runtime.submitMessage("op", {
-                author: "Professor Node",
-                content: message,
-                language: "en",
-                time: Date.now().toString(),
-                translated: false,
-              });
-        }
-        */
     }
 }
 
@@ -122,8 +101,8 @@ commander
 
         const loader = new Loader(
             { resolver },
-            new NodeDocumentServiceFactory(),
-            new NodeCodeLoader(),
+            new RouterliciousDocumentServiceFactory(),
+            new NodeCodeLoader("https://packages.wu2.prague.office-int.com", "/tmp/chaincode", 60000),
             null);
 
         run(loader, documentUrl)
