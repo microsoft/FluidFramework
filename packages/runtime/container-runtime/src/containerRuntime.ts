@@ -41,12 +41,12 @@ export interface IComponentRegistry {
 }
 
 // Context will define the component level mappings
-export class Runtime extends EventEmitter implements IHostRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public static async Load(
         registry: IComponentRegistry,
         context: IContainerContext,
-    ): Promise<Runtime> {
-        const runtime = new Runtime(registry, context);
+    ): Promise<ContainerRuntime> {
+        const runtime = new ContainerRuntime(registry, context);
 
         const components = new Map<string, ISnapshotTree>();
         const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
@@ -379,8 +379,8 @@ export class Runtime extends EventEmitter implements IHostRuntime {
             this.componentsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
-        const componentRuntime = await this.componentsDeferred.get(id).promise;
-        return componentRuntime.component;
+        const componentContext = await this.componentsDeferred.get(id).promise;
+        return componentContext.componentRuntime;
     }
 
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -413,7 +413,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         await component.start();
         deferred.resolve(component);
 
-        return component.component;
+        return component.componentRuntime;
     }
 
     public getQuorum(): IQuorum {

@@ -1,5 +1,5 @@
 import { TableSliceType } from "@chaincode/table-document";
-import { ComponentRuntime } from "@prague/component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { initializeIcons } from "@uifabric/icons";
 import { CommandBar, ICommandBarItemProps } from "office-ui-fabric-react/lib/CommandBar";
 import * as React from "react";

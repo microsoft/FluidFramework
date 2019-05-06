@@ -1,6 +1,8 @@
 # 0.3 Breaking Changes
 
 This document lists the set of breaking changes as part of upgrading to 0.3
+- [Legacy chaincode API removal](#legacy-chaincode-api-removal)
+- [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
 
 ## Legacy chaincode API removal
 
@@ -117,4 +119,17 @@ return Component.instantiateRuntime(
             ["@chaincode/chart-view", Promise.resolve(Component.createComponentFactory(chartView.ChartView))],
             ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
         ]));
+```
+
+## Container and Component Packages and Classes Renamed
+
+The following classes and packages are renamed to align with what they are.
+
+```
+Context -> ContainerContext
+Runtime -> ContainerRuntime
+```
+```
+Package @prague/runtime -> @prague/container-runtime
+Package @prague/component -> @prague/component-runtime
 ```

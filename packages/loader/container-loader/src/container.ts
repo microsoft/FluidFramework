@@ -33,7 +33,7 @@ import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
-import { Context } from "./context";
+import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
@@ -93,7 +93,7 @@ export class Container extends EventEmitter implements IContainer {
     private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
 
-    private context: Context | undefined;
+    private context: ContainerContext | undefined;
     private pkg: string | null = null;
 
     // Local copy of incomplete received chunks.
@@ -378,7 +378,7 @@ export class Container extends EventEmitter implements IContainer {
                     this._parentBranch = details!.parentBranch;
                 }
 
-                this.context = await Context.Load(
+                this.context = await ContainerContext.Load(
                     this,
                     this.codeLoader,
                     chaincode.chaincode,
@@ -583,7 +583,7 @@ export class Container extends EventEmitter implements IContainer {
             sequenceNumber: null,
         };
 
-        const newContext = await Context.Load(
+        const newContext = await ContainerContext.Load(
             this,
             this.codeLoader,
             chaincode,

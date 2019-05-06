@@ -50,13 +50,13 @@ COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/runtime/api-definitions/package*.json packages/runtime/api-definitions/
-COPY packages/runtime/component/package*.json packages/runtime/component/
+COPY packages/runtime/component-runtime/package*.json packages/runtime/component-runtime/
 COPY packages/runtime/consensus-ordered-collection/package*.json packages/runtime/consensus-ordered-collection/
 COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/map/package*.json packages/runtime/map/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
-COPY packages/runtime/runtime/package*.json packages/runtime/runtime/
+COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/runtime/stream/package*.json packages/runtime/stream/

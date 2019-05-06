@@ -1,4 +1,4 @@
-import { ComponentRuntime } from "@prague/component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
 import { ConfigKeys } from "./configKeys";

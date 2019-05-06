@@ -123,8 +123,8 @@
       "projectFolder": "packages/runtime/api-definitions/"
     },
     {
-      "packageName": "@prague/component",
-      "projectFolder": "packages/runtime/component/"
+      "packageName": "@prague/component-runtime",
+      "projectFolder": "packages/runtime/component-runtime/"
     },
     {
       "packageName": "@prague/consensus-ordered-collection",
@@ -147,8 +147,8 @@
       "projectFolder": "packages/runtime/merge-tree/"
     },
     {
-      "packageName": "@prague/runtime",
-      "projectFolder": "packages/runtime/runtime/"
+      "packageName": "@prague/container-runtime",
+      "projectFolder": "packages/runtime/container-runtime/"
     },
     {
       "packageName": "@prague/runtime-definitions",

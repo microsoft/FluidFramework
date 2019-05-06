@@ -35,11 +35,11 @@
   "dependencies": {
     "@prague/app-component": "^0.3.0",
     "@prague/app-datastore": "^0.3.0",
-    "@prague/component": "^0.3.0",
+    "@prague/component-runtime": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
     "@prague/map": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
-    "@prague/runtime": "^0.3.0",
+    "@prague/container-runtime": "^0.3.0",
     "@prague/runtime-definitions": "^0.3.0",
     "@prague/sequence": "^0.3.0",
     "@prague/utils": "^0.3.0"

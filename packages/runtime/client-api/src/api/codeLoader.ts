@@ -1,6 +1,6 @@
 import * as cell from "@prague/cell";
-import { ComponentRuntime } from "@prague/component";
-import { ConsensusQueueExtension, ConsensusStackExtension} from "@prague/consensus-ordered-collection";
+import { ComponentRuntime } from "@prague/component-runtime";
+import { ConsensusQueueExtension, ConsensusStackExtension } from "@prague/consensus-ordered-collection";
 import {
     IChaincodeFactory,
     ICodeLoader,
@@ -8,11 +8,8 @@ import {
     IRequest,
     IRuntime,
 } from "@prague/container-definitions";
+import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import * as map from "@prague/map";
-import {
-    IComponentRegistry,
-    Runtime,
-} from "@prague/runtime";
 import {
     IComponentContext,
     IComponentFactory,
@@ -82,7 +79,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
         const chaincode = new Chaincode(this.runFn);
         const registry = new BackCompatLoader(chaincode);
 
-        const runtime = await Runtime.Load(registry, context);
+        const runtime = await ContainerRuntime.Load(registry, context);
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {

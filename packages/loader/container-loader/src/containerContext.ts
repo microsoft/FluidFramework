@@ -21,7 +21,7 @@ import {
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
-export class Context implements IContainerContext {
+export class ContainerContext implements IContainerContext {
     public static async Load(
         container: Container,
         codeLoader: ICodeLoader,
@@ -39,8 +39,8 @@ export class Context implements IContainerContext {
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
-    ): Promise<Context> {
-        const context = new Context(
+    ): Promise<ContainerContext> {
+        const context = new ContainerContext(
             container,
             codeLoader,
             chaincode,

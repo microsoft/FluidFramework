@@ -1,13 +1,14 @@
 import * as cell from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { ComponentRuntime } from "@prague/component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IContainerContext,
     IPlatform,
     IRequest,
     IRuntime,
 } from "@prague/container-definitions";
+import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import * as Intelligence from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -18,7 +19,6 @@ import {
     registerDefaultValueType,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IComponentRegistry, Runtime } from "@prague/runtime";
 import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
@@ -445,7 +445,7 @@ class MyRegistry implements IComponentRegistry {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const runtime = await Runtime.Load(new MyRegistry(context), context);
+    const runtime = await ContainerRuntime.Load(new MyRegistry(context), context);
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {

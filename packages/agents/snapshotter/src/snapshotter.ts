@@ -1,5 +1,5 @@
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { Runtime } from "@prague/runtime";
+import { ContainerRuntime } from "@prague/container-runtime";
 import { Serializer } from "./serializer";
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
@@ -12,7 +12,7 @@ const MaxOpCountWithoutSnapshot = 1000;
 
 export class Snapshotter {
     private serializer: Serializer | undefined;
-    constructor(private readonly runtime: Runtime) {
+    constructor(private readonly runtime: ContainerRuntime) {
     }
 
     public start() {

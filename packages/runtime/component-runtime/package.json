@@ -1,5 +1,5 @@
 {
-  "name": "@prague/component",
+  "name": "@prague/component-runtime",
   "version": "0.3.0",
   "description": "Prague component API",
   "main": "dist/index.js",

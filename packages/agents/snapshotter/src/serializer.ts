@@ -1,5 +1,5 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
-import { Runtime } from "@prague/runtime";
+import { ContainerRuntime } from "@prague/container-runtime";
 import * as assert from "assert";
 
 /**
@@ -30,7 +30,7 @@ export class Serializer {
     private snapshotting = false;
 
     constructor(
-        private readonly runtime: Runtime,
+        private readonly runtime: ContainerRuntime,
         private readonly idleTime: number,
         private readonly maxTimeWithoutSnapshot: number,
         private readonly retryTime: number,

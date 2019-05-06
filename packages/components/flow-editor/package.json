@@ -38,7 +38,7 @@
     "@chaincode/flow-document": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-datastore": "^0.3.0",
-    "@prague/component": "^0.3.0",
+    "@prague/component-runtime": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
     "@prague/flow-util": "^0.3.0",
     "@prague/map": "^0.3.0",

@@ -96,7 +96,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         return this._hostRuntime;
     }
 
-    public get component(): IComponentRuntime {
+    public get componentRuntime(): IComponentRuntime {
         return this._componentRuntime;
     }
 

@@ -1,5 +1,5 @@
 {
-  "name": "@prague/runtime",
+  "name": "@prague/container-runtime",
   "version": "0.3.0",
   "description": "Prague runtime API",
   "main": "dist/index.js",
