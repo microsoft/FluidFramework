@@ -56,7 +56,7 @@ export class Clicker extends Document {
 export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", Promise.resolve(Clicker)]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/clicker", new Map([
+    ["@chaincode/clicker", Promise.resolve(Component.createComponentFactory(Clicker))]
+  ]));
 }
