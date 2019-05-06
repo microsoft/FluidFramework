@@ -1,6 +1,5 @@
 import { Component } from "@prague/app-component";
 import { Workbook } from "@prague/client-ui/ext/calc2";
-import { ServicePlatform } from "@prague/component";
 import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
 import {
     ICombiningOp,

@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import * as fs from "fs";
 import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment} from "..";
 import * as ops from "../ops";

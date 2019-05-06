@@ -1,11 +1,9 @@
-import { ITree } from "@prague/container-definitions";
 import { Snapshot, TextSegment } from "@prague/merge-tree";
 import { SharedString } from "../sharedString";
 import * as mocks from "./mocks";
 
 export function* generateStrings() {
     const documentId = "fakeId";
-    const localUserLongId = "localUser";
     const runtime: mocks.MockRuntime = new mocks.MockRuntime();
     const insertText = "text";
 

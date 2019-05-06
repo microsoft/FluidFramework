@@ -24,7 +24,6 @@ import {
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
-    ITokenProvider,
     ITree,
     ITreeEntry,
     MessageType,

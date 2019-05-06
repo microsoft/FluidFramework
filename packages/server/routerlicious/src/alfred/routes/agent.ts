@@ -4,7 +4,7 @@ import * as minio from "minio";
 import { Provider } from "nconf";
 import * as path from "path";
 import * as rimraf from "rimraf";
-import { Readable, Stream } from "stream";
+import { Stream } from "stream";
 import * as unzip from "unzip-stream";
 import * as webpack from "webpack";
 import * as winston from "winston";

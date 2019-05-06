@@ -9,9 +9,6 @@ import { TestDeltaStorageService } from "./testDeltaStorageService";
 import { TestDocumentService } from "./testDocumentService";
 
 class TestDocumentServiceFactory implements IDocumentServiceFactory {
-
-    constructor(private deltaUrl: string, private blobUrl: string, private repository: string) {}
-
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
             // tslint:disable-next-line:max-line-length
@@ -37,6 +34,6 @@ class TestDocumentServiceFactory implements IDocumentServiceFactory {
 }
 
 export function registerAsTest(deltaUrl: string, blobUrl: string, repository: string) {
-    const serviceFactory = new TestDocumentServiceFactory(deltaUrl, blobUrl, repository);
+    const serviceFactory = new TestDocumentServiceFactory();
     api.registerDocumentServiceFactory(serviceFactory);
 }

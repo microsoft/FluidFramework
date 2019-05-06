@@ -6,7 +6,6 @@ import {
     IDocumentServiceFactory,
     IGenericBlob,
     IHost,
-    IPlatform,
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@prague/container-definitions";

@@ -8,7 +8,6 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
-    ITokenProvider,
     ITree,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";

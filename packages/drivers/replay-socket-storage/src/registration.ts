@@ -1,4 +1,4 @@
-import { IDocumentService, IDocumentServiceFactory } from "@prague/container-definitions";
+import { IDocumentService } from "@prague/container-definitions";
 import { ReplayDocumentService } from "./documentService";
 
 export function createReplayDocumentService(

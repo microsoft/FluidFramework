@@ -2,7 +2,6 @@ import {
     IClient,
     IDocumentService,
     ISequencedDocumentMessage,
-    ITokenProvider,
     MessageType,
 } from "@prague/container-definitions";
 import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";

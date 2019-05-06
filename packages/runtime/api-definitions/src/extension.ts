@@ -1,6 +1,4 @@
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IChaincodeModule } from "@prague/runtime-definitions";
-import * as types from "./types";
 
 export interface IExtension {
     /**

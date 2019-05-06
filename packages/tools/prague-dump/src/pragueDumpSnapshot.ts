@@ -2,14 +2,12 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
-    ITokenProvider,
 } from "@prague/container-definitions";
 import { ICommit } from "@prague/gitresources";
 import * as fs from "fs";
 import * as util from "util";
 import {
     dumpSnapshotBlobs,
-    dumpSnapshotSha,
     dumpSnapshotStats,
     dumpSnapshotTrees,
     dumpSnapshotVersions,

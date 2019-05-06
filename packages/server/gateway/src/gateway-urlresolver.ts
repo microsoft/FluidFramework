@@ -1,6 +1,5 @@
 import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IClientConfig } from "@prague/odsp-utils";
-import { IGitCache } from "@prague/services-client";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
@@ -64,7 +63,7 @@ function r11sResolveUrl(
         "/repos" +
         `/${encodeURIComponent(tenantId)}`;
 
-    const resolvedP = Promise.resolve({
+    const resolvedUrl: IPragueResolvedUrl = {
         endpoints: {
             deltaStorageUrl,
             ordererUrl: config.get("worker:serverUrl"),
@@ -73,7 +72,8 @@ function r11sResolveUrl(
         tokens: { jwt: token },
         type: "prague",
         url: pragueUrl,
-    });
+    };
+    const resolvedP = Promise.resolve(resolvedUrl);
 
     const fullTreeP = alfred.getFullTree(tenantId, documentId);
     return [resolvedP, fullTreeP];

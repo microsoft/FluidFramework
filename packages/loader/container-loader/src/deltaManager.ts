@@ -12,7 +12,6 @@ import {
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    ITokenProvider,
     ITrace,
     MessageType,
 } from "@prague/container-definitions";

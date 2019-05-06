@@ -4,7 +4,7 @@ import {
     MockStorage,
 // tslint:disable-next-line:no-submodule-imports
 } from "@prague/merge-tree/dist/test/";
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IDistributedObjectServices } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { SharedString } from "../sharedString";
 import * as mocks from "./mocks";
