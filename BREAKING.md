@@ -83,7 +83,7 @@ and begin requiring it in later PRs.
 The Component defined in the app-component package largely has stayed the same. The one primary change is that
 it now takes in an `IComponentRegistry` rather than a map of strings to `IChaincodeComponent` constructors.
 
-The `IComponentRegistry` is defined as 
+The `IComponentRegistry` is defined as
 
 ```typescript
 export interface IComponentRegistry {
@@ -120,7 +120,6 @@ return Component.instantiateRuntime(
             ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
         ]));
 ```
-
 ## Container and Component Packages and Classes Renamed
 
 The following classes and packages are renamed to align with what they are.
@@ -133,3 +132,6 @@ Runtime -> ContainerRuntime
 Package @prague/runtime -> @prague/container-runtime
 Package @prague/component -> @prague/component-runtime
 ```
+
+### @chaincode/table-document
+Move SparseMatrix to @prague/sequence to avoid circular dependencies when adding to client-api

@@ -1,6 +1,6 @@
 import "mocha";
 import * as assert from "assert";
-import { SparseMatrix, SparseMatrixExtension } from "@chaincode/table-document"
+import { SparseMatrix, SparseMatrixExtension } from "@prague/sequence"
 import { TestHost } from "@prague/local-test-server";
 
 describe("SparseMatrix", () => {
@@ -19,10 +19,10 @@ describe("SparseMatrix", () => {
     describe("local client", () => {
         let host: TestHost;
         let matrix: SparseMatrix;
-        
+
         before(async () => {
             host = new TestHost([]);
-             
+
             matrix = await host.createType("matrix", SparseMatrixExtension.Type);
         });
 
@@ -40,7 +40,7 @@ describe("SparseMatrix", () => {
             assert.strictEqual(matrix.numRows, expected.length);
             assert.deepStrictEqual(extract(matrix, expectedCols), expected);
         };
-    
+
         after(async () => {
             await host.close();
         });
@@ -109,7 +109,7 @@ describe("SparseMatrix", () => {
         let host2: TestHost;
         let matrix1: SparseMatrix;
         let matrix2: SparseMatrix;
-        
+
         const print = (matrix: SparseMatrix) => {
             for (const row of extract(matrix, 10)) {
                 console.log(`[${row.join(",")}]`)
@@ -132,11 +132,11 @@ describe("SparseMatrix", () => {
         beforeEach(async () => {
             host1 = new TestHost([]);
             host2 = host1.clone();
-            
+
             matrix1 = await host1.createType("matrix", SparseMatrixExtension.Type);
             matrix2 = await host2.getType("matrix");
         });
-    
+
         afterEach(async () => {
             await TestHost.sync(host1, host2);
             await host1.close();

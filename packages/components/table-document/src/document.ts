@@ -9,15 +9,19 @@ import {
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import {
+    positionToRowCol,
+    rowColToPosition,
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
     SharedNumberSequenceExtension,
     SharedStringIntervalCollectionValueType,
+    SparseMatrix,
+    SparseMatrixExtension,
+    UnboxedOper,
 } from "@prague/sequence";
 import * as assert from "assert";
 import { CellInterval } from "./cellinterval";
 import { TableSliceType } from "./ComponentTypes";
-import { positionToRowCol, rowColToPosition, SparseMatrix, SparseMatrixExtension } from "./matrix/sparsematrix";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -26,8 +30,6 @@ export const storeCellTextSym = Symbol("TableDocument.storeCellText");
 export const loadCellSym = Symbol("TableDocument.loadCell");
 export const storeCellSym = Symbol("TableDocument.storeCell");
 export const cellSym = Symbol("TableDocument.cell");
-
-type UnboxedOper = undefined | boolean | number | string;
 
 class WorkbookAdapter extends Workbook {
     constructor(private readonly doc: TableDocument) {

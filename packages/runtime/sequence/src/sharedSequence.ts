@@ -20,7 +20,7 @@ export class SubSequence<T> extends BaseSegment {
     public static fromJSONObject(spec: any) {
         // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new SubSequence(spec.items, UniversalSequenceNumber, LocalClientId);
+            const segment = new SubSequence<any>(spec.items, UniversalSequenceNumber, LocalClientId);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }

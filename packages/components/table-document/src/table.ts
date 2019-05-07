@@ -1,5 +1,5 @@
-import { UnboxedOper } from "@prague/client-ui/ext/calc";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
+import { UnboxedOper } from "@prague/sequence";
 
 export interface ITable {
     readonly numRows: number;

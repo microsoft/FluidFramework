@@ -1,5 +1,4 @@
 import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
-import { UnboxedOper } from "@prague/client-ui/ext/calc";
 import {
     BaseSegment,
     IJSONSegment,
@@ -12,7 +11,9 @@ import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-d
 import {
     SharedSegmentSequence,
     SubSequence,
-} from "@prague/sequence";
+} from ".";
+
+export type UnboxedOper = undefined | boolean | number | string;
 
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
@@ -79,6 +80,7 @@ export class PaddingSegment extends BaseSegment {
 }
 
 export class RunSegment extends SubSequence<UnboxedOper> {
+
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new RunSegment(spec.items, UniversalSequenceNumber, LocalClientId);
@@ -149,7 +151,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
     }
 }
 
-type MatrixSegment = RunSegment | PaddingSegment;
+export type MatrixSegment = RunSegment | PaddingSegment;
 
 export const maxCol = 0x200000;         // x128 Excel maximum of 16,384 columns
 export const maxCols = maxCol + 1;
@@ -255,7 +257,8 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
-        const { segment, offset } = this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
+        const { segment, offset } =
+            this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
         if (segment instanceof RunSegment) {
             return segment.items[offset];
         } else if (segment instanceof PaddingSegment) {

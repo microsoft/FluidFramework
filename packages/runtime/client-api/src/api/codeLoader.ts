@@ -38,6 +38,7 @@ class Chaincode implements IComponentFactory {
         const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
         const consensusQueueExtension = new ConsensusQueueExtension();
         const consensusStackExtension = new ConsensusStackExtension();
+        const sparseMatrixExtension = new sequence.SparseMatrixExtension();
 
         // Register channel extensions
         const modules = new Map<string, any>();
@@ -49,6 +50,7 @@ class Chaincode implements IComponentFactory {
         modules.set(numberSequenceExtension.type, numberSequenceExtension);
         modules.set(consensusQueueExtension.type, consensusQueueExtension);
         modules.set(consensusStackExtension.type, consensusStackExtension);
+        modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
 
         const component = await ComponentRuntime.LoadFromSnapshot(context, modules);
 
