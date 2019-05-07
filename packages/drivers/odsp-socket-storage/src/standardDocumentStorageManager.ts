@@ -50,28 +50,46 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
         return this.restWrapper.get<resources.IBlob>(`/blobs/${blobid}`);
     }
 
+    // tslint:disable: no-non-null-assertion
     public async getVersions(blobid: string, count: number): Promise<resources.ICommit[]> {
         if (blobid && blobid !== this.documentId) {
             // each commit calls getVersions but odsp doesn't have a history for each version
             // return the blobid as is
+
             return [
                 {
+                    author: undefined!,
+                    commitId: blobid,
+                    committer: undefined!,
                     message: "",
-                    sha: blobid,
-                } as any,
+                    parents: undefined!,
+                    tree: undefined!,
+                    url: undefined!,
+                },
             ];
         }
 
         // fetch the latest snapshot versions for the document
         const versionsResponse = await this.restWrapper
             .get<IDocumentStorageGetVersionsResponse>("/versions", { count })
-            .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
+            .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
         if (versionsResponse && Array.isArray(versionsResponse.value)) {
-            return versionsResponse.value;
+            return versionsResponse.value.map((version) => {
+                return {
+                    author: undefined!,
+                    commitId: version.sha,
+                    committer: undefined!,
+                    message: version.message,
+                    parents: undefined!,
+                    tree: undefined!,
+                    url: undefined!,
+                };
+            });
         }
 
         return [];
     }
+    // tslint:enable: no-non-null-assertion
 
     public async getContent(version: resources.ICommit, path: string): Promise<resources.IBlob> {
         return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.commitId, path });

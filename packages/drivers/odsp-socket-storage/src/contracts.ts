@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 
 /**
  * Socket storage discovery api response
@@ -26,5 +25,10 @@ export interface ISequencedDeltaOpMessage {
 }
 
 export interface IDocumentStorageGetVersionsResponse {
-    value: resources.ICommit[];
+    value: IDocumentStorageVersion[];
+}
+
+export interface IDocumentStorageVersion {
+    message: string;
+    sha: string;
 }

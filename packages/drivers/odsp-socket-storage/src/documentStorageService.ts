@@ -16,7 +16,21 @@ export class DocumentStorageService implements api.IDocumentStorageService {
 
     public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
         const tree = await this.storageManager.getTree(version);
-        return buildHierarchy(tree);
+        const hierarchicalTree = buildHierarchy(tree);
+
+        if (hierarchicalTree) {
+            // decode commit paths
+            const commits = {};
+
+            const keys = Object.keys(hierarchicalTree.commits);
+            for (const key of keys) {
+                commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
+            }
+
+            hierarchicalTree.commits = commits;
+        }
+
+        return hierarchicalTree;
     }
 
     public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
