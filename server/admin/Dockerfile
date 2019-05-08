@@ -15,6 +15,13 @@ COPY package-lock.json .
 COPY package.json .
 RUN npm install
 
+# Copy over chaincode npmrc and package.json to dynamically install packages.
+COPY chaincode/* /tmp/chaincode/
+
+# Give write permission to node user.
+RUN chown -R node:node /tmp/chaincode/
+RUN chmod -R 755 /tmp/chaincode/*
+
 # And now copy over our actual code and build
 COPY . .
 RUN npm run build
