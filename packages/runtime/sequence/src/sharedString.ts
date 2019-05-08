@@ -124,7 +124,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         if (removeOp) {
             const segment = MergeTree.TextSegment.make(text, props);
             const insertOp = this.client.insertSegmentLocal(start, segment);
-            this.submitIfAttached(MergeTree.createGroupOp(removeOp, insertOp));
+            this.submitSequenceMessage(MergeTree.createGroupOp(removeOp, insertOp));
         }
     }
     public removeText(start: number, end: number) {

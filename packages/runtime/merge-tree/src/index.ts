@@ -9,5 +9,6 @@ export * from "./client";
 export * from "./segmentGroupCollection";
 export * from "./mergeTreeDeltaCallback";
 export * from "./opBuilder";
+export * from "./mergeTreeTracking";
 export * from "./segmentPropertiesManager";
 export * from "./sortedSegmentSet";

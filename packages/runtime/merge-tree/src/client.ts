@@ -170,8 +170,12 @@ export class Client {
      */
     public insertSiblingSegment(leftSibling: ISegment, segment: ISegment): ops.IMergeTreeInsertMsg {
         // generate the op for the expected position of the new sibling segment
-        const opPos =
-            this.mergeTree.getOffset(leftSibling, this.getCurrentSeq(), this.getClientId()) + leftSibling.cachedLength;
+        let opPos =
+            this.mergeTree.getOffset(leftSibling, this.getCurrentSeq(), this.getClientId());
+        // only add the length if the segment isn't removed
+        if (!leftSibling.removedSeq) {
+            opPos += leftSibling.cachedLength;
+        }
         const insertOp = OpBuilder.createInsertSegmentOp(opPos, segment);
 
         let clockStart: number | [ number, number ];

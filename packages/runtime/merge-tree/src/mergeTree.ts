@@ -4,7 +4,7 @@ import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as assert from "assert";
-import { IRelativePosition } from "./index";
+import { IRelativePosition, TrackingGroupCollection } from "./index";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta } from "./mergeTreeDeltaCallback";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
@@ -150,6 +150,7 @@ export interface IRemovalInfo {
 
 export interface ISegment extends IMergeNode, IRemovalInfo {
     readonly segmentGroups: SegmentGroupCollection;
+    readonly trackingCollection: TrackingGroupCollection;
     propertyManager: SegmentPropertiesManager;
     seq?: number;  // if not present assumed to be previous to window min
     clientId?: number;
@@ -498,6 +499,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     removedClientOverlap: number[];
     removalsByBranch?: IRemovalInfo[];
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
+    readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
     propertyManager: SegmentPropertiesManager;
     properties: Properties.PropertySet;
     localRefs: LocalReference[];
@@ -670,6 +672,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                     this.propertyManager.copyTo(leafSegment);
                 }
                 leafSegment.parent = this.parent;
+
+                // give the leaf a temporary yet valid ordinal.
+                // when this segment is put in the tree, it will get it's real ordinal,
+                // but this ordinal meets all the necessary invarients for now.
+                leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+
                 leafSegment.removedClientId = this.removedClientId;
                 leafSegment.removedSeq = this.removedSeq;
                 if (this.removalsByBranch) {
@@ -689,6 +697,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.clientId = this.clientId;
                 leafSegment.removedClientOverlap = this.removedClientOverlap;
                 this.segmentGroups.copyTo(leafSegment);
+                this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
                     this.splitLocalRefs(pos, leafSegment);
                 }
@@ -2232,52 +2241,57 @@ export class MergeTree {
         for (let k = 0; k < node.childCount; k++) {
             let childNode = node.children[k];
             if (childNode.isLeaf()) {
-                let segment = <ISegment>childNode;
-                if ((segment.removedSeq !== undefined) && (segment.removedSeq !== UnassignedSequenceNumber)) {
-                    let createBrid = this.getBranchId(segment.clientId);
-                    let removeBrid = this.getBranchId(segment.removedClientId);
-                    if ((removeBrid != createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
-                        holdNodes.push(segment);
+                const segment = <ISegment>childNode;
+                if (segment.segmentGroups.empty && segment.trackingCollection.empty) {
+                    if (segment.removedSeq !== undefined) {
+                        let createBrid = this.getBranchId(segment.clientId);
+                        let removeBrid = this.getBranchId(segment.removedClientId);
+                        if ((removeBrid != createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
+                            holdNodes.push(segment);
+                        }
+                        else {
+                            if (MergeTree.traceZRemove) {
+                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${(<TextSegment>segment).text}; cli ${this.getLongClientId(segment.clientId)}`);
+                            }
+                            segment.parent = undefined;
+                        }
+                        prevSegment = undefined;
                     }
                     else {
-                        if (MergeTree.traceZRemove) {
-                            console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${(<TextSegment>segment).text}; cli ${this.getLongClientId(segment.clientId)}`);
-                        }
-                        segment.parent = undefined;
-                    }
-                    prevSegment = undefined;
-                }
-                else {
-                    if ((segment.seq <= this.collabWindow.minSeq) &&
-                        segment.segmentGroups.empty && (segment.seq != UnassignedSequenceNumber)) {
+                        if (segment.seq <= this.collabWindow.minSeq) {
 
-                        const canAppend = prevSegment
-                            && (!prevSegment.removedSeq)
-                            && prevSegment.canAppend(segment)
-                            && Properties.matchProperties(prevSegment.properties, segment.properties)
-                            && this.getBranchId(prevSegment.clientId) === this.getBranchId(segment.clientId)
-                            && this.localNetLength(segment) > 0;
+                            const canAppend = prevSegment
+                                && prevSegment.canAppend(segment)
+                                && Properties.matchProperties(prevSegment.properties, segment.properties)
+                                && prevSegment.trackingCollection.matches(segment.trackingCollection)
+                                && this.getBranchId(prevSegment.clientId) === this.getBranchId(segment.clientId)
+                                && this.localNetLength(segment) > 0;
 
-                        if (canAppend) {
-                            if (MergeTree.traceAppend) {
-                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
+                            if (canAppend) {
+                                if (MergeTree.traceAppend) {
+                                    console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
+                                }
+                                prevSegment.append(segment);
+                                segment.parent = undefined;
+                                segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             }
-                            prevSegment.append(segment);
-                            segment.parent = undefined;
+                            else {
+                                holdNodes.push(segment);
+                                if (this.localNetLength(segment) > 0) {
+                                    prevSegment = segment;
+                                } else {
+                                    prevSegment = undefined;
+                                }
+                            }
                         }
                         else {
                             holdNodes.push(segment);
-                            if (this.localNetLength(segment) > 0) {
-                                prevSegment = segment;
-                            } else {
-                                prevSegment = undefined;
-                            }
+                            prevSegment = undefined;
                         }
                     }
-                    else {
-                        holdNodes.push(segment);
-                        prevSegment = undefined;
-                    }
+                } else {
+                    holdNodes.push(segment);
+                    prevSegment = undefined;
                 }
             }
             else {

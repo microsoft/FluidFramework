@@ -129,7 +129,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public paste(pos: number, register: string) {
         const insertOp = this.client.pasteLocal(pos, register);
         if (insertOp) {
-            this.submitIfAttached(insertOp);
+            this.submitSequenceMessage(insertOp);
         }
         return pos;
     }
@@ -151,7 +151,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public groupOperation(groupOp: MergeTree.IMergeTreeGroupMsg) {
         this.client.localTransaction(groupOp);
-        this.submitIfAttached(groupOp);
+        this.submitSequenceMessage(groupOp);
 
     }
 
@@ -411,14 +411,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     protected readyContent(): Promise<void> {
         return this.loaded;
-    }
-
-    protected submitIfAttached(message: any) {
-        if (this.isLocal()) {
-            return;
-        }
-
-        this.submitLocalMessage(message);
     }
 
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {

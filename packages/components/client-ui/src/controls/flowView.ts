@@ -28,6 +28,7 @@ import * as MathMenu from "./mathMenu";
 import { PresenceSignal } from "./presenceSignal";
 import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
+import { UndoRedoStackManager } from "./undoRedo";
 
 export interface IFlowViewUser extends IUser {
     name: string;
@@ -2982,6 +2983,8 @@ export class FlowView extends ui.Component {
     // may have been invalidated.
     private modifiedMarkers = [];
 
+    private readonly undoRedoManager = new UndoRedoStackManager();
+
     constructor(
         element: HTMLDivElement,
         public collabDocument: api.Document,
@@ -3019,6 +3022,9 @@ export class FlowView extends ui.Component {
         }
         this.statusMessage("li", " ");
         this.statusMessage("si", " ");
+
+        this.undoRedoManager.attachSequence(sharedString);
+
         sharedString.on("sequenceDelta", (event, target) => {
             // For each incoming delta, save any referenced Marker segments.
             // (see comments at 'modifiedMarkers' decl for more info.)
@@ -4048,6 +4054,7 @@ export class FlowView extends ui.Component {
                     this.broadcastPresence();
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
+                    this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
                         if (this.inMath()) {
                             this.mathCursorFwd();
@@ -4066,6 +4073,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                 } else if (e.keyCode === KeyCode.leftArrow) {
+                    this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos > FlowView.docStartPosition) {
                         if (this.inMath()) {
                             this.mathCursorRev();
@@ -4084,6 +4092,7 @@ export class FlowView extends ui.Component {
                         }
                     }
                 } else if ((e.keyCode === KeyCode.upArrow) || (e.keyCode === KeyCode.downArrow)) {
+                    this.undoRedoManager.closeCurrentOperation();
                     this.lastVerticalX = saveLastVertX;
                     let lineCount = 1;
                     if (e.keyCode === KeyCode.upArrow) {
@@ -4171,6 +4180,9 @@ export class FlowView extends ui.Component {
                     this.activeSearchBox.showAllItems();
                 } else {
                     this.sharedString.insertText(String.fromCharCode(code), pos);
+                    if (code === CharacterCodes.space) {
+                        this.undoRedoManager.closeCurrentOperation();
+                    }
                 }
                 this.clearSelection();
                 if (this.modes.showCursorLocation) {
@@ -4261,6 +4273,7 @@ export class FlowView extends ui.Component {
     }
 
     public setList(listKind = 0) {
+        this.undoRedoManager.closeCurrentOperation();
         const searchPos = this.cursor.pos;
         const tileInfo = findTile(this, searchPos, "pg", false);
         if (tileInfo) {
@@ -4292,6 +4305,7 @@ export class FlowView extends ui.Component {
             }
             tile.listCache = undefined;
         }
+        this.undoRedoManager.closeCurrentOperation();
     }
 
     public tryMoveCell(pos: number, shift = false) {
@@ -4349,11 +4363,13 @@ export class FlowView extends ui.Component {
         if (tileInfo) {
             const tile = tileInfo.tile;
             const props = tile.properties;
+            this.undoRedoManager.closeCurrentOperation();
             if (props && props.blockquote) {
                 this.sharedString.annotateRange({ blockquote: false }, tileInfo.pos, tileInfo.pos + 1);
             } else {
                 this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
             }
+            this.undoRedoManager.closeCurrentOperation();
         }
     }
 
@@ -4379,6 +4395,7 @@ export class FlowView extends ui.Component {
 
     public setProps(props: MergeTree.PropertySet, updatePG = true) {
         const sel = this.cursor.getSelection();
+        this.undoRedoManager.closeCurrentOperation();
         if (sel) {
             this.clearSelection(false);
             this.sharedString.annotateRange(props, sel.start, sel.end);
@@ -4388,6 +4405,7 @@ export class FlowView extends ui.Component {
                 this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
             }
         }
+        this.undoRedoManager.closeCurrentOperation();
     }
 
     public paintFormat() {
@@ -4430,12 +4448,13 @@ export class FlowView extends ui.Component {
         };
         this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, MergeTree.UniversalSequenceNumber,
             this.sharedString.client.getClientId(), undefined, start, end);
+        this.undoRedoManager.closeCurrentOperation();
         if (someSet) {
             this.sharedString.annotateRange({ [name]: valueOff }, start, end);
         } else {
             this.sharedString.annotateRange({ [name]: valueOn }, start, end);
         }
-        this.localQueueRender(this.cursor.pos);
+        this.undoRedoManager.closeCurrentOperation();
     }
 
     public showAdjacentBookmark(before = true) {
@@ -4898,6 +4917,12 @@ export class FlowView extends ui.Component {
             case CharacterCodes.S:
                 this.collabDocument.save();
                 break;
+            case CharacterCodes.Y:
+                this.undoRedoManager.redo();
+                break;
+            case CharacterCodes.Z:
+                this.undoRedoManager.undo();
+                break;
             case CharacterCodes.S4:
                 this.enterMathMode();
                 break;
@@ -5169,6 +5194,7 @@ export class FlowView extends ui.Component {
         this.sharedString.annotateRange(newProps, pgPos, pgPos + 1, { name: "rewrite" });
         // new marker gets existing props
         this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
+        this.undoRedoManager.closeCurrentOperation();
     }
 
     private insertComponent(type: string, state: {}) {
@@ -5306,6 +5332,7 @@ export class FlowView extends ui.Component {
 
     private increaseIndent(tile: Paragraph.IParagraphMarker, pos: number, decrease = false) {
         tile.listCache = undefined;
+        this.undoRedoManager.closeCurrentOperation();
         if (decrease && tile.properties.indentLevel > 0) {
             this.sharedString.annotateRange({ indentLevel: -1 },
                 pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
@@ -5313,76 +5340,57 @@ export class FlowView extends ui.Component {
             this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
                 { name: "incr", defaultValue: 0 });
         }
-        this.localQueueRender(this.cursor.pos);
+        this.undoRedoManager.closeCurrentOperation();
     }
 
     private handleSharedStringDelta(event: Sequence.SequenceDeltaEvent, target: Sequence.SharedString) {
         let opCursorPos: number;
-        switch (event.deltaOperation) {
-            case MergeTree.MergeTreeDeltaType.ANNOTATE:
-                opCursorPos = event.end;
-                event.ranges.forEach((range) => {
-                    if (range.segment instanceof MergeTree.Marker) {
-                        this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment instanceof MergeTree.TextSegment) {
-                        this.updatePGInfo(range.offset);
-                        this.updatePGInfo(range.offset + range.segment.cachedLength);
-                    }
-                });
-                break;
-
-            case MergeTree.MergeTreeDeltaType.INSERT:
-                opCursorPos = event.end;
-                event.ranges.forEach((range) => {
-                    if (range.segment instanceof MergeTree.Marker) {
-                        this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment instanceof MergeTree.TextSegment) {
-                        this.updatePGInfo(range.offset);
-                        this.updatePGInfo(range.offset + range.segment.cachedLength);
-                        if (!event.isLocal && range.offset <= this.cursor.pos) {
-                            this.cursor.pos += range.segment.cachedLength;
-                        }
-                    }
-                });
-                break;
-
-            case MergeTree.MergeTreeDeltaType.REMOVE:
-                opCursorPos = event.start;
-                event.ranges.forEach((range) => {
-                    if (range.segment instanceof MergeTree.Marker) {
-                        this.updatePGInfo(range.offset - 1);
-                    } else if (range.segment instanceof MergeTree.TextSegment) {
-                        this.updatePGInfo(range.offset);
-                        if (!event.isLocal && range.offset <= this.cursor.pos) {
-                            this.cursor.pos -= range.segment.cachedLength;
-                        }
-                    }
-                });
-                break;
-        }
-
-        if (!event.opArgs.groupOp
-            || event.opArgs.op === event.opArgs.groupOp.ops[event.opArgs.groupOp.ops.length - 1]) {
-            if (event.isLocal) {
-                if (opCursorPos) {
-                    this.cursor.pos = opCursorPos;
-                    if (event.opArgs.groupOp) {
-                        // make sure after the group op the cursor ends up
-                        // in text if it is not already.
-                        // This is primarily needed for tables.
-                        this.cursorRev(true);
+        event.ranges.forEach((range) => {
+            if (range.segment instanceof MergeTree.Marker) {
+                this.updatePGInfo(range.offset - 1);
+            } else if (range.segment instanceof MergeTree.TextSegment) {
+                if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
+                    opCursorPos = range.offset;
+                } else {
+                    const insertOrAnnotateEnd = range.offset + range.segment.cachedLength;
+                    this.updatePGInfo(insertOrAnnotateEnd);
+                    if (range.operation === MergeTree.MergeTreeDeltaType.INSERT) {
+                        opCursorPos = insertOrAnnotateEnd;
                     }
                 }
-                this.localQueueRender(this.cursor.pos);
-            } else {
-                if (opCursorPos) {
-                    this.remotePresenceFromEdit(
-                        event.opArgs.sequencedMessage.clientId,
-                        event.opArgs.sequencedMessage.referenceSequenceNumber,
-                        opCursorPos);
-                }
-                this.queueRender(undefined, this.posInViewport(event.start) || this.posInViewport(event.end));
             }
+            // if it was a remote op before the local cursor, we need to adjust
+            // the local cursor
+            if (!event.isLocal && range.offset <= this.cursor.pos) {
+                let adjust = range.segment.cachedLength;
+                // we might not need to use the full length if
+                // the range crosses the curors position
+                if (range.offset + adjust > this.cursor.pos) {
+                    adjust -= range.offset + adjust - this.cursor.pos;
+                }
+
+                // do nothing for annotate, as it doesn't affect position
+                if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
+                    this.cursor.pos -= adjust;
+                } else if (range.operation === MergeTree.MergeTreeDeltaType.INSERT) {
+                    this.cursor.pos += adjust;
+                }
+            }
+        });
+
+        if (event.isLocal) {
+            if (opCursorPos !== undefined) {
+                this.cursor.pos = opCursorPos;
+            }
+            this.localQueueRender(this.cursor.pos);
+        } else {
+            if (opCursorPos !== undefined) {
+                this.remotePresenceFromEdit(
+                    event.opArgs.sequencedMessage.clientId,
+                    event.opArgs.sequencedMessage.referenceSequenceNumber,
+                    opCursorPos);
+            }
+            this.queueRender(undefined, this.posInViewport(event.start) || this.posInViewport(opCursorPos));
         }
     }
 
