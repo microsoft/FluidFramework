@@ -23,6 +23,7 @@ import * as expiry from "static-expiry";
 import * as winston from "winston";
 import { saveSpoTokens } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
+import { KeyValueManager } from "./keyValueManager";
 import * as gatewayRoutes from "./routes";
 
 // Base endpoint to expose static files at
@@ -209,8 +210,17 @@ export function create(
         }
     }
 
+    const keyValueManager = new KeyValueManager(
+        config.get("loader:orderer"),
+        config.get("loader:storage"),
+        config.get("loader:tenant"),
+        config.get("loader:secret"),
+        config.get("loader:jwtKey"),
+        config.get("loader:documentId"),
+        config.get("loader:package"));
+
     // bind routes
-    const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
+    const routes = gatewayRoutes.create(config, cache, alfred, tenants, keyValueManager, getFingerprintUrl);
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/maps", routes.maps);

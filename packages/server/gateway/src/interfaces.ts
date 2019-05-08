@@ -12,3 +12,9 @@ export interface IAlfred {
 
     getLatestVersion(tenantId: string, documentId: string): Promise<ICommit>;
 }
+
+export interface IKeyValue {
+    key: string;
+
+    value: string;
+}

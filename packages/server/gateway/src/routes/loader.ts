@@ -9,6 +9,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { gatewayResolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
+import { KeyValueManager } from "../keyValueManager";
 import { getConfig, getScriptsForCode } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -16,6 +17,7 @@ export function create(
     config: Provider,
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
+    keyValueManager: KeyValueManager,
     ensureLoggedIn: any): Router {
 
     const router: Router = Router();
