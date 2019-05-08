@@ -10,8 +10,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    keyValueManager: KeyValueManager,
-): Router {
+    keyValueManager: KeyValueManager): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
@@ -42,8 +41,8 @@ export function create(
      */
     router.post("/keyValues", ensureLoggedIn(), (request, response) => {
         const keyValueInput = request.body as IKeyValue;
-        const newKeyValue = keyValueManager.addKeyValue(keyValueInput);
-        response.status(200).json(newKeyValue);
+        const keyValueP = keyValueManager.addKeyValue(keyValueInput);
+        returnResponse(keyValueP, response);
     });
 
     /**
@@ -51,8 +50,8 @@ export function create(
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
         const key = request.params[0] as string;
-        const keyValueId = keyValueManager.removeKeyValue(key);
-        response.status(200).json(keyValueId);
+        const keyP = keyValueManager.removeKeyValue(key);
+        returnResponse(keyP, response);
     });
 
     return router;

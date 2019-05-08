@@ -76,7 +76,14 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         config.get("app:alfredUrl"),
         config.get("app:jarvisUrl"));
 
-    const keyValueManager = new KeyValueManager();
+    const keyValueManager = new KeyValueManager(
+        config.get("loader:orderer"),
+        config.get("loader:storage"),
+        config.get("loader:tenant"),
+        config.get("loader:secret"),
+        config.get("loader:jwtKey"),
+        config.get("loader:documentId"),
+        config.get("loader:package"));
 
     // Create a redis session store.
     const redisStore = connectRedis(expressSession);

@@ -23,27 +23,25 @@ export function create(
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
         const tenantsP = tenantManager.getTenantsforUser(request.user.oid);
-        tenantsP.then(
-            (tenants) => {
-                const data: IData = {
-                    keyValues: keyValueManager.getKeyValues(),
-                    tenants,
-                };
-                response.render(
-                    "admin",
-                    {
-                        data: JSON.stringify(data),
-                        partials: defaultPartials,
-                        title: "Admin Portal",
-                        user: JSON.stringify(request.user),
-                    },
-                );
-            },
-            (error) => {
-                winston.error(error);
-                response.status(500).json(error);
-            },
-        );
+        const keyValuesP = keyValueManager.getKeyValues();
+        Promise.all([tenantsP, keyValuesP]).then(([tenants, keyValues]) => {
+            const data: IData = {
+                keyValues,
+                tenants,
+            };
+            response.render(
+                "admin",
+                {
+                    data: JSON.stringify(data),
+                    partials: defaultPartials,
+                    title: "Admin Portal",
+                    user: JSON.stringify(request.user),
+                },
+            );
+        }, (error) => {
+            winston.error(error);
+            response.status(500).json(error);
+        });
     });
 
     /**

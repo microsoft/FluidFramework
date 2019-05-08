@@ -1,47 +1,51 @@
+import { ISharedMap } from "@prague/map";
 import { IKeyValue } from "./definitions";
+import { KeyValueLoader } from "./keyValueLoader";
 
 export class KeyValueManager {
-
-    private keyValues: IKeyValue[];
-    constructor() {
-        this.keyValues = [
-            {
-                key: "@chaincode/shared-text",
-                value: "0.0.1",
-            },
-            {
-                key: "@chaincode/monaco",
-                value: "0.0.5",
-            },
-            {
-                key: "@chaincode/pinpoint-editor",
-                value: "0.0.10",
-            },
-            {
-                key: "@chaincode/charts",
-                value: "0.0.1",
-            },
-        ];
+    private keyValueLoader: KeyValueLoader;
+    private readyP: Promise<void>;
+    constructor(
+        orderer: string,
+        storage: string,
+        tenantId: string,
+        secret: string,
+        jwtKey: string,
+        documentId: string,
+        codePackage: string) {
+            this.keyValueLoader = new KeyValueLoader(
+                orderer,
+                storage,
+                tenantId,
+                secret,
+                jwtKey,
+                documentId,
+                codePackage);
+            this.readyP = this.keyValueLoader.load();
     }
-    public getKeyValues(): IKeyValue[] {
-        return this.keyValues;
+    public async getKeyValues(): Promise<IKeyValue[]> {
+        const keyValues: IKeyValue[] = [];
+        const rootMap = await this.getRootMap();
+        rootMap.forEach((value: string, key: string) => {
+            keyValues.push({ key, value});
+        });
+        return keyValues;
     }
 
-    public addKeyValue(keyValue: IKeyValue): IKeyValue {
-        const index = this.keyValues.findIndex((value) => keyValue.key === value.key);
-        if (index === -1) {
-            this.keyValues.push(keyValue);
-        } else {
-            this.keyValues[index].value = keyValue.value;
-        }
+    public async addKeyValue(keyValue: IKeyValue): Promise<IKeyValue> {
+        const rootMap = await this.getRootMap();
+        rootMap.set(keyValue.key, keyValue.value);
         return keyValue;
     }
 
-    public removeKeyValue(key: string): string {
-        const index = this.keyValues.findIndex((value) => key === value.key);
-        if (index !== -1) {
-            this.keyValues.splice(index, 1);
-            return key;
-        }
+    public async removeKeyValue(key: string): Promise<string> {
+        const rootMap = await this.getRootMap();
+        rootMap.delete(key);
+        return key;
+    }
+
+    private async getRootMap(): Promise<ISharedMap> {
+        await this.readyP;
+        return this.keyValueLoader.rootMap;
     }
 }
