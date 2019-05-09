@@ -28,7 +28,7 @@
     <h3>Non-Office</h3>
     <p>Open the link below and add in a WSJ journal Pinpoint Map.</p>
     <ul class="list-unstyled">
-        <li><a href="/loader/prague/{{pinpointMoniker}}?chaincode=@container/pinpoint-editor@0.3.6534#/maps/new"
+        <li><a href="/loader/prague/{{pinpointMoniker}}?chaincode=@container/pinpoint-editor@0.3.6527#/maps/new"
                 target="_blank">Pin Point Map</a></li>
         <li><a href="/loader/prague/{{newsMoniker}}?chaincode=@chaincode/shared-text@0.3.6672"
                 target="_blank">Prague Text Editor</a></li>

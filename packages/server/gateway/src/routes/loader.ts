@@ -88,9 +88,9 @@ export function create(
                     title: documentId,
                 });
         }, (error) => {
-            response.status(400).end(safeStringify(error));
+            response.status(400).end(safeStringify(error, undefined, 2));
         }).catch((error) => {
-            response.status(500).end(safeStringify(error));
+            response.status(500).end(safeStringify(error, undefined, 2));
         });
     });
 
