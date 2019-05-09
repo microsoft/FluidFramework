@@ -46,10 +46,11 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
-    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
     "debug": "^3.1.0",
+    "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",

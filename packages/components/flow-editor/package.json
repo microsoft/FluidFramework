@@ -48,11 +48,12 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
-    "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "css-loader": "^1.0.0",
+    "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
