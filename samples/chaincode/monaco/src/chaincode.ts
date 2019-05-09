@@ -8,7 +8,7 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponent, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
@@ -49,7 +49,7 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-export class MonacoRunner extends EventEmitter implements IPlatform {
+export class MonacoRunner extends EventEmitter implements IComponent, IPlatform {
     public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
         const runner = new MonacoRunner(runtime);
         await runner.initialize();
@@ -61,6 +61,10 @@ export class MonacoRunner extends EventEmitter implements IPlatform {
     private codeModel: monaco.editor.ITextModel;
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
     private rootView: ISharedMap;
+
+    public get id(): string {
+        return this.runtime.id;
+    }
 
     constructor(private runtime: IComponentRuntime) {
         super();
