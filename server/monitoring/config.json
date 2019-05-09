@@ -1,0 +1,23 @@
+{
+    "logger": {
+        "colorize": true,
+        "morganFormat": "dev",
+        "json": false,
+        "level": "info",
+        "timestamp": true,
+        "label": "winston"
+    },
+    "error": {
+        "track": false,
+        "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+    },
+    "loader": {
+        "orderer": "https://alfred.wu2-ppe.prague.office-int.com",
+        "storage": "https://historian.wu2-ppe.prague.office-int.com",
+        "tenant": "pensive-newton",
+        "secret": "2fd6c969f329006b6acd031abaf1c5ce",
+        "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+        "user": "service-tester",
+        "waitMSec": 60000 
+    }
+}

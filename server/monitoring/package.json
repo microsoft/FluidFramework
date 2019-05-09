@@ -1,0 +1,32 @@
+{
+  "name": "prague-health-monitor",
+  "version": "0.0.1",
+  "description": "Checks Prague service health using a script",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && tslint 'src/**/*.ts'",
+    "build:full": "npm run build",
+    "docker:build": "docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t monitoring .",
+    "docker:start": "docker run --rm -t monitoring"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.3.6760",
+    "@prague/container-loader": "^0.3.6760",
+    "@prague/routerlicious-host": "^0.3.6760",
+    "@prague/routerlicious-socket-storage": "^0.3.6760",
+    "debug": "^3.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "nconf": "^0.10.0",
+    "uuid": "^3.3.2",
+    "winston": "3.2.1"
+  },
+  "devDependencies": {
+    "@types/debug": "^0.0.31",
+    "@types/jsonwebtoken": "^8.3.2",
+    "@types/nconf": "^0.10.0",
+    "@types/node": "^10.12.12",
+    "@types/uuid": "^3.4.4",
+    "tslint": "^5.10.0",
+    "typescript": "^3.2.2"
+  }
+}
