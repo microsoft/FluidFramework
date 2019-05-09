@@ -12,8 +12,20 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: 'ts-loader',
+                use: [{
+                    loader:'ts-loader',
+                    options: {
+                        compilerOptions: {
+                            module: "esnext"
+                        },
+                    }
+                }],
                 exclude: /node_modules/
+            },
+            {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+                enforce: "pre"
             },
             {
                 test: /\.css$/,
@@ -21,6 +33,25 @@ module.exports = {
                     "style-loader", // creates style nodes from JS strings
                     "css-loader", // translates CSS into CommonJS
                 ]
+            },
+            {
+                test: /\.scss$/,
+                use: [
+                    "style-loader", // creates style nodes from JS strings
+                    "css-loader", // translates CSS into CommonJS
+                    "sass-loader" // compiles Sass to CSS, using Node Sass by default
+                ]
+            },
+            {
+                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
+                loader: 'url-loader',
+                options: {
+                    limit: 10000
+                }
+            },
+            {
+                test: /\.html$/,
+                loader: 'html-loader'
             }
         ]
     },
@@ -35,20 +66,15 @@ module.exports = {
 	},
     output: {
         filename: '[name].bundle.js',
+        chunkFilename: '[name].async.js',
         path: path.resolve(__dirname, 'dist'),
-        // publicPath: "https://pragueunpkg.blob.core.windows.net/egjncwvrnjwmqlbcugacp6ru/@chaincode/monaco@latest/dist/",
         publicPath: "/dist/",
         library: "[name]",
         libraryTarget: "umd",
         globalObject: 'self',
     },
-    devServer: {
-        publicPath: '/dist'
-    },
     plugins: [
-        new webpack.IgnorePlugin(/^((fs)|(path)|(os)|(crypto)|(source-map-support))$/, /vs\/language\/typescript\/lib/),
-		new webpack.optimize.LimitChunkCountPlugin({
-			maxChunks: 1,
-		}),
-    ],
+        // new MonacoWebpackPlugin()
+        // new BundleAnalyzerPlugin()
+    ]
 };

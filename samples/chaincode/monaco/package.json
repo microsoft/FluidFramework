@@ -8,9 +8,11 @@
   "sideEffects": "false",
   "author": "Microsoft",
   "scripts": {
-    "build": "tsc && tsc --outDir lib --m esnext && npm run tslint",
+    "build": "tsc && tsc --outDir lib --m esnext && npm run tslint && npm run webpack",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json --component",
     "tsc": "tsc",
-    "tslint": "tslint 'src/**/*.ts'"
+    "tslint": "tslint 'src/**/*.ts'",
+    "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
     "@prague/app-component": "^0.3.0",
@@ -31,6 +33,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@prague/prague-dev-server": "^3.3.8",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",
@@ -46,5 +49,13 @@
     "webpack": "^4.7.0",
     "webpack-cli": "^3.1.2",
     "webpack-dev-server": "^3.1.14"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
   }
 }

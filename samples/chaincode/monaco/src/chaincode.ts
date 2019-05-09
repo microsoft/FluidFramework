@@ -103,13 +103,13 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
         hostWrapper.style.height = "100%";
 
         const inputDiv = document.createElement("div");
-        inputDiv.style.width = "50%";
-        const outputDiv = document.createElement("div");
-        outputDiv.style.width = "50%";
+        inputDiv.style.width = "100%";
+        // const outputDiv = document.createElement("div");
+        // outputDiv.style.width = "50%";
 
         this.mapHost.appendChild(hostWrapper);
         hostWrapper.appendChild(inputDiv);
-        hostWrapper.appendChild(outputDiv);
+        // hostWrapper.appendChild(outputDiv);
 
         const root = await this.rootView;
         const text = await root.wait<SharedString>("text");
@@ -135,19 +135,19 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
         this.codeEditor = monaco.editor.create(
             inputDiv,
             { model: this.codeModel, automaticLayout: true });
-        const outputEditor = monaco.editor.create(
-            outputDiv,
-            { model: outputModel, automaticLayout: true, readOnly: true });
+        // const outputEditor = monaco.editor.create(
+        //     outputDiv,
+        //     { model: outputModel, automaticLayout: true, readOnly: true });
 
         this.codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
             () => { this.runCode(outputModel.getValue(), platform); },
             null);
 
-        outputEditor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(outputModel.getValue(), platform); },
-            null);
+        // outputEditor.addCommand(
+        //     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+        //     () => { this.runCode(outputModel.getValue(), platform); },
+        //     null);
 
         let ignoreModelContentChanges = false;
         this.codeEditor.onDidChangeModelContent((e) => {
