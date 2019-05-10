@@ -191,13 +191,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             snapshotTree);
         this.components.set(id, component);
 
-        // Create a promise to refer to the started component
-        const startedP = component.start().then(() => component);
+        // Create a promise that will resolve to the started component
         const deferred = new Deferred<ComponentContext>();
-        deferred.resolve(startedP);
         this.componentsDeferred.set(id, deferred);
 
-        await startedP;
+        await component.start();
+
+        deferred.resolve(component);
     }
 
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
