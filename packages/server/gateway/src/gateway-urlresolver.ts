@@ -86,10 +86,9 @@ export function gatewayResolveUrl(
     tenantId: string,
     documentId: string,
     spoSuffix: string,
-    request: Request) {
-
-    if (isSpoTenant(tenantId)) {
-        return spoResolveUrl(config, tenantId, `${documentId}.${spoSuffix}`, request);
-    }
-    return r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+    request: Request,
+) {
+    return isSpoTenant(tenantId)
+        ? spoResolveUrl(config, tenantId, `${documentId}.${spoSuffix}`, request)
+        : r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, request);
 }

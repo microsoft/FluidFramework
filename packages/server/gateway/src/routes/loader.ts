@@ -43,12 +43,11 @@ export function create(
         const tenantId = request.params.tenantId;
 
         // SPO will always depends on the passed in chaincode since we don't get the fullTree on the server.
-        const chaincode = request.query.chaincode;
-        const search = parse(request.url).search;
+        const chaincode = request.query.chaincode ? request.query.chaincode : "";
         const spoSuffix = chaincode.replace(/[^A-Za-z0-9-]/g, "_");
+        const search = parse(request.url).search;
         const [resolvedP, fullTreeP] =
-            gatewayResolveUrl(config, alfred, appTenants, tenantId, documentId,
-                spoSuffix, request);
+            gatewayResolveUrl(config, alfred, appTenants, tenantId, documentId, spoSuffix, request);
 
         const workerConfig = getConfig(
             config.get("worker"),
