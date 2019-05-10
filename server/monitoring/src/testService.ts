@@ -33,10 +33,9 @@ async function waitForFullConnection(container: Container): Promise<void> {
 }
 
 async function runInternal(loader: Loader, docUrl: string): Promise<void> {
-    winston.info(`Loading ${docUrl}`);
-    const loaderP = loader.resolve({ url: docUrl });
-    const container = await loaderP;
-    winston.info(`Loaded ${docUrl}`);
+    winston.info(`Resolving ${docUrl}`);
+    const container = await loader.resolve({ url: docUrl });
+    winston.info(`Resolved ${docUrl}`);
     await waitForFullConnection(container);
     winston.info(`Fully connected to ${docUrl}`);
 }

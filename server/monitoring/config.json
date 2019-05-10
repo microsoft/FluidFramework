@@ -7,9 +7,8 @@
         "timestamp": true,
         "label": "winston"
     },
-    "error": {
-        "track": false,
-        "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+    "notification": {
+        "endpoint" : "https://201f9eb9cc4f478baa067e2fa1b355b4:3a2b3c31689642c18845b6cb81818cf5@sentry.wu2.prague.office-int.com/3"
     },
     "loader": {
         "orderer": "https://alfred.wu2.prague.office-int.com",
