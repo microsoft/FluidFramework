@@ -1,0 +1,30 @@
+{
+	"name": "example-iso-git",
+	"version": "0.0.1",
+	"description": "Experiment with isomorphic-git",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"sideEffects": "false",
+	"scripts": {
+		"build": "npm run tsc && npm run tslint",
+		"build:full": "npm run build",
+		"clean": "rimraf dist && rimraf lib",
+		"start": "node dist/index.js",
+		"tsc": "tsc",
+		"tslint": "tslint --project tsconfig.json --format verbose"
+	},
+	"author": "Microsoft",
+	"repository": "microsoft/prague",
+	"devDependencies": {
+		"@types/node": "^10.12.12",
+		"@types/sha.js": "^2.4.0",
+		"rimraf": "^2.6.2",
+		"tslint": "^5.16.0",
+		"tslint-microsoft-contrib": "^6.0.0",
+		"typescript": "^3.4.5"
+	},
+	"dependencies": {
+		"isomorphic-git": "^0.54.2",
+		"sha.js": "^2.4.11"
+	}
+}
