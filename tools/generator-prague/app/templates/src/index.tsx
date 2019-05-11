@@ -4,6 +4,9 @@ import { Counter, CounterValueType } from "@prague/map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+const pkg = require("../package.json");
+const chaincodeName = pkg.name;
+
 export class Clicker extends Document {
   /**
    * Create the component's schema and perform other initialization tasks
@@ -56,7 +59,7 @@ export class Clicker extends Document {
 export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/clicker", new Map([
-    ["@chaincode/clicker", Promise.resolve(Component.createComponentFactory(Clicker))]
+  return Component.instantiateRuntime(context, chaincodeName, new Map([
+    [chaincodeName, Promise.resolve(Component.createComponentFactory(Clicker))]
   ]));
 }

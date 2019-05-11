@@ -2,6 +2,17 @@ var Generator = require("yeoman-generator");
 var { Project } = require("ts-morph");
 var chalk = require("chalk");
 
+const choices = [
+  "react",
+  "vanillaJS"
+]
+
+/**
+ * Go to the Yeoman Website to find out more about their generators in general.
+ * 
+ * All functions **without** a _ to start are run sequentially from the start to end of the document.
+ * Functions **with** a _ can be called as helper functions.
+ */
 module.exports = class extends Generator {
   constructor(args, opts) {
     super(args, opts);
@@ -17,9 +28,16 @@ module.exports = class extends Generator {
         message: "Component Name",
         default: this.appname,
         filter: input => {
-          input = input.replace(" ", "_");
+          input = input.replace(" ", "_").toLowerCase();
           return input.replace(/\W/g, "");
         }
+      },
+      {
+        type: "list",
+        name: "template",
+        message: "Which experience would you like to start with?",
+        default: "react",
+        choices: choices
       },
       {
         type: "input",
@@ -36,6 +54,7 @@ module.exports = class extends Generator {
         }
       }
     ]);
+
     this._setNewDestinationPath(this.answers.path);
   }
 
@@ -49,8 +68,8 @@ module.exports = class extends Generator {
       this.destinationPath("tsconfig.json") // TO
     );
 
-    this._movePackageFile();
-    this._modifyComponent();
+    this._copyPackageFile();
+    this._copyComponent();
 
     this.fs.copy(
       this.templatePath("webpack.*.js"), // FROM
@@ -73,10 +92,15 @@ module.exports = class extends Generator {
     );
   }
 
-  _movePackageFile() {
+  /**
+   * Copy over the package.json file
+   */
+  _copyPackageFile() {
     var packageJson = this.fs.readJSON(this.templatePath("package.json"));
-    packageJson.name = "@chaincode/" + this.answers.name;
+    packageJson.name = "@chaincode/" + this.answers.name.toLowerCase();
     packageJson.description = this.answers.description;
+
+    packageJson = this._cleanDependencies(packageJson);
 
     this.fs.writeJSON(
       this.destinationPath("package.json"), // TO
@@ -84,8 +108,27 @@ module.exports = class extends Generator {
     );
   }
 
-  _modifyComponent() {
-    const fileString = this.fs.read(this.templatePath("src/index.tsx"));
+  /**
+   * REMOVE dependencies. This is preferred because it keeps all dependencies in one place
+   * @param {*} packageJson 
+   */
+  _cleanDependencies(packageJson) {
+    switch (this.answers.template) {
+      case "react": {
+        break;
+      }
+      case "vanillaJS": {
+        delete packageJson.devDependencies["@types/react-dom"];
+        delete packageJson.dependencies["react"];
+        delete packageJson.dependencies["react-dom"];
+        break;
+      }
+    }
+    return packageJson;
+  }
+
+  _copyComponent() {
+    const fileString = this.fs.read(this.templatePath((this.answers.template === "react" ) ? "src/index.tsx" : "src/index.ts"));
 
     const project = new Project({});
 
@@ -94,8 +137,10 @@ module.exports = class extends Generator {
       fileString
     );
 
-    file.getClass("Clicker").rename(this.answers.name);
-
+    // Change Classname plus references
+    const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
+    file.getClass("Clicker").rename(chaincodeClassName);
+    
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
     file.save();
@@ -106,9 +151,10 @@ module.exports = class extends Generator {
     this.npmInstall();
   }
 
+  /**
+   * Give Final Instructions to user
+   */
   async end() {
-    // await this._runInstall();
-
     this.log("\n");
     this.log(chalk.green("Success.") + " Created component", this.answers.name);
     this.log("Component is in", this.destinationRoot());
