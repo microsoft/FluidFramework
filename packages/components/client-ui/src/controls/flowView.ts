@@ -746,7 +746,18 @@ function renderSegmentIntoLine(
                 if ((cpos > lineContext.mathSegpos) && (cpos <= segpos)) {
                     lineContext.span.style.borderLeft = "solid orange 2px";
                     lineContext.span.style.borderRight = "solid orange 2px";
-                    lineContext.mathBuffer += " \\textcolor{#0000FE}{\\cdots}";
+                    const mathMarker = segment as MathMenu.IMathMarker;
+                    if ((!mathMarker.mathViewBuffer) || (cpos === segpos)) {
+                        mathMarker.mathCursor = lineContext.mathBuffer.length;
+                        lineContext.mathBuffer += MathMenu.cursorTex;
+                    } else {
+                        // replace cursor box with cdots
+                        lineContext.mathBuffer = lineContext.mathBuffer.substring(0, mathMarker.mathCursor) +
+                            MathMenu.cursorTex +
+                            lineContext.mathBuffer.substring(mathMarker.mathCursor +
+                                MathMenu.entryPointTex.length);
+                    }
+                    mathMarker.mathViewBuffer = lineContext.mathBuffer;
                     cursorPresent = true;
                     lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight,
                         lineContext.lineDiv, false);
@@ -4167,7 +4178,7 @@ export class FlowView extends ui.Component {
                 const code = e.charCode;
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
-                    this.insertParagraph(pos);
+                    this.insertParagraph(this.cursor.pos++);
                 } else if ((code === CharacterCodes.backslash) && this.inMath()) {
                     this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
                         (s, cmd) => {
@@ -4200,9 +4211,17 @@ export class FlowView extends ui.Component {
 
     public mathCursorFwd() {
         const endTileInfo = findTile(this, this.cursor.pos, "math", false);
-        // const beginTileInfo = findTile(this, this.cursor.pos, "math", true);
-        // for now just go past
-        this.cursor.pos = endTileInfo.pos + 1;
+        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
+        if (MathMenu.fwdEntryPoint(mathMarker)) {
+            this.cursor.pos = endTileInfo.pos + 1;
+        } else {
+            let pos = this.cursor.pos;
+            if (pos === endTileInfo.pos) {
+                pos--;
+            }
+            const beginTileInfo = findTile(this, pos, "math", true);
+            this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
+        }
         this.broadcastPresence();
         this.cursor.updateView(this);
     }
@@ -4214,8 +4233,12 @@ export class FlowView extends ui.Component {
             pos--;
         }
         const beginTileInfo = findTile(this, pos, "math", true);
-        // for now just go past
-        this.cursor.pos = beginTileInfo.pos;
+        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
+        if (MathMenu.revEntryPoint(mathMarker)) {
+            this.cursor.pos = beginTileInfo.pos;
+        } else {
+            this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
+        }
         this.broadcastPresence();
         this.cursor.updateView(this);
     }
@@ -4239,11 +4262,11 @@ export class FlowView extends ui.Component {
     }
 
     public enterMathMode() {
-        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
+        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Tile,
             { [MergeTree.reservedTileLabelsKey]: ["math"], mathStart: true });
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
             { [MergeTree.reservedTileLabelsKey]: ["math"], mathEnd: true });
-        this.cursor.pos--;
+        // this.cursor.pos++;
         this.clearSelection();
         if (this.modes.showCursorLocation) {
             this.cursorLocation();

@@ -3,6 +3,56 @@ import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";
 import * as SearchMenu from "./searchMenu";
 
+export const cursorTex = " \\textcolor{#0000FE}{\\cdots}";
+export const entryPointTex = "\\Box";
+
+export interface IMathMarker extends MergeTree.Marker {
+    mathCursor: number;
+    mathViewBuffer?: string;
+}
+
+/**
+ * Move math entry forward; return true if cursor should exit math component (to the right)
+ * @param marker marker referencing math component
+ */
+export function fwdEntryPoint(marker: IMathMarker) {
+    if (!marker.mathViewBuffer) {
+        return true;
+    } else {
+        const currentPos = marker.mathViewBuffer.indexOf(cursorTex);
+        const lenCdots = cursorTex.length;
+        const afterCdots = currentPos + lenCdots;
+        if (afterCdots === marker.mathViewBuffer.length) {
+            return true;
+        } else {
+            const remainder = marker.mathViewBuffer.substring(afterCdots);
+            const boxPos = remainder.indexOf(entryPointTex);
+            if (boxPos >= 0) {
+                marker.mathCursor = boxPos + entryPointTex.length + currentPos;
+            } else {
+                marker.mathCursor = marker.mathViewBuffer.length + entryPointTex.length - lenCdots;
+            }
+            return false;
+        }
+    }
+}
+
+/**
+ * Move math entry backward; return true if cursor should exit math component (to the left)
+ * @param marker marker referencing math component
+ */
+export function revEntryPoint(marker: IMathMarker) {
+    const currentPos = marker.mathViewBuffer.indexOf(cursorTex);
+    const prefix = marker.mathViewBuffer.substring(0, currentPos);
+    const boxPos = prefix.lastIndexOf(entryPointTex);
+    if (boxPos >= 0) {
+        marker.mathCursor = boxPos;
+        return false;
+    } else {
+        return true;
+    }
+}
+
 export interface IMathCommand extends SearchMenu.ISearchMenuCommand {
     arity?: number;
     infix?: boolean;
@@ -108,7 +158,7 @@ const binaryRelations = [
     { key: "equiv", op: Operator.EQUIV },
     { key: "ni", op: Operator.OWNS },
     { key: "owns", op: Operator.OWNS },
-    { key: "implies", op: Operator.IMPLIES},
+    { key: "implies", op: Operator.IMPLIES },
 ];
 
 const logic = [
@@ -156,4 +206,4 @@ addCommand(mathCmdTree, { key: "sin", arity: 1, exp: true, texString: "\\sin" })
 // TODO: [3] for cube root etc.
 addCommand(mathCmdTree, { key: "sqrt", arity: 1, texString: "\\sqrt{}", curlies: true });
 addCommand(mathCmdTree, { key: "to", arity: 0, texString: "\\to" });
-addCommand(mathCmdTree, { key: "frac", arity: 2, texString: "\\frac " });
+addCommand(mathCmdTree, { key: "frac", arity: 2, texString: "\\frac {\\Box}{\\Box} " });
