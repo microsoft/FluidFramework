@@ -19,8 +19,6 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server
- *
- * TODO Is the below a connection to the actual Kafka stream?
  */
 export interface IConnected {
     // The client who is sending the message

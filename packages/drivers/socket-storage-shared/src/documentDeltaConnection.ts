@@ -1,4 +1,3 @@
-// tslint:disable
 import {
     IClient,
     IContentMessage,
@@ -16,6 +15,8 @@ import * as messages from "./messages";
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+    // tslint:disable:max-func-body-length
+    // tslint:disable-next-line:function-name
     public static async Create(
         tenantId: string,
         id: string,
@@ -76,7 +77,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             socket.on("connect_timeout", () => {
                 debug(`Socket connection timeout`);
                 reject();
-            })
+            });
 
             socket.on("connect_document_success", (response: messages.IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
@@ -104,7 +105,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
                     response.initialContents.push(...queuedContents);
 
-                    response.initialContents.sort((a, b) => (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId)? -1 : 1) || a.clientSequenceNumber - b.clientSequenceNumber);
+                    response.initialContents.sort((a, b) =>
+                        // tslint:disable-next-line:strict-boolean-expressions
+                        (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
+                        a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {
@@ -120,24 +124,25 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 resolve(response);
             });
 
-            socket.on("connect_document_error", (error => {
+            socket.on("connect_document_error", ((error) => {
                 debug(`Error connecting to the document after connecting to the socket. Error:[${error}]`);
 
                 socket.disconnect();
-                
+
                 reject(error);
             }));
 
             socket.emit("connect_document", connectMessage);
         });
 
+        // tslint:disable-next-line:no-unnecessary-local-variable
         const deltaConnection = new DocumentDeltaConnection(socket, id, connection);
 
         return deltaConnection;
     }
 
-    private emitter = new EventEmitter();
-    private submitManager: BatchManager<IDocumentMessage>;
+    private readonly emitter = new EventEmitter();
+    private readonly submitManager: BatchManager<IDocumentMessage>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -168,7 +173,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     }
 
     constructor(
-        private socket: SocketIOClient.Socket,
+        private readonly socket: SocketIOClient.Socket,
         public documentId: string,
         public details: messages.IConnected) {
         super();
@@ -214,7 +219,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     /**
      * Submits a new signal to the server
      */
-    public submitSignal(message: any): void {
+    public submitSignal(message: IDocumentMessage): void {
         this.submitManager.add("submitSignal", message);
     }
 
