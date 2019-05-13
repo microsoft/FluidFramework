@@ -2,21 +2,20 @@
 
 ## Chaincode
 
-## Container
-
-See [Containers](concepts.md#containers)
-
 ## Component
 
 See [Components](concepts.md#components)
 
 ## Component Host
 
-## Quorum
+## Container
+
+See [Containers](concepts.md#containers)
 
 ## Loader
 
 See <https://github.com/Microsoft/Prague/blob/master/samples/hosts/README.md>
 
-## Total Order Broadcast
+## Quorum
 
+## Total Order Broadcast

@@ -4,8 +4,8 @@ uid: SharedMap
 
 # SharedMap
 
-Package: <xref:map>
-API documentation: <xref:map.SharedMap>
+* Package: <xref:map>
+* API documentation: <xref:map.SharedMap>
 
 * High level description of the data structure
 
