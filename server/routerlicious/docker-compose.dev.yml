@@ -15,6 +15,9 @@ services:
     broadcaster:
         volumes:
             - ../..:/usr/src/server
+    scribe:
+        volumes:
+            - ../..:/usr/src/server
     foreman:
         volumes:
             - ../..:/usr/src/server

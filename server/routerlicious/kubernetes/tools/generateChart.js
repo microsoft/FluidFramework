@@ -60,6 +60,10 @@ broadcaster:
   name: broadcaster
   replicas: 8
 
+scribe:
+  name: scribe
+  replicas: 8
+
 routemaster:
   name: routemaster
   replicas: 8

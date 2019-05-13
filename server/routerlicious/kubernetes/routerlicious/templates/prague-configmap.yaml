@@ -138,6 +138,10 @@ data:
                 "group": "{{ template "broadcaster.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
             },
+            "scribe": {
+                "group": "{{ template "scribe.fullname" . }}",
+                "topic": "deltas"
+            },
             "foreman": {
                 "group": "{{ template "foreman.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"

@@ -114,6 +114,10 @@
             "group": "broadcaster",
             "topic": "deltas"
         },
+        "scribe": {
+            "group": "scribe",
+            "topic": "deltas"
+        },
         "serviceGraph": {
             "group": "serviceGraph",
             "topic": "deltas"

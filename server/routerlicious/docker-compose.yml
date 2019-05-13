@@ -49,6 +49,15 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
+    scribe:
+        build:
+            context: ../..
+            dockerfile: server/routerlicious/Dockerfile
+        command: node dist/kafka-service/index.js scribe /usr/src/server/packages/server/routerlicious/dist/scribe/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     foreman:
         build:
             context: ../..
