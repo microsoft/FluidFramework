@@ -2,7 +2,7 @@
 use File::Spec 'join';
 use JSON 'decode_json';
 
-open(my $inFile,  "<Dockerfile") || die "Unable to open './Dockerfile'.";   
+open(my $inFile,  "<./server/routerlicious/Dockerfile") || die "Unable to open './server/routerlicious/Dockerfile'.";   
 
 print <<'END';
 {

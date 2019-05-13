@@ -59,6 +59,10 @@
       "projectFolder": "packages/components/flow-util/"
     },
     {
+      "packageName": "@chaincode/key-value",
+      "projectFolder": "packages/components/key-value/"
+    },
+    {
       "packageName": "@chaincode/owned-map",
       "projectFolder": "packages/components/owned-map/"
     },
@@ -211,6 +215,14 @@
       "projectFolder": "packages/server/services-utils/"
     },
     {
+      "packageName": "@prague/odsp-utils",
+      "projectFolder": "packages/utils/odsp-utils/"
+    },
+    {
+      "packageName": "@prague/build-common",
+      "projectFolder": "packages/utils/build-common/"
+    },
+    {
       "packageName": "@prague/test-utils",
       "projectFolder": "packages/server/test-utils/"
     },
@@ -221,14 +233,6 @@
     {
       "packageName": "@prague/prague-dump",
       "projectFolder": "packages/tools/prague-dump/"
-    },
-    {
-      "packageName": "@prague/build-common",
-      "projectFolder": "packages/utils/build-common/"
-    },
-    {
-      "packageName": "@prague/odsp-utils",
-      "projectFolder": "packages/utils/odsp-utils/"
     }
   ]
 }
