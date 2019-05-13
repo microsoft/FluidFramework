@@ -16,5 +16,5 @@ spec:
             image: prague.azurecr.io/monitoring:latest
             imagePullPolicy: Always
           restartPolicy: Never
-  schedule: '*/5 * * * *'
+  schedule: '*/10 * * * *'
   successfulJobsHistoryLimit: 3
