@@ -3,7 +3,6 @@ export interface IViewState {
 }
 
 export interface IView<TProps> {
-
     readonly root: Element;
     mount(props: Readonly<TProps>): Element;
     update(props: Readonly<TProps>): void;
@@ -26,8 +25,8 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
     }
 
     public unmount() {
-        this.unmounting(this.state);
         this.root.remove();
+        this.unmounting(this.state);
         this._state = undefined;
     }
 
@@ -38,16 +37,12 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
     protected abstract unmounting(state: TState): void;
 }
 
-export interface IFlowViewComponentState extends IViewState {
-    cursorTarget: Node;
-}
-
 export interface IFlowViewComponent<TProps> extends IView<TProps> {
     readonly cursorTarget: Node;
 }
 
-export abstract class FlowViewComponent<TProps, TState extends IFlowViewComponentState>
+export abstract class FlowViewComponent<TProps, TState extends IViewState>
     extends View<TProps, TState>
     implements IFlowViewComponent<TProps> {
-    public get cursorTarget() { return this.state.cursorTarget; }
+    public abstract get cursorTarget(): Node;
 }

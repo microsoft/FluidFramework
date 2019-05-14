@@ -1,27 +1,20 @@
+/* Workaround prague-loader content element */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 .viewport {
-    position: relative;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+
     background: #aaa;
-    height: 100%;
-    
-    display: grid;
-    justify-content: stretch;
-    grid-template-columns: 1fr;
-    grid-template-rows: 100%;
-    grid-template-areas:
-      "main";
-  
-    width: 100%;
 
-    --scroll-bar-width: 15px;
-
-    /* Padding to allow for scrollbar overlaying the right edge of the viewport. */
-    padding: 0 var(--scroll-bar-width) 0 0;
-    
-    /* Clip viewport contents to bounds of viewport. */
-    overflow-y: hidden;
-
-    /* TODO: Cancel scroll events rather than set touch-action?  Allow horizontal scrolling? */
-    touch-action: none;
+    overflow-y: scroll;
 }
 
 /* Provides a relative frame of reference for the contained absolute positioned block.
@@ -49,9 +42,13 @@
     margin: 3% auto;
 
     /* Emulate paper document proportions. */
-    max-width: 8.5in;
-    min-height: 11in;
+    max-width: 8in;
     padding: 1in;
+}
+
+/* Focus is communicated to the user via the visible cursor. */
+.document:focus {
+    outline: none;
 }
 
 .slot { }
@@ -76,8 +73,9 @@
     /* Scrollbar should overlap right 15px of 'slot'.  We need to force the
        15px width due to Chrome's auto-hide behavior when using touchpad. */
     position: absolute;
+    top: 0px;
     right: 0px;
-    height: 100%;
+    bottom: 0px;
     width: var(--scroll-bar-width);
     
     /* Show vertical scrollbar. */
@@ -87,4 +85,7 @@
   
 .space {
     height: 8192px;
+
+    /* FF66: Firefox will not display the scrollbar for a 0-width element. */ 
+    width: 1px;
 }

@@ -32,6 +32,8 @@ COPY packages/components/client-ui/package*.json packages/components/client-ui/
 COPY packages/components/flow-document/package*.json packages/components/flow-document/
 COPY packages/components/flow-editor/package*.json packages/components/flow-editor/
 COPY packages/components/flow-host/package*.json packages/components/flow-host/
+COPY packages/components/flow-page/package*.json packages/components/flow-page/
+COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
 COPY packages/components/key-value/package*.json packages/components/key-value/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/

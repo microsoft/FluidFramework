@@ -1,5 +1,5 @@
 import { Template } from "@prague/flow-util";
-import { FlowViewComponent, IFlowViewComponentState } from "..";
+import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -14,16 +14,16 @@ const template = new Template({
 // tslint:disable-next-line:no-empty-interface
 export interface ILineBreakProps {}
 // tslint:disable-next-line:no-empty-interface
-export interface ILineBreakViewState extends IFlowViewComponentState { }
+export interface ILineBreakViewState extends IViewState { }
 
 export class LineBreakView extends FlowViewComponent<ILineBreakProps, ILineBreakViewState> {
     public static readonly factory = () => new LineBreakView();
 
     public mounting(props: Readonly<ILineBreakProps>): ILineBreakViewState {
-        const root = template.clone();
-        const cursorTarget = template.get(root, "cursorTarget");
-        return { root, cursorTarget };
+        return { root: template.clone() };
     }
+
+    public get cursorTarget() { return template.get(this.state.root, "cursorTarget"); }
 
     public updating(props: Readonly<ILineBreakProps>, state: Readonly<ILineBreakViewState>): ILineBreakViewState {
         return state;

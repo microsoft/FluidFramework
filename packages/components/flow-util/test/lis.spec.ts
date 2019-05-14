@@ -1,7 +1,10 @@
+// tslint:disable:no-import-side-effect
+// tslint:disable:no-relative-imports
+import * as assert from "assert";
+import "mocha";
 import { lis } from "../src/lis";
 import { lis as patience } from "./patience";
 import { randomSequence } from "./sequence";
-import * as assert from "assert";
 
 function isIS(seq: number[], sub: number[]) {
     let i = 0;
@@ -25,10 +28,10 @@ function expectedLis(seq: number[]) {
 function checkLis(seq: number[], sub: number[]) {
     const expected = expectedLis(seq);
     const expectedLen = expected.length;
-    
+
     assert.equal(sub.length, expectedLen,
         `Subsequence ${JSON.stringify(sub)} of ${JSON.stringify(seq)} must have ${expectedLen} items (like ${JSON.stringify(expected)}), but has ${sub.length}.`);
-    
+
     assert(isIS(seq, expected), `lis() must return a subsequence of ${JSON.stringify(seq)}, but got ${JSON.stringify(expected)}.`);
 }
 

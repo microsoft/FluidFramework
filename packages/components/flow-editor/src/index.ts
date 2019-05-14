@@ -1,5 +1,6 @@
-export { Editor } from "./components/editor";
-export { VirtualizedView, IVirtualizedProps } from "./components/virtualized";
+export { Editor, IEditorProps } from "./components/editor";
+export { PagePosition } from "./pagination";
+
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { Scheduler } from "@prague/flow-util";
@@ -7,6 +8,9 @@ import { MapExtension } from "@prague/map";
 import { Editor } from "./components/editor";
 
 export class FlowEditor extends Component {
+    // tslint:disable-next-line:no-require-imports
+    public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
+
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
     }
@@ -24,7 +28,7 @@ export class FlowEditor extends Component {
     protected async create() {
         // tslint:disable-next-line:insecure-random
         const docId = Math.random().toString(36).substr(2, 4);
-        this.runtime.createAndAttachComponent(docId, "@chaincode/flow-document");
+        this.runtime.createAndAttachComponent(docId, FlowDocument.type);
         this.root.set("docId", docId);
     }
 }

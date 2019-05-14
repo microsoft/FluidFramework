@@ -4,16 +4,19 @@ const pkg = require("./package.json");
 
 module.exports = env => {
     const isProduction = env === "production";
-    const tsconfig = isProduction
-        ? "tsconfig.prod.json"
-        : "tsconfig.dev.json";
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
-        : "[folder]-[local]-[hash:base64:5]";
+        : "[path][name]-[local]-[hash:base64:5]"
 
     return merge({
         entry: { main: "./src/index.ts" },
-        resolve: { extensions: [".ts", ".tsx", ".js"] },
+        resolve: { extensions: [".ts", ".js"] },
+        
+        // We use WebPack to bundle assets like CSS, but do not require WebPack to bundle our dependencies since
+        // the output of this pack package is rebundled by the consuming apps ('routerlicious' and 'flow-app')
+        // target: "node",                 // Do not bundle built-in node modules (e.g., 'fs', 'path', etc.)
+        // externals: [nodeExternals()],   // Do not bundle modules in /node_modules/ folder 
+
         module: {
             rules: [
                 {
@@ -26,7 +29,6 @@ module.exports = env => {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
                     options: { 
-                        configFile: tsconfig,
                         // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
                         // This is different than 'tsc', which resolves 'declarationDir' relative to the location
                         // of the tsconfig. 
@@ -46,8 +48,7 @@ module.exports = env => {
                                 localIdentName: styleLocalIdentName
                             }
                         }
-                    ],
-                    exclude: /node_modules/
+                    ]
                 }
             ]
         },
@@ -58,13 +59,11 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: pkg.name,
-            libraryTarget: "umd"
+            libraryTarget: "umd",
+            publicPath: "/dist/",
         },
-        node: {
-            fs: "empty",
-            dgram: "empty",
-            net: "empty",
-            tls: "empty"
+        devServer: {
+            contentBase: [path.resolve(__dirname, 'assets')],
         }
     }, isProduction
         ? require("./webpack.prod")

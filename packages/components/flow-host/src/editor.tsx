@@ -1,5 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { IVirtualizedProps, VirtualizedView } from "@chaincode/flow-editor";
+import { Editor, IEditorProps } from "@chaincode/flow-editor";
 import { Scheduler } from "@prague/flow-util";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -18,8 +18,8 @@ interface IProps {
 
 interface IState {
     doc?: FlowDocument;
-    editor?: VirtualizedView;
-    editorProps?: IVirtualizedProps;
+    editor?: Editor;
+    props?: IEditorProps;
 }
 
 export class FlowEditor extends React.Component<IProps, IState> {
@@ -36,32 +36,27 @@ export class FlowEditor extends React.Component<IProps, IState> {
     public componentWillMount() {
         const { config } = this.props;
 
-        if (!config.runtime.existing) {
-            config.runtime.createAndAttachComponent("document", "@chaincode/flow-document");
-        }
-
-        config.runtime.openComponent<FlowDocument>("document", true).then((doc) => {
-            // TODO getProcess happens after run is called not before the component is ready. May want to formalize
-            // this ready call.
-            doc.ready.then(() => {
-                // buildTestParagraph(doc);
-                const editor = new VirtualizedView();
-                const editorProps: IVirtualizedProps = { virtualize: this.props.virtualize, scheduler: new Scheduler(), doc, trackedPositions: [] };
-                editor.mount(editorProps);
-                this.setState({ doc, editor, editorProps });
-            });
+        config.doc.then((doc) => {
+            const editor = new Editor();
+            const props: IEditorProps = {
+                scheduler: new Scheduler(),
+                doc,
+                trackedPositions: [],
+                eventSink: this.ref.current,
+            };
+            editor.mount(props);
+            this.setState({ doc, editor, props });
         });
     }
 
     public render() {
-        return <span className={`${style.fill} ${style.editorPane}`} ref={this.ref}></span>;
+        return <div className={`${style.fill} ${style.editorPane}`} tabIndex={0} ref={this.ref}></div>;
     }
 
     public componentDidUpdate() {
         const editor = this.state.editor;
         if (editor) {
-            this.state.editorProps.virtualize = this.props.virtualize;
-            editor.update(this.state.editorProps);
+            editor.update(this.state.props);
 
             const parent = this.ref.current;
             if (parent.firstElementChild && parent.firstElementChild !== editor.root) {

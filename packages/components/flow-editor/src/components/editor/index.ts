@@ -1,7 +1,9 @@
 import { KeyCode, Scheduler } from "@prague/flow-util";
 import { ISegment } from "@prague/merge-tree";
 import { IViewState, View } from "..";
+import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";
 import { debug } from "../../debug";
+import { IPaginationProvider, PagePosition } from "../../pagination";
 import { DocumentView, IDocumentProps } from "../document";
 import { shouldIgnoreEvent } from "../inclusion";
 import { Cursor } from "./cursor";
@@ -25,24 +27,26 @@ interface IEditorViewState extends IViewState {
     listeners: IListenerRegistration[];
 }
 
-export class Editor extends View<IEditorProps, IEditorViewState> {
-
+export class Editor extends View<IEditorProps, IEditorViewState> implements IPaginationProvider {
     private get cursor()         { return this.state.cursor; }
     public  get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
-    public invalidate: () => void;
+    public invalidate?: () => void;
 
     constructor() {
         super();
+    }
 
-        // TODO: Kludge: We temporarily assign invalidate -> render until we get our scheduler in mount().
-        this.invalidate = this.render;
+    public paginate(start: PagePosition, budget: number) {
+        Object.assign(this.props, { start, paginationBudget: budget });
+        this.update(this.props);
+        return this.state.docView.paginationStop;
     }
 
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
         const scheduler = props.scheduler;
-        this.invalidate = scheduler.coalesce(this.render);
+        this.invalidate = scheduler.coalesce(scheduler.onLayout, this.render);
 
         const cursor = new Cursor(props.doc);
         cursor.moveTo(0, false);
@@ -58,7 +62,12 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
         this.on(listeners, eventSink, "mousedown", this.onMouseDown);
         this.on(listeners, window,    "resize",    this.invalidate);
 
-        props.doc.on("op", this.invalidate);
+        props.doc.on("sequenceDelta", (e: SequenceDeltaEvent) => {
+            const { start, end } = this.state.docView.range;
+            if (start < e.end && e.start < end) {
+                this.invalidate();
+            }
+        });
 
         return this.updating(props, {
             root,
@@ -87,7 +96,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             listener.target.removeEventListener(listener.type, listener.listener);
         }
 
-        this.doc.off("op", this.invalidate);
+        this.doc.off("sequenceDelta", this.invalidate);
     }
 
     private on<K extends keyof HTMLElementEventMap>(listeners: IListenerRegistration[], target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
@@ -136,6 +145,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
     private horizontalArrow(ev: KeyboardEvent, deltaX: number) {
         this.cursor.moveBy(deltaX, ev.shiftKey);
         this.invalidate();
+        ev.preventDefault();
         ev.stopPropagation();
     }
 
@@ -147,6 +157,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
                 const position = this.doc.getPosition(segmentAndOffset.segment);
                 this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
                 this.invalidate();
+                ev.preventDefault();
                 ev.stopPropagation();
             }
         }
@@ -158,11 +169,13 @@ export class Editor extends View<IEditorProps, IEditorViewState> {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.Backspace: {
                 this.delete(-1, 0);
+                ev.preventDefault();
                 ev.stopPropagation();
                 break;
             }
             case KeyCode.Delete: {
                 this.delete(0, 1);
+                ev.preventDefault();
                 ev.stopPropagation();
                 break;
             }

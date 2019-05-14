@@ -1,5 +1,5 @@
 import { Dom, Template } from "@prague/flow-util";
-import { FlowViewComponent, IFlowViewComponentState } from "..";
+import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -10,7 +10,9 @@ const template = new Template({
 export interface IInclusionProps { child: Node; }
 
 // tslint:disable-next-line:no-empty-interface
-export interface IInclusionViewState extends IFlowViewComponentState { }
+export interface IInclusionViewState extends IViewState {
+    child: Node;
+}
 
 // TODO: This can not yet be made a Symbol due to multiple/recursive WebPack bundles.
 //       'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
@@ -45,8 +47,10 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
             root.addEventListener(type, markInclusionEvent);
         }
 
-        return this.updating(props, { root, cursorTarget: props.child });
+        return this.updating(props, { root, child: props.child });
     }
+
+    public get cursorTarget() { return this.state.child; }
 
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
         const root = state.root;
@@ -54,7 +58,7 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
 
         if (root.firstChild !== desiredChild) {
             Dom.replaceFirstChild(root, desiredChild);
-            state = { root, cursorTarget: desiredChild };
+            state = { root, child: desiredChild };
         }
 
         return state;

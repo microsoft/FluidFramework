@@ -2,7 +2,7 @@
 import "./publicpath";
 
 import * as chartView from "@chaincode/chart-view";
-import * as flowDocument from "@chaincode/flow-document";
+import { FlowDocument } from "@chaincode/flow-document";
 import * as flowEditor from "@chaincode/flow-editor";
 import {TableDocumentType, TableSliceType} from "@chaincode/table-document";
 import * as tableView from "@chaincode/table-view";
@@ -25,9 +25,11 @@ export class FlowHost extends Component {
         super([]);
     }
 
-    public async opened() {
-        await this.connected;
+    protected async create() {
+        this.runtime.createAndAttachComponent(this.docId, FlowDocument.type);
+    }
 
+    protected async opened() {
         const hostContent: HTMLElement = await this.platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {
             // If headless exist early
@@ -35,14 +37,15 @@ export class FlowHost extends Component {
         }
 
         const appConfig: IAppConfig = {
-            runtime: this.runtime,
+            doc: this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true),
             verdaccioUrl: "http://localhost:4873",
+            runtime: this.runtime,
         };
 
         ReactDOM.render(<App config={appConfig} />, hostContent);
     }
 
-    protected async create() { /* do nothing */ }
+    private get docId() { return `${this.id}-doc`; }
 }
 
 /**
@@ -54,7 +57,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         pkg.name,
         new Map([
             ["@chaincode/chart-view", Promise.resolve(Component.createComponentFactory(chartView.ChartView))],
-            ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
+            [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
             [pkg.name, Promise.resolve(Component.createComponentFactory(FlowHost))],
             ["@chaincode/flow-editor", Promise.resolve(Component.createComponentFactory(flowEditor.FlowEditor))],
             [TableDocumentType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableDocument))],

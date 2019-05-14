@@ -128,7 +128,7 @@ export class FlowDocument extends Component {
 
     public async opened() {
         this.maybeSharedString = await this.root.wait("text") as SharedString;
-        this.maybeSharedString.on("op", (op, local) => { this.emit("op", op, local); });
+        this.maybeSharedString.on("sequenceDelta", (...args) => { this.emit("sequenceDelta", ...args); });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
@@ -171,10 +171,6 @@ export class FlowDocument extends Component {
 
     public localRefToPosition(localRef: LocalReference) {
         return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, this.clientId);
-    }
-
-    public appendText(text: string) {
-        this.sharedString.insertText(text, this.length);
     }
 
     public insertText(position: number, text: string) {
@@ -221,17 +217,28 @@ export class FlowDocument extends Component {
         this.sharedString.annotateRange(props, start, end);
     }
 
-    public findTile(startPos: number, tileType: string, preceding = true): { tile: ReferencePosition, pos: number } {
+    public findTile(startPos: number, tileType: string, preceding): { tile: ReferencePosition, pos: number } {
         return this.mergeTree.findTile(startPos, this.clientId, tileType, preceding);
     }
 
-    public findParagraphStart(position: number) {
+    public findParagraph(position: number) {
         position = Math.min(position, this.length - 1);
-        const maybePosAndTile = this.findTile(position, DocSegmentKind.Paragraph);
-        return maybePosAndTile ? maybePosAndTile.pos : 0;
+
+        const maybeStart = this.findTile(position, DocSegmentKind.Paragraph, /* preceding: */ true);
+        const start = maybeStart ? maybeStart.pos : 0;
+
+        const maybeEnd = this.findTile(position, DocSegmentKind.Paragraph, /* preceding: */ false);
+        const end = maybeEnd ? maybeEnd.pos : this.length;
+
+        return { start, end };
     }
 
     public visitRange(callback: LeafAction, startPosition?: number, endPosition?: number) {
+        // Early exit if passed an empty or invalid range (e.g., NaN).
+        if (!(startPosition < endPosition)) {
+            return;
+        }
+
         // Note: We pass the leaf callback action as the accumulator, and then use the 'accumAsLeafAction'
         //       actions to invoke the accum for each leaf.  (Paranoid micro-optimization that attempts to
         //       avoid allocation while simplifying the 'LeafAction' signature.)

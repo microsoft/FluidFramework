@@ -55,6 +55,14 @@
       "projectFolder": "packages/components/flow-host/"
     },
     {
+      "packageName": "@chaincode/flow-page",
+      "projectFolder": "packages/components/flow-page/"
+    },
+    {
+      "packageName": "@chaincode/flow-scroll",
+      "projectFolder": "packages/components/flow-scroll/"
+    },
+    {
       "packageName": "@prague/flow-util",
       "projectFolder": "packages/components/flow-util/"
     },

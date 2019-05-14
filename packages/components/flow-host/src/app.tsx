@@ -1,3 +1,4 @@
+import { FlowDocument } from "@chaincode/flow-document";
 import { TableSliceType } from "@chaincode/table-document";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { initializeIcons } from "@uifabric/icons";
@@ -10,6 +11,7 @@ import * as style from "./index.css";
 export interface IAppConfig {
     runtime: ComponentRuntime;
     verdaccioUrl: string;           // Url of Verdaccio npm server (e.g., "http://localhost:4873")
+    doc: Promise<FlowDocument>;
 }
 
 interface IProps {
@@ -21,7 +23,6 @@ interface IState {
 }
 
 export class App extends React.Component<IProps, IState> {
-
     private static readonly exampleText = [
         "The SID is a mixed-signal integrated circuit, featuring both digital and analog circuitry. All control ports are digital, while the output ports are analog. The SID features three-voice synthesis, where each voice may use one of at least five different waveforms: pulse wave (with variable duty cycle), triangle wave, sawtooth wave, pseudorandom noise (called white noise in documentation), and certain complex/combined waveforms when multiple waveforms are selected simultaneously. A voice playing Triangle waveform may be ring-modulated with one of the other voices, where the triangle waveform's bits are inverted when the modulating voice's msb is set, producing a discontinuity and change of direction with the Triangle's ramp. Oscillators may also be hard-synced to each other, where the synced oscillator is reset whenever the syncing oscillator's msb raises.",
         "Each voice may be routed into a common, digitally controlled analog 12 dB/octave multimode filter, which is constructed with aid of external capacitors to the chip. The filter has lowpass, bandpass and highpass outputs, which can be individually selected for final output amplification via master volume register. Using a combined state of lowpass and highpass results in a notch (or inverted bandpass) output.[7] The programmer may vary the filter's cut-off frequency and resonance. An external audio-in port enables external audio to be passed through the filter.",
@@ -35,6 +36,7 @@ export class App extends React.Component<IProps, IState> {
         "The consumer version of the 8580 was rebadged the 6582, even though the die on the chip is identical to a stock 8580 chip, including the '8580R5' mark. Dr. Evil Laboratories used it in their SID Symphony expansion cartridge (sold to Creative Micro Designs in 1991), and it was used in a few other places as well, including one PC sound-card.",
         "Despite its documented shortcomings, many SID musicians prefer the flawed 6581 chip over the corrected 8580 chip. The main reason for this is that the filter produces strong distortion that is sometimes used to produce simulation of instruments such as a distorted electric guitar. Also, the highpass component of the filter was mixed in 3 dB attenuated compared to the other outputs, making the sound more bassy. In addition to nonlinearities in filter, the D/A circuitry used in the waveform generators produces yet more additional distortion that made its sound richer in character.",
     ];
+
     private readonly cmds = {
         insert: (element: JSX.Element | HTMLElement | { docId: string, chaincode?: string }) => { alert("insert(?)"); },
         insertText: (lines: string[]) => { alert("insert(text)"); },
@@ -74,18 +76,6 @@ export class App extends React.Component<IProps, IState> {
         super(props);
 
         this.state = { virtualize: true };
-
-        // // Extract docId from query parameters
-        // const queryParams = window.location.search.substr(1).split('&');
-        // let docId = queryParams.shift();
-
-        // // If docId was unspecified, create one and update URL.
-        // if (!docId) {
-        //     docId = Math.random().toString(36).substr(2, 4);
-        //     window.history.pushState("", "", `${window.location.href}?${docId}`);
-        // }
-        // this.docId = docId;
-
         initializeIcons();
     }
 

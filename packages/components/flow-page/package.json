@@ -1,0 +1,64 @@
+{
+  "name": "@chaincode/flow-page",
+  "description": "Experimental Flow-Editor pagination demo.",
+  "version": "0.3.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "module": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run build:compile",
+    "build:compile": "npm run webpack",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"developement\"",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "publish-local": "npm publish --registry http://localhost:4873",
+    "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
+    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@chaincode/flow-document": "^0.3.0",
+    "@chaincode/flow-editor": "^0.3.0",
+    "@prague/app-component": "^0.3.0",
+    "@prague/app-datastore": "^0.3.0",
+    "@prague/component": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/flow-util": "^0.3.0",
+    "@prague/runtime": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/utils": "^0.3.0",
+    "debug": "^3.1.0"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.3.0",
+    "@prague/prague-dev-server": "^3.3.5",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "css-loader": "^1.0.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.4.0",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  }
+}

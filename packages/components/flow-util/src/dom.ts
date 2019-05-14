@@ -3,6 +3,17 @@ function isElement(node: Node): node is Element {
 }
 
 export class Dom {
+    public static readonly caretPositionFromPoint = document.caretRangeFromPoint
+        ? (x: number, y: number) => {
+            // CH74/SF12
+            const range = document.caretRangeFromPoint(x, y);
+            return { offsetNode: range.startContainer, offset: range.startOffset };
+        }
+        : (x: number, y: number) => {
+            // FF66
+            return document.caretPositionFromPoint(x, y);
+        };
+
     // Returns true if the given 'node' follows the specified 'previous' node in the 'parent' node's children.
     public static isAfterNode(parent: Node, node: Node, previous: Node | null) {
         return previous
@@ -38,7 +49,7 @@ export class Dom {
      * inserts 'newChild' as the first child of 'parent'.
      */
     public static insertAfter(parent: Node, newChild: Node, refChild: Node | null) {
-        parent.insertBefore(newChild, refChild && refChild.nextSibling);
+        parent.insertBefore(newChild, refChild ? refChild.nextSibling : parent.firstChild);
     }
 
     public static prependChild(parent: Node, newChild: Node) {
@@ -46,13 +57,12 @@ export class Dom {
     }
 
     public static getClientRect(node: Node, nodeOffset: number) {
-        const measurementRange = document.createRange();
-
         if (isElement(node)) {
             console.assert(!nodeOffset);
             return node.getBoundingClientRect();
         }
 
+        const measurementRange = document.createRange();
         measurementRange.setStart(node, nodeOffset);
         measurementRange.setEnd(node, nodeOffset);
 

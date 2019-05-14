@@ -1,5 +1,5 @@
 import { Template } from "@prague/flow-util";
-import { FlowViewComponent, IFlowViewComponentState } from "..";
+import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
 const template = new Template({ tag: "p", props: { className: styles.text }});
@@ -9,29 +9,29 @@ export interface ITextProps {
 }
 
 // tslint:disable-next-line:no-empty-interface
-export interface ITextViewState extends IFlowViewComponentState { }
+export interface ITextViewState extends IViewState { }
 
 export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
     public static readonly factory = () => new TextView();
 
     public mounting(props: Readonly<ITextProps>): ITextViewState {
-        const root = template.clone();
-        return this.updating(props, { root, cursorTarget: root });
+        return this.updating(props, { root: template.clone() });
     }
+
+    // Note: As long as textContent is not empty, the <span> must have a firstChild.
+    public get cursorTarget() { return this.state.root.firstChild!; }
 
     public updating(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {
         console.assert(props.text !== "",
             "Should not emit a TextView for empty text.");
 
         const root = state.root;
-        if (root.textContent === props.text) {
-            return state;
+        const text = props.text;
+        if (root.textContent !== text) {
+            root.textContent = text;
         }
 
-        root.textContent = props.text;
-
-        // Note: As long as textContent is not empty, the <span> must have a firstChild.
-        return { root, cursorTarget: root.firstChild! };
+        return state;
     }
 
     public unmounting(state: Readonly<ITextViewState>) { /* do nothing */ }

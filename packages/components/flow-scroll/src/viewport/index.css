@@ -1,0 +1,91 @@
+/* Workaround prague-loader content element */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.viewport {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+
+    background: #aaa;
+
+    overflow-y: scroll;
+}
+
+/* Provides a relative frame of reference for the contained absolute positioned block.
+   Without this, absolute top/left/right/bottom will ignore the parent element's padding. */
+.ref {
+    position: relative;
+}
+
+.transform {
+    /* Fill the viewport...  why is viewport using Grid?  Should this use grid-area instead? */
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+ }
+
+ .document {
+    position: relative;
+    background: #EEE;
+    border: 1px solid #888;
+    box-shadow: 5px 5px 20px 0px #555;
+
+    /* Center with small gap at top. */
+    margin: 3% auto;
+
+    /* Emulate paper document proportions. */
+    max-width: 8in;
+    padding: 1in;
+}
+
+/* Focus is communicated to the user via the visible cursor. */
+.document:focus {
+    outline: none;
+}
+
+.slot { }
+
+/* We layout overlapping slot & document elements in order to position the pre-scrolled frame
+   of reference for the 'origin' element.  When doing this, we add the 'position' class to make
+   the overlapping elements transparent.  TODO: Use z-order instead? */
+.position {
+    pointer-events: none;
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Div used as the stable frame of reference when scrolling. */
+.origin {
+    background: green;
+    padding: 1px;
+}
+
+.scrollPane {
+    /* Scrollbar should overlap right 15px of 'slot'.  We need to force the
+       15px width due to Chrome's auto-hide behavior when using touchpad. */
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: var(--scroll-bar-width);
+    
+    /* Show vertical scrollbar. */
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+  
+.space {
+    height: 8192px;
+
+    /* FF66: Firefox will not display the scrollbar for a 0-width element. */ 
+    width: 1px;
+}

@@ -48,7 +48,7 @@ export class GridView {
 
     constructor(private readonly doc: TableDocument) {
         const scheduler = new Scheduler();
-        this.invalidate = scheduler.coalesce(this.refreshCells);
+        this.invalidate = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
 
         this.root.addEventListener("click", this.onClick as EventListener);
         this.tbody.addEventListener("pointerdown", this.cellDown as EventListener);

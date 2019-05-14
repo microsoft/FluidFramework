@@ -20,9 +20,9 @@
 
 .cursor {
     position: absolute;
-    padding: 0px 0px 0px 1px;
-    margin: 0px 0px 0px -0.5px;
-    background: black;
+    padding: 0;
+    margin: 0px 0px 0px -1px;
+    border-left: 1px solid black;
     animation: blink 1s step-start 0s infinite;
     animation-delay: 0.5s;
 }
