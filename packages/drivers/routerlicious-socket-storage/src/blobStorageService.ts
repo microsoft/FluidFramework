@@ -38,7 +38,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     }
 
     public async getContent(version: resources.ICommit, path: string): Promise<string> {
-        const value = await this.manager.getContent(version.commitId, path);
+        const value = await this.manager.getContent(version.sha, path);
         return value.content;
     }
 
@@ -58,10 +58,10 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     private translateCommit(details: resources.ICommitDetails): resources.ICommit {
         return {
             author: details.commit.author,
-            commitId: details.commitId,
             committer: details.commit.committer,
             message: details.commit.message,
             parents: details.parents,
+            sha: details.sha,
             tree: details.commit.tree,
             url: details.commit.url,
         };

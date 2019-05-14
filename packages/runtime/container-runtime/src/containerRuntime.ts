@@ -242,7 +242,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
                     .then((commit) => {
                         this.components.get(componentId).updateBaseSha(commit.tree.sha);
-                        return { id: componentId, commit: commit.commitId };
+                        return { id: componentId, commit: commit.sha };
                     });
                 componentCommitsP.push(componentCommitP);
             }

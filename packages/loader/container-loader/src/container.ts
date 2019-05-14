@@ -271,7 +271,7 @@ export class Container extends EventEmitter implements IContainer {
         // the snapshotSequenceNumber by 1 to include it.
         // TODO We likely then want to filter the operation list to each component to use in its snapshot
         const deltas = await this._deltaManager!.getDeltas(sequenceNumber!, snapshotSequenceNumber! + 1);
-        const parents = lastVersion.length > 0 ? [lastVersion[0].commitId] : [];
+        const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
         root.entries.push({
             mode: FileMode.File,
             path: "deltas",

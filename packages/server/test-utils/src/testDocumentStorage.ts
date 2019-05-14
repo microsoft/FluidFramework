@@ -39,10 +39,10 @@ export class TestDocumentStorage implements IDocumentStorage {
         const latest = versions[0];
         return {
             author: latest.commit.author,
-            commitId: latest.commitId,
             committer: latest.commit.committer,
             message: latest.commit.message,
             parents: latest.parents,
+            sha: latest.sha,
             tree: latest.commit.tree,
             url: latest.url,
         };

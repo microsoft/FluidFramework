@@ -36,7 +36,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
 
     public async getTree(version?: resources.ICommit): Promise<resources.ITree | null> {
         // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
-        const id = (version && version.commitId) ? version.commitId : "latest";
+        const id = (version && version.sha) ? version.sha : "latest";
         const tree = await this.restWrapper.get<resources.ITree>(`/trees/${id}`)
             .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
         if (!tree || !tree.tree) {
@@ -59,10 +59,10 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             return [
                 {
                     author: undefined!,
-                    commitId: blobid,
                     committer: undefined!,
                     message: "",
                     parents: undefined!,
+                    sha: blobid,
                     tree: undefined!,
                     url: undefined!,
                 },
@@ -77,10 +77,10 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             return versionsResponse.value.map((version) => {
                 return {
                     author: undefined!,
-                    commitId: version.sha,
                     committer: undefined!,
                     message: version.message,
                     parents: undefined!,
+                    sha: version.sha,
                     tree: undefined!,
                     url: undefined!,
                 };
@@ -92,7 +92,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     // tslint:enable: no-non-null-assertion
 
     public async getContent(version: resources.ICommit, path: string): Promise<resources.IBlob> {
-        return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.commitId, path });
+        return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.sha, path });
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined> {

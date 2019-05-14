@@ -35,7 +35,7 @@ export class Alfred implements IAlfred {
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
         }
 
-        const fullTree = await gitManager.getFullTree(versions[0].commitId);
+        const fullTree = await gitManager.getFullTree(versions[0].sha);
 
         let code: string = null;
         if (fullTree.quorumValues) {
@@ -61,7 +61,7 @@ export class Alfred implements IAlfred {
             cache: {
                 blobs: fullTree.blobs,
                 commits: fullTree.commits,
-                refs: { [documentId]: versions[0].commitId },
+                refs: { [documentId]: versions[0].sha },
                 trees: fullTree.trees,
             },
             code,
@@ -87,10 +87,10 @@ export class Alfred implements IAlfred {
         const latest = versions[0];
         return {
             author: latest.commit.author,
-            commitId: latest.commitId,
             committer: latest.commit.committer,
             message: latest.commit.message,
             parents: latest.parents,
+            sha: latest.sha,
             tree: latest.commit.tree,
             url: latest.url,
         };

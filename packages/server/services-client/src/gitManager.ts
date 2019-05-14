@@ -71,8 +71,8 @@ export class GitManager implements IGitManager {
                     tree: commit.tree,
                     url: commit.url,
                 },
-                commitId: commit.commitId,
                 parents: commit.parents,
+                sha: commit.sha,
                 url: commit.url,
             }];
         }
@@ -168,7 +168,7 @@ export class GitManager implements IGitManager {
     }
 
     public addCommit(commit: resources.ICommit) {
-        this.commitCache.set(commit.commitId, commit);
+        this.commitCache.set(commit.sha, commit);
     }
 
     public addTree(tree: resources.ITree) {
@@ -209,9 +209,9 @@ export class GitManager implements IGitManager {
         const existingRef = await this.getRef(branch);
 
         if (existingRef) {
-            await this.upsertRef(branch, commit.commitId);
+            await this.upsertRef(branch, commit.sha);
         } else {
-            await this.createRef(branch, commit.commitId);
+            await this.createRef(branch, commit.sha);
         }
 
         return commit;
