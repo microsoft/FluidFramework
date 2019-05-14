@@ -1,4 +1,5 @@
 import * as core from "@prague/services-core";
+import { AssertionError } from "assert";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -56,6 +57,14 @@ function translateStaticUrl(
     return staticFilesEndpoint + furl(cache[local]);
 }
 
+function handleAsserionError(error: Error) {
+    if (error instanceof AssertionError) {
+        winston.error(JSON.stringify(error));
+    } else {
+        throw error;
+    }
+}
+
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)
  */
@@ -64,6 +73,12 @@ const stream = split().on("data", (message) => {
 });
 
 export function create(config: Provider, mongoManager: core.MongoManager) {
+
+    // We are loading a Prague document that might lead to assertion errors.
+    // Handling this so that the whole process is not terminated.
+    process.on("uncaughtException", handleAsserionError);
+    process.on("unhandledRejection", handleAsserionError);
+
     const tenantManager = new TenantManager(
         mongoManager,
         config.get("mongo:collectionNames:users"),
