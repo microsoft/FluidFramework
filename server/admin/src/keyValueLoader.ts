@@ -1,4 +1,4 @@
-import { IPlatform, IPragueResolvedUrl } from "@prague/container-definitions";
+import { IClient, IPlatform, IPragueResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -109,11 +109,14 @@ export class KeyValueLoader {
             hostToken,
             new Map([[documentUrl, resolved]]));
 
+        // Join as readonly.
+        const client: Partial<IClient> = { type: "robot" };
+
         const loader = new Loader(
             { resolver },
             new RouterliciousDocumentServiceFactory(),
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            null);
+            { client });
 
         return {loader, documentUrl};
     }

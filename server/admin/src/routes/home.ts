@@ -3,7 +3,7 @@ import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import * as winston from "winston";
-import { IData } from "../definitions";
+import { IData, IKeyValue } from "../definitions";
 import { KeyValueManager } from "../keyValueManager";
 import { TenantManager } from "../tenantManager";
 import { defaultPartials } from "./partials";
@@ -23,7 +23,12 @@ export function create(
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
         const tenantsP = tenantManager.getTenantsforUser(request.user.oid);
-        const keyValuesP = keyValueManager.getKeyValues();
+        // Return empty result if the key-value document was not loaded properly.
+        const keyValuesP = keyValueManager.getKeyValues().then((values) => {
+            return values;
+        }, () => {
+            return [] as IKeyValue[];
+        });
         Promise.all([tenantsP, keyValuesP]).then(([tenants, keyValues]) => {
             const data: IData = {
                 keyValues,

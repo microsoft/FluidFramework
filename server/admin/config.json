@@ -54,7 +54,7 @@
         "tenant": "pensive-newton",
         "secret": "2fd6c969f329006b6acd031abaf1c5ce",
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-        "documentId": "key-value-manager-0004",
+        "documentId": "key-value-manager-0005",
         "package": "@chaincode/key-value@0.3.6797"
     }
 }

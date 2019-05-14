@@ -26,9 +26,9 @@ data:
             }
         },
         "logger": {
-            "colorize": true,
-            "morganFormat": "dev",
-            "json": false,
+            "colorize": false,
+            "morganFormat": "short",
+            "json": true,
             "level": "info",
             "timestamp": true,
             "label": "winston"
