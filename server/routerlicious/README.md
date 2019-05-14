@@ -16,7 +16,7 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Getting Started
 
-To get started in Prague, we suggest that you build a [component](../chaincode/README.md). Visit the [chaincode directory](../chaincode/README.md) and use [Yo Prague](../tools/generator-prague/README.md) bootstrapper.
+To get started with Prague, we suggest that you [build a component](https://praguedocs.azurewebsites.net/get-started/build-a-component.html) using the [Yo Prague](https://praguedocs.azurewebsites.net/get-started/yo-prague.html) bootstrapper.
 
 If you want to dive into the Prague internals, keep reading below.
 
@@ -43,7 +43,7 @@ Deployment Status
 ## Building and Running
 
 Note that we also provide an npm package of our client side API which allows you to program against the production
-Routerlicious service. See the [API documentation](../doc) for more details. You only need to follow the below steps
+Routerlicious service. See the [API documentation](https://praguedocs.azurewebsites.net/api/app-component.html) for more details. You only need to follow the below steps
 if you'd like to run a local version of the service or need to make changes to it.
 
 ### Prerequisities
@@ -112,7 +112,7 @@ attach to the running tests with VS Code or any other node debugger.
 
 ### Documentation
 
-If you want to build API documentation locally, see [Building Documentation](../docs/building-documentation.md).
+If you want to build API documentation locally, see [Building Documentation](https://praguedocs.azurewebsites.net/contributing/building-documentation.html).
 
 ## CI/CD
 
@@ -129,7 +129,7 @@ Below is the original Routerlicious architecture diagram. The current system has
 largely remains unchanged. Detailed descriptions of the components are contained below as well as callouts
 to areas that have changed from the original picture. We will update the README with a more current diagram soon.
 
-![Routerlicious architecture diagram](../doc/img/routerlicious-architecture.jpg)
+![Routerlicious architecture diagram](../../doc/img/routerlicious-architecture.jpg)
 
 ### Microservices
 

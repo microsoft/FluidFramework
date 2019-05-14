@@ -4,7 +4,7 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Admin](./admin) provides tenant management for Routerlicious
 
-[Auspkn](./aupkn) provides REST API access to npm packages
+[Auspkn](./auspkn) provides REST API access to npm packages
 
 [Charts](./charts) Kubernetes charts for the micro-services
 
@@ -16,7 +16,7 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 
-[Lambda](./lambda) serverless lambda version of Fluid services
+[Lambdas](./lambdas) serverless lambda version of Fluid services
 
 [Routerlicious](./routerlicious) composed reference server implementation
 

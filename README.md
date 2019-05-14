@@ -53,7 +53,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 * Why can't I install Prague dependencies?
   * [You're probably having problems with npm and private npm registries](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 * Is there a set of design principles I can look at?
-  * Architectural design principals can be found in the [doc/architecture](./doc/architecture) folder. 
+  * Architectural design principals can be found in the [Fluid documentation](https://praguedocs.azurewebsites.net/architecture/readme.html).
 * Do you have a homepage?
   * [Fluid Docs](https://praguedocs.azurewebsites.net/) is our alpha version of our documentation and tutorial website.
   * [Demo Portal](https://www.wu2-ppe.prague.office-int.com) is our prototype demo portal
@@ -61,7 +61,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
   * [You may need to upgrade NPM or Node. We require above 5 and 8 respectively](https://stackoverflow.microsoft.com/questions/138019/yo-prague-fails-with-insight-track-firstcmd-args-slice0-2/138020#138020)
 * Do you have any suggested reading before I get started?
   * Get hacking: check out [yo prague!](./tools/generator-prague/README.md)
-  * If you need to read, check out our [architecture documents](./doc/architecture)
+  * If you need to read, check out our [architecture documents](https://praguedocs.azurewebsites.net/architecture/readme.html).
 * [Can I contribute to Prague?](https://stackoverflow.microsoft.com/questions/126025/can-i-contribute-to-the-prague-codebase/126026#126026)
   * Heck yeah.
 * What is the difference between Fluid and Prague?
@@ -87,7 +87,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 
 * [Loader](./packages/loader) startup code that loads Fluid container
 * [Runtime](./packages/runtime) core Fluid runtime definition and distributed data structures
-* [Drivers](./packages/driver) contains the drivers targeting different server implementation endpoints (e.g. Routerlicious and ODSP)
+* [Drivers](./packages/drivers) contains the drivers targeting different server implementation endpoints (e.g. Routerlicious and ODSP)
 * [Components](./packages/components) contains the component mechanism that enable components to be built on top of the Fluid runtime.  It also contains the sample Flow and Table components.
 * [Server](./packages/server) (To be moved to `server` directory) contains libraries for the reference implementation of the core server services
 
@@ -98,11 +98,11 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 * [Components Architecture](./docs/architecture/components) has documentation and diagrams for the component
   architecture.
 
-* [Service Architecture](./docs/architecture) has documentation and diagrams of the service architecture.
+* [Service Architecture](https://praguedocs.azurewebsites.net/architecture/readme.html) has documentation and diagrams of the service architecture.
 
 ## Further Reading
 
-Architectural design principals can be found in the [doc/architecture](./doc/architecture) folder.
+Architectural design principals can be found in the [Fluid documentation](https://praguedocs.azurewebsites.net/architecture/readme.html).
 
 Developers looking to make deep/advanced Prague changes can find our latest implementations in [Routerlicious](./server/routerlicious).
 

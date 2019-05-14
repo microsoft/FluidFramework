@@ -9,7 +9,7 @@ that maintains the versioned snapshots.
 
 For consistency we recommend building and developing within a container
 
-To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../doc)
+To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../../doc)
 
 You can build the production container by running.
 
