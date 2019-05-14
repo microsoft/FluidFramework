@@ -58,6 +58,7 @@ function translateStaticUrl(
 }
 
 function handleAsserionError(error: Error) {
+    winston.info(`Handling error ${JSON.stringify(error)}`);
     if (error instanceof AssertionError) {
         winston.error(JSON.stringify(error));
     } else {
@@ -76,6 +77,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
 
     // We are loading a Prague document that might lead to assertion errors.
     // Handling this so that the whole process is not terminated.
+    winston.info(`Attaching error handlers`);
     process.on("uncaughtException", handleAsserionError);
     process.on("unhandledRejection", handleAsserionError);
 
