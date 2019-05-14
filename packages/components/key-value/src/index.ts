@@ -7,11 +7,6 @@ export class KeyValue extends Document {
 
   public async opened() {
     // May be we want to render the root map?
-    this.root.on("valueChanged", (changed, local, op) => {
-      console.log(`Key: ${changed.key}`);
-      console.log(`New Value: ${this.root.get(changed.key)}`);
-      console.log(`Prev Value: ${local}`);
-    });
   }
 
   protected async create() {
