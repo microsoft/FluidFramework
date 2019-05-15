@@ -16,6 +16,7 @@ import {
     IGenericBlob,
     ILoader,
     IProposal,
+    IQuorum,
     IRequest,
     IResponse,
     ISequencedClient,
@@ -164,7 +165,7 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): Quorum | undefined {
+    public getQuorum(): IQuorum | undefined {
         return this.quorum;
     }
 

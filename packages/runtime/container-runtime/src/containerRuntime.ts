@@ -320,14 +320,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: ComponentContext) {
+    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         switch (message.type) {
             case MessageType.Operation:
                 this.processOperation(message, local, context);
                 break;
 
             case MessageType.Attach:
-                this.processAttach(message, local, context);
+                this.processAttach(message, local, context as ComponentContext);
                 break;
 
             default:
@@ -341,14 +341,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public async postProcess(
-        message: ISequencedDocumentMessage,
-        local: boolean,
-        context: ComponentContext,
-    ): Promise<void> {
+    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
         switch (message.type) {
             case MessageType.Attach:
-                return this.postProcessAttach(message, local, context);
+                return this.postProcessAttach(message, local, context as ComponentContext);
             default:
         }
     }
@@ -453,7 +449,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentContext> {
+    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         const envelope = message.contents as IEnvelope;
         const component = this.components.get(envelope.address);
         assert(component);

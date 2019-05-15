@@ -38,7 +38,7 @@ import { ChannelStorageService } from "./channelStorageService";
 import { debug } from "./debug";
 import { LocalChannelStorageService } from "./localChannelStorageService";
 
-export interface IChannelState {
+interface IChannelState {
     object: IChannel;
     storage: IObjectStorageService;
     connection: ChannelDeltaConnection;
