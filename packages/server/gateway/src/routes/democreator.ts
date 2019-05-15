@@ -58,11 +58,11 @@ export function create(ensureLoggedIn: any): Router {
     });
 
     /**
-     * Spring 2010 demos
+     * Winter 2019 demos
      */
-    router.get("/spring2019", ensureLoggedIn(), (request, response, next) => {
+    router.get("/winter2019", ensureLoggedIn(), (request, response, next) => {
         response.render(
-            "demos/spring2019",
+            "demos/winter2019",
             {
                 chartMonacoMoniker: moniker.choose(),
                 inkMoniker: moniker.choose(),
@@ -72,6 +72,22 @@ export function create(ensureLoggedIn: any): Router {
                 sharedTextMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
+            });
+    });
+
+    /**
+     * Spring 2010 demos
+     */
+    router.get("/spring2019", ensureLoggedIn(), (request, response, next) => {
+        response.render(
+            "demos/spring2019",
+            {
+                chartMonacoMoniker: moniker.choose(),
+                inkMoniker: moniker.choose(),
+                mathMoniker: moniker.choose(),
+                partials: defaultPartials,
+                sharedTextMoniker: moniker.choose(),
+                title: "Prague Demos",
             });
     });
 
