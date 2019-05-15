@@ -89,12 +89,12 @@
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "loader": {
-        "orderer": "https://alfred.wu2-ppe.prague.office-int.com",
-        "storage": "https://historian.wu2-ppe.prague.office-int.com",
-        "tenant": "pensive-newton",
-        "secret": "2fd6c969f329006b6acd031abaf1c5ce",
+        "orderer": "https://alfred.wu2.prague.office-int.com",
+        "storage": "https://historian.wu2.prague.office-int.com",
+        "tenant": "dreamy-jang",
+        "secret": "70fe794a484bebbfa2b0813745a4450e",
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-        "documentId": "key-value-manager-0004",
-        "package": "@chaincode/key-value@0.3.6797"
+        "documentId": "key-value-manager-0000",
+        "package": "@chaincode/key-value@0.3.6901"
     }
 }

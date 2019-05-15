@@ -43,18 +43,25 @@ export function create(
         const tenantId = request.params.tenantId;
 
         // SPO will always depends on the passed in chaincode since we don't get the fullTree on the server.
-        const chaincode = request.query.chaincode ? request.query.chaincode : "";
-        const spoSuffix = chaincode.replace(/[^A-Za-z0-9-]/g, "_");
+        const codePackage: string = request.query.chaincode ? request.query.chaincode : "";
+        const spoSuffix = codePackage.replace(/[^A-Za-z0-9-]/g, "_");
         const search = parse(request.url).search;
         const [resolvedP, fullTreeP] =
             gatewayResolveUrl(config, alfred, appTenants, tenantId, documentId, spoSuffix, request);
+
+        // Return the original string if the key was not found.
+        const chaincodeP = keyValueManager.get(codePackage).then((value) => {
+            return value === undefined ? codePackage : `${codePackage}@${value}`;
+        }, () => {
+            return codePackage;
+        });
 
         const workerConfig = getConfig(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
 
-        const pkgP = fullTreeP.then((fullTree) => {
+        const pkgP = Promise.all([fullTreeP, chaincodeP]).then(([fullTree, chaincode]) => {
             winston.info(`getScriptsForCode ${tenantId}/${documentId} +${Date.now() - start}`);
             return getScriptsForCode(
                 config.get("worker:npm"),
@@ -67,7 +74,8 @@ export function create(
         const pkgTimeP = pkgP.then(() => Date.now() - start);
         const timingsP = Promise.all([treeTimeP, pkgTimeP]);
 
-        Promise.all([resolvedP, fullTreeP, pkgP, timingsP]).then(([resolved, fullTree, pkg, timings]) => {
+        Promise.all([resolvedP, fullTreeP, pkgP, timingsP, chaincodeP])
+            .then(([resolved, fullTree, pkg, timings, chaincode]) => {
             resolved.url += path + (search ? search : "");
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 

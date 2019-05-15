@@ -2,6 +2,9 @@ import { ISharedMap } from "@prague/map";
 import { IKeyValue } from "./interfaces";
 import { KeyValueLoader } from "./keyValueLoader";
 
+// Timeout while waiting to load the key value document.
+const loadTimeoutMSec = 15000;
+
 export class KeyValueManager {
     private keyValueLoader: KeyValueLoader;
     private readyP: Promise<void>;
@@ -21,7 +24,7 @@ export class KeyValueManager {
                 jwtKey,
                 documentId,
                 codePackage);
-            this.readyP = this.keyValueLoader.load();
+            this.readyP = this.loadContainer(loadTimeoutMSec);
     }
     public async entries(): Promise<IKeyValue[]> {
         const keyValues: IKeyValue[] = [];
@@ -32,13 +35,30 @@ export class KeyValueManager {
         return keyValues;
     }
 
-    public async get(key: string): Promise<IKeyValue> {
+    public async get(key: string): Promise<string> {
         const rootMap = await this.getRootMap();
-        return {key, value: rootMap.get(key)};
+        return rootMap.get(key);
     }
 
     private async getRootMap(): Promise<ISharedMap> {
         await this.readyP;
         return this.keyValueLoader.rootMap;
+    }
+
+    private loadContainer(timeoutMS: number) {
+        return new Promise<void>((resolve, reject) => {
+            const waitTimer = setTimeout(() => {
+                clearTimeout(waitTimer);
+                reject(`Timeout (${timeoutMS} ms) expired while loading key-value map`);
+            }, timeoutMS);
+
+            this.keyValueLoader.load().then(() => {
+                clearTimeout(waitTimer);
+                resolve();
+            }, (err) => {
+                clearTimeout(waitTimer);
+                reject(err);
+            });
+        });
     }
 }
