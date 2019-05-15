@@ -51,8 +51,10 @@ export function create(
 
         // Return the original string if the key was not found.
         const chaincodeP = keyValueManager.get(codePackage).then((value) => {
+            winston.info(`Key: ${codePackage}, Value: ${value}`);
             return value === undefined ? codePackage : `${codePackage}@${value}`;
         }, () => {
+            winston.info(`${codePackage} not found in key-value store`);
             return codePackage;
         });
 
@@ -62,6 +64,7 @@ export function create(
             config.get("error:track"));
 
         const pkgP = Promise.all([fullTreeP, chaincodeP]).then(([fullTree, chaincode]) => {
+            winston.info(`Chaincode ${chaincode}`);
             winston.info(`getScriptsForCode ${tenantId}/${documentId} +${Date.now() - start}`);
             return getScriptsForCode(
                 config.get("worker:npm"),
