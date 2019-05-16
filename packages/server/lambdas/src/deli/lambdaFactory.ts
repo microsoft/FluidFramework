@@ -35,9 +35,21 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        const dbObject = await this.collection.findOne({ documentId, tenantId });
+        let dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
-            return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
+            // Temporary guard against failure until we figure out what causing this to trigger.
+            dbObject = {
+                branchMap: null,
+                clients: null,
+                createTime: Date.now(),
+                documentId,
+                forks: [],
+                logOffset: null,
+                parent: null,
+                sequenceNumber: 0,
+                tenantId,
+            };
+            // return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
         }
 
         return new DeliLambda(
