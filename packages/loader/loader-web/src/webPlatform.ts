@@ -30,8 +30,7 @@ export class WebPlatformFactory implements IPlatformFactory {
     }
 
     public async create(): Promise<IPlatform> {
-        // tslint:disable-next-line:no-inner-html
-        this.div.innerHTML = "";
+        this.div.textContent = "";
         this.lastPlatform = new WebPlatform(this.div);
         return this.lastPlatform;
     }
