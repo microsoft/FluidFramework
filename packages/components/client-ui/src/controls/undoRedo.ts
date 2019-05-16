@@ -154,24 +154,24 @@ interface IRevertable {
 
 class SequenceUndoRedo implements IRevertable {
 
-    private readonly tracking: ReadonlyArray<{ tg: TrackingGroup, pd: PropertySet }>;
+    private readonly tracking: Array<{ trackingGroup: TrackingGroup, propertyDelta: PropertySet }>;
 
     constructor(
         public readonly event: SequenceDeltaEvent,
         public readonly sequence: SharedSegmentSequence<ISegment>,
     ) {
-        const tracking = [];
+        const tracking: Array<{ trackingGroup: TrackingGroup, propertyDelta: PropertySet }> = [];
         if (event.ranges.length > 0) {
-            let current = { tg: new TrackingGroup(), pd: event.ranges[0].propertyDeltas };
+            let current = { trackingGroup: new TrackingGroup(), propertyDelta: event.ranges[0].propertyDeltas };
             tracking.push(current);
-            current.tg.link(event.ranges[0].segment);
+            current.trackingGroup.link(event.ranges[0].segment);
             for (let i = 1; i < event.ranges.length; i++) {
-                if (matchProperties(current.pd, event.ranges[i].propertyDeltas)) {
-                    current.tg.link(event.ranges[i].segment);
+                if (matchProperties(current.propertyDelta, event.ranges[i].propertyDeltas)) {
+                    current.trackingGroup.link(event.ranges[i].segment);
                 } else {
                     const tg = new TrackingGroup();
                     tg.link(event.ranges[i].segment);
-                    current = { tg, pd: event.ranges[i].propertyDeltas };
+                    current = { trackingGroup: tg, propertyDelta: event.ranges[i].propertyDeltas };
                     tracking.push(current);
                 }
             }
@@ -182,65 +182,70 @@ class SequenceUndoRedo implements IRevertable {
     public revert() {
         const mergeTree = this.sequence.client.mergeTree;
         const ops: IMergeTreeOp[] = [];
-        this.tracking.forEach((tracked) => tracked.tg.segments.forEach((sg) => {
-            sg.trackingCollection.unlink(tracked.tg);
-            switch (this.event.deltaOperation) {
-                case MergeTreeDeltaType.INSERT:
-                    if (!sg.removedSeq) {
-                        const start =
-                            mergeTree.getOffset(
-                                sg,
-                                mergeTree.collabWindow.currentSeq,
-                                mergeTree.collabWindow.clientId);
-                        const removeOp = this.sequence.client.removeRangeLocal(
-                            start,
-                            start + sg.cachedLength);
-                        if (removeOp) {
-                            ops.push(removeOp);
-                        }
-                    }
-                    break;
 
-                case MergeTreeDeltaType.REMOVE:
-                    const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
-                    const insertOp = this.sequence.client.insertSiblingSegment(sg, insertSegment);
-                    if (insertOp) {
-                        ops.push(insertOp);
-                    }
-                    sg.trackingCollection.trackingGroups.forEach((tg) => {
-                        tg.link(insertSegment);
-                        tg.unlink(sg);
-                    });
-                    break;
-
-                case MergeTreeDeltaType.ANNOTATE:
-                    if (!sg.removedSeq) {
-                        const start =
-                            mergeTree.getOffset(
-                                sg,
-                                mergeTree.collabWindow.currentSeq,
-                                mergeTree.collabWindow.clientId);
-                        const annnotateOp =
-                            this.sequence.client.annotateRangeLocal(
+        this.tracking.forEach((tracked) => {
+            while (tracked.trackingGroup.size > 0) {
+                const sg = tracked.trackingGroup.segments[0];
+                sg.trackingCollection.unlink(tracked.trackingGroup);
+                switch (this.event.deltaOperation) {
+                    case MergeTreeDeltaType.INSERT:
+                        if (!sg.removedSeq) {
+                            const start =
+                                mergeTree.getOffset(
+                                    sg,
+                                    mergeTree.collabWindow.currentSeq,
+                                    mergeTree.collabWindow.clientId);
+                            const removeOp = this.sequence.client.removeRangeLocal(
                                 start,
-                                start + sg.cachedLength,
-                                tracked.pd,
-                                undefined);
-                        if (annnotateOp) {
-                            ops.push(annnotateOp);
+                                start + sg.cachedLength);
+                            if (removeOp) {
+                                ops.push(removeOp);
+                            }
                         }
-                    }
-                    break;
+                        break;
+
+                    case MergeTreeDeltaType.REMOVE:
+                        const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
+                        const insertOp = this.sequence.client.insertSiblingSegment(sg, insertSegment);
+                        if (insertOp) {
+                            ops.push(insertOp);
+                        }
+                        sg.trackingCollection.trackingGroups.forEach((tg) => {
+                            tg.link(insertSegment);
+                            tg.unlink(sg);
+                        });
+                        break;
+
+                    case MergeTreeDeltaType.ANNOTATE:
+                        if (!sg.removedSeq) {
+                            const start =
+                                mergeTree.getOffset(
+                                    sg,
+                                    mergeTree.collabWindow.currentSeq,
+                                    mergeTree.collabWindow.clientId);
+                            const annnotateOp =
+                                this.sequence.client.annotateRangeLocal(
+                                    start,
+                                    start + sg.cachedLength,
+                                    tracked.propertyDelta,
+                                    undefined);
+                            if (annnotateOp) {
+                                ops.push(annnotateOp);
+                            }
+                        }
+                        break;
                 }
-            }));
+            }
+        });
+
         if (ops.length > 0) {
             this.sequence.submitSequenceMessage(createGroupOp(...ops));
         }
     }
 
     public disgard() {
-        this.tracking.forEach((tracked) => tracked.tg.segments.forEach(
-            (sg) => sg.trackingCollection.unlink(tracked.tg)));
+        this.tracking.forEach((tracked) => tracked.trackingGroup.segments.forEach(
+            (sg) => sg.trackingCollection.unlink(tracked.trackingGroup)));
     }
 }
 
