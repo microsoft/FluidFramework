@@ -5,7 +5,7 @@ import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as SharedString from "@prague/sequence";
 import { InsecureUrlResolver } from "./urlResolver";
 
-// Using package verions published in 03-04-2019
+// Using package versions published in 03-04-2019
 // For local development
 // const routerlicious = "http://localhost:3000";
 // const historian = "http://localhost:3001";

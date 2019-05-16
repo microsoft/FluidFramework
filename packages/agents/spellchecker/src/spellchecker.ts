@@ -241,7 +241,7 @@ class Speller {
     }
 }
 
-export class Spellcheker {
+export class Spellchecker {
     private speller: Speller | undefined;
 
     constructor(

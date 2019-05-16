@@ -4,9 +4,9 @@ import {
 } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
-import * as Spellcheker from "@prague/spellchecker";
-import { BaseWork} from "./baseWork";
-import { IWork} from "./definitions";
+import * as Spellchecker from "@prague/spellchecker";
+import { BaseWork } from "./baseWork";
+import { IWork } from "./definitions";
 
 export class SpellcheckerWork extends BaseWork implements IWork {
 
@@ -26,7 +26,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         await this.loadDocument(
             {
                 blockUpdateMarkers: true,
-                client: { type: "spell"},
+                client: { type: "spell" },
                 encrypted: undefined,
                 localMinSeq: 0,
             },
@@ -42,7 +42,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         const sharedString = rootMap.get("text") as Sequence.SharedString;
 
         if (sharedString) {
-            Spellcheker.run(sharedString, this.dictionary);
+            Spellchecker.run(sharedString, this.dictionary);
         }
     }
 

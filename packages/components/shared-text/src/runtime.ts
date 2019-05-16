@@ -23,7 +23,7 @@ import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } f
 import * as SharedString from "@prague/sequence";
 import * as sequence from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
-import * as Spellcheker from "@prague/spellchecker";
+import * as Spellchecker from "@prague/spellchecker";
 import { IStream } from "@prague/stream";
 import * as stream from "@prague/stream";
 import * as Translator from "@prague/translator";
@@ -309,7 +309,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
                 break;
             case "spell":
                 console.log(`@chaincode/shared-text running ${clientType}`);
-                Spellcheker.run(this.sharedString);
+                Spellchecker.run(this.sharedString);
                 break;
             case "cache":
                 console.log(`@chaincode/shared-text running ${clientType}`);

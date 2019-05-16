@@ -16,9 +16,9 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"production\"",
-    "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"developement\"",
-    "webpack": "webpack --env=\"developement\"",
-    "webpack:dev": "webpack --env=\"developement\"",
+    "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
+    "webpack": "webpack --env=\"development\"",
+    "webpack:dev": "webpack --env=\"development\"",
     "webpack:full": "webpack --env=\"production\""
   },
   "author": "Microsoft",
