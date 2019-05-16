@@ -23,7 +23,9 @@ const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import {
+    ISerializableInterval,
     SharedIntervalCollection,
+    SharedIntervalCollectionValueType,
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
@@ -271,6 +273,21 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         const sharedCollection =
             this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(label);
+        return sharedCollection;
+    }
+
+    // TODO: fix race condition on creation by putting type on every operation
+    public getGenericSharedIntervalCollection<TInterval extends ISerializableInterval>(label: string):
+        SharedIntervalCollection<TInterval> {
+        if (!this.intervalCollections.has(label)) {
+            this.intervalCollections.set<SharedIntervalCollection<TInterval>>(
+                label,
+                undefined,
+                SharedIntervalCollectionValueType.Name);
+        }
+
+        const sharedCollection =
+            this.intervalCollections.get<SharedIntervalCollection<TInterval>>(label);
         return sharedCollection;
     }
 

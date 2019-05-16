@@ -543,6 +543,10 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         return this.attachingP;
     }
 
+    public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
+        this.localCollection.addConflictResolver(conflictResolver);
+    }
+
     public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
         return this.localCollection.findOverlappingIntervals(startPosition, endPosition);
     }
@@ -697,6 +701,10 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         }
 
         this.view.add(startPosition, endPosition, intervalType, props);
+    }
+
+    public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
+        this.view.addConflictResolver(conflictResolver);
     }
 
     public async getView(
