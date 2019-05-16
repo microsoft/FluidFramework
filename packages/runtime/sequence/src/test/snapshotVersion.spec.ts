@@ -9,6 +9,7 @@ import * as mocks from "./mocks";
 describe("SharedString Snapshot Version", () => {
     const filebase: string = "src/test/sequenceTestSnapshot";
 
+    // tslint:disable-next-line:mocha-no-side-effect-code
     it("snapshot rebuild", async () => {
         const message = "SharedString snapshot format has changed." +
         "Please update the snapshotFormatVersion if appropriate " +
@@ -70,7 +71,7 @@ describe("SharedString Snapshot Version", () => {
 
             ++i;
         }
-    });
+    }).timeout(3000);
 
     it("snapshot diff", async () => {
         const message = "SharedString snapshot format has changed." +

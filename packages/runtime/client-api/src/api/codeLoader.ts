@@ -52,7 +52,7 @@ class Chaincode implements IComponentFactory {
         modules.set(consensusStackExtension.type, consensusStackExtension);
         modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
 
-        const component = await ComponentRuntime.LoadFromSnapshot(context, modules);
+        const component = await ComponentRuntime.Load(context, modules);
 
         this.runFn(component, context).catch(
             (error) => {
@@ -81,7 +81,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
         const chaincode = new Chaincode(this.runFn);
         const registry = new BackCompatLoader(chaincode);
 
-        const runtime = await ContainerRuntime.Load(registry, context);
+        const runtime = await ContainerRuntime.Load(context, registry);
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {

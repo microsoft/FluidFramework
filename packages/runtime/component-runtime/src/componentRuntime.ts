@@ -68,7 +68,7 @@ export class ServicePlatform extends EventEmitter implements IPlatform {
     }
 }
 
-export interface IComponentRegistry {
+export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
     get(name: string): ISharedObjectExtension;
@@ -78,9 +78,9 @@ export interface IComponentRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
-    public static async LoadFromSnapshot(
+    public static async Load(
         context: IComponentContext,
-        registry: IComponentRegistry,
+        registry: ISharedObjectRegistry,
     ) {
         const tree = context.baseSnapshot;
         const runtime = new ComponentRuntime(
@@ -168,7 +168,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         private storageService: IDocumentStorageService,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void,
-        private registry: IComponentRegistry) {
+        private registry: ISharedObjectRegistry) {
         super();
         this.attachListener();
     }

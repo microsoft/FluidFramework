@@ -410,7 +410,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.LoadFromSnapshot(context, modules);
+    const runtime = await ComponentRuntime.Load(context, modules);
     const runnerP = SharedTextRunner.Load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {
@@ -445,7 +445,7 @@ class MyRegistry implements IComponentRegistry {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const runtime = await ContainerRuntime.Load(new MyRegistry(context), context);
+    const runtime = await ContainerRuntime.Load(context, new MyRegistry(context));
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {

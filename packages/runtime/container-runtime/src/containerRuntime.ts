@@ -43,10 +43,10 @@ export interface IComponentRegistry {
 // Context will define the component level mappings
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public static async Load(
-        registry: IComponentRegistry,
         context: IContainerContext,
+        registry: IComponentRegistry,
     ): Promise<ContainerRuntime> {
-        const runtime = new ContainerRuntime(registry, context);
+        const runtime = new ContainerRuntime(context, registry);
 
         const components = new Map<string, ISnapshotTree>();
         const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
@@ -164,8 +164,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private lastMinSequenceNumber: number;
 
     private constructor(
-        private readonly registry: IComponentRegistry,
         private readonly context: IContainerContext,
+        private readonly registry: IComponentRegistry,
     ) {
         super();
         this.lastMinSequenceNumber = context.minimumSequenceNumber;

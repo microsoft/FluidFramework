@@ -3,6 +3,8 @@
 This document lists the set of breaking changes as part of upgrading to 0.3
 - [Legacy chaincode API removal](#legacy-chaincode-api-removal)
 - [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
+- [SparseMatrix moved](#sparsematrix-moved)
+- [Rename one of the IComponentRegistry definition to ISharedObjectRegistry](#rename-one-of-the-icomponentregistry-definition-to-isharedobjectregistry)
 
 ## Legacy chaincode API removal
 
@@ -133,5 +135,10 @@ Package @prague/runtime -> @prague/container-runtime
 Package @prague/component -> @prague/component-runtime
 ```
 
-### @chaincode/table-document
+## SparseMatrix moved
 Move SparseMatrix to @prague/sequence to avoid circular dependencies when adding to client-api
+
+## Rename one of the IComponentRegistry definition to ISharedObjectRegistry
+The IComponentRegistry in component-runtime should be a ISharedObjectRegistry
+Also renamed ComponentRuntime.LoadFromSnapshot to ComponentRuntime.Load
+and switch the argument order for ContainerRuntime.Load to make those match
