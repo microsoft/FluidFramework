@@ -35,7 +35,7 @@ export class Histogram {
  */
 export class ThroughputCounter {
     private produceCounter = new RateCounter();
-    private acknowlwedgeCounter = new RateCounter();
+    private acknowledgeCounter = new RateCounter();
     private interval;
 
     constructor(
@@ -49,8 +49,8 @@ export class ThroughputCounter {
         this.ensureTracking();
     }
 
-    public acknowlwedge(count: number = 1) {
-        this.acknowlwedgeCounter.increment(count);
+    public acknowledge(count: number = 1) {
+        this.acknowledgeCounter.increment(count);
         this.ensureTracking();
     }
 
@@ -61,24 +61,24 @@ export class ThroughputCounter {
 
         // Reset both counters when starting the interval
         this.produceCounter.reset();
-        this.acknowlwedgeCounter.reset();
+        this.acknowledgeCounter.reset();
 
         // Kick off the interval
         this.interval = setInterval(() => {
             const produce = 1000 * this.produceCounter.getValue() / this.produceCounter.elapsed();
-            const ack = 1000 * this.acknowlwedgeCounter.getValue() / this.acknowlwedgeCounter.elapsed();
+            const ack = 1000 * this.acknowledgeCounter.getValue() / this.acknowledgeCounter.elapsed();
 
             this.log(`${this.prefix}Produce@ ${produce.toFixed(2)} msg/s - Ack@ ${ack.toFixed(2)} msg/s`);
 
             // If there was no activity within the interval disable it
-            if (this.produceCounter.getValue() === 0 && this.acknowlwedgeCounter.getValue() === 0) {
+            if (this.produceCounter.getValue() === 0 && this.acknowledgeCounter.getValue() === 0) {
                 // tslint:disable-next-line:no-unsafe-any
                 clearInterval(this.interval);
                 this.interval = undefined;
             }
 
             this.produceCounter.reset();
-            this.acknowlwedgeCounter.reset();
+            this.acknowledgeCounter.reset();
         }, this.intervalTime);
     }
 }

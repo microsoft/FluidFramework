@@ -50,7 +50,7 @@ export interface IDeltaConnection {
     state: ConnectionState;
 
     /**
-     * Send new messages to the server. Returns the client ID for the messaage. Must be in a connected state
+     * Send new messages to the server. Returns the client ID for the message. Must be in a connected state
      * to submit a message.
      */
     submit(messageContent: any): number;

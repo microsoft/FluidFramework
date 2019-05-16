@@ -15,15 +15,15 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     }
 
     public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
-        let requestVerion = version;
-        if (!requestVerion) {
+        let requestVersion = version;
+        if (!requestVersion) {
             const versions = await this.getVersions(this.id, 1);
             if (versions.length === 0) {
                 return Promise.resolve<api.ISnapshotTree | null>(null);
             }
-            requestVerion = versions[0];
+            requestVersion = versions[0];
         }
-        const tree = await this.manager.getTree(requestVerion.tree.sha);
+        const tree = await this.manager.getTree(requestVersion.tree.sha);
         return buildHierarchy(tree);
     }
 

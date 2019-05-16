@@ -12,7 +12,7 @@ export class DOMStreamViewer extends Component {
     // Once document/component is opened, finish any remaining initialization required before the
     // document/component is returned to to the host.
     public async opened() {
-        // If the host provided a <div>, display a minimual UI.
+        // If the host provided a <div>, display a minimal UI.
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (maybeDiv) {
             // Create a <span> that displays the current value of 'clicks'.

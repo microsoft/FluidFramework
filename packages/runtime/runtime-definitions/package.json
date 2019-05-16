@@ -1,7 +1,7 @@
 {
   "name": "@prague/runtime-definitions",
   "version": "0.3.0",
-  "description": "Prague document loader",
+  "description": "Prague Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",

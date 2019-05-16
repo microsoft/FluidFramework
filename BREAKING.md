@@ -55,7 +55,7 @@ Instead in 0.3 the `ComponentRuntime` matches the underlying `Runtime` in giving
 via the request mechanism. `ComponentRuntime` exposes a `registerRequestHandler` function which can be used
 to define URL request routes. The default behavior when making use of @prague/app-component is to return the
 `Component` when making a request against / as shown in the snippet below. App developers can customize
-this behavir should they need more control.
+this behavior should they need more control.
 
 ```typescript
 debug(`${this.dbgName}.instantiateComponent()`);
@@ -98,7 +98,7 @@ can be used to easily implement this type. But an end user can have more control
 loading, by directly implenting it.
 
 Conversion from the old constructor form to this new one is largely a mechanical process of wrapping the constructor
-with a call to `Component.createComonentFactory`. For example here is an existing call and its updating version.
+with a call to `Component.createComponentFactory`. For example here is an existing call and its updating version.
 
 Existing:
 

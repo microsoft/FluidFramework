@@ -15,7 +15,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"developement\"",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",

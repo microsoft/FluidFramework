@@ -21,7 +21,7 @@ export class EventHubConsumer implements IConsumer {
     ) {
         console.log("Starting Event Hub");
 
-        // Create the Event Processo Host
+        // Create the Event Processor Host
         this.eventHost = EventProcessorHost.createFromConnectionString(
             clientId,
             storageEndpoint,

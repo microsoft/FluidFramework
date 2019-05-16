@@ -597,6 +597,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
         // Pass the transformedMessages - but the object really should be storing this
         const extension = this.registry.get(type);
+        if (!extension) {
+            throw new Error(`Channel Extension ${type} not registered`);
+        }
 
         // compare snapshot version to collaborative object version
         if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== extension.snapshotFormatVersion) {

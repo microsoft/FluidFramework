@@ -178,10 +178,6 @@ export interface IHostRuntime extends IRuntime {
     error(err: any): void;
 }
 
-export interface IComponent {
-    attach(platform: IPlatform): Promise<IPlatform>;
-}
-
 export interface IComponentFactory {
     instantiateComponent(context: IComponentContext): Promise<IComponentRuntime>;
 }

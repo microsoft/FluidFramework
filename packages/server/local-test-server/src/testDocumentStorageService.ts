@@ -2,7 +2,7 @@ import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 
 /**
- * Document storage service for the test driver...just does a default implememtation for
+ * Document storage service for the test driver...just does a default implementation for
  * all the methods
  */
 export class TestDocumentStorageService implements api.IDocumentStorageService  {

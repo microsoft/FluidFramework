@@ -1,7 +1,7 @@
 {
   "name": "@prague/gateway",
   "version": "0.3.0",
-  "description": "Routerl",
+  "description": "Routerlicious Gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,

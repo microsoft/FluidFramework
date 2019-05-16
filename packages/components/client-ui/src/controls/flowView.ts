@@ -5201,7 +5201,7 @@ export class FlowView extends ui.Component {
         const newProps = MergeTree.createMap<any>();
         const newLabels = ["pg"];
 
-        // TODO: Should merge w/all exisitng tile labels?
+        // TODO: Should merge w/all existing tile labels?
         if (Paragraph.isListTile(pgMarker)) {
             newLabels.push("list");
             newProps.indentLevel = curProps.indentLevel;
