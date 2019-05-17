@@ -1,5 +1,5 @@
-import { IDocumentStorageService, ISnapshotTree, ITree } from "@prague/container-definitions";
-import { ICommit, ICreateBlobResponse } from "@prague/gitresources";
+import { IDocumentStorageService, ISnapshotTree, ITree, IVersion } from "@prague/container-definitions";
+import { ICreateBlobResponse } from "@prague/gitresources";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
@@ -14,7 +14,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.repositoryUrl;
     }
 
-    public getSnapshotTree(version?: ICommit): Promise<ISnapshotTree | undefined | null> {
+    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | undefined | null> {
         const p = this.storage.getSnapshotTree(version);
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
@@ -27,7 +27,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return p;
     }
 
-    public async getVersions(commitId: string | null, count: number): Promise<ICommit[]> {
+    public async getVersions(commitId: string | null, count: number): Promise<IVersion[]> {
         return this.storage.getVersions(commitId, count);
     }
 
@@ -35,11 +35,11 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.cachedRead(blobId);
     }
 
-    public async getContent(version: ICommit, path: string): Promise<string | undefined> {
+    public async getContent(version: IVersion, path: string): Promise<string | undefined> {
         return this.storage.getContent(version, path);
     }
 
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<ICommit | undefined | null> {
+    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion | undefined | null> {
         return this.storage.write(tree, parents, message, ref);
     }
 

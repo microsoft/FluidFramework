@@ -9,6 +9,7 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ITree,
+    IVersion,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
@@ -53,15 +54,15 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public getSnapshotTree(version?: git.ICommit): Promise<ISnapshotTree> {
+    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree> {
         throw new Error("Method not implemented.");
     }
 
-    public getVersions(commitId: string, count: number): Promise<git.ICommit[]> {
+    public getVersions(commitId: string, count: number): Promise<IVersion[]> {
         throw new Error("Method not implemented.");
     }
 
-    public async getContent(version: git.ICommit, path: string): Promise<string> {
+    public async getContent(version: IVersion, path: string): Promise<string> {
         return "";
     }
 
@@ -69,7 +70,7 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         throw new Error("Method not implemented.");
     }
 
-    public write(root: ITree, parents: string[], message: string): Promise<git.ICommit> {
+    public write(root: ITree, parents: string[], message: string): Promise<IVersion> {
         throw new Error("Method not implemented.");
     }
 

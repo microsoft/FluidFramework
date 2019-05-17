@@ -14,7 +14,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
     constructor(private id: string, public manager: gitStorage.GitManager) {
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         let requestVersion = version;
         if (!requestVersion) {
             const versions = await this.getVersions(this.id, 1);
@@ -23,11 +23,11 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
             }
             requestVersion = versions[0];
         }
-        const tree = await this.manager.getTree(requestVersion.tree.sha);
+        const tree = await this.manager.getTree(requestVersion.treeId);
         return buildHierarchy(tree);
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
         const commits = await this.manager.getCommits(commitId, count);
         return commits.map((commit) => this.translateCommit(commit));
     }
@@ -37,14 +37,15 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return value.content;
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
-        const value = await this.manager.getContent(version.sha, path);
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
+        const value = await this.manager.getContent(version.id, path);
         return value.content;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit> {
+    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
-        return this.manager.write(branch, tree, parents, message);
+        const commit = this.manager.write(branch, tree, parents, message);
+        return commit.then((c) => ({id: c.sha, treeId: c.tree.sha}));
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
@@ -55,15 +56,10 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return this.manager.getRawUrl(blobId);
     }
 
-    private translateCommit(details: resources.ICommitDetails): resources.ICommit {
+    private translateCommit(details: resources.ICommitDetails): api.IVersion {
         return {
-            author: details.commit.author,
-            committer: details.commit.committer,
-            message: details.commit.message,
-            parents: details.parents,
-            sha: details.sha,
-            tree: details.commit.tree,
-            url: details.commit.url,
+            id: details.sha,
+            treeId: details.commit.tree.sha,
         };
     }
 }

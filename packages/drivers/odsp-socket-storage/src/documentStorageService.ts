@@ -14,7 +14,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: IDocumentStorageManager) {
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         const tree = await this.storageManager.getTree(version);
         const hierarchicalTree = buildHierarchy(tree);
 
@@ -33,7 +33,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return hierarchicalTree;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
         return this.storageManager.getVersions(commitId, count);
     }
 
@@ -42,12 +42,12 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return response.content;
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
         const response = await this.storageManager.getContent(version, path);
         return response.content;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | undefined> {
+    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | undefined> {
         return this.storageManager.write(tree, parents, message);
     }
 

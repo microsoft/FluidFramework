@@ -5,7 +5,7 @@ import Axios from "axios";
 import * as io from "socket.io-client";
 import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { NullBlobtorageService } from "./nullBlobStorageService";
+import { NullBlobStorageService } from "./nullBlobStorageService";
 import { TokenProvider } from "./tokens";
 
 /**
@@ -29,7 +29,7 @@ export class DocumentService implements api.IDocumentService {
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
 
         if (this.gitUrl === undefined) {
-            return new NullBlobtorageService();
+            return new NullBlobStorageService();
         }
 
         // Craft credentials - either use the direct credentials (i.e. a GitHub user + PAT) - or make use of our

@@ -2,8 +2,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
+    IVersion,
 } from "@prague/container-definitions";
-import { ICommit } from "@prague/gitresources";
 import * as fs from "fs";
 import * as util from "util";
 import {
@@ -45,7 +45,7 @@ async function fetchSnapshotTreeBlobs(
         const componentSnapShotTree = await storage.getSnapshotTree(componentVersions[0]);
         if (saveTreeDir !== undefined) {
             const writeFile = util.promisify(fs.writeFile);
-            await writeFile(`${saveTreeDir}/${componentVersions[0].sha}.json`,
+            await writeFile(`${saveTreeDir}/${componentVersions[0].id}.json`,
                 JSON.stringify(componentSnapShotTree, undefined, 2));
         }
         if (componentSnapShotTree) {
@@ -103,8 +103,8 @@ async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapsho
     return size;
 }
 
-async function saveSnapshot(storage: IDocumentStorageService, version: ICommit, index?: number) {
-    const suffix = `${index !== undefined ? `${index}-` : ""}${version.sha}`;
+async function saveSnapshot(storage: IDocumentStorageService, version: IVersion, index?: number) {
+    const suffix = `${index !== undefined ? `${index}-` : ""}${version.id}`;
     console.log(`Saving snapshot ${suffix}`);
     const outDir = `${paramSave}/${suffix}/`;
     const snapshotTree = await storage.getSnapshotTree(version);
@@ -141,7 +141,7 @@ export async function pragueDumpSnapshot(documentService: IDocumentService) {
     const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
     if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {
         const storage = await documentService.connectToStorage();
-        let version: ICommit | undefined;
+        let version: IVersion | undefined;
         if (dumpSnapshotVersions || paramSnapshotVersionIndex !== undefined || paramSave !== undefined) {
             const versions = await storage.getVersions("", paramNumSnapshotVersions);
             if (dumpSnapshotVersions) {

@@ -10,11 +10,11 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return "";
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null> {
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         return null;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
        return [];
     }
 
@@ -22,11 +22,11 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return "";
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
         return "";
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit | null> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | null> {
         return null;
     }
 

@@ -94,6 +94,17 @@ export interface ISnapshotTree {
 }
 
 /**
+ * Represents a version of the snapshot of a component
+ */
+export interface IVersion  {
+    // version ID
+    id: string;
+
+    // tree ID for this version of the snapshot
+    treeId: string;
+}
+
+/**
  * Interface to provide access to stored deltas for a shared object
  */
 export interface IDeltaStorageService {
@@ -127,17 +138,17 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree | null | undefined>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null | undefined>;
 
     /**
      * Retrieves all versions of the document starting at the specified commitId - or null if from the head
      */
-    getVersions(commitId: string | null, count: number): Promise<resources.ICommit[]>;
+    getVersions(commitId: string | null, count: number): Promise<IVersion[]>;
 
     /**
      * Retrieves the content for the given commit at the given path
      */
-    getContent(version: resources.ICommit, path: string): Promise<string | undefined>;
+    getContent(version: IVersion, path: string): Promise<string | undefined>;
 
     /**
      * Reads the object with the given ID
@@ -147,7 +158,7 @@ export interface IDocumentStorageService {
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit | undefined | null>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion | undefined | null>;
 
     /**
      * Creates a blob out of the given buffer

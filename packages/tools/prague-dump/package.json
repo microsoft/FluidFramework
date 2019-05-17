@@ -16,7 +16,6 @@
   "dependencies": {
     "@prague/build-common": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
     "@prague/odsp-socket-storage": "^0.3.0",
     "@prague/odsp-utils": "^0.3.0",
     "@prague/routerlicious-socket-storage": "^0.3.0",

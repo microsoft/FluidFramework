@@ -10,11 +10,11 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return "";
     }
 
-    public getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree> {
+    public getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree> {
         return null;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
        return [];
     }
 
@@ -22,11 +22,11 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return "";
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
         return "";
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<resources.ICommit> {
+    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         return null;
     }
 

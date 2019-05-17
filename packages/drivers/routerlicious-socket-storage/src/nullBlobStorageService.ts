@@ -4,16 +4,16 @@ import * as resources from "@prague/gitresources";
 /**
  * Document access to underlying storage
  */
-export class NullBlobtorageService implements api.IDocumentStorageService  {
+export class NullBlobStorageService implements api.IDocumentStorageService  {
     public get repositoryUrl(): string {
         return "";
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<api.ISnapshotTree | null | undefined> {
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null | undefined> {
         return null;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
         return [];
     }
 
@@ -21,11 +21,11 @@ export class NullBlobtorageService implements api.IDocumentStorageService  {
         return;
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string | undefined> {
+    public async getContent(version: api.IVersion, path: string): Promise<string | undefined> {
         return;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<resources.ICommit> {
+    public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
         return Promise.reject("Null blob storage can not write commit");
     }
 

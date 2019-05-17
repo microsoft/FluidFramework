@@ -7,6 +7,7 @@ import {
     ISnapshotTree,
     ITokenProvider,
     ITree,
+    IVersion,
 } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
@@ -17,11 +18,11 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async getSnapshotTree(version?: resources.ICommit): Promise<ISnapshotTree> {
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree> {
         return null;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<resources.ICommit[]> {
+    public async getVersions(commitId: string, count: number): Promise<IVersion[]> {
         return [];
     }
 
@@ -29,24 +30,16 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    public async getContent(version: resources.ICommit, path: string): Promise<string> {
+    public async getContent(version: IVersion, path: string): Promise<string> {
         return "";
     }
 
-    public async write(root: ITree, parents: string[], message: string): Promise<resources.ICommit> {
-        const commit: resources.ICommit = {
-            author: { date: "", email: "", name: ""},
-            committer: { date: "", email: "", name: ""},
-            message: "",
-            parents: [],
-            sha: "test",
-            tree: {
-                sha: "test",
-                url: "test",
-            },
-            url: "test",
+    public async write(root: ITree, parents: string[], message: string): Promise<IVersion> {
+        const version: IVersion = {
+            id: "test",
+            treeId: "test",
         };
-        return commit;
+        return version;
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
