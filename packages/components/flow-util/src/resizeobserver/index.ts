@@ -2,12 +2,13 @@
 // tslint:disable:no-relative-imports
 // tslint:disable:import-name
 // tslint:disable:variable-name
+import { isBrowser } from "../isbrowser";
 import { Template } from "../template";
 import { IViewState, View } from "../view";
 import * as style from "./index.css";
 
 // tslint:disable:object-literal-sort-keys
-const template = new Template(
+const template = isBrowser && new Template(
     { tag: "div", ref: "root", props: { className: style.root }, children: [
         { tag: "div", ref: "observer", props: { className: style.observer }, children: [
             { tag: "div", ref: "expand", props: { className: style.expand }, children: [

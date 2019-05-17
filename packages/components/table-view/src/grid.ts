@@ -239,7 +239,7 @@ export class GridView {
     }
 
     private moveInputByOffset(e: KeyboardEvent, rowOffset: number, colOffset: number) {
-        // Allow the left/right arrow keys to move the caret inside the inputBox until the caret
+        // Allow the left/arrowright  keys to move the caret inside the inputBox until the caret
         // is in the first/last character position.  Then move the inputBox.
         if ((e.target === this.inputBox) && this.inputBox.selectionStart! >= 0) {
             const x = this.inputBox.selectionStart! + colOffset;
@@ -251,7 +251,7 @@ export class GridView {
             }
         }
 
-        // If we're moving 'inputBox' prevent the arrow keys from moving the caret.  If we don't do this,
+        // If we're moving 'inputBox' prevent arrowthe  keys from moving the caret.  If we don't do this,
         // our 'setSelectionRange()' below will appear off-by-one, and up/down in the top/bottom cells
         // will behave like home/end respectively.
         e.preventDefault();
@@ -273,14 +273,14 @@ export class GridView {
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
         // tslint:disable-next-line: switch-default
-        switch (e.keyCode) {
+        switch (e.code) {
             case KeyCode.Escape:     { this.cancelInput(); break; }
-            case KeyCode.UpArrow:    { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
+            case KeyCode.ArrowUp:    { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */  0); break; }
             case KeyCode.Enter:      { this.commitInput(); /* fall-through */ }
-            case KeyCode.DownArrow:  { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
-            case KeyCode.LeftArrow:  { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
+            case KeyCode.ArrowDown:  { this.moveInputByOffset(e, /* rowOffset: */  1, /* colOffset */  0); break; }
+            case KeyCode.ArrowLeft:  { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */ -1); break; }
             case KeyCode.Tab:        { e.preventDefault(); /* fall-through */ }
-            case KeyCode.RightArrow: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
+            case KeyCode.ArrowRight: { this.moveInputByOffset(e, /* rowOffset: */  0, /* colOffset */  1); }
         }
     }
 

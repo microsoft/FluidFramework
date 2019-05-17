@@ -1,43 +1,21 @@
-import { DocSegmentKind, FlowDocument, getDocSegmentKind, getInclusionHtml, getInclusionKind, InclusionKind } from "@chaincode/flow-document";
-import { bsearch2, Char, Dom, Template } from "@prague/flow-util";
+import { DocSegmentKind, FlowDocument, getDocSegmentKind, getInclusionHtml, getInclusionKind, InclusionKind, SegmentSpan } from "@chaincode/flow-document";
+import { bsearch2, Char, Dom } from "@prague/flow-util";
 import {
     ISegment,
     Marker,
     TextSegment,
 } from "@prague/merge-tree";
-import { IFlowViewComponent, IViewState, View } from "../";
+import { IFlowViewComponent, View } from "../";
 import { debug } from "../../debug";
 import { PagePosition } from "../../pagination";
 import { InclusionView } from "../inclusion";
 import { LineBreakView } from "../linebreak";
 import { ParagraphView } from "../paragraph";
-import { TextView } from "../text";
-import * as styles from "./index.css";
-import { SegmentSpan } from "./segmentspan";
-import { TextAccumulator } from "./textaccumulator";
-
-const template = new Template({
-    tag: "span",
-    props: { className: styles.document },
-    children: [
-        { tag: "span", ref: "leadingSpan", props: { className: styles.leadingSpan }},
-        { tag: "span", ref: "slot", props: { className: styles.documentContent }},
-        { tag: "span", ref: "trailingSpan", props: { className: styles.trailingSpan }},
-        { tag: "span", ref: "overlay", props: { className: styles.documentOverlay }},
-    ],
-});
-
-type TrackedPositionCallback = (node: Node, nodeOffset: number) => void;
-
-/**
- * A position in the FlowDocument and a callback to be invoked with the DOM node
- * and offset within the dom node where that position is rendered.
- */
-export interface ITrackedPosition {
-    position: number;
-    callback: TrackedPositionCallback;
-    sync?: boolean;
-}
+import { TextLayout, TextView } from "../text";
+import { DocumentViewState, IViewInfo, LayoutContext } from "./layoutcontext";
+import { LayoutSink } from "./layoutsink";
+import { template } from "./template";
+import { ITrackedPosition } from "./trackedposition";
 
 /**
  * The state to be visualized/edited by the DocumentView.
@@ -50,50 +28,96 @@ export interface IDocumentProps {
     onPaginationStop?: (position: PagePosition) => void;
 }
 
-/**
- * The state that is calculated/cached for each segment within the currently rendered
- * window.
- */
-export interface IViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
-    view: TView;
-    span: SegmentSpan;
-}
-
 interface IRect { top: number; bottom: number; left: number; right: number; }
 type FindVerticalPredicate = (top: number, bottom: number, best: IRect, candidate: IRect) => boolean;
 
-/**
- * The state maintained by the DocumentView instance.
- */
-interface IDocumentViewState extends IViewState {
-    doc: FlowDocument;
-
-    // The root element into which segments are rendered.
-    slot: HTMLElement;
-
-    // The root element into which overlays are attached.
-    overlay: Element;
-
-    /**
-     * Mapping from segments to their IViewInfo, if the segment is currently within the rendered window.
-     * Note that when a range of segments are rendered by a single view (as is the case with TextSegments
-     * that share the same style), only the first segment in the range appears in this map.
-     */
-    segmentToViewInfo: Map<ISegment, IViewInfo<unknown, IFlowViewComponent<unknown>>>;
-
-    /**
-     * Mapping from the root element produced by an IView to it's IViewInfo.
-     */
-    elementToViewInfo: Map<Element, IViewInfo<unknown, IFlowViewComponent<unknown>>>;
-
-    start?: PagePosition;
-    end?: PagePosition;
-}
-
 const inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
 
+class DocumentLayout extends LayoutSink<{}> {
+    public onPush(context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number): {} {
+        return {};
+    }
+
+    public tryAppend(state: {}, context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number) {
+        const kind = getDocSegmentKind(segment);
+        const span = new SegmentSpan(position, segment, startOffset, endOffset);
+
+        switch (kind) {
+            case DocSegmentKind.Text:
+                context.pushLayout(TextLayout, position, segment, startOffset, endOffset);
+                return true;
+
+            case DocSegmentKind.Paragraph:
+                this.syncParagraph(context, span);
+                return true;
+
+            case DocSegmentKind.LineBreak:
+                this.syncLineBreak(context, span);
+                return true;
+
+            case DocSegmentKind.Inclusion:
+                this.syncInclusion(context, span, segment as Marker);
+                return true;
+
+            case DocSegmentKind.EOF:
+                this.syncText(context, span, Char.ZeroWidthSpace, "");
+                return true;
+
+            default:
+                throw new Error(`Unknown DocSegmentKind '${kind}'.`);
+        }
+    }
+
+    public onPop() { /* do nothing */ }
+
+    // Ensures that the paragraph's view is mounted and up to date.
+    private syncParagraph(context: LayoutContext, span: SegmentSpan) {
+        context.emitNode(span, ParagraphView.factory, {});
+    }
+
+    // Ensures that the lineBreak's view is mounted and up to date.
+    private syncLineBreak(context: LayoutContext, span: SegmentSpan) {
+        context.emitNode(span, LineBreakView.factory, {});
+    }
+
+    // Ensures that the text's view is mounted and up to date.
+    private syncText(context: LayoutContext, span: SegmentSpan, text: string, classList: string) {
+        context.emitNode(span, TextView.factory, { text, classList });
+    }
+
+    // Ensures that a foreign inclusion's view is mounted and up to date.
+    private syncInclusion(context: LayoutContext, span: SegmentSpan, marker: Marker) {
+        let child: HTMLElement;
+        const kind = getInclusionKind(marker);
+
+        child = (marker.properties as any)[inclusionRootSym];
+        if (!child) {
+            switch (kind) {
+                case InclusionKind.HTML:
+                    child = getInclusionHtml(marker);
+                    break;
+
+                case InclusionKind.Component:
+                    child = document.createElement("span");
+                    context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
+                    break;
+
+                default:
+                    console.assert(kind === InclusionKind.Chaincode);
+                    child = document.createElement("span");
+                    context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
+            }
+            (marker.properties as any)[inclusionRootSym] = child;
+        }
+
+        context.emitNode(span, InclusionView.factory, { child });
+    }
+}
+
+const documentLayout = new DocumentLayout();
+
 // IView that renders a FlowDocument.
-export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
+export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     public get root()       { return this.state.root; }
     public get overlay()    { return this.state.overlay; }
     public get paginationStop() { return this.state.end; }
@@ -147,25 +171,20 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
 
     protected mounting(props: IDocumentProps) {
         const root = template.clone();
-        const slot = template.get(root, "slot") as HTMLElement;
-        const overlay = template.get(root, "overlay");
 
-        return this.updating(props, {
-            doc: props.doc,
+        return this.updating(props, new DocumentViewState(
+            props.doc,
             root,
-            slot,
-            overlay,
-            segmentToViewInfo: new Map<ISegment, IViewInfo<unknown, IFlowViewComponent<unknown>>>(),
-            elementToViewInfo: new Map<Element, IViewInfo<unknown, IFlowViewComponent<unknown>>>(),
-            start: props.start,
-            end: props.start,
-        });
+            props.start,
+            /* end: */ undefined,
+        ));
     }
 
-    protected updating(props: Readonly<IDocumentProps>, state: IDocumentViewState) {
+    protected updating(props: Readonly<IDocumentProps>, state: DocumentViewState) {
         const pageLimit = state.root.getBoundingClientRect().top + props.paginationBudget;
 
         let remainingChars = 5000;
+
         const findPageBreak = (ctx: LayoutContext) => {
             {
                 const viewInfo = ctx.lastEmitted;
@@ -218,9 +237,9 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
                 return exceeds;
             }, 0, cursorTarget.textContent.length) + lastViewInfo.span.startPosition - 1;
 
-            debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
-
             this.setPaginationStop(props, state, breakPoint);
+
+            debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
 
             return true;
         };
@@ -247,7 +266,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             : doc.localRefToPosition(position[0]);
     }
 
-    private setPaginationStop(props: IDocumentProps, state: IDocumentViewState, position: number) {
+    private setPaginationStop(props: IDocumentProps, state: DocumentViewState, position: number) {
         const { doc, onPaginationStop } = props;
 
         if (state.end === undefined) {
@@ -268,7 +287,7 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
     }
 
     // Runs state machine, starting with the paragraph at 'start'.
-    private sync(props: Readonly<IDocumentProps>, state: IDocumentViewState, start: number, end: number, trackedPositions: ITrackedPosition[], halt: (context: LayoutContext) => boolean) {
+    private sync(props: Readonly<IDocumentProps>, state: DocumentViewState, start: number, end: number, trackedPositions: ITrackedPosition[], halt: (context: LayoutContext) => boolean) {
         debug("sync(%d..%d)", start, end);
 
         // When paginating, DocumentView must be able to measure the screen size of produced DOM nodes
@@ -277,51 +296,47 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
         // Rather than defend against this edge case throughout the code, we simply early exit if the
         // DOM tree is detached.
         if (!state.root.isConnected) {
+            debug("sync(): Root node is disconnected.");
             return;
         }
 
         // Remove any viewInfos whose document position is before the current start.
-        this.unmountBeforePosition(props, state, start);
+        this.unmountBeforePosition(state, start);
 
         const context = new LayoutContext(
             props.doc,
             state,
             state.slot,
-            trackedPositions);
+            trackedPositions,
+            halt);
 
-        this.syncRange(props, state, context, start, end, halt);
+        this.syncRange(context, start, end, halt);
 
         // Any nodes not re-used from the previous layout are unmounted and removed.
         context.unmount();
     }
 
-    private syncRange(props: IDocumentProps, state: IDocumentViewState, context: LayoutContext, start: number, end: number, halt: (context: LayoutContext) => boolean) {
+    private syncRange(context: LayoutContext, start: number, end: number, halt: (context: LayoutContext) => boolean) {
         debug(`syncRange([${start}..${end})`);
 
-        do {
-            // Ensure that we exit the outer do..while loop if there are no remaining segments.
-            let nextStart = -1;
+        context.pushLayout(documentLayout, NaN, undefined, NaN, NaN);
 
+        try {
             context.doc.visitRange((position, segment, startOffset, endOffset) => {
-                nextStart = this.syncSegment(context, position, segment, startOffset, endOffset);
+                const shouldContinue = context.layout(position, segment, startOffset, endOffset);
 
-                // Give the 'halt' callback an opportunity to terminate layout.
-                if (halt(context)) {
-                    nextStart = -1;
-                    return false;
+                if (!shouldContinue) {
+                    debug(`syncRange stopped @ ${position + endOffset}`);
                 }
 
-                // If the 'syncSegment' returned '-1', proceed to the next segment (if any).
-                // Otherwise break to the outer 'do..while' loop and we'll restart at the returned
-                // 'next' position.
-                return nextStart < 0;
+                return shouldContinue;
             }, start, end);
-
-            start = nextStart;
-        } while (start >= 0);
+        } finally {
+            while (context.popLayout()) { /* do nothing */ }
+        }
     }
 
-    private unmountBeforePosition(props: IDocumentProps, state: IDocumentViewState, start: number) {
+    private unmountBeforePosition(state: DocumentViewState, start: number) {
         const toRemove: Array<IViewInfo<unknown, IFlowViewComponent<unknown>>> = [];
 
         for (const info of state.segmentToViewInfo.values()) {
@@ -335,143 +350,6 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             this.state.segmentToViewInfo.delete(info.span.firstSegment);
             info.view.unmount();
         }
-    }
-
-    private mountView<TProps, TView extends IFlowViewComponent<TProps>>(
-        context: LayoutContext,
-        span: SegmentSpan,
-        factory: () => TView,
-        props: TProps,
-    ): IViewInfo<TProps, TView> {
-        const view = factory();
-        view.mount(props);
-
-        return context.setViewInfo({ view, span });
-    }
-
-    /**
-     * Ensure that the IView for the given set of Segments has been created and that it's root DOM node
-     * is at the correct position within the current parent.
-     */
-    private syncNode<TProps, TView extends IFlowViewComponent<TProps>>(
-        context: LayoutContext,
-        span: SegmentSpan,
-        factory: () => TView,
-        props: TProps,
-    ): IViewInfo<TProps, TView> {
-        const parent = context.root;
-        const previous = context.lastEmitted && context.lastEmitted.view.root;
-
-        // TODO: Check all non-head segments to look for best match?
-        let viewInfo = context.maybeReuseViewInfo<TProps, TView>(span.firstSegment);
-        if (!viewInfo) {
-            // Segment was not previously in the rendered window.  Create it.
-            viewInfo = this.mountView(context, span, factory, props);
-
-            // Insert the node for the new segment after the previous block.
-            Dom.insertAfter(parent, viewInfo.view.root, previous);
-        } else {
-            viewInfo.span = span;
-            const view = viewInfo.view;
-            view.update(props);
-
-            const node = viewInfo.view.root;
-
-            // The node was previously inside the rendered window.  See if it is already in the correct location.
-            if (!Dom.isAfterNode(parent, node, previous)) {
-                // The node is not in the correct position.  Move it.
-                //
-                // TODO: Sometimes we have a choice if we move the cached node or the one already residing in the
-                //       expected position.  We should prefer to move nodes known not to have side effects (i.e.,
-                //       do not move inclusion if possible, and never move the node containing focus.)
-                Dom.insertAfter(parent, node, previous);
-            }
-        }
-
-        context.emit(viewInfo);
-        context.notifyTrackedPositionListeners(viewInfo.view.cursorTarget, span);
-
-        return viewInfo;
-    }
-
-    // Ensures that the paragraph's view is mounted and up to date.
-    private syncParagraph(context: LayoutContext, span: SegmentSpan) {
-        this.syncNode(context, span, ParagraphView.factory, {});
-    }
-
-    // Ensures that the lineBreak's view is mounted and up to date.
-    private syncLineBreak(context: LayoutContext, span: SegmentSpan) {
-        this.syncNode(context, span, LineBreakView.factory, {});
-    }
-
-    // Ensures that the text's view is mounted and up to date.
-    private syncText(context: LayoutContext, span: SegmentSpan, text: string) {
-        this.syncNode(context, span, TextView.factory, { text });
-    }
-
-    // Ensures that a foreign inclusion's view is mounted and up to date.
-    private syncInclusion(context: LayoutContext, span: SegmentSpan, marker: Marker) {
-        let child: HTMLElement;
-        const kind = getInclusionKind(marker);
-
-        child = (marker.properties as any)[inclusionRootSym];
-        if (!child) {
-            switch (kind) {
-                case InclusionKind.HTML:
-                    child = getInclusionHtml(marker);
-                    break;
-
-                case InclusionKind.Component:
-                    child = document.createElement("span");
-                    context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
-                    break;
-
-                default:
-                    console.assert(kind === InclusionKind.Chaincode);
-                    child = document.createElement("span");
-                    context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
-            }
-            (marker.properties as any)[inclusionRootSym] = child;
-        }
-
-        this.syncNode(context, span, InclusionView.factory, { child });
-    }
-
-    private syncSegment(context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        const kind = getDocSegmentKind(segment);
-        const span = new SegmentSpan();
-
-        if (kind === DocSegmentKind.Text) {
-            const accumulator = new TextAccumulator(span);
-            context.doc.visitRange(accumulator.tryConcat, Math.max(position + startOffset, position), position + endOffset);
-            this.syncText(context, span, accumulator.text);
-            return span.endPosition;
-        } else {
-            span.append(position, segment, startOffset, endOffset);
-            switch (kind) {
-                case DocSegmentKind.Paragraph:
-                    this.syncParagraph(context, span);
-                    break;
-
-                case DocSegmentKind.LineBreak:
-                    this.syncLineBreak(context, span);
-                    break;
-
-                case DocSegmentKind.Inclusion:
-                    this.syncInclusion(context, span, segment as Marker);
-                    break;
-
-                case DocSegmentKind.EOF:
-                    this.syncText(context, span, Char.ZeroWidthSpace);
-                    break;
-
-                default:
-                    throw new Error(`Unknown DocSegmentKind '${kind}'.`);
-            }
-        }
-
-        // By default, continue continue with the next segment.
-        return -1;
     }
 
     // Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it.
@@ -579,135 +457,5 @@ export class DocumentView extends View<IDocumentProps, IDocumentViewState> {
             bestViewInfo.view.cursorTarget,
             Math.min(Math.max(x, bestRect.left), bestRect.right),
             bestRect.top, bestRect.bottom);
-    }
-}
-
-// Holds ephemeral state used during layout calculations.
-class LayoutContext {
-    // The next tracked position we're looking for.
-    private get nextTrackedPosition() {
-        return this.pendingTrackedPositions[this.pendingTrackedPositions.length - 1];
-    }
-
-    public get lastEmitted() { return this.emitted[this.emitted.length - 1]; }
-
-    // The IViewInfo for the last rendered inline view.
-    // tslint:disable-next-line:variable-name
-    public readonly emitted: Array<IViewInfo<unknown, IFlowViewComponent<unknown>>> = [];
-
-    /**
-     * Sorted stack of tracked position we're still looking for.  Positions are popped from
-     * the stack as the consumers are notified.
-     */
-    private readonly pendingTrackedPositions: ITrackedPosition[];
-
-    private readonly pendingNotifications = [];
-
-    /**
-     * Set of Elements that were previously rendered that have not yet been encountered by
-     * this layout pass.  At the end of the layout pass, any remaining elements are unmounted
-     * as they are no longer within the rendered window.
-     */
-    private readonly pendingLayout: Set<Element>;
-
-    constructor(readonly doc: FlowDocument, readonly state: IDocumentViewState, public root: Element, trackedPositions: ITrackedPosition[]) {
-        // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
-        this.pendingTrackedPositions = trackedPositions
-            .slice(0)
-            .sort((left, right) => right.position - left.position);
-
-        // Initialize 'pendingLayout' with the set of root elements rendered in the last layout pass.
-        this.pendingLayout = new Set<Element>(state.elementToViewInfo.keys());
-    }
-
-    /**
-     * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.
-     */
-    public notifyTrackedPositionListeners(node: Node, span: SegmentSpan) {
-        const { startPosition, endPosition } = span;
-
-        // Notify listeners if any of the consumed segments intersected a tracked position.
-        this.queueNotifications(node, startPosition, endPosition);
-    }
-
-    // Invoked at completion of the layout pass to unmount all IViews that are no longer in the rendered window.
-    public unmount() {
-        for (const toUnmount of this.pendingLayout) {
-            const toUnmountInfo = this.elementToViewInfo(toUnmount)!;
-            this.state.elementToViewInfo.delete(toUnmount);
-            toUnmountInfo.view.unmount();
-        }
-
-        this.pendingLayout.clear();
-
-        // Rebuild the segment -> ViewInfo map from the remaining visible elements.
-        this.state.segmentToViewInfo = new Map<ISegment, IViewInfo<unknown, IFlowViewComponent<unknown>>>(
-            [...this.state.elementToViewInfo.values()].map<[ISegment, IViewInfo<any, IFlowViewComponent<any>>]>(
-                (viewInfo) => [viewInfo.span.firstSegment, viewInfo]));
-
-        // Dispatch pending notifications for positions we passed during our layout.
-        for (const { node, nodeOffset, callback } of this.pendingNotifications) {
-            callback(node, nodeOffset);
-        }
-
-        // Notify listeners whose tracked positions were after our rendered window.
-        {
-            const lastNode = template.get(this.state.root, "trailingSpan");
-            const trackedPositions = this.pendingTrackedPositions;
-
-            for (let i = trackedPositions.length - 1; i >= 0; i--) {
-                trackedPositions[i].callback(lastNode, +Infinity);
-            }
-        }
-    }
-
-    public elementToViewInfo(element: Element) { return this.state.elementToViewInfo.get(element); }
-
-    /**
-     * If the given 'segment' is at the head of a list of previously rendered segments, return it's
-     * cached ViewInfo and remove that IView from the pendingLayout list.
-     */
-    public maybeReuseViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(segment: ISegment) {
-        const viewInfo = this.state.segmentToViewInfo.get(segment);
-        if (viewInfo) {
-            this.pendingLayout.delete(viewInfo.view.root);
-        }
-        return viewInfo as IViewInfo<TProps, TView>;
-    }
-
-    public emit<TProps>(viewInfo: IViewInfo<TProps, IFlowViewComponent<TProps>>) {
-        this.emitted.push(viewInfo);
-    }
-
-    public setViewInfo<TProps, TView extends IFlowViewComponent<TProps>>(viewInfo: IViewInfo<TProps, TView>) {
-        this.state.segmentToViewInfo.set(viewInfo.span.firstSegment, viewInfo);
-        this.state.elementToViewInfo.set(viewInfo.view.root, viewInfo);
-        return viewInfo;
-    }
-
-    /**
-     * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.
-     */
-    private queueNotifications(node: Node, position: number, end: number) {
-        const trackedPositions = this.pendingTrackedPositions;
-        let topTracked: ITrackedPosition;
-
-        // Notify listeners if any of the consumed segments intersected a tracked position.
-        // tslint:disable-next-line:no-conditional-assignment
-        while ((topTracked = this.nextTrackedPosition) && topTracked.position < end) {
-            const callback = topTracked.callback;
-            const nodeOffset = topTracked.position - position;
-
-            debug("Tracked position @%d -> '%s':%d", topTracked.position, node.textContent, nodeOffset);
-            console.assert(nodeOffset < node.textContent.length);
-
-            if (topTracked.sync) {
-                callback(node, nodeOffset);
-            } else {
-                this.pendingNotifications.push({ callback, node, nodeOffset });
-            }
-
-            trackedPositions.pop();
-        }
     }
 }

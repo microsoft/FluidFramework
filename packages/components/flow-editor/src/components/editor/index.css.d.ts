@@ -8,3 +8,7 @@ export const cursorHighlightRoot: string;
 export const cursor: string;
 export const blink: string;
 export const highlightRect: string;
+
+export const bold: string;
+export const italic: string;
+export const underline: string;

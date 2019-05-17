@@ -1,9 +1,12 @@
+// tslint:disable-next-line:no-relative-imports
+import { isBrowser } from "./isbrowser";
+
 function isElement(node: Node): node is Element {
     return node.nodeType === Node.ELEMENT_NODE;
 }
 
 export class Dom {
-    public static readonly caretPositionFromPoint = document.caretRangeFromPoint
+    public static readonly caretPositionFromPoint = isBrowser && document.caretRangeFromPoint
         ? (x: number, y: number) => {
             // CH74/SF12
             const range = document.caretRangeFromPoint(x, y);
@@ -41,6 +44,15 @@ export class Dom {
     public static ensureFirstChild(parent: Node, desiredChild: Node) {
         if (parent.firstChild !== desiredChild) {
             this.replaceFirstChild(parent, desiredChild);
+        }
+    }
+
+    public static removeAllChildren(parent: Node) {
+        let firstChild: ChildNode | null;
+
+        // tslint:disable-next-line:no-conditional-assignment
+        while ((firstChild = parent.firstChild) !== null) {
+            firstChild.remove();
         }
     }
 

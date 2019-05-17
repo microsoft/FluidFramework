@@ -2,16 +2,9 @@
     "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/command-line.schema.json",
     "commands": [{
         "commandKind": "bulk",
-        "name": "publish-local",
-        "summary": "Example bulk custom command",
-        "description": "This is an example custom command that runs separately for each project",
-        "enableParallelism": true,
-        "ignoreMissingScript": true
-    }, {
-        "commandKind": "bulk",
-        "name": "publish-patch-local",
-        "summary": "Example bulk custom command",
-        "description": "This is an example custom command that runs separately for each project",
+        "name": "clean",
+        "summary": "Recursively runs npm 'clean' script in all packages that define one",
+        "description": "Use to remove build artifacts such as 'dist/' 'lib/' and *.tsbuildinfo",
         "enableParallelism": true,
         "ignoreMissingScript": true
     }]

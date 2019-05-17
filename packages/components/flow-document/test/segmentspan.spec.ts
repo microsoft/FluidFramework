@@ -1,13 +1,11 @@
 // tslint:disable:binary-expression-operand-order
-import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
+import { TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
-
-import { SegmentSpan } from "../src/components/document/segmentspan";
+import { FlowDocument, SegmentSpan } from "../src";
 
 // tslint:disable-next-line:no-import-side-effect
-import { TextSegment } from "@prague/merge-tree";
 import "mocha";
 
 describe("SegmentSpan", () => {
@@ -73,11 +71,12 @@ describe("SegmentSpan", () => {
     test(["01", "23"], 1, 3);
     test(["01", "23", "45"], 1, 5);
 
-    it(`Not first segment`, () => {
+    it(`Non-zero startOffset`, () => {
         setup(["01", "23"]);
         doc.visitRange((position, segment, startOffset, endOffset) => {
             const span = new SegmentSpan();
             span.append(position, segment, startOffset, endOffset);
+
             switch (position) {
                 case 0:
                     assert.strictEqual(span.startPosition, 0);
@@ -87,6 +86,10 @@ describe("SegmentSpan", () => {
                     assert.strictEqual(span.startPosition, 2);
                     assert.strictEqual(span.endPosition, 4);
             }
+
+            // Ensure that initializing the span via the ctor agrees with appending to an empty span.
+            assert.deepStrictEqual(new SegmentSpan(position, segment, startOffset, endOffset), span);
+
             return true;
         }, 0, 4);
     });

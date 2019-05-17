@@ -1,29 +1,29 @@
 // tslint:disable:variable-name
 // tslint:disable:no-this-assignment
 // tslint:disable:binary-expression-operand-order
-
 import { ISegment } from "@prague/merge-tree";
-import { IFlowViewComponent } from "..";
-
-export class ViewInfo<TProps, TView extends IFlowViewComponent<TProps>> {
-    constructor(
-        public readonly view: TView,
-        public span: SegmentSpan,
-    ) { }
-}
 
 export class SegmentSpan {
+    public get segments(): ReadonlyArray<ISegment> { return this._segments; }
+    public get startOffset() { return this._startOffset; }
+    public get startPosition() { return this.firstPosition + this._startOffset; }
+    public get endPosition() { return this.lastPosition + Math.min(this._endOffset, this.lastSegment.cachedLength); }
+    public get isEmpty() { return isNaN(this.firstPosition); }
+
+    public get firstSegment() { return this.segments[0]; }
+    public get lastSegment() { return this.segments[this.segments.length - 1]; }
+
     private firstPosition = NaN;
     private lastPosition = NaN;
     private readonly _segments = [];
     private _endOffset = NaN;
     private _startOffset = NaN;
 
-    public get segments(): ReadonlyArray<ISegment> { return this._segments; }
-    public get startOffset() { return this._startOffset; }
-    public get startPosition() { return this.firstPosition + this._startOffset; }
-    public get endPosition() { return this.lastPosition + Math.min(this._endOffset, this.lastSegment.cachedLength); }
-    public get isEmpty() { return isNaN(this.firstPosition); }
+    constructor(position?: number, segment?: ISegment, startOffset?: number, endOffset?: number) {
+        if (position !== undefined) {
+            this.append(position, segment, startOffset, endOffset);
+        }
+    }
 
     public forEach(callback: (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean | undefined) {
         let startOffset = this._startOffset;
@@ -39,9 +39,6 @@ export class SegmentSpan {
             startOffset = 0;
         }
     }
-
-    public get firstSegment() { return this.segments[0]; }
-    public get lastSegment() { return this.segments[this.segments.length - 1]; }
 
     public append(position: number, segment: ISegment, startOffset: number, endOffset: number) {
         this._segments.push(segment);

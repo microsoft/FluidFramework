@@ -13,10 +13,6 @@ export class FlowHost extends Component {
 
     protected async create() {
         this.runtime.createAndAttachComponent(this.docId, FlowDocument.type);
-
-        this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true).then((doc) => {
-            this.importDoc(doc);
-        });
     }
 
     protected async opened() {
@@ -29,29 +25,6 @@ export class FlowHost extends Component {
     }
 
     private get docId() { return `${this.id}-doc`; }
-
-    private async importDoc(doc: FlowDocument) {
-        const response = await fetch("https://www.wu2.prague.office-int.com/public/literature/pp.txt");
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        try {
-            // tslint:disable-next-line:no-constant-condition
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) {
-                    return;
-                }
-
-                const lines = decoder.decode(value).split(/\r?\n/);
-                for (const paragraph of lines) {
-                    doc.insertText(doc.length, paragraph);
-                    doc.insertParagraph(doc.length);
-                }
-            }
-        } finally {
-            reader.releaseLock();
-        }
-    }
 }
 
 /**

@@ -7,6 +7,7 @@ import { IPaginationProvider, PagePosition } from "../../pagination";
 import { DocumentView, IDocumentProps } from "../document";
 import { shouldIgnoreEvent } from "../inclusion";
 import { Cursor } from "./cursor";
+import * as style from "./index.css";
 
 export interface IEditorProps extends IDocumentProps {
     scheduler: Scheduler;
@@ -164,7 +165,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private readonly onKeyDown = (ev: KeyboardEvent) => {
-        const keyCode = ev.keyCode;
+        const keyCode = ev.code;
         switch (keyCode) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.Backspace: {
@@ -179,19 +180,19 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
                 ev.stopPropagation();
                 break;
             }
-            case KeyCode.LeftArrow: {
+            case KeyCode.ArrowLeft: {
                 this.horizontalArrow(ev, -1);
                 break;
             }
-            case KeyCode.RightArrow: {
+            case KeyCode.ArrowRight: {
                 this.horizontalArrow(ev, +1);
                 break;
             }
-            case KeyCode.DownArrow: {
+            case KeyCode.ArrowDown: {
                 this.verticalArrow(ev, this.state.docView.findBelow);
                 break;
             }
-            case KeyCode.UpArrow: {
+            case KeyCode.ArrowUp: {
                 this.verticalArrow(ev, this.state.docView.findAbove);
                 break;
             }
@@ -202,7 +203,28 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private readonly onKeyPress = (ev: KeyboardEvent) => {
-        switch (ev.keyCode) {
+        if (ev.ctrlKey) {
+            switch (ev.key) {
+                case "b":
+                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.bold);
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    return;
+                case "i":
+                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.italic);
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    return;
+                case "u":
+                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.underline);
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    return;
+                default:
+            }
+        }
+
+        switch (ev.code) {
             case KeyCode.Backspace: {
                 // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
                 break;

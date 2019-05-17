@@ -40,7 +40,7 @@ export class Viewport extends View<IViewportProps, IViewportState> {
         const { doc, scheduler } = props;
 
         const state = { doc, pages: [], root, scheduler, slot };
-        this.addPage(state, [doc.addLocalRef(0)]);
+        this.addPage(state, undefined);
 
         return state;
     }

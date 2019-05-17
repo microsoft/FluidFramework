@@ -1,5 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
@@ -17,6 +18,9 @@ import {
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { debug } from "./debug";
+import { SegmentSpan } from "./segmentspan";
+
+export { SegmentSpan };
 
 export enum DocSegmentKind {
     Text = "text",
@@ -72,7 +76,13 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     }
 };
 
-type LeafAction = (position: number, segment: ISegment, start: number, end: number) => boolean;
+export function getCssClassList(segment: ISegment): string {
+    const props = segment.properties;
+    const classes = props && props.classes;
+    return (classes !== undefined) ? classes : "";
+}
+
+type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
 
 /**
  * Used by 'FlowDocument.visitRange'.  Uses the otherwise unused 'accum' object to pass the
@@ -85,10 +95,10 @@ const accumAsLeafAction = {
         position: number,
         refSeq: number,
         clientId: number,
-        start: number,
-        end: number,
+        startOffset: number,
+        endOffset: number,
         accum?: LeafAction,
-    ) => (accum as LeafAction)(position, segment, start, end),
+    ) => (accum as LeafAction)(position, segment, startOffset, endOffset),
 };
 
 export class FlowDocument extends Component {
@@ -217,6 +227,38 @@ export class FlowDocument extends Component {
         this.sharedString.annotateRange(props, start, end);
     }
 
+    public addCssClass(start: number, end: number, ...classNames: string[]) {
+        if (classNames.length > 0) {
+            this.removeCssClass(start, end, ...classNames);
+
+            const newClasses = classNames.join(" ");
+            this.updateCssClassList(start, end, (classList) => TokenList.appendToken(classList, newClasses));
+        }
+    }
+
+    public removeCssClass(start: number, end: number, ...classNames: string[]) {
+        this.updateCssClassList(start, end,
+                (classList) => classNames.reduce(
+                    (updatedList, className) => TokenList.removeToken(updatedList, className),
+                    classList));
+    }
+
+    public toggleCssClass(start: number, end: number, ...classNames: string[]) {
+        // Pre-visit the range to see if any of the new styles have already been set.
+        // If so, change the add to a removal by setting the map value to 'undefined'.
+        const toAdd = classNames.slice(0);
+        const toRemove = new Set<string>();
+
+        this.updateCssClassList(start, end,
+            (classList) => {
+                TokenList.computeToggle(classList, toAdd, toRemove);
+                return classList;
+            });
+
+        this.removeCssClass(start, end, ...toRemove);
+        this.addCssClass(start, end, ...toAdd);
+    }
+
     public findTile(startPos: number, tileType: string, preceding): { tile: ReferencePosition, pos: number } {
         return this.mergeTree.findTile(startPos, this.clientId, tileType, preceding);
     }
@@ -233,7 +275,7 @@ export class FlowDocument extends Component {
         return { start, end };
     }
 
-    public visitRange(callback: LeafAction, startPosition?: number, endPosition?: number) {
+    public visitRange(callback: LeafAction, startPosition = 0, endPosition = +Infinity) {
         // Early exit if passed an empty or invalid range (e.g., NaN).
         if (!(startPosition < endPosition)) {
             return;
@@ -259,5 +301,28 @@ export class FlowDocument extends Component {
         const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
         text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
         this.root.set("text", text);
+    }
+
+    private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
+        // tslint:disable-next-line:prefer-array-literal
+        const updates: Array<{span: SegmentSpan, classList: string}> = [];
+
+        this.visitRange((position, segment, startOffset, endOffset) => {
+            const oldList = getCssClassList(segment);
+            const newList = callback(oldList);
+
+            if (newList !== oldList) {
+                updates.push({
+                    classList: newList,
+                    span: new SegmentSpan(position, segment, startOffset, endOffset),
+                });
+            }
+
+            return true;
+        }, start, end);
+
+        for (const { span, classList } of updates) {
+            this.annotate(span.startPosition, span.endPosition, { classes: classList });
+        }
     }
 }

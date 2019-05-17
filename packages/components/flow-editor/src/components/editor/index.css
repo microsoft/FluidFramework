@@ -31,3 +31,15 @@
     position: absolute;
     background: rgba(0, 128, 255, 0.25);
 }
+
+.bold {
+    font-weight: bold;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.underline {
+    text-decoration: underline;
+}

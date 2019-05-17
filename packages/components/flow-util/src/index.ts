@@ -1,6 +1,6 @@
 export { Char } from "./char";
 export { Dom } from "./dom";
-export { KeyCode } from "./keycode";
+export { KeyCode, Modifier } from "./keycode";
 export { lis } from "./lis";
 export { Scheduler } from "./scheduler";
 export { Template } from "./template";
@@ -8,3 +8,4 @@ export { bsearch } from "./bsearch";
 export { bsearch2 } from "./bsearch2";
 export { IView, IViewState, View } from "./view";
 export { ResizeObserver } from "./resizeobserver";
+export { TokenList } from "./tokenlist";
