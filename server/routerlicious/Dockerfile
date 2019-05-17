@@ -54,6 +54,7 @@ COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/runtime/api-definitions/package*.json packages/runtime/api-definitions/
 COPY packages/runtime/component-runtime/package*.json packages/runtime/component-runtime/
 COPY packages/runtime/consensus-ordered-collection/package*.json packages/runtime/consensus-ordered-collection/
+COPY packages/runtime/consensus-register-collection/package*.json packages/runtime/consensus-register-collection/
 COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
 COPY packages/runtime/map/package*.json packages/runtime/map/

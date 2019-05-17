@@ -1,6 +1,7 @@
 import * as cell from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusQueueExtension, ConsensusStackExtension } from "@prague/consensus-ordered-collection";
+import { ConsensusRegisterCollectionExtension } from "@prague/consensus-register-collection";
 import {
     IChaincodeFactory,
     ICodeLoader,
@@ -38,6 +39,7 @@ class Chaincode implements IComponentFactory {
         const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
         const consensusQueueExtension = new ConsensusQueueExtension();
         const consensusStackExtension = new ConsensusStackExtension();
+        const consensusRegisterCollectionExtension = new ConsensusRegisterCollectionExtension();
         const sparseMatrixExtension = new sequence.SparseMatrixExtension();
 
         // Register channel extensions
@@ -50,6 +52,7 @@ class Chaincode implements IComponentFactory {
         modules.set(numberSequenceExtension.type, numberSequenceExtension);
         modules.set(consensusQueueExtension.type, consensusQueueExtension);
         modules.set(consensusStackExtension.type, consensusStackExtension);
+        modules.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
         modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
 
         const component = await ComponentRuntime.Load(context, modules);

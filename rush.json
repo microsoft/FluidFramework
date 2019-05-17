@@ -143,6 +143,10 @@
       "projectFolder": "packages/runtime/consensus-ordered-collection/"
     },
     {
+      "packageName": "@prague/consensus-register-collection",
+      "projectFolder": "packages/runtime/consensus-register-collection/"
+    },
+    {
       "packageName": "@prague/cell",
       "projectFolder": "packages/runtime/cell/"
     },
