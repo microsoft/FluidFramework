@@ -76,7 +76,7 @@ export function create(ensureLoggedIn: any): Router {
     });
 
     /**
-     * Spring 2010 demos
+     * Spring 2019 demos
      */
     router.get("/spring2019", ensureLoggedIn(), (request, response, next) => {
         response.render(
@@ -87,7 +87,7 @@ export function create(ensureLoggedIn: any): Router {
                 mathMoniker: moniker.choose(),
                 partials: defaultPartials,
                 sharedTextMoniker: moniker.choose(),
-                title: "Prague Demos",
+                title: "Fluid Demos",
             });
     });
 
