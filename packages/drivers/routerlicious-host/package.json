@@ -12,7 +12,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -34,7 +34,6 @@
     "@prague/utils": "^0.3.0",
     "@types/debug": "^0.0.31",
     "axios": "^0.18.0",
-    "debug": "^3.1.0",
-    "rimraf": "^2.6.2"
+    "debug": "^3.1.0"
   }
 }

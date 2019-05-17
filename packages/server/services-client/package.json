@@ -11,7 +11,7 @@
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose"

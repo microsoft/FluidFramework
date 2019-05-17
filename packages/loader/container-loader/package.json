@@ -11,7 +11,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:docs": "api-extractor run --local",
-    "clean": "rimraf dist lib *.tsbuildinfo",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "test": "mocha --recursive dist/test",

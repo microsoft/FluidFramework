@@ -12,7 +12,7 @@
     "build": "tsc",
     "build:compile": "npm run build",
     "build:full:compile": "npm run build",
-    "clean": "rimraf dist *.tsbuildinfo",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "test": "mocha --recursive dist/**/*.spec.js --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit"
   },
