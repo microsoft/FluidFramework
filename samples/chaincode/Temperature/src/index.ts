@@ -81,3 +81,4 @@ export async function instantiateRuntime( context: IContainerContext ): Promise<
     ["@chaincode/temperature", Promise.resolve({ instantiateComponent })]
   ]);
 }
+

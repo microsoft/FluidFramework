@@ -6,7 +6,7 @@ import {
 } from "@prague/container-definitions";
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/chat", [
-    ["@chaincode/chat", ChatApp]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/chat", new Map([
+    ["@chaincode/chat", Promise.resolve(Component.createComponentFactory(ChatApp))]
+  ]));
 }

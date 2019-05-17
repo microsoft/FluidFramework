@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/chat",
   "description": "Prague Chat!",
-  "version": "0.2.69",
+  "version": "0.3.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -35,12 +35,12 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.5287",
-    "@prague/app-datastore": "^0.2.5287",
-    "@prague/map": "^0.2.5287",
-    "@prague/runtime": "^0.2.5287",
-    "@prague/runtime-definitions": "^0.2.5287",
-    "@prague/container-definitions": "^0.2.5287",
+    "@prague/app-component": "^0.3.0",
+    "@prague/app-datastore": "^0.3.0",
+    "@prague/map": "^0.3.0",
+    "@prague/runtime": "^0.3.0",
+    "@prague/runtime-definitions": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"
