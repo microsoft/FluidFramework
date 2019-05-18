@@ -31,9 +31,6 @@ export interface IConsensusRegisterCollectionExtension extends ISharedObjectExte
  * operation wins and every client reaches to an agreement on the value. The sequence number when agreement was
  * reached is stored and that will be used on the next update.
  *
- * All non-distributed object added to the collection will be cloned (via JSON).
- * They will not be references to the original input object.  Thus changed to
- * the input object will not reflect the object in the collection.
  */
 export interface IConsensusRegisterCollection extends ISharedObject {
     /**

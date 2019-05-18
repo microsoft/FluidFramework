@@ -58,22 +58,25 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     }
 
     /**
-     * Add a value to the consensus collection.
+     * Creates a new register or writes a new value.
+     * Returns a promise that will resolve when the write is acked.
+     *
+     * TODO: Right now we will only allow connected clients to write.
+     * The correct answer for this should become more clear as we build more scenarios on top of this.
      */
     public async write(key: string, value: any): Promise<void> {
+        if (this.isLocal()) {
+            return Promise.reject(`Client is disconnected`);
+        }
+
         // Set the reference sequence number to the value when this register was last updated.
-        // Otherwise it's a brand new one 0 is a valid reference sequence number.
+        // Otherwise it's a new one and 0 is a valid reference sequence number.
         const referenceSequenceNumber = this.data.has(key) ? this.data.get(key).referenceSequenceNumber : 0;
 
         let operationValue: IRegisterState;
 
-        // TODO: Not all shared object will be derived from SharedObject
         if (value instanceof SharedObject) {
-            if (!this.isLocal()) {
-                // Ensure a referenced shared object is attached.
-                value.attach();
-            }
-
+            value.attach();
             operationValue = {
                 referenceSequenceNumber,
                 type: RegisterValueType[RegisterValueType.Shared],
@@ -87,16 +90,6 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
             };
         }
 
-        // This do not work if you are local. May be we just want to buffer ops until we get connected?
-        // So local promise will never resolve?
-        if (this.isLocal()) {
-            // For the case where this is not attached yet, explicitly JSON
-            // clone the value to match the behavior of going thru the wire.
-            const writeValue = JSON.parse(JSON.stringify(operationValue)) as IRegisterState;
-            this.writeCore(key, writeValue, true, null);
-            return Promise.resolve();
-        }
-
         const op: IRegisterOperation = {
             key,
             type: "set",
@@ -105,13 +98,19 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         return this.submit(op);
     }
 
+    /**
+     * Returns the most recent local value of a register.
+     *
+     * TODO: This read does not guarantee most up to date value. We probably want to have a version
+     * that submits a read message and returns when the message is acked. That way we are guaranteed
+     * to read the most recent value for that register.
+     */
     public read(key: string): any {
         if (!this.data.has(key)) {
             return undefined;
         }
         const value = this.data.get(key);
         return value.value;
-
     }
 
     public snapshot(): ITree {
@@ -188,7 +187,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     }
 
     protected onDisconnect() {
-        debug(`ConsensusCollection ${this.id} is now disconnected`);
+        debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
     protected onConnect(pending: any[]) {
