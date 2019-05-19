@@ -20,14 +20,6 @@ describe("Routerlicious", () => {
                 it("Can create a collection", () => {
                     assert.ok(testCollection);
                 });
-
-                it("Rejects writing to local collection", () => {
-                    testCollection.write("test-key", "test-value").then(() => {
-                        assert(false, "Writing to local did not fail");
-                    }).catch((reason) => {
-                        assert(true, "Writing to local should fail");
-                    });
-                });
             });
         }
     });

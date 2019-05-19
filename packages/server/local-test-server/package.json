@@ -48,6 +48,7 @@
     "@prague/cell": "^0.3.0",
     "@prague/client-api": "^0.3.0",
     "@prague/consensus-ordered-collection": "^0.3.0",
+    "@prague/consensus-register-collection": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
     "@prague/gitresources": "^0.3.0",
     "@prague/map": "^0.3.0",
