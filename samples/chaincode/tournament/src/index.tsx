@@ -62,8 +62,8 @@ export class Tournament extends Document {
       const bracket = await this.root.wait<ISharedMap>("TournamentState");
       this.render(bracketDiv, bracket);
 
-      this.host.createAndAttachComponent("schedule", "@chaincode/schedule");
-      await this.host.openComponent("schedule", true, [
+      this.runtime.createAndAttachComponent("schedule", "@chaincode/schedule");
+      await this.runtime.openComponent("schedule", true, [
         ["div", Promise.resolve(scheduleDiv)]
       ]);
 
@@ -79,8 +79,8 @@ export class Tournament extends Document {
 export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/tournament", [
-    ["@chaincode/tournament", Tournament],
-    ["@chaincode/schedule", ScheduleComponent]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/tournament", new Map([
+    ["@chaincode/tournament", Promise.resolve(Component.createComponentFactory(Tournament))],
+    ["@chaincode/schedule", Promise.resolve(Component.createComponentFactory(ScheduleComponent))]
+  ]));
 }
