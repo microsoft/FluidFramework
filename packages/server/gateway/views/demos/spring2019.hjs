@@ -14,7 +14,7 @@
         Type "insert monaco" and "insert chart" to add Monaco and Charts respectively.
     </p>
     <li class="list-unstyled">
-        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.6672" target="_blank">Data + Code Bindings</a>
+        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.7052" target="_blank">Data + Code Bindings</a>
     </li>
     <p>
         For a coding example start by pasting in the code to the Monaco editor. This sample comes with two errors:
