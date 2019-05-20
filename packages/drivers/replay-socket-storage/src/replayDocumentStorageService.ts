@@ -30,8 +30,8 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return null;
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | null> {
-        return null;
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+        return Promise.reject(new Error("ReplayDocumentStorageService.createBlob() not implemented"));
     }
 
     public getRawUrl(blobId: string): string | null {

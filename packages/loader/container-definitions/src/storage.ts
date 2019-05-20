@@ -163,7 +163,7 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse | undefined | null>;
+    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse>;
 
     /**
      * Fetch blob Data url

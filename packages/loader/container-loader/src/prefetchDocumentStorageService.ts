@@ -43,7 +43,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.write(tree, parents, message, ref);
     }
 
-    public async createBlob(file: Buffer): Promise<ICreateBlobResponse | undefined | null> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         return this.storage.createBlob(file);
     }
 

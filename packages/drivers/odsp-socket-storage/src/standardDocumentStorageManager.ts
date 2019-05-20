@@ -5,7 +5,7 @@ import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";
 
 export interface IDocumentStorageManager {
-    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined>;
+    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
     getBlob(blobid: string): Promise<resources.IBlob>;
     getContent(version: api.IVersion, path: string): Promise<resources.IBlob>;
     getRawUrl(blobid: string): string;
@@ -29,9 +29,9 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             standardTokenProvider.getStorageQueryParams());
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined> {
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
         // TODO: Implement
-        return undefined;
+        return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
     }
 
     public async getTree(version?: api.IVersion): Promise<resources.ITree | null> {

@@ -30,7 +30,7 @@ import {
     IInboundSignalMessage,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
-import { Deferred, gitHashFile, readAndParse } from "@prague/utils";
+import { Deferred, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -326,11 +326,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
         this.verifyNotClosed();
 
-        const sha = gitHashFile(file.content);
-        file.blobId = sha;
-        file.url = this.storageService.getRawUrl(sha);
-
         const blob = await this.blobManager.createBlob(file);
+        file.blobId = blob.blobId;
+        file.url = blob.url;
+
         this.submit(MessageType.BlobUploaded, blob);
 
         return file;

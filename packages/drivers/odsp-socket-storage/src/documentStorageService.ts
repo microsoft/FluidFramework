@@ -51,7 +51,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return this.storageManager.write(tree, parents, message);
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | undefined> {
+    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
         return this.storageManager.createBlob(file);
     }
 

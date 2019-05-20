@@ -45,18 +45,18 @@ export class BlobManager implements IBlobManager {
     }
 
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
-        await this.storage.createBlob(blob.content);
+        const response = await this.storage.createBlob(blob.content);
 
         /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
         const blobMetaData = {
-            blobId: blob.blobId,
+            blobId: response.sha,
             fileName: blob.fileName,
             size: blob.size,
             type: blob.type,
-            url: blob.url,
+            url: response.url,
         } as IGenericBlob;
-        this.blobs.set(blob.blobId, blobMetaData);
+        this.blobs.set(blobMetaData.blobId, blobMetaData);
         return blobMetaData;
     }
 
