@@ -43,6 +43,11 @@ export interface IConsensusRegisterCollection extends ISharedObject {
      * Retrieves the agreed upon value for the register. Returns undefined if not present.
      */
     read(key: string): any;
+
+    /**
+     * Returns the agreed upon value of all registers amongst clients.
+     */
+    entries(): Map<string, any>;
 }
 
 export interface IRegisterState {

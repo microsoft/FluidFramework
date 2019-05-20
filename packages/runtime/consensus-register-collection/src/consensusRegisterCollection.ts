@@ -113,6 +113,14 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         return value.value;
     }
 
+    public entries(): Map<string, any> {
+        const keysAndValues = new Map<string, any>();
+        this.data.forEach((state, key) => {
+            keysAndValues.set(key, state.value);
+        });
+        return keysAndValues;
+    }
+
     public snapshot(): ITree {
         const serialized: any = {};
         this.data.forEach((value, key) => {
