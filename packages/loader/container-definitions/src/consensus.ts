@@ -4,7 +4,7 @@ import { ISequencedClient } from "./clients";
 /**
  * Proposal to set the given key/value pair.
  *
- * Consensus on the proposal is achieved if the MSN is >= the sequence number
+ * Consensus on the proposal is achieved if the MSN is \>= the sequence number
  * at which the proposal is made and no client within the collaboration window rejects
  * the proposal.
  */

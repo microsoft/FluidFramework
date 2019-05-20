@@ -39,7 +39,7 @@ class ContentObjectStorage implements IObjectStorageService {
     }
 }
 
-interface IMapMessageHandler {
+export interface IMapMessageHandler {
     prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
     process(op: IMapOperation, context: any, local: boolean, message: ISequencedDocumentMessage): void;
     submit(op: IMapOperation);

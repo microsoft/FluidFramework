@@ -82,7 +82,7 @@
          *
          * DEFAULT VALUE: "warning"
          */
-        "logLevel": "warning"
+        "logLevel": "error"
         /**
          * When addToApiReviewFile is true:  If API Extractor is configured to write an API report file (.api.md),
          * then the message will be written inside that file; otherwise, the message is instead logged according to
@@ -110,7 +110,7 @@
      */
     "extractorMessageReporting": {
       "default": {
-        "logLevel": "warning"
+        "logLevel": "error"
         // "addToApiReviewFile": false
       },
       "ae-extra-release-tag": {
@@ -130,7 +130,7 @@
      */
     "tsdocMessageReporting": {
       "default": {
-        "logLevel": "warning"
+        "logLevel": "error"
       }
 
       // "tsdoc-link-tag-unescaped-text": {

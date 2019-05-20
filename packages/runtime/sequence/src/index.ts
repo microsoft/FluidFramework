@@ -1,20 +1,21 @@
 export {
     DeserializeCallback,
-    SharedStringInterval,
+    IIntervalHelpers,
     Interval,
+    ISerializableInterval,
+    ISerializedInterval,
     PrepareDeserializeCallback,
     SharedIntervalCollection,
-    SharedIntervalCollectionView,
     SharedIntervalCollectionValueType,
+    SharedIntervalCollectionView,
+    SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
-export {
-    SharedString,
-} from "./sharedString";
+export * from "./sharedString";
 export * from "./sequence";
 export * from "./extension";
 export * from "./sequenceDeltaEvent";
-export {IJSONRunSegment, SubSequence} from "./sharedSequence";
+export * from "./sharedSequence";
 export * from "./sharedObjectSequence";
 export * from "./sharedNumberSequence";
 export * from "./sparsematrix";

@@ -93,8 +93,8 @@ export class DataStore {
      * Given the 'hostUrl' of a routerlicious service, returns a Prague data store that can
      * open, create, and instantiate components from that server.
      *
-     * @param hostUrl The url of the routerlicious service to (e.g., "http://localhost:3000")
-     * @param usedId The ID of the user (e.g., "anonymous-coward")
+     * @param hostUrl - The url of the routerlicious service to (e.g., "http://localhost:3000")
+     * @param usedId - The ID of the user (e.g., "anonymous-coward")
      */
     // tslint:disable-next-line:no-reserved-keywords
     public static async from(hostUrl: string, userId: string, codeLoader?: ICodeLoader) {
@@ -134,10 +134,10 @@ export class DataStore {
     /**
      * Open or create a component instance.
      *
-     * @param componentId Identity of the component.
-     * @param chaincodePackage Identity of the chaincode package to use, if creating the component.
-     * @param path Route to the desired subcomponent (use "" to retrieve the root component).
-     * @param services Services to provided by the caller to the component.
+     * @param componentId - Identity of the component.
+     * @param chaincodePackage - Identity of the chaincode package to use, if creating the component.
+     * @param path - Route to the desired subcomponent (use "" to retrieve the root component).
+     * @param services - Services to provided by the caller to the component.
      */
     public async open<T>(
         componentId: string,
