@@ -1,0 +1,18 @@
+{
+  "name": "@prague/url-generator",
+  "version": "1.0.4",
+  "description": "Get a URL for your component",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "bin": {
+    "getURL": "./index.js"
+  },
+  "dependencies": {
+    "commander": "^2.20.0"
+  }
+}
