@@ -27,6 +27,7 @@ COPY packages/agents/translator/package*.json packages/agents/translator/
 COPY packages/components/app-component/package*.json packages/components/app-component/
 COPY packages/components/app-datastore/package*.json packages/components/app-datastore/
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
+COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/chart-view/package*.json packages/components/chart-view/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
 COPY packages/components/flow-document/package*.json packages/components/flow-document/
@@ -36,7 +37,9 @@ COPY packages/components/flow-page/package*.json packages/components/flow-page/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
 COPY packages/components/key-value/package*.json packages/components/key-value/
+COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
+COPY packages/components/pinpoint-editor/package*.json packages/components/pinpoint-editor/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/

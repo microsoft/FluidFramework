@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
-    "@prague/prague-dev-server": "^3.3.5",
+    "@prague/prague-dev-server": "^3.3.8",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",

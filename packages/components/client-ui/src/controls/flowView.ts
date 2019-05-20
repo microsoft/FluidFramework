@@ -425,6 +425,12 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (f) => {
+            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
+        },
+        key: "insert map",
+    },
+    {
+        exec: (f) => {
             f.insertInnerComponent("code", "@chaincode/monaco");
         },
         key: "insert monaco",

@@ -44,12 +44,11 @@ import { GraphQLService } from "./database";
 import { Document } from "./document";
 import { createCacheHTML } from "./pageCacher";
 
-// const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
-// const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
-// const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
+const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
+const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 
 // tslint:disable
-/*
 (self as any).MonacoEnvironment = {
 	getWorkerUrl: function (moduleId, label) {
 		switch (label) {
@@ -62,7 +61,7 @@ import { createCacheHTML } from "./pageCacher";
 				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
 		}
 	}
-};*/
+};
 // tslint:enable
 
 // first script loaded
@@ -430,9 +429,11 @@ class MyRegistry implements IComponentRegistry {
 
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "@chaincode/charts") {
-            // return charts;
+            return charts;
         } else if (name === "@chaincode/monaco") {
-            // return monaco;
+            return monaco;
+        } else if (name === "@chaincode/pinpoint-editor") {
+            return pinpoint;
         } else if (name === "@chaincode/shared-text") {
             return { instantiateComponent };
         } else {

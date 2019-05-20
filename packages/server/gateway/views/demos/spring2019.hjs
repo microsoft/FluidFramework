@@ -10,16 +10,74 @@
     <h2>Components</h2>
     <h3>Data, Code, Components Bindings</h3>
     <p>
-    Open the link below and add in a Monaco and Chart Component. Press ctrl-M to open up the search menu. 
-    Type (and use intellisense) "insert monaco" and "insert chart" to add Monaco and Charts respectively. 
+        Open the link below and add in a Monaco and Chart Component. Press ctrl-M to open up the search menu.
+        Type "insert monaco" and "insert chart" to add Monaco and Charts respectively.
     </p>
-    <li class="list-unstyled"><a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.6672" target="_blank">Data +
-            Code Bindings</a></li>
+    <li class="list-unstyled">
+        <a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.6672" target="_blank">Data + Code Bindings</a>
+    </li>
+    <p>
+        For a coding example start by pasting in the code to the Monaco editor. This sample comes with two errors:
+        the getRandomValues function is not defined and you will get an intellisense warning on the host.chartembed2.set
+        line.
+    </p>
+<pre>
+let xValues = getRandomValues(10);
+let yValues = getRandomValues(10);
+let xValues2 = getRandomValues(10);
+let yValues2 = getRandomValues(10);
 
+const defaultSettings = {
+    series: [
+        {
+            id: "i3",
+            data: {
+                xValues,
+                yValues,
+            },
+            layout: "Scatter",
+        },
+        {
+            id: "i4",
+            data: {
+                xValues: xValues2,
+                yValues: yValues2,
+            },
+            layout: "Scatter",
+        }],
+    size: {
+        height: 480,
+        width: 768,
+    },
+    title: {
+        text: "Scatter Plot",
+    },
+};
+
+host.chartembed2.set("chart", defaultSettings);
+</pre>
+    <p>
+        To fix the host line simply type in host and then a dot to pull up the intellisense list. All components
+        defined on the page will be available in the definitions list. Choose the chart identifier.
+    </p>
+    <p>
+        The code for getRandomValues is given below. To open a standalone Monaco editor simply hover your mouse
+        above the Monaco component until the URL for it shows. You can click this to open it in a separate window.
+        This URL can also be pasted into OWA or Teams to edit from a separate host.
+    </p>
+<pre>
+function getRandomValues(length: number): number[] {
+    const values = new Array&lt;number&gt;();
+    for (let i = 0; i &lt; length; i++) {
+        values.push(Math.random() * 100);
+    }
+
+    return values;
+}
+</pre>
     <h3>Fluid Math</h3>
     <ul class="list-unstyled">
-        <li><a href="/loader/prague/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7"
-                target="_blank">Fluid Math Component</a></li>
+        <li><a href="/loader/prague/{{mathMoniker}}?chaincode=@chaincode/math@0.0.7" target="_blank">Fluid Math Component</a></li>
     </ul>
 
     <h2>OWA + Bohemia</h2>
@@ -27,7 +85,9 @@
         <p>
             <li><a href="https://aka.ms/praguedocs" target="_blank">Bohemia Docs</a></li>
             <li>Fluid Embeddable OWA</li>
-            <li style="padding-left:2em">https://outlook-sdf.office.com/mail/inbox?features=rp-prague,cmp-prague&popoutv2=1 (Must Be Copied In)</li>
+            <li style="padding-left:2em">
+                https://outlook-sdf.office.com/mail/inbox?features=rp-prague,cmp-prague&amp;popoutv2=1 (Must Be Copied In)
+            </li>
         </p>
     </ul>
 
