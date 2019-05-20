@@ -1938,7 +1938,7 @@ function printOverlayTree(client: MergeTree.Client) {
         return attrStrbuf;
     }
     function leaf(segment: MergeTree.ISegment) {
-        if (segment instanceof MergeTree.TextSegment) {
+        if (MergeTree.TextSegment.is(segment)) {
             strbuf += MergeTree.internedSpaces(indentAmt);
             strbuf += segment.text;
             strbuf += "\n";

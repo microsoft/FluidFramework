@@ -16,7 +16,10 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
 }
 
 export class SubSequence<T> extends BaseSegment {
-
+    public static readonly type: string = "SubSequence";
+    public static is(segment: ISegment): segment is SubSequence<any> {
+        return segment !== undefined && segment.type === SubSequence.type;
+    }
     public static fromJSONObject(spec: any) {
         // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
@@ -28,6 +31,8 @@ export class SubSequence<T> extends BaseSegment {
         }
         return undefined;
     }
+
+    public readonly type = SubSequence.type;
 
     constructor(public items: T[], seq?: number, clientId?: number) {
         super(seq, clientId);
@@ -53,7 +58,7 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public canAppend(segment: ISegment) {
-        return segment instanceof SubSequence
+        return SubSequence.is(segment)
             && (this.cachedLength <= MaxRun || segment.cachedLength <= MaxRun);
     }
 
@@ -62,7 +67,7 @@ export class SubSequence<T> extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (!(segment instanceof SubSequence)) {
+        if (!SubSequence.is(segment)) {
             throw new Error("can only append another run segment");
         }
 
@@ -70,8 +75,7 @@ export class SubSequence<T> extends BaseSegment {
         //       'this.cachedLength' is used to adjust the offsets of the local refs.
         this.appendLocalRefs(segment);
 
-        const rseg = segment as SubSequence<T>;
-        this.items = this.items.concat(rseg.items);
+        this.items = this.items.concat(segment.items);
         this.cachedLength = this.items.length;
     }
 
@@ -157,7 +161,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
             start,
             end,
             (segment: ISegment) => {
-                if (segment instanceof SubSequence) {
+                if (SubSequence.is(segment)) {
                     items.push(...segment.items);
                 }
             });

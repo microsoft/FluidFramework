@@ -149,6 +149,7 @@ export interface IRemovalInfo {
 }
 
 export interface ISegment extends IMergeNode, IRemovalInfo {
+    readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
     propertyManager: SegmentPropertiesManager;
@@ -339,7 +340,7 @@ function addNodeReferences(mergeTree: MergeTree, node: IMergeNode,
     if (node.isLeaf()) {
         let segment = <ISegment>node;
         if (mergeTree.localNetLength(segment) > 0) {
-            if (segment instanceof Marker) {
+            if (Marker.is(segment)) {
                 let markerId = segment.getId();
                 // also in insertMarker but need for reload segs case
                 // can add option for this only from reload segs
@@ -504,6 +505,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     properties: Properties.PropertySet;
     localRefs: LocalReference[];
     hierRefCount?: number;
+    abstract readonly type: string;
 
     addLocalRef(lref: LocalReference) {
         if ((this.hierRefCount === undefined) || (this.hierRefCount === 0)) {
@@ -720,6 +722,9 @@ interface IJSONExternalSegment extends ops.IJSONSegment {
  * A non-shared placeholder for external content.
  */
 export class ExternalSegment extends BaseSegment {
+    public static readonly type = "ExternalSegment";
+    public readonly type = ExternalSegment.type;
+
     constructor(public placeholderSeq, public sequenceLength: number,
         public sequenceIndex: number) {
         super();
@@ -811,6 +816,12 @@ export interface IJSONMarkerSegment extends ops.IJSONSegment {
 }
 
 export class Marker extends BaseSegment implements ReferencePosition {
+    public static readonly type = "Marker";
+    public static is(segment: ISegment): segment is Marker {
+        return segment !== undefined && segment.type === Marker.type;
+    }
+    public readonly type = Marker.type;
+
     nestBuddy: Marker;
     public static make(refType: ops.ReferenceType, props?: Properties.PropertySet,
         seq?: number, clientId?: number) {
@@ -975,6 +986,14 @@ export interface IJSONTextSegment extends ops.IJSONSegment {
 }
 
 export class TextSegment extends BaseSegment {
+    public static readonly type = "TextSegment";
+
+    public static is(segment: ISegment): segment is TextSegment {
+        return segment !== undefined && segment.type === TextSegment.type;
+    }
+
+    public readonly type = TextSegment.type;
+
     public static make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
         let tseg = new TextSegment(text, seq, clientId);
         if (props) {
@@ -1033,7 +1052,7 @@ export class TextSegment extends BaseSegment {
 
     canAppend(segment: ISegment) {
         return this.text.charAt(this.text.length - 1) !== '\n'
-            && segment instanceof TextSegment
+            && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
                 segment.cachedLength <= MergeTree.TextSegmentGranularity);
     }
@@ -1043,11 +1062,10 @@ export class TextSegment extends BaseSegment {
     }
 
     append(segment: ISegment) {
-        if (segment instanceof TextSegment) {
+        if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             //'this.cachedLength' is used to adjust the offsets of the local refs.
             this.appendLocalRefs(segment);
-
             this.text += segment.text;
             this.cachedLength = this.text.length;
         } else {
@@ -1073,8 +1091,7 @@ export class TextSegment extends BaseSegment {
 }
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-    if (segment instanceof TextSegment) {
-
+    if (TextSegment.is(segment)) {
         if (MergeTree.traceGatherText) {
             console.log(`@cli ${state.clientId ? state.clientId : -1} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
         }
@@ -1919,7 +1936,7 @@ function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo
 function recordRangeLeaf(segment: ISegment, segpos: number,
     refSeq: number, clientId: number, start: number, end: number,
     searchInfo: IMarkerSearchRangeInfo) {
-    if (segment instanceof Marker) {
+    if (Marker.is(segment)) {
         if (segment.refType &
             (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
             applyLeafRangeMarker(segment, searchInfo);
@@ -1932,7 +1949,7 @@ function rangeShift(node: IMergeNode, segpos: number, refSeq: number, clientId: 
     offset: number, end: number, searchInfo: IMarkerSearchRangeInfo) {
     if (node.isLeaf()) {
         let seg = <ISegment>node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg instanceof Marker)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
             if (seg.refType &
                 (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) {
                 applyLeafRangeMarker(seg, searchInfo);
@@ -1948,7 +1965,7 @@ function rangeShift(node: IMergeNode, segpos: number, refSeq: number, clientId: 
 function recordTileStart(segment: ISegment, segpos: number,
     refSeq: number, clientId: number, start: number, end: number,
     searchInfo: IReferenceSearchInfo) {
-    if (segment instanceof Marker) {
+    if (Marker.is(segment)) {
         if (segment.hasTileLabel(searchInfo.tileLabel)) {
             searchInfo.tile = segment;
         }
@@ -1960,7 +1977,7 @@ function tileShift(node: IMergeNode, segpos: number, refSeq: number, clientId: n
     offset: number, end: number, searchInfo: IReferenceSearchInfo) {
     if (node.isLeaf()) {
         let seg = <ISegment>node;
-        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && (seg instanceof Marker)) {
+        if ((searchInfo.mergeTree.localNetLength(seg) > 0) && Marker.is(seg)) {
             if (seg.hasTileLabel(searchInfo.tileLabel)) {
                 searchInfo.tile = seg;
             }
@@ -2539,7 +2556,7 @@ export class MergeTree {
         if (end > segment.cachedLength) {
             end = segment.cachedLength;
         }
-        if (segment instanceof TextSegment) {
+        if (TextSegment.is(segment)) {
             accumSegments.segments.push(segment.clone(start, end));
         } else {
             const marker = segment as Marker;
@@ -2550,7 +2567,7 @@ export class MergeTree {
 
     private gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
         end: number, accumText: TextAccumulator) => {
-        if (segment instanceof TextSegment) {
+        if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
             }
@@ -3110,17 +3127,7 @@ export class MergeTree {
         insertSegment.seq = seq;
         insertSegment.clientId = clientId;
 
-        if (insertSegment instanceof Marker) {
-            const markerId = insertSegment.getId();
-            if (markerId) {
-                this.mapIdToSegment(markerId, insertSegment);
-            }
-        }
-
-        insertSegment.seq = seq;
-        insertSegment.clientId = clientId;
-
-        if (insertSegment instanceof Marker) {
+        if (Marker.is(insertSegment)) {
             const markerId = insertSegment.getId();
             if (markerId) {
                 this.mapIdToSegment(markerId, insertSegment);
@@ -3257,7 +3264,7 @@ export class MergeTree {
 
             newSegment.seq = seq;
             newSegment.clientId = clientId;
-            if (newSegment instanceof Marker) {
+            if (Marker.is(newSegment)) {
                 const markerId = newSegment.getId();
                 if (markerId) {
                     this.mapIdToSegment(markerId, newSegment);

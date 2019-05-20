@@ -51,9 +51,9 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
 };
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    if (segment instanceof TextSegment) {
+    if (TextSegment.is(segment)) {
         return DocSegmentKind.Text;
-    } else if (segment instanceof Marker) {
+    } else if (Marker.is(segment)) {
         const markerType = segment.refType;
         switch (markerType) {
             case ReferenceType.Tile:

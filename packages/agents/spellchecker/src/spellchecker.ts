@@ -61,7 +61,7 @@ class Speller {
         let endMarkerFound = false;
         const mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
-            if (segment instanceof MergeTree.Marker) {
+            if (MergeTree.Marker.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (segment.hasTileLabel("pg")) {
                         if (prevPG) {
@@ -81,7 +81,7 @@ class Speller {
                         }
                     }
                 }
-            } else if (segment instanceof MergeTree.TextSegment) {
+            } else if (MergeTree.TextSegment.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     pgText += segment.text;
                 }

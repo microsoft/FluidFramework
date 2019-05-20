@@ -18,6 +18,11 @@ export type UnboxedOper = undefined | boolean | number | string;
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
 export class PaddingSegment extends BaseSegment {
+
+    public static readonly type = "PaddingSegment";
+    public static is(segment: ISegment): segment is PaddingSegment {
+        return segment !== undefined && segment.type === PaddingSegment.type;
+    }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "pad" in spec) {
             const segment = new PaddingSegment(spec.pad, UniversalSequenceNumber, LocalClientId);
@@ -28,6 +33,7 @@ export class PaddingSegment extends BaseSegment {
         }
         return undefined;
     }
+    public readonly type = PaddingSegment.type;
 
     constructor(public size: number, seq?: number, clientId?: number) {
         super(seq, clientId);
@@ -45,7 +51,7 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public canAppend(segment: ISegment) {
-        return segment instanceof PaddingSegment;
+        return PaddingSegment.is(segment);
     }
 
     public toString() {
@@ -53,7 +59,7 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (!(segment instanceof PaddingSegment)) {
+        if (!PaddingSegment.is(segment)) {
             throw new Error("can only append padding segment");
         }
 
@@ -80,7 +86,10 @@ export class PaddingSegment extends BaseSegment {
 }
 
 export class RunSegment extends SubSequence<UnboxedOper> {
-
+    public static readonly type = "RunSegment";
+    public static is(segment: ISegment): segment is RunSegment {
+        return segment !== undefined && segment.type === RunSegment.type;
+    }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {
             const segment = new RunSegment(spec.items, UniversalSequenceNumber, LocalClientId);
@@ -91,6 +100,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
         }
         return undefined;
     }
+    public readonly type = RunSegment.type;
 
     private tags: any [];
 
@@ -259,9 +269,9 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         const pos = rowColToPosition(row, col);
         const { segment, offset } =
             this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
-        if (segment instanceof RunSegment) {
+        if (RunSegment.is(segment)) {
             return segment.items[offset];
-        } else if (segment instanceof PaddingSegment) {
+        } else if (PaddingSegment.is(segment)) {
             return undefined;
         }
 
@@ -270,14 +280,15 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     public getTag(row: number, col: number) {
         const { segment, offset } = this.getSegment(row, col);
-        return segment instanceof RunSegment
-            ? segment.getTag(offset)
-            : undefined;
+        if (RunSegment.is(segment)) {
+            return segment.getTag(offset);
+        }
+        return undefined;
     }
 
     public setTag(row: number, col: number, tag: any) {
         const { segment, offset } = this.getSegment(row, col);
-        if (segment instanceof RunSegment) {
+        if (RunSegment.is(segment)) {
             segment.setTag(offset, tag);
         } else if (tag !== undefined) {
             throw new Error(`Must not attempt to set tags on '${segment.constructor.name}'.`);

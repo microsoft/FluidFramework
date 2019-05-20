@@ -676,7 +676,7 @@ function renderSegmentIntoLine(
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
-    if (segment instanceof MergeTree.TextSegment) {
+    if (MergeTree.TextSegment.is(segment)) {
         if (lineContext.mathMode) {
             // will be whole segment
             // TODO: show math box if cursor in math
@@ -705,7 +705,7 @@ function renderSegmentIntoLine(
                 showPositionInLine(lineContext, textStartPos, text, presenceInfo.xformPos, presenceInfo);
             }
         }
-    } else if (segment instanceof MergeTree.Marker) {
+    } else if (MergeTree.Marker.is(segment)) {
         // console.log(`marker pos: ${segpos}`);
 
         // If the marker is a simple reference, see if it's types is registered as an external
@@ -1427,11 +1427,10 @@ function gatherOverlayLayer(
     end: number,
     context: IOverlayMarker[]) {
 
-    if (segment instanceof MergeTree.Marker) {
-        const marker = segment as MergeTree.Marker;
-        if ((marker.refType === MergeTree.ReferenceType.Simple) &&
-            (marker.hasSimpleType("inkOverlay"))) {
-            context.push({ id: marker.getId(), position: segpos });
+    if (MergeTree.Marker.is(segment)) {
+        if ((segment.refType === MergeTree.ReferenceType.Simple) &&
+            (segment.hasSimpleType("inkOverlay"))) {
+            context.push({ id: segment.getId(), position: segpos });
         }
     }
 
@@ -2194,8 +2193,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             break;
         }
 
-        const asMarker = segoff.segment instanceof MergeTree.Marker
-            ? segoff.segment as MergeTree.Marker
+        const asMarker = MergeTree.Marker.is(segoff.segment)
+            ? segoff.segment
             : undefined;
 
         const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
@@ -2244,16 +2243,15 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             currentPos++;
             segoff = undefined;
         } else if (asMarker && asMarker.hasRangeLabel("table")) {
-            const marker = segoff.segment as MergeTree.Marker;
             // TODO: branches
             let tableView: Table.Table;
-            if (marker.removedSeq === undefined) {
-                renderTable(marker, docContext, layoutContext, targetTranslation, deferredPGs);
-                tableView = (marker as Table.ITableMarker).table;
+            if (asMarker.removedSeq === undefined) {
+                renderTable(asMarker, docContext, layoutContext, targetTranslation, deferredPGs);
+                tableView = (asMarker as Table.ITableMarker).table;
                 deferredHeight += tableView.deferredHeight;
                 layoutContext.viewport.vskip(layoutContext.docContext.tableVspace);
             } else {
-                tableView = Table.parseTable(marker, currentPos, flowView.sharedString,
+                tableView = Table.parseTable(asMarker, currentPos, flowView.sharedString,
                     makeFontInfo(layoutContext.docContext));
             }
             const endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
@@ -2261,7 +2259,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
         } else {
-            if (segoff.segment instanceof MergeTree.Marker) {
+            if (asMarker) {
                 // empty paragraph
                 curPGMarker = segoff.segment as Paragraph.IParagraphMarker;
                 if (fetchLog) {
@@ -2331,9 +2329,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 if (currentPos < totalLength) {
                     segoff = getContainingSegment(flowView, currentPos);
-                    if (segoff.segment instanceof MergeTree.Marker) {
-                        const marker = segoff.segment as MergeTree.Marker;
-                        if (marker.hasRangeLabel("cell") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                    if (MergeTree.Marker.is(segoff.segment)) {
+                        if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
                     }
@@ -2775,7 +2772,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordBackward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (segment instanceof MergeTree.TextSegment) {
+            if (MergeTree.TextSegment.is(segment)) {
                 const innerOffset = segment.text.length - 1;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordStart < maxWord.wordEnd) {
@@ -2792,7 +2789,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordForward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (segment instanceof MergeTree.TextSegment) {
+            if (MergeTree.TextSegment.is(segment)) {
                 const innerOffset = 0;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordEnd > innerOffset) {
@@ -2807,9 +2804,8 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const segoff = mergeTree.getContainingSegment(pos,
         MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
-    if (segoff.segment && (segoff.segment instanceof MergeTree.TextSegment)) {
-        const textSegment = segoff.segment as MergeTree.TextSegment;
-        const maxWord = maximalWord(textSegment, segoff.offset);
+    if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
+        const maxWord = maximalWord(segoff.segment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
             const segStartPos = pos - segoff.offset;
             wordStart = segStartPos + maxWord.wordStart;
@@ -2817,7 +2813,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
             if (maxWord.wordStart === 0) {
                 mergeTree.leftExcursion(segoff.segment, expandWordBackward);
             }
-            if (maxWord.wordEnd === textSegment.text.length) {
+            if (maxWord.wordEnd === segoff.segment.text.length) {
                 mergeTree.rightExcursion(segoff.segment, expandWordForward);
             }
         }
@@ -3047,7 +3043,7 @@ export class FlowView extends ui.Component {
             // (see comments at 'modifiedMarkers' decl for more info.)
             this.modifiedMarkers = event
                 .ranges
-                .filter((range) => range.segment instanceof MergeTree.Marker);
+                .filter((range) => MergeTree.Marker.is(range.segment));
 
             this.handleSharedStringDelta(event, target);
         });
@@ -3665,18 +3661,17 @@ export class FlowView extends ui.Component {
                 this.cursor.pos--;
             }
             const segoff = getContainingSegment(this, this.cursor.pos);
-            if (segoff.segment instanceof MergeTree.Marker) {
-                const marker = segoff.segment;
-                if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+            if (MergeTree.Marker.is(segoff.segment)) {
+                if (segoff.segment.refType & MergeTree.ReferenceType.Tile) {
+                    if (segoff.segment.hasTileLabel("pg")) {
+                        if (segoff.segment.hasRangeLabel("table") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorRev();
                         }
-                    } else if (marker.hasTileLabel("math")) {
+                    } else if (segoff.segment.hasTileLabel("math")) {
                         return;
                     }
-                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
-                    const cellMarker = marker as Table.ICellMarker;
+                } else if ((segoff.segment.refType === MergeTree.ReferenceType.NestEnd) && (segoff.segment.hasRangeLabel("cell"))) {
+                    const cellMarker = segoff.segment as Table.ICellMarker;
                     const endId = cellMarker.getId();
                     let beginMarker: Table.ICellMarker;
                     if (endId) {
@@ -3701,26 +3696,25 @@ export class FlowView extends ui.Component {
 
             const segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
                 this.client.getClientId());
-            if (segoff.segment instanceof MergeTree.Marker) {
+            if (MergeTree.Marker.is(segoff.segment)) {
                 // REVIEW: assume marker for now
-                const marker = segoff.segment;
-                if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                if (segoff.segment.refType & MergeTree.ReferenceType.Tile) {
+                    if (segoff.segment.hasTileLabel("pg")) {
+                        if (segoff.segment.hasRangeLabel("table") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorFwd();
                         } else {
                             return;
                         }
-                    } else if (marker.hasTileLabel("math")) {
+                    } else if (segoff.segment.hasTileLabel("math")) {
                         this.cursor.pos = this.endOfMathRegion(this.cursor.pos + 1);
                     }
-                } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
-                    if (marker.hasRangeLabel("table")) {
+                } else if (segoff.segment.refType & MergeTree.ReferenceType.NestBegin) {
+                    if (segoff.segment.hasRangeLabel("table")) {
                         this.cursor.pos += 3;
-                    } else if (marker.hasRangeLabel("row")) {
+                    } else if (segoff.segment.hasRangeLabel("row")) {
                         this.cursor.pos += 2;
-                    } else if (marker.hasRangeLabel("cell")) {
-                        if (Table.cellIsMoribund(marker)) {
+                    } else if (segoff.segment.hasRangeLabel("cell")) {
+                        if (Table.cellIsMoribund(segoff.segment)) {
                             this.tryMoveCell(this.cursor.pos);
                         } else {
                             this.cursor.pos += 1;
@@ -3728,10 +3722,10 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorFwd();
                     }
-                } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
-                    if (marker.hasRangeLabel("row")) {
+                } else if (segoff.segment.refType & MergeTree.ReferenceType.NestEnd) {
+                    if (segoff.segment.hasRangeLabel("row")) {
                         this.cursorFwd();
-                    } else if (marker.hasRangeLabel("table")) {
+                    } else if (segoff.segment.hasRangeLabel("table")) {
                         this.cursor.pos += 2;
                     } else {
                         this.cursorFwd();
@@ -4416,9 +4410,8 @@ export class FlowView extends ui.Component {
 
     public copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
-        if (segoff.segment && (segoff.segment instanceof MergeTree.TextSegment)) {
-            const textSegment = segoff.segment as MergeTree.TextSegment;
-            this.formatRegister = MergeTree.extend(MergeTree.createMap(), textSegment.properties);
+        if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
+            this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment .properties);
         }
     }
 
@@ -4467,9 +4460,8 @@ export class FlowView extends ui.Component {
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
-            if (segment instanceof MergeTree.TextSegment) {
-                const textSegment = segment as MergeTree.TextSegment;
-                if (textSegment.properties && textSegment.properties[name] === valueOn) {
+            if (MergeTree.TextSegment.is(segment)) {
+                if (segment.properties && segment.properties[name] === valueOn) {
                     someSet = true;
                 }
                 return !someSet;
@@ -5375,9 +5367,9 @@ export class FlowView extends ui.Component {
     private handleSharedStringDelta(event: Sequence.SequenceDeltaEvent, target: Sequence.SharedString) {
         let opCursorPos: number;
         event.ranges.forEach((range) => {
-            if (range.segment instanceof MergeTree.Marker) {
+            if (MergeTree.Marker.is(range.segment)) {
                 this.updatePGInfo(range.offset - 1);
-            } else if (range.segment instanceof MergeTree.TextSegment) {
+            } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
                     opCursorPos = range.offset;
                 } else {

@@ -85,9 +85,8 @@ export class GraphQLService {
                             start: number,
                             end: number,
                         ) {
-                            if (segment instanceof MergeTree.Marker) {
-                                const marker = segment as MergeTree.Marker;
-                                if (marker.refType === MergeTree.ReferenceType.Tile && marker.hasTileLabel("pg")) {
+                            if (MergeTree.Marker.is(segment)) {
+                                if (segment.refType === MergeTree.ReferenceType.Tile && segment.hasTileLabel("pg")) {
                                     pgs.push({ text: root.getText(lastStart, pos) });
                                     lastStart = pos + 1;
                                 }

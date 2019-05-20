@@ -116,7 +116,7 @@ class Speller {
         let endMarkerFound = false;
         let mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
-            if (segment instanceof Marker) {
+            if (Marker.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (segment.hasTileLabel("pg")) {
                         if (prevPG) {
@@ -137,7 +137,7 @@ class Speller {
                         }
                     }
                 }
-            } else if (segment instanceof TextSegment) {
+            } else if (TextSegment.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     pgText += segment.text;
                 }
@@ -179,7 +179,7 @@ class Speller {
         let mergeTree = this.sharedString.client.mergeTree;
 
         let gatherReverse = (segment: MergeTree.ISegment) => {
-            if (segment instanceof Marker) {
+            if (Marker.is(segment)) {
                 if (!wordsFound) {
                     words = " " + words;
                 }
@@ -187,7 +187,7 @@ class Speller {
                 if (segment.hasTileLabel("pg")) {
                     return false;
                 }
-            } else if (segment instanceof TextSegment) {
+            } else if (TextSegment.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
                         words = segment.text + words;
@@ -207,7 +207,7 @@ class Speller {
         };
 
         let gatherForward = (segment: MergeTree.ISegment) => {
-            if (segment instanceof Marker) {
+            if (Marker.is(segment)) {
                 if (!wordsFound) {
                     fwdWords = fwdWords + " ";
                 }
@@ -215,7 +215,7 @@ class Speller {
                 if (segment.hasTileLabel("pg")) {
                     return false;
                 }
-            } else if (segment instanceof TextSegment) {
+            } else if (TextSegment.is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
                         fwdWords = fwdWords + segment.text;
