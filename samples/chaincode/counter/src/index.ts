@@ -2,7 +2,7 @@ import { Component, Document } from "@prague/app-component";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { Counter, CounterValueType } from "@prague/map";
 
-export class Clicker extends Document {
+export class ChaincodeCounter extends Document {
 
   // Create the component's schema and perform other initialization tasks
   // (only called when document is initially created).
@@ -48,7 +48,7 @@ export class Clicker extends Document {
 }
 
 export async function instantiateRuntime( context: IContainerContext ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", Clicker]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/counter", new Map([
+    ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(ChaincodeCounter))]
+  ]));
 }

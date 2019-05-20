@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/counter",
   "description": "Minimal @chaincode sample to implement a collaborative counter.",
-  "version": "0.0.50",
+  "version": "0.3.50",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -32,8 +32,8 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.2.5246",
-    "@prague/map": "^0.2.5246",
-    "@prague/container-definitions": "^0.2.5246"
+    "@prague/app-component": "^0.3.0",
+    "@prague/map": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0"
   }
 }
