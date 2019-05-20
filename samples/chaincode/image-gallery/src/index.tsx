@@ -90,7 +90,7 @@ export class ImageGalleryComponent extends Document {
 export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/counter", [
-    ["@chaincode/counter", ImageGalleryComponent]
-  ]);
+  return Component.instantiateRuntime(context, "@chaincode/image-gallery", new Map([
+    ["@chaincode/image-gallery", Promise.resolve(Component.createComponentFactory(ImageGalleryComponent))]
+  ]));
 }
