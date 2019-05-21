@@ -1,4 +1,4 @@
-import { ComponentRuntime } from "@prague/component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { IRequest } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
@@ -14,7 +14,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     const mapExtension = new MapExtension();
     modules.set(MapExtension.Type, mapExtension);
 
-    const runtime = await ComponentRuntime.LoadFromSnapshot(context, modules);
+    const runtime = await ComponentRuntime.Load(context, modules);
     const runnerP = PinpointRunner.Load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {

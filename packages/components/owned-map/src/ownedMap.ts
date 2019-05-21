@@ -144,7 +144,7 @@ export class OwnedSharedMap extends OwnedSharedObject implements ISharedMap {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         // Move this to ownedSharedObject

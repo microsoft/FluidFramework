@@ -106,7 +106,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
 
     // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
     // snapshot call
-    private baseSha = null;
+    private baseId = null;
 
     constructor(
         // tslint:disable-next-line:variable-name
@@ -117,7 +117,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         public readonly storage: IDocumentStorageService,
         public readonly baseSnapshot: ISnapshotTree) {
         super();
-        this.baseSha = baseSnapshot ? baseSnapshot.sha : null;
+        this.baseId = baseSnapshot ? baseSnapshot.id : null;
     }
 
     public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -134,8 +134,8 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     // Called after a snapshot to update the base sha
-    public updateBaseSha(sha: string) {
-        this.baseSha = sha;
+    public updateBaseId(sha: string) {
+        this.baseId = sha;
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -146,7 +146,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
         // component has been modified and will need to regenerate its snapshot
-        this.baseSha = null;
+        this.baseId = null;
         return this._componentRuntime.process(message, local, context);
     }
 
@@ -180,7 +180,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         const componentAttributes = { pkg: this.pkg };
 
         const entries = this._componentRuntime.snapshotInternal();
-        const snapshot = { entries, sha: undefined };
+        const snapshot = { entries, id: undefined };
 
         snapshot.entries.push({
             mode: FileMode.File,
@@ -193,8 +193,8 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         });
 
         // base sha still being set means previous snapshot is still valid
-        if (this.baseSha) {
-            snapshot.sha = this.baseSha;
+        if (this.baseId) {
+            snapshot.id = this.baseId;
         }
 
         return snapshot;

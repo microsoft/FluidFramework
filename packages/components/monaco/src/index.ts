@@ -1,4 +1,4 @@
-import { ComponentRuntime } from "@prague/component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { IRequest } from "@prague/container-definitions";
 import {
     CounterValueType,
@@ -33,7 +33,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.LoadFromSnapshot(context, modules);
+    const runtime = await ComponentRuntime.Load(context, modules);
     const runnerP = MonacoRunner.Load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {

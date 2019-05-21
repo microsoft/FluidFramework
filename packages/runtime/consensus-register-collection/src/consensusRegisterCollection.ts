@@ -150,7 +150,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         return tree;

@@ -148,7 +148,7 @@ export class Cell extends SharedObject implements ICell {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         return tree;

@@ -519,7 +519,7 @@ export class Container extends EventEmitter implements IContainer {
         // Output the tree
         const root: ITree = {
             entries,
-            sha: null,
+            id: null,
         };
 
         return root;
@@ -612,7 +612,7 @@ export class Container extends EventEmitter implements IContainer {
             const flattened = flatten(previousContextState.entries, blobs);
             snapshotTree = buildHierarchy(flattened);
         } else {
-            snapshotTree = { sha: null, blobs: {}, commits: {}, trees: {} };
+            snapshotTree = { id: null, blobs: {}, commits: {}, trees: {} };
         }
 
         const attributes: IDocumentAttributes = {

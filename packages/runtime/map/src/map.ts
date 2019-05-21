@@ -150,7 +150,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         // Add the snapshot of the content to the tree

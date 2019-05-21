@@ -81,13 +81,13 @@ export enum TreeEntry {
 export interface ITree {
     entries: ITreeEntry[];
 
-    // sha hash representing all entries in the tree. Can be used to optimize snapshotting in the case
+    // Unique ID representing all entries in the tree. Can be used to optimize snapshotting in the case
     // it is known that the ITree has already been created and stored
-    sha: string | null;
+    id: string | null;
 }
 
 export interface ISnapshotTree {
-    sha: string | null;
+    id: string | null;
     blobs: { [path: string]: string | null};
     commits: { [path: string]: string | null};
     trees: { [path: string]: ISnapshotTree };

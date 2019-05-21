@@ -82,7 +82,7 @@ export class Snapshot {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);

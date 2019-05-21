@@ -133,9 +133,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     private closed = false;
     private handler: IComponentDeltaHandler;
 
-    // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
+    // Tracks the base snapshot id. If no ops effect this component then the id value can be returned on a
     // snapshot call
-    private baseSha = null;
+    private baseId = null;
 
     private constructor(
         private readonly hostRuntime: IHostRuntime,
@@ -146,7 +146,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly storage: IDocumentStorageService,
         public readonly baseSnapshot: ISnapshotTree) {
         super();
-        this.baseSha = baseSnapshot ? baseSnapshot.sha : null;
+        this.baseId = baseSnapshot ? baseSnapshot.sha : null;
     }
 
     // exp: Component can create other components via the runtime.
@@ -164,9 +164,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.handler.changeConnectionState(value, clientId);
     }
 
-    // Called after a snapshot to update the base sha
-    public updateBaseSha(sha: string) {
-        this.baseSha = sha;
+    // Called after a snapshot to update the base id
+    public updateBaseId(id: string) {
+        this.baseId = id;
     }
 
     // exp: runtime forwards incoming ops to the following two methods.
@@ -178,7 +178,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         this.verifyNotClosed();
         // component has been modified and will need to regenerate its snapshot
-        this.baseSha = null;
+        this.baseId = null;
         return this.handler.process(message, local, context);
     }
 
@@ -222,9 +222,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             },
         });
 
-        // base sha still being set means previous snapshot is still valid
-        if (this.baseSha) {
-            snapshot.sha = this.baseSha;
+        // base id still being set means previous snapshot is still valid
+        if (this.baseId) {
+            snapshot.id = this.baseId;
         }
 
         return snapshot;

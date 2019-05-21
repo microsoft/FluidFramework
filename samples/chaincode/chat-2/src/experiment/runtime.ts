@@ -220,7 +220,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
                 const channelCommitP = this.storage
                     .write(channelSnapshot, parent, `${channelId} commit ${tagMessage}`, channelId)
                     .then((commit) => {
-                        this.components.get(channelId).updateBaseSha(commit.tree.sha);
+                        this.components.get(channelId).updateBaseId(commit.tree.sha);
                         return { id: channelId, commit: commit.sha };
                     });
                 channelCommitsP.push(channelCommitP);

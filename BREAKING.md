@@ -5,6 +5,7 @@ This document lists the set of breaking changes as part of upgrading to 0.3
 - [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
 - [SparseMatrix moved](#sparsematrix-moved)
 - [Rename one of the IComponentRegistry definition to ISharedObjectRegistry](#rename-one-of-the-icomponentregistry-definition-to-isharedobjectregistry)
+- [API ITree and ISnapshotTree "sha" properties have been renamed to "id"](#api-itree-and-isnapshottree-"sha"-properties-have-been-renamed-to-"id")
 
 ## Legacy chaincode API removal
 
@@ -142,3 +143,6 @@ Move SparseMatrix to @prague/sequence to avoid circular dependencies when adding
 The IComponentRegistry in component-runtime should be a ISharedObjectRegistry
 Also renamed ComponentRuntime.LoadFromSnapshot to ComponentRuntime.Load
 and switch the argument order for ContainerRuntime.Load to make those match
+
+## API ITree and ISnapshotTree "sha" properties have been renamed to "id"
+The "sha" property has been renamed to "id" on the ITree and ISnapshotTree interfaces in  @prague/container-definitions since this property should not be assumed to be a sha. Storage drivers may need to be updated to accommodate this change

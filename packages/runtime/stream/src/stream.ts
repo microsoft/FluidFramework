@@ -79,7 +79,7 @@ export class Stream extends SharedMap implements IStream {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         return tree;

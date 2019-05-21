@@ -45,7 +45,7 @@ export class SnapshotableArray<T> extends Array {
                     },
                 },
             ],
-            sha: null,
+            id: null,
         };
 
         return tree;

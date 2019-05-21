@@ -231,7 +231,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         const componentCommitsP = new Array<Promise<{ id: string, commit: string }>>();
         for (const [componentId, componentSnapshot] of componentEntries) {
             // If sha exists then previous commit is still valid
-            if (componentSnapshot.sha) {
+            if (componentSnapshot.id) {
                 componentCommitsP.push(Promise.resolve({
                     commit: tree.commits[componentId],
                     id: componentId,
@@ -241,14 +241,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 const componentCommitP = this.storage
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
                     .then((commit) => {
-                        this.components.get(componentId).updateBaseSha(commit.treeId);
+                        this.components.get(componentId).updateBaseId(commit.treeId);
                         return { id: componentId, commit: commit.id };
                     });
                 componentCommitsP.push(componentCommitP);
             }
         }
 
-        const root: ITree = { entries: [], sha: null };
+        const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
         const componentCommits = await Promise.all(componentCommitsP);

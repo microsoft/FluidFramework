@@ -42,13 +42,13 @@ interface IChannelState {
     object: IChannel;
     storage: IObjectStorageService;
     connection: ChannelDeltaConnection;
-    baseSha: string;
+    baseId: string;
 }
 
 interface IObjectServices {
     deltaConnection: ChannelDeltaConnection;
     objectStorage: IObjectStorageService;
-    baseSha: string;
+    baseId: string;
 }
 
 export class ServicePlatform extends EventEmitter implements IPlatform {
@@ -247,7 +247,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const channel = extension.create(this, id);
         this.channels.set(
             id,
-            { baseSha: null, object: channel, connection: null, storage: null });
+            { baseId: null, object: channel, connection: null, storage: null });
 
         if (this.channelsDeferred.has(id)) {
             this.channelsDeferred.get(id).resolve(channel);
@@ -412,9 +412,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
                     },
                 });
 
-                // If baseSha exists then the previous snapshot is still valid
-                if (object.baseSha) {
-                    snapshot.sha = object.baseSha;
+                // If baseId exists then the previous snapshot is still valid
+                if (object.baseId) {
+                    snapshot.id = object.baseId;
                 }
 
                 // And then store the tree
@@ -480,8 +480,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const objectDetails = this.channels.get(envelope.address);
         assert(objectDetails);
 
-        // Clear base sha since the channel is now dirty
-        objectDetails.baseSha = null;
+        // Clear base id since the channel is now dirty
+        objectDetails.baseId = null;
 
         const transformed: ISequencedDocumentMessage = {
             clientId: message.clientId,
@@ -547,7 +547,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             });
 
         const services: IObjectServices = {
-            baseSha: null,
+            baseId: null,
             deltaConnection: connection,
             objectStorage: localStorage,
         };
@@ -617,7 +617,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             originBranch);
 
         return {
-            baseSha: services.baseSha,
+            baseId: services.baseId,
             connection: services.deltaConnection,
             object: value,
             storage: services.objectStorage,
@@ -639,7 +639,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const objectStorage = new ChannelStorageService(tree, storage);
 
         return {
-            baseSha: tree ? tree.sha : null,
+            baseId: tree ? tree.id : null,
             deltaConnection,
             objectStorage,
         };

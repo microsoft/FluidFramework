@@ -218,9 +218,9 @@ export class GitManager implements IGitManager {
     }
 
     private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {
-        // If a sha is specified use it rather than creating new
-        if (files.sha) {
-            return this.getTree(files.sha);
+        // If a id is specified use it rather than creating new
+        if (files.id) {
+            return this.getTree(files.id);
         }
 
         // Kick off the work to create all the tree values
