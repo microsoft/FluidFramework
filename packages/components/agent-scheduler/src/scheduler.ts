@@ -115,7 +115,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
                 }
             });
             // TODO: Pick in random order to have some fairness guarantee.
-            await this.clearTasks(clearCandidates);
+            await this.clearTasks(leftTasks);
         });
     }
 
