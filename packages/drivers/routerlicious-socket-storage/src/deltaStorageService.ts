@@ -1,7 +1,6 @@
-// tslint:disable
 import * as api from "@prague/container-definitions";
 import * as assert from "assert";
-import axios from "axios";
+import Axios from "axios";
 import * as querystring from "querystring";
 import { TokenProvider} from "./tokens";
 /**
@@ -47,10 +46,10 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             };
         }
 
-        const opPromise = axios.get<api.ISequencedDocumentMessage[]>(
+        const opPromise = Axios.get<api.ISequencedDocumentMessage[]>(
             `${this.url}?${query}`, { headers });
 
-        const contentPromise = axios.get<any[]>(
+        const contentPromise = Axios.get<any[]>(
             `${this.url}/content?${query}`, { headers });
 
         const [opData, contentData] = await Promise.all([opPromise, contentPromise]);
@@ -62,7 +61,9 @@ export class DeltaStorageService implements api.IDeltaStorageService {
             if (op.contents === undefined) {
                 assert.ok(contentIndex < contents.length, "Delta content not found");
                 const content = contents[contentIndex];
+                // tslint:disable-next-line: no-unsafe-any
                 assert.equal(op.sequenceNumber, content.sequenceNumber, "Invalid delta content order");
+                // tslint:disable-next-line: no-unsafe-any
                 op.contents = content.op.contents;
                 ++contentIndex;
             }
