@@ -327,7 +327,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.verifyNotClosed();
 
         const blob = await this.blobManager.createBlob(file);
-        file.blobId = blob.blobId;
+        file.id = blob.id;
         file.url = blob.url;
 
         this.submit(MessageType.BlobUploaded, blob);

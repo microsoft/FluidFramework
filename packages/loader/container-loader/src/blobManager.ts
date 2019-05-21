@@ -10,7 +10,7 @@ export class BlobManager implements IBlobManager {
     public async loadBlobMetadata(blobs: IGenericBlob[]) {
         try {
             for (const blob of blobs) {
-                this.blobs.set(blob.blobId, blob);
+                this.blobs.set(blob.id, blob);
             }
         } catch (error) {
             console.log("Error in Blob Snapshot Load");
@@ -41,7 +41,7 @@ export class BlobManager implements IBlobManager {
     }
 
     public async addBlob(blob: IGenericBlob): Promise<void> {
-        this.blobs.set(blob.blobId, blob);
+        this.blobs.set(blob.id, blob);
     }
 
     public async createBlob(blob: IGenericBlob): Promise<IGenericBlob> {
@@ -50,13 +50,13 @@ export class BlobManager implements IBlobManager {
         /* tslint:disable:no-object-literal-type-assertion */
         // Remove blobContent
         const blobMetaData = {
-            blobId: response.sha,
             fileName: blob.fileName,
+            id: response.sha,
             size: blob.size,
             type: blob.type,
             url: response.url,
         } as IGenericBlob;
-        this.blobs.set(blobMetaData.blobId, blobMetaData);
+        this.blobs.set(blobMetaData.id, blobMetaData);
         return blobMetaData;
     }
 

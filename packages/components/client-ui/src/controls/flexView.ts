@@ -208,9 +208,9 @@ export class FlexView extends ui.Component {
     private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
 
         if (incl.type === "image") {
-            if (document.getElementById(incl.blobId) === null) { // Handle blob Processed
+            if (document.getElementById(incl.id) === null) { // Handle blob Processed
                 const imageDiv = document.createElement("div");
-                imageDiv.id = incl.blobId;
+                imageDiv.id = incl.id;
                 imageDiv.style.height = incl.height + 40 + "px";
                 imageDiv.style.width = incl.width + 15 + "px";
                 imageDiv.style.border = "3px solid black";
@@ -218,7 +218,7 @@ export class FlexView extends ui.Component {
                 const image = new Image(imageDiv, incl.url);
                 ink.addPhoto(image);
             } else { // handle blob uploaded
-                const imageDiv = document.getElementById(incl.blobId);
+                const imageDiv = document.getElementById(incl.id);
                 const image = imageDiv.getElementsByTagName("img").item(0);
                 if (image.naturalWidth === 0) {
                     image.src = image.src;
@@ -226,22 +226,22 @@ export class FlexView extends ui.Component {
             }
 
         } else if (incl.type === "video") {
-            if (document.getElementById(incl.blobId) === null) {
+            if (document.getElementById(incl.id) === null) {
                 const videoDiv = document.createElement("div");
-                videoDiv.id = incl.blobId;
+                videoDiv.id = incl.id;
                 videoDiv.style.height = incl.height + 40 + "px";
                 videoDiv.style.width = incl.width + 15 + "px";
                 videoDiv.style.border = "3px solid black";
 
-                if (!this.insightsMap.has(incl.blobId)) {
-                    this.insightsMap.set(incl.blobId, this.doc.createMap());
+                if (!this.insightsMap.has(incl.id)) {
+                    this.insightsMap.set(incl.id, this.doc.createMap());
                 }
-                const videoMap = this.insightsMap.get<ISharedMap>(incl.blobId);
+                const videoMap = this.insightsMap.get<ISharedMap>(incl.id);
 
                 const video = new Video(videoDiv, videoMap, incl.url);
                 ink.addVideo(video);
             } else {
-                const videoDiv = document.getElementById(incl.blobId);
+                const videoDiv = document.getElementById(incl.id);
                 const video = videoDiv.getElementsByTagName("video").item(0);
                 if (video.height === 0) {
                     video.src = video.src;

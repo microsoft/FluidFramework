@@ -25,8 +25,8 @@ export interface IBlobManager {
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {
-    blobId: string;
     content?: Buffer | null;
+    id: string;
     size: number;
     fileName: string;
     url: string; // Link to durable URL

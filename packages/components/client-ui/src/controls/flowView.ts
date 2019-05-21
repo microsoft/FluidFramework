@@ -2888,7 +2888,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
                 name: "image",
             };
             const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.blobId,
+                referenceDocId: blob.id,
                 type: irdocType,
                 url: blob.url,
             };
@@ -2906,7 +2906,7 @@ export function makeBlobRef(blob: IGenericBlob, cb: (irdoc: IReferenceDoc) => vo
                 name: "video",
             };
             const irdoc = <IReferenceDoc>{
-                referenceDocId: blob.blobId,
+                referenceDocId: blob.id,
                 type: irdocType,
                 url: blob.url,
             };
@@ -4625,7 +4625,7 @@ export class FlowView extends ui.Component {
     }
 
     private insertBlobInternal(blob: IGenericBlob) {
-        this.collabDocument.getBlob(blob.blobId)
+        this.collabDocument.getBlob(blob.id)
             .then((finalBlob) => {
                 makeBlobRef(finalBlob, (irdoc) => {
                     const refProps = {
