@@ -24,6 +24,7 @@ COPY packages/agents/intelligence-runner/package*.json packages/agents/intellige
 COPY packages/agents/snapshotter/package*.json packages/agents/snapshotter/
 COPY packages/agents/spellchecker/package*.json packages/agents/spellchecker/
 COPY packages/agents/translator/package*.json packages/agents/translator/
+COPY packages/components/agent-scheduler/package*.json packages/components/agent-scheduler/
 COPY packages/components/app-component/package*.json packages/components/app-component/
 COPY packages/components/app-datastore/package*.json packages/components/app-datastore/
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
