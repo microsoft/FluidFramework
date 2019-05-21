@@ -16,7 +16,7 @@ You can try the following commands
        Builds the component into bundled js files
 
 
-    npm deploy
+    npm run deploy
        Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/
 ````
 
