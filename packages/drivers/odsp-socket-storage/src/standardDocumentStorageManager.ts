@@ -30,7 +30,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
-        // TODO: Implement
+        // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
         return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
     }
 
@@ -79,14 +79,13 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
 
         return [];
     }
-    // tslint:enable: no-non-null-assertion
 
     public async getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
         return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.id, path });
     }
 
     public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | undefined> {
-        // TODO: Implement
+        // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
         return undefined;
     }
 
