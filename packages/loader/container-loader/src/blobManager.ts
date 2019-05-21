@@ -61,12 +61,12 @@ export class BlobManager implements IBlobManager {
     }
 
     public async updateBlob(blob: IGenericBlob): Promise<void | null> {
-        // TODO: SABRONER Implement Update
+        // TODO: Issue-2170 Implement updateBlob and removeBlob
         return null;
     }
 
     public async removeBlob(blobId: string): Promise<void> {
-        // TODO: SABRONER implement removal
+        // TODO: Issue-2170 Implement updateBlob and removeBlob
         this.blobs.delete(blobId);
     }
 }

@@ -208,7 +208,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     /**
      * Rejects the given proposal
      */
-    public rejectProposal(clientId: string, sequenceNumber: number) {
+    public rejectProposal(clientId: string, sequenceNumber: number): void {
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
@@ -252,7 +252,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
      * a rejection then it becomes an accepted consensus value.
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage) {
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
             assert(value >= this.minimumSequenceNumber);

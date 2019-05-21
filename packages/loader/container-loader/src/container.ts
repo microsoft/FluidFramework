@@ -201,7 +201,7 @@ export class Container extends EventEmitter implements IContainer {
     }
 
     public async snapshot(tagMessage: string): Promise<void> {
-        // TODO: support for branch snapshots. For now simply no-op when a branch snapshot is requested
+        // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
             debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
@@ -331,7 +331,6 @@ export class Container extends EventEmitter implements IContainer {
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
-        // TODO connect to storage needs the token provider
         const storageP = this.service.connectToStorage()
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 

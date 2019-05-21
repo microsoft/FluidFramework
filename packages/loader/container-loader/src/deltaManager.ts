@@ -33,7 +33,7 @@ const DefaultChunkSize = 16 * 1024;
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
 
-// TODO (mdaumi): These two should come from connect protocol. For now, splitting will never occur since
+// TODO - These two should come from connect protocol. For now, splitting will never occur since
 // it's bigger than DefaultChunkSize
 const DefaultMaxContentSize = 32 * 1024;
 const DefaultContentBufferSize = 10;
@@ -48,7 +48,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
 
-    // Flag indicating whether or not we need to udpate the reference sequence number
+    // Flag indicating whether or not we need to update the reference sequence number
     private updateHasBeenRequested = false;
     private updateSequenceNumberTimer: any;
 
@@ -107,7 +107,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.maxMessageSize || DefaultChunkSize;
     }
 
-    // TODO (mdaumi): This should be instantiated as a part of connection protocol.
+    // TODO - This should be instantiated as a part of connection protocol.
     public get maxContentSize(): number {
         return DefaultMaxContentSize;
     }
@@ -240,6 +240,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             traces,
             type,
         };
+        // tslint:enable:no-increment-decrement
 
         const message = this.createOutboundMessage(type, coreMessage);
         this.readonly = false;
@@ -254,27 +255,26 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection!.submitSignal(content);
     }
 
-    /* tslint:disable:promise-function-async */
-    public getDeltas(from: number | undefined, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public async getDeltas(from: number | undefined, to?: number): Promise<ISequencedDocumentMessage[]> {
         const deferred = new Deferred<ISequencedDocumentMessage[]>();
         this.getDeltasCore(from, to, [], deferred, 0);
 
         return deferred.promise;
     }
 
-    public enableReadonlyMode() {
+    public enableReadonlyMode(): void {
         this.stopSequenceNumberUpdate();
         this.readonly = true;
     }
 
-    public disableReadonlyMode() {
+    public disableReadonlyMode(): void {
         this.readonly = false;
     }
 
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close() {
+    public close(): void {
         this.closed = true;
         this.stopSequenceNumberUpdate();
         if (this.connection) {
@@ -286,8 +286,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.removeAllListeners();
     }
 
-    private shouldSplit(contents: string) {
-        return (contents) && (contents.length > this.maxContentSize);
+    private shouldSplit(contents: string): boolean {
+        return (!!contents) && (contents.length > this.maxContentSize);
     }
 
     // Specific system level message attributes are need to be looked at by the server.
@@ -314,7 +314,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         allDeltas: ISequencedDocumentMessage[],
         deferred: Deferred<ISequencedDocumentMessage[]>,
         retry: number,
-    ) {
+        ): void {
         if (this.closed || from === undefined) {
             return;
         }
@@ -341,7 +341,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     deferred.resolve(allDeltas);
                     return null;
                 } else {
-                    // Attempt to fetch more deltas. If we didn't recieve any in the previous call we up our retry
+                    // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
                     // count since something prevented us from seeing those deltas
                     return { from: lastFetch, to, retry: deltas.length === 0 ? retry + 1 : 0 };
                 }
@@ -371,7 +371,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
     }
 
-    private connectCore(reason: string, delay: number) {
+    private connectCore(reason: string, delay: number): void {
         // Reconnection is only enabled for browser clients.
         const reconnect = this.clientType === Browser;
 
@@ -468,7 +468,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private processInitialMessages(
             messages: ISequencedDocumentMessage[] | undefined,
             contents: IContentMessage[] | undefined,
-            signals: ISignalMessage[] | undefined) {
+            signals: ISignalMessage[] | undefined): void {
         // confirm the status of the handler and inbound queue
         if (!this.handler || this._inbound.paused) {
             // process them once the queue is ready
@@ -488,7 +488,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private enqueInitalOps(messages: ISequencedDocumentMessage[] | undefined, contents: IContentMessage[] | undefined) {
+    private enqueInitalOps(
+        messages: ISequencedDocumentMessage[] | undefined,
+        contents: IContentMessage[] | undefined): void {
         if (contents && contents.length > 0) {
             for (const content of contents) {
                 this.contentCache.set(content);
@@ -499,7 +501,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private enqueInitalSignals(signals: ISignalMessage[] | undefined) {
+    private enqueInitalSignals(signals: ISignalMessage[] | undefined): void {
         if (signals && signals.length > 0) {
             for (const signal of signals) {
                 this._inboundSignal.push(signal);
@@ -507,7 +509,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private handleOpContent(op: ISequencedDocumentMessage, callback: (error?) => void) {
+    private handleOpContent(op: ISequencedDocumentMessage, callback: (error?) => void): void {
         const opContent = this.contentCache.peek(op.clientId);
         if (!opContent) {
             this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
@@ -534,7 +536,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private processInboundOp(op: ISequencedDocumentMessage, callback: (error?) => void) {
+    private processInboundOp(op: ISequencedDocumentMessage, callback: (error?) => void): void {
         this.processMessage(op).then(
             () => {
                 callback();
@@ -545,12 +547,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             });
     }
 
-    private mergeAndProcess(message: ISequencedDocumentMessage, contentOp: IContentMessage, callback) {
+    private mergeAndProcess(message: ISequencedDocumentMessage, contentOp: IContentMessage, callback): void {
         message.contents = contentOp.contents;
         this.processInboundOp(message, callback);
     }
 
-    private enqueueMessages(messages: ISequencedDocumentMessage[]) {
+    private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
         for (const message of messages) {
             if (this.largestSequenceNumber !== undefined) {
                 this.largestSequenceNumber = Math.max(this.largestSequenceNumber, message.sequenceNumber);
@@ -572,7 +574,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
         const startTime = Date.now();
 
-        // Remove after SPO picks up the latest build.
+        // TODO Remove after SPO picks up the latest build.
         if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
             message.contents = JSON.parse(message.contents);
         }
@@ -710,12 +712,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         });
     }
 
-    private catchUp(messages: ISequencedDocumentMessage[]) {
+    private catchUp(messages: ISequencedDocumentMessage[]): void {
         // Apply current operations
         this.enqueueMessages(messages);
 
         // Then sort pending operations and attempt to apply them again.
-        // This could be optimized to stop handling messages once we realize we need to fetch mising values.
+        // This could be optimized to stop handling messages once we realize we need to fetch missing values.
         // But for simplicity, and because catching up should be rare, we just process all of them.
         const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
         this.pending = [];
@@ -725,7 +727,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Acks the server to update the reference sequence number
      */
-    private updateSequenceNumber(type: MessageType) {
+    private updateSequenceNumber(type: MessageType): void {
         // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
         if (this.readonly) {
             return;
@@ -759,7 +761,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }, 100);
     }
 
-    private stopSequenceNumberUpdate() {
+    private stopSequenceNumberUpdate(): void {
         if (this.updateSequenceNumberTimer) {
             clearTimeout(this.updateSequenceNumberTimer);
         }
