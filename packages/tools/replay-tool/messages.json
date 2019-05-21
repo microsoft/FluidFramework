@@ -1,0 +1,4904 @@
+[
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 0,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 1,
+    "timestamp": 1555452234258,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"77bda5b5-7cab-42d3-a078-b515d430203d\",\"detail\":{\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 1,
+    "contents": {
+      "key": "code2",
+      "value": "@ms/office-prague-container"
+    },
+    "minimumSequenceNumber": 1,
+    "referenceSequenceNumber": 1,
+    "sequenceNumber": 2,
+    "timestamp": 1555452234336,
+    "traces": [],
+    "type": "propose"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 2,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 3,
+    "timestamp": 1555452234743,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 3,
+    "contents": {
+      "key": "leader",
+      "value": "77bda5b5-7cab-42d3-a078-b515d430203d"
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 4,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "propose"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 4,
+    "contents": {
+      "id": "defaultComponent",
+      "snapshot": null,
+      "type": "@ms/scriptor"
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 5,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "attach"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 5,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "id": "root",
+          "snapshot": {
+            "entries": [
+              {
+                "mode": "100644",
+                "path": "header",
+                "type": "Blob",
+                "value": {
+                  "contents": "{}",
+                  "encoding": "utf-8"
+                }
+              }
+            ],
+            "sha": null
+          },
+          "type": "https://graph.microsoft.com/types/map"
+        },
+        "type": "attach"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 6,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 6,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "root",
+          "contents": {
+            "key": "endOfKeys",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": true
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 7,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 7,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "id": "03230e38-cb5c-44a8-8886-c36c7b6dc4ab",
+          "snapshot": {
+            "entries": [
+              {
+                "mode": "100644",
+                "path": "header",
+                "type": "Blob",
+                "value": {
+                  "contents": "{}",
+                  "encoding": "utf-8"
+                }
+              }
+            ],
+            "sha": null
+          },
+          "type": "https://graph.microsoft.com/types/map"
+        },
+        "type": "attach"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 8,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 8,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "id": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "snapshot": {
+            "entries": [
+              {
+                "mode": "100644",
+                "path": "header",
+                "type": "Blob",
+                "value": {
+                  "contents": "{\"intervalCollections\":{\"type\":\"Shared\",\"value\":\"03230e38-cb5c-44a8-8886-c36c7b6dc4ab\"},\"ItemType\":{\"type\":\"Plain\",\"value\":\"RootNode\"}}",
+                  "encoding": "utf-8"
+                }
+              },
+              {
+                "mode": "040000",
+                "path": "content",
+                "type": "Tree",
+                "value": {
+                  "entries": [
+                    {
+                      "mode": "100644",
+                      "path": "header",
+                      "type": "Blob",
+                      "value": {
+                        "contents": "{\"chunkStartSegmentIndex\":0,\"chunkSegmentCount\":1,\"chunkLengthChars\":1,\"totalLengthChars\":1,\"totalSegmentCount\":1,\"chunkSequenceNumber\":2,\"segmentTexts\":[{\"marker\":{\"refType\":1},\"props\":{\"referenceTileLabels\":[\"Eop\"],\"markerId\":\"1ecfd19c-9a0c-4e48-b1b0-90497f047d18\",\"ItemType\":\"Paragraph\"}}]}",
+                        "encoding": "utf-8"
+                      }
+                    },
+                    {
+                      "mode": "100644",
+                      "path": "tardis",
+                      "type": "Blob",
+                      "value": {
+                        "contents": "[]",
+                        "encoding": "utf-8"
+                      }
+                    }
+                  ],
+                  "sha": null
+                }
+              }
+            ],
+            "sha": null
+          },
+          "type": "https://graph.microsoft.com/types/mergeTree"
+        },
+        "type": "attach"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 9,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 9,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "root",
+          "contents": {
+            "key": "text",
+            "type": "set",
+            "value": {
+              "type": "Shared",
+              "value": "b1582ebf-833c-4298-9712-381c9a8507b4"
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 10,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 10,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "id": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "snapshot": {
+            "entries": [
+              {
+                "mode": "100644",
+                "path": "header",
+                "type": "Blob",
+                "value": {
+                  "contents": "{}",
+                  "encoding": "utf-8"
+                }
+              }
+            ],
+            "sha": null
+          },
+          "type": "https://graph.microsoft.com/types/map"
+        },
+        "type": "attach"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 11,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 11,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "root",
+          "contents": {
+            "key": "presence",
+            "type": "set",
+            "value": {
+              "type": "Shared",
+              "value": "6a699d79-32ce-4033-8539-dfc921c47fe6"
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 12,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 12,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "id": "ac048904-7081-4caf-8849-d879dfc0d7d2",
+          "snapshot": {
+            "entries": [
+              {
+                "mode": "100644",
+                "path": "header",
+                "type": "Blob",
+                "value": {
+                  "contents": "{}",
+                  "encoding": "utf-8"
+                }
+              }
+            ],
+            "sha": null
+          },
+          "type": "https://graph.microsoft.com/types/map"
+        },
+        "type": "attach"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 13,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 13,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "root",
+          "contents": {
+            "key": "language",
+            "type": "set",
+            "value": {
+              "type": "Shared",
+              "value": "ac048904-7081-4caf-8849-d879dfc0d7d2"
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 14,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 14,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 15,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 15,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 3,
+    "referenceSequenceNumber": 3,
+    "sequenceNumber": 16,
+    "timestamp": 1555452234868,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 16,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 17,
+    "timestamp": 1555452235383,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 17,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 18,
+    "timestamp": 1555452237649,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 18,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 19,
+    "timestamp": 1555452246090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 19,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 20,
+    "timestamp": 1555452246090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 20,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 21,
+    "timestamp": 1555452246090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 21,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 22,
+    "timestamp": 1555452246090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 22,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 23,
+    "timestamp": 1555452246090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 23,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 24,
+    "timestamp": 1555452246105,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 24,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 18,
+    "referenceSequenceNumber": 18,
+    "sequenceNumber": 25,
+    "timestamp": 1555452246105,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 25,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 25,
+    "referenceSequenceNumber": 25,
+    "sequenceNumber": 26,
+    "timestamp": 1555452246215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 26,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 0,
+                "refSeqNumber": 0
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 25,
+    "referenceSequenceNumber": 25,
+    "sequenceNumber": 27,
+    "timestamp": 1555452246215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 27,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 28,
+    "timestamp": 1555452246730,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 28,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 0,
+            "seg": "m",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 28,
+    "referenceSequenceNumber": 28,
+    "sequenceNumber": 29,
+    "timestamp": 1555452248824,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 29,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 1,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 28,
+    "referenceSequenceNumber": 28,
+    "sequenceNumber": 30,
+    "timestamp": 1555452248824,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 30,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 2,
+            "seg": "a",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 31,
+    "timestamp": 1555452248918,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 31,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 3,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 32,
+    "timestamp": 1555452248933,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 32,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 4,
+            "seg": "d",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 33,
+    "timestamp": 1555452248933,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 33,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 5,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 34,
+    "timestamp": 1555452248949,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 34,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 6,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 35,
+    "timestamp": 1555452248949,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 35,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 7,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 36,
+    "timestamp": 1555452248965,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 36,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 8,
+            "seg": ";",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 30,
+    "referenceSequenceNumber": 30,
+    "sequenceNumber": 37,
+    "timestamp": 1555452248980,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 37,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 9,
+            "seg": "m",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 36,
+    "referenceSequenceNumber": 36,
+    "sequenceNumber": 38,
+    "timestamp": 1555452249027,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 38,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 10,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 37,
+    "referenceSequenceNumber": 37,
+    "sequenceNumber": 39,
+    "timestamp": 1555452249090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 40,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 11,
+            "seg": "j",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 39,
+    "referenceSequenceNumber": 39,
+    "sequenceNumber": 40,
+    "timestamp": 1555452249215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 40,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 41,
+    "timestamp": 1555452249636,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 42,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 13,
+            "seg": {
+              "marker": {
+                "refType": 1
+              },
+              "props": {
+                "referenceTileLabels": [
+                  "Eop"
+                ],
+                "markerId": "37dbe1f3-dce1-41ed-b727-30ea93121f2e",
+                "ItemType": "Paragraph"
+              }
+            },
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 41,
+    "referenceSequenceNumber": 41,
+    "sequenceNumber": 42,
+    "timestamp": 1555452249730,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 43,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 13,
+                "refSeqNumber": 40
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 41,
+    "referenceSequenceNumber": 41,
+    "sequenceNumber": 43,
+    "timestamp": 1555452249730,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 44,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 13,
+            "seg": "j",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 43,
+    "referenceSequenceNumber": 43,
+    "sequenceNumber": 44,
+    "timestamp": 1555452249980,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 45,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 14,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 43,
+    "referenceSequenceNumber": 43,
+    "sequenceNumber": 45,
+    "timestamp": 1555452249980,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 46,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 15,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 43,
+    "referenceSequenceNumber": 43,
+    "sequenceNumber": 46,
+    "timestamp": 1555452249980,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 47,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 16,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 43,
+    "referenceSequenceNumber": 43,
+    "sequenceNumber": 47,
+    "timestamp": 1555452249996,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 48,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 17,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 47,
+    "referenceSequenceNumber": 47,
+    "sequenceNumber": 48,
+    "timestamp": 1555452250230,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 49,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 18,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 47,
+    "referenceSequenceNumber": 47,
+    "sequenceNumber": 49,
+    "timestamp": 1555452250230,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 50,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 19,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 47,
+    "referenceSequenceNumber": 47,
+    "sequenceNumber": 50,
+    "timestamp": 1555452250246,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 51,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 20,
+            "seg": "d",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 47,
+    "referenceSequenceNumber": 47,
+    "sequenceNumber": 51,
+    "timestamp": 1555452250261,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 52,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 21,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 47,
+    "referenceSequenceNumber": 47,
+    "sequenceNumber": 52,
+    "timestamp": 1555452250277,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 53,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 22,
+            "seg": "a",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 50,
+    "referenceSequenceNumber": 50,
+    "sequenceNumber": 53,
+    "timestamp": 1555452250308,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 54,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 23,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 53,
+    "referenceSequenceNumber": 53,
+    "sequenceNumber": 54,
+    "timestamp": 1555452250386,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 55,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 24,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 53,
+    "referenceSequenceNumber": 53,
+    "sequenceNumber": 55,
+    "timestamp": 1555452250418,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 56,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 25,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 53,
+    "referenceSequenceNumber": 53,
+    "sequenceNumber": 56,
+    "timestamp": 1555452250449,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 57,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 26,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 53,
+    "referenceSequenceNumber": 53,
+    "sequenceNumber": 57,
+    "timestamp": 1555452250449,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 59,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 27,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 57,
+    "referenceSequenceNumber": 57,
+    "sequenceNumber": 58,
+    "timestamp": 1555452250715,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 58,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 59,
+    "timestamp": 1555452251121,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 61,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 29,
+            "seg": {
+              "marker": {
+                "refType": 1
+              },
+              "props": {
+                "referenceTileLabels": [
+                  "Eop"
+                ],
+                "markerId": "714f1131-7fc0-46b9-bc1d-ed5ea089601b",
+                "ItemType": "Paragraph"
+              }
+            },
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 59,
+    "referenceSequenceNumber": 59,
+    "sequenceNumber": 60,
+    "timestamp": 1555452252058,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 62,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 29,
+                "refSeqNumber": 58
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 59,
+    "referenceSequenceNumber": 59,
+    "sequenceNumber": 61,
+    "timestamp": 1555452252058,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 63,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 29,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 61,
+    "referenceSequenceNumber": 61,
+    "sequenceNumber": 62,
+    "timestamp": 1555452252261,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 64,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 30,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 61,
+    "referenceSequenceNumber": 61,
+    "sequenceNumber": 63,
+    "timestamp": 1555452252261,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 66,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 31,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 63,
+    "referenceSequenceNumber": 63,
+    "sequenceNumber": 64,
+    "timestamp": 1555452252355,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 67,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 32,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 63,
+    "referenceSequenceNumber": 63,
+    "sequenceNumber": 65,
+    "timestamp": 1555452252371,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 68,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 33,
+            "seg": "j",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 63,
+    "referenceSequenceNumber": 63,
+    "sequenceNumber": 66,
+    "timestamp": 1555452252371,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 69,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 34,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 66,
+    "referenceSequenceNumber": 66,
+    "sequenceNumber": 67,
+    "timestamp": 1555452252449,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 70,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 35,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 66,
+    "referenceSequenceNumber": 66,
+    "sequenceNumber": 68,
+    "timestamp": 1555452252480,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 71,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 36,
+            "seg": "w",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 66,
+    "referenceSequenceNumber": 66,
+    "sequenceNumber": 69,
+    "timestamp": 1555452252496,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 72,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 37,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 69,
+    "referenceSequenceNumber": 69,
+    "sequenceNumber": 70,
+    "timestamp": 1555452252683,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 73,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 38,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 69,
+    "referenceSequenceNumber": 69,
+    "sequenceNumber": 71,
+    "timestamp": 1555452252730,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 74,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 40,
+            "seg": {
+              "marker": {
+                "refType": 1
+              },
+              "props": {
+                "referenceTileLabels": [
+                  "Eop"
+                ],
+                "markerId": "346c9f73-80db-447d-8062-034c1724c741",
+                "ItemType": "Paragraph"
+              }
+            },
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 71,
+    "referenceSequenceNumber": 71,
+    "sequenceNumber": 72,
+    "timestamp": 1555452252918,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 75,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 40,
+                "refSeqNumber": 71
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 71,
+    "referenceSequenceNumber": 71,
+    "sequenceNumber": 73,
+    "timestamp": 1555452252918,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 77,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 40,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 73,
+    "referenceSequenceNumber": 73,
+    "sequenceNumber": 74,
+    "timestamp": 1555452253215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 78,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 41,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 73,
+    "referenceSequenceNumber": 73,
+    "sequenceNumber": 75,
+    "timestamp": 1555452253215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 79,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 42,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 73,
+    "referenceSequenceNumber": 73,
+    "sequenceNumber": 76,
+    "timestamp": 1555452253230,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 80,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 43,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 73,
+    "referenceSequenceNumber": 73,
+    "sequenceNumber": 77,
+    "timestamp": 1555452253246,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 82,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 44,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 77,
+    "referenceSequenceNumber": 77,
+    "sequenceNumber": 78,
+    "timestamp": 1555452253574,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 83,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 45,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 78,
+    "referenceSequenceNumber": 78,
+    "sequenceNumber": 79,
+    "timestamp": 1555452253668,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 84,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 46,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 78,
+    "referenceSequenceNumber": 78,
+    "sequenceNumber": 80,
+    "timestamp": 1555452253715,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 85,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 47,
+            "seg": "x",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 78,
+    "referenceSequenceNumber": 78,
+    "sequenceNumber": 81,
+    "timestamp": 1555452253730,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 86,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 48,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 79,
+    "referenceSequenceNumber": 79,
+    "sequenceNumber": 82,
+    "timestamp": 1555452253746,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 87,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 49,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 82,
+    "referenceSequenceNumber": 82,
+    "sequenceNumber": 83,
+    "timestamp": 1555452253871,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 88,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 50,
+            "seg": "n",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 82,
+    "referenceSequenceNumber": 82,
+    "sequenceNumber": 84,
+    "timestamp": 1555452253871,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 89,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 51,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 84,
+    "referenceSequenceNumber": 84,
+    "sequenceNumber": 85,
+    "timestamp": 1555452254074,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 90,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 52,
+            "seg": "x",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 84,
+    "referenceSequenceNumber": 84,
+    "sequenceNumber": 86,
+    "timestamp": 1555452254121,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 91,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 53,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 85,
+    "referenceSequenceNumber": 85,
+    "sequenceNumber": 87,
+    "timestamp": 1555452254136,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 92,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 54,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 85,
+    "referenceSequenceNumber": 85,
+    "sequenceNumber": 88,
+    "timestamp": 1555452254168,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 93,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 55,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 86,
+    "referenceSequenceNumber": 86,
+    "sequenceNumber": 89,
+    "timestamp": 1555452254183,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 89,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 90,
+    "timestamp": 1555452254652,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 91,
+    "timestamp": 1555452255575,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 92,
+    "timestamp": 1555452315273,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"7625f377-7220-4cba-88b3-7aeb810deb0a\",\"detail\":{\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 1,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 92,
+    "sequenceNumber": 93,
+    "timestamp": 1555452319384,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 2,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 92,
+    "sequenceNumber": 94,
+    "timestamp": 1555452319399,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 3,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 92,
+    "sequenceNumber": 95,
+    "timestamp": 1555452319399,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 4,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 92,
+    "sequenceNumber": 96,
+    "timestamp": 1555452319415,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 5,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 92,
+    "sequenceNumber": 97,
+    "timestamp": 1555452319415,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 6,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 97,
+    "sequenceNumber": 98,
+    "timestamp": 1555452319477,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 7,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 42,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 90,
+    "referenceSequenceNumber": 97,
+    "sequenceNumber": 99,
+    "timestamp": 1555452319477,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 99,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 100,
+    "timestamp": 1555452320884,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 101,
+    "timestamp": 1555452322809,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 10,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 101,
+    "sequenceNumber": 102,
+    "timestamp": 1555452325027,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 11,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 101,
+    "sequenceNumber": 103,
+    "timestamp": 1555452325027,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 12,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 101,
+    "sequenceNumber": 104,
+    "timestamp": 1555452325027,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 13,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 101,
+    "sequenceNumber": 105,
+    "timestamp": 1555452325059,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 14,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 101,
+    "sequenceNumber": 106,
+    "timestamp": 1555452325059,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 15,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 104,
+    "sequenceNumber": 107,
+    "timestamp": 1555452325090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 16,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 100,
+    "referenceSequenceNumber": 104,
+    "sequenceNumber": 108,
+    "timestamp": 1555452325090,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 108,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 109,
+    "timestamp": 1555452326809,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 110,
+    "timestamp": 1555452328731,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 19,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 57,
+            "seg": {
+              "marker": {
+                "refType": 1
+              },
+              "props": {
+                "referenceTileLabels": [
+                  "Eop"
+                ],
+                "markerId": "8247a534-dc29-480f-b593-0b83ac5d2b90",
+                "ItemType": "Paragraph",
+                "Properties": {}
+              }
+            },
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 110,
+    "sequenceNumber": 111,
+    "timestamp": 1555452329981,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 20,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 57,
+                "refSeqNumber": 91
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 110,
+    "sequenceNumber": 112,
+    "timestamp": 1555452329981,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 22,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 57,
+            "seg": "o",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 112,
+    "sequenceNumber": 113,
+    "timestamp": 1555452331106,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 23,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 58,
+            "seg": "k",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 113,
+    "sequenceNumber": 114,
+    "timestamp": 1555452331215,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 25,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 59,
+            "seg": " ",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 114,
+    "sequenceNumber": 115,
+    "timestamp": 1555452331496,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 27,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 60,
+            "seg": "l",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 115,
+    "sequenceNumber": 116,
+    "timestamp": 1555452332794,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 28,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 61,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 116,
+    "sequenceNumber": 117,
+    "timestamp": 1555452332950,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 30,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 62,
+            "seg": "t",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 117,
+    "sequenceNumber": 118,
+    "timestamp": 1555452333216,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 32,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 63,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 118,
+    "sequenceNumber": 119,
+    "timestamp": 1555452333388,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 33,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 64,
+            "seg": " ",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 109,
+    "referenceSequenceNumber": 119,
+    "sequenceNumber": 120,
+    "timestamp": 1555452333528,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 119,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 121,
+    "timestamp": 1555452333950,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 35,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 65,
+            "seg": "s",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 119,
+    "referenceSequenceNumber": 121,
+    "sequenceNumber": 122,
+    "timestamp": 1555452334153,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 37,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 66,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 119,
+    "referenceSequenceNumber": 122,
+    "sequenceNumber": 123,
+    "timestamp": 1555452334372,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 39,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 67,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 119,
+    "referenceSequenceNumber": 123,
+    "sequenceNumber": 124,
+    "timestamp": 1555452334551,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 125,
+    "timestamp": 1555452336848,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 103,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 126,
+    "timestamp": 1555452338379,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 104,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 127,
+    "timestamp": 1555452338379,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 105,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 128,
+    "timestamp": 1555452338379,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 106,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 129,
+    "timestamp": 1555452338379,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 107,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 130,
+    "timestamp": 1555452338379,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 108,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 131,
+    "timestamp": 1555452338395,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 109,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 132,
+    "timestamp": 1555452338395,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 110,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 133,
+    "timestamp": 1555452338411,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 111,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 134,
+    "timestamp": 1555452338411,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 112,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 135,
+    "timestamp": 1555452338426,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 113,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 56,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 124,
+    "referenceSequenceNumber": 125,
+    "sequenceNumber": 136,
+    "timestamp": 1555452338426,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 136,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 137,
+    "timestamp": 1555452340818,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 138,
+    "timestamp": 1555452341806,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 116,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": 138,
+    "sequenceNumber": 139,
+    "timestamp": 1555453652475,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 117,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": 138,
+    "sequenceNumber": 140,
+    "timestamp": 1555453652475,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 118,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": 138,
+    "sequenceNumber": 141,
+    "timestamp": 1555453652476,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 119,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": 138,
+    "sequenceNumber": 142,
+    "timestamp": 1555453652501,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "77bda5b5-7cab-42d3-a078-b515d430203d",
+    "clientSequenceNumber": 120,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "77bda5b5-7cab-42d3-a078-b515d430203d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 137,
+    "referenceSequenceNumber": 138,
+    "sequenceNumber": 143,
+    "timestamp": 1555453652501,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 143,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 144,
+    "timestamp": 1555453654801,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 144,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 145,
+    "timestamp": 1555453655803,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 144,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 146,
+    "timestamp": 1555455369532,
+    "traces": [],
+    "type": "leave",
+    "data": "\"77bda5b5-7cab-42d3-a078-b515d430203d\""
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 46,
+    "contents": {
+      "key": "leader",
+      "value": "7625f377-7220-4cba-88b3-7aeb810deb0a"
+    },
+    "minimumSequenceNumber": 146,
+    "referenceSequenceNumber": 146,
+    "sequenceNumber": 147,
+    "timestamp": 1555455370516,
+    "traces": [],
+    "type": "propose"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 147,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 148,
+    "timestamp": 1555455371782,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 149,
+    "timestamp": 1555455374782,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 150,
+    "timestamp": 1555455377986,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"786273ce-4de7-40c0-bdd8-f1b15acc450d\",\"detail\":{\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 3,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 150,
+    "sequenceNumber": 151,
+    "timestamp": 1555455866795,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 4,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 150,
+    "sequenceNumber": 152,
+    "timestamp": 1555455866795,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 5,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 150,
+    "sequenceNumber": 153,
+    "timestamp": 1555455866795,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 6,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 150,
+    "sequenceNumber": 154,
+    "timestamp": 1555455866795,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 7,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 150,
+    "sequenceNumber": 155,
+    "timestamp": 1555455866795,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 8,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 155,
+    "sequenceNumber": 156,
+    "timestamp": 1555455866890,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 9,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 68,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 155,
+    "sequenceNumber": 157,
+    "timestamp": 1555455866890,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 11,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 69,
+            "seg": {
+              "marker": {
+                "refType": 1
+              },
+              "props": {
+                "referenceTileLabels": [
+                  "Eop"
+                ],
+                "markerId": "7579bcfe-217b-401a-a63a-82de885d85ba",
+                "ItemType": "Paragraph",
+                "Properties": {}
+              }
+            },
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 157,
+    "sequenceNumber": 158,
+    "timestamp": 1555455867499,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 12,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 69,
+                "refSeqNumber": 124
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 157,
+    "sequenceNumber": 159,
+    "timestamp": 1555455867515,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 14,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 69,
+            "seg": "d",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 159,
+    "sequenceNumber": 160,
+    "timestamp": 1555455867843,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 15,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 70,
+            "seg": "e",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 159,
+    "sequenceNumber": 161,
+    "timestamp": 1555455867843,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 16,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 71,
+            "seg": "w",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 159,
+    "sequenceNumber": 162,
+    "timestamp": 1555455867874,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 18,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 72,
+            "seg": "d",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 162,
+    "sequenceNumber": 163,
+    "timestamp": 1555455868140,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 19,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 73,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 162,
+    "sequenceNumber": 164,
+    "timestamp": 1555455868140,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 20,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 74,
+            "seg": "x",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 162,
+    "sequenceNumber": 165,
+    "timestamp": 1555455868156,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 21,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 75,
+            "seg": "w",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 165,
+    "sequenceNumber": 166,
+    "timestamp": 1555455868218,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 23,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 76,
+            "seg": "x",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 166,
+    "sequenceNumber": 167,
+    "timestamp": 1555455868406,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 24,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 77,
+            "seg": "c",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 166,
+    "sequenceNumber": 168,
+    "timestamp": 1555455868421,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 25,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "b1582ebf-833c-4298-9712-381c9a8507b4",
+          "contents": {
+            "pos1": 78,
+            "seg": "w",
+            "type": 0
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 148,
+    "referenceSequenceNumber": 168,
+    "sequenceNumber": 169,
+    "timestamp": 1555455868499,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 169,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 170,
+    "timestamp": 1555455870109,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 51,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 171,
+    "timestamp": 1555455870984,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 52,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 172,
+    "timestamp": 1555455870984,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 53,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 173,
+    "timestamp": 1555455870984,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 54,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 174,
+    "timestamp": 1555455870984,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 55,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 175,
+    "timestamp": 1555455870984,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 56,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 176,
+    "timestamp": 1555455871047,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+    "clientSequenceNumber": 57,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "7625f377-7220-4cba-88b3-7aeb810deb0a",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 79,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 170,
+    "referenceSequenceNumber": 170,
+    "sequenceNumber": 177,
+    "timestamp": 1555455871047,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 177,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 178,
+    "timestamp": 1555455872766,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 179,
+    "timestamp": 1555455874767,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 30,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 12,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": 179,
+    "sequenceNumber": 180,
+    "timestamp": 1555455991206,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 31,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 12,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": 179,
+    "sequenceNumber": 181,
+    "timestamp": 1555455991206,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 32,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 12,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": 179,
+    "sequenceNumber": 182,
+    "timestamp": 1555455991206,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 33,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 12,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": 182,
+    "sequenceNumber": 183,
+    "timestamp": 1555455991268,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 34,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "set",
+            "value": {
+              "type": "Plain",
+              "value": {
+                "type": "selection",
+                "origMark": -1,
+                "pos": 12,
+                "refSeqNumber": 169
+              }
+            }
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 178,
+    "referenceSequenceNumber": 182,
+    "sequenceNumber": 184,
+    "timestamp": 1555455991268,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 184,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 185,
+    "timestamp": 1555455992784,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 186,
+    "timestamp": 1555455994785,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 187,
+    "timestamp": 1555456344057,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"184211c3-19c4-484c-841b-8fa48d4d3d2d\",\"detail\":{\"permission\":[],\"type\":\"browser\",\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 188,
+    "timestamp": 1555456344119,
+    "traces": [],
+    "type": "leave",
+    "data": "\"184211c3-19c4-484c-841b-8fa48d4d3d2d\""
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 189,
+    "timestamp": 1555456531321,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"2798c3f0-505b-49f6-9ee5-346d30d667b3\",\"detail\":{\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 190,
+    "timestamp": 1555456646184,
+    "traces": [],
+    "type": "leave",
+    "data": "\"2798c3f0-505b-49f6-9ee5-346d30d667b3\""
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 37,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "6a699d79-32ce-4033-8539-dfc921c47fe6",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "delete"
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": 190,
+    "sequenceNumber": 191,
+    "timestamp": 1555456788555,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+    "clientSequenceNumber": 38,
+    "contents": {
+      "address": "defaultComponent",
+      "contents": {
+        "content": {
+          "address": "ac048904-7081-4caf-8849-d879dfc0d7d2",
+          "contents": {
+            "key": "786273ce-4de7-40c0-bdd8-f1b15acc450d",
+            "type": "delete"
+          }
+        },
+        "type": "op"
+      }
+    },
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": 190,
+    "sequenceNumber": 192,
+    "timestamp": 1555456788555,
+    "traces": [],
+    "type": "op"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 185,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 193,
+    "timestamp": 1555456788633,
+    "traces": [],
+    "type": "leave",
+    "data": "\"786273ce-4de7-40c0-bdd8-f1b15acc450d\""
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 193,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 194,
+    "timestamp": 1555456789086,
+    "traces": [],
+    "type": "noop"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 195,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 195,
+    "timestamp": 1555456789508,
+    "traces": [],
+    "type": "leave",
+    "data": "\"7625f377-7220-4cba-88b3-7aeb810deb0a\""
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 195,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 196,
+    "timestamp": 1555458521310,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"d016238b-4819-4f9b-9b1b-a264c2d053cc\",\"detail\":{\"permission\":[],\"type\":\"browser\",\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 197,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 197,
+    "timestamp": 1555458521373,
+    "traces": [],
+    "type": "leave",
+    "data": "\"d016238b-4819-4f9b-9b1b-a264c2d053cc\""
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 197,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 198,
+    "timestamp": 1555461089493,
+    "traces": [],
+    "type": "join",
+    "data": "{\"clientId\":\"645c41b5-91fd-4090-93fe-17a89bea59ce\",\"detail\":{\"permission\":[],\"type\":\"browser\",\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  },
+  {
+    "clientId": null,
+    "clientSequenceNumber": -1,
+    "contents": null,
+    "minimumSequenceNumber": 197,
+    "referenceSequenceNumber": -1,
+    "sequenceNumber": 198,
+    "timestamp": 1555461089493,
+    "traces": [
+      {
+        "action": "start",
+        "service": "alfred",
+        "timestamp": 9660982.0683
+      }
+    ],
+    "type": "join",
+    "data": "{\"clientId\":\"645c41b5-91fd-4090-93fe-17a89bea59ce\",\"detail\":{\"permission\":[],\"type\":\"browser\",\"user\":{\"id\":\"jatgarg@microsoft.com\",\"email\":\"jatgarg@microsoft.com\",\"name\":\"Jatin Garg\"}}}"
+  }
+]

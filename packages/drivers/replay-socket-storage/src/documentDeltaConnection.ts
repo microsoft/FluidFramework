@@ -175,8 +175,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
-        unitIsTime: boolean | undefined,
-    ): Promise<IDocumentDeltaConnection> {
+        unitIsTime: boolean | undefined): Promise<IDocumentDeltaConnection> {
 
         const connection = {
             clientId: "",

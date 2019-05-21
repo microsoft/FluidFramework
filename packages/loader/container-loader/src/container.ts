@@ -10,6 +10,7 @@ import {
     IContainer,
     IDeltaManager,
     IDocumentAttributes,
+    IDocumentDeltaStorageService,
     IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
@@ -238,6 +239,43 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         return this.context!.request(path);
+    }
+
+    public async snapshotCoreForReplayTool(
+        tagMessage: string,
+        fileDeltaStorageService: IDocumentDeltaStorageService,
+        replayFrom: number,
+        replayTo: number) {
+        // Snapshots base document state and currently running context
+        const root = this.snapshotBase();
+        const componentEntries = await this.context!.snapshot(tagMessage);
+
+        // And then combine
+        if (componentEntries) {
+            root.entries.push(...componentEntries.entries);
+        }
+
+        // Generate base snapshot message
+        const deltaDetails =
+            `${this._deltaManager!.referenceSequenceNumber}:${this._deltaManager!.minimumSequenceNumber}`;
+        const message = `Commit @${deltaDetails} ${tagMessage}`;
+
+        // Retrieve all deltas from replayFrom to replayTo
+        const deltas = await fileDeltaStorageService.get(replayFrom, replayTo);
+        // const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
+        const parents = [];
+        root.entries.push({
+            mode: FileMode.File,
+            path: "deltas",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(deltas),
+                encoding: "utf-8",
+            },
+        });
+
+        // Write the full snapshot
+        await this.storageService!.write(root, parents, message, "");
     }
 
     private async snapshotCore(tagMessage: string) {

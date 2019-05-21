@@ -393,7 +393,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
                     if (this.handler) {
-                        this.enqueueMessages(messages);
+                        if (messages instanceof Array) {
+                            this.enqueueMessages(messages);
+                        } else {
+                            this.enqueueMessages([messages]);
+                        }
                     }
                 });
 

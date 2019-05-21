@@ -1,18 +1,17 @@
 {
-  "name": "@prague/replay-socket-storage",
+  "name": "@prague/file-socket-storage",
   "version": "0.3.0",
-  "description": "Document replay version of Socket.IO implementation",
+  "description": "A driver that reads/write from/to local file storage.",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:compile": "tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -21,22 +20,15 @@
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
     "@prague/gitresources": "^0.3.0",
-    "@prague/routerlicious-socket-storage": "^0.3.0",
     "@prague/socket-storage-shared": "^0.3.0",
-    "axios": "^0.18.0",
-    "debug": "^3.1.0",
-    "keypress": "^0.2.1"
+    "@prague/replay-socket-storage": "^0.3.0",
+    "debug": "^3.1.0"
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
     "@types/debug": "^0.0.31",
-    "@types/mocha": "^5.2.5",
-    "@types/nock": "^9.3.0",
     "@types/node": "^10.12.12",
-    "@types/keypress.js": "^2.0.30",
     "concurrently": "^4.1.0",
-    "mocha": "^5.2.0",
-    "nock": "^10.0.1",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
