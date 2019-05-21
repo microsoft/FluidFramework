@@ -216,6 +216,8 @@ const officeServers = [
 const odspServers = [
     "microsoft-my.sharepoint-df.com",
     "microsoft-my.sharepoint.com",
+    "microsoft.sharepoint-df.com",
+    "microsoft.sharepoint.com",
 ];
 
 const r11sServers = [

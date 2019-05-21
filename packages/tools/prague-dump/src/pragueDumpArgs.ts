@@ -1,3 +1,5 @@
+import {URL} from "url";
+
 export let dumpMessages = false;
 export let dumpMessageStats = false;
 export let dumpChannelStats = false;
@@ -104,7 +106,7 @@ export function parseArguments() {
                         break;
                     }
                 } catch (e) {
-                    // Nothing
+                    console.error(e);
                 }
 
                 console.error(`ERROR: Invalid argument ${arg}`);

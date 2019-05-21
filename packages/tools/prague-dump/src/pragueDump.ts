@@ -32,4 +32,4 @@ parseArguments();
 
 pragueDumpMain()
     .catch((error: string) => console.log(`ERROR: ${error}`))
-    .finally(() => process.exit(0));
+    .then(() => process.exit(0));
