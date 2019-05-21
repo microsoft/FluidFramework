@@ -5,7 +5,7 @@ This document lists the set of breaking changes as part of upgrading to 0.3
 - [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
 - [SparseMatrix moved](#sparsematrix-moved)
 - [Rename one of the IComponentRegistry definition to ISharedObjectRegistry](#rename-one-of-the-icomponentregistry-definition-to-isharedobjectregistry)
-- [API ITree and ISnapshotTree "sha" properties have been renamed to "id"](#api-itree-and-isnapshottree-"sha"-properties-have-been-renamed-to-"id")
+- [API ITree and ISnapshotTree "sha" properties have been renamed to "id"](#api-itree-and-isnapshottree-sha-properties-have-been-renamed-to-id)
 
 ## Legacy chaincode API removal
 
