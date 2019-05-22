@@ -23,6 +23,10 @@
       "projectFolder": "packages/agents/translator/"
     },
     {
+      "packageName": "@chaincode/agent-scheduler",
+      "projectFolder": "packages/components/agent-scheduler/"
+    },
+    {
       "packageName": "@prague/app-component",
       "projectFolder": "packages/components/app-component/"
     },
