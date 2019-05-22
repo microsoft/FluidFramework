@@ -39,6 +39,10 @@
       "projectFolder": "packages/components/app-ui/"
     },
     {
+      "packageName": "@chaincode/charts",
+      "projectFolder": "packages/components/charts/"
+    },
+    {
       "packageName": "@chaincode/chart-view",
       "projectFolder": "packages/components/chart-view/"
     },
@@ -75,8 +79,16 @@
       "projectFolder": "packages/components/key-value/"
     },
     {
+      "packageName": "@chaincode/monaco",
+      "projectFolder": "packages/components/monaco/"
+    },
+    {
       "packageName": "@chaincode/owned-map",
       "projectFolder": "packages/components/owned-map/"
+    },
+    {
+      "packageName": "@chaincode/pinpoint-editor",
+      "projectFolder": "packages/components/pinpoint-editor/"
     },
     {
       "packageName": "@chaincode/shared-text",
@@ -101,6 +113,10 @@
     {
       "packageName": "@prague/replay-socket-storage",
       "projectFolder": "packages/drivers/replay-socket-storage/"
+    },
+    {
+      "packageName": "@prague/file-socket-storage",
+      "projectFolder": "packages/drivers/file-socket-storage/"
     },
     {
       "packageName": "@prague/routerlicious-host",
@@ -249,6 +265,10 @@
     {
       "packageName": "@prague/prague-dump",
       "projectFolder": "packages/tools/prague-dump/"
+    },
+    {
+      "packageName": "@prague/replay-tool",
+      "projectFolder": "packages/tools/replay-tool/"
     }
   ]
 }
