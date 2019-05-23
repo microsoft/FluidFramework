@@ -1,0 +1,17 @@
+import { ISharedMap } from '@prague/map';
+
+export type AggregateVotesMap = Map<string /* optionId */, Set<string> /* votersIds */>;
+
+export const aggregateVotes = (votersMap: ISharedMap): AggregateVotesMap => {
+  const _votes: AggregateVotesMap = new Map<string, Set<string>>();
+
+  votersMap.forEach((value, key) => {
+    const optionId: string = value.currentOptionId;
+    if (!_votes.has(optionId)) {
+      _votes.set(value.currentOptionId, new Set<string>());
+    }
+    _votes.get(value.currentOptionId)!.add(key);
+  });
+
+  return _votes;
+};

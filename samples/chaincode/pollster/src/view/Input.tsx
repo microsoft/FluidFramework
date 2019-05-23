@@ -1,0 +1,35 @@
+import * as React from 'react';
+import { KeyCodes } from 'office-ui-fabric-react';
+
+export interface InputProps {
+  placeholder?: string;
+  submitValue: (inputValue: string) => void;
+}
+
+export const ControlledInput = React.memo((props: InputProps) => {
+  const { placeholder, submitValue } = props;
+
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [inputValue, updateInputValue] = React.useState<string>('');
+
+  const onChangeQuestion = React.useCallback((ev: React.ChangeEvent<HTMLInputElement>) => {
+    updateInputValue(ev.target.value);
+  }, []);
+
+  const onKeyDown = React.useCallback((ev: React.KeyboardEvent<HTMLInputElement>) => {
+    if (ev.keyCode === KeyCodes.enter) {
+      submitValue(inputRef!.current!.value);
+      updateInputValue('');
+    }
+  }, []);
+
+  return (
+    <input
+      value={inputValue}
+      placeholder={placeholder || ''}
+      onChange={onChangeQuestion}
+      onKeyDown={onKeyDown}
+      ref={inputRef}
+    />
+  );
+});
