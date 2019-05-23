@@ -3,6 +3,7 @@
     "rules": {
         "no-increment-decrement": false,
         "no-backbone-get-set-outside-model": false,
+        "no-this-assignment": [true, {"allow-destructuring": true}],
         "newline-per-chained-call": false,
         "max-classes-per-file": false,
         "linebreak-style": false,

@@ -1,4 +1,3 @@
-// tslint:disable:no-this-assignment
 // tslint:disable:no-relative-imports
 // tslint:disable:import-name
 // tslint:disable:variable-name
