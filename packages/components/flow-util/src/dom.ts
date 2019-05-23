@@ -1,4 +1,5 @@
-// tslint:disable-next-line:no-relative-imports
+// tslint:disable:no-relative-imports
+import { bsearch2 } from "./bsearch2";
 import { isBrowser } from "./isbrowser";
 
 function isElement(node: Node): node is Element {
@@ -68,7 +69,7 @@ export class Dom {
         parent.insertBefore(newChild, parent.firstChild);
     }
 
-    public static getClientRect(node: Node, nodeOffset: number) {
+    public static getClientRect(node: Node, nodeOffset: number): ClientRect {
         if (isElement(node)) {
             console.assert(!nodeOffset);
             return node.getBoundingClientRect();
@@ -81,5 +82,21 @@ export class Dom {
         // Note: On Safari 12, 'domRange.getBoundingClientRect()' returns an empty rectangle when domRange start === end.
         //       However, 'getClientRects()' for the same range returns the expected 0-width rect.
         return measurementRange.getClientRects()[0];
+    }
+
+    // Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom.
+    public static findNodeOffset(node: Node, x: number, yMin: number, yMax: number) {
+        const domRange = document.createRange();
+        return bsearch2((m) => {
+            domRange.setStart(node, m);
+            domRange.setEnd(node, m);
+
+            // Note: On Safari 12, 'domRange.getBoundingClientRect()' returns an empty rectangle when domRange start === end.
+            //       However, 'getClientRects()' for the same range returns the expected 0-width rect.
+            const bounds = domRange.getClientRects()[0];
+            const cy = (bounds.top + bounds.bottom) / 2;
+            return ((cy < yMin)                                // Current position is above our target rect.
+                || (cy < yMax && bounds.left < x));            // Current position is within our desired y range.
+        }, 0, node.textContent.length);
     }
 }

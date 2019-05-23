@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/table-view",
+  "name": "@chaincode/math",
   "version": "0.3.0",
-  "description": "Chaincode component that provides a view for a table-document.",
+  "description": "Chaincode component that provides math.",
   "main": "dist/index.js",
   "module": "lib/index.js",
   "sideEffects": false,
@@ -28,9 +28,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@chaincode/table-document": "^0.3.0",
     "@prague/app-component": "^0.3.0",
-    "@prague/app-datastore": "^0.3.0",
     "@prague/component-runtime": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
     "@prague/flow-util": "^0.3.0",

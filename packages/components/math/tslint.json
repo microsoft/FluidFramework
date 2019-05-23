@@ -1,0 +1,19 @@
+{
+    "extends": ["@prague/build-common/tslint.json"],
+    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
+    "rules": {
+        "binary-expression-operand-order": false,
+        "completed-docs": false,
+        "max-line-length": false,
+        "newline-before-return": false,
+        "no-console": false,
+        "no-floating-promises": false,
+        "no-non-null-assertion": false,
+        "no-parameter-reassignment": false,
+        "no-relative-imports": false,
+        "no-unnecessary-type-assertion": false,
+        "no-unsafe-any": false,
+        "object-literal-sort-keys": false,
+        "prefer-type-cast": false
+    }
+}

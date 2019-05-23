@@ -60,7 +60,7 @@ class DocumentLayout extends LayoutSink<{}> {
                 return true;
 
             case DocSegmentKind.EOF:
-                this.syncText(context, span, Char.ZeroWidthSpace, "");
+                this.syncText(context, span, Char.zeroWidthSpace, "");
                 return true;
 
             default:
@@ -167,6 +167,19 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
      */
     public readonly findAbove = (x: number, top: number, bottom: number) => {
         return this.findVertical(x, top, bottom, DocumentView.findAbovePredicate);
+    }
+
+    public getInclusionView(position: number): InclusionView {
+        const { segment } = this.state.doc.getSegmentAndOffset(position);
+
+        return getDocSegmentKind(segment) === DocSegmentKind.Inclusion
+            ? this.state.segmentToViewInfo.get(segment).view as InclusionView
+            : undefined;
+    }
+
+    public getPosition(node: Node, nodeOffset = 0) {
+        const { segment, offset } = this.nodeOffsetToSegmentOffset(node, nodeOffset);
+        return this.state.doc.getPosition(segment) + offset;
     }
 
     protected mounting(props: IDocumentProps) {
@@ -384,24 +397,6 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         return segment && { segment, offset };
     }
 
-    // Returns the closest { segment, offset } to the 0-width rect described by x/top/bottom.
-    private findDomPosition(node: Node, x: number, yMin: number, yMax: number) {
-        const domRange = document.createRange();
-        const nodeOffset = bsearch2((m) => {
-            domRange.setStart(node, m);
-            domRange.setEnd(node, m);
-
-            // Note: On Safari 12, 'domRange.getBoundingClientRect()' returns an empty rectangle when domRange start === end.
-            //       However, 'getClientRects()' for the same range returns the expected 0-width rect.
-            const bounds = domRange.getClientRects()[0];
-            const cy = (bounds.top + bounds.bottom) / 2;
-            return ((cy < yMin)                                // Current position is above our target rect.
-                || (cy < yMax && bounds.left < x));            // Current position is within our desired y range.
-        }, 0, node.textContent.length);
-
-        return this.nodeOffsetToSegmentOffset(node, nodeOffset);
-    }
-
     /**
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
@@ -415,8 +410,8 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
 
         for (const viewInfo of state.elementToViewInfo.values()) {
-            // TODO: Better filter for potential cursor targets?
-            if (!(viewInfo.view instanceof TextView)) {
+            const segmentKind = getDocSegmentKind(viewInfo.span.firstSegment);
+            if (segmentKind !== DocSegmentKind.Text && segmentKind !== DocSegmentKind.Inclusion) {
                 continue;
             }
 
@@ -453,9 +448,13 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         debug(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
         debug(`    rect: ${JSON.stringify(bestRect)}`);
 
-        return this.findDomPosition(
-            bestViewInfo.view.cursorTarget,
-            Math.min(Math.max(x, bestRect.left), bestRect.right),
-            bestRect.top, bestRect.bottom);
+        return getDocSegmentKind(bestViewInfo.span.firstSegment) === DocSegmentKind.Text
+            ? this.nodeOffsetToSegmentOffset(
+                bestViewInfo.view.cursorTarget,
+                Dom.findNodeOffset(
+                    bestViewInfo.view.cursorTarget,
+                    Math.min(Math.max(x, bestRect.left), bestRect.right),
+                    bestRect.top, bestRect.bottom))
+            : { segment: bestViewInfo.span.firstSegment, offset: 0 };
     }
 }

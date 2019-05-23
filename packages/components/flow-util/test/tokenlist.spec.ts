@@ -40,14 +40,14 @@ describe("TokenList", () => {
         });
     });
 
-    describe("appendToken", () => {
+    describe("set", () => {
         function test(tokens: string[], token: string) {
             const tokenList = tokens.join(" ");
             tokens.push(token);
             const expected = tokens.join(" ");
 
             it(`'${tokenList}' + '${token}' -> '${expected}'`, () => {
-                const actual = TokenList.appendToken(tokenList, token);
+                const actual = TokenList.set(tokenList, token);
                 assert.strictEqual(actual, expected);
             });
         }
@@ -55,9 +55,14 @@ describe("TokenList", () => {
         // tslint:disable:mocha-no-side-effect-code
         test([], "a");
         test(["a"], "b");
+
+        it("duplicate: 'a b' + 'a' -> 'a b'", () => {
+            const actual = TokenList.set("a b", "a");
+            assert.deepStrictEqual(actual, "a b");
+        });
     });
 
-    describe("removeToken", () => {
+    describe("unset", () => {
         function test(tokens: string[], token: string) {
             const tokenList = tokens.join(" ");
             const toRemove = tokens.indexOf(token);
@@ -67,7 +72,7 @@ describe("TokenList", () => {
             const expected = tokens.join(" ");
 
             it(`'${tokenList}' - '${token}' -> '${expected}'`, () => {
-                const actual = TokenList.removeToken(tokenList, token);
+                const actual = TokenList.unset(tokenList, token);
                 assert.strictEqual(actual, expected);
             });
         }

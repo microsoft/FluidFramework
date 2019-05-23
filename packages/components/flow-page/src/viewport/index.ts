@@ -1,5 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { IViewState, Scheduler, Template, View } from "@prague/flow-util";
+import { Scheduler, Template, View } from "@prague/flow-util";
 import { PagePosition } from "../../../flow-editor/dist";
 import { debug } from "../debug";
 import { Page } from "../page";
@@ -20,45 +20,45 @@ interface IPageInfo {
     root: HTMLElement;
 }
 
-interface IViewportProps {
+interface IViewportInit {
     doc: FlowDocument;
     scheduler: Scheduler;
 }
 
-interface IViewportState extends IViewState {
-    doc: FlowDocument;
-    scheduler: Scheduler;
-    slot: HTMLElement;
-    // tslint:disable-next-line:prefer-array-literal
-    pages: IPageInfo[];
-}
+export class Viewport extends View<IViewportInit> {
+    private state?: {
+        doc: FlowDocument;
+        scheduler: Scheduler;
+        slot: HTMLElement;
+        // tslint:disable-next-line:prefer-array-literal
+        pages: IPageInfo[];
+    };
 
-export class Viewport extends View<IViewportProps, IViewportState> {
-    protected onAttach(props: Readonly<IViewportProps>): IViewportState {
+    protected onAttach(props: Readonly<IViewportInit>) {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
         const { doc, scheduler } = props;
 
-        const state = { doc, pages: [], root, scheduler, slot };
-        this.addPage(state, [doc.addLocalRef(0)]);
+        this.state = { doc, pages: [], scheduler, slot };
+        this.addPage([doc.addLocalRef(0)]);
 
-        return state;
+        return root;
     }
 
-    protected onUpdate(props: Readonly<IViewportProps>, state: IViewportState): void {
+    protected onUpdate(): void {
         // do nothing
     }
 
-    protected onDetach(state: IViewportState): void {
+    protected onDetach(): void {
         // do nothing
     }
 
-    private addPage(state: IViewportState, pageStart: PagePosition) {
-        const { doc, pages, scheduler } = state;
+    private addPage(pageStart: PagePosition) {
+        const { doc, pages, scheduler, slot } = this.state;
         debug(`Inserted page #${pages.length}`);
 
         const pageRoot = document.createElement("div");
-        state.slot.appendChild(pageRoot);
+        slot.appendChild(pageRoot);
 
         const page = new Page();
         const nextIndex = pages.push({ page, root: pageRoot });
@@ -93,7 +93,7 @@ export class Viewport extends View<IViewportProps, IViewportState> {
 
             const page = this.state.pages[pageIndex];
             if (page === undefined) {
-                this.addPage(this.state, newStart);
+                this.addPage(newStart);
             } else {
                 page.page.update({ pageStart: newStart });
                 debug(`Updated page #${pages.length}`);

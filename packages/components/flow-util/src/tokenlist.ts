@@ -4,12 +4,12 @@ import { CharCode } from "./charcode";
 export function findToken(tokenList: string, token: string) {
     const start = tokenList.indexOf(token);
 
-    if (start !== 0 && tokenList.charCodeAt(start - 1) !== CharCode.Space) {
+    if (start !== 0 && tokenList.charCodeAt(start - 1) !== CharCode.space) {
         return undefined;
     }
 
     const end = start + token.length;
-    if (end !== tokenList.length && tokenList.charCodeAt(end) !== CharCode.Space) {
+    if (end !== tokenList.length && tokenList.charCodeAt(end) !== CharCode.space) {
         return undefined;
     }
 
@@ -18,13 +18,15 @@ export function findToken(tokenList: string, token: string) {
 
 // tslint:disable-next-line:no-namespace
 export namespace TokenList {
-    export function appendToken(tokenList: string, token: string) {
+    export function set(tokenList: string, token: string) {
         return tokenList && tokenList.length > 0
-            ? `${tokenList} ${token}`
-            : token;
+            ? findToken(tokenList, token) !== undefined
+                ? tokenList                     // If the token already exists, return the original list
+                : `${tokenList} ${token}`       // ...otherwise append it.
+            : token;                            // If the current list is empty, return the token.
     }
 
-    export function removeToken(tokenList: string, token: string) {
+    export function unset(tokenList: string, token: string) {
         const span = findToken(tokenList, token);
         if (!span) {
             return tokenList;

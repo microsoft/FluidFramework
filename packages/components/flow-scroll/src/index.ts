@@ -6,7 +6,7 @@ import {
     IRuntime,
 } from "@prague/container-definitions";
 import { Scheduler } from "../../flow-util/dist";
-import { Viewport } from "./viewport";
+import { HostView } from "./host";
 
 export class FlowHost extends Component {
     public static readonly type = "@chaincode/flow-host2";
@@ -20,7 +20,7 @@ export class FlowHost extends Component {
         const div = await this.platform.queryInterface<Element>("div");
 
         const scheduler = new Scheduler();
-        const viewport = new Viewport();
+        const viewport = new HostView();
         viewport.attach(div, { scheduler, doc: await docP });
     }
 
@@ -38,5 +38,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             [FlowHost.type, Promise.resolve(Component.createComponentFactory(FlowHost))],
             [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
             [FlowEditor.type, Promise.resolve(Component.createComponentFactory(FlowEditor))],
+            ["@chaincode/math", import("@chaincode/math").then((module) => Component.createComponentFactory(module.Math))],
         ]));
 }

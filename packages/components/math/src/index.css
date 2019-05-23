@@ -1,0 +1,37 @@
+.math {
+    position: relative;
+    display: inline-block;
+}
+
+.math:focus-within {
+    background: white;
+}
+
+.cell {
+    position: relative;
+    display: inline-block;
+    white-space: pre;
+    visibility: hidden;
+    padding: 0px 1px;
+}
+
+.input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    border: none;
+    font: inherit;
+
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+
+    /* Override the default <input> width */ 
+    width: 100%;
+}
+
+.input:focus{
+    outline: none;
+}

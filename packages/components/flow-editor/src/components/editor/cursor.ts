@@ -1,5 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { Dom, Template } from "@prague/flow-util";
+import { Dom, Scheduler, Template } from "@prague/flow-util";
 import { LocalReference } from "@prague/merge-tree";
 import { debug } from "../../debug";
 import * as styles from "./index.css";
@@ -14,10 +14,14 @@ const template = new Template({
 });
 
 export class Cursor {
-
-    public get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
-
     public get position() { return this.doc.localRefToPosition(this.endRef); }
+
+    public get selection() {
+        const start = this.doc.localRefToPosition(this.startRef);
+        const end = this.position;
+
+        return { start: Math.min(start, end), end: Math.max(start, end) };
+    }
 
     public get bounds() { return this.cursorBounds; }
 
@@ -33,12 +37,17 @@ export class Cursor {
     private cursorBounds?: ClientRect;
 
     private readonly domRange = document.createRange();
-    private readonly highlightRootElement: Element;
     private readonly cursorElement: HTMLElement;
+    private readonly sync: () => void;
 
-    constructor(private readonly doc: FlowDocument) {
+    constructor(private readonly doc: FlowDocument, scheduler: Scheduler) {
+        this.sync = scheduler.coalesce(scheduler.onLayout, () => {
+            this.updateCursor();
+            this.updateSelection();
+            this.restartBlinkAnimation();
+        });
+
         this.root = template.clone() as HTMLElement;
-        this.highlightRootElement = template.get(this.root, "highlights");
         this.cursorElement = template.get(this.root, "cursor") as HTMLElement;
 
         this.startRef = doc.addLocalRef(0);
@@ -77,6 +86,8 @@ export class Cursor {
         return this.root;
     }
 
+    private get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
+
     private clampPosition(position: number) {
         return Math.min(Math.max(position, 0), this.doc.length - 1);
     }
@@ -84,10 +95,12 @@ export class Cursor {
     private addLocalRef(position: number) {
         return this.doc.addLocalRef(this.clampPosition(position));
     }
+
     private setSelectionStart(newStart: number) {
         this.doc.removeLocalRef(this.startRef);
         this.startRef = this.addLocalRef(newStart);
     }
+
     private setPosition(newEnd: number) {
         this.doc.removeLocalRef(this.endRef);
         this.endRef = this.addLocalRef(newEnd);
@@ -114,10 +127,19 @@ export class Cursor {
         return this.root.offsetParent!.getBoundingClientRect();
     }
 
-    private updateSelection() {
-        // tslint:disable-next-line:no-inner-html
-        this.highlightRootElement.innerHTML = "";
+    private readonly updateDomRangeStart = (node: Node, nodeOffset: number) => {
+        this.startContainer = node;
+        this.relativeStartOffset = nodeOffset;
+        this.sync();
+    }
 
+    private readonly updateDomRangeEnd = (node: Node, nodeOffset: number) => {
+        this.endContainer = node;
+        this.relativeEndOffset = nodeOffset;
+        this.sync();
+    }
+
+    private updateSelection() {
         if (!this.startContainer || !this.endContainer) {
             throw new Error();
         }
@@ -131,27 +153,17 @@ export class Cursor {
         }
 
         const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(this.domRange);
+        if (selection.rangeCount !== 1 || selection.getRangeAt(0) !== this.domRange) {
+            selection.removeAllRanges();
+            selection.addRange(this.domRange);
+        }
 
-        // const offset = this.getOffset();
-        // for (const rect of this.domRange.getClientRects()) {
-        //     debug(`highlight: ${JSON.stringify(rect)}`);
-        //     const div = e({ tag: "div", props: { className: styles.highlightRect }});
-
-        //     div.style.top = `${rect.top - offset.top}px`;
-        //     div.style.left = `${rect.left - offset.left}px`;
-        //     div.style.width = `${rect.width}px`;
-        //     div.style.height = `${rect.height}px`;
-
-        //     this.highlightRootElement.appendChild(div);
-        // }
+        debug(`Updated Selection: ${this.domRange.startContainer.textContent}:${this.domRange.startOffset}..${this.domRange.endContainer.textContent}:${this.domRange.endOffset}`);
     }
 
     private getCursorBounds() {
-        if ((!this.endContainer)
-            || (this.relativeEndOffset < 0 || +Infinity < this.relativeEndOffset)
-        ) {
+        // tslint:disable-next-line:binary-expression-operand-order
+        if (!(this.endContainer && 0 <= this.relativeEndOffset && this.relativeEndOffset < +Infinity)) {
             return undefined;
         }
 
@@ -171,27 +183,12 @@ export class Cursor {
             this.cursorElement.style.left = `${this.cursorBounds.left - offset.left}px`;
             this.cursorElement.style.height = `${this.cursorBounds.height}px`;
         } else {
-            // Otherwise hide it.
-            this.cursorElement.style.visibility = "hidden";
+            this.hide();
         }
     }
 
-    private readonly updateDomRangeStart = (node: Node, nodeOffset: number) => {
-        this.startContainer = node;
-        this.relativeStartOffset = nodeOffset;
-    }
-
-    private readonly updateDomRangeEnd = (node: Node, nodeOffset: number) => {
-        this.endContainer = node;
-        this.relativeEndOffset = nodeOffset;
-
-        this.updateCursor();
-        this.updateSelection();
-        this.restartBlinkAnimation();
-    }
-
     private restartBlinkAnimation() {
-        // To restart the CSS blink animation, we reinsert the element it at it's current location.
+        // To restart the CSS blink animation, we swap the position of the cursor element with it's sibling.
         // (See: https://css-tricks.com/restart-css-animation/).
         if (this.cursorElement.parentNode) {
             this.cursorElement.parentNode.insertBefore(this.cursorElement, this.cursorElement.previousSibling);

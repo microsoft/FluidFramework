@@ -1,43 +1,68 @@
-export interface IViewState {
-    readonly root: Element;
+// tslint:disable:no-this-assignment
+
+interface IListenerRegistration {
+    target: EventTarget;
+    type: string;
+    listener: EventListener;
 }
 
-export interface IView<TProps, TUpdatable> {
-    attach(parent: Element, props: Readonly<TProps>): void;
-    update(props: Readonly<TUpdatable>): void;
+export interface IView<TInit, TProps> {
+    attach(parent: Element, init: Readonly<TInit>): void;
+    update(props: Readonly<TProps>): void;
     detach(): void;
 }
 
-export abstract class View<TProps extends TUpdatable, TState extends IViewState, TUpdatable = TProps> implements IView<TProps, TUpdatable> {
+export abstract class View<TInit extends TProps, TProps = {} | undefined> implements IView<TInit, TProps> {
     // tslint:disable-next-line:variable-name
-    private _state?: TState;
+    private _root?: Element;
+    private listeners?: IListenerRegistration[];
 
-    public attach(parent: Element, props: Readonly<TProps>) {
-        this._state = this.onAttach(props);
-        this.onUpdate(props, this.state);
+    public attach(parent: Element, init: Readonly<TInit>) {
+        this._root = this.onAttach(init);
+        this.onUpdate(init);
         console.assert(parent.hasChildNodes() === false);
-        parent.append(this.state.root);
+        parent.append(this._root);
     }
 
-    public update(props: Readonly<TUpdatable>) {
-        this.onUpdate(props, this.state);
+    public update(props: Readonly<TProps>) {
+        this.onUpdate(props);
     }
 
     public detach() {
-        const parent = this.root.parentNode!;
-        this.root.remove();
-        this.onDetach(this.state);
-        this._state = undefined;
+        const { root, listeners } = this;
+
+        const parent = root.parentNode;
+        root.remove();
+
         console.assert(parent.hasChildNodes() === false);
+
+        if (listeners !== undefined) {
+            for (const { target, type, listener } of listeners) {
+                target.removeEventListener(type, listener);
+            }
+        }
+
+        this.onDetach();
+
+        this._root = undefined;
+        this.listeners = undefined;
     }
 
-    protected get root() { return this.state.root; }
-    protected get state(): Readonly<TState> { return this._state!; }
-    protected abstract onAttach(props: Readonly<TProps>): TState;
-    protected abstract onUpdate(props: Readonly<TUpdatable>, state: TState): void;
-    protected abstract onDetach(state: TState): void;
+    protected get root() { return this._root; }
+    protected abstract onAttach(init: Readonly<TInit>): Element;
+    protected abstract onUpdate(props: Readonly<TProps>): void;
+    protected abstract onDetach(): void;
 
-    protected updateState(state: Partial<TState>) {
-        Object.assign(this._state, state);
+    protected onDom<K extends keyof HTMLElementEventMap>(target: EventTarget, type: K | string, listener: (ev: HTMLElementEventMap[K]) => any) {
+        const registration: IListenerRegistration = { target, type, listener };
+        const listeners = this.listeners;
+
+        if (listeners === undefined) {
+            this.listeners = [ registration ];
+        } else {
+            listeners.push(registration);
+        }
+
+        target.addEventListener(type, listener);
     }
 }

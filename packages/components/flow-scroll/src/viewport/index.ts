@@ -1,5 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { IViewState, Scheduler, Template, View } from "@prague/flow-util";
+import { Scheduler, Template, View } from "@prague/flow-util";
 import { PagePosition } from "../../../flow-editor/dist";
 import { debug } from "../debug";
 import { Page } from "../page";
@@ -20,41 +20,46 @@ interface IPageInfo {
     root: HTMLElement;
 }
 
-interface IViewportProps {
+interface IViewportInit {
     doc: FlowDocument;
     scheduler: Scheduler;
 }
 
-interface IViewportState extends IViewState {
-    doc: FlowDocument;
-    scheduler: Scheduler;
-    slot: HTMLElement;
-    // tslint:disable-next-line:prefer-array-literal
-    pages: IPageInfo[];
-}
+export class Viewport extends View<IViewportInit> {
+    private state?: {
+        doc: FlowDocument;
+        scheduler: Scheduler;
+        slot: HTMLElement;
+        pages: IPageInfo[];
+        elementToPage: WeakMap<Element, Page>;
+    };
 
-export class Viewport extends View<IViewportProps, IViewportState> {
-    protected onAttach(props: Readonly<IViewportProps>): IViewportState {
+    public get editor() {
+        return this.state.pages[0].page.editor;
+    }
+
+    protected onAttach(init: Readonly<IViewportInit>) {
         const root = template.clone();
         const slot = template.get(root, "slot") as HTMLElement;
-        const { doc, scheduler } = props;
+        const { doc, scheduler } = init;
 
-        const state = { doc, pages: [], root, scheduler, slot };
-        this.addPage(state, undefined);
+        this.state = { doc, pages: [], scheduler, slot, elementToPage: new WeakMap() };
+        this.addPage(undefined);
 
-        return state;
+        return root;
     }
 
-    protected onUpdate(props: Readonly<IViewportProps>, state: IViewportState): void {
+    protected onUpdate(): void {
         // do nothing
     }
 
-    protected onDetach(state: IViewportState): void {
+    protected onDetach(): void {
         // do nothing
     }
 
-    private addPage(state: IViewportState, pageStart: PagePosition) {
-        const { doc, pages, scheduler } = state;
+    private addPage(pageStart: PagePosition) {
+        const { state } = this;
+        const { doc, pages, scheduler } = this.state;
         debug(`Inserted page #${pages.length}`);
 
         const pageRoot = document.createElement("div");
@@ -71,6 +76,8 @@ export class Viewport extends View<IViewportProps, IViewportState> {
                 this.noteNewStop(nextIndex, position);
             },
         });
+
+        state.elementToPage.set(pageRoot, page);
     }
 
     private noteNewStop(pageIndex: number, newStart: PagePosition) {
@@ -93,7 +100,7 @@ export class Viewport extends View<IViewportProps, IViewportState> {
 
             const page = this.state.pages[pageIndex];
             if (page === undefined) {
-                this.addPage(this.state, newStart);
+                this.addPage(newStart);
             } else {
                 page.page.update({ pageStart: newStart });
                 debug(`Updated page #${pages.length}`);

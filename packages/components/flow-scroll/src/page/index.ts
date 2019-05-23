@@ -1,6 +1,6 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { Editor, PagePosition } from "@chaincode/flow-editor";
-import { IViewState, ResizeObserver, Scheduler, Template, View } from "@prague/flow-util";
+import { ResizeObserver, Scheduler, Template, View } from "@prague/flow-util";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -11,27 +11,28 @@ const template = new Template({
     ],
 });
 
-interface IPageUpdatable {
+interface IPageProps {
     pageStart: PagePosition;
 }
 
-interface IPageProps extends IPageUpdatable {
+interface IPageInit extends IPageProps {
     doc: FlowDocument;
     scheduler: Scheduler;
     onPaginationStop: (position: PagePosition) => void;
 }
 
-interface IPageState extends IViewState {
-    root: HTMLElement;
-    slot: HTMLElement;
-    editor: Editor;
-    pageStart: PagePosition;
-    resizeObserver: ResizeObserver;
-    repaginate: () => void;
-}
+export class Page extends View<IPageInit, IPageProps> {
+    private state?: {
+        slot: HTMLElement;
+        editor: Editor;
+        pageStart: PagePosition;
+        resizeObserver: ResizeObserver;
+        repaginate: () => void;
+    };
 
-export class Page extends View<IPageProps, IPageState, IPageUpdatable> {
-    protected onAttach(props: Readonly<IPageProps>): IPageState {
+    public get editor() { return this.state.editor; }
+
+    protected onAttach(props: Readonly<IPageInit>) {
         const root = template.clone() as HTMLElement;
         const slot = template.get(root, "slot") as HTMLElement;
 
@@ -59,19 +60,20 @@ export class Page extends View<IPageProps, IPageState, IPageUpdatable> {
                 this.root.getBoundingClientRect().height);
         });
 
-        return {
+        this.state = {
             slot,
-            root,
             editor,
             pageStart,
             resizeObserver,
             repaginate,
         };
+
+        return root;
     }
 
-    protected onUpdate(props: IPageUpdatable, state: IPageState) {
-        this.updateState({ pageStart: props.pageStart });
-        state.repaginate();
+    protected onUpdate(props: IPageProps) {
+        Object.assign(this.state, props);
+        this.state.repaginate();
     }
 
     protected onDetach() {

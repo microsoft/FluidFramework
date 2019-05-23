@@ -229,17 +229,15 @@ export class FlowDocument extends Component {
 
     public addCssClass(start: number, end: number, ...classNames: string[]) {
         if (classNames.length > 0) {
-            this.removeCssClass(start, end, ...classNames);
-
             const newClasses = classNames.join(" ");
-            this.updateCssClassList(start, end, (classList) => TokenList.appendToken(classList, newClasses));
+            this.updateCssClassList(start, end, (classList) => TokenList.set(classList, newClasses));
         }
     }
 
     public removeCssClass(start: number, end: number, ...classNames: string[]) {
         this.updateCssClassList(start, end,
                 (classList) => classNames.reduce(
-                    (updatedList, className) => TokenList.removeToken(updatedList, className),
+                    (updatedList, className) => TokenList.unset(updatedList, className),
                     classList));
     }
 

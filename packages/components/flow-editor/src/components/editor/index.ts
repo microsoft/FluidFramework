@@ -1,5 +1,5 @@
-import { KeyCode, Scheduler } from "@prague/flow-util";
-import { ISegment } from "@prague/merge-tree";
+import { DocSegmentKind, getDocSegmentKind } from "@chaincode/flow-document";
+import { CaretEventType, Direction, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
 import { IViewState, View } from "..";
 import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";
 import { debug } from "../../debug";
@@ -23,7 +23,7 @@ interface IListenerRegistration {
 interface IEditorViewState extends IViewState {
     cursor: Cursor;
     docView: DocumentView;
-    eventSink: Element;
+    eventSink: HTMLElement;
     props: IEditorProps;
     listeners: IListenerRegistration[];
 }
@@ -33,7 +33,32 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     public  get doc()            { return this.state.props.doc; }
     private get props()          { return this.state.props; }
     public  get cursorPosition() { return this.state.cursor.position; }
+    public  get selection()      { return this.state.cursor.selection; }
     public invalidate?: () => void;
+
+    private readonly onCaretLeave = ((e: ICaretEvent) => {
+        this.state.eventSink.focus();
+        const direction = e.detail.direction;
+        const extendSelection = false;
+
+        switch (direction) {
+            case Direction.left:
+                this.cursor.moveTo(this.state.docView.getPosition(e.target as Node), extendSelection);
+                this.horizontalArrow(e, -1, /* extendSelection: */ false);
+                break;
+            case Direction.right:
+                this.cursor.moveTo(this.state.docView.getPosition(e.target as Node), extendSelection);
+                this.horizontalArrow(e, 1, /* extendSelection: */ false);
+                break;
+            case Direction.up:
+                this.verticalArrow(e, -1, e.detail.caretBounds, /* extendSelection */ false);
+                break;
+            case Direction.down:
+                this.verticalArrow(e, 1, e.detail.caretBounds, /* extendSelection */ false);
+                break;
+            default:
+        }
+    }) as EventHandlerNonNull;
 
     constructor() {
         super();
@@ -49,7 +74,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         const scheduler = props.scheduler;
         this.invalidate = scheduler.coalesce(scheduler.onLayout, this.render);
 
-        const cursor = new Cursor(props.doc);
+        const cursor = new Cursor(props.doc, scheduler);
         cursor.moveTo(0, false);
 
         const docView = new DocumentView();
@@ -57,11 +82,15 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         docView.overlay.appendChild(cursor.root);
 
         const listeners: IListenerRegistration[] = [];
-        const eventSink = props.eventSink || root;
+        const eventSink = (props.eventSink || root) as HTMLElement;
         this.on(listeners, eventSink, "keydown",   this.onKeyDown);
         this.on(listeners, eventSink, "keypress",  this.onKeyPress);
         this.on(listeners, eventSink, "mousedown", this.onMouseDown);
         this.on(listeners, window,    "resize",    this.invalidate);
+        this.on(listeners, eventSink, "blur",      this.onBlur);
+        this.on(listeners, eventSink, "focus",     this.onFocus);
+
+        root.addEventListener(CaretEventType.leave, this.onCaretLeave);
 
         props.doc.on("sequenceDelta", (e: SequenceDeltaEvent) => {
             const { start, end } = this.state.docView.range;
@@ -115,15 +144,17 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private readonly render = () => {
-        this.props.trackedPositions = this.cursor.getTracked();
+        // Avoid modifying window selection when Flow-Editor is not displaying cursor
+        this.props.trackedPositions = document.activeElement === this.state.eventSink
+            ? this.cursor.getTracked()
+            : [];
+
         this.state.docView.update(this.props);
         this.cursor.render();
     }
 
     private delete(deltaStart: number, deltaEnd: number) {
-        const start = this.cursor.selectionStart;
-        const end = this.cursor.position;
-
+        const { start, end } = this.cursor.selection;
         if (start === end) {
             // If no range is currently selected, delete the preceding character (if any).
             this.doc.remove(start + deltaStart, end + deltaEnd);
@@ -134,8 +165,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private insertText(text: string) {
-        const start = this.cursor.selectionStart;
-        const end = this.cursor.position;
+        const { start, end } = this.cursor.selection;
         if (start === end) {
             this.doc.insertText(end, text);
         } else {
@@ -143,21 +173,46 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
     }
 
-    private horizontalArrow(ev: KeyboardEvent, deltaX: number) {
-        this.cursor.moveBy(deltaX, ev.shiftKey);
+    private horizontalArrow(ev: Event, deltaX: number, extendSelection: boolean) {
+        this.cursor.moveBy(deltaX, extendSelection);
+
+        const maybeView = this.state.docView.getInclusionView(this.cursorPosition);
+        if (maybeView) {
+            const direction = deltaX > 0
+                ? Direction.right
+                : Direction.left;
+            maybeView.caretEnter(direction, this.cursor.bounds);
+        }
+
         this.invalidate();
         ev.preventDefault();
         ev.stopPropagation();
     }
 
-    private verticalArrow(ev: KeyboardEvent, searchFn: (x: number, top: number, bottom: number) => { segment: ISegment, offset: number} | undefined) {
-        const cursorBounds = this.cursor.bounds;
-        if (cursorBounds) {
-            const segmentAndOffset = searchFn(cursorBounds.left, cursorBounds.top, cursorBounds.bottom);
+    private verticalArrow(ev: Event, deltaY: number, caretBounds: ClientRect, extendSelection: boolean) {
+        if (caretBounds) {
+            const searchFn = deltaY > 0
+                ? this.state.docView.findBelow
+                : this.state.docView.findAbove;
+
+            const segmentAndOffset = searchFn(caretBounds.left, caretBounds.top, caretBounds.bottom);
             if (segmentAndOffset) {
-                const position = this.doc.getPosition(segmentAndOffset.segment);
-                this.cursor.moveTo(position + segmentAndOffset.offset, ev.shiftKey);
-                this.invalidate();
+                const { segment, offset } = segmentAndOffset;
+                const maybeView = getDocSegmentKind(segmentAndOffset.segment) === DocSegmentKind.Inclusion
+                    && this.state.docView.getInclusionView(this.doc.getPosition(segment) + offset);
+
+                if (maybeView) {
+                    const direction = deltaY > 0
+                        ? Direction.down
+                        : Direction.up;
+
+                    maybeView.caretEnter(direction, this.cursor.bounds);
+                } else {
+                    const position = this.doc.getPosition(segmentAndOffset.segment);
+                    this.cursor.moveTo(position + segmentAndOffset.offset, extendSelection);
+                    this.invalidate();
+                }
+
                 ev.preventDefault();
                 ev.stopPropagation();
             }
@@ -168,32 +223,32 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         const keyCode = ev.code;
         switch (keyCode) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
-            case KeyCode.Backspace: {
+            case KeyCode.backspace: {
                 this.delete(-1, 0);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
             }
-            case KeyCode.Delete: {
+            case KeyCode.delete: {
                 this.delete(0, 1);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
             }
-            case KeyCode.ArrowLeft: {
-                this.horizontalArrow(ev, -1);
+            case KeyCode.arrowLeft: {
+                this.horizontalArrow(ev, -1, ev.shiftKey);
                 break;
             }
-            case KeyCode.ArrowRight: {
-                this.horizontalArrow(ev, +1);
+            case KeyCode.arrowRight: {
+                this.horizontalArrow(ev, +1, ev.shiftKey);
                 break;
             }
-            case KeyCode.ArrowDown: {
-                this.verticalArrow(ev, this.state.docView.findBelow);
+            case KeyCode.arrowDown: {
+                this.verticalArrow(ev, 1, this.cursor.bounds, ev.shiftKey);
                 break;
             }
-            case KeyCode.ArrowUp: {
-                this.verticalArrow(ev, this.state.docView.findAbove);
+            case KeyCode.arrowUp: {
+                this.verticalArrow(ev, -1, this.cursor.bounds, ev.shiftKey);
                 break;
             }
             default: {
@@ -202,46 +257,47 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
     }
 
+    private toggleCssClass(ev: KeyboardEvent, className: string) {
+        const { start, end } = this.cursor.selection;
+        this.doc.toggleCssClass(start, end, className);
+        ev.stopPropagation();
+        ev.preventDefault();
+    }
+
     private readonly onKeyPress = (ev: KeyboardEvent) => {
         if (ev.ctrlKey) {
             switch (ev.key) {
                 case "b":
-                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.bold);
-                    ev.stopPropagation();
-                    ev.preventDefault();
+                    this.toggleCssClass(ev, style.bold);
                     return;
                 case "i":
-                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.italic);
-                    ev.stopPropagation();
-                    ev.preventDefault();
+                    this.toggleCssClass(ev, style.italic);
                     return;
                 case "u":
-                    this.doc.toggleCssClass(this.cursor.selectionStart, this.cursor.position, style.underline);
-                    ev.stopPropagation();
-                    ev.preventDefault();
+                    this.toggleCssClass(ev, style.underline);
                     return;
                 default:
             }
-        }
-
-        switch (ev.code) {
-            case KeyCode.Backspace: {
-                // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
-                break;
-            }
-            case KeyCode.Enter: {
-                if (ev.shiftKey) {
-                    this.doc.insertLineBreak(this.cursor.position);
-                } else {
-                    this.doc.insertParagraph(this.cursor.position);
+        } else {
+            switch (ev.code) {
+                case KeyCode.backspace: {
+                    // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
+                    break;
                 }
-                ev.stopPropagation();
-                break;
-            }
-            default: {
-                this.insertText(ev.key);
-                ev.stopPropagation();
-                ev.preventDefault();
+                case KeyCode.enter: {
+                    if (ev.shiftKey) {
+                        this.doc.insertLineBreak(this.cursor.position);
+                    } else {
+                        this.doc.insertParagraph(this.cursor.position);
+                    }
+                    ev.stopPropagation();
+                    break;
+                }
+                default: {
+                    this.insertText(ev.key);
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }
             }
         }
     }
@@ -257,5 +313,13 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             this.invalidate();
             ev.stopPropagation();
         }
+    }
+
+    private readonly onFocus = () => {
+        this.cursor.show();
+    }
+
+    private readonly onBlur = () => {
+        this.cursor.hide();
     }
 }

@@ -3,7 +3,7 @@
 // tslint:disable:variable-name
 import { isBrowser } from "../isbrowser";
 import { Template } from "../template";
-import { IViewState, View } from "../view";
+import { View } from "../view";
 import * as style from "./index.css";
 
 // tslint:disable:object-literal-sort-keys
@@ -21,24 +21,24 @@ const template = isBrowser && new Template(
     ]},
 );
 
-interface IResizeObserverProps {
+interface IResizeObserverInit {
     subject: Element;
     callback: () => void;
 }
 
-interface IResizeObserverState extends IViewState {
-    callback: () => void;
-    root: HTMLElement;
-    expand: HTMLElement;
-    expandChild: HTMLElement;
-    shrink: Element;
-    slot: Element;
-    width: number;     // TS2564: Assigned in ctor via call to 'this.reset()'.
-    height: number;    // TS2564: Assigned in ctor via call to 'this.reset()'.
-}
+export class ResizeObserver extends View<IResizeObserverInit> {
+    private state?: {
+        callback: () => void;
+        root: HTMLElement;
+        expand: HTMLElement;
+        expandChild: HTMLElement;
+        shrink: Element;
+        slot: Element;
+        width: number;
+        height: number;
+    };
 
-export class ResizeObserver extends View<IResizeObserverProps, IResizeObserverState, {}> {
-    protected onAttach(props: Readonly<IResizeObserverProps>): IResizeObserverState {
+    protected onAttach(init: Readonly<IResizeObserverInit>) {
         const root = template.clone() as HTMLElement;
         const expand = template.get(root, "expand") as HTMLElement;
         const expandChild = template.get(root, "expandChild") as HTMLElement;
@@ -47,18 +47,24 @@ export class ResizeObserver extends View<IResizeObserverProps, IResizeObserverSt
 
         expand.addEventListener("scroll", this.onExpandScrolled);
         shrink.addEventListener("scroll", this.onShrinkScrolled);
-        slot.appendChild(props.subject);
 
-        return { callback: props.callback, root, expand, expandChild, shrink, slot, width: NaN, height: NaN };
+        const { subject, callback } = init;
+        slot.appendChild(subject);
+
+        this.state = { callback, root, expand, expandChild, shrink, slot, width: NaN, height: NaN };
+
+        return root;
     }
 
-    protected onUpdate(props: Readonly<{}>, state: IResizeObserverState): void {
+    protected onUpdate(): void {
         this.reset();
     }
 
-    protected onDetach(state: IResizeObserverState): void {
+    protected onDetach(): void {
+        const state = this.state;
         state.expand.removeEventListener("scroll", this.onExpandScrolled);
         state.shrink.removeEventListener("scroll", this.onShrinkScrolled);
+        this.state = undefined;
     }
 
     private readonly onExpandScrolled = () => {
@@ -85,6 +91,7 @@ export class ResizeObserver extends View<IResizeObserverProps, IResizeObserverSt
         expand.scrollTop = expand.scrollHeight;
         shrink.scrollLeft = shrink.scrollWidth;
         shrink.scrollTop = shrink.scrollHeight;
-        this.updateState({ width: root.offsetWidth, height: root.offsetHeight });
+        this.state.width = root.offsetWidth;
+        this.state.height = root.offsetHeight;
     }
 }

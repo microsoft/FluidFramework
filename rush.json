@@ -79,6 +79,10 @@
       "projectFolder": "packages/components/key-value/"
     },
     {
+      "packageName": "@chaincode/math",
+      "projectFolder": "packages/components/math/"
+    },
+    {
       "packageName": "@chaincode/monaco",
       "projectFolder": "packages/components/monaco/"
     },

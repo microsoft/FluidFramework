@@ -1,4 +1,4 @@
-import { Dom, Template } from "@prague/flow-util";
+import { Caret, Direction, Dom, Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
@@ -7,12 +7,10 @@ const template = new Template({
     props: { className: styles.inclusion },
 });
 
-export interface IInclusionProps { child: Node; }
+export interface IInclusionProps { child: Element; }
 
 // tslint:disable-next-line:no-empty-interface
-export interface IInclusionViewState extends IViewState {
-    child: Node;
-}
+export interface IInclusionViewState extends IViewState { }
 
 // TODO: This can not yet be made a Symbol due to multiple/recursive WebPack bundles.
 //       'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
@@ -47,19 +45,15 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
             root.addEventListener(type, markInclusionEvent);
         }
 
-        return this.updating(props, { root, child: props.child });
+        return this.updating(props, { root });
     }
 
-    public get cursorTarget() { return this.state.child; }
+    public get cursorTarget() { return this.root.firstChild; }
+    private get child() { return this.root.firstElementChild; }
 
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
-        const root = state.root;
-        const desiredChild = props.child;
-
-        if (root.firstChild !== desiredChild) {
-            Dom.replaceFirstChild(root, desiredChild);
-            state = { root, child: desiredChild };
-        }
+        const { child } = props;
+        Dom.ensureFirstChild(state.root, child);
 
         return state;
     }
@@ -68,5 +62,9 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
         for (const type of events) {
             state.root.removeEventListener(type, markInclusionEvent);
         }
+    }
+
+    public caretEnter(direction: Direction, caretBounds: ClientRect) {
+        return Caret.caretEnter(this.child.firstElementChild, direction, caretBounds);
     }
 }

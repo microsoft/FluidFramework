@@ -1,4 +1,5 @@
 export { Char } from "./char";
+export { CharCode } from "./charcode";
 export { Dom } from "./dom";
 export { KeyCode, Modifier } from "./keycode";
 export { lis } from "./lis";
@@ -6,6 +7,10 @@ export { Scheduler } from "./scheduler";
 export { Template } from "./template";
 export { bsearch } from "./bsearch";
 export { bsearch2 } from "./bsearch2";
-export { IView, IViewState, View } from "./view";
+export { IView, View } from "./view";
 export { ResizeObserver } from "./resizeobserver";
 export { TokenList } from "./tokenlist";
+export { randomId } from "./random";
+export { ICommand } from "./command";
+export { ICaretEvent, CaretEventType, Caret } from "./caret";
+export { Direction, getDeltaX, getDeltaY } from "./direction";

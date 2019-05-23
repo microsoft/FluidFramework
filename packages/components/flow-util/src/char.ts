@@ -1,3 +1,3 @@
 export const enum Char {
-    ZeroWidthSpace = "\u200B",
+    zeroWidthSpace = "\u200B",
 }

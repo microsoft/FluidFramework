@@ -1,7 +1,7 @@
 import { FlowDocument, SegmentSpan } from "@chaincode/flow-document";
-import { Dom, IViewState } from "@prague/flow-util";
+import { Dom } from "@prague/flow-util";
 import { ISegment } from "@prague/merge-tree";
-import { IFlowViewComponent } from "..";
+import { IFlowViewComponent, IViewState } from "..";
 import { PagePosition } from "../..";
 import { debug } from "../../debug";
 import { LayoutSink } from "./layoutsink";

@@ -6,7 +6,7 @@ const template = new Template({
     tag: "span",
     props: { className: styles.paragraph },
     children: [
-        { tag: "span", ref: "cursorTarget", props: { className: styles.afterParagraph, textContent: Char.ZeroWidthSpace }},
+        { tag: "span", ref: "cursorTarget", props: { className: styles.afterParagraph, textContent: Char.zeroWidthSpace }},
         { tag: "p" },
     ],
 });
