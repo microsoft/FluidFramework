@@ -1,4 +1,4 @@
-# Welcome to your first Chaincode
+# Welcome to your first Fluid Chaincode
 
 Welcome to your first chaincode component.
 

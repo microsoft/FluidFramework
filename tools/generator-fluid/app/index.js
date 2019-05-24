@@ -19,7 +19,7 @@ module.exports = class extends Generator {
   }
 
   async prompting() {
-    this.log("Congratulations! You've started building your own prague component.");
+    this.log("Congratulations! You've started building your own Fluid component.");
     this.log("Let us help you get set up. Once we're done, you can start coding!");
     this.answers = await this.prompt([
       {
@@ -48,7 +48,7 @@ module.exports = class extends Generator {
       {
         type: "input",
         name: "path",
-        message: "Where would you like to put your prague component?",
+        message: "Where would you like to put your Fluid component?",
         default: function(answers) {
           return "./" + answers.name;
         }

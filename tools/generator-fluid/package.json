@@ -1,11 +1,11 @@
 {
-  "name": "generator-prague",
+  "name": "generator-fluid",
   "version": "0.1.0",
-  "description": "A yeoman project generator for prague chaincodes",
+  "description": "A yeoman project generator for fluid chaincode",
   "main": "app/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "unlink": "npm rm --global generator-prague",
+    "unlink": "npm rm --global generator-fluid",
     "check": "npm ls --global --depth 0",
     "link": "npm install && npm link"
   },
