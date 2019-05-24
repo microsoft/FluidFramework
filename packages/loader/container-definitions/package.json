@@ -27,7 +27,6 @@
     "typescript": "^3.4.0"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.3.0",
     "@types/node": "^10.12.12"
   }
 }

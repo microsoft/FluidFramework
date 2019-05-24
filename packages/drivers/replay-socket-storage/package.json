@@ -20,7 +20,6 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
     "@prague/routerlicious-socket-storage": "^0.3.0",
     "@prague/socket-storage-shared": "^0.3.0",
     "axios": "^0.18.0",

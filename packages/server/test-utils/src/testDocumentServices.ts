@@ -1,5 +1,6 @@
 import {
     IContentMessage,
+    ICreateBlobResponse,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
     IDocumentMessage,
@@ -74,7 +75,7 @@ export class TestDocumentStorageService implements IDocumentStorageService {
         throw new Error("Method not implemented.");
     }
 
-    public async createBlob(file: Buffer): Promise<git.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         return null;
     }
 

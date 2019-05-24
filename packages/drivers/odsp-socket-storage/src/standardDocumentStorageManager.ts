@@ -5,7 +5,7 @@ import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";
 
 export interface IDocumentStorageManager {
-    createBlob(file: Buffer): Promise<resources.ICreateBlobResponse>;
+    createBlob(file: Buffer): Promise<api.ICreateBlobResponse>;
     getBlob(blobid: string): Promise<resources.IBlob>;
     getContent(version: api.IVersion, path: string): Promise<resources.IBlob>;
     getRawUrl(blobid: string): string;
@@ -29,7 +29,7 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
             standardTokenProvider.getStorageQueryParams());
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
         return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
     }

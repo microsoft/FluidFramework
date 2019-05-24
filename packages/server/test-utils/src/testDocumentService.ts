@@ -1,4 +1,5 @@
 import {
+    ICreateBlobResponse,
     IDeltaStorageService,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -42,7 +43,7 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return version;
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
         return null;
     }
 

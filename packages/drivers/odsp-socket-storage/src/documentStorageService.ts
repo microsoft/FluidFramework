@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
 import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
@@ -51,7 +50,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return this.storageManager.write(tree, parents, message);
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return this.storageManager.createBlob(file);
     }
 

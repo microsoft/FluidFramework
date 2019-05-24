@@ -19,7 +19,6 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
     "@prague/socket-storage-shared": "^0.3.0",
     "@prague/replay-socket-storage": "^0.3.0",
     "debug": "^3.1.0"

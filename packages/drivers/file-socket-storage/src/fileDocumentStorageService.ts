@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import * as fs from "fs";
 import * as util from "util";
 
@@ -49,7 +48,7 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             return commit;
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse | null> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse | null> {
         return null;
     }
 

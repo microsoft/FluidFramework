@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import * as gitStorage from "@prague/services-client";
 import { buildHierarchy } from "@prague/utils";
 
@@ -29,7 +28,7 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
 
     public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
         const commits = await this.manager.getCommits(commitId, count);
-        return commits.map((commit) => this.translateCommit(commit));
+        return commits.map((commit) => ({id: commit.sha, treeId: commit.commit.tree.sha}));
     }
 
     public async read(blobId: string): Promise<string> {
@@ -48,18 +47,12 @@ export class DocumentStorageService implements api.IDocumentStorageService  {
         return commit.then((c) => ({id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
-        return this.manager.createBlob(file.toString("base64"), "base64");
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+        const response = this.manager.createBlob(file.toString("base64"), "base64");
+        return response.then((r) => ({id: r.sha, url: r.url}));
     }
 
     public getRawUrl(blobId: string): string {
         return this.manager.getRawUrl(blobId);
-    }
-
-    private translateCommit(details: resources.ICommitDetails): api.IVersion {
-        return {
-            id: details.sha,
-            treeId: details.commit.tree.sha,
-        };
     }
 }

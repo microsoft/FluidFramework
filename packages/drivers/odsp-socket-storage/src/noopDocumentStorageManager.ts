@@ -4,7 +4,7 @@ import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
 export class NoopDocumentStorageManager implements IDocumentStorageManager {
     private static readonly notSupportedMessage = "Method not supported.";
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         throw new Error(NoopDocumentStorageManager.notSupportedMessage);
     }
     public async getBlob(blobid: string): Promise<resources.IBlob> {

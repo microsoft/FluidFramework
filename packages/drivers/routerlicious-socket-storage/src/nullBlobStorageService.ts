@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 
 /**
  * Document access to underlying storage
@@ -29,7 +28,7 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not write commit");
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Null blob storage can not create blob");
     }
 

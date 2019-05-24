@@ -51,7 +51,7 @@ export class BlobManager implements IBlobManager {
         // Remove blobContent
         const blobMetaData = {
             fileName: blob.fileName,
-            id: response.sha,
+            id: response.id,
             size: blob.size,
             type: blob.type,
             url: response.url,

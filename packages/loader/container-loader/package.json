@@ -41,7 +41,6 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
     "@prague/utils": "^0.3.0",
     "debug": "^3.1.0",
     "double-ended-queue": "^2.1.0-0",

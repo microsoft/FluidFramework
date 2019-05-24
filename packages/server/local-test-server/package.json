@@ -50,7 +50,6 @@
     "@prague/consensus-ordered-collection": "^0.3.0",
     "@prague/consensus-register-collection": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
     "@prague/map": "^0.3.0",
     "@prague/memory-orderer": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",

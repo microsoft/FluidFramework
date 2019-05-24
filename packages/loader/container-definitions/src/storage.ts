@@ -1,4 +1,3 @@
-import * as resources from "@prague/gitresources";
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
 import { IResolvedUrl } from "./loader";
@@ -49,6 +48,11 @@ export interface IBlob {
 
     // The encoding of the contents string (utf-8 or base64)
     encoding: string;
+}
+
+export interface ICreateBlobResponse {
+    id: string;
+    url: string;
 }
 
 /**
@@ -163,7 +167,7 @@ export interface IDocumentStorageService {
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Buffer | undefined | null): Promise<resources.ICreateBlobResponse>;
+    createBlob(file: Buffer | undefined | null): Promise<ICreateBlobResponse>;
 
     /**
      * Fetch blob Data url

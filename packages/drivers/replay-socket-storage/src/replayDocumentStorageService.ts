@@ -1,5 +1,4 @@
 import * as api from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 
 /**
  * Document storage service for the replay driver...just does a default implementation for
@@ -30,7 +29,7 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return null;
     }
 
-    public async createBlob(file: Buffer): Promise<resources.ICreateBlobResponse> {
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return Promise.reject(new Error("ReplayDocumentStorageService.createBlob() not implemented"));
     }
 

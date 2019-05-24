@@ -1,5 +1,10 @@
-import { IDocumentStorageService, ISnapshotTree, ITree, IVersion } from "@prague/container-definitions";
-import { ICreateBlobResponse } from "@prague/gitresources";
+import {
+    ICreateBlobResponse,
+    IDocumentStorageService,
+    ISnapshotTree,
+    ITree,
+    IVersion,
+} from "@prague/container-definitions";
 import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
