@@ -1,6 +1,6 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { Editor, PagePosition } from "@chaincode/flow-editor";
-import { ResizeObserver, Scheduler, Template, View } from "@prague/flow-util";
+import { Scheduler, Template, View } from "@prague/flow-util";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -25,9 +25,6 @@ export class Page extends View<IPageInit, IPageProps> {
     private state?: {
         slot: HTMLElement;
         editor: Editor;
-        pageStart: PagePosition;
-        resizeObserver: ResizeObserver;
-        repaginate: () => void;
     };
 
     public get editor() { return this.state.editor; }
@@ -37,35 +34,20 @@ export class Page extends View<IPageInit, IPageProps> {
         const slot = template.get(root, "slot") as HTMLElement;
 
         const editor = new Editor();
-        const { doc, scheduler, pageStart, onPaginationStop } = props;
-        editor.mount({
-            doc,
-            scheduler,
-            eventSink: root,
-            trackedPositions: [],
-            start: pageStart,
-            paginationBudget: -1,
-            onPaginationStop,
-        });
+        const { doc, scheduler } = props;
 
-        const resizeObserver = new ResizeObserver();
-        resizeObserver.attach(slot, {
-            subject: editor.root,
-            callback: this.onResize,
-        });
-
-        const repaginate = scheduler.coalesce(scheduler.onLayout, () => {
-            this.state.editor.paginate(
-                this.state.pageStart,
-                this.root.getBoundingClientRect().height);
-        });
+        slot.appendChild(
+            editor.mount({
+                doc,
+                scheduler,
+                eventSink: root,
+                trackedPositions: [],
+            }),
+        );
 
         this.state = {
             slot,
             editor,
-            pageStart,
-            resizeObserver,
-            repaginate,
         };
 
         return root;
@@ -73,15 +55,9 @@ export class Page extends View<IPageInit, IPageProps> {
 
     protected onUpdate(props: IPageProps) {
         Object.assign(this.state, props);
-        this.state.repaginate();
     }
 
     protected onDetach() {
-        this.state.resizeObserver.detach();
         this.state.editor.unmount();
-    }
-
-    private readonly onResize = () => {
-        this.state.repaginate();
     }
 }

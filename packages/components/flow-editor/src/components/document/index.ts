@@ -194,68 +194,72 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     }
 
     protected updating(props: Readonly<IDocumentProps>, state: DocumentViewState) {
-        const pageLimit = state.root.getBoundingClientRect().top + props.paginationBudget;
+        let findPageBreak = (ctx: LayoutContext) => false;
 
-        let remainingChars = 5000;
+        if (props.paginationBudget !== undefined) {
+            const pageLimit = state.root.getBoundingClientRect().top + props.paginationBudget;
 
-        const findPageBreak = (ctx: LayoutContext) => {
-            {
-                const viewInfo = ctx.lastEmitted;
-                const seg = viewInfo.span.firstSegment;
+            let remainingChars = 5000;
 
-                switch (getDocSegmentKind(seg)) {
-                    case DocSegmentKind.Inclusion:
-                        remainingChars = 0;
+            findPageBreak = (ctx: LayoutContext) => {
+                {
+                    const viewInfo = ctx.lastEmitted;
+                    const seg = viewInfo.span.firstSegment;
+
+                    switch (getDocSegmentKind(seg)) {
+                        case DocSegmentKind.Inclusion:
+                            remainingChars = 0;
+                            break;
+
+                        default:
+                            remainingChars -= viewInfo.span.endPosition - viewInfo.span.startPosition;
+                    }
+
+                    if (remainingChars > 0) {
+                        return false;
+                    }
+
+                    // If the paginator says we've exceeded the amount to render, break here.
+                    //
+                    // Note: There may be yet-to-removed views below the last view inserted, therefore we should
+                    //       compare this view's bottom with the page limit rather than us the root's height.
+                    const viewBottom = viewInfo.view.root.getBoundingClientRect().bottom;
+                    if (viewBottom <= pageLimit) {
+                        return false;
+                    }
+
+                    debug(`HALT(position:${viewInfo.span.endPosition}): ${viewBottom} > ${pageLimit}`);
+                }
+
+                remainingChars = 5000;
+                let lastViewInfo: IViewInfo<unknown, IFlowViewComponent<unknown>>;
+
+                for (lastViewInfo of ctx.emitted) {
+                    const viewBounds = lastViewInfo.view.root.getBoundingClientRect();
+                    if (viewBounds.bottom > pageLimit) {
                         break;
-
-                    default:
-                        remainingChars -= viewInfo.span.endPosition - viewInfo.span.startPosition;
+                    }
                 }
 
-                if (remainingChars > 0) {
-                    return false;
-                }
+                const cursorTarget = lastViewInfo.view.cursorTarget;
+                const measurementRange = document.createRange();
+                measurementRange.setStart(cursorTarget, 0);
 
-                // If the paginator says we've exceeded the amount to render, break here.
-                //
-                // Note: There may be yet-to-removed views below the last view inserted, therefore we should
-                //       compare this view's bottom with the page limit rather than us the root's height.
-                const viewBottom = viewInfo.view.root.getBoundingClientRect().bottom;
-                if (viewBottom <= pageLimit) {
-                    return false;
-                }
+                const breakPoint = bsearch2((index) => {
+                    measurementRange.setEnd(cursorTarget, index);
+                    const rangeBottom = measurementRange.getBoundingClientRect().bottom;
+                    const exceeds = rangeBottom <= pageLimit;
+                    debug(`  [0..${index}): ${rangeBottom} ${exceeds ? ">=" : "<"} ${pageLimit} '${cursorTarget.textContent.slice(0, index)}'`);
+                    return exceeds;
+                }, 0, cursorTarget.textContent.length) + lastViewInfo.span.startPosition - 1;
 
-                debug(`HALT(position:${viewInfo.span.endPosition}): ${viewBottom} > ${pageLimit}`);
-            }
+                this.setPaginationStop(props, state, breakPoint);
 
-            remainingChars = 5000;
-            let lastViewInfo: IViewInfo<unknown, IFlowViewComponent<unknown>>;
+                debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
 
-            for (lastViewInfo of ctx.emitted) {
-                const viewBounds = lastViewInfo.view.root.getBoundingClientRect();
-                if (viewBounds.bottom > pageLimit) {
-                    break;
-                }
-            }
-
-            const cursorTarget = lastViewInfo.view.cursorTarget;
-            const measurementRange = document.createRange();
-            measurementRange.setStart(cursorTarget, 0);
-
-            const breakPoint = bsearch2((index) => {
-                measurementRange.setEnd(cursorTarget, index);
-                const rangeBottom = measurementRange.getBoundingClientRect().bottom;
-                const exceeds = rangeBottom <= pageLimit;
-                debug(`  [0..${index}): ${rangeBottom} ${exceeds ? ">=" : "<"} ${pageLimit} '${cursorTarget.textContent.slice(0, index)}'`);
-                return exceeds;
-            }, 0, cursorTarget.textContent.length) + lastViewInfo.span.startPosition - 1;
-
-            this.setPaginationStop(props, state, breakPoint);
-
-            debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
-
-            return true;
-        };
+                return true;
+            };
+        }
 
         const start = this.getPagePosition(props.doc, props.start, 0);
 

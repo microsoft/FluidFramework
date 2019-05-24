@@ -1,5 +1,5 @@
 .page, .slot { 
-    height: 10in;
+    min-height: 10in;
 }
 
 .slot { 

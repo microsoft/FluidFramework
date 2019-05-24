@@ -81,7 +81,7 @@ export class HostView extends View<IHostConfig> {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.code === KeyCode.space) {
+        if (e.ctrlKey && e.code === KeyCode.keyM) {
             this.state.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
             this.state.searchMenu.show();
         }

@@ -7,12 +7,22 @@ import {
 } from "@prague/container-definitions";
 import { Scheduler } from "../../flow-util/dist";
 import { HostView } from "./host";
+import { importDoc } from "./template";
 
 export class FlowHost extends Component {
     public static readonly type = "@chaincode/flow-host2";
 
     protected async create() {
         this.runtime.createAndAttachComponent(this.docId, FlowDocument.type);
+
+        const url = new URL(window.location.href);
+        const template = url.searchParams.get("template");
+        if (template) {
+            importDoc(
+                this.runtime.openComponent(this.docId, /* wait: */ true),
+                template,
+            );
+        }
     }
 
     protected async opened() {
