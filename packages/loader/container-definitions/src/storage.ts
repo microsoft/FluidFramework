@@ -58,7 +58,7 @@ export interface ITreeEntry {
     // Path to the object
     path: string;
 
-    // One of the above enum string values
+    // One of the below enum string values
     type: string;
 
     // The value of the entry - either a tree or a blob

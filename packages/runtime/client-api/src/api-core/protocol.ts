@@ -15,14 +15,3 @@ export interface IPingMessage {
     // Traces for the ping.
     traces: ITrace[];
 }
-
-/**
- * Raw blob stored within the tree
- */
-export interface IBlob {
-    // Contents of the blob
-    contents: string;
-
-    // The encoding of the contents string (utf-8 or base64)
-    encoding: string;
-}

@@ -16,7 +16,6 @@ export class Histogram {
     public add(value: number) {
         const bucket = Math.floor(value / this.increment);
         this.ensureBucket(bucket);
-        /* tslint:disable:no-increment-decrement */
         this.buckets[bucket]++;
     }
 

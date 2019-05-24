@@ -153,7 +153,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
     // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
-    // tslint:enable-next-line:variable-name
 
     private constructor(
         private readonly componentContext: IComponentContext,

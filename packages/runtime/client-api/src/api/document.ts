@@ -151,7 +151,6 @@ export class Document extends EventEmitter {
 
     /**
      * Creates a new shared cell.
-     * TODO (tanvir): replace this with type class.
      */
     public createCell(): cell.ICell {
         return this.create(cell.CellExtension.Type) as cell.ICell;
