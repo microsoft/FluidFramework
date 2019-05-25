@@ -45,6 +45,7 @@
     "loader-utils": "^1.1.0",
     "monaco-editor-webpack-plugin": "^1.5.4",
     "node-sass": "^4.9.3",
+    "rimraf": "^2.6.2",
     "sass-loader": "^7.1.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",

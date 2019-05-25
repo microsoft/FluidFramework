@@ -51,6 +51,7 @@
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
+    "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",
