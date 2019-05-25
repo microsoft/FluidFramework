@@ -55,7 +55,7 @@
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "^3.4.0",
+    "typescript": "^3.4.5",
     "xmldoc": "^1.1.2",
     "@types/mocha": "^5.2.5",
     "mocha": "^5.2.0",
