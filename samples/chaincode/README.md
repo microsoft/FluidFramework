@@ -1,12 +1,12 @@
 # Chaincode
 
-Use [Yo Prague](../../tools/generator-prague/README.md) to start building components and chaincode.
+Use [Yo Fluid](../../tools/generator-fluid/README.md) to start building components and chaincode.
 
 ## What's a chaincode?
 A chaincode is a installable block of code. They often create web components following the [Prague component model](../../docs/architecture/components/web-component-model.md).
 
 ## How do I build a chaincode?
-Build a chaincode with [Yo Prague](../../tools/generator-prague/README.md). We strongly suggest using Yo Prague as your starting point. For more exotic features, you can look through the examples in this directory.
+Build a chaincode with [Yo Fluid](../../tools/generator-fluid/README.md). We strongly suggest using Yo Fluid as your starting point. For more exotic features, you can look through the examples in this directory.
 
 ## How do I deploy a chaincode?
 

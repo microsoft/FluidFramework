@@ -12,28 +12,28 @@ tooling, and IoT.
 
 ## Build with Prague
 
-Use [Yo Prague](./tools/generator-prague/README.md) to get set up quickly after cloning the Prague repo.
+Use [Yo Fluid](./tools/generator-fluid/README.md) to get set up quickly after cloning the Prague repo.
 
 First, do these one time steps:
 
 ````bash
 npm install -g yo
 
-cd .../Prague/tools/generator-prague
+cd .../Prague/tools/generator-fluid
 
 npm install
 npm link
 ````
 
-Yo Prague is now ready. Try it!
+Yo Fluid is now ready. Try it!
 
 ````bash
-yo prague
+yo fluid
 ````
 
 [Chaincode](./samples/chaincode/README.md) has additional examples of building components with Prague.
 
-\* For Yo Prague setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
+\* For Yo Fluid setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
 ## Documentation
 
@@ -47,7 +47,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 ## FAQ
 
 * How do I get started?
-  * Check out [Yo Prague](./tools/generator-prague/README.md)
+  * Check out [Yo Fluid](./tools/generator-fluid/README.md)
 * Why can't I build or start docker?
   * [Allocate more than 4GB of RAM to Docker and share your harddrive with Docker](https://stackoverflow.microsoft.com/questions/137472/im-getting-docker-build-error-number-137)
 * Why can't I install Prague dependencies?
@@ -60,7 +60,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 * Why aren't commandline tools working?
   * [You may need to upgrade NPM or Node. We require above 5 and 8 respectively](https://stackoverflow.microsoft.com/questions/138019/yo-prague-fails-with-insight-track-firstcmd-args-slice0-2/138020#138020)
 * Do you have any suggested reading before I get started?
-  * Get hacking: check out [yo prague!](./tools/generator-prague/README.md)
+  * Get hacking: check out [yo fluid!](./tools/generator-fluid/README.md)
   * If you need to read, check out our [architecture documents](https://praguedocs.azurewebsites.net/architecture/readme.html).
 * [Can I contribute to Prague?](https://stackoverflow.microsoft.com/questions/126025/can-i-contribute-to-the-prague-codebase/126026#126026)
   * Heck yeah.
@@ -73,7 +73,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 
 [Translations](https://msit.microsoftstream.com/video/baf075cb-8718-4b16-aa73-400b64766317)
 
-[Yo Prague (Prague Getting Started)](https://msit.microsoftstream.com/video/95532bfa-919e-4233-943e-55faaf418234)
+[Yo Fluid (Prague Getting Started)](https://msit.microsoftstream.com/video/95532bfa-919e-4233-943e-55faaf418234)
 
 [All Demos](https://msit.microsoftstream.com/channel/de63dd15-b6a2-4237-9fbc-2a2629b12fbc)
 

@@ -21,7 +21,7 @@
     <li class="list-unstyled"><a href="/loader/prague/{{chartMonacoMoniker}}?chaincode=@chaincode/shared-text@0.3.5429" target="_blank">Data +
             Code Bindings</a></li>
 
-    <h3>Yo Prague - Bootstrapper</h3>
+    <h3>Yo Fluid - Bootstrapper</h3>
     <p>Follow the steps at the below link</p>
     <li class="list-unstyled"><a href="https://aka.ms/r11s" target="_blank">aka.ms/r11s</a></li>
 

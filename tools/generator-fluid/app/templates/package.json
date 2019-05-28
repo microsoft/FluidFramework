@@ -13,11 +13,12 @@
     "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "node getRoute.js",
+    "post-deploy": "getUrl -p",
     "tsc": "tsc"
   },
   "devDependencies": {
     "@prague/prague-dev-server": "^3.3.9",
+    "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
     "ts-loader": "^4.5.0",

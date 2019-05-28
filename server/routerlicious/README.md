@@ -16,7 +16,7 @@ The services follow the [twelve factor](https://12factor.net) methodology and ar
 
 ## Getting Started
 
-To get started with Prague, we suggest that you [build a component](https://praguedocs.azurewebsites.net/get-started/build-a-component.html) using the [Yo Prague](https://praguedocs.azurewebsites.net/get-started/yo-prague.html) bootstrapper.
+To get started with Prague, we suggest that you [build a component](https://praguedocs.azurewebsites.net/get-started/build-a-component.html) using the [Yo Fluid](https://praguedocs.azurewebsites.net/get-started/yo-prague.html) bootstrapper.
 
 If you want to dive into the Prague internals, keep reading below.
 

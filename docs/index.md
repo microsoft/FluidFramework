@@ -33,7 +33,7 @@ distributed data structures.
 * Data synchronization is ludicrously fast
 * Easy to plug in custom components
 
-## Build with Prague
+## Build with Fluid
 
 Use <xref:yo-prague> to get set up quickly.
 
@@ -42,19 +42,19 @@ First, do these one time steps:
 ````bash
 npm install -g yo
 
-cd .../Prague/tools/generator-prague
+cd .../Prague/tools/generator-fluid
 
 npm install
 npm link
 ````
 
-Yo Prague is now ready. Try it!
+Yo Fluid is now ready. Try it!
 
 ````bash
-yo prague
+yo fluid
 ````
 
-\* For Yo Prague setup issues: [Unauthorized - Stack
+\* For Yo Fluid setup issues: [Unauthorized - Stack
 Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
 ## Stack Overflow
