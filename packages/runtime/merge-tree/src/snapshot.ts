@@ -1,6 +1,5 @@
 import { ChildLogger, FileMode, ITree, TelemetryLogger, TreeEntry } from "@prague/container-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
-import * as assert from "assert";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 
@@ -72,6 +71,8 @@ export class Snapshot {
 
     emit(): ITree {
         let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
+        let length: number = chunk1.chunkLengthChars;
+        let segments: number = chunk1.chunkSegmentCount;
         const tree: ITree = {
             entries: [
                 {
@@ -87,11 +88,11 @@ export class Snapshot {
             id: null,
         };
 
-        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount, "emit: mismatch in totalSegmentCount");
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
         {
-            assert(chunk1.chunkLengthChars < chunk1.totalLengthChars);
-            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, chunk1.totalLengthChars, chunk1.chunkSegmentCount);
+            let chunk2 = this.getSeqLengthSegs(this.segments, this.segmentLengths, this.header.segmentsTotalLength, chunk1.chunkSegmentCount);
+            length += chunk2.chunkLengthChars;
+            segments += chunk2.chunkSegmentCount;
             tree.entries.push({
                 mode: FileMode.File,
                 path: "body",
@@ -103,6 +104,8 @@ export class Snapshot {
             });
         }
 
+        this.logger.shipAssert(length === this.header.segmentsTotalLength, "emit: mismatch in segmentsTotalLength");
+        this.logger.shipAssert(segments === chunk1.totalSegmentCount, "emit: mismatch in totalSegmentCount");
         return tree;
     }
 
@@ -116,6 +119,7 @@ export class Snapshot {
         };
         let segs = <ops.IJSONSegment[]>[];
         let segLengths = <number[]> [];
+        let totalLength: number = 0;
         let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
@@ -123,12 +127,23 @@ export class Snapshot {
                     (segment.removedSeq > this.seq))) {
                 segs.push(segment.toJSONObject());
                 segLengths.push(segment.cachedLength);
+                totalLength += segment.cachedLength;
             }
             return true;
         }
         this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
         this.segments = segs;
         this.segmentLengths = segLengths;
+
+        // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
+        // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
+        // Issue #1995 tracks following up on the core of the problem.
+        // In the meantime, this code makes sure we will write out all segments properly
+        if (this.header.segmentsTotalLength != totalLength) {
+            this.logger.sendError({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
+            this.header.segmentsTotalLength = totalLength;
+        }
+
         return segs;
     }
 
