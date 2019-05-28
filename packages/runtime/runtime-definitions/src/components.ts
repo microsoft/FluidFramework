@@ -140,7 +140,7 @@ export interface IComponentContext extends EventEmitter {
 
     createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
-    getComponent(id: string, wait: boolean): Promise<IComponentRuntime>;
+    getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime>;
 
     request(request: IRequest): Promise<IResponse>;
 }
@@ -169,7 +169,7 @@ export interface IHostRuntime extends IRuntime {
 
     // I believe these next two things won't be necessary
 
-    getComponent(id: string, wait?: boolean): Promise<IComponentRuntime>;
+    getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
     // TODO at some point we may want to split create from attach for components. But the distributed data
     // structures aren't yet prepared for this. For simplicity we just offer a createAndAttachComponent

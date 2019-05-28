@@ -6,6 +6,7 @@ This document lists the set of breaking changes as part of upgrading to 0.3
 - [SparseMatrix moved](#sparsematrix-moved)
 - [Rename one of the IComponentRegistry definition to ISharedObjectRegistry](#rename-one-of-the-icomponentregistry-definition-to-isharedobjectregistry)
 - [API ITree and ISnapshotTree "sha" properties have been renamed to "id"](#api-itree-and-isnapshottree-sha-properties-have-been-renamed-to-id)
+- [Rename IComponentContext getComponent method](#rename-icomponent-getcomponent-method)
 
 ## Legacy chaincode API removal
 
@@ -146,3 +147,8 @@ and switch the argument order for ContainerRuntime.Load to make those match
 
 ## API ITree and ISnapshotTree "sha" properties have been renamed to "id"
 The "sha" property has been renamed to "id" on the ITree and ISnapshotTree interfaces in  @prague/container-definitions since this property should not be assumed to be a sha. Storage drivers may need to be updated to accommodate this change
+
+## Rename IComponentContext getComponent method
+To match what the method is returning, rename:
+  `IComponentContext.getComponent` -> `IComponentContext.getComponentRuntime`
+

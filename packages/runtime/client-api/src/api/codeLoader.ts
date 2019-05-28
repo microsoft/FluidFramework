@@ -97,7 +97,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
             const componentId = requestUrl
                 ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                 : "text";
-            const component = await runtime.getComponent(componentId, true);
+            const component = await runtime.getComponentRuntime(componentId, true);
 
             // If there is a trailing slash forward to the component. Otherwise handle directly.
             if (trailingSlash === -1) {

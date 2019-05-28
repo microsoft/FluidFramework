@@ -366,7 +366,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         component.processSignal(transformed, local);
     }
 
-    public async getComponent(id: string, wait = true): Promise<IComponentRuntime> {
+    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         if (!this.componentsDeferred.has(id)) {

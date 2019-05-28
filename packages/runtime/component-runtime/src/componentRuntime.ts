@@ -181,10 +181,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.componentContext.createAndAttachComponent(id, pkg);
     }
 
-    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this.componentContext.getComponent(id, wait);
-    }
-
     /**
      * Opens the component with the given 'id'.
      */
@@ -193,7 +189,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         wait: boolean,
         services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
-        const runtime = await this.componentContext.getComponent(id, wait);
+        const runtime = await this.componentContext.getComponentRuntime(id, wait);
         const component = await runtime.request({ url: "/" });
 
         if (component.status !== 200 || component.mimeType !== "prague/component") {

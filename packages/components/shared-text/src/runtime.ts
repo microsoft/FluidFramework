@@ -464,7 +464,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             const componentId = requestUrl
                 ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
                 : "text";
-            const component = await runtime.getComponent(componentId, true);
+            const component = await runtime.getComponentRuntime(componentId, true);
 
             return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash) });
         }

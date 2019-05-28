@@ -124,8 +124,8 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         return this._hostRuntime.createAndAttachComponent(id, pkg);
     }
 
-    public getComponent(id: string, wait: boolean): Promise<IComponentRuntime> {
-        return this._hostRuntime.getComponent(id, wait);
+    public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {
+        return this._hostRuntime.getComponentRuntime(id, wait);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

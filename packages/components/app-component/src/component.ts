@@ -101,7 +101,7 @@ export abstract class Component extends EventEmitter implements IComponent {
             const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
 
             debug(`awaiting component ${componentId}`);
-            const component = await runtime.getComponent(componentId, true);
+            const component = await runtime.getComponentRuntime(componentId, true);
             debug(`have component ${componentId}`);
 
             // And then defer the handling of the request to the component
