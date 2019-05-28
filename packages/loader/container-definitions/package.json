@@ -27,6 +27,7 @@
     "typescript": "^3.4.5"
   },
   "dependencies": {
-    "@types/node": "^10.12.12"
+    "@types/node": "^10.12.12",
+    "debug": "^3.1.0"
   }
 }

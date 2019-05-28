@@ -1,3 +1,4 @@
+import { DebugLogger } from "@prague/container-definitions";
 import * as assert from "assert";
 import { MockStorage, specToSegment, TestClient } from ".";
 import { Client,  UniversalSequenceNumber } from "..";
@@ -14,7 +15,7 @@ describe("snapshot", () => {
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk);
 
-        const snapshot = new Snapshot(client1.mergeTree);
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.Create("prague:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
@@ -38,7 +39,7 @@ describe("snapshot", () => {
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 100);
 
-        const snapshot = new Snapshot(client1.mergeTree);
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.Create("prague:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);

@@ -1,5 +1,5 @@
-import { FileMode, ITree, TreeEntry } from "@prague/container-definitions";
-import { IObjectStorageService } from "@prague/runtime-definitions";
+import { ChildLogger, FileMode, ITree, TelemetryLogger, TreeEntry } from "@prague/container-definitions";
+import { IObjectStorageService} from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -40,9 +40,11 @@ export class Snapshot {
     pendingChunk: SnapChunk;
     segments: ops.IJSONSegment[];
     segmentLengths: number[];
+    logger: TelemetryLogger;
 
-    constructor(public mergeTree: MergeTree.MergeTree, public filename?: string,
+    constructor(public mergeTree: MergeTree.MergeTree, logger: TelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
+        this.logger = ChildLogger.Create(logger, "Snapshot");
     }
 
     getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,
@@ -85,7 +87,7 @@ export class Snapshot {
             id: null,
         };
 
-        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);
+        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount, "emit: mismatch in totalSegmentCount");
         if (chunk1.chunkSegmentCount < chunk1.totalSegmentCount)
         {
             assert(chunk1.chunkLengthChars < chunk1.totalLengthChars);
@@ -148,5 +150,4 @@ export class Snapshot {
     public static processChunk(chunk: string): ops.MergeTreeChunk {
         return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
     }
-
 }

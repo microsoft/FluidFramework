@@ -2,6 +2,7 @@ import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader, IRequest, IResponse } from "./loader";
+import { TelemetryLogger } from "./logger";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
 
@@ -145,6 +146,7 @@ export interface IContainerContext {
     readonly quorum: IQuorum | undefined;
     readonly loader: ILoader;
     readonly codeLoader: ICodeLoader;
+    readonly logger: TelemetryLogger;
 
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;

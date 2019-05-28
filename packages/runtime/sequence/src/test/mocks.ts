@@ -1,5 +1,6 @@
 import {
     ConnectionState,
+    DebugLogger,
     IDeltaManager,
     IDocumentMessage,
     IGenericBlob,
@@ -11,6 +12,7 @@ import {
     ISequencedDocumentMessage,
     ITreeEntry,
     MessageType,
+    TelemetryLogger,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
 import {
@@ -110,6 +112,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly platform: IPlatform;
     public readonly loader: ILoader;
+    public readonly logger: TelemetryLogger = DebugLogger.Create("prague:MockRuntime");
 
     public async getChannel(id: string): Promise<IChannel> {
         return null;

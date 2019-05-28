@@ -28,6 +28,7 @@
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
     "@prague/gitresources": "^0.3.0",
-    "@types/node": "^10.12.12"
+    "@types/node": "^10.12.12",
+    "@prague/utils": "^0.3.0"
   }
 }

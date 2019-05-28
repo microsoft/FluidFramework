@@ -242,7 +242,7 @@
             "type": "node",
             "request": "launch",
             "name": "Debug Current Test",
-            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "stopOnEntry": false,
             "env": {
                 "TS_NODE_PROJECT": "${fileDirname}/../../tsconfig.json",

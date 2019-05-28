@@ -7,6 +7,7 @@ import {
     IPragueResolvedUrl,
     IRequest,
     IResponse,
+    ITelemetryBaseLogger,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
@@ -33,6 +34,7 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
+        private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
 
@@ -122,7 +124,8 @@ export class Loader extends EventEmitter implements ILoader {
                         parsed!.id,
                         version,
                         connection,
-                        documentService);
+                        documentService,
+                        this.logger);
                 this.containers.set(versionedId, containerP);
             }
 
@@ -133,7 +136,8 @@ export class Loader extends EventEmitter implements ILoader {
                     parsed!.id,
                     version,
                     connection,
-                    documentService);
+                    documentService,
+                    this.logger);
         }
 
         return { container, parsed };
@@ -144,6 +148,7 @@ export class Loader extends EventEmitter implements ILoader {
         version: string,
         connection: string,
         documentService: IDocumentService,
+        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = await Container.Load(
             id,
@@ -152,7 +157,8 @@ export class Loader extends EventEmitter implements ILoader {
             this.codeLoader,
             this.options,
             connection,
-            this);
+            this,
+            logger);
 
         return container;
     }

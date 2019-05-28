@@ -1,5 +1,7 @@
 import {
+    ChildLogger,
     ConnectionState,
+    DebugLogger,
     FileMode,
     IChaincodeFactory,
     IChunkedOp,
@@ -26,12 +28,18 @@ import {
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
+    ITelemetryBaseLogger,
     ITree,
     ITreeEntry,
     MessageType,
+    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
-import { buildHierarchy, flatten, readAndParse } from "@prague/utils";
+import {
+    buildHierarchy,
+    flatten,
+    readAndParse,
+} from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
@@ -41,6 +49,8 @@ import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullChaincode";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { Quorum } from "./quorum";
+// tslint:disable-next-line:no-var-requires
+const now = require("performance-now") as () => number;
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails | null>;
@@ -63,19 +73,24 @@ export class Container extends EventEmitter implements IContainer {
         options: any,
         connection: string,
         loader: ILoader,
+        logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
             id,
             options,
             service,
             codeLoader,
-            loader);
+            loader,
+            logger);
         await container.load(version, connection);
 
         return container;
     }
 
     public runtime: any = null;
+
+    public subLogger: TelemetryLogger;
+    private logger: TelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -156,11 +171,25 @@ export class Container extends EventEmitter implements IContainer {
         private service: IDocumentService,
         private codeLoader: ICodeLoader,
         private loader: ILoader,
+        logger?: ITelemetryBaseLogger,
     ) {
         super();
 
         const [, documentId] = id.split("/");
         this._id = decodeURI(documentId);
+
+        // create logger for components to use
+        this.subLogger = DebugLogger.MixinDebugLogger(
+            "Prague",
+            {documentId: this.id},
+            logger);
+        // Prefix all events in this file with container-loader
+        this.logger = ChildLogger.Create(this.subLogger, "Container");
+
+        this.on("error", (error: any) => {
+            // tslint:disable-next-line:no-unsafe-any
+            this.logger.sendError({eventName: "onError", error});
+        });
     }
 
     /**
@@ -209,7 +238,7 @@ export class Container extends EventEmitter implements IContainer {
 
         // Only snapshot once a code quorum has been established
         if (!this.quorum!.has("code2")) {
-            debug(`Skipping snapshot due to no code quorum`);
+            this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
             return;
         }
 
@@ -223,7 +252,7 @@ export class Container extends EventEmitter implements IContainer {
             await this.snapshotCore(tagMessage);
 
         } catch (ex) {
-            debug("Snapshot error", ex);
+            this.logger.logException("SnapshotExceptionError", ex);
             throw ex;
 
         } finally {
@@ -438,12 +467,12 @@ export class Container extends EventEmitter implements IContainer {
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
                     if (!pause) {
-                        debug("Connected - resuming inbound messages");
+                        this.logger.sendTelemetryEvent({eventName: "ConnectedResume"});
                         this._deltaManager!.inbound.resume();
                         this._deltaManager!.outbound.resume();
                         this._deltaManager!.inboundSignal.resume();
                     } else {
-                        debug("Connected - waiting to process inbound messages");
+                        this.logger.sendTelemetryEvent({eventName: "ConnectedWaiting"});
                     }
                 }
 
@@ -451,7 +480,7 @@ export class Container extends EventEmitter implements IContainer {
                 this.loaded = true;
 
                 /* tslint:disable:no-unsafe-any */
-                debug(`Document loaded ${this.id}: ${Date.now()} `);
+                debug(`Document loaded ${this.id}}: ${now()}`);
             });
     }
 
@@ -749,7 +778,8 @@ export class Container extends EventEmitter implements IContainer {
             return;
         }
 
-        debug(`Changing from ${ConnectionState[this.connectionState]} to ${ConnectionState[value]}: ${reason}`);
+        this.logger.sendTelemetryEvent({eventName: "ConnectionStateChange",
+            from: ConnectionState[this.connectionState], reason, to: ConnectionState[value]});
         this._connectionState = value;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected

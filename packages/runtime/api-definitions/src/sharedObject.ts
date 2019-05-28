@@ -1,8 +1,10 @@
 import {
+    ChildLogger,
     ConnectionState,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
+    TelemetryLogger,
 } from "@prague/container-definitions";
 import {
     IComponentRuntime,
@@ -20,6 +22,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
+    protected readonly logger: TelemetryLogger;
+
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;
 
@@ -34,6 +38,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
+        this.logger = ChildLogger.Create(runtime ? runtime.logger : undefined, type, {SharedObjectId: id});
     }
 
     public toJSON() {
@@ -191,6 +196,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     protected prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return this.prepareCore(message, local);
+    }
+
+    protected debugAssert(condition: boolean, message: string) {
+        this.logger.debugAssert(condition, message);
     }
 
     private attachDeltaHandler() {

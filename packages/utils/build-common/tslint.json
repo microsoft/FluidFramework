@@ -11,6 +11,7 @@
         "no-console": [true, "log", "warn", "error"],
         "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
         "no-implicit-dependencies": [true, "dev"],
+        "function-name": [ true, { "method-regex": "^[a-z][\\w\\d]+$", "private-method-regex": "^[a-z][\\w\\d]+$", "protected-method-regex": "^[a-z][\\w\\d]+$", "static-method-regex": "^[A-Z][\\w\\d]+$", "function-regex": "^[a-z][\\w\\d]+$" } ],
 
         /**
          * Security Rules. The following rules should be turned on because they find security issues

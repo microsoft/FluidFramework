@@ -16,6 +16,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -141,6 +142,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.context.loader;
     }
 
+    public readonly logger: TelemetryLogger;
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
 
@@ -168,6 +170,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         private readonly registry: IComponentRegistry,
     ) {
         super();
+        this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
     }

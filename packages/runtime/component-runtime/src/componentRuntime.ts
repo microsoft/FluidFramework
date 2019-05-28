@@ -1,5 +1,6 @@
 import { ISharedObjectExtension } from "@prague/api-definitions";
 import {
+    ChildLogger,
     ConnectionState,
     FileMode,
     IBlobManager,
@@ -16,6 +17,7 @@ import {
     ISnapshotTree,
     ITreeEntry,
     MessageType,
+    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -83,6 +85,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         registry: ISharedObjectRegistry,
     ) {
         const tree = context.baseSnapshot;
+        const logger = ChildLogger.Create(context.hostRuntime.logger, undefined, {componentId: context.id});
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -96,7 +99,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             context.storage,
             context.snapshotFn,
             context.closeFn,
-            registry);
+            registry,
+            logger);
 
         // Must always receive the component type inside of the attributes
         if (tree && tree.trees) {
@@ -167,7 +171,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         private storageService: IDocumentStorageService,
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void,
-        private registry: ISharedObjectRegistry) {
+        private registry: ISharedObjectRegistry,
+        public readonly logger: TelemetryLogger) {
         super();
         this.attachListener();
     }

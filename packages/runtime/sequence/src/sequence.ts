@@ -383,7 +383,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         }
 
         this.client.mergeTree.commitGlobalMin();
-        const snap = new MergeTree.Snapshot(this.client.mergeTree);
+        const snap = new MergeTree.Snapshot(this.client.mergeTree, this.logger);
         snap.extractSync();
         const mtSnap = snap.emit();
 
@@ -544,8 +544,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
-        assert(chunk1.chunkLengthChars <= chunk1.totalLengthChars);
-        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount);
+        assert(chunk1.chunkLengthChars <= chunk1.totalLengthChars, "Mismatch in totalLengthChars");
+        assert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount, "Mismatch in totalSegmentCount");
         if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
             return;
         }

@@ -1,4 +1,4 @@
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { DebugLogger, ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 // tslint:disable-next-line:no-implicit-dependencies
 import * as JsDiff from "diff";
@@ -1137,7 +1137,7 @@ export function TestPack(verbose = true) {
             }
         }
         cli.updateMinSeq(6);
-        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree).extractSync();
+        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree, DebugLogger.Create("prague:snapshot")).extractSync();
         if (verbose) {
             for (let seg of segs) {
                 console.log(`${specToSegment(seg)}`);

@@ -17,6 +17,7 @@ import {
     ISnapshotTree,
     ITree,
     MessageType,
+    TelemetryLogger,
 } from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -61,6 +62,8 @@ export class ContainerContext implements IContainerContext {
 
         return context;
     }
+
+    public readonly logger: TelemetryLogger;
 
     public get id(): string {
         return this.container.id;
@@ -123,6 +126,7 @@ export class ContainerContext implements IContainerContext {
         public readonly closeFn: () => void,
     ) {
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
+        this.logger = container.subLogger;
     }
 
     public async snapshot(tagMessage: string): Promise<ITree | null> {
