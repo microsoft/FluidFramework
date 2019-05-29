@@ -2,13 +2,25 @@
   "build": {
     "content": [
       {
-        "files": ["**.md", "**.yml"],
-        "exclude": ["_site/**", "_template/**"]
+        "files": [
+          "**.md",
+          "**.yml"
+        ],
+        "exclude": [
+          "_site/**",
+          "_template/**",
+          "legacy/**",
+        ]
       }
     ],
     "resource": [
       {
-        "files": ["images/**", "examples/**/*.html", "**.png", "**.jpg"]
+        "files": [
+          "images/**",
+          "examples/**/*.html",
+          "**.png",
+          "**.jpg",
+        ]
       }
     ],
     "dest": "_site",
@@ -22,7 +34,10 @@
     },
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],
-    "template": ["default", "_template"],
+    "template": [
+      "default",
+      "_template",
+    ],
     "postProcessors": [],
     "markdownEngineName": "dfm-latest",
     "noLangKeyword": false,

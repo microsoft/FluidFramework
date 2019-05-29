@@ -1,3 +1,7 @@
+---
+uid: concepts
+---
+
 # Concepts
 
 * This section will contain deeper information about the key concepts that developers should understand to be effective

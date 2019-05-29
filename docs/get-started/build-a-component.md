@@ -1,3 +1,7 @@
+---
+uid: build-a-component
+---
+
 # Build a component
 
 * Walkthrough of a sample component, created using <xref:yo-prague>, along with the source code that the generator

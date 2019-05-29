@@ -2,6 +2,8 @@
 uid: component-architecture
 ---
 
+# Component architecture
+
 * [Prague web component model](./web-component-model.md)
 * [Prague component mechanism](./component-mechanism.md)
 

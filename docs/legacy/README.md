@@ -1,10 +1,14 @@
-# Prague
+# Legacy docs
+
+> [!WARNING]
+> This folder contains examples using Prague's v0.1.x API. It is kept for historical reasons only.
 
 ## Running against our API
 
 ### Private NPM Repository
 
-The simplest way to get up and running with Prague is to install our npm module and then run against our production service. From there you can choose whether to webpack, browserify, etc...
+The simplest way to get up and running with Prague is to install our npm module and then run against our production
+service. From there you can choose whether to webpack, browserify, etc.
 
 To get started simply
 * Navigate to our production npm repository https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed
@@ -14,7 +18,7 @@ To get started simply
 * And then follow the steps provided. This involves adding a new line to your project's .npmrc as well as storing credentials to access the private repo on your machine.
 * IMPORTANT NOTE: VSTS will give you a line like this to put into your .npmrc file:
   `registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
-  
+
   You need to prefix that line with @prague in order to not force all package lookups to go to the Prague registry. The line you add to your .npmrc file should actually look like this:
   `@prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
 
@@ -29,7 +33,8 @@ If you'd like to recieve email notifications when breaking changes are introduce
 ##### @prague/routerlicious
 The core Prague project. This contains the client side code you need to run Prague.
 
-You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious README](../server/routerlicious) for more information
+You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious
+README](../server/routerlicious) for more information
 
 If using WebPack you will need to update your config to exclude certain node modules. An example webpack config is given
 below showing how to exclude these modules. We are working to break these dependencies. The example also shows how
@@ -91,8 +96,8 @@ always-auth=true
 Edit your Dockerfile to contain the following lines prior to the `npm install`
 
 ```
-ARG NPM_TOKEN  
-COPY .npmrc .npmrc  
+ARG NPM_TOKEN
+COPY .npmrc .npmrc
 ```
 
 When building you then need to provide the token as a build argument.
@@ -103,7 +108,9 @@ docker build --build-arg NPM_TOKEN=${NPM_TOKEN} .
 
 ### Script include
 
-We also publish our API files which can be included in your project with a `<script>` tag. The [sequence](./api/examples/sequence) example shows how to do this. We recommend installing from npm rather than using this approach since it better integrates with a modern JavaScript development environment.
+We also publish our API files which can be included in your project with a `<script>` tag. The
+[sequence](./api/examples/sequence) example shows how to do this. We recommend installing from npm rather than using
+this approach since it better integrates with a modern JavaScript development environment.
 
 ## Build Machine
 
