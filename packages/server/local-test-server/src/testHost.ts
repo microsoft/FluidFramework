@@ -1,8 +1,8 @@
-import { ISharedObject } from "@prague/api-definitions";
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { IComponent, IComponentFactory } from "@prague/runtime-definitions";
 import { SharedStringExtension, SparseMatrixExtension } from "@prague/sequence";
+import { ISharedObject } from "@prague/shared-object-common";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,

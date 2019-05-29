@@ -1,4 +1,3 @@
-import { SharedObject } from "@prague/api-definitions";
 import {
     ISequencedDocumentMessage,
 } from "@prague/container-definitions";
@@ -6,6 +5,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 
 const ownerPath = "owner";

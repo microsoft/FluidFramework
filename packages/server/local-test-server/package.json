@@ -42,7 +42,7 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@chaincode/table-document": "^0.3.0",
-    "@prague/api-definitions": "^0.3.0",
+    "@prague/shared-object-common": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-datastore": "^0.3.0",
     "@prague/cell": "^0.3.0",

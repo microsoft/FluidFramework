@@ -1,7 +1,7 @@
 // tslint:disable:align
-import { ISharedObject, SharedObject, ValueType } from "@prague/api-definitions";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import { IMapOperation, IMapValue } from "./definitions";
 import { SharedDirectory } from "./directory";
 import { IValueChanged, IValueOpEmitter, SerializeFilter } from "./interfaces";

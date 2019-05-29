@@ -1,4 +1,3 @@
-import { ISharedObject } from "@prague/api-definitions";
 import * as cell from "@prague/cell";
 import {
     IDeltaManager,
@@ -13,6 +12,7 @@ import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap, MapExtension } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
+import { ISharedObject } from "@prague/shared-object-common";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";

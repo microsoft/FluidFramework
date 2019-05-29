@@ -1,10 +1,10 @@
-import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { ITree } from "@prague/container-definitions";
 import {
     IComponentRuntime,
     IDistributedObjectServices,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 
 /**
  * Consensus Ordered Collection channel extension interface

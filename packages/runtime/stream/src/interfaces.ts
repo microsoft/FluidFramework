@@ -1,4 +1,4 @@
-import { ISharedObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/shared-object-common";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 

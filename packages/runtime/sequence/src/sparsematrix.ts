@@ -1,4 +1,3 @@
-import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import {
     BaseSegment,
     IJSONSegment,
@@ -8,6 +7,7 @@ import {
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 import {
     SharedSegmentSequence,
     SubSequence,

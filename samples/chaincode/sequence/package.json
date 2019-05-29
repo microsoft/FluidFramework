@@ -25,7 +25,7 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.4668",
+    "@prague/shared-object-common": "^0.1.4668",
     "@prague/app-component": "^0.1.4668",
     "@prague/loader-web": "^0.1.4668",
     "@prague/map": "^0.1.4668",

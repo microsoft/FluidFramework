@@ -1,5 +1,5 @@
-import { ISharedObject, ISharedObjectExtension } from "@prague/api-definitions";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 import { Stream } from "./stream";
 
 export class StreamExtension implements ISharedObjectExtension {

@@ -7,6 +7,7 @@ This document lists the set of breaking changes as part of upgrading to 0.3
 - [Rename one of the IComponentRegistry definition to ISharedObjectRegistry](#rename-one-of-the-icomponentregistry-definition-to-isharedobjectregistry)
 - [API ITree and ISnapshotTree "sha" properties have been renamed to "id"](#api-itree-and-isnapshottree-sha-properties-have-been-renamed-to-id)
 - [Rename IComponentContext getComponent method](#rename-icomponent-getcomponent-method)
+- [Rename api-definitions package](#rename-api-definitions-package)
 
 ## Legacy chaincode API removal
 
@@ -152,3 +153,6 @@ The "sha" property has been renamed to "id" on the ITree and ISnapshotTree inter
 To match what the method is returning, rename:
   `IComponentContext.getComponent` -> `IComponentContext.getComponentRuntime`
 
+## Rename api-definitions package
+This package no longer houses interface definitions, but rather has the base class of all the shared objects in the runtime.  Renaming:
+  `@prague/api-definitions` -> `@prague/shared-object-common`

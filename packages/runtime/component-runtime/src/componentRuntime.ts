@@ -1,4 +1,3 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import {
     ChildLogger,
     ConnectionState,
@@ -32,6 +31,7 @@ import {
     IInboundSignalMessage,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { Deferred, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

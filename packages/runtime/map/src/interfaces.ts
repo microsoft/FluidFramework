@@ -1,5 +1,5 @@
-import { ISharedObject } from "@prague/api-definitions";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISharedObject } from "@prague/shared-object-common";
 
 export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
 

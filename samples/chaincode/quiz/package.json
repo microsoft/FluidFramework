@@ -28,7 +28,7 @@
     "webpack-visualizer-plugin": "^0.1.11"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.3542",
+    "@prague/shared-object-common": "^0.1.3542",
     "@prague/map": "^0.1.3542",
     "@prague/runtime-definitions": "^0.1.3542",
     "@prague/shared-string": "^0.1.3542",

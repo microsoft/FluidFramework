@@ -1,6 +1,6 @@
-import { ICollaborativeObject, IDocument } from "@prague/api-definitions";
 import { IMap, MapExtension } from "@prague/map";
 import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
+import { ICollaborativeObject, IDocument } from "@prague/shared-object-common";
 import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
 import { IStream, StreamExtension } from "@prague/stream";
 import { EventEmitter } from "events";

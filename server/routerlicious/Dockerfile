@@ -57,7 +57,7 @@ COPY packages/loader/container-loader/package*.json packages/loader/container-lo
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/utils/package*.json packages/loader/utils/
-COPY packages/runtime/api-definitions/package*.json packages/runtime/api-definitions/
+COPY packages/runtime/shared-object-common/package*.json packages/runtime/shared-object-common/
 COPY packages/runtime/component-runtime/package*.json packages/runtime/component-runtime/
 COPY packages/runtime/consensus-ordered-collection/package*.json packages/runtime/consensus-ordered-collection/
 COPY packages/runtime/consensus-register-collection/package*.json packages/runtime/consensus-register-collection/

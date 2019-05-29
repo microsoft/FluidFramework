@@ -1,6 +1,6 @@
-import { ICollaborativeObject, IDocument } from "@prague/api-definitions";
 import { IMap, MapExtension } from "@prague/map";
 import { IDistributedObjectServices, IRuntime, IUser } from "@prague/runtime-definitions";
+import { ICollaborativeObject, IDocument } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import * as uuid from "uuid/v4";
 import { runTaskAnalyzer } from "./taskHelper";

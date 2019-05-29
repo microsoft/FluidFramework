@@ -1,4 +1,3 @@
-import { SharedObject } from "@prague/api-definitions";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -10,6 +9,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ICell } from "./interfaces";

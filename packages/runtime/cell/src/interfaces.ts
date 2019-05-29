@@ -1,4 +1,4 @@
-import { ISharedObject } from "@prague/api-definitions";
+import { ISharedObject } from "@prague/shared-object-common";
 
 /**
  * Shared cell interface

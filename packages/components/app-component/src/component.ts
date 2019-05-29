@@ -1,4 +1,3 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IContainerContext,
@@ -10,6 +9,7 @@ import {
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import { ISharedMap, MapExtension } from "@prague/map";
 import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 

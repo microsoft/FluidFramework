@@ -1,5 +1,5 @@
 {
-  "name": "@prague/api-definitions",
+  "name": "@prague/shared-object-common",
   "version": "0.3.0",
   "description": "Prague document loader",
   "main": "dist/index.js",

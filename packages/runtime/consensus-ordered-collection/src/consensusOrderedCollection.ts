@@ -1,6 +1,6 @@
-import { SharedObject } from "@prague/api-definitions";
 import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { SharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";

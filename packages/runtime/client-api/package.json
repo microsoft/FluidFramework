@@ -39,7 +39,7 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.3.0",
+    "@prague/shared-object-common": "^0.3.0",
     "@prague/cell": "^0.3.0",
     "@prague/component-runtime": "^0.3.0",
     "@prague/consensus-ordered-collection": "^0.3.0",

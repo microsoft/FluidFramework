@@ -1,5 +1,4 @@
 import * as agent from "@prague/agent";
-import { SharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { Browser, IClient, IHost, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import {
@@ -11,6 +10,7 @@ import {
     IValueChanged,
 } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { SharedObject } from "@prague/shared-object-common";
 import * as $ from "jquery";
 import { parse } from "url";
 // tslint:disable-next-line:no-var-requires

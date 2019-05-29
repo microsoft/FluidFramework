@@ -35,7 +35,7 @@
     "@chaincode/charts": "^0.3.0",
     "@chaincode/monaco": "^0.3.0",
     "@chaincode/pinpoint-editor": "^0.3.0",
-    "@prague/api-definitions": "^0.3.0",
+    "@prague/shared-object-common": "^0.3.0",
     "@prague/app-component": "^0.3.0",
     "@prague/app-ui": "^0.3.0",
     "@prague/build-common": "^0.3.0",

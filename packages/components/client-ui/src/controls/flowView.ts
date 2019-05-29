@@ -1,12 +1,12 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import { ISharedObject } from "@prague/api-definitions";
 import * as api from "@prague/client-api";
 import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
+import { ISharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
 import * as Katex from "katex";

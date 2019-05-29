@@ -1,6 +1,6 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import { ISharedMap, IValueType } from "@prague/map";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { OwnedSharedMap } from "./ownedMap";
 
 // register default types

@@ -5,8 +5,8 @@
 // import * as socketStorage from "@prague/socket-storage";
 // import * as jwt from "jsonwebtoken";
 // import { JSDOM } from "jsdom";
-// // import { ICollaborativeObject } from "@prague/api-definitions";
 // import { IMap, MapExtension } from "@prague/map";
+// // import { ICollaborativeObject } from "@prague/shared-object-common";
 
 // const routerlicious = "https://alfred.wu2.prague.office-int.com";
 // const historian = "https://historian.wu2.prague.office-int.com";

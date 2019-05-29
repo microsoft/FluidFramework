@@ -1,5 +1,5 @@
-import { ISharedObjectExtension } from "@prague/api-definitions";
 import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { ISharedMap, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
 

@@ -20,7 +20,7 @@
     "webpack-merge": "^4.1.4"
   },
   "dependencies": {
-    "@prague/api-definitions": "^0.1.0",
+    "@prague/shared-object-common": "^0.1.0",
     "@prague/client-api": "^0.1.0",
     "@prague/datastore": "^0.1.0",
     "@prague/local-test-server": "^0.1.0",
