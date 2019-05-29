@@ -1,0 +1,59 @@
+{
+  "name": "@chaincode/Musica",
+  "description": "Play music collaboratively",
+  "version": "0.0.5",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\"",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "node getRoute.js",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@prague/prague-dev-server": "^3.3.5",
+    "@types/node": "^10.14.6",
+    "@types/react-dom": "^16.0.11",
+    "@types/react": "^16.8.2",
+    "css-loader": "^1.0.0",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "^3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-merge": "4.1.4"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@babel/core": "^7.4.4",
+    "@prague/app-component": "^0.3.0",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/map": "^0.3.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.5",
+    "file-loader": "^3.0.1",
+    "rc-slider": "^8.6.9",
+    "rc-tooltip": "^3.7.3",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3",
+    "react-piano": "^3.1.2",
+    "react-widgets": "^4.4.11",
+    "soundfont-player": "^0.11.0",
+    "url-loader": "^1.1.2",
+    "yarn": "^1.15.2"
+  }
+}
