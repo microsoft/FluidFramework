@@ -37,7 +37,7 @@
     "@types/redis": "^2.8.10",
     "ts-loader": "^5.3.1",
     "tslint": "^5.10.0",
-    "typescript": "^2.8.3",
+    "typescript": "~3.4.5",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0"
   }

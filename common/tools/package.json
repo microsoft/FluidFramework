@@ -6,6 +6,6 @@
     "@types/mocha": "^5.2.6",
     "mocha": "^5.2.0",
     "ts-node": "^8.0.2",
-    "typescript": "^3.4.0"
+    "typescript": "~3.4.5"
   }
 }

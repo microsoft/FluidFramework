@@ -56,6 +56,6 @@
     "nyc": "^11.8.0",
     "supertest": "^3.0.0",
     "tslint": "^5.9.1",
-    "typescript": "^2.8.3"
+    "typescript": "~3.4.5"
   }
 }

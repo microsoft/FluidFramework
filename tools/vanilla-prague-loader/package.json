@@ -21,7 +21,7 @@
     "@types/url-parse": "^1.4.3",
     "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
-    "typescript": "^3.4.0",
+    "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",

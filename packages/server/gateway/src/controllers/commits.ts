@@ -85,6 +85,7 @@ export async function load(
     id: string,
     versions: resources.ICommitDetails[]) {
     console.log(JSON.stringify(versions));
+    // tslint:disable-next-line:no-jquery-raw-elements
     $("#commitsView").append($(`<h2>Document ${id} commit graph</h2>`));
     generateGraph(type, pathPostfix, tenantId, id, versions);
 }

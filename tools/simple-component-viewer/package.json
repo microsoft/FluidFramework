@@ -13,7 +13,7 @@
     "@prague/vanilla-loader": "^0.0.14"
   },
   "devDependencies": {
-    "typescript": "3.3.4000",
+    "typescript": "~3.4.5",
     "webpack-cli": "3.3.0",
     "webpack": "4.29.6",
     "ts-loader": "5.3.3",

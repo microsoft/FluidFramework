@@ -15,7 +15,7 @@
   "devDependencies": {
     "@types/uuid": "^3.4.4",
     "ts-loader": "^5.3.1",
-    "typescript": "^3.1.6",
+    "typescript": "~3.4.5",
     "webpack": "^4.26.1",
     "webpack-cli": "^3.1.2"
   },

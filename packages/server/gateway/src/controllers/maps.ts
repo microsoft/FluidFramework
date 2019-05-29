@@ -36,6 +36,7 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
     const isCollab = value instanceof SharedObject;
 
     if (newElement) {
+        // tslint:disable-next-line:no-jquery-raw-elements
         keyElement = $(`<div class="${key} ${isCollab ? "collab-object" : ""}"></div>`);
         container.append(keyElement);
     }
@@ -84,6 +85,7 @@ function displayValues(map: ISharedMap, container: JQuery, doc: api.Document) {
 async function displayMap(parentElement: JQuery, key: string, map: ISharedMap,
     // tslint:disable-next-line: align
     parent: ISharedMap, doc: api.Document) {
+    // tslint:disable-next-line:no-jquery-raw-elements
     const header = key !== null ? $(`<h2>${key}: ${map.id}</h2>`) : $(`<h2>${map.id}</h2>`);
 
     if (key !== null) {
@@ -96,7 +98,9 @@ async function displayMap(parentElement: JQuery, key: string, map: ISharedMap,
     }
     parentElement.append(header);
 
+    // tslint:disable-next-line:no-jquery-raw-elements
     const container = $(`<div></div>`);
+    // tslint:disable-next-line:no-jquery-raw-elements
     const childMaps = $(`<div></div>`);
 
     displayValues(map, container, doc);
