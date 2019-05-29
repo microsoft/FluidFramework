@@ -13,9 +13,9 @@ import {
     IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITelemetryLogger,
     ITreeEntry,
     MessageType,
-    TelemetryLogger,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { IChannel, IDistributedObjectServices } from "./channel";
@@ -39,7 +39,7 @@ export interface IComponentRuntime extends EventEmitter {
 
     readonly loader: ILoader;
 
-    readonly logger: TelemetryLogger;
+    readonly logger: ITelemetryLogger;
 
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
@@ -161,7 +161,7 @@ export interface IHostRuntime extends IRuntime {
     readonly branch: string;
     readonly minimumSequenceNumber: number;
     readonly loader: ILoader;
-    readonly logger: TelemetryLogger;
+    readonly logger: ITelemetryLogger;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;

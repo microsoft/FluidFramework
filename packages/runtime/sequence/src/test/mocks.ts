@@ -1,6 +1,5 @@
 import {
     ConnectionState,
-    DebugLogger,
     IDeltaManager,
     IDocumentMessage,
     IGenericBlob,
@@ -10,9 +9,9 @@ import {
     IRequest,
     IResponse,
     ISequencedDocumentMessage,
+    ITelemetryLogger,
     ITreeEntry,
     MessageType,
-    TelemetryLogger,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
 import {
@@ -23,6 +22,7 @@ import {
     IDistributedObjectServices,
 } from "@prague/runtime-definitions";
 import { IHistorian } from "@prague/services-client";
+import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
@@ -112,7 +112,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly platform: IPlatform;
     public readonly loader: ILoader;
-    public readonly logger: TelemetryLogger = DebugLogger.Create("prague:MockRuntime");
+    public readonly logger: ITelemetryLogger = DebugLogger.Create("prague:MockRuntime");
 
     public async getChannel(id: string): Promise<IChannel> {
         return null;

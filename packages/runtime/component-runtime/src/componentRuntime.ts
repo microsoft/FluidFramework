@@ -1,5 +1,4 @@
 import {
-    ChildLogger,
     ConnectionState,
     FileMode,
     IBlobManager,
@@ -14,9 +13,9 @@ import {
     IResponse,
     ISequencedDocumentMessage,
     ISnapshotTree,
+    ITelemetryLogger,
     ITreeEntry,
     MessageType,
-    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -32,7 +31,7 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
-import { Deferred, readAndParse } from "@prague/utils";
+import { ChildLogger, Deferred, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -172,7 +171,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         private snapshotFn: (message: string) => Promise<void>,
         private closeFn: () => void,
         private registry: ISharedObjectRegistry,
-        public readonly logger: TelemetryLogger) {
+        public readonly logger: ITelemetryLogger) {
         super();
         this.attachListener();
     }

@@ -1,4 +1,5 @@
-import { DebugLogger, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-implicit-dependencies
 import * as JsDiff from "diff";

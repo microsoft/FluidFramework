@@ -15,9 +15,9 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
+    ITelemetryLogger,
     ITree,
     MessageType,
-    TelemetryLogger,
 } from "@prague/container-definitions";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -63,7 +63,7 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
-    public readonly logger: TelemetryLogger;
+    public readonly logger: ITelemetryLogger;
 
     public get id(): string {
         return this.container.id;

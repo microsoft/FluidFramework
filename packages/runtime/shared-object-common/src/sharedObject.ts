@@ -1,16 +1,16 @@
 import {
-    ChildLogger,
     ConnectionState,
     ISequencedDocumentMessage,
+    ITelemetryLogger,
     ITree,
     MessageType,
-    TelemetryLogger,
 } from "@prague/container-definitions";
 import {
     IComponentRuntime,
     IDistributedObjectServices,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { ChildLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
@@ -22,7 +22,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
-    protected readonly logger: TelemetryLogger;
+    protected readonly logger: ITelemetryLogger;
 
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;

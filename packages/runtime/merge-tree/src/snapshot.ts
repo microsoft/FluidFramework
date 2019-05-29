@@ -1,5 +1,6 @@
-import { ChildLogger, FileMode, ITree, TelemetryLogger, TreeEntry } from "@prague/container-definitions";
+import { FileMode, ITelemetryLogger, ITree, TreeEntry } from "@prague/container-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
+import { ChildLogger } from "@prague/utils";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 
@@ -39,9 +40,9 @@ export class Snapshot {
     pendingChunk: SnapChunk;
     segments: ops.IJSONSegment[];
     segmentLengths: number[];
-    logger: TelemetryLogger;
+    logger: ITelemetryLogger;
 
-    constructor(public mergeTree: MergeTree.MergeTree, logger: TelemetryLogger, public filename?: string,
+    constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
         this.logger = ChildLogger.Create(logger, "Snapshot");
     }

@@ -1,7 +1,5 @@
 import {
-    ChildLogger,
     ConnectionState,
-    DebugLogger,
     FileMode,
     IChaincodeFactory,
     IChunkedOp,
@@ -29,14 +27,16 @@ import {
     ISignalMessage,
     ISnapshotTree,
     ITelemetryBaseLogger,
+    ITelemetryLogger,
     ITree,
     ITreeEntry,
     MessageType,
-    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
     buildHierarchy,
+    ChildLogger,
+    DebugLogger,
     flatten,
     readAndParse,
 } from "@prague/utils";
@@ -89,8 +89,8 @@ export class Container extends EventEmitter implements IContainer {
 
     public runtime: any = null;
 
-    public subLogger: TelemetryLogger;
-    private logger: TelemetryLogger;
+    public subLogger: ITelemetryLogger;
+    private logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;

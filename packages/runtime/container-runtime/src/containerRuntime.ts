@@ -14,9 +14,9 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
+    ITelemetryLogger,
     ITree,
     MessageType,
-    TelemetryLogger,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -142,7 +142,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.context.loader;
     }
 
-    public readonly logger: TelemetryLogger;
+    public readonly logger: ITelemetryLogger;
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
 

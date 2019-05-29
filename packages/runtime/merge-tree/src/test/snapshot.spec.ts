@@ -1,4 +1,4 @@
-import { DebugLogger } from "@prague/container-definitions";
+import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import { MockStorage, specToSegment, TestClient } from ".";
 import { Client,  UniversalSequenceNumber } from "..";
