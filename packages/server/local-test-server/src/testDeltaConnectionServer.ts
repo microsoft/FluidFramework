@@ -35,7 +35,7 @@ import {
     TestWebSocketServer,
 } from "@prague/test-utils";
 import * as jwt from "jsonwebtoken";
-import * as moniker from "moniker";
+import * as randomName from "random-name";
 
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
@@ -157,7 +157,7 @@ export function register(
             }
             await tenantManager.verifyToken(claims.tenantId, token);
 
-            const clientId = moniker.choose();
+            const clientId = `${randomName.first()}-${randomName.last()}`;
 
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
