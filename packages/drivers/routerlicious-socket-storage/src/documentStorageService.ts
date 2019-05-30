@@ -43,8 +43,8 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return buildHierarchy(tree);
     }
 
-    public async getVersions(commitId: string, count: number): Promise<IVersion[]> {
-        const commits = await this.manager.getCommits(commitId, count);
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+        const commits = await this.manager.getCommits(versionId, count);
         return commits.map((commit) => ({id: commit.sha, treeId: commit.commit.tree.sha}));
     }
 

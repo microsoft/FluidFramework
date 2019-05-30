@@ -21,8 +21,8 @@ export class ComponentStorageService implements IDocumentStorageService {
         return this.storageService.getSnapshotTree(version);
     }
 
-    public getVersions(commitId: string, count: number): Promise<IVersion[]> {
-        return this.storageService.getVersions(commitId, count);
+    public getVersions(versionId: string, count: number): Promise<IVersion[]> {
+        return this.storageService.getVersions(versionId, count);
     }
 
     public getContent(version: IVersion, path: string): Promise<string> {

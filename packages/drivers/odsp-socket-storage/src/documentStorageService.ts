@@ -32,8 +32,8 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return hierarchicalTree;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
-        return this.storageManager.getVersions(commitId, count);
+    public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
+        return this.storageManager.getVersions(versionId, count);
     }
 
     public async read(blobId: string): Promise<string> {

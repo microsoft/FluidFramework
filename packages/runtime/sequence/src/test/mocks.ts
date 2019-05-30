@@ -138,7 +138,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public async uploadBlob(file: IGenericBlob): Promise<IGenericBlob> {
         return null;
     }
-    public async getBlob(sha: string): Promise<IGenericBlob> {
+    public async getBlob(blobId: string): Promise<IGenericBlob> {
         return null;
     }
     public async getBlobMetadata(): Promise<IGenericBlob[]> {

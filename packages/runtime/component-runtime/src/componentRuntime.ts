@@ -334,10 +334,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return file;
     }
 
-    public getBlob(sha: string): Promise<IGenericBlob> {
+    public getBlob(blobId: string): Promise<IGenericBlob> {
         this.verifyNotClosed();
 
-        return this.blobManager.getBlob(sha);
+        return this.blobManager.getBlob(blobId);
     }
 
     public async getBlobMetadata(): Promise<IGenericBlob[]> {

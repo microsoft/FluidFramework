@@ -12,7 +12,7 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         return null;
     }
 
-    public async getVersions(commitId: string, count: number): Promise<api.IVersion[]> {
+    public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
         return [];
     }
 

@@ -26,11 +26,11 @@ export class ChannelStorageService implements IObjectStorageService {
 
     /* tslint:disable:promise-function-async */
     public read(path: string): Promise<string> {
-        const sha = this.getShaForPath(path);
-        return this.storage.read(sha);
+        const id = this.getIdForPath(path);
+        return this.storage.read(id);
     }
 
-    private getShaForPath(path: string): string {
+    private getIdForPath(path: string): string {
         return this.flattenedTree[path];
     }
 }

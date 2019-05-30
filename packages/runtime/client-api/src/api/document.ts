@@ -210,8 +210,8 @@ export class Document extends EventEmitter {
         return this.runtime.uploadBlob(file);
     }
 
-    public async getBlob(sha: string): Promise<IGenericBlob> {
-        return this.runtime.getBlob(sha);
+    public async getBlob(blobId: string): Promise<IGenericBlob> {
+        return this.runtime.getBlob(blobId);
     }
 
     public getBlobMetadata(): Promise<IGenericBlob[]> {

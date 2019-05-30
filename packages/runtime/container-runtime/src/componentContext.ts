@@ -104,7 +104,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     // tslint:disable-next-line:variable-name
     private _componentRuntime: IComponentRuntime;
 
-    // Tracks the base snapshot hash. If no ops effect this component then the sha value can be returned on a
+    // Tracks the base snapshot ID. If no ops effect this component then the id value can be returned on a
     // snapshot call
     private baseId = null;
 
@@ -133,9 +133,9 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         this._componentRuntime.changeConnectionState(value, clientId);
     }
 
-    // Called after a snapshot to update the base sha
-    public updateBaseId(sha: string) {
-        this.baseId = sha;
+    // Called after a snapshot to update the base ID
+    public updateBaseId(id: string) {
+        this.baseId = id;
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -192,7 +192,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
             },
         });
 
-        // base sha still being set means previous snapshot is still valid
+        // base ID still being set means previous snapshot is still valid
         if (this.baseId) {
             snapshot.id = this.baseId;
         }

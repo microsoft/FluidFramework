@@ -34,8 +34,8 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return p;
     }
 
-    public async getVersions(commitId: string | null, count: number): Promise<IVersion[]> {
-        return this.storage.getVersions(commitId, count);
+    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+        return this.storage.getVersions(versionId, count);
     }
 
     public async read(blobId: string): Promise<string | undefined> {

@@ -146,12 +146,12 @@ export interface IDocumentStorageService {
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null | undefined>;
 
     /**
-     * Retrieves all versions of the document starting at the specified commitId - or null if from the head
+     * Retrieves all versions of the document starting at the specified versionId - or null if from the head
      */
-    getVersions(commitId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
 
     /**
-     * Retrieves the content for the given commit at the given path
+     * Retrieves the content for the given version at the given path
      */
     getContent(version: IVersion, path: string): Promise<string | undefined>;
 

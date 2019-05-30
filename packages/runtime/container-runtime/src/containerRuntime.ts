@@ -57,8 +57,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         const components = new Map<string, ISnapshotTree>();
         const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
-            const moduleSha = context.baseSnapshot.commits[key];
-            const commit = (await context.storage.getVersions(moduleSha, 1))[0];
+            const moduleId = context.baseSnapshot.commits[key];
+            const commit = (await context.storage.getVersions(moduleId, 1))[0];
             const moduleTree = await context.storage.getSnapshotTree(commit);
             return { id: key, tree: moduleTree };
         });
@@ -291,41 +291,42 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.components.forEach((component, key) => componentEntries.set(key, component.snapshot()));
 
         // Use base tree to know previous component snapshot and then snapshot each component
-        const componentCommitsP = new Array<Promise<{ id: string, commit: string }>>();
+        const componentVersionsP = new Array<Promise<{ id: string, version: string }>>();
         for (const [componentId, componentSnapshot] of componentEntries) {
-            // If sha exists then previous commit is still valid
+            // If ID exists then previous commit is still valid
             if (componentSnapshot.id) {
-                componentCommitsP.push(Promise.resolve({
-                    commit: tree.commits[componentId],
+                componentVersionsP.push(Promise.resolve({
                     id: componentId,
+                    version: tree.commits[componentId],
                 }));
             } else {
                 const parent = componentId in tree.commits ? [tree.commits[componentId]] : [];
-                const componentCommitP = this.storage
+                const componentVersionP = this.storage
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
-                    .then((commit) => {
-                        this.components.get(componentId).updateBaseId(commit.treeId);
-                        return { id: componentId, commit: commit.id };
+                    .then((version) => {
+                        this.components.get(componentId).updateBaseId(version.treeId);
+                        return { id: componentId, version: version.id };
                     });
-                componentCommitsP.push(componentCommitP);
+                componentVersionsP.push(componentVersionP);
             }
         }
 
         const root: ITree = { entries: [], id: null };
 
         // Add in module references to the component snapshots
-        const componentCommits = await Promise.all(componentCommitsP);
+        const componentVersions = await Promise.all(componentVersionsP);
         let gitModules = "";
-        for (const componentCommit of componentCommits) {
+        for (const componentVersion of componentVersions) {
             root.entries.push({
                 mode: FileMode.Commit,
-                path: componentCommit.id,
+                path: componentVersion.id,
                 type: TreeEntry[TreeEntry.Commit],
-                value: componentCommit.commit,
+                value: componentVersion.version,
             });
 
             const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            gitModules += `[submodule "${componentCommit.id}"]\n\tpath = ${componentCommit.id}\n\turl = ${repoUrl}\n\n`;
+            // tslint:disable-next-line: max-line-length
+            gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
         }
 
         // Write the module lookup details
