@@ -19,7 +19,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "@prague/container-definitions": "^0.3.0",
     "@prague/file-socket-storage": "^0.3.0",
     "@prague/client-api": "^0.3.0",

@@ -22,7 +22,7 @@
     "@prague/services-core": "^0.3.0",
     "@prague/utils": "^0.3.0",
     "bytes": "^3.0.0",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "kafka-node": "^3.0.1",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",

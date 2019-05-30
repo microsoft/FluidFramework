@@ -63,6 +63,6 @@
     "@prague/container-definitions": "^0.3.0",
     "@prague/runtime-definitions": "^0.3.0",
     "@prague/utils": "^0.3.0",
-    "debug": "^3.1.0"
+    "debug": "^4.1.1"
   }
 }

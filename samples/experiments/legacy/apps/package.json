@@ -23,7 +23,7 @@
     "compression": "^1.7.1",
     "concurrently": "^3.5.1",
     "cookie-parser": "^1.4.3",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "express": "^4.16.2",
     "express-session": "^1.15.6",
     "gitresources": "https://praguenpm.blob.core.windows.net/packages/gitresources-0.2.0.tgz",

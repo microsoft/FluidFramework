@@ -34,7 +34,7 @@
     "@prague/app-component": "^0.3.7140",
     "@prague/container-definitions": "^0.3.7140",
     "@chaincode/agent-scheduler": "^0.3.7140",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

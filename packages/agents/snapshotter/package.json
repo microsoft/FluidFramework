@@ -29,6 +29,6 @@
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
     "@prague/container-runtime": "^0.3.0",
-    "debug": "^3.1.0"
+    "debug": "^4.1.1"
   }
 }

@@ -35,7 +35,7 @@
     "azure-iot-device": "^1.7.3",
     "azure-iot-device-mqtt": "^1.7.3",
     "azure-iothub": "^1.7.3",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "request": "^2.88.0",
     "socket.io-client": "^2.1.1",
     "telegrafjs": "^0.1.3",

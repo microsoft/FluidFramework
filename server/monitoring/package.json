@@ -14,7 +14,7 @@
     "@prague/container-loader": "^0.3.6760",
     "@prague/routerlicious-host": "^0.3.6760",
     "@prague/routerlicious-socket-storage": "^0.3.6760",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
     "raven": "^2.6.4",

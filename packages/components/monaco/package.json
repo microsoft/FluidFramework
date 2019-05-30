@@ -33,7 +33,7 @@
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.12.12",
     "axios": "^0.18.0",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "monaco-editor": "^0.15.6",
     "uuid": "^3.3.2"
   },

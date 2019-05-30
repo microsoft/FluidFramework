@@ -23,7 +23,7 @@
     "@prague/routerlicious-socket-storage": "^0.3.0",
     "@prague/socket-storage-shared": "^0.3.0",
     "axios": "^0.18.0",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "keypress": "^0.2.1"
   },
   "devDependencies": {

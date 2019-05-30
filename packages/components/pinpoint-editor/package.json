@@ -38,7 +38,7 @@
     "angular": "^1.7.4",
     "angular-route": "^1.7.4",
     "bootstrap": "^3.3.7",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "file-loader": "^2.0.0",
     "google-maps": "^3.3.0",
     "jquery": "^3.3.1",

@@ -98,7 +98,7 @@
     "cookie-parser": "^1.4.3",
     "cors": "^2.8.4",
     "d3": "^5.7.0",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "gitgraph.js": "^1.11.4",

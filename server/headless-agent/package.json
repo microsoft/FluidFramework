@@ -23,7 +23,7 @@
     "@prague/services-utils": "^0.3.6078",
     "@prague/utils": "^0.3.6078",
     "commander": "^2.15.1",
-    "debug": "^3.1.0",
+    "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.0",
     "puppeteer": "^1.14.0",
     "redis": "^2.8.0",
