@@ -62,7 +62,6 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 
         // tmz agent uploader does not run locally.
-        // TODO: Make agent uploader run locally.
         const tmzConfig = config.get("tmz");
         const taskMessageSender = services.createMessageSender(config.get("rabbitmq"), tmzConfig);
         await taskMessageSender.initialize();
@@ -87,7 +86,6 @@ export class JarvisResourcesFactory implements utils.IResourcesFactory<JarvisRes
         // Tenants attached to the apps this service exposes
         const appTenants = config.get("alfred:tenants") as Array<{ id: string, key: string }>;
 
-        // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
         return new JarvisResources(

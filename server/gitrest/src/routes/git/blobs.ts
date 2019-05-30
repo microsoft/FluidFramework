@@ -15,10 +15,10 @@ function validateBlob(blob: string): boolean {
 }
 
 export async function getBlob(
-    repoManager: utils.RepositoryManager,
-    owner: string,
-    repo: string,
-    sha: string): Promise<IBlob> {
+        repoManager: utils.RepositoryManager,
+        owner: string,
+        repo: string,
+        sha: string): Promise<IBlob> {
     const repository = await repoManager.open(owner, repo);
     const blob = await repository.getBlob(sha);
 
@@ -26,10 +26,10 @@ export async function getBlob(
 }
 
 export async function createBlob(
-    repoManager: utils.RepositoryManager,
-    owner: string,
-    repo: string,
-    blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
+        repoManager: utils.RepositoryManager,
+        owner: string,
+        repo: string,
+        blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
 
     if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
         return Promise.reject("Invalid blob");

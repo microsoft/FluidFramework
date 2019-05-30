@@ -13,7 +13,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
     private scheduler: ConsensusRegisterCollection;
 
-    // List of all tasks client capable of running. This is a strict superset of currently running tasks.
+    // List of all tasks client is capable of running. This is a strict superset of currently running tasks.
     private readonly localTaskMap = new Map<string, () => void>();
 
     constructor() {
@@ -83,7 +83,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
         const quorum = this.runtime.getQuorum();
 
-        // On an old session, nobody released the tasks held by last client.
+        // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
         // TODO: We need a leader in charge of this.
         const clearCandidates = [];
@@ -95,8 +95,8 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         await this.clearTasks(clearCandidates);
 
         // Listeners for new/released tasks or left client tasks.
-        // This is interesting because all other clients will try to grab at the same time.
-        // May be we want a randomized timer (Something like raft) to reduce chattyness?
+        // All clients will try to grab at the same time.
+        // May be we want a randomized timer (Something like raft) to reduce chattiness?
         this.scheduler.on("valueChanged", async (changed: IChanged) => {
             const taskStatus = this.scheduler.read(changed.key);
             // Either a client registered for a new task or released a running task.
@@ -143,7 +143,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             }
             await Promise.all(picksP);
 
-            // The registers should have up to date results now. Start the respecive task if this client was chosen.
+            // The registers should have up to date results now. Start the respective task if this client was chosen.
             for (const task of tasks) {
                 const pickedClientId = this.scheduler.read(task.id);
                 assert(pickedClientId, `No client was chosen for ${task.id}`);

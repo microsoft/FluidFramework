@@ -11,12 +11,10 @@ export async function createTree(
     tree: ICreateTreeParams): Promise<ITree> {
 
     const repository = await repoManager.open(owner, repo);
-    // TODO if base_tree exists look it up here and assume everything else is an insert
     const builder = await git.Treebuilder.create(repository, null);
 
     // build up the tree
     for (const node of tree.tree) {
-        // TODO support content as well
         builder.insert(node.path, git.Oid.fromString(node.sha), parseInt(node.mode, 8));
     }
 
@@ -53,7 +51,6 @@ async function getTreeRecursive(
             reject(error);
         });
 
-        // BUG:TYPINGS Missing definition leads to the below cast
         (walker as any).start();
     });
 }
@@ -83,9 +80,9 @@ function treeEntryToITreeEntry(entry: git.TreeEntry): ITreeEntry {
         mode: entry.filemode().toString(8),
         path: entry.path(),
         sha: entry.id().tostrS(),
-        size: 0, // TODO
+        size: 0,
         type: utils.GitObjectType[entry.type()],
-        url: "", // TODO
+        url: "",
     };
 }
 

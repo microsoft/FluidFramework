@@ -115,9 +115,6 @@ export function create(store: nconf.Provider, repoManager: utils.RepositoryManag
     });
 
     router.patch("/repos/:owner/:repo/git/refs/*", (request, response, next) => {
-        // TODO per the below I think I need to validate the update can be a FF
-        // Indicates whether to force the update or to make sure the update is a fast-forward update.
-        // Leaving this out or setting it to false will make sure you're not overwriting work. Default: false
         const resultP = patchRef(
             repoManager,
             request.params.owner,

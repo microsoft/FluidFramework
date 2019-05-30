@@ -70,16 +70,16 @@ export class LayoutContext {
     public readonly emitted: ViewInfo[] = [];
 
     /**
-     * Sorted stack of tracked position we're still looking for.  Positions are popped from
-     * the stack as the consumers are notified.
+     * Sorted stack of tracked position we're still looking for.
+     * Positions are popped from the stack as the consumers are notified.
      */
     private readonly pendingTrackedPositions: ITrackedPosition[];
 
     private readonly pendingNotifications = [];
 
     /**
-     * Set of Elements that were previously rendered that have not yet been encountered by
-     * this layout pass.  At the end of the layout pass, any remaining elements are unmounted
+     * Set of previously rendered Elements that have not yet been encountered by
+     * this layout pass. Any remaining elements are unmounted at the end of the layout pass
      * as they are no longer within the rendered window.
      */
     private readonly pendingLayout: Set<Element>;
@@ -167,15 +167,15 @@ export class LayoutContext {
             if (!Dom.isAfterNode(parent, root, previous)) {
                 // The node is not in the correct position.  Move it.
                 //
-                // TODO: Sometimes we have a choice if we move the cached node or the one already residing in the
-                //       expected position.  We should prefer to move nodes known not to have side effects (i.e.,
-                //       do not move inclusion if possible, and never move the node containing focus.)
+                // Sometimes we have a choice if we move the cached node or the one already residing in the
+                // expected position. We can prefer to move nodes known not to have side effects (i.e.,
+                // do not move inclusion if possible, and never move the node containing focus.)
                 Dom.insertAfter(parent, root, previous);
             }
 
             this.pendingLayout.delete(root);
         } else {
-            // Segment was not previously in the rendered window.  Create it.
+            // Segment was not previously in the rendered window. Create it.
             const view = factory();
             view.mount(props);
 

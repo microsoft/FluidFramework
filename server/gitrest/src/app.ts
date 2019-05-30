@@ -20,7 +20,6 @@ export function create(store: nconf.Provider) {
     // Express app configuration
     const app: Express = express();
 
-    // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(store.get("logger:morganFormat"), { stream }));
 
     const requestSize = store.get("requestSizeLimit");

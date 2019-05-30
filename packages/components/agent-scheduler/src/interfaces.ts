@@ -1,12 +1,19 @@
+/**
+ * Task interface to be used with IAgentScheduler.
+ */
 export interface ITask {
 
-    // id of the task
+    // id of the task given client wants to pick
     id: string;
 
-    // callback to run when the task gets picked by the client.
+    // callback run by agent scheduler when the task gets picked by the client.
     callback(): void;
 }
 
+/**
+ * Agent scheduler.
+ * Distributes a set of tasks across connected clients.
+ */
 export interface IAgentScheduler {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
@@ -26,7 +33,7 @@ export interface IAgentScheduler {
      * Releases a set of tasks for other clients to grab. Resolves when the tasks are released.
      *
      * Only previously picked tasks are allowed. Non picked tasks will be rejected.
-     * App should call pickedTasks() to get the picked list first.
+     * App can call pickedTasks() to get the picked list first.
      */
     release(...taskIds: string[]): Promise<void>;
 

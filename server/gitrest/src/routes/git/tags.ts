@@ -5,7 +5,6 @@ import * as git from "nodegit";
 import * as utils from "../../utils";
 
 async function tagToITag(tag: git.Tag): Promise<ITag> {
-    // TODO there's a bug in the nodegit d.ts file that thinks name and email and properties and not methods
     const tagger = tag.tagger() as any;
     const target = await tag.target();
 
@@ -39,7 +38,6 @@ async function createTag(
     }
 
     const repository = await repoManager.open(owner, repo);
-    // TODO detect timezone information in date string rather than specifying UTC by default
     const signature = git.Signature.create(tag.tagger.name, tag.tagger.email, Math.floor(date), 0);
     const object = await git.Object.lookup(
         repository,

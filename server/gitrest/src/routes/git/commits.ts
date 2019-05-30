@@ -16,7 +16,6 @@ export async function createCommit(
     }
 
     const repository = await repoManager.open(owner, repo);
-    // TODO detect timezone information in date string rather than specifying UTC by default
     const signature = git.Signature.create(blob.author.name, blob.author.email, Math.floor(date), 0);
     const parents = blob.parents && blob.parents.length > 0 ? blob.parents : null;
     const commit = await repository.createCommit(null, signature, signature, blob.message, blob.tree, parents);

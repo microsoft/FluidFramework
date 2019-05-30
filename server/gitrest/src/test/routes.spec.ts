@@ -19,6 +19,10 @@ import { getCommits } from "../routes/repository/commits";
 import * as utils from "../utils";
 import * as testUtils from "./utils";
 
+// TODO: (issue logged): replace email & name
+const commitEmail = "kurtb@microsoft.com";
+const commitName = "Kurt Berglund";
+
 function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
     return supertest
         .post(`/${owner}/repos`)
@@ -120,8 +124,8 @@ describe("Historian", () => {
         const testCommit: ICreateCommitParams = {
             author: {
                 date: "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)",
-                email: "kurtb@microsoft.com",
-                name: "Kurt Berglund",
+                email: commitEmail,
+                name: commitName,
             },
             message: "first commit",
             parents: [],
@@ -240,8 +244,8 @@ describe("Historian", () => {
                     const treeCommit: ICreateCommitParams = {
                         author: {
                             date: "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)",
-                            email: "kurtb@microsoft.com",
-                            name: "Kurt Berglund",
+                            email: commitEmail,
+                            name: commitName,
                         },
                         message: "complex tree",
                         parents: [],
@@ -300,8 +304,6 @@ describe("Historian", () => {
                         });
                 });
 
-                // TODO need to verify the GitHub API works this way - odd to create a new commit via a patch command
-                // but this simplfiies cases where we want to upsert
                 it("Can patch to create a reference", async () => {
                     await initBaseRepo(supertest, testOwnerName, testRepoName, testBlob, testTree, testCommit, testRef);
                     return supertest
@@ -352,8 +354,8 @@ describe("Historian", () => {
                         tag: "v1.0",
                         tagger: {
                             date: "Thu Jul 13 2017 20:17:40 GMT-0700 (PDT)",
-                            email: "kurtb@microsoft.com",
-                            name: "Kurt Berglund",
+                            email: commitEmail,
+                            name: commitName,
                         },
                         type: "commit",
                     };
@@ -427,8 +429,8 @@ describe("Historian", () => {
                     const commitParams: ICreateCommitParams = {
                         author: {
                             date: new Date().toISOString(),
-                            email: "kurtb@microsoft.com",
-                            name: "Kurt Berglund",
+                            email: commitEmail,
+                            name: commitName,
                         },
                         message: lorem({ count: 1, units: "sentences" }),
                         parents,

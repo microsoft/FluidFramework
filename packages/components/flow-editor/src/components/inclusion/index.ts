@@ -12,8 +12,8 @@ export interface IInclusionProps { child: Element; }
 // tslint:disable-next-line:no-empty-interface
 export interface IInclusionViewState extends IViewState { }
 
-// TODO: This can not yet be made a Symbol due to multiple/recursive WebPack bundles.
-//       'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
+// This can not yet be made a Symbol due to multiple/recursive WebPack bundles.
+// 'unique symbol' should work, but isn't yet universally supported (e.g., breaks tests on Node v8).
 const ignoreEventSym = "InclusionView.ignoreEvent";
 
 // Reusable event handler used to mark events has having bubbled out of an inclusion.
@@ -21,14 +21,14 @@ const markInclusionEvent = (e: Event) => {
     (e as any)[ignoreEventSym] = true;
 };
 
-// List of events that the FlowEditor may try to hijack.
+// List of events that the FlowEditor may try to capture.
 const events: string[] = [
     "mousedown", "keydown", "keypress",
 ];
 
 /**
- * Returns true if the given event has bubbled up from an inclusion.  Used by FlowEditor to avoid
- * hijacking events that should bubble to document/window for default action or dispatch by synthetic
+ * Returns true if the given event has bubbled up from an inclusion. Used by FlowEditor to avoid
+ * capturing events that should bubble to document/window for default action or dispatch by synthetic
  * event handlers (e.g., React).
  */
 export function shouldIgnoreEvent(e: Event): true | undefined {
