@@ -6,7 +6,7 @@ import * as api from "@prague/container-definitions";
  */
 export class ReplayDocumentStorageService implements api.IDocumentStorageService  {
     public get repositoryUrl(): string {
-        return "";
+        throw new Error("Invalid operation");
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
@@ -17,8 +17,12 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
        return [];
     }
 
-    public async read(blobId: string): Promise<string> {
-        return "";
+    public async read(blobId: string): Promise<string | undefined> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+        return Promise.reject("Invalid operation");
     }
 
     public async getContent(version: api.IVersion, path: string): Promise<string> {
@@ -33,7 +37,11 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
         return Promise.reject(new Error("ReplayDocumentStorageService.createBlob() not implemented"));
     }
 
-    public getRawUrl(blobId: string): string | null {
-        return null;
+    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public getRawUrl(blobId: string): string | undefined {
+        throw new Error("Invalid operation");
     }
 }

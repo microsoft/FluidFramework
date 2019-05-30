@@ -15,6 +15,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryTree,
     ITelemetryLogger,
     ITree,
     MessageType,
@@ -97,6 +98,10 @@ export class ContainerContext implements IContainerContext {
         return this.container.connectionState;
     }
 
+    public get canSummarize(): boolean {
+        return "summarize" in this.runtime!;
+    }
+
     // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.container.options;
@@ -133,6 +138,14 @@ export class ContainerContext implements IContainerContext {
         return this.runtime!.snapshot(tagMessage);
     }
 
+    public summarize(): Promise<ISummaryTree> {
+        if (!this.canSummarize) {
+            return Promise.reject("Runtime does not support summaries");
+        }
+
+        return this.runtime!.summarize();
+    }
+
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.runtime!.changeConnectionState(value, clientId);
     }
@@ -165,7 +178,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public async requestSnapshot(tagMessage: string): Promise<void> {
-        return this.container.snapshot(tagMessage);
+        return this.snapshotFn(tagMessage);
     }
 
     public error(err: any): void {

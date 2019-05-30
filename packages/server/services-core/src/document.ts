@@ -1,3 +1,4 @@
+import { IProposal } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
@@ -37,6 +38,20 @@ export interface IFork {
 
     // The last forwarded sequence number
     lastForwardedSequenceNumber: number;
+}
+
+export interface ITrackedProposal {
+    sequenceNumber: number;
+
+    proposal: IProposal;
+
+    rejections: number;
+}
+
+export interface IScribe {
+    logOffset: number;
+
+    proposals: ITrackedProposal[];
 }
 
 export interface IDocument {
@@ -83,4 +98,7 @@ export interface IDocument {
     sequenceNumber: number;
 
     logOffset: number;
+
+    // Scribe tracked summary context
+    scribe: IScribe;
 }

@@ -7,8 +7,8 @@ import * as util from "util";
  * all the methods
  */
 export class FileDocumentStorageService implements api.IDocumentStorageService  {
-
     private static snapshotNumber = 0;
+
     public get repositoryUrl(): string {
         return "";
     }
@@ -46,6 +46,14 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             FileDocumentStorageService.snapshotNumber += 1;
             console.log("writing snapshot_", FileDocumentStorageService.snapshotNumber);
             return commit;
+    }
+
+    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+        return Promise.reject("Method not implemented.");
+    }
+
+    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+        return Promise.reject("Method not implemented.");
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse | null> {

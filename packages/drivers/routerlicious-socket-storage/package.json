@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
+    "@prague/gitresources": "^0.3.0",
     "@prague/services-client": "^0.3.0",
     "@prague/socket-storage-shared": "^0.3.0",
     "@prague/utils": "^0.3.0",

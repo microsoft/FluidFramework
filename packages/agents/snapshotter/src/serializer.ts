@@ -70,7 +70,6 @@ export class Serializer {
 
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
         console.log(`Snapshotting ${this.runtime.id}@${this.lastOp!.sequenceNumber}`);
-        this.runtime.deltaManager.inbound.pause();
         const snapshotP = this.runtime.requestSnapshot(message).then(
             () => {
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
@@ -91,7 +90,6 @@ export class Serializer {
             if (!success && required) {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
-                this.runtime.deltaManager.inbound.resume();
                 this.snapshotting = false;
             }
         });

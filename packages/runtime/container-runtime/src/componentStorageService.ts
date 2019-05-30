@@ -2,6 +2,8 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryCommit,
+    ISummaryPackfileHandle,
     ITree,
     IVersion,
 } from "@prague/container-definitions";
@@ -35,9 +37,16 @@ export class ComponentStorageService implements IDocumentStorageService {
         return this.storageService.read(id);
     }
 
-    // TODO the write as well potentially doesn't seem necessary
     public write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.storageService.write(root, parents, message, ref);
+    }
+
+    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+        return this.storageService.uploadSummary(commit);
+    }
+
+    public downloadSummary(commit: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+        return this.storageService.downloadSummary(commit);
     }
 
     public createBlob(file: Buffer): Promise<ICreateBlobResponse> {

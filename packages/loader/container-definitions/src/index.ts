@@ -8,5 +8,6 @@ export * from "./logger";
 export * from "./platform";
 export * from "./protocol";
 export * from "./storage";
+export * from "./summary";
 export * from "./users";
 export * from "./tokens";

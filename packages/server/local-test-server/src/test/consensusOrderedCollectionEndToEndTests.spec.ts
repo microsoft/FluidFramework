@@ -72,7 +72,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
-            documentDeltaEventManager.pauseProcessing();
+            await documentDeltaEventManager.pauseProcessing();
 
             const addP = [];
             for (const item of input) {
@@ -106,7 +106,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
-            documentDeltaEventManager.pauseProcessing();
+            await documentDeltaEventManager.pauseProcessing();
 
             const waitOn2P = collection2.waitAndRemove();
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
@@ -151,7 +151,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
-            documentDeltaEventManager.pauseProcessing();
+            await documentDeltaEventManager.pauseProcessing();
 
             let addCount1 = 0;
             let addCount2 = 0;

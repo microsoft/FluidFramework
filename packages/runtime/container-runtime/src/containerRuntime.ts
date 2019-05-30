@@ -2,6 +2,7 @@ import {
     Browser,
     ConnectionState,
     FileMode,
+    IBlob,
     IBlobManager,
     IContainerContext,
     IDeltaManager,
@@ -14,9 +15,14 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryBlob,
+    ISummaryTree,
     ITelemetryLogger,
     ITree,
     MessageType,
+    SummaryObject,
+    SummaryTree,
+    SummaryType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -217,6 +223,60 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         } else {
             return this.requestHandler(request);
         }
+    }
+
+    /**
+     * Returns a summary of the runtime at the current sequence number
+     */
+    public async summarize(): Promise<ISummaryTree> {
+        const result: ISummaryTree = {
+            tree: {},
+            type: SummaryType.Tree,
+        };
+
+        // Iterate over each component and ask it to snapshot
+        const componentEntries = new Map<string, ITree>();
+        this.components.forEach((component, key) => componentEntries.set(key, component.snapshot()));
+
+        // Pull in the prior version and snapshot tree to store against
+        const lastVersion = await this.storage.getVersions(this.id, 1);
+        const tree = lastVersion.length > 0
+            ? await this.storage.getSnapshotTree(lastVersion[0])
+            : ({ blobs: {}, commits: {}, trees: {} } as ISnapshotTree);
+
+        for (const [componentId, componentSnapshot] of componentEntries) {
+            // If sha exists then previous commit is still valid
+            if (componentSnapshot.id) {
+                result.tree[componentId] = {
+                    handle: tree.commits[componentId],
+                    handleType: SummaryType.Commit,
+                    type: SummaryType.Handle,
+                };
+            } else {
+                const parents = componentId in tree.commits ? [tree.commits[componentId]] : [];
+                const summaryTree = this.convertToSummaryTree(componentSnapshot);
+
+                const author = {
+                    date: new Date().toISOString(),
+                    email: "kurtb@microsoft.com",
+                    name: "Kurt Berglund",
+                };
+
+                const message =
+                    `${componentId}@` +
+                    `${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+                result.tree[componentId] = {
+                    author,
+                    committer: author,
+                    message,
+                    parents,
+                    tree: summaryTree,
+                    type: SummaryType.Commit,
+                };
+            }
+        }
+
+        return result;
     }
 
     public async snapshot(tagMessage: string): Promise<ITree> {
@@ -435,6 +495,50 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    private convertToSummaryTree(snapshot: ITree): SummaryTree {
+        if (snapshot.id) {
+            return {
+                handle: snapshot.id,
+                handleType: SummaryType.Tree,
+                type: SummaryType.Handle,
+            };
+        } else {
+            const summaryTree: ISummaryTree = {
+                tree: {},
+                type: SummaryType.Tree,
+            };
+
+            for (const entry of snapshot.entries) {
+                let value: SummaryObject;
+
+                switch (entry.type) {
+                    case TreeEntry[TreeEntry.Blob]:
+                        const blob = entry.value as IBlob;
+                        value = {
+                            content: blob.encoding === "base64" ? Buffer.from(blob.contents, "base64") : blob.contents,
+                            type: SummaryType.Blob,
+                        } as ISummaryBlob;
+                        break;
+
+                    case TreeEntry[TreeEntry.Tree]:
+                        value = this.convertToSummaryTree(entry.value as ITree);
+                        break;
+
+                    case TreeEntry[TreeEntry.Commit]:
+                        value = this.convertToSummaryTree(entry.value as ITree);
+                        break;
+
+                    default:
+                        throw new Error();
+                }
+
+                summaryTree.tree[entry.path] = value;
+            }
+
+            return summaryTree;
+        }
     }
 
     private updateMinSequenceNumber(minimumSequenceNumber: number) {

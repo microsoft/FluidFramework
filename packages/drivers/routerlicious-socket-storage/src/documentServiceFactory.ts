@@ -13,14 +13,15 @@ import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";
 
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-
     constructor(
         private useDocumentService2: boolean = false,
         private errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
         private disableCache: boolean = false,
         private historianApi: boolean = true,
         private gitCache: IGitCache | null = null,
-        private credentials?: ICredentials) {}
+        private credentials?: ICredentials,
+    ) {
+    }
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
@@ -63,19 +64,19 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 tokenProvider,
                 tenantId,
                 documentId));
+        } else {
+            return Promise.resolve(new DocumentService(
+                ordererUrl,
+                deltaStorageUrl,
+                storageUrl,
+                this.errorTracking,
+                this.disableCache,
+                this.historianApi,
+                this.credentials,
+                this.gitCache,
+                tokenProvider,
+                tenantId,
+                documentId));
         }
-
-        return Promise.resolve(new DocumentService(
-            ordererUrl,
-            deltaStorageUrl,
-            storageUrl,
-            this.errorTracking,
-            this.disableCache,
-            this.historianApi,
-            this.credentials,
-            this.gitCache,
-            tokenProvider,
-            tenantId,
-            documentId));
     }
 }

@@ -188,7 +188,7 @@ describe("TestHost", () => {
                 const user1Component = await host1.createComponent<TestComponent>("test_component", TestComponent.type);
                 const user2Component = await host2.openComponent<TestComponent>("test_component");
 
-                deltaEventManager.pauseProcessing();
+                await deltaEventManager.pauseProcessing();
 
                 user1Component.increment();
                 assert.equal(user1Component.value, 1, "Expected user1 to see the local increment");

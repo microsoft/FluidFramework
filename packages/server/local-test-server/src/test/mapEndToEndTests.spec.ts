@@ -43,7 +43,7 @@ describe("Map", () => {
         root1 = user1Document.getRoot();
         root2 = user2Document.getRoot();
         root3 = user3Document.getRoot();
-        documentDeltaEventManager.pauseProcessing();
+        await documentDeltaEventManager.pauseProcessing();
         root1.set("testKey1", "testValue");
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
     });

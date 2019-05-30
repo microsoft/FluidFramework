@@ -6,7 +6,9 @@ import {
     IResponse,
     IRuntime,
     ISequencedDocumentMessage,
+    ISummaryTree,
     ITree,
+    SummaryType,
 } from "@prague/container-definitions";
 
 class NullRuntime implements IRuntime {
@@ -14,6 +16,13 @@ class NullRuntime implements IRuntime {
 
     public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
+    }
+
+    public summarize(): Promise<ISummaryTree> {
+        return Promise.resolve({
+            tree: {},
+            type: SummaryType.Tree,
+        });
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

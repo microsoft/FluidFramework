@@ -28,9 +28,9 @@ export function gitHashFile(file: Buffer): string {
 export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
     const entries = flattenCore("", tree, blobMap);
     return {
-        sha: null,
+        sha: "",
         tree: entries,
-        url: null,
+        url: "",
     };
 }
 
@@ -67,7 +67,7 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],
                 path: subPath,
-                sha: null,
+                sha: "",
                 size: -1,
                 type: "tree",
                 url: "",

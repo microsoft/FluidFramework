@@ -26,11 +26,16 @@ import {
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryAuthor,
+    ISummaryCommit,
+    ISummaryTree,
     ITelemetryBaseLogger,
     ITelemetryLogger,
     ITree,
     ITreeEntry,
     MessageType,
+    SummaryObject,
+    SummaryType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -46,7 +51,7 @@ import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
-import { NullChaincode } from "./nullChaincode";
+import { NullChaincode } from "./nullRuntime";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { Quorum } from "./quorum";
 // tslint:disable-next-line:no-var-requires
@@ -229,39 +234,6 @@ export class Container extends EventEmitter implements IContainer {
         this.removeAllListeners();
     }
 
-    public async snapshot(tagMessage: string): Promise<void> {
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
-            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
-            return;
-        }
-
-        // Only snapshot once a code quorum has been established
-        if (!this.quorum!.has("code2")) {
-            this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
-            return;
-        }
-
-        // Stop inbound message processing while we complete the snapshot
-        // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
-        try {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.pause();
-            }
-
-            await this.snapshotCore(tagMessage);
-
-        } catch (ex) {
-            this.logger.logException("SnapshotExceptionError", ex);
-            throw ex;
-
-        } finally {
-            if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.resume();
-            }
-        }
-    }
-
     public async request(path: IRequest): Promise<IResponse> {
         if (!path) {
             return { mimeType: "prague/container", status: 200, value: this };
@@ -305,6 +277,154 @@ export class Container extends EventEmitter implements IContainer {
 
         // Write the full snapshot
         await this.storageService!.write(root, parents, message, "");
+    }
+
+    // * EXPERIMENTAL - checked in to bring up the feature but please still use snapshots
+    // If the app is in control - especially around proposal values - does generateSummary even exist in this
+    // place? Or does the app hand a summary out with rules on how to apply it? Probably this actually
+    public async generateSummary(
+        author: ISummaryAuthor,
+        committer: ISummaryAuthor,
+        message: string,
+        parents: string[],
+    ): Promise<void> {
+        // TODO: Issue-2171 Support for Branch Snapshots
+        if (this.parentBranch) {
+            debug(`Skipping summary due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        if (!this.context!.canSummarize) {
+            debug(`Runtime does not support summary ops`);
+            return;
+        }
+
+        if (!("uploadSummary" in this.storageService!)) {
+            debug(`Driver does not support summary ops`);
+            return;
+        }
+
+        try {
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.systemPause();
+            }
+
+            const summary = await this.summarizeCore(author, committer, message, parents);
+
+            // TODO I think I want to define the summary op proposal in more detail
+            // contain the sequenceNumber
+            // etag for previous commit - avoid replay going wrong
+            // "force" summary - meaning it will destroy history - overwrite. Previous commit should match etag
+            // unless this bit is explicitly set
+            // "reload" - clients expected to reload off the contents of the summary (not implemented)
+            this.quorum!.propose("summary", summary);
+        } catch (ex) {
+            debug("Summary error", ex);
+            throw ex;
+        } finally {
+            // Restart the delta manager
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.systemResume();
+            }
+        }
+    }
+
+    public async snapshot(tagMessage: string): Promise<void> {
+        // TODO: Issue-2171 Support for Branch Snapshots
+        if (this.parentBranch) {
+            debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        // Only snapshot once a code quorum has been established
+        if (!this.quorum!.has("code2")) {
+            this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
+            return;
+        }
+
+        // Stop inbound message processing while we complete the snapshot
+        // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
+        try {
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.pause();
+            }
+
+            await this.snapshotCore(tagMessage);
+
+        } catch (ex) {
+            this.logger.logException("SnapshotExceptionError", ex);
+            throw ex;
+
+        } finally {
+            if (this.deltaManager !== undefined) {
+                this.deltaManager.inbound.resume();
+            }
+        }
+    }
+
+    private async summarizeCore(
+        author: ISummaryAuthor,
+        committer: ISummaryAuthor,
+        message: string,
+        parents: string[],
+    ): Promise<any> {
+        const entries: { [path: string]: SummaryObject } = {};
+
+        const blobMetaData = this.blobManager!.getBlobMetadata();
+        entries[".blobs"] = {
+            content: JSON.stringify(blobMetaData),
+            type: SummaryType.Blob,
+        };
+
+        const quorumSnapshot = this.quorum!.snapshot();
+
+        entries.quorumMembers = {
+            content: JSON.stringify(quorumSnapshot.members),
+            type: SummaryType.Blob,
+        };
+
+        entries.quorumProposals = {
+            content: JSON.stringify(quorumSnapshot.proposals),
+            type: SummaryType.Blob,
+        };
+
+        entries.quorumValues = {
+            content: JSON.stringify(quorumSnapshot.values),
+            type: SummaryType.Blob,
+        };
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
+            partialOps: [...this.chunkMap],
+            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+        };
+        entries[".attributes"] = {
+            content: JSON.stringify(documentAttributes),
+            type: SummaryType.Blob,
+        };
+
+        const componentEntries = await this.context!.summarize();
+
+        // And then combine
+        const root: ISummaryTree = {
+            tree: { ...entries, ...componentEntries.tree },
+            type: SummaryType.Tree,
+        };
+
+        // Delta storage is up to the runtime to store
+
+        const summaryCommit: ISummaryCommit = {
+            author,
+            committer,
+            message,
+            parents,
+            tree: root,
+            type: SummaryType.Commit,
+        };
+
+        return this.storageService!.uploadSummary(summaryCommit);
     }
 
     private async snapshotCore(tagMessage: string) {
@@ -351,7 +471,76 @@ export class Container extends EventEmitter implements IContainer {
         });
 
         // Write the full snapshot
-        await this.storageService!.write(root, parents, message, "");
+        return this.storageService!.write(root, parents, message, "");
+    }
+
+    private snapshotBase(): ITree {
+        const entries: ITreeEntry[] = [];
+
+        const blobMetaData = this.blobManager!.getBlobMetadata();
+        entries.push({
+            mode: FileMode.File,
+            path: ".blobs",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(blobMetaData),
+                encoding: "utf-8",
+            },
+        });
+
+        const quorumSnapshot = this.quorum!.snapshot();
+        entries.push({
+            mode: FileMode.File,
+            path: "quorumMembers",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot.members),
+                encoding: "utf-8",
+            },
+        });
+        entries.push({
+            mode: FileMode.File,
+            path: "quorumProposals",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot.proposals),
+                encoding: "utf-8",
+            },
+        });
+        entries.push({
+            mode: FileMode.File,
+            path: "quorumValues",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(quorumSnapshot.values),
+                encoding: "utf-8",
+            },
+        });
+
+        // Save attributes for the document
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
+            partialOps: [...this.chunkMap],
+            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+        };
+        entries.push({
+            mode: FileMode.File,
+            path: ".attributes",
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(documentAttributes),
+                encoding: "utf-8",
+            },
+        });
+
+        // Output the tree
+        const root: ITree = {
+            entries,
+            id: null,
+        };
+
+        return root;
     }
 
     private async load(specifiedVersion: string, connection: string): Promise<void> {
@@ -482,75 +671,6 @@ export class Container extends EventEmitter implements IContainer {
                 /* tslint:disable:no-unsafe-any */
                 debug(`Document loaded ${this.id}}: ${now()}`);
             });
-    }
-
-    private snapshotBase(): ITree {
-        const entries: ITreeEntry[] = [];
-
-        const blobMetaData = this.blobManager!.getBlobMetadata();
-        entries.push({
-            mode: FileMode.File,
-            path: ".blobs",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(blobMetaData),
-                encoding: "utf-8",
-            },
-        });
-
-        const quorumSnapshot = this.quorum!.snapshot();
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumMembers",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(quorumSnapshot.members),
-                encoding: "utf-8",
-            },
-        });
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumProposals",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(quorumSnapshot.proposals),
-                encoding: "utf-8",
-            },
-        });
-        entries.push({
-            mode: FileMode.File,
-            path: "quorumValues",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(quorumSnapshot.values),
-                encoding: "utf-8",
-            },
-        });
-
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            partialOps: [...this.chunkMap],
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
-        };
-        entries.push({
-            mode: FileMode.File,
-            path: ".attributes",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(documentAttributes),
-                encoding: "utf-8",
-            },
-        });
-
-        // Output the tree
-        const root: ITree = {
-            entries,
-            id: null,
-        };
-
-        return root;
     }
 
     private async loadQuorum(

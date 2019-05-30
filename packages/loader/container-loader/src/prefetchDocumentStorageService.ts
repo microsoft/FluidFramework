@@ -2,6 +2,8 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryCommit,
+    ISummaryPackfileHandle,
     ITree,
     IVersion,
 } from "@prague/container-definitions";
@@ -46,6 +48,14 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
 
     public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion | undefined | null> {
         return this.storage.write(tree, parents, message, ref);
+    }
+
+    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+        return this.storage.uploadSummary(commit);
+    }
+
+    public downloadSummary(handle: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+        return this.storage.downloadSummary(handle);
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {

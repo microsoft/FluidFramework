@@ -141,6 +141,17 @@ class LocalPlatform extends WebPlatform {
     }
 }
 
+export let lastLoaded: Container;
+export async function testSummary() {
+    if (!lastLoaded) {
+        return;
+    }
+
+    const author = { name: "Kurt", email: "kurtb@microsoft.com", date: new Date().toISOString() };
+
+    lastLoaded.generateSummary(author, author, `test summary ${Date.now()}`, []);
+}
+
 async function start(
     url: string,
     resolved: IResolvedUrl,
@@ -169,15 +180,18 @@ async function start(
         });
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
-    codeLoader.load(code).catch((error) => console.error("script load error", error));
+    if (code) {
+        codeLoader.load(code).catch((error) => console.error("script load error", error));
+    }
 
     const loader = new Loader(
         { resolver },
         documentServiceFactory,
         codeLoader,
         { blockUpdateMarkers: true });
-
     const container = await loader.resolve({ url });
+
+    lastLoaded = container;
 
     const platform = new LocalPlatform(document.getElementById("content"));
     registerAttach(

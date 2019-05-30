@@ -9,6 +9,8 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryCommit,
+    ISummaryPackfileHandle,
     ITree,
     IVersion,
 } from "@prague/container-definitions";
@@ -73,6 +75,14 @@ export class TestDocumentStorageService implements IDocumentStorageService {
 
     public write(root: ITree, parents: string[], message: string): Promise<IVersion> {
         throw new Error("Method not implemented.");
+    }
+
+    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+        return Promise.reject("Method not implemented.");
+    }
+
+    public downloadSummary(handle: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+        return Promise.reject("Invalid operation");
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {

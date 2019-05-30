@@ -160,6 +160,10 @@ export class DocumentStorage implements IDocumentStorage {
                     sequenceNumber,
                     tenantId,
                 },
+                scribe: {
+                    logOffset: -1,
+                    proposals: [],
+                },
                 sequenceNumber,
                 tenantId,
             });
@@ -201,6 +205,10 @@ export class DocumentStorage implements IDocumentStorage {
                 forks: [],
                 logOffset: undefined,
                 parent: null,
+                scribe: {
+                    logOffset: -1,
+                    proposals: [],
+                },
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
             });

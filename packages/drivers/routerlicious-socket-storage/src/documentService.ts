@@ -3,8 +3,8 @@ import { GitManager, Historian, ICredentials, IGitCache } from "@prague/services
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import Axios from "axios";
 import * as io from "socket.io-client";
-import { DocumentStorageService } from "./blobStorageService";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
+import { DocumentStorageService } from "./documentStorageService";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { TokenProvider } from "./tokens";
 
@@ -24,10 +24,11 @@ export class DocumentService implements api.IDocumentService {
         private gitCache: IGitCache | null | undefined,
         protected tokenProvider: TokenProvider,
         protected tenantId: string,
-        protected documentId: string) {}
+        protected documentId: string,
+    ) {
+    }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
-
         if (this.gitUrl === undefined) {
             return new NullBlobStorageService();
         }

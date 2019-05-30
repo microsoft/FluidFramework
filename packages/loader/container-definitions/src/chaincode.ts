@@ -5,6 +5,7 @@ import { ICodeLoader, ILoader, IRequest, IResponse } from "./loader";
 import { ITelemetryLogger } from "./logger";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
+import { ISummaryTree } from "./summary";
 
 /**
  * Person definition in a npm script
@@ -91,6 +92,11 @@ export interface IRuntime {
      * Snapshots the runtime
      */
     snapshot(tagMessage: string): Promise<ITree | null>;
+
+    /**
+     * Returns a summary of the runtime at the current sequence number
+     */
+    summarize(): Promise<ISummaryTree>;
 
     /**
      * Notifies the runtime of a change in the connection state

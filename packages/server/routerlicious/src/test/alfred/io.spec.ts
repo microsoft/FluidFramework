@@ -4,9 +4,9 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType } from "@prague/container-definitions";
 import { KafkaOrdererFactory } from "@prague/kafka-orderer";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
+import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import {
     MessageFactory,
     TestCollection,
@@ -73,19 +73,20 @@ describe("Routerlicious", () => {
                     id: string,
                     tenantId: string,
                     secret: string,
-                    socket: TestWebSocket): Promise<socketStorage.IConnected> {
+                    socket: TestWebSocket): Promise<IConnected> {
                     const token = core.generateToken(tenantId, id, secret);
 
-                    const connectMessage: socketStorage.IConnect = {
+                    const connectMessage: IConnect = {
                         client: undefined,
                         id,
                         tenantId,
                         token,
+                        versions: ["^0.1.0"],
                     };
 
-                    const deferred = new Deferred<socketStorage.IConnected>();
+                    const deferred = new Deferred<IConnected>();
 
-                    socket.on("connect_document_success", (connectedMessage: socketStorage.IConnected) => {
+                    socket.on("connect_document_success", (connectedMessage: IConnected) => {
                         deferred.resolve(connectedMessage);
                     });
 
@@ -96,7 +97,7 @@ describe("Routerlicious", () => {
                     socket.send(
                         "connect_document",
                         connectMessage,
-                        (error: any, connectedMessage: socketStorage.IConnected) => {
+                        (error: any, connectedMessage: IConnected) => {
                             if (error) {
                                 deferred.reject(error);
                             } else {

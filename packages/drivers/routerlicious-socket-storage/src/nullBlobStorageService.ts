@@ -5,7 +5,7 @@ import * as api from "@prague/container-definitions";
  */
 export class NullBlobStorageService implements api.IDocumentStorageService  {
     public get repositoryUrl(): string {
-        return "";
+        throw new Error("Invalid operation");
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null | undefined> {
@@ -17,7 +17,7 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
     }
 
     public async read(blobId: string): Promise<string | undefined> {
-        return;
+        return Promise.reject("Invalid operation");
     }
 
     public async getContent(version: api.IVersion, path: string): Promise<string | undefined> {
@@ -28,11 +28,19 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not write commit");
     }
 
+    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+        return Promise.reject("Invalid operation");
+    }
+
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return Promise.reject("Null blob storage can not create blob");
     }
 
     public getRawUrl(blobId: string): string | undefined {
-        return;
+        throw new Error("Invalid operation");
     }
 }

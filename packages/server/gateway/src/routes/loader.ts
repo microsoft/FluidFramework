@@ -24,7 +24,7 @@ export function create(
     const jwtKey = config.get("gateway:key");
 
     /**
-     * Loading of a specific shared text.
+     * Loading of a specific fluid document.
      */
     router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
         const start = Date.now();

@@ -6,6 +6,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
+    ISummaryCommit,
+    ISummaryPackfileHandle,
     ITokenProvider,
     ITree,
     IVersion,
@@ -41,6 +43,14 @@ class TestDocumentStorageService implements IDocumentStorageService {
             treeId: "test",
         };
         return version;
+    }
+
+    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+        return Promise.reject("NOT IMPLEMENTED!");
+    }
+
+    public downloadSummary(handle: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+        return Promise.reject("Invalid operation");
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {

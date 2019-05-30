@@ -20,11 +20,10 @@ export class KafkaNodeConsumer implements IConsumer {
     }
 
     public commitOffset(commitRequest: any[]): Promise<void> {
-        if (commitRequest[0].offset % 50 !== 0) {
-            return Promise.resolve();
-        }
-
-        commitRequest.forEach((commit) => commit.topic = this.topic);
+        commitRequest.forEach((commit) => {
+            commit.topic = this.topic;
+            commit.offset = commit.offset as number + 1;
+        });
         return new Promise<any>((resolve, reject) => {
             this.offset.commit(this.groupId, commitRequest, (err, data) => {
                 if (err) {

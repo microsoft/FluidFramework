@@ -17,6 +17,8 @@ const MaxBatchDeltas = 2000;
 // Since the replay service never actually sends messages the size below is arbitrary
 const ReplayMaxMessageSize = 16 * 1024;
 
+const fileProtocolVersion = "^0.1.0";
+
 export class Replayer {
     public static isReplayDone = false;
     private static currentReplayOp = 0;
@@ -158,7 +160,9 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             initialSignals: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
+            supportedVersions: [fileProtocolVersion],
             user: null,
+            version: fileProtocolVersion,
         };
         const deltaConnection = new ReplayFileDeltaConnection(connection);
         this.fileDocumentStorageService = documentStorageService;

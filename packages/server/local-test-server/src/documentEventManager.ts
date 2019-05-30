@@ -36,10 +36,9 @@ export class DocumentDeltaEventManager {
 
     public async process(...docs: IDocumentDeltaEvent[]): Promise<void> {
 
-        const documents = this.pauseAndValidateDocs(...docs);
+        const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            doc.deltaManager.inbound.resume();
-            doc.deltaManager.outbound.resume();
+            await Promise.all([doc.deltaManager.inbound.resume(), doc.deltaManager.outbound.resume()]);
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
@@ -48,9 +47,9 @@ export class DocumentDeltaEventManager {
 
     public async processIncoming(...docs: IDocumentDeltaEvent[]): Promise<void> {
 
-        const documents = this.pauseAndValidateDocs(...docs);
+        const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            doc.deltaManager.inbound.resume();
+            await doc.deltaManager.inbound.resume();
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
@@ -59,9 +58,9 @@ export class DocumentDeltaEventManager {
 
     public async processOutgoing(...docs: IDocumentDeltaEvent[]): Promise<void> {
 
-        const documents = this.pauseAndValidateDocs(...docs);
+        const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
-            doc.deltaManager.outbound.resume();
+            await doc.deltaManager.outbound.resume();
         }
         await this.yieldWhileDocumentsHaveWork(
             documents,
@@ -72,25 +71,21 @@ export class DocumentDeltaEventManager {
      * Pause normal delta event processing for controlled testing.
      * Should be called upfront during automated testing.
      */
-    public pauseProcessing(...docs: IDocumentDeltaEvent[]) {
-        this.pauseAndValidateDocs(...docs);
+    public async pauseProcessing(...docs: IDocumentDeltaEvent[]) {
+        await this.pauseAndValidateDocs(...docs);
     }
 
     /**
      * Resume normal delta event processing after a pauseProcessing call.
      * Useful when called from a manual test utility, but not for automated testing.
      */
-    public resumeProcessing(...docs: IDocumentDeltaEvent[]) {
-        docs.forEach((doc) => { this.resumeDocument(doc); });
+    public async resumeProcessing(...docs: IDocumentDeltaEvent[]) {
+        await Promise.all(docs.map((doc) => this.resumeDocument(doc)));
         this.isNormalProcessingPaused = false;
     }
 
-    private pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]):
-        Iterable<IDocumentDeltaEvent> {
-
-        for (const doc of this.documents) {
-            this.pauseDocument(doc);
-        }
+    private async pauseAndValidateDocs(...docs: IDocumentDeltaEvent[]): Promise<Iterable<IDocumentDeltaEvent>> {
+        await Promise.all(Array.from(this.documents).map((doc) => this.pauseDocument(doc)));
         this.isNormalProcessingPaused = true;
 
         if (docs && docs.length > 0) {
@@ -126,18 +121,16 @@ export class DocumentDeltaEventManager {
         // If deterministically controlling events, need to pause before continuing
         if (this.isNormalProcessingPaused) {
             for (const doc of docs) {
-                this.pauseDocument(doc);
+                await this.pauseDocument(doc);
             }
         }
     }
 
-    private pauseDocument(doc: IDocumentDeltaEvent) {
-        doc.deltaManager.inbound.pause();
-        doc.deltaManager.outbound.pause();
+    private async pauseDocument(doc: IDocumentDeltaEvent) {
+        await Promise.all([doc.deltaManager.inbound.pause(), doc.deltaManager.outbound.pause()]);
     }
 
-    private resumeDocument(doc: IDocumentDeltaEvent) {
-        doc.deltaManager.inbound.resume();
-        doc.deltaManager.outbound.resume();
+    private async resumeDocument(doc: IDocumentDeltaEvent) {
+        await Promise.all([doc.deltaManager.inbound.resume(), doc.deltaManager.outbound.resume()]);
     }
 }

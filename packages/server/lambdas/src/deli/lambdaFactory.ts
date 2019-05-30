@@ -46,6 +46,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 forks: [],
                 logOffset: null,
                 parent: null,
+                scribe: {
+                    logOffset: -1,
+                    proposals: [],
+                },
                 sequenceNumber: 0,
                 tenantId,
             };

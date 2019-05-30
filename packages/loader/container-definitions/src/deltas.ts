@@ -98,12 +98,12 @@ export interface IDeltaQueue<T> extends EventEmitter {
     /**
      * Pauses processing on the queue
      */
-    pause();
+    pause(): Promise<void>;
 
     /**
      * Resumes processing on the queue
      */
-    resume();
+    resume(): Promise<void>;
 
     /**
      * Peeks at the next message in the queue
@@ -113,10 +113,10 @@ export interface IDeltaQueue<T> extends EventEmitter {
     /**
      * System level pause
      */
-    systemPause();
+    systemPause(): Promise<void>;
 
     /**
      * System level resume
      */
-    systemResume();
+    systemResume(): Promise<void>;
 }

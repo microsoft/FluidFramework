@@ -79,7 +79,11 @@ export class CheckpointManager {
      * Checkpoints at the last received offset. Returns the checkpointed offset.
      */
     public async flush(): Promise<void> {
-        return this.checkpoint(this.lastOffset);
+        if (this.lastOffset === undefined) {
+            return;
+        } else {
+            return this.checkpoint(this.lastOffset);
+        }
     }
 
     /**

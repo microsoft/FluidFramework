@@ -15,6 +15,7 @@
         "prefer-readonly": false,
         "prefer-type-cast": false,
         "promise-function-async": false,
-        "type-literal-delimiter": false
+        "type-literal-delimiter": false,
+        "no-object-literal-type-assertion": false
     }
 }

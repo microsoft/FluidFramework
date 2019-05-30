@@ -8,11 +8,12 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@prague/container-definitions";
-import * as socketStorage from "@prague/routerlicious-socket-storage";
 import * as core from "@prague/services-core";
 import { generateClientId, getRandomInt } from "@prague/services-utils";
+import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
+import * as semver from "semver";
 import * as winston from "winston";
 
 // Sanitize the receeived op before sending.
@@ -43,6 +44,8 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
+const protocolVersion = "^0.1.0";
+
 export function register(
     webSocketServer: core.IWebSocketServer,
     metricClientConfig: any,
@@ -58,7 +61,7 @@ export function register(
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
 
-        async function connectDocument(message: socketStorage.IConnect): Promise<socketStorage.IConnected> {
+        async function connectDocument(message: IConnect): Promise<IConnected> {
             if (!message.token) {
                 return Promise.reject("Must provide an authorization token");
             }
@@ -86,48 +89,56 @@ export function register(
             // Join the room to receive signals.
             roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
 
+            // Iterate over the version ranges provided by the client and select the best one that works
+            const connectVersions = message.versions ? message.versions : ["^0.1.0"];
+            let version: string = null;
+            for (const connectVersion of connectVersions) {
+                if (semver.intersects(protocolVersion, connectVersion)) {
+                    version = protocolVersion;
+                    break;
+                }
+            }
+
+            if (!version) {
+                return Promise.reject(
+                    `Unsupported client protocol.` +
+                    `Server: ${protocolVersion}. ` +
+                    `Client: ${JSON.stringify(connectVersions)}`);
+            }
+
             // Readonly clients don't need an orderer.
             if (messageClient.mode !== "readonly") {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient);
                 connectionsMap.set(clientId, connection);
 
-                const connectedMessage: socketStorage.IConnected = {
+                const connectedMessage: IConnected = {
                     clientId,
                     existing: connection.existing,
                     maxMessageSize: connection.maxMessageSize,
                     parentBranch: connection.parentBranch,
+                    supportedVersions: [protocolVersion],
+                    version,
                 };
 
                 return connectedMessage;
             } else {
-                // Todo (mdaumi): We should split storage stuff from orderer to get the following fields right.
-                const connectedMessage: socketStorage.IConnected = {
+                // TODO (mdaumi): We should split storage stuff from orderer to get the following fields right.
+                const connectedMessage: IConnected = {
                     clientId,
                     existing: true, // Readonly client can only open an existing document.
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     parentBranch: null, // Does not matter for now.
+                    supportedVersions: [protocolVersion],
+                    version,
                 };
 
                 return connectedMessage;
             }
         }
 
-        // todo: remove this handler once clients onboard "connect_document"
-        // Note connect is a reserved socket.io word so we use connectDocument to represent the connect request
-        socket.on("connectDocument", async (message: socketStorage.IConnect, response) => {
-            connectDocument(message).then(
-                (connectedMessage) => {
-                    response(null, connectedMessage);
-                },
-                (error) => {
-                    winston.info(`connectDocument error`, error);
-                    response(error, null);
-                });
-        });
-
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
-        socket.on("connect_document", async (message: socketStorage.IConnect) => {
+        socket.on("connect_document", async (message: IConnect) => {
             connectDocument(message).then(
                 (connectedMessage) => {
                     socket.emit("connect_document_success", connectedMessage);

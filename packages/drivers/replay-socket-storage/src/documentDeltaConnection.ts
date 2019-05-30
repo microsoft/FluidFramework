@@ -18,6 +18,8 @@ const ReplayResolution = 15;
 // Since the replay service never actually sends messages the size below is arbitrary
 const ReplayMaxMessageSize = 16 * 1024;
 
+const replayProtocolVersion = "^0.1.0";
+
 class Replayer {
     private replayCurrent = 0;
     private replayP = Promise.resolve();
@@ -177,7 +179,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         replayTo: number,
         unitIsTime: boolean | undefined): Promise<IDocumentDeltaConnection> {
 
-        const connection = {
+        const connection: messages.IConnected = {
             clientId: "",
             existing: true,
             initialContents: [],
@@ -185,7 +187,8 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
             initialSignals: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
-            user: null,
+            supportedVersions: [replayProtocolVersion],
+            version: replayProtocolVersion,
         };
         const deltaConnection = new ReplayDocumentDeltaConnection(connection);
         // tslint:disable-next-line:no-floating-promises

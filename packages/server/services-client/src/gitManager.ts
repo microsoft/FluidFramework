@@ -124,6 +124,11 @@ export class GitManager implements IGitManager {
         return this.historian.createBlob(blob);
     }
 
+    public createGitTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+        const treeP = this.historian.createTree(params);
+        return treeP;
+    }
+
     public createTree(files: api.ITree): Promise<resources.ITree> {
         return this.createTreeCore(files, 0);
     }

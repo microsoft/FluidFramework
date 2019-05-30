@@ -6,12 +6,14 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "@prague/container-definitions";
+import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";
 import { debug } from "./debug";
-import * as messages from "./messages";
+
+const protocolVersion = "^0.1.0";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -44,7 +46,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     private socket: ws;
     private submitManager: BatchManager<IDocumentMessage>;
-    private details: messages.IConnected | undefined;
+    private details: IConnected | undefined;
 
     public get clientId(): string {
         return this.details!.clientId;
@@ -54,7 +56,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.existing;
     }
 
-    public get parentBranch(): string {
+    public get parentBranch(): string | null {
         return this.details!.parentBranch;
     }
 
@@ -85,11 +87,12 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             `${wsUrl}?documentId${encodeURIComponent(documentId)}&tenantId${encodeURIComponent(tenantId)}`);
 
         this.socket.onopen = () => {
-            const connectMessage: messages.IConnect = {
+            const connectMessage: IConnect = {
                 client,
                 id: documentId,
                 tenantId,
                 token,
+                versions: [protocolVersion],
             };
             this.socket.send(JSON.stringify(["connect", connectMessage]));
         };
@@ -111,7 +114,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             }
         };
 
-        this.once("connect_document_success", (connectedMessage: messages.IConnected) => {
+        this.once("connect_document_success", (connectedMessage: IConnected) => {
             this.details = connectedMessage;
         });
 

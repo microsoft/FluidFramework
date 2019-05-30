@@ -99,6 +99,14 @@ export class TestCollection implements ICollection<any> {
         });
     }
 
+    public async deleteOne(filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
+    public async deleteMany(filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+
     public createIndex(index: any, unique: boolean): Promise<void> {
         throw new Error("Method not implemented.");
     }

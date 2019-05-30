@@ -19,24 +19,28 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public idle: boolean;
     private resumeDeferred: utils.Deferred<void>;
 
-    public pause() {
+    public pause(): Promise<void> {
         if (!this.paused) {
             this.paused = true;
             this.resumeDeferred = new utils.Deferred<void>();
         }
+
+        return Promise.resolve();
     }
 
-    public resume() {
+    public resume(): Promise<void> {
         this.paused = false;
         this.resumeDeferred.resolve();
+
+        return Promise.resolve();
     }
 
-    public systemPause() {
-        this.pause();
+    public systemPause(): Promise<void> {
+        return this.pause();
     }
 
-    public systemResume() {
-        this.resume();
+    public systemResume(): Promise<void> {
+        return this.resume();
     }
 
     public waitForResume(): Promise<void> {

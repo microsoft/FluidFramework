@@ -44,6 +44,7 @@
   "dependencies": {
     "@prague/container-definitions": "^0.3.0",
     "@prague/utils": "^0.3.0",
+    "@types/double-ended-queue": "^2.1.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.11",
@@ -52,7 +53,6 @@
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
     "@types/debug": "^0.0.31",
-    "@types/double-ended-queue": "^2.1.0",
     "@types/mocha": "^5.2.5",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",

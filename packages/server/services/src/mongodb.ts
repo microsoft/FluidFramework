@@ -31,6 +31,14 @@ export class MongoCollection<T> implements core.ICollection<T> {
         return this.updateCore(filter, set, addToSet, true);
     }
 
+    public async deleteOne(filter: any): Promise<any> {
+        return this.collection.deleteOne(filter);
+    }
+
+    public async deleteMany(filter: any): Promise<any> {
+        return this.collection.deleteMany(filter);
+    }
+
     public async insertOne(value: T): Promise<any> {
         const result = await this.collection.insertOne(value);
         return result.insertedId;

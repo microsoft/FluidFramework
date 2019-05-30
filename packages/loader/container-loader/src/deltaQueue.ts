@@ -1,4 +1,5 @@
 import { IDeltaQueue } from "@prague/container-definitions";
+import { Deferred } from "@prague/utils";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 
@@ -15,6 +16,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     // tslint:enable:variable-name
 
     private processing = false;
+    private pauseDeferred: Deferred<void> | undefined;
 
     public get paused(): boolean {
         return this._paused;
@@ -46,40 +48,49 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.processDeltas();
     }
 
-    public pause() {
+    public pause(): Promise<void> {
         this.userPause = true;
-        this.updatePause();
+        return this.updatePause();
     }
 
-    public resume() {
+    public resume(): Promise<void> {
         this.userPause = false;
-        this.updatePause();
+        return this.updatePause();
     }
 
-    public systemPause() {
+    public systemPause(): Promise<void> {
         this.sysPause = true;
-        this.updatePause();
+        return this.updatePause();
     }
 
-    public systemResume() {
+    public systemResume(): Promise<void> {
         this.sysPause = false;
-        this.updatePause();
+        return this.updatePause();
     }
 
-    private updatePause() {
+    private updatePause(): Promise<void> {
         const paused = this.sysPause || this.userPause;
-        if (paused === this._paused) {
-            return;
+        if (paused !== this._paused) {
+            if (paused) {
+                if (this.processing) {
+                    this.pauseDeferred = new Deferred<void>();
+                }
+
+                this._paused = true;
+                this.emit("pause");
+            } else {
+                if (this.pauseDeferred) {
+                    this.pauseDeferred.reject("Resumed while waiting to pause");
+                    this.pauseDeferred = undefined;
+                }
+
+                this._paused = false;
+                this.processDeltas();
+                this.emit("resume");
+            }
         }
 
-        if (paused) {
-            this._paused = true;
-            this.emit("pause");
-        } else {
-            this._paused = false;
-            this.processDeltas();
-            this.emit("resume");
-        }
+        return this.pauseDeferred ? this.pauseDeferred.promise : Promise.resolve();
     }
 
     private processDeltas() {
@@ -94,6 +105,17 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.emit("pre-op", next);
         this.worker(next, (error) => {
             this.processing = false;
+
+            // Signal any pending messages
+            if (this.pauseDeferred) {
+                if (error) {
+                    this.pauseDeferred.reject(error);
+                } else {
+                    this.pauseDeferred.resolve();
+                }
+                this.pauseDeferred = undefined;
+            }
+
             if (error) {
                 this.emit("error", error);
                 this.q.clear();

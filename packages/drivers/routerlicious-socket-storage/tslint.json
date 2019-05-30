@@ -12,6 +12,7 @@
         "no-suspicious-comment": false,
         "no-unnecessary-local-variable": false,
         "no-unnecessary-type-assertion": false,
+        "prefer-array-literal": false,
         "prefer-readonly": false,
         "prefer-type-cast": false,
         "promise-function-async": false,

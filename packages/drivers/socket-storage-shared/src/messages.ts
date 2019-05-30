@@ -15,6 +15,9 @@ export interface IConnect {
 
     // Type of the client trying to connect
     client: IClient;
+
+    // Semver list of protocol versions supported by the client ordered in priority of use
+    versions: string[];
 }
 
 /**
@@ -41,6 +44,12 @@ export interface IConnected {
 
     // Signals sent during the connection
     initialSignals?: ISignalMessage[];
+
+    // Protocol version selected by the server to communicate with the client
+    version: string;
+
+    // List of protocol versions supported by the server
+    supportedVersions: string[];
 }
 
 /**

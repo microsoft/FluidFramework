@@ -39,5 +39,9 @@ export interface ICollection<T> {
 
     insertMany(values: T[], ordered: boolean): Promise<void>;
 
+    deleteOne(filter: any): Promise<any>;
+
+    deleteMany(filter: any): Promise<any>;
+
     createIndex(index: any, unique: boolean): Promise<void>;
 }

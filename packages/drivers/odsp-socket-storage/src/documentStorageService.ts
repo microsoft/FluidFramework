@@ -50,6 +50,14 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return this.storageManager.write(tree, parents, message);
     }
 
+    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+        return Promise.reject("NOT IMPLEMENTED!");
+    }
+
+    public downloadSummary(commit: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+        return Promise.reject("NOT IMPLEMENTED!");
+    }
+
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         return this.storageManager.createBlob(file);
     }

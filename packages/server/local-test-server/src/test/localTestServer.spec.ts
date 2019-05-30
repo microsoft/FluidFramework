@@ -69,7 +69,7 @@ describe("LocalTestServer", () => {
         }
       });
 
-      documentDeltaEventManager.pauseProcessing();
+      await documentDeltaEventManager.pauseProcessing();
 
       user1SharedString.insertText("A", 0);
       user2SharedString.insertText("C", 0);

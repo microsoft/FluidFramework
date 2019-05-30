@@ -11,6 +11,8 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import * as messages from "./messages";
 
+const protocolVersion = "^0.1.0";
+
 /**
  * Represents a connection to a stream of delta updates
  */
@@ -41,6 +43,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             id,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
+            versions: [protocolVersion],
         };
 
         const connection = await new Promise<messages.IConnected>((resolve, reject) => {
