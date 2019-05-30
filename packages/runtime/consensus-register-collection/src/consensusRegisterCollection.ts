@@ -10,7 +10,8 @@ import * as assert from "assert";
 import { debug } from "./debug";
 import {
     IConsensusRegisterCollection,
-    IRegisterState,
+    ILocalRegister,
+    IRegisterValue,
     RegisterValueType } from "./interfaces";
 
 /**
@@ -18,8 +19,8 @@ import {
  */
 interface IRegisterOperation {
     key: string;
-    type: "set"; // We probably want delete too?
-    value: IRegisterState;
+    type: "write";
+    value: IRegisterValue;
 }
 
 /**
@@ -43,7 +44,7 @@ const snapshotFileName = "header";
  * Implementation of a consensus rgister collection
  */
 export class ConsensusRegisterCollection extends SharedObject implements IConsensusRegisterCollection {
-    private readonly data = new Map<string, IRegisterState>();
+    private readonly data = new Map<string, ILocalRegister>();
     private readonly promiseResolveQueue = new Array<IPendingRecord>();
 
     /**
@@ -69,22 +70,16 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
             return Promise.reject(`Client is disconnected`);
         }
 
-        // Set the reference sequence number to the value when this register was last updated.
-        // Otherwise it's a new one and 0 is a valid reference sequence number.
-        const referenceSequenceNumber = this.data.has(key) ? this.data.get(key).referenceSequenceNumber : 0;
-
-        let operationValue: IRegisterState;
+        let operationValue: IRegisterValue;
 
         if (value instanceof SharedObject) {
             value.attach();
             operationValue = {
-                referenceSequenceNumber,
                 type: RegisterValueType[RegisterValueType.Shared],
                 value: value.id,
             };
         } else {
             operationValue = {
-                referenceSequenceNumber,
                 type: RegisterValueType[RegisterValueType.Plain],
                 value,
             };
@@ -92,7 +87,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
 
         const op: IRegisterOperation = {
             key,
-            type: "set",
+            type: "write",
             value: operationValue,
         };
         return this.submit(op);
@@ -103,14 +98,14 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      *
      * TODO: This read does not guarantee most up to date value. We probably want to have a version
      * that submits a read message and returns when the message is acked. That way we are guaranteed
-     * to read the most recent value for that register.
+     * to read the most recent linearizable value for that register.
      */
     public read(key: string): any {
         if (!this.data.has(key)) {
             return undefined;
         }
-        const value = this.data.get(key);
-        return value.value;
+        const item = this.data.get(key);
+        return item.value.value;
     }
 
     public entries(): Map<string, any> {
@@ -123,18 +118,20 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
 
     public snapshot(): ITree {
         const serialized: any = {};
-        this.data.forEach((value, key) => {
-            let serializeValue: any;
-            if (value.type === RegisterValueType[RegisterValueType.Shared]) {
-                serializeValue = (value.value as ISharedObject).id;
+        this.data.forEach((item, key) => {
+            let innerValue: any;
+            if (item.value.type === RegisterValueType[RegisterValueType.Shared]) {
+                innerValue = (item.value.value as ISharedObject).id;
             } else {
-                serializeValue = value;
+                innerValue = item.value.value;
             }
             /* tslint:disable:no-unsafe-any */
             serialized[key] = {
-                referenceSequenceNumber: value.referenceSequenceNumber,
-                type: value.type,
-                value: serializeValue,
+                sequenceNumber: item.sequenceNumber,
+                value: {
+                    type: item.value.type,
+                    value: innerValue,
+                },
             };
         });
         // And then construct the tree for it
@@ -162,21 +159,23 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        const data: { [key: string]: IRegisterState } = header ? JSON.parse(Buffer.from(header, "base64")
+        const data: { [key: string]: ILocalRegister } = header ? JSON.parse(Buffer.from(header, "base64")
         .toString("utf-8")) : {};
 
         for (const key of Object.keys(data)) {
-            const value = data[key];
-            switch (value.type) {
+            const item = data[key];
+            switch (item.value.type) {
                 case RegisterValueType[RegisterValueType.Plain]:
-                    this.data.set(key, value);
+                    this.data.set(key, item);
                     break;
                 case RegisterValueType[RegisterValueType.Shared]:
-                    const channel = await this.runtime.getChannel(value.value as string);
-                    const fullValue: IRegisterState = {
-                        referenceSequenceNumber: value.referenceSequenceNumber,
-                        type: value.type,
-                        value: channel,
+                    const channel = await this.runtime.getChannel(item.value.value as string);
+                    const fullValue: ILocalRegister = {
+                        sequenceNumber: item.sequenceNumber,
+                        value: {
+                            type: item.value.type,
+                            value: channel,
+                        },
                     };
                     this.data.set(key, fullValue);
                     break;
@@ -209,10 +208,10 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === MessageType.Operation && !local) {
             const op: IRegisterOperation = message.contents;
-            if (op.type === "set") {
+            if (op.type === "write") {
                 /* tslint:disable:no-return-await */
                 return op.value.type === RegisterValueType[RegisterValueType.Shared]
-                    ? await this.runtime.getChannel(op.value.value)
+                    ? await this.runtime.getChannel(op.value.value as string)
                     : op.value.value;
             }
         }
@@ -222,7 +221,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
             switch (op.type) {
-                case "set":
+                case "write":
                     this.processInboundWrite(message, op, local);
                     break;
 
@@ -237,12 +236,14 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     }
 
     private processInboundWrite(message: ISequencedDocumentMessage, op: IRegisterOperation, local: boolean) {
-        // If it's a new register, set its value. Otherwise, check whether the incoming ref seq matches with local.
-        if (!this.data.has(op.key) ||
-            this.data.get(op.key).referenceSequenceNumber === op.value.referenceSequenceNumber) {
-                // Update the ref seq to incoming sequence number.
-                op.value.referenceSequenceNumber = message.sequenceNumber;
-                this.writeCore(op.key, op.value, local, message);
+        // Update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
+        if (!this.data.has(op.key) || message.referenceSequenceNumber >= this.data.get(op.key).sequenceNumber) {
+            const value: ILocalRegister = {
+                sequenceNumber: message.sequenceNumber,
+                value: op.value,
+            };
+            this.data.set(op.key, value);
+            this.emit("valueChanged", { key: op.key }, local, message);
         }
     }
 
@@ -263,10 +264,5 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
             this.promiseResolveQueue.push({ resolve, clientSequenceNumber });
         });
-    }
-
-    private writeCore(key: string, value: IRegisterState, local: boolean, message: ISequencedDocumentMessage) {
-        this.data.set(key, value);
-        this.emit("valueChanged", { key }, local, message);
     }
 }

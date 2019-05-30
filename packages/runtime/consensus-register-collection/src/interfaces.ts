@@ -50,15 +50,20 @@ export interface IConsensusRegisterCollection extends ISharedObject {
     entries(): Map<string, any>;
 }
 
-export interface IRegisterState {
+export interface ILocalRegister {
+    // Register value
+    value: IRegisterValue;
+
+    // The sequence number when last consensus was reached.
+    sequenceNumber: number;
+}
+
+export interface IRegisterValue {
     // Type of the value
     type: string;
 
     // Actual Value
     value: any;
-
-    // The sequence number when last consensus was reached. 'null' during creation of a new one
-    referenceSequenceNumber: number;
 }
 
 /**
