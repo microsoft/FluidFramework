@@ -11,20 +11,12 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:full": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\"",
-    "dev": "npm run build:dev -- --watch",
-    "publish-local": "npm publish --registry http://localhost:4873",
-    "publish-wu2": "npm run build && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "publish-patch-local": "npm version patch && npm run publish-local",
-    "republish": "docker-compose stop verdaccio && docker-compose rm -f -v verdaccio && docker-compose create --force-recreate verdaccio && docker-compose start verdaccio && npm run publish-local"
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "prague": {
     "browser": {
@@ -53,13 +45,8 @@
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
-    "source-map-loader": "^0.2.4",
-    "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
-    "typescript": "~3.4.5",
-    "webpack": "^4.8.2",
-    "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
+    "typescript": "~3.4.5"
   }
 }

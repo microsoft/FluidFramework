@@ -4,9 +4,6 @@ const pkg = require("./package.json");
 
 module.exports = env => {
     const isProduction = env === "production";
-    const tsconfig = isProduction
-        ? "tsconfig.prod.json"
-        : "tsconfig.dev.json";
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
         : "[path][name]-[local]-[hash:base64:5]"
@@ -32,7 +29,6 @@ module.exports = env => {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
                     options: { 
-                        configFile: tsconfig,
                         // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
                         // This is different than 'tsc', which resolves 'declarationDir' relative to the location
                         // of the tsconfig. 

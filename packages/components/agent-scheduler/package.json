@@ -18,7 +18,6 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
-    "webpack:full": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\"",
     "dev": "npm run build:dev -- --watch",
     "publish-local": "npm publish --registry http://localhost:4873",

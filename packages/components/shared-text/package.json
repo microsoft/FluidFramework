@@ -11,15 +11,14 @@
     "build": "npm run build:compile",
     "build:compile": "npm run tsc && npm run webpack:dev",
     "build:full": "npm run build",
-    "build:full:compile": "npm run tsc && npm run webpack:full",
+    "build:full:compile": "npm run tsc && npm run webpack",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"production\"",
     "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
-    "webpack": "webpack --env=\"development\"",
-    "webpack:dev": "webpack --env=\"development\"",
-    "webpack:full": "webpack --env=\"production\""
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
