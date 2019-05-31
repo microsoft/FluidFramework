@@ -1,7 +1,7 @@
 import { ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { IHelpMessage, IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
-import { RateLimitter } from "@prague/utils";
+import { RateLimiter } from "@prague/utils";
 import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";
 
@@ -10,7 +10,7 @@ const RequestWindowMS = 15000;
 
 export class ForemanLambda extends SequencedLambda {
     private taskQueueMap = new Map<string, string>();
-    private rateLimitter = new RateLimitter(RequestWindowMS);
+    private rateLimiter = new RateLimiter(RequestWindowMS);
     constructor(
         private messageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
@@ -66,7 +66,7 @@ export class ForemanLambda extends SequencedLambda {
         const queueTasks = this.generateQueueTasks(helpTasks);
         for (const queueTask of queueTasks) {
             const queueName = queueTask[0];
-            const tasks = this.rateLimitter.filter(clientId, queueTask[1]);
+            const tasks = this.rateLimiter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
                 const queueMessage: IQueueMessage = {
                     documentId: docId,

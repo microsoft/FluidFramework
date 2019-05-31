@@ -99,7 +99,7 @@ export class ChaincodeWork extends EventEmitter {
     }
 
     private attachListeners() {
-        // Emits document relared errors to caller.
+        // Emits document related errors to caller.
         const errorHandler = (error) => {
             this.events.emit("error", error);
         };

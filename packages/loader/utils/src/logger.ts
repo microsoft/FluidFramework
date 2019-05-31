@@ -12,6 +12,11 @@ import * as registerDebug from "debug";
  * It can be used in places where logger instance is required, but events should be not send over.
  */
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
+    /**
+     * Send an event with the logger
+     *
+     * @param event - the event to send
+     */
     public send(event: ITelemetryBaseEvent): void {
         return;
     }
@@ -28,32 +33,65 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         private readonly properties?: object) {
     }
 
+    /**
+     * Send an event with the logger
+     *
+     * @param event - the event to send
+     */
     public abstract send(event: ITelemetryBaseEvent): void;
 
+    /**
+     * Send a telemetry event with the logger
+     *
+     * @param event - the event to send
+     */
     public sendTelemetryEvent(event: ITelemetryInformationalEvent) {
-        this.send({...event, category: "telemetryEvent"});
+        this.send({ ...event, category: "telemetryEvent" });
     }
 
+    /**
+     * Send am error event with the logger
+     *
+     * @param event - the event to send
+     */
     public sendError(event: ITelemetryErrorEvent) {
-        this.send({...event, category: "error"});
+        this.send({ ...event, category: "error" });
     }
 
+    /**
+     * Log an exception with the logger
+     *
+     * @param eventName - the name of the event
+     * @param exception - the exception to include in the event, require to be JSON-able
+     */
     public logException(eventName: string, exception: any) {
-        this.sendError({eventName, exception: JSON.stringify(exception)});
+        this.sendError({ eventName, exception: JSON.stringify(exception) });
     }
 
+    /**
+     * Log an debug assert with the logger
+     *
+     * @param condition - the condition to assert on
+     * @param exception - the message to log if the condition fails
+     */
     public debugAssert(condition: boolean, message: string): void {
         this.shipAssert(condition, message);
     }
 
+    /**
+     * Log an ship assert with the logger
+     *
+     * @param condition - the condition to assert on
+     * @param exception - the message to log if the condition fails
+     */
     public shipAssert(condition: boolean, message: string): void {
         if (!condition) {
-            this.sendError({eventName: "Assert", message});
+            this.sendError({ eventName: "Assert", message });
         }
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-        const newEvent = {...this.properties, ...event};
+        const newEvent = { ...this.properties, ...event };
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}:${newEvent.eventName}`;
         }
@@ -75,9 +113,11 @@ export class ChildLogger extends TelemetryLogger {
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      */
-    public static Create(baseLogger?: ITelemetryBaseLogger,
-                         namespace?: string,
-                         properties?: object): TelemetryLogger {
+    public static Create(
+        baseLogger?: ITelemetryBaseLogger,
+        namespace?: string,
+        properties?: object): TelemetryLogger {
+
         return new ChildLogger(
             baseLogger ? baseLogger : new BaseTelemetryNullLogger(),
             namespace,
@@ -85,12 +125,17 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     constructor(
-            protected readonly logger: ITelemetryBaseLogger,
-            namespace?: string,
-            properties?: object) {
+        protected readonly logger: ITelemetryBaseLogger,
+        namespace?: string,
+        properties?: object) {
         super(namespace, properties);
     }
 
+    /**
+     * Send an event with the logger
+     *
+     * @param event - the event to send
+     */
     public send(event: ITelemetryBaseEvent): void {
         this.logger.send(this.prepareEvent(event));
     }
@@ -123,6 +168,11 @@ export class MultiSinkLogger extends TelemetryLogger {
         }
     }
 
+    /**
+     * Send an event to the loggers
+     *
+     * @param event - the event to send to all the registered logger
+     */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
@@ -160,9 +210,9 @@ export class DebugLogger extends TelemetryLogger {
      * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
      */
     public static MixinDebugLogger(
-            namespace: string,
-            properties?: object,
-            baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
+        namespace: string,
+        properties?: object,
+        baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
         const debugLogger = DebugLogger.Create(namespace, properties);
         if (!baseLogger) {
             return debugLogger;
@@ -175,13 +225,18 @@ export class DebugLogger extends TelemetryLogger {
     }
 
     constructor(
-            private readonly debug: registerDebug.IDebugger,
-            private readonly debugErr: registerDebug.IDebugger,
-            properties?: object,
-            ) {
+        private readonly debug: registerDebug.IDebugger,
+        private readonly debugErr: registerDebug.IDebugger,
+        properties?: object,
+    ) {
         super(undefined, properties);
     }
 
+    /**
+     * Send an event to debug loggers
+     *
+     * @param event - the event to send
+     */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
         let logger = newEvent.category === "error" ? this.debugErr : this.debug;

@@ -43,7 +43,7 @@ export class RateLimiter extends EventEmitter {
         completeP.then(() => {
             this.running = false;
             this.emit("done");
-            // Wait rate amount of time before resolving to limit the udpate flow
+            // Wait rate amount of time before resolving to limit the update flow
             this.triggerTimer = setTimeout(() => {
                 this.pending = false;
                 if (this.dirty) {

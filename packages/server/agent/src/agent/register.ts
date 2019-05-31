@@ -1,7 +1,7 @@
 import * as api from "@prague/client-api";
 import { IClient, IHost } from "@prague/container-definitions";
 import { IHelpMessage } from "@prague/runtime-definitions";
-import { RateLimitter } from "@prague/utils";
+import { RateLimiter } from "@prague/utils";
 import { debug } from "./debug";
 import { loadDictionary } from "./dictionaryLoader";
 import { IntelWork } from "./intelWork";
@@ -22,9 +22,9 @@ export function registerToWork(
     tenantId: string,
     documentId: string) {
     if (client.permission && client.permission.length > 0) {
-        const rateLimitter = new RateLimitter(RequestWindowMS);
+        const rateLimiter = new RateLimiter(RequestWindowMS);
         doc.on("localHelp", async (helpMessage: IHelpMessage) => {
-            const filteredTasks = rateLimitter.filter(doc.clientId, helpMessage.tasks);
+            const filteredTasks = rateLimiter.filter(doc.clientId, helpMessage.tasks);
             await performTasks(
                 alfred,
                 documentId,

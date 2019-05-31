@@ -367,7 +367,7 @@ export class DeliLambda implements IPartitionLambda {
             }
         }
 
-        // Store the previous minimum sequene number we returned and then update it. If there are no clients
+        // Store the previous minimum sequence number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
         const msn = this.getMinimumSequenceNumber();
         if (msn === -1) {

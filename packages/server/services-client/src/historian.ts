@@ -121,12 +121,11 @@ export class Historian implements IHistorian {
     }
 
     private async getHeaderDirect(sha: string): Promise<git.IHeader> {
-        const tree = await this.getTree(sha, true) as any;
+        const tree = await this.getTree(sha, true);
 
         const includeBlobs = [".attributes", ".blobs", ".messages", "header"];
 
         const blobsP: Array<Promise<git.IBlob>> = [];
-        /* tslint:disable:no-unsafe-any */
         for (const entry of tree.tree) {
             if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
                 const blobP = this.getBlob(entry.sha);

@@ -5,12 +5,18 @@ import * as assert from "assert";
 const cloneDeep = require("lodash/cloneDeep");
 // tslint:enable:no-var-requires
 
+/**
+ * A range in the RangeTracker
+ */
 export interface IRange {
     primary: number;
     secondary: number | undefined;
     length: number;
 }
 
+/**
+ * A serialized version of the RangeTracker
+ */
 export interface IRangeTrackerSnapshot {
     ranges: IRange[];
     lastPrimary: number;
@@ -21,6 +27,8 @@ export interface IRangeTrackerSnapshot {
  * Helper class that keeps track of the relation between two ranges in a 1:N fashion. Primary
  * is continuous and always maps to a single value in secondary above the base value. The range
  * defines an increasing step function.
+ *
+ * Used by deli to keep track of the branch map
  */
 export class RangeTracker {
     private ranges: IRange[];
@@ -31,10 +39,20 @@ export class RangeTracker {
         return this.ranges[0].primary;
     }
 
+    /**
+     * Getter for the last primary that was added
+     *
+     * @returns last primary that was added
+     */
     get primaryHead() {
         return this.lastPrimary;
     }
 
+    /**
+     * Getter for the last secondary that was added
+     *
+     * @returns last secondary that was added
+     */
     get secondaryHead() {
         return this.lastSecondary;
     }
@@ -65,7 +83,12 @@ export class RangeTracker {
         };
     }
 
-    // primary is time - secondary is the MSN
+    /**
+     * Add a primary, secondary pair to the range
+     *
+     * @param primary - the primary number in the range
+     * @param secondary - the secondary number in the range
+     */
     public add(primary: number, secondary: number) {
         // Both values must continuously be increasing - we won't always track the last value we saw so we do so
         // below to check invariants
@@ -111,7 +134,13 @@ export class RangeTracker {
         }
     }
 
-    public get(primary: number) {
+    /**
+     * Get the closest range to the primary
+     *
+     * @param primary - the primary value to look for
+     * @returns the closest range to the primary
+     */
+    public get(primary: number): number {
         assert(primary >= this.ranges[0].primary);
 
         // Find the first range where the starting position is greater than the primary. Our target range is
@@ -131,6 +160,11 @@ export class RangeTracker {
         return Math.min(primary - closestRange.primary, closestRange.length) + closestRange.secondary!;
     }
 
+    /**
+     * Update the range of primary
+     *
+     * @param primary - the primary value to update
+     */
     public updateBase(primary: number) {
         assert(primary >= this.ranges[0].primary);
 

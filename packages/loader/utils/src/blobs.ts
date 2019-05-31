@@ -13,7 +13,9 @@ import * as sha1 from "sha.js/sha1";
 
 /**
  * Create Hash (Github hashes the string with blob and size)
+ *
  * @param file - The contents of the file in a buffer
+ * @returns The sha1 hash of the content of the buffer with the `blob` prefix and size
  */
 export function gitHashFile(file: Buffer): string {
     const size = file.byteLength;
@@ -25,6 +27,13 @@ export function gitHashFile(file: Buffer): string {
         .digest("hex");
 }
 
+/**
+ * Create a flatten view of an array of ITreeEntry
+ *
+ * @param tree - an array of ITreeEntry to flatten
+ * @param blobMap - a map of blob's sha1 to content
+ * @returns A flatten with of the ITreeEntry
+ */
 export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.ITree {
     const entries = flattenCore("", tree, blobMap);
     return {
@@ -34,6 +43,13 @@ export function flatten(tree: ITreeEntry[], blobMap: Map<string, string>): git.I
     };
 }
 
+/**
+ * Read a blob from IDocumentStorageService, decode it (from "base64") and JSON.parse it into object of type T
+ *
+ * @param storage - the IDocumentStorageService to read from
+ * @param id - the id of the blob to read and parse
+ * @returns the object that we decoded and JSON.parse
+ */
 export async function readAndParse<T>(storage: IDocumentStorageService, id: string): Promise<T> {
     const encoded = await storage.read(id);
     const decoded = Buffer
@@ -82,11 +98,13 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
     return entries;
 }
 
-export function buildHierarchy(flatTree: git.ITree | null): ISnapshotTree | null {
-    if (!flatTree) {
-        return null;
-    }
-
+/**
+ * Build a tree hierarchy base on a flat tree
+ *
+ * @param flatTree - a flat tree
+ * @returns the hierarchical tree
+ */
+export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
     const lookup: { [path: string]: ISnapshotTree } = {};
     const root: ISnapshotTree = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;

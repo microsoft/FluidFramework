@@ -164,8 +164,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     // Components tracked by the Domain
-    private components = new Map<string, ComponentContext>();
-    private componentsDeferred = new Map<string, Deferred<ComponentContext>>();
+    private componentContexts = new Map<string, ComponentContext>();
+    private componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
@@ -198,11 +198,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             true,
             runtimeStorage,
             snapshotTree);
-        this.components.set(id, component);
+        this.componentContexts.set(id, component);
 
         // Create a promise that will resolve to the started component
         const deferred = new Deferred<ComponentContext>();
-        this.componentsDeferred.set(id, deferred);
+        this.componentContextsDeferred.set(id, deferred);
 
         await component.start();
 
@@ -236,7 +236,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Iterate over each component and ask it to snapshot
         const componentEntries = new Map<string, ITree>();
-        this.components.forEach((component, key) => componentEntries.set(key, component.snapshot()));
+        this.componentContexts.forEach((component, key) => componentEntries.set(key, component.snapshot()));
 
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storage.getVersions(this.id, 1);
@@ -288,7 +288,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Iterate over each component and ask it to snapshot
         const componentEntries = new Map<string, ITree>();
-        this.components.forEach((component, key) => componentEntries.set(key, component.snapshot()));
+        this.componentContexts.forEach((component, key) => componentEntries.set(key, component.snapshot()));
 
         // Use base tree to know previous component snapshot and then snapshot each component
         const componentVersionsP = new Array<Promise<{ id: string, version: string }>>();
@@ -304,7 +304,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 const componentVersionP = this.storage
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
                     .then((version) => {
-                        this.components.get(componentId).updateBaseId(version.treeId);
+                        this.componentContexts.get(componentId).updateBaseId(version.treeId);
                         return { id: componentId, version: version.id };
                     });
                 componentVersionsP.push(componentVersionP);
@@ -362,8 +362,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             }
         }
 
-        for (const [, component] of this.components) {
-            component.changeConnectionState(value, clientId);
+        for (const [, componentContext] of this.componentContexts) {
+            componentContext.changeConnectionState(value, clientId);
         }
 
         if (value === ConnectionState.Connected) {
@@ -415,7 +415,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
-        const component = this.components.get(envelope.address);
+        const component = this.componentContexts.get(envelope.address);
         assert(component);
         const innerContent = envelope.contents as { content: any, type: string };
 
@@ -430,16 +430,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        if (!this.componentsDeferred.has(id)) {
+        if (!this.componentContextsDeferred.has(id)) {
             if (!wait) {
                 return Promise.reject(`Process ${id} does not exist`);
             }
 
             // Add in a deferred that will resolve once the process ID arrives
-            this.componentsDeferred.set(id, new Deferred<ComponentContext>());
+            this.componentContextsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
-        const componentContext = await this.componentsDeferred.get(id).promise;
+        const componentContext = await this.componentContextsDeferred.get(id).promise;
         return componentContext.componentRuntime;
     }
 
@@ -447,7 +447,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.verifyNotClosed();
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = new ComponentContext(
+        const componentContext = new ComponentContext(
             this,
             pkg,
             id,
@@ -466,14 +466,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Store off the component
         const deferred = new Deferred<ComponentContext>();
-        this.componentsDeferred.set(id, deferred);
-        this.components.set(id, component);
+        this.componentContextsDeferred.set(id, deferred);
+        this.componentContexts.set(id, componentContext);
 
         // Start the component
-        await component.start();
-        deferred.resolve(component);
+        const componentRuntime = await componentContext.start();
+        deferred.resolve(componentContext);
 
-        return component.componentRuntime;
+        return componentRuntime;
     }
 
     public getQuorum(): IQuorum {
@@ -559,7 +559,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         const envelope = message.contents as IEnvelope;
-        const component = this.components.get(envelope.address);
+        const component = this.componentContexts.get(envelope.address);
         assert(component);
         const innerContents = envelope.contents as { content: any, type: string };
 
@@ -581,7 +581,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     private processOperation(message: ISequencedDocumentMessage, local: boolean, context: any) {
         const envelope = message.contents as IEnvelope;
-        const component = this.components.get(envelope.address);
+        const component = this.componentContexts.get(envelope.address);
         assert(component);
         const innerContents = envelope.contents as { content: any, type: string };
 
@@ -646,18 +646,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             assert(this.pendingAttach.has(attachMessage.id));
             this.pendingAttach.delete(attachMessage.id);
         } else {
-            this.components.set(attachMessage.id, context);
+            this.componentContexts.set(attachMessage.id, context);
 
             // Fully start the component
             await context.start();
 
             // Resolve pending gets and store off any new ones
-            if (this.componentsDeferred.has(attachMessage.id)) {
-                this.componentsDeferred.get(attachMessage.id).resolve(context);
+            if (this.componentContextsDeferred.has(attachMessage.id)) {
+                this.componentContextsDeferred.get(attachMessage.id).resolve(context);
             } else {
                 const deferred = new Deferred<ComponentContext>();
                 deferred.resolve(context);
-                this.componentsDeferred.set(attachMessage.id, deferred);
+                this.componentContextsDeferred.set(attachMessage.id, deferred);
             }
         }
     }
@@ -678,7 +678,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             debug(`New leader elected: ${clientId}`);
             if (this.leader) {
                 this.emit("leader", clientId);
-                for (const [, component] of this.components) {
+                for (const [, component] of this.componentContexts) {
                     component.updateLeader(clientId);
                 }
                 this.runTaskAnalyzer();
@@ -715,7 +715,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      * Emit local help message for this browser and submits a remote help message for agents.
      */
     private runTaskAnalyzer() {
-        // Analyze the current state and ask for local and remote help seperately.
+        // Analyze the current state and ask for local and remote help separately.
         const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {

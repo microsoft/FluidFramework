@@ -11,10 +11,6 @@ export interface IEnvelope {
     contents: any;
 }
 
-export interface ISave {
-    message: string;
-}
-
 export interface IHelpMessage {
 
     tasks: string[];

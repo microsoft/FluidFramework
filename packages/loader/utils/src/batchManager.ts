@@ -1,12 +1,25 @@
 const MaxBatchSize = 100;
-
+/**
+ * Manages a queue of work to be batch processed at next javascript turn of execution
+ */
 export class BatchManager<T> {
     private pendingWork = new Map<string, T[]>();
     private pendingTimer: NodeJS.Timer | undefined;
 
-    constructor(private readonly process: (id: string, work: T[]) => void) {
+    /**
+     * Creates an instance of BatchManager.
+     * @param process - callback to process the work
+     */
+    constructor(
+        private readonly process: (id: string, work: T[]) => void) {
     }
 
+    /**
+     * Queue up a work item to be processed
+     *
+     * @param id - id of the batch to add the work item to
+     * @param work - the work item to be added
+     */
     public add(id: string, work: T) {
         if (!this.pendingWork.has(id)) {
             this.pendingWork.set(id, []);
@@ -32,7 +45,7 @@ export class BatchManager<T> {
     }
 
     /**
-     * Resolves once all pending work is complete
+     * Process all the pending work item synchronously now
      */
     public drain(): void {
         this.startWork();
@@ -40,7 +53,7 @@ export class BatchManager<T> {
 
     private startWork() {
         // Clear the internal flags first to avoid issues in case any of the pending work calls back into
-        // the batch manager. We could also do this with a second setImmediate call but avodiing in order
+        // the batch manager. We could also do this with a second setImmediate call but avoiding in order
         // to process the work quicker.
         const pendingWork = this.pendingWork;
         this.pendingWork = new Map<string, T[]>();

@@ -18,6 +18,8 @@ export class Deferred<T> {
 
     /**
      * Retrieves the underlying promise for the deferred
+     *
+     * @returns the underlying promise
      */
     public get promise(): Promise<T> {
         return this.p;
@@ -25,6 +27,8 @@ export class Deferred<T> {
 
     /**
      * Resolves the promise
+     *
+     * @param value - the value to resolve the promise with
      */
     public resolve(value?: T | PromiseLike<T>) {
         if (this.res !== undefined) {
@@ -34,6 +38,8 @@ export class Deferred<T> {
 
     /**
      * Rejects the promise
+     *
+     * @param value - the value to reject the promise with
      */
     public reject(error: any) {
         if (this.rej !== undefined) {

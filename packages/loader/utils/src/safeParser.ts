@@ -1,3 +1,9 @@
+/**
+ * Wrapper for JSON.parse to translate all exception to return undefined
+ *
+ * @param json - the JSON string to parse
+ * @returns the result JSON.parse is successful, undefined if exception happens
+ */
 export function safelyParseJSON(json: string) {
     let parsed;
     try {

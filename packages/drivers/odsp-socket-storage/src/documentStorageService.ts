@@ -3,7 +3,7 @@ import { buildHierarchy } from "@prague/utils";
 import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
 /**
- * The current implementation of this aligns with SPO's implmentation of SnapShot
+ * The current implementation of this aligns with SPO's implementation of SnapShot
  */
 export class DocumentStorageService implements api.IDocumentStorageService {
     public get repositoryUrl(): string {
@@ -15,7 +15,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         const tree = await this.storageManager.getTree(version);
-        const hierarchicalTree = buildHierarchy(tree);
+        const hierarchicalTree = tree ? buildHierarchy(tree) : null;
 
         if (hierarchicalTree) {
             // decode commit paths

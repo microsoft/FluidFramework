@@ -57,7 +57,7 @@ export class MockDeltaConnectionFactory {
     }
 }
 
-// Mock implementaiton IDeltaConnection that does nothing
+// Mock implementation IDeltaConnection that does nothing
 class MockDeltaConnection implements IDeltaConnection {
     public get state(): ConnectionState {
         return this.connectionState;
@@ -98,7 +98,7 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 }
 
-// Mock implementaiton of IRuntime
+// Mock implementation of IRuntime
 export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public readonly documentId: string;
     public readonly id: string;
