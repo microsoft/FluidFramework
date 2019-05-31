@@ -4,7 +4,7 @@ import {
     MockStorage,
 // tslint:disable-next-line:no-submodule-imports
 } from "@prague/merge-tree/dist/test/";
-import { IDistributedObjectServices } from "@prague/runtime-definitions";
+import { ISharedObjectServices } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { SharedString } from "../sharedString";
 import * as mocks from "./mocks";
@@ -17,7 +17,7 @@ describe("SharedString", () => {
     beforeEach(() => {
         const runtime = new mocks.MockRuntime();
         deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
-        const services: IDistributedObjectServices = {
+        const services: ISharedObjectServices = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),
         };
@@ -171,7 +171,7 @@ describe("SharedString", () => {
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
 
             const runtime = new mocks.MockRuntime();
-            const services: IDistributedObjectServices = {
+            const services: ISharedObjectServices = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(tree),
             };

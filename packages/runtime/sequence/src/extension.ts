@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 import { SharedNumberSequence} from "./sharedNumberSequence";
 import { SharedObjectSequence} from "./sharedObjectSequence";
@@ -16,7 +16,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedString = new SharedString(document, id, services);
@@ -41,7 +41,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedObjectSequence<object>(document, id, services);
@@ -66,7 +66,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedNumberSequence(document, id, services);

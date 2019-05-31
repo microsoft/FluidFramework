@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { ISharedMap, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
@@ -22,7 +22,7 @@ export class MapExtension implements ISharedObjectExtension {
         runtime: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedMap> {
 
         const map = new SharedMap(id, runtime, MapExtension.Type);

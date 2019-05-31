@@ -130,10 +130,10 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Loads the specified distributed object. Returns null if it does not exist
+     * Loads the specified shared object. Returns null if it does not exist
      *
      * This method should not be called directly. Instead access should be obtained through the root map
-     * or another distributed object.
+     * or another shared object.
      *
      * @param id - Identifier of the object to load
      */

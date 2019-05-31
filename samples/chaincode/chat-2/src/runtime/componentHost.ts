@@ -21,7 +21,7 @@ import {
     IChannel,
     IComponentDeltaHandler,
     IComponentRuntime,
-    IDistributedObjectServices,
+    ISharedObjectServices,
     IRuntime,
 } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";
@@ -156,7 +156,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
         return;
     }
 
-    public attachChannel(channel: IChannel): IDistributedObjectServices {
+    public attachChannel(channel: IChannel): ISharedObjectServices {
         this.verifyNotClosed();
         return;
     }

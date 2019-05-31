@@ -7,8 +7,8 @@ import {
 } from "@prague/container-definitions";
 import {
     IComponentRuntime,
-    IDistributedObjectServices,
     IObjectStorageService,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ChildLogger } from "@prague/utils";
 import * as assert from "assert";
@@ -30,7 +30,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     // Locally applied operations not yet ACK'd by the server
     private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
-    private services: IDistributedObjectServices;
+    private services: ISharedObjectServices;
 
     public get state(): ConnectionState {
         return this._state;
@@ -55,7 +55,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     public async load(
         minimumSequenceNumber: number,
         headerOrigin: string,
-        services: IDistributedObjectServices): Promise<void> {
+        services: ISharedObjectServices): Promise<void> {
 
         this.services = services;
 

@@ -13,8 +13,8 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     IComponentRuntime,
-    IDistributedObjectServices,
     IObjectStorageService,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -49,7 +49,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         document: IComponentRuntime,
         public id: string,
         extensionType: string,
-        services?: IDistributedObjectServices) {
+        services?: ISharedObjectServices) {
 
         super(id, document, extensionType);
         /* tslint:disable:no-unsafe-any */

@@ -43,11 +43,11 @@ interface IRemoveFullResult {
 }
 
 /**
- * Implementation of a consensus collection distributed object
+ * Implementation of a consensus collection shared object
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/remove order and snapshot ability.
- * Implements the distributed object's communication, handles the sending/processing
+ * Implements the shared object's communication, handles the sending/processing
  * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any> extends SharedObject implements IConsensusOrderedCollection<T> {

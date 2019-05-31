@@ -1,5 +1,5 @@
 import { IMap, MapExtension } from "@prague/map";
-import { IDistributedObjectServices, IGenericBlob, IRuntime, IUser } from "@prague/runtime-definitions";
+import { IGenericBlob, IRuntime, ISharedObjectServices, IUser } from "@prague/runtime-definitions";
 import { ICollaborativeObject, IDocument } from "@prague/shared-object-common";
 import { CollaborativeStringExtension, SharedString } from "@prague/shared-string";
 import { IStream, StreamExtension } from "@prague/stream";
@@ -103,7 +103,7 @@ export class Document extends EventEmitter implements IDocument {
         throw new Error("Method not implemented.");
     }
 
-    public attach(object: ICollaborativeObject): IDistributedObjectServices {
+    public attach(object: ICollaborativeObject): ISharedObjectServices {
         return this.runtime.attachChannel(object);
     }
 

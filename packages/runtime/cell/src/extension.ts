@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { Cell } from "./cell";
 import { ICell } from "./interfaces";
@@ -16,7 +16,7 @@ export class CellExtension implements ISharedObjectExtension {
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ICell> {
 
         const cell = new Cell(id, document);

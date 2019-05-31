@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 
 /**
@@ -12,7 +12,7 @@ export interface IConsensusRegisterCollectionExtension extends ISharedObjectExte
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<IConsensusRegisterCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusRegisterCollection;

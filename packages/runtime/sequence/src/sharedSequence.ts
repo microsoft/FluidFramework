@@ -6,7 +6,7 @@ import {
     PropertySet,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;
@@ -112,7 +112,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
         document: IComponentRuntime,
         public id: string,
         extensionType: string,
-        services?: IDistributedObjectServices) {
+        services?: ISharedObjectServices) {
         super(document, id, extensionType, services);
     }
 

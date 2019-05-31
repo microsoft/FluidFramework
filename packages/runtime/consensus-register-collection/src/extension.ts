@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionExtension } from "./interfaces";
 
@@ -15,7 +15,7 @@ export class ConsensusRegisterCollectionExtension implements IConsensusRegisterC
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<IConsensusRegisterCollection> {
 
         const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionExtension.Type);

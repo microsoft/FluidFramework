@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { ConsensusStack } from "./consensusStack";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionExtension } from "./interfaces";
@@ -16,7 +16,7 @@ export class ConsensusQueueExtension implements IConsensusOrderedCollectionExten
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<IConsensusOrderedCollection> {
 
         const collection = new ConsensusQueue(id, document);
@@ -44,7 +44,7 @@ export class ConsensusStackExtension implements IConsensusOrderedCollectionExten
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<IConsensusOrderedCollection> {
 
         const collection = new ConsensusStack(id, document);

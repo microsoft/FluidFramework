@@ -19,7 +19,7 @@ import {
     IComponentRuntime,
     IDeltaConnection,
     IDeltaHandler,
-    IDistributedObjectServices,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { IHistorian } from "@prague/services-client";
 import { DebugLogger } from "@prague/utils";
@@ -121,7 +121,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
         return null;
     }
 
-    public attachChannel: (channel: IChannel) => IDistributedObjectServices = () => null;
+    public attachChannel: (channel: IChannel) => ISharedObjectServices = () => null;
 
     public getQuorum(): IQuorum {
         return null;

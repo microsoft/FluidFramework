@@ -1,8 +1,8 @@
 import { ITree } from "@prague/container-definitions";
 import {
     IComponentRuntime,
-    IDistributedObjectServices,
     IObjectStorageService,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 
@@ -17,7 +17,7 @@ export interface IConsensusOrderedCollectionExtension extends ISharedObjectExten
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<IConsensusOrderedCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
@@ -27,7 +27,7 @@ export interface IConsensusOrderedCollectionExtension extends ISharedObjectExten
  * Consensus Ordered Collection interface
  *
  * An consensus ordered collection is a distributed data structure, which
- * holds a collection of JSON-able or distributed objects, and have a
+ * holds a collection of JSON-able or shared objects, and have a
  * deterministic add/remove order.
  *
  * @remarks
@@ -39,7 +39,7 @@ export interface IConsensusOrderedCollectionExtension extends ISharedObjectExten
  * will get the first removed item, etc. All operations are asynchronous.
  * A function `wait` is provided to wait for and remove an entry in the collection.
  *
- * All non-distributed object added to the collection will be cloned (via JSON).
+ * All non-shared objects added to the collection will be cloned (via JSON).
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */

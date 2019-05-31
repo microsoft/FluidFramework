@@ -6,7 +6,7 @@ import {
     PropertySet,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 import {
     SharedSegmentSequence,
@@ -185,7 +185,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     constructor(
         document: IComponentRuntime,
         public id: string,
-        services?: IDistributedObjectServices,
+        services?: ISharedObjectServices,
     ) {
         super(document, id, SparseMatrixExtension.Type, services);
     }
@@ -372,7 +372,7 @@ export class SparseMatrixExtension implements ISharedObjectExtension {
         document: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string,
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(document, id, services);

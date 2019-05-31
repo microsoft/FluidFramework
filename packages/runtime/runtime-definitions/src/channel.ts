@@ -68,7 +68,7 @@ export interface IObjectStorageService {
     read(path: string): Promise<string>;
 }
 
-export interface IDistributedObjectServices {
+export interface ISharedObjectServices {
     deltaConnection: IDeltaConnection;
 
     objectStorage: IObjectStorageService;

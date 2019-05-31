@@ -18,7 +18,7 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
-import { IChannel, IDistributedObjectServices } from "./channel";
+import { IChannel, ISharedObjectServices } from "./channel";
 
 export interface IComponentRuntime extends EventEmitter {
     readonly options: any;
@@ -73,9 +73,9 @@ export interface IComponentRuntime extends EventEmitter {
     createChannel(id: string, type: string): IChannel;
 
     /**
-     * Attaches the channel to the runtime - exposing it ot remote clients
+     * Attaches the channel to the runtime - exposing it to remote clients
      */
-    attachChannel(channel: IChannel): IDistributedObjectServices;
+    attachChannel(channel: IChannel): ISharedObjectServices;
 
     snapshot(message: string): Promise<void>;
 

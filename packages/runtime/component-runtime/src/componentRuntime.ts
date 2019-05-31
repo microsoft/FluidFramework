@@ -25,10 +25,10 @@ import {
     IComponent,
     IComponentContext,
     IComponentRuntime,
-    IDistributedObjectServices,
     IEnvelope,
     IInboundSignalMessage,
     IObjectStorageService,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { ChildLogger, Deferred, readAndParse } from "@prague/utils";
@@ -259,7 +259,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return channel;
     }
 
-    public attachChannel(channel: IChannel): IDistributedObjectServices {
+    public attachChannel(channel: IChannel): ISharedObjectServices {
         this.verifyNotClosed();
 
         // Get the object snapshot and include it in the initial attach
@@ -389,7 +389,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public snapshotInternal(): ITreeEntry[] {
         const entries = new Array<ITreeEntry>();
 
-        // Craft the .attributes file for each distributed object
+        // Craft the .attributes file for each shared object
         for (const [objectId, object] of this.channels) {
             // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot

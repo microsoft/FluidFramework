@@ -1,4 +1,4 @@
-import { IComponentRuntime, IDistributedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
 import { Stream } from "./stream";
 
@@ -12,7 +12,7 @@ export class StreamExtension implements ISharedObjectExtension {
         runtime: IComponentRuntime,
         id: string,
         minimumSequenceNumber: number,
-        services: IDistributedObjectServices,
+        services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
         const stream = new Stream(runtime, id);
