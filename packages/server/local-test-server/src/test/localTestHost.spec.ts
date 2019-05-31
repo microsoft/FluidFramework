@@ -42,7 +42,7 @@ describe("TestHost", () => {
 
         beforeEach(async () => {
             host = new TestHost(testComponents);
-            comp = await host.createComponent<TestComponent>("documentId", TestComponent.type);
+            comp = await host.createAndOpenComponent("documentId", TestComponent.type);
         });
 
         afterEach(async () => {
@@ -63,7 +63,7 @@ describe("TestHost", () => {
                 "Cloned hosts must share the deltaConnectionServer.");
 
             // Create/open both instance of TestComponent before applying ops.
-            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
+            const comp1 = await host1.createAndOpenComponent<TestComponent>("documentId", TestComponent.type);
             const comp2 = await host2.openComponent<TestComponent>("documentId");
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
@@ -86,7 +86,7 @@ describe("TestHost", () => {
 
         it("late open / early close", async () => {
             const host1 = new TestHost(testComponents);
-            const comp1 = await host1.createComponent<TestComponent>("documentId", TestComponent.type);
+            const comp1 = await host1.createAndOpenComponent<TestComponent>("documentId", TestComponent.type);
 
             comp1.increment();
             assert.equal(comp1.value, 1, "Local update by 'comp1' must be promptly observable");
@@ -185,8 +185,10 @@ describe("TestHost", () => {
                 const user2DocumentDeltaEvent = await host2.getDocumentDeltaEvent();
                 deltaEventManager.registerDocuments(user1DocumentDeltaEvent, user2DocumentDeltaEvent);
 
-                const user1Component = await host1.createComponent<TestComponent>("test_component", TestComponent.type);
-                const user2Component = await host2.openComponent<TestComponent>("test_component");
+                const user1Component =
+                    await host1.createAndOpenComponent<TestComponent>("test_component", TestComponent.type);
+                const user2Component =
+                    await host2.openComponent<TestComponent>("test_component");
 
                 await deltaEventManager.pauseProcessing();
 

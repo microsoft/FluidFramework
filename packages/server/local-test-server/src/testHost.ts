@@ -1,6 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IComponent, IComponentFactory } from "@prague/runtime-definitions";
+import { IComponent, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedStringExtension, SparseMatrixExtension } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import {
@@ -11,6 +11,7 @@ import {
     TestLoader,
 } from ".";
 
+// tslint:disable:array-type
 class TestRootComponent extends Component {
     public static readonly type = "@chaincode/test-root-component";
 
@@ -21,15 +22,16 @@ class TestRootComponent extends Component {
         ]);
     }
 
-    public async createComponent(id: string, type: string) {
-        await this.runtime.createAndAttachComponent(id, type);
+    public async createComponent(id: string, type: string): Promise<IComponentRuntime> {
+        return this.runtime.createAndAttachComponent(id, type);
     }
 
     public openComponent<T extends IComponent>(
         id: string,
         wait: boolean,
+        services?: [string, Promise<any>][],
     ) {
-        return this.runtime.openComponent<T>(id, wait);
+        return this.runtime.openComponent<T>(id, wait, services);
     }
 
     public createType<T extends ISharedObject>(id: string, type: string) {
@@ -134,18 +136,48 @@ export class TestHost {
             this.deltaConnectionServer);
     }
 
-    public async createComponent<T extends IComponent>(
+    /**
+     * runs createComponent followed by openComponent
+     * @param id component id
+     * @param type component type
+     * @param services component services for query interface
+     * @returns Component object
+     */
+    public async createAndOpenComponent<T extends IComponent>(
         id: string,
         type: string,
-    ) {
-        const root = await this.root;
-        await root.createComponent(id, type);
-        return this.openComponent<T>(id);
+        services?: [string, Promise<any>][],
+    ): Promise<T> {
+        await this.createComponent(id, type);
+        return this.openComponent<T>(id, services);
     }
 
-    public async openComponent<T extends IComponent>(id: string) {
+    /**
+     * Runs createAndAttachComponent on the underlying runtime
+     * @param id component Id
+     * @param type component type
+     * @returns ComponentRuntime for the created component
+     */
+    public async createComponent(
+        id: string,
+        type: string,
+    ): Promise<IComponentRuntime> {
         const root = await this.root;
-        const component = await root.openComponent<T>(id, /* wait: */ true);
+        return root.createComponent(id, type);
+    }
+
+    /**
+     * Runs openComponent on the underlying runtime
+     * @param id component Id
+     * @param services component services for query interface
+     * @returns Component object
+     */
+    public async openComponent<T extends IComponent>(
+        id: string,
+        services?: [string, Promise<any>][],
+    ): Promise<T> {
+        const root = await this.root;
+        const component = await root.openComponent<T>(id, /* wait: */ true, services);
         this.components.push(component);
         return component;
     }

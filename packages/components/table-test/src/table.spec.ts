@@ -29,7 +29,7 @@ describe("TableDocument", () => {
     }
     
     async function createTable() {
-        return await host.createComponent(makeId("Table-Document"), TableDocumentType);
+        return await host.createAndOpenComponent(makeId("Table-Document"), TableDocumentType);
     }
 
     let table: TableDocument;    
