@@ -1,4 +1,5 @@
 import {
+    ConnectionState,
     FileMode,
     ISequencedDocumentMessage,
     ITree,
@@ -67,7 +68,10 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      */
     public async write(key: string, value: any): Promise<void> {
         if (this.isLocal()) {
-            return Promise.reject(`Client is disconnected`);
+            return Promise.reject(`Local changes are not allowed`);
+        }
+        if (this.state !== ConnectionState.Connected) {
+            return Promise.reject(`Client is not connected`);
         }
 
         let operationValue: IRegisterValue;
