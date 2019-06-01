@@ -6,9 +6,12 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 
-export interface ISearchMenuParam {
-    possibleValues(): string[];
-    defaultValue(): string;
+export interface ISearchMenuParam<TContext = any> {
+    name: string;
+    suffix?: string;
+    lruValue?: string;
+    values(context: TContext): string[];
+    defaultValue(context: TContext): string;
 }
 
 export interface ISearchMenuCommand<TContext = any> {
@@ -17,6 +20,7 @@ export interface ISearchMenuCommand<TContext = any> {
     enabled?: (context?: TContext) => boolean;
     iconHTML?: string;
     key: string;
+    parameters?: Array<ISearchMenuParam<TContext>>;
 }
 
 export function namesToItems(names: string[]): ISearchMenuCommand[] {
@@ -398,6 +402,12 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
     }
 }
 
+interface IParameterState {
+    paramCmd: ISearchMenuCommand;
+    // represents parameters already satisfied; length of params is index of current parameter
+    params: string[];
+}
+
 export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     cmdTree: MergeTree.TST<ISearchMenuCommand>,
     foldCase = true,
@@ -408,6 +418,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     let inputElm: HTMLElement;
     let inputBox: IInputBox;
     let selectionListBox: ISelectionListBox;
+    // let paramState: IParameterState;
 
     init();
 
@@ -445,12 +456,16 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         if (foldCase) {
             prefix = prefix.toLowerCase();
         }
+/*        if (paramState) {
+        } else */ {
         const items = cmdTree.pairsWithPrefix(prefix).map((res) => {
             return res.val;
         }).filter((cmd) => {
             return (!cmd.enabled) || cmd.enabled(context);
         });
+
         showSelectionList(items);
+    }
     }
 
     function getSelectedKey() {

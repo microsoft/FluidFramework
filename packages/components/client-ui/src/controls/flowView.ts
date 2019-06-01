@@ -100,7 +100,34 @@ export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 
 let viewOptions: Object;
 
+const fontSizes = (f: FlowView) => ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
+const defaultFontSize = (f: FlowView) => "18";
+
 const commands: IFlowViewCmd[] = [
+    {
+        exec: (f) => {
+            f.setBGImage(dinoImage);
+        },
+        key: "enable dinosaur",
+    },
+    {
+        exec: (f) => {
+            f.setBGImage(dinoImage, true);
+        },
+        key: "jettison one dinosaur",
+    },
+    {
+        exec: (f) => {
+            f.setBGImage(mrBennetEyeRoll);
+        },
+        key: "release the Bennets",
+    },
+    {
+        exec: (f) => {
+            f.setBGImage(mrBennetEyeRoll, true);
+        },
+        key: "release one Bennet",
+    },
     {
         exec: (f) => {
             f.copyFormat();
@@ -199,6 +226,18 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (f) => {
+            f.setColor("pink");
+        },
+        key: "pink",
+    },
+    {
+        exec: (f) => {
+            f.makeBlink("pink");
+        },
+        key: "blink-pink",
+    },
+    {
+        exec: (f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
@@ -207,7 +246,10 @@ const commands: IFlowViewCmd[] = [
         exec: (f) => {
             f.setFont("tahoma", "18px");
         },
-        key: "Tahoma font",
+        key: "Tahoma",
+        parameters: [
+            { name: "size", defaultValue: defaultFontSize, suffix: "px", values: fontSizes },
+        ],
     },
     {
         exec: (f) => {
@@ -478,11 +520,12 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 const baseURI = typeof document !== "undefined" ? document.location.origin : "";
+const dinoImage = `url("${baseURI}/public/images/Dino3.jpg")`;
 const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
 const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
-// const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
+const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
 
 // global until remove old render
 let textErrorRun: IRange;
@@ -742,37 +785,39 @@ function renderSegmentIntoLine(
                 lineContext.mathMode = true;
                 lineContext.mathSegpos = segpos;
             } else {
+                const mathMarker = segment as MathMenu.IMathMarker;
                 lineContext.span = makeMathSpan(lineContext.mathSegpos, 0);
                 lineContext.span.style.marginLeft = "2px";
                 lineContext.span.style.marginTop = "4px";
                 lineContext.span.style.marginRight = "2px";
-
+                if (mathMarker.mathTokens === undefined) {
+                    MathMenu.initMathMarker(mathMarker, lineContext.mathBuffer);
+                }
                 const cpos = lineContext.flowView.cursor.pos;
                 let cursorPresent = false;
                 if ((cpos > lineContext.mathSegpos) && (cpos <= segpos)) {
                     lineContext.span.style.borderLeft = "solid orange 2px";
                     lineContext.span.style.borderRight = "solid orange 2px";
-                    const mathMarker = segment as MathMenu.IMathMarker;
                     if ((!mathMarker.mathViewBuffer) || (cpos === segpos)) {
                         mathMarker.mathCursor = lineContext.mathBuffer.length;
                         lineContext.mathBuffer += MathMenu.cursorTex;
                     } else {
-                        // replace cursor box with cdots
+                        // showCursor
                         lineContext.mathBuffer = lineContext.mathBuffer.substring(0, mathMarker.mathCursor) +
                             MathMenu.cursorTex +
-                            lineContext.mathBuffer.substring(mathMarker.mathCursor +
-                                MathMenu.entryPointTex.length);
+                            lineContext.mathBuffer.substring(mathMarker.mathCursor);
                     }
-                    mathMarker.mathViewBuffer = lineContext.mathBuffer;
                     cursorPresent = true;
                     lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight,
                         lineContext.lineDiv, false);
                 }
+                lineContext.mathBuffer = MathMenu.boxEmptyParam(lineContext.mathBuffer);
+                mathMarker.mathViewBuffer = lineContext.mathBuffer;
                 Katex.render(lineContext.mathBuffer, lineContext.span,
                     { throwOnError: false });
                 if (cursorPresent) {
                     const cursorElement = domutils.findFirstMatch(lineContext.span, elm => {
-                        return elm.style && (elm.style.color === "rgb(0, 0, 254)");
+                        return elm.style && (elm.style.color === MathMenu.cursorColor);
                     });
                     if (cursorElement) {
                         cursorElement.classList.add("blinking");
@@ -2448,6 +2493,10 @@ function makeSegSpan(
                         }
                     };
                 }
+            } else if (key === "blink") {
+                if (textSegment.properties[key]) {
+                    span.classList.add("blinking");
+                }
             } else {
                 span.style[key] = textSegment.properties[key];
             }
@@ -2573,6 +2622,15 @@ export class FlowCursor extends Cursor {
         }
     }
 
+    public setPresenceDivEvents(div: HTMLDivElement) {
+        this.presenceDiv.onmouseenter = (e) => {
+            div.innerText = (this.presenceInfo.user as IFlowViewUser).name;
+        };
+        this.presenceDiv.onmouseleave = (e) => {
+            div.innerText = this.getUserDisplayString(this.presenceInfo.user as IFlowViewUser);
+        };
+    }
+
     public makePresenceDiv() {
         this.presenceDiv = document.createElement("div");
         // TODO callback to go from UID to display information
@@ -2581,9 +2639,10 @@ export class FlowCursor extends Cursor {
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
         this.presenceDiv.style.backgroundColor = this.bgColor;
-        this.presenceDiv.style.font = "14px Arial";
+        this.presenceDiv.style.font = "12px Arial";
         this.presenceDiv.style.border = `3px solid ${this.bgColor}`;
         this.presenceDiv.style.borderTopRightRadius = "1em";
+        this.setPresenceDivEvents(this.presenceDiv);
         // go underneath local cursor
         this.editSpan.style.zIndex = "1";
     }
@@ -2626,7 +2685,7 @@ export class FlowCursor extends Cursor {
         }
         lineDiv.appendChild(this.editSpan);
         if (this.presenceInfo) {
-            const bannerHeight = 20;
+            const bannerHeight = 16;
             const halfBannerHeight = bannerHeight / 2;
             this.presenceDiv.style.left = `${x}px`;
             this.presenceDiv.style.height = `${bannerHeight}px`;
@@ -2635,15 +2694,15 @@ export class FlowCursor extends Cursor {
                 this.presenceDiv.parentElement.removeChild(this.presenceDiv);
             }
             lineDiv.appendChild(this.presenceDiv);
+            this.setPresenceDivEvents(this.presenceDiv);
         }
         if ((!this.presenceInfo) || (this.presenceInfo.fresh)) {
             if (this.presenceInfo) {
-                this.presenceDiv.style.opacity = "1.0";
-            }
-            if (this.blinkTimer) {
-                clearTimeout(this.blinkTimer);
+                this.editSpan.style.opacity = "0.6";
+                this.presenceDiv.style.opacity = "0.6";
             }
             if (show) {
+                this.show();
                 this.blinkCursor();
             } else {
                 this.hide();
@@ -2651,34 +2710,12 @@ export class FlowCursor extends Cursor {
         }
     }
 
-    protected blinker = () => {
-        if (!this.enabled) {
-            return;
-        }
-
-        if (this.off) {
-            this.show();
+    protected blinkCursor() {
+        if (this.presenceDiv) {
+            this.editSpan.classList.add("brieflyBlinking");
+            this.presenceDiv.classList.add("brieflyBlinking");
         } else {
-            this.hide();
-        }
-        this.off = !this.off;
-        if (this.blinkCount > 0) {
-            this.blinkCount--;
-            if (this.presenceInfo) {
-                let opacity = 0.5 + (0.5 * Math.exp(-0.05 * (30 - this.blinkCount)));
-                if (this.blinkCount <= 20) {
-                    opacity = 0.0;
-                } else if (this.blinkCount > 26) {
-                    opacity = 1.0;
-                }
-                this.presenceDiv.style.opacity = `${opacity}`;
-            }
-            this.blinkTimer = setTimeout(this.blinker, 500);
-        } else {
-            if (this.presenceInfo) {
-                this.presenceDiv.style.opacity = "0.0";
-            }
-            this.show();
+            super.blinkCursor();
         }
     }
 
@@ -2686,7 +2723,13 @@ export class FlowCursor extends Cursor {
         // TODO - callback to client code to provide mapping from user -> display
         // this would allow a user ID to be put on the wire which can then be mapped
         // back to an email, name, etc...
-        return user.name;
+        const name = user.name;
+        const nameParts = name.split(" ");
+        let initials = "";
+        for (const part of nameParts) {
+            initials += part.substring(0, 1);
+        }
+        return initials;
     }
 }
 
@@ -3640,7 +3683,7 @@ export class FlowView extends ui.Component {
 
     public getCanonicalX() {
         let rect = this.cursor.rect();
-        const mathTileInfo = this.inMath();
+        const mathTileInfo = this.inMathGetMarker();
         if (mathTileInfo) {
             const mathEndMarker = mathTileInfo.tile as IMathEndMarker;
             rect = mathEndMarker.outerSpan.getBoundingClientRect();
@@ -3706,7 +3749,7 @@ export class FlowView extends ui.Component {
                             return;
                         }
                     } else if (segoff.segment.hasTileLabel("math")) {
-                        this.cursor.pos = this.endOfMathRegion(this.cursor.pos + 1);
+                        this.cursor.pos++;
                     }
                 } else if (segoff.segment.refType & MergeTree.ReferenceType.NestBegin) {
                     if (segoff.segment.hasRangeLabel("table")) {
@@ -4023,26 +4066,40 @@ export class FlowView extends ui.Component {
                     this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
                     // TODO: in math region; don't backspace if region empty
-                    let toRemove = this.cursor.getSelection();
-                    if (toRemove) {
-                        // If there was a selected range, use it as range to remove below.  In preparation, clear
-                        // the FlowView's selection and set the cursor to the start of the range to be deleted.
-                        this.clearSelection();
-                        this.cursor.pos = toRemove.start;
+                    const mathTileInfo = this.inMathGetMarker();
+                    if (mathTileInfo) {
+                        const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
+                        const toRemoveMath = MathMenu.bksp(mathMarker);
+                        if (toRemoveMath) {
+                            const beginTileInfo = findTile(this, mathTileInfo.pos - 1, "math", true);
+                            if (this.modes.showCursorLocation) {
+                                this.cursorLocation();
+                            }
+                            const adjPos = beginTileInfo.pos + 1;
+                            this.sharedString.removeText(adjPos + toRemoveMath.start, adjPos + toRemoveMath.end);
+                        }
                     } else {
-                        // Otherwise, construct the range to remove by moving the cursor once in the reverse direction.
-                        // Below we will remove the positions spanned by the current and previous cursor positions.
-                        const removeEnd = this.cursor.pos;
-                        this.cursorRev();
-                        toRemove = {
-                            end: removeEnd,
-                            start: this.cursor.pos,
-                        };
+                        let toRemove = this.cursor.getSelection();
+                        if (toRemove) {
+                            // If there was a selected range, use it as range to remove below.  In preparation, clear
+                            // the FlowView's selection and set the cursor to the start of the range to be deleted.
+                            this.clearSelection();
+                            this.cursor.pos = toRemove.start;
+                        } else {
+                            // Otherwise, construct the range to remove by moving the cursor once in the reverse direction.
+                            // Below we will remove the positions spanned by the current and previous cursor positions.
+                            const removeEnd = this.cursor.pos;
+                            this.cursorRev();
+                            toRemove = {
+                                end: removeEnd,
+                                start: this.cursor.pos,
+                            };
+                        }
+                        if (this.modes.showCursorLocation) {
+                            this.cursorLocation();
+                        }
+                        this.sharedString.removeText(toRemove.start, toRemove.end);
                     }
-                    if (this.modes.showCursorLocation) {
-                        this.cursorLocation();
-                    }
-                    this.sharedString.removeText(toRemove.start, toRemove.end);
                 } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
@@ -4067,7 +4124,7 @@ export class FlowView extends ui.Component {
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
-                        if (this.inMath()) {
+                        if (this.inMathGetMarker()) {
                             this.mathCursorFwd();
                         } else {
                             if (this.cursor.pos === this.viewportEndPos) {
@@ -4079,6 +4136,12 @@ export class FlowView extends ui.Component {
                                 this.clearSelection();
                             }
                             this.cursorFwd();
+                            const mathTileInfo = this.inMathGetMarker();
+                            if (mathTileInfo) {
+                                const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
+                                mathMarker.mathTokenIndex = 0;
+                                mathMarker.mathCursor = 0;
+                            }
                             this.broadcastPresence();
                             this.cursor.updateView(this);
                         }
@@ -4086,7 +4149,7 @@ export class FlowView extends ui.Component {
                 } else if (e.keyCode === KeyCode.leftArrow) {
                     this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos > FlowView.docStartPosition) {
-                        if (this.inMath()) {
+                        if (this.inMathGetMarker()) {
                             this.mathCursorRev();
                         } else {
                             if (this.cursor.pos === this.viewportStartPos) {
@@ -4098,6 +4161,12 @@ export class FlowView extends ui.Component {
                                 this.clearSelection();
                             }
                             this.cursorRev();
+                            const mathTileInfo = this.inMathGetMarker();
+                            if (mathTileInfo) {
+                                const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
+                                mathMarker.mathTokenIndex = mathMarker.mathTokens.length;
+                                mathMarker.mathCursor = mathTileInfo.pos;
+                            }
                             this.broadcastPresence();
                             this.cursor.updateView(this);
                         }
@@ -4121,7 +4190,7 @@ export class FlowView extends ui.Component {
                     const vpEnd = this.viewportEndPos;
                     if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
                         let fromMath = false;
-                        if (this.inMath()) {
+                        if (this.inMathGetMarker()) {
                             fromMath = true;
                         }
                         if (!this.verticalMove(lineCount)) {
@@ -4145,7 +4214,7 @@ export class FlowView extends ui.Component {
                         }
                         this.broadcastPresence();
                         this.cursor.updateView(this);
-                        if (this.inMath()) {
+                        if (this.inMathGetMarker()) {
                             this.mathNormalizeCursor();
                             fromMath = true;
                         }
@@ -4179,25 +4248,38 @@ export class FlowView extends ui.Component {
                 if (code === CharacterCodes.cr) {
                     // TODO: other labels; for now assume only list/pg tile labels
                     this.insertParagraph(this.cursor.pos++);
-                } else if ((code === CharacterCodes.backslash) && this.inMath()) {
-                    this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
-                        (s, cmd) => {
-                            if (cmd) {
-                                this.sharedString.insertText(cmd.texString, pos);
-                            } else {
-                                this.sharedString.insertText("\\" + s, pos);
-                            }
-                        });
-                    this.activeSearchBox.showAllItems();
                 } else {
-                    this.sharedString.insertText(String.fromCharCode(code), pos);
-                    if (code === CharacterCodes.space) {
-                        this.undoRedoManager.closeCurrentOperation();
+                    const mathTileInfo = this.inMathGetMarker();
+
+                    if (mathTileInfo) {
+                        if (code === CharacterCodes.backslash) {
+                            this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
+                                (s, cmd) => {
+                                    let text = "\\" + s;
+                                    if (cmd) {
+                                        text = cmd.texString;
+                                    }
+                                    this.sharedString.insertText(text, pos);
+                                });
+                            this.activeSearchBox.showAllItems();
+                        } else {
+                            const toInsert = MathMenu.transformInputCode(code);
+                            if (toInsert) {
+                                this.sharedString.insertText(toInsert, pos);
+                            } else {
+                                console.log(`unrecognized math input ${e.char}`);
+                            }
+                        }
+                    } else {
+                        this.sharedString.insertText(String.fromCharCode(code), pos);
+                        if (code === CharacterCodes.space) {
+                            this.undoRedoManager.closeCurrentOperation();
+                        }
                     }
-                }
-                this.clearSelection();
-                if (this.modes.showCursorLocation) {
-                    this.cursorLocation();
+                    this.clearSelection();
+                    if (this.modes.showCursorLocation) {
+                        this.cursorLocation();
+                    }
                 }
             }
         };
@@ -4212,9 +4294,15 @@ export class FlowView extends ui.Component {
     public mathCursorFwd() {
         const endTileInfo = findTile(this, this.cursor.pos, "math", false);
         const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
-        if (MathMenu.fwdEntryPoint(mathMarker)) {
+        mathMarker.mathTokenIndex = MathMenu.mathTokFwd(mathMarker.mathTokenIndex,
+            mathMarker.mathTokens);
+        MathMenu.printMathMarker(mathMarker);
+        if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
             this.cursor.pos = endTileInfo.pos + 1;
+        } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
+            this.cursor.pos = endTileInfo.pos;
         } else {
+            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
             let pos = this.cursor.pos;
             if (pos === endTileInfo.pos) {
                 pos--;
@@ -4234,9 +4322,14 @@ export class FlowView extends ui.Component {
         }
         const beginTileInfo = findTile(this, pos, "math", true);
         const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
-        if (MathMenu.revEntryPoint(mathMarker)) {
+        mathMarker.mathTokenIndex = MathMenu.mathTokRev(mathMarker.mathTokenIndex,
+            mathMarker.mathTokens);
+        MathMenu.printMathMarker(mathMarker);
+        if (mathMarker.mathTokenIndex === MathMenu.Nope) {
             this.cursor.pos = beginTileInfo.pos;
+            mathMarker.mathTokenIndex = 0;
         } else {
+            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
             this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
         }
         this.broadcastPresence();
@@ -4247,9 +4340,18 @@ export class FlowView extends ui.Component {
     public mathNormalizeCursor() {
         const endTileInfo = findTile(this, this.cursor.pos, "math", false);
         this.cursor.pos = endTileInfo.pos;
+        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
+        if (mathMarker.mathTokens) {
+            mathMarker.mathTokenIndex = mathMarker.mathTokens.length;
+            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+        } else {
+            const beginTileInfo = findTile(this, endTileInfo.pos - 1, "math", true);
+            const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endTileInfo.pos);
+            MathMenu.initMathMarker(mathMarker, mathText);
+        }
     }
 
-    public inMath() {
+    public inMathGetMarker() {
         const tileInfo = findTile(this, this.cursor.pos, "math", false);
         if (tileInfo && (tileInfo.tile.properties.mathEnd)) {
             return tileInfo;
@@ -4261,12 +4363,39 @@ export class FlowView extends ui.Component {
         return tileInfo.pos;
     }
 
+    public mathMarkerPostRemove(mathMarker: MathMenu.IMathMarker, endPos: number) {
+        const beginTileInfo = findTile(this, endPos - 1, "math", true);
+        const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endPos);
+        mathMarker.mathText = mathText;
+        mathMarker.mathTokens = MathMenu.lexMath(mathText);
+        console.log("math backspace token");
+        MathMenu.printMathMarker(mathMarker);
+    }
+
+    public mathMarkerPostInsert(mathMarker: MathMenu.IMathMarker, endPos: number) {
+        const beginTileInfo = findTile(this, endPos - 1, "math", true);
+        const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endPos);
+        mathMarker.mathText = mathText;
+        mathMarker.mathTokens = MathMenu.lexMath(mathText);
+        MathMenu.printMathMarker(mathMarker);
+        mathMarker.mathTokenIndex = MathMenu.mathTokFwd(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+        mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+        this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
+        console.log("advance math token");
+        MathMenu.printMathMarker(mathMarker);
+    }
+
     public enterMathMode() {
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Tile,
             { [MergeTree.reservedTileLabelsKey]: ["math"], mathStart: true });
         this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
             { [MergeTree.reservedTileLabelsKey]: ["math"], mathEnd: true });
-        // this.cursor.pos++;
+        const tileInfo = this.inMathGetMarker();
+        const mathMarker = tileInfo.tile as MathMenu.IMathMarker;
+        mathMarker.mathTokenIndex = 0;
+        mathMarker.mathTokens = [] as MathMenu.MathToken[];
+        mathMarker.mathCursor = 0;
+        mathMarker.mathText = "";
         this.clearSelection();
         if (this.modes.showCursorLocation) {
             this.cursorLocation();
@@ -4411,7 +4540,7 @@ export class FlowView extends ui.Component {
     public copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
         if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
-            this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment .properties);
+            this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
     }
 
@@ -4440,8 +4569,24 @@ export class FlowView extends ui.Component {
         this.setProps({ fontFamily: family, fontSize: size });
     }
 
+    public setBGImage(imageName: string, setSize?: boolean) {
+        this.viewportDiv.style.backgroundImage = imageName;
+        if (setSize) {
+            const rect = this.viewportDiv.getBoundingClientRect();
+            this.viewportDiv.style.backgroundSize = `${rect.width}px ${rect.height}px`;
+        }
+    }
+
+    public clearBGImage() {
+        this.viewportDiv.style.backgroundImage = undefined;
+    }
+
     public setColor(color: string) {
         this.setProps({ color }, false);
+    }
+
+    public makeBlink(color: string) {
+        this.setProps({ blink: true, color }, false);
     }
 
     public toggleWordOrSelection(name: string, valueOn: string, valueOff: string) {
@@ -4865,8 +5010,17 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public selectAll() {
+        this.cursor.clearSelection();
+        this.cursor.mark = 0;
+        this.cursor.pos = this.sharedString.getLength();
+    }
+
     public keyCmd(charCode: number, shift = false) {
         switch (charCode) {
+            case CharacterCodes.A:
+                this.selectAll();
+                break;
             case CharacterCodes.C:
                 this.copy();
                 break;
@@ -5187,6 +5341,10 @@ export class FlowView extends ui.Component {
             if (this.client.getLength() > 0) {
                 this.render(this.topChar, true);
             }
+            if (this.viewportDiv.style.backgroundSize !== undefined) {
+                const rect = this.viewportDiv.getBoundingClientRect();
+                this.viewportDiv.style.backgroundSize = `${rect.width}px ${rect.height}px`;
+            }
         }
     }
 
@@ -5402,6 +5560,17 @@ export class FlowView extends ui.Component {
         if (event.isLocal) {
             if (opCursorPos !== undefined) {
                 this.cursor.pos = opCursorPos;
+                const mathTileInfo = this.inMathGetMarker();
+                if (mathTileInfo) {
+                    const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
+                    if (event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT) {
+                        this.mathMarkerPostInsert(mathMarker, mathTileInfo.pos);
+                    } else if (event.deltaOperation === MergeTree.MergeTreeDeltaType.REMOVE) {
+                        // assume single range from backspace for now
+                        this.mathMarkerPostRemove(mathMarker, mathTileInfo.pos);
+                    }
+                }
+
             }
             this.localQueueRender(this.cursor.pos);
         } else {

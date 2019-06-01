@@ -12,8 +12,6 @@ export class Cursor {
     public mark = Nope;
     protected bgColor = "blue";
     protected enabled = true;
-    protected blinkCount = 0;
-    protected blinkTimer: any;
 
     constructor(public viewportDiv: HTMLDivElement, public pos = 0) {
         this.makeSpan();
@@ -44,11 +42,6 @@ export class Cursor {
         this.enabled = false;
         this.hide(true);
         this.clearSelection();
-
-        if (this.blinkTimer) {
-            clearTimeout(this.blinkTimer);
-            this.blinkTimer = undefined;
-        }
     }
 
     public tryMark() {
@@ -82,7 +75,6 @@ export class Cursor {
         if (!this.enabled) {
             return;
         }
-
         this.editSpan.style.backgroundColor = this.bgColor;
         this.editSpan.style.visibility = "visible";
     }
@@ -94,7 +86,7 @@ export class Cursor {
         this.editSpan.style.position = "absolute";
         this.editSpan.style.left = "0px";
         this.editSpan.style.top = "0px";
-        this.editSpan.style.width = "2px";
+        this.editSpan.style.width = "1px";
         this.show();
     }
 
@@ -120,35 +112,11 @@ export class Cursor {
             this.editSpan.parentElement.removeChild(this.editSpan);
         }
         lineDiv.appendChild(this.editSpan);
-        if (this.blinkTimer) {
-            clearTimeout(this.blinkTimer);
-        }
         this.blinkCursor();
     }
 
-    protected blinker = () => {
-        if (!this.enabled) {
-            return;
-        }
-
-        if (this.off) {
-            this.show();
-        } else {
-            this.hide();
-        }
-        this.off = !this.off;
-        if (this.blinkCount > 0) {
-            this.blinkCount--;
-            this.blinkTimer = setTimeout(this.blinker, 500);
-        } else {
-            this.show();
-        }
-    }
-
     protected blinkCursor() {
-        this.blinkCount = 30;
-        this.off = true;
-        this.blinkTimer = setTimeout(this.blinker, 20);
+        this.editSpan.classList.add("blinking");
     }
 
 }
