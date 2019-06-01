@@ -6,7 +6,7 @@ import {
     TextSegment,
 } from "@prague/merge-tree";
 import { IFlowViewComponent, View } from "../";
-import { debug } from "../../debug";
+import { debug, nodeAndOffsetToString } from "../../debug";
 import { PagePosition } from "../../pagination";
 import { InclusionView } from "../inclusion";
 import { LineBreakView } from "../linebreak";
@@ -98,12 +98,17 @@ class DocumentLayout extends LayoutSink<{}> {
                     break;
 
                 case InclusionKind.Component:
+                    // DANGER: Note that Inclusion.caretEnter(..) compensates for the extra <span> required
+                    //         for the "div" style mounting.
                     child = document.createElement("span");
                     context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
                     break;
 
                 default:
                     console.assert(kind === InclusionKind.Chaincode);
+
+                    // DANGER: Note that Inclusion.caretEnter(..) compensates for the extra <span> required
+                    //         for the "div" style mounting.
                     child = document.createElement("span");
                     context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
             }
@@ -118,21 +123,12 @@ const documentLayout = new DocumentLayout();
 
 // IView that renders a FlowDocument.
 export class DocumentView extends View<IDocumentProps, DocumentViewState> {
-    public get root()       { return this.state.root; }
-    public get overlay()    { return this.state.overlay; }
+    public get doc()            { return this.state.doc; }
+    public get root()           { return this.state.root; }
+    public get overlay()        { return this.state.overlay; }
+    public get leadingSpan()    { return template.get(this.root, "leadingSpan"); }
+    public get trailingSpan()   { return template.get(this.root, "trailingSpan"); }
     public get paginationStop() { return this.state.end; }
-
-    private static readonly findBelowPredicate: FindVerticalPredicate =
-        (top, bottom, best, candidate) => {
-            return candidate.top > top              // disqualify rects higher/same original height
-                && candidate.top <= best.top;       // disqualify rects lower than best match
-        }
-
-    private static readonly findAbovePredicate: FindVerticalPredicate =
-        (top, bottom, best, candidate) => {
-            return candidate.bottom < bottom        // disqualify rects lower/same as starting point
-                && candidate.bottom >= best.bottom; // disqualify rects higher than best match
-        }
 
     public get range() {
         const { doc, start, end } = this.state;
@@ -141,6 +137,25 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             end: this.getPagePosition(doc, end, +Infinity),
         };
     }
+
+    private get emittedRange() {
+        const { emitted } = this.state;
+        return emitted.length < 1
+            ? { start: +Infinity, end: -Infinity }
+            : { start: emitted[0].span.startPosition, end: emitted[emitted.length - 1].span.endPosition };
+    }
+
+    private static readonly findBelowPredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.top > top              // Must be below original top
+                && candidate.top <= best.top;       // Must higher/closer than best match
+        }
+
+    private static readonly findAbovePredicate: FindVerticalPredicate =
+        (top, bottom, best, candidate) => {
+            return candidate.bottom < bottom        // Must be above original bottom
+                && candidate.bottom >= best.bottom; // Must be lower/closer than best match
+        }
 
     // Returns the { segment, offset } currently visible at the given x/y coordinates (if any).
     public hitTest(x: number, y: number) {
@@ -177,9 +192,50 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             : undefined;
     }
 
-    public getPosition(node: Node, nodeOffset = 0) {
+    public nodeOffsetToPosition(node: Node, nodeOffset = 0) {
+        if (this.leadingSpan.contains(node)) {
+            return this.emittedRange.start;
+        }
+
+        if (this.trailingSpan.contains(node)) {
+            return this.emittedRange.end;
+        }
+
         const { segment, offset } = this.nodeOffsetToSegmentOffset(node, nodeOffset);
-        return this.state.doc.getPosition(segment) + offset;
+        const position = this.state.doc.getPosition(segment) + Math.min(offset, segment.cachedLength - 1);
+
+        debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> ${position}`);
+
+        return position;
+    }
+
+    public positionToNodeOffset(position: number) {
+        const viewInfo = this.positionToViewInfo(position);
+
+        // If the position is not currently rendered, return the appropriate leading/trailing span.
+        if (!viewInfo) {
+            const { start } = this.emittedRange;
+            return position < start
+                ? { node: this.leadingSpan.firstChild }
+                : { node: this.trailingSpan.firstChild };
+        }
+
+        const node = viewInfo.view.cursorTarget;
+        const { segment } = this.doc.getSegmentAndOffset(position);
+
+        switch (getDocSegmentKind(segment)) {
+            case DocSegmentKind.Text:
+                return {
+                    node,
+                    nodeOffset: Math.min(
+                        position - viewInfo.span.startPosition,
+                        node.textContent.length,
+                    ),
+                };
+            default: {
+                return { node };
+            }
+        }
     }
 
     protected mounting(props: IDocumentProps) {
@@ -277,6 +333,35 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
 
     protected unmounting() { /* do nothing */ }
 
+    // Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it.
+    private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
+        const state = this.state;
+        let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
+        // tslint:disable-next-line:no-conditional-assignment
+        while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
+            node = node.parentElement;
+        }
+
+        return viewInfo && viewInfo.span.spanOffsetToSegmentOffset(nodeOffset);
+    }
+
+    private positionToViewInfo(position: number) {
+        const emitted = this.state.emitted;
+        const viewInfo = emitted[bsearch2(
+            (index) => emitted[index].span.endPosition <= position,
+            0,
+            emitted.length)];
+
+        if (!viewInfo) {
+            debug(`positionToViewInfo(${position}) -> undefined`);
+            return undefined;
+        }
+
+        debug(`positionToViewInfo(${position}) -> ${viewInfo.view.constructor.name}:${position - viewInfo.span.startPosition}`);
+        console.assert(viewInfo.span.startPosition <= position && position <= viewInfo.span.endPosition);
+        return viewInfo;
+    }
+
     private getPagePosition(doc: FlowDocument, position: PagePosition | undefined, defaultValue: number) {
         return position === undefined
             ? defaultValue
@@ -305,7 +390,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
 
     // Runs state machine, starting with the paragraph at 'start'.
     private sync(props: Readonly<IDocumentProps>, state: DocumentViewState, start: number, end: number, trackedPositions: ITrackedPosition[], halt: (context: LayoutContext) => boolean) {
-        debug("sync(%d..%d)", start, end);
+        debug(`sync([${start}..${end}))`);
 
         // When paginating, DocumentView must be able to measure the screen size of produced DOM nodes
         // to terminate.  When the DOM tree is detached, these measurements will return 0/empty.
@@ -334,7 +419,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     }
 
     private syncRange(context: LayoutContext, start: number, end: number, halt: (context: LayoutContext) => boolean) {
-        debug(`syncRange([${start}..${end})`);
+        debug(`  syncRange([${start}..${end}))`);
 
         context.pushLayout(documentLayout, NaN, undefined, NaN, NaN);
 
@@ -367,38 +452,6 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             this.state.segmentToViewInfo.delete(info.span.firstSegment);
             info.view.unmount();
         }
-    }
-
-    // Map a node/nodeOffset to the corresponding segment/segmentOffset that rendered it.
-    private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
-        const state = this.state;
-        let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
-        // tslint:disable-next-line:no-conditional-assignment
-        while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
-            node = node.parentElement;
-        }
-
-        if (!viewInfo) {
-            return undefined;
-        }
-
-        let segment: ISegment;
-        let offset = NaN;
-
-        viewInfo.span.forEach((position, candidate, startOffset, endOffset) => {
-            segment = candidate;
-            const len = endOffset - startOffset;
-
-            offset = startOffset + nodeOffset;
-            if (nodeOffset < len) {
-                return false;
-            }
-
-            nodeOffset -= len;
-            return true;
-        });
-
-        return segment && { segment, offset };
     }
 
     /**

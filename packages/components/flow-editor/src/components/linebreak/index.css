@@ -1,10 +1,10 @@
-.lineBreak { }
-.afterLineBreak::after { 
-    content: "⏎";
-    font-size: 0.7rem;
-    padding: 0px 1px 0px 1px;
+.lineBreak { 
+    white-space: nowrap;
 }
 
-.afterLineBreak::after {
+.beforeLineBreak::before { 
+    content: "⏎";
     color: #ccc;
+    padding: 0px 1px 0px 1px;
+    font-size: 0.7rem;
 }

@@ -1,5 +1,4 @@
-import { DocSegmentKind, getDocSegmentKind } from "@chaincode/flow-document";
-import { CaretEventType, Direction, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
+import { CaretEventType, Direction, getDeltaX, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
 import { IViewState, View } from "..";
 import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";
 import { debug } from "../../debug";
@@ -41,28 +40,27 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         const direction = e.detail.direction;
         const extendSelection = false;
 
-        switch (direction) {
-            case Direction.left:
-                this.cursor.moveTo(this.state.docView.getPosition(e.target as Node), extendSelection);
-                this.horizontalArrow(e, -1, /* extendSelection: */ false);
-                break;
-            case Direction.right:
-                this.cursor.moveTo(this.state.docView.getPosition(e.target as Node), extendSelection);
-                this.horizontalArrow(e, 1, /* extendSelection: */ false);
-                break;
-            case Direction.up:
-                this.verticalArrow(e, -1, e.detail.caretBounds, /* extendSelection */ false);
-                break;
-            case Direction.down:
-                this.verticalArrow(e, 1, e.detail.caretBounds, /* extendSelection */ false);
-                break;
-            default:
-        }
-    }) as EventHandlerNonNull;
+        const dx = getDeltaX(direction);
+        if (dx !== 0) {
+            this.cursor.moveTo(this.state.docView.nodeOffsetToPosition(e.target as Node), extendSelection);
+            this.horizontalArrow(e, dx, extendSelection);
+        } else {
+            const searchFn = direction === Direction.down
+                ? this.state.docView.findBelow
+                : this.state.docView.findAbove;
 
-    constructor() {
-        super();
-    }
+            const caretBounds = e.detail.caretBounds;
+            const segmentAndOffset = searchFn(caretBounds.left, caretBounds.top, caretBounds.bottom);
+            if (segmentAndOffset) {
+                const { segment, offset } = segmentAndOffset;
+                const position = this.doc.getPosition(segment) + offset;
+                this.cursor.moveTo(position, extendSelection);
+            }
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+    }) as EventHandlerNonNull;
 
     public paginate(start: PagePosition, budget: number) {
         Object.assign(this.props, { start, paginationBudget: budget });
@@ -72,23 +70,26 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
 
     protected mounting(props: Readonly<IEditorProps>): IEditorViewState {
         const scheduler = props.scheduler;
-        this.invalidate = scheduler.coalesce(scheduler.onLayout, this.render);
-
-        const cursor = new Cursor(props.doc, scheduler);
-        cursor.moveTo(0, false);
+        const invalidate = scheduler.coalesce(scheduler.onLayout, this.render);
+        this.invalidate = () => {
+            debug(`Invalidated`);
+            invalidate();
+        };
 
         const docView = new DocumentView();
         const root = docView.mount(props);
-        docView.overlay.appendChild(cursor.root);
+
+        const cursor = new Cursor(docView, scheduler);
+        cursor.moveTo(0, false);
 
         const listeners: IListenerRegistration[] = [];
         const eventSink = (props.eventSink || root) as HTMLElement;
+
+        eventSink.contentEditable = "true";
         this.on(listeners, eventSink, "keydown",   this.onKeyDown);
         this.on(listeners, eventSink, "keypress",  this.onKeyPress);
         this.on(listeners, eventSink, "mousedown", this.onMouseDown);
         this.on(listeners, window,    "resize",    this.invalidate);
-        this.on(listeners, eventSink, "blur",      this.onBlur);
-        this.on(listeners, eventSink, "focus",     this.onFocus);
 
         root.addEventListener(CaretEventType.leave, this.onCaretLeave);
 
@@ -126,6 +127,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             listener.target.removeEventListener(listener.type, listener.listener);
         }
 
+        this.root.removeEventListener(CaretEventType.leave, this.onCaretLeave);
         this.doc.off("sequenceDelta", this.invalidate);
     }
 
@@ -144,13 +146,8 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private readonly render = () => {
-        // Avoid modifying window selection when Flow-Editor is not displaying cursor
-        this.props.trackedPositions = document.activeElement === this.state.eventSink
-            ? this.cursor.getTracked()
-            : [];
-
+        this.props.trackedPositions = this.cursor.getTracked();
         this.state.docView.update(this.props);
-        this.cursor.render();
     }
 
     private delete(deltaStart: number, deltaEnd: number) {
@@ -173,50 +170,22 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
     }
 
-    private horizontalArrow(ev: Event, deltaX: number, extendSelection: boolean) {
-        this.cursor.moveBy(deltaX, extendSelection);
-
-        const maybeView = this.state.docView.getInclusionView(this.cursorPosition);
-        if (maybeView) {
-            const direction = deltaX > 0
-                ? Direction.right
-                : Direction.left;
-            maybeView.caretEnter(direction, this.cursor.bounds);
+    private horizontalArrow(ev: Event | KeyboardEvent, deltaX: number, extendSelection: boolean) {
+        if ("metaKey" in ev) {
+            if (ev.metaKey || ev.altKey || ev.ctrlKey) {
+                return;
+            }
         }
 
-        this.invalidate();
+        this.cursor.setDirection(deltaX < 0 ? Direction.left : Direction.right);
+        this.cursor.moveBy(deltaX, extendSelection);
+
         ev.preventDefault();
         ev.stopPropagation();
     }
 
     private verticalArrow(ev: Event, deltaY: number, caretBounds: ClientRect, extendSelection: boolean) {
-        if (caretBounds) {
-            const searchFn = deltaY > 0
-                ? this.state.docView.findBelow
-                : this.state.docView.findAbove;
-
-            const segmentAndOffset = searchFn(caretBounds.left, caretBounds.top, caretBounds.bottom);
-            if (segmentAndOffset) {
-                const { segment, offset } = segmentAndOffset;
-                const maybeView = getDocSegmentKind(segmentAndOffset.segment) === DocSegmentKind.Inclusion
-                    && this.state.docView.getInclusionView(this.doc.getPosition(segment) + offset);
-
-                if (maybeView) {
-                    const direction = deltaY > 0
-                        ? Direction.down
-                        : Direction.up;
-
-                    maybeView.caretEnter(direction, this.cursor.bounds);
-                } else {
-                    const position = this.doc.getPosition(segmentAndOffset.segment);
-                    this.cursor.moveTo(position + segmentAndOffset.offset, extendSelection);
-                    this.invalidate();
-                }
-
-                ev.preventDefault();
-                ev.stopPropagation();
-            }
-        }
+        this.cursor.setDirection(deltaY < 0 ? Direction.up : Direction.down);
     }
 
     private readonly onKeyDown = (ev: KeyboardEvent) => {
@@ -224,13 +193,13 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         switch (keyCode) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
-                this.delete(-1, 0);
+                this.delete(/* deltaStart: */ -1, /* deltaEnd: */ 0);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
             }
             case KeyCode.delete: {
-                this.delete(0, 1);
+                this.delete(/* deltaStart: */ 0, /* deltaEnd: */ 1);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
@@ -257,29 +226,32 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
     }
 
-    private toggleCssClass(ev: KeyboardEvent, className: string) {
+    private toggleCssClass(className: string) {
         const { start, end } = this.cursor.selection;
         this.doc.toggleCssClass(start, end, className);
-        ev.stopPropagation();
-        ev.preventDefault();
     }
 
     private readonly onKeyPress = (ev: KeyboardEvent) => {
         if (ev.ctrlKey) {
             switch (ev.key) {
                 case "b":
-                    this.toggleCssClass(ev, style.bold);
-                    return;
+                    this.toggleCssClass(style.bold);
+                    break;
                 case "i":
-                    this.toggleCssClass(ev, style.italic);
-                    return;
+                    this.toggleCssClass(style.italic);
+                    break;
                 case "u":
-                    this.toggleCssClass(ev, style.underline);
-                    return;
+                    this.toggleCssClass(style.underline);
+                    break;
                 default:
             }
         } else {
             switch (ev.code) {
+                case KeyCode.pageUp:
+                case KeyCode.pageDown:
+                    // Do not prevent default on pageUp/Down.
+                    return;
+
                 case KeyCode.backspace: {
                     // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
                     break;
@@ -290,17 +262,16 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
                     } else {
                         this.doc.insertParagraph(this.cursor.position);
                     }
-                    ev.stopPropagation();
                     break;
                 }
                 default: {
                     this.insertText(ev.key);
-                    ev.stopPropagation();
-                    ev.preventDefault();
                 }
             }
         }
-    }
+        ev.stopPropagation();
+        ev.preventDefault();
+}
 
     private readonly onMouseDown = (ev: MouseEvent) => {
         const maybeSegmentAndOffset = this.state.docView.hitTest(ev.x, ev.y);
@@ -313,13 +284,5 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             this.invalidate();
             ev.stopPropagation();
         }
-    }
-
-    private readonly onFocus = () => {
-        this.cursor.show();
-    }
-
-    private readonly onBlur = () => {
-        this.cursor.hide();
     }
 }

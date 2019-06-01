@@ -136,15 +136,6 @@ export class FlowDocument extends Component {
         ]);
     }
 
-    public async opened() {
-        this.maybeSharedString = await this.root.wait("text") as SharedString;
-        this.maybeSharedString.on("sequenceDelta", (...args) => { this.emit("sequenceDelta", ...args); });
-        const client = this.sharedString.client;
-        this.maybeClientId = client.getClientId();
-        this.maybeMergeTree = client.mergeTree;
-        this.readyDeferred.resolve();
-    }
-
     public async getInclusionComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
         const store = await DataStore.from(marker.properties.serverUrl, "anonymous-coward");
 
@@ -289,6 +280,15 @@ export class FlowDocument extends Component {
             /* accum: */ callback,
             startPosition,
             endPosition);
+    }
+
+    protected async opened() {
+        this.maybeSharedString = await this.root.wait("text") as SharedString;
+        this.maybeSharedString.on("sequenceDelta", (...args) => { this.emit("sequenceDelta", ...args); });
+        const client = this.sharedString.client;
+        this.maybeClientId = client.getClientId();
+        this.maybeMergeTree = client.mergeTree;
+        this.readyDeferred.resolve();
     }
 
     protected async create() {

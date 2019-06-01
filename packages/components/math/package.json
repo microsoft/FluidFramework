@@ -31,17 +31,18 @@
     "@prague/app-component": "^0.3.0",
     "@prague/component-runtime": "^0.3.0",
     "@prague/container-definitions": "^0.3.0",
+    "@prague/container-runtime": "^0.3.0",
     "@prague/flow-util": "^0.3.0",
     "@prague/map": "^0.3.0",
     "@prague/merge-tree": "^0.3.0",
-    "@prague/container-runtime": "^0.3.0",
     "@prague/runtime-definitions": "^0.3.0",
-    "@prague/utils": "^0.3.0"
+    "@prague/utils": "^0.3.0",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@prague/build-common": "^0.3.0",
     "@types/node": "^10.12.12",
-    "concurrently": "^4.1.0",    
+    "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

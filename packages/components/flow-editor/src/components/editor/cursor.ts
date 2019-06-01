@@ -1,20 +1,19 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { Dom, Scheduler, Template } from "@prague/flow-util";
+import { Direction, Dom, Scheduler } from "@prague/flow-util";
 import { LocalReference } from "@prague/merge-tree";
-import { debug } from "../../debug";
-import * as styles from "./index.css";
-
-const template = new Template({
-    tag: "span",
-    props: { className: styles.cursorOverlay },
-    children: [
-        { tag: "span", ref: "highlights", props: { className: styles.cursorHighlightRoot }},
-        { tag: "span", ref: "cursor", props: { className: styles.cursor }},
-    ],
-});
+import { debug, domRangeToString, windowSelectionToString } from "../../debug";
+import { DocumentView } from "../document";
 
 export class Cursor {
+    public get bounds() {
+        const { focusNode, focusOffset } = window.getSelection();
+        return focusNode === null
+            ? undefined
+            : Dom.getClientRect(focusNode, focusOffset);
+    }
+
     public get position() { return this.doc.localRefToPosition(this.endRef); }
+    public get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
 
     public get selection() {
         const start = this.doc.localRefToPosition(this.startRef);
@@ -23,175 +22,114 @@ export class Cursor {
         return { start: Math.min(start, end), end: Math.max(start, end) };
     }
 
-    public get bounds() { return this.cursorBounds; }
-
-    public readonly root: HTMLElement;
+    private get doc() { return this.docView.doc; }
+    // tslint:disable:prefer-readonly - TSLint does not recognize assignment via destructuring.
     private startRef: LocalReference;
     private endRef: LocalReference;
+    // tslint:enable:prefer-readonly
 
-    private startContainer?: Node;
-    private relativeStartOffset = NaN;
-
-    private endContainer?: Node;
-    private relativeEndOffset = NaN;
-    private cursorBounds?: ClientRect;
-
-    private readonly domRange = document.createRange();
-    private readonly cursorElement: HTMLElement;
+    private lastDirection = Direction.none;
+    private previousBounds: ClientRect;
     private readonly sync: () => void;
 
-    constructor(private readonly doc: FlowDocument, scheduler: Scheduler) {
-        this.sync = scheduler.coalesce(scheduler.onLayout, () => {
-            this.updateCursor();
-            this.updateSelection();
-            this.restartBlinkAnimation();
+    public constructor(private readonly docView: DocumentView, scheduler: Scheduler) {
+        this.sync = scheduler.coalesce(scheduler.onPostLayout, () => {
+            const end = this.doc.localRefToPosition(this.endRef);
+            const maybeView = this.docView.getInclusionView(end);
+            if (maybeView) {
+                if (maybeView.isFocused) {
+                    debug(`  Inclusion already focused.`);
+                } else {
+                    debug(`  Entering inclusion ${this.lastDirection} ${JSON.stringify(this.previousBounds)}`);
+                    maybeView.caretEnter(this.lastDirection, this.previousBounds);
+                }
+            } else {
+                // tslint:disable:prefer-const
+                let { node: startNode, nodeOffset: startOffset } = this.docView.positionToNodeOffset(this.doc.localRefToPosition(this.startRef));
+                let { node: endNode, nodeOffset: endOffset } = this.docView.positionToNodeOffset(end);
+                // tslint:enable:prefer-const
+
+                const selection = window.getSelection();
+                const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
+                startOffset = this.clampOffset(startNode, startOffset, anchorOffset);
+                endOffset = this.clampOffset(endNode, endOffset, focusOffset);
+                if (endOffset !== focusOffset || endNode !== focusNode || startOffset !== anchorOffset || startNode !== anchorNode) {
+                    debug(`    set: (${domRangeToString(startNode, startOffset, endNode, endOffset)})`);
+                    debug(`    was: (${windowSelectionToString()})`);
+                    selection.setBaseAndExtent(startNode, startOffset, endNode, endOffset);
+                    debug(`    now: (${windowSelectionToString()})`);
+                }
+            }
         });
 
-        this.root = template.clone() as HTMLElement;
-        this.cursorElement = template.get(this.root, "cursor") as HTMLElement;
+        this.startRef = this.doc.addLocalRef(0);
+        this.endRef = this.doc.addLocalRef(0);
 
-        this.startRef = doc.addLocalRef(0);
-        this.endRef = doc.addLocalRef(0);
+        this.previousBounds = this.bounds;
+        document.addEventListener("selectionchange", this.onSelectionChange);
+    }
+
+    public getTracked() {
+        return [
+            { position: this.position, callback: this.sync },
+            { position: this.selectionStart, callback: this.sync },
+        ];
     }
 
     public moveTo(position: number, extendSelection: boolean) {
-        this.setPosition(position);
-        if (!extendSelection) {
-            this.setSelectionStart(position);
-        }
+        debug(`Cursor.moveTo(${position},${extendSelection})`);
+        this.setSelection(extendSelection ? this.selectionStart : position, position);
     }
 
     public moveBy(delta: number, extendSelection: boolean) {
         this.moveTo(this.position + delta, extendSelection);
     }
 
-    public getTracked() {
-        return [
-            { position: this.position, callback: this.updateDomRangeEnd },
-            { position: this.selectionStart, callback: this.updateDomRangeStart },
-        ];
-    }
-
-    public show() {
-        debug("show cursor");
-        this.root.style.visibility = "inherit";
-    }
-
-    public hide() {
-        debug("hide cursor");
-        this.root.style.visibility = "hidden";
-    }
-
-    public readonly render = () => {
-        return this.root;
-    }
-
-    private get selectionStart() { return this.doc.localRefToPosition(this.startRef); }
-
-    private clampPosition(position: number) {
-        return Math.min(Math.max(position, 0), this.doc.length - 1);
-    }
-
-    private addLocalRef(position: number) {
-        return this.doc.addLocalRef(this.clampPosition(position));
-    }
-
-    private setSelectionStart(newStart: number) {
-        this.doc.removeLocalRef(this.startRef);
-        this.startRef = this.addLocalRef(newStart);
-    }
-
-    private setPosition(newEnd: number) {
-        this.doc.removeLocalRef(this.endRef);
-        this.endRef = this.addLocalRef(newEnd);
-    }
-
-    private clampToText(container: Node, position: number) {
-        return Math.max(0, Math.min(position, container.textContent!.length));
-    }
-
-    private setRangeStart(container: Node, position: number) {
-        this.domRange.setStart(container, this.clampToText(container, position));
-    }
-
-    private setRangeEnd(container: Node, position: number) {
-        this.domRange.setEnd(container, this.clampToText(container, position));
-    }
-
-    /**
-     * Returns the top/left offset of nearest ancestor that is a CSS containing block, used to
-     * adjust absolute the x/y position of the caret/highlight.
-     */
-    private getOffset(): { top: number, left: number } {
-        // Note: Could generalize by walking parentElement chain and probing style properties.
-        return this.root.offsetParent!.getBoundingClientRect();
-    }
-
-    private readonly updateDomRangeStart = (node: Node, nodeOffset: number) => {
-        this.startContainer = node;
-        this.relativeStartOffset = nodeOffset;
+    public setSelection(start: number, end: number) {
+        const { doc } = this;
+        debug(`  Cursor.setSelection(${start},${end}):`);
+        debug(`    start:`);
+        this.startRef = this.updateRef(doc, this.startRef, start);
+        debug(`    end:`);
+        this.endRef = this.updateRef(doc, this.endRef, end);
         this.sync();
     }
 
-    private readonly updateDomRangeEnd = (node: Node, nodeOffset: number) => {
-        this.endContainer = node;
-        this.relativeEndOffset = nodeOffset;
-        this.sync();
+    public setDirection(direction: Direction) {
+        this.previousBounds = this.bounds;
+        this.lastDirection = direction;
     }
 
-    private updateSelection() {
-        if (!this.startContainer || !this.endContainer) {
-            throw new Error();
+    private updateRef(doc: FlowDocument, ref: LocalReference, position: number) {
+        position = Math.min(Math.max(position, 0), doc.length - 1);
+        const oldPosition = doc.localRefToPosition(ref);
+        if (position === oldPosition) {
+            debug(`      ${position} (unchanged)`);
+            return ref;
         }
 
-        if (this.position > this.selectionStart) {
-            this.setRangeStart(this.startContainer, this.relativeStartOffset);
-            this.setRangeEnd(this.endContainer, this.relativeEndOffset);
-        } else {
-            this.setRangeEnd(this.startContainer, this.relativeStartOffset);
-            this.setRangeStart(this.endContainer, this.relativeEndOffset);
-        }
-
-        const selection = window.getSelection();
-        if (selection.rangeCount !== 1 || selection.getRangeAt(0) !== this.domRange) {
-            selection.removeAllRanges();
-            selection.addRange(this.domRange);
-        }
-
-        debug(`Updated Selection: ${this.domRange.startContainer.textContent}:${this.domRange.startOffset}..${this.domRange.endContainer.textContent}:${this.domRange.endOffset}`);
+        debug(`      ${position} (was: ${oldPosition})`);
+        doc.removeLocalRef(ref);
+        return doc.addLocalRef(position);
     }
 
-    private getCursorBounds() {
-        // tslint:disable-next-line:binary-expression-operand-order
-        if (!(this.endContainer && 0 <= this.relativeEndOffset && this.relativeEndOffset < +Infinity)) {
-            return undefined;
-        }
-
-        return Dom.getClientRect(this.endContainer, this.relativeEndOffset);
+    private clampOffset(container: Node, offset: number | undefined, defaultOffset: number) {
+        const length = container.textContent.length;
+        return Math.max(
+            0,
+            Math.min(
+                offset === undefined
+                    ? defaultOffset
+                    : offset,
+                length));
     }
 
-    private updateCursor() {
-        // If the cursor position is currently within the windowed of rendered elements, display it at the
-        // appropriate location.
-        this.cursorBounds = this.getCursorBounds();
-        if (this.cursorBounds) {
-            const offset = this.getOffset();
-            debug(`cursor: (${this.cursorBounds.top} - ${offset.top} -> ${this.cursorBounds.top - offset.top},`);
-            debug(`        (${this.cursorBounds.left} - ${offset.left} -> ${this.cursorBounds.left - offset.left},`);
-            this.cursorElement.style.visibility = "inherit";
-            this.cursorElement.style.top = `${this.cursorBounds.top - offset.top}px`;
-            this.cursorElement.style.left = `${this.cursorBounds.left - offset.left}px`;
-            this.cursorElement.style.height = `${this.cursorBounds.height}px`;
-        } else {
-            this.hide();
-        }
-    }
-
-    private restartBlinkAnimation() {
-        // To restart the CSS blink animation, we swap the position of the cursor element with it's sibling.
-        // (See: https://css-tricks.com/restart-css-animation/).
-        if (this.cursorElement.parentNode) {
-            this.cursorElement.parentNode.insertBefore(this.cursorElement, this.cursorElement.previousSibling);
-        }
+    private readonly onSelectionChange = () => {
+        debug(`Cursor.onSelectionChange(${windowSelectionToString()})`);
+        const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
+        const start = this.docView.nodeOffsetToPosition(anchorNode, anchorOffset);
+        const end = this.docView.nodeOffsetToPosition(focusNode, focusOffset);
+        debug(`  -> ${start}..${end}`);
+        this.setSelection(start, end);
     }
 }

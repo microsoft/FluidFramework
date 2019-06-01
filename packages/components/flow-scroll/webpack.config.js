@@ -11,12 +11,6 @@ module.exports = env => {
     return merge({
         entry: { main: "./src/index.ts" },
         resolve: { extensions: [".ts", ".js"] },
-        
-        // We use WebPack to bundle assets like CSS, but do not require WebPack to bundle our dependencies since
-        // the output of this pack package is rebundled by the consuming apps ('routerlicious' and 'flow-app')
-        // target: "node",                 // Do not bundle built-in node modules (e.g., 'fs', 'path', etc.)
-        // externals: [nodeExternals()],   // Do not bundle modules in /node_modules/ folder 
-
         module: {
             rules: [
                 {
@@ -34,6 +28,7 @@ module.exports = env => {
                         // of the tsconfig. 
                         compilerOptions: {
                             declarationDir: ".",
+                            incremental: false
                         }
                     },
                 },

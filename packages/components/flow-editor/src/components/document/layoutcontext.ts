@@ -30,6 +30,8 @@ export class DocumentViewState implements IViewState {
      */
     public readonly elementToViewInfo = new Map<Element, ViewInfo>();
 
+    public readonly emitted: ViewInfo[] = [];
+
     // tslint:disable-next-line:variable-name
     private _segmentToViewInfo = new Map<ISegment, ViewInfo>();
 
@@ -65,10 +67,6 @@ export class LayoutContext {
 
     public get lastEmitted() { return this.emitted[this.emitted.length - 1]; }
 
-    // The IViewInfo for the last rendered inline view.
-    // tslint:disable-next-line:variable-name
-    public readonly emitted: ViewInfo[] = [];
-
     /**
      * Sorted stack of tracked position we're still looking for.
      * Positions are popped from the stack as the consumers are notified.
@@ -94,6 +92,8 @@ export class LayoutContext {
         trackedPositions: ITrackedPosition[],
         private readonly halt: (context: LayoutContext) => boolean,
     ) {
+        this.emitted.length = 0;
+
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
         this.pendingTrackedPositions = trackedPositions
             .slice(0)
@@ -102,6 +102,8 @@ export class LayoutContext {
         // Initialize 'pendingLayout' with the set of root elements rendered in the last layout pass.
         this.pendingLayout = new Set<Element>(state.elementToViewInfo.keys());
     }
+
+    public get emitted() { return this.state.emitted; }
 
     /**
      * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.

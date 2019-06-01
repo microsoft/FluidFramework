@@ -11,13 +11,14 @@ export async function importDoc(docP: Promise<FlowDocument>, file: string) {
         while (true) {
             const {done, value} = await reader.read();
             if (done) {
-                return;
+                break;
             }
 
             const lines = decoder.decode(value).split(/\r?\n/);
             for (const paragraph of lines) {
-                doc.insertText(doc.length, paragraph);
-                doc.insertParagraph(doc.length);
+                // -1 to stay in front of the EOF marker.
+                doc.insertText(doc.length - 1, paragraph);
+                doc.insertParagraph(doc.length - 1);
             }
         }
     } finally {

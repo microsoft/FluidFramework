@@ -1,10 +1,15 @@
-import { Caret, Direction, Dom, Template } from "@prague/flow-util";
+import { Caret, Char, Direction, Dom, Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
 const template = new Template({
     tag: "span",
     props: { className: styles.inclusion },
+    children: [
+        { tag: "span", ref: "cursorTarget", props: { textContent: Char.zeroWidthSpace }},
+        { tag: "span", ref: "slot", props: { contentEditable: false }},
+        { tag: "span", props: { textContent: Char.zeroWidthSpace }},
+    ],
 });
 
 export interface IInclusionProps { child: Element; }
@@ -48,13 +53,11 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
         return this.updating(props, { root });
     }
 
-    public get cursorTarget() { return this.root.firstChild; }
-    private get child() { return this.root.firstElementChild; }
+    public get cursorTarget() { return template.get(this.state.root, "cursorTarget"); }
 
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
         const { child } = props;
-        Dom.ensureFirstChild(state.root, child);
-
+        Dom.ensureFirstChild(template.get(state.root, "slot"), child);
         return state;
     }
 
@@ -64,7 +67,18 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
         }
     }
 
+    public get isFocused() {
+        return this.inclusionRoot.contains(document.activeElement);
+    }
+
     public caretEnter(direction: Direction, caretBounds: ClientRect) {
-        return Caret.caretEnter(this.child.firstElementChild, direction, caretBounds);
+        return Caret.caretEnter(this.inclusionRoot, direction, caretBounds);
+    }
+
+    private get inclusionRoot() {
+        // DANGER: The extra '.firstElementChild' is to compensate for needing an extra element to
+        //         pass into the component's attach() method as the 'div' service.  Will need to update
+        //         if/when we change 'syncInclusion()'.
+        return template.get(this.state.root, "slot").firstElementChild.firstElementChild;
     }
 }

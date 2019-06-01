@@ -15,6 +15,7 @@ const enum DirectionFlag {
 }
 
 export const enum Direction {
+    none    = 0,
     left    = DirectionFlag.horizontal | DirectionFlag.negativeHorizontal,
     right   = DirectionFlag.horizontal,
     up      = DirectionFlag.vertical   | DirectionFlag.negativeVertical,

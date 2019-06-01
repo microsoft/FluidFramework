@@ -60,6 +60,10 @@ describe("SegmentSpan", () => {
             });
 
             assert.strictEqual(actual, expected);
+
+            // Trivial 'spanOffsetToSegmentOffset()' case.  There is a one-off test of a more interesting case below.
+            assert.deepStrictEqual(
+                span.spanOffsetToSegmentOffset(0), { segment: span.firstSegment, offset: span.startOffset });
         });
     }
 
@@ -92,5 +96,16 @@ describe("SegmentSpan", () => {
 
             return true;
         }, 0, 4);
+    });
+
+    it("spanOffsetToSegmentOffset", () => {
+        const span = new SegmentSpan();
+        doc.visitRange((position, segment, startOffset, endOffset) => {
+            span.append(position, segment, startOffset, endOffset);
+            return true;
+        }, 1, 3);
+
+        assert.deepStrictEqual(span.spanOffsetToSegmentOffset(0), { segment: span.firstSegment, offset: 1 });
+        assert.deepStrictEqual(span.spanOffsetToSegmentOffset(1), { segment: span.lastSegment, offset: 0 });
     });
 });

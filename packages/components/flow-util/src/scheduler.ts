@@ -7,10 +7,19 @@ const idleTaskTurnBreak = 2;
 export class Scheduler {
     private lastDispatchMS = Date.now();
     private readonly layoutTasks: TaskCallback[] = [];
+    private readonly postLayoutTasks: TaskCallback[] = [];
     private readonly idleTasks: TaskCallback[] = [];
 
     public readonly onLayout = (callback: TaskCallback) => {
-        if (this.layoutTasks.push(callback) === 1) {
+        this.layoutTasks.push(callback);
+        if (this.layoutQueueLength === 1) {
+            requestAnimationFrame(this.processLayoutTasks);
+        }
+    }
+
+    public readonly onPostLayout = (callback: TaskCallback) => {
+        this.postLayoutTasks.push(callback);
+        if (this.layoutQueueLength === 1) {
             requestAnimationFrame(this.processLayoutTasks);
         }
     }
@@ -19,6 +28,10 @@ export class Scheduler {
         if (this.idleTasks.push(callback) === 1) {
             this.scheduleIdleTasks(this.idleDueMS(Date.now()));
         }
+    }
+
+    private get layoutQueueLength() {
+        return this.layoutTasks.length + this.postLayoutTasks.length;
     }
 
     public coalesce(queue: TaskQueue, callback: TaskCallback) {
@@ -42,8 +55,13 @@ export class Scheduler {
         for (const task of this.layoutTasks) {
             task();
         }
-
         this.layoutTasks.length = 0;
+
+        for (const task of this.postLayoutTasks) {
+            task();
+        }
+        this.postLayoutTasks.length = 0;
+
         this.lastDispatchMS = Date.now();
     }
 

@@ -1,6 +1,7 @@
 // tslint:disable:no-empty-interface
 
 import { Caret, CaretEventType, Direction, Dom, ICaretEvent, KeyCode, Template, View } from "@prague/flow-util";
+import { debug } from "./debug";
 import * as style from "./index.css";
 
 const template = new Template({ tag: "div", props: { className: style.math }, children: [
@@ -83,6 +84,8 @@ export class MathView extends View<IMathInit, IMathProps> {
 }
 
     private readonly onCaretEnter = (e: ICaretEvent) => {
+        debug(`onCaretEnter(${JSON.stringify(e.detail)})`);
+
         const input = this.input;
         input.focus();
 

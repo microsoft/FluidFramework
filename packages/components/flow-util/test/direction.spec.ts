@@ -7,6 +7,7 @@ import { Direction, getDeltaX, getDeltaY } from "../src/direction";
 
 // tslint:disable-next-line:mocha-no-side-effect-code
 const cases = [
+    { name: "none",       direction: Direction.none,                      expectedX:  0,    expectedY:  0 },
     { name: "left",       direction: Direction.left,                      expectedX: -1,    expectedY:  0 },
     { name: "right",      direction: Direction.right,                     expectedX:  1,    expectedY:  0 },
     { name: "up",         direction: Direction.up,                        expectedX:  0,    expectedY: -1 },

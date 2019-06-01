@@ -26,6 +26,14 @@ interface IResizeObserverInit {
     callback: () => void;
 }
 
+/**
+ * Experimental container that uses CSS scroll events to detect when a child DOM element resizes,
+ * as a possible path toward polyfilling the Chrome native resize observer:
+ * https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
+ *
+ * Based on 'ResizeSensor' from Marc J. Schmidt's 'CSS Element Queries':
+ * https://github.com/marcj/css-element-queries/blob/09d4cf12a2bf2c143274bbe4e4bc04060e55880f/src/ResizeSensor.js
+ */
 export class ResizeObserver extends View<IResizeObserverInit> {
     private state?: {
         callback: () => void;

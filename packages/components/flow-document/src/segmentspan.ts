@@ -12,6 +12,8 @@ export class SegmentSpan {
     public get firstSegment() { return this.segments[0]; }
     public get lastSegment() { return this.segments[this.segments.length - 1]; }
 
+    public get length() { return this.endPosition - this.startPosition; }
+
     private firstPosition = NaN;
     private lastPosition = NaN;
     private readonly _segments = [];
@@ -54,5 +56,31 @@ export class SegmentSpan {
 
         console.assert(0 <= this._startOffset && this._startOffset <= segment.cachedLength);
         console.assert(0 <= this.startPosition && this.startPosition <= this.endPosition);
+    }
+
+    /**
+     * Given an offset from the beginning of the span, returns the segment that contains the offset
+     * as well as the offset from the segment start.
+     */
+    public spanOffsetToSegmentOffset(spanOffset: number) {
+        let segment: ISegment;
+        let offset = NaN;
+
+        // Note: It is trivial to accelerate this using binary search.  To do so, construct a second
+        //       array of cumulative span lengths when pushing each segment in 'append()'.
+        this.forEach((position, candidate, startOffset, endOffset) => {
+            segment = candidate;
+            const len = endOffset - startOffset;
+
+            offset = startOffset + spanOffset;
+            if (spanOffset < len) {
+                return false;
+            }
+
+            spanOffset -= len;
+            return true;
+        });
+
+        return { segment, offset };
     }
 }

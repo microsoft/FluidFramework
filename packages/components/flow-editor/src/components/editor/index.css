@@ -1,37 +1,3 @@
-.viewportContent {
-    margin: 4px;
-}
-
-.textRoot, .contentRoot, .viewportContent, .viewportOverlay, .viewport, .cursorOverlay, .cursorHighlightRoot {
-    overflow: hidden;
-}
-
-.textRoot {
-    user-select: none;
-}
-
-.viewportOverlay {
-    pointer-events: none;
-}
-
-@keyframes blink {
-    50% { opacity: 0.0; }
-}
-
-.cursor {
-    position: absolute;
-    padding: 0;
-    margin: 0px 0px 0px -1px;
-    border-left: 1px solid black;
-    animation: blink 1s step-start 0s infinite;
-    animation-delay: 0.5s;
-}
-
-.highlightRect {
-    position: absolute;
-    background: rgba(0, 128, 255, 0.25);
-}
-
 .bold {
     font-weight: bold;
 }
