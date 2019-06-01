@@ -40,14 +40,19 @@ export interface IConsensusRegisterCollection extends ISharedObject {
     write(key: string, value: any): Promise<void>;
 
     /**
-     * Retrieves the agreed upon value for the register. Returns undefined if not present.
+     * Retrieves the agreed upon value for the register based on policy. Returns undefined if not present.
      */
-    read(key: string): any;
+    read(key: string, policy?: ReadPolicy): any | undefined;
 
     /**
-     * Returns the agreed upon value of all registers amongst clients.
+     * Retrives all concurrent versions. Undefined if not present.
      */
-    entries(): Map<string, any>;
+    readVersions(key: string): any[] | undefined;
+
+    /**
+     * Returns the keys.
+     */
+    keys(): string[];
 }
 
 export interface ILocalRegister {
@@ -64,6 +69,17 @@ export interface IRegisterValue {
 
     // Actual Value
     value: any;
+}
+
+/**
+ * Read policies used when reading the map value.
+ */
+export enum ReadPolicy {
+    // On a concurrent update, returns the agreed upon value amongst all clients.
+    Atomic,
+
+    // Last writer wins. Simply returns the last written value.
+    LWW,
 }
 
 /**

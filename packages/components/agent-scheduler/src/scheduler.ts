@@ -35,12 +35,11 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             }
         }
 
-        const allTasks = this.scheduler.entries();
         const availableTasks: ITask[] = [];
         for (const task of tasks) {
             this.localTaskMap.set(task.id, task.callback);
             // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
-            const currentStatus = allTasks.get(task.id);
+            const currentStatus = this.scheduler.read(task.id);
             if (currentStatus === undefined || currentStatus === null) {
                 availableTasks.push(task);
             }
@@ -53,7 +52,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             if (!this.localTaskMap.has(taskId)) {
                 return Promise.reject(`${taskId} was never registered`);
             }
-            if (this.scheduler.entries().get(taskId) !== this.runtime.clientId) {
+            if (this.scheduler.read(taskId) !== this.runtime.clientId) {
                 return Promise.reject(`${taskId} was never picked`);
             }
         }
@@ -62,11 +61,11 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
     public pickedTasks(): string[] {
         const allPickedTasks = [];
-        this.scheduler.entries().forEach((value: string, key: string) => {
-            if (value === this.runtime.clientId) {
-                allPickedTasks.push(key);
+        for (const taskId of this.scheduler.keys()) {
+            if (this.scheduler.read(taskId) === this.runtime.clientId) {
+                allPickedTasks.push(taskId);
             }
-        });
+        }
         return allPickedTasks;
     }
 
@@ -87,11 +86,13 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         // Check to see if this client needs to do this.
         // TODO: We need a leader in charge of this.
         const clearCandidates = [];
-        this.scheduler.entries().forEach((value: string, key: string) => {
-            if (!quorum.getMembers().has(value)) {
-                clearCandidates.push(key);
+
+        for (const taskId of this.scheduler.keys()) {
+            if (!quorum.getMembers().has(this.scheduler.read(taskId))) {
+                clearCandidates.push(taskId);
             }
-        });
+        }
+
         await this.clearTasks(clearCandidates);
 
         // Listeners for new/released tasks or left client tasks.
@@ -109,11 +110,11 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             // Iterate and clear tasks held by the left client.
             // TODO: We need a leader for this.
             const leftTasks: string[] = [];
-            this.scheduler.entries().forEach((value: string, key: string) => {
-                if (value === clientId) {
-                    leftTasks.push(key);
+            for (const taskId of this.scheduler.keys()) {
+                if (this.scheduler.read(taskId) === clientId) {
+                    leftTasks.push(taskId);
                 }
-            });
+            }
             // TODO: Pick in random order to have some fairness guarantee.
             await this.clearTasks(leftTasks);
         });
