@@ -18,7 +18,7 @@ RUN unzip docfx.zip
 WORKDIR /
 
 # Install api-documenter
-RUN npm install -g @microsoft/api-documenter@7.1.3
+RUN npm install -g @microsoft/api-documenter@^7.2.1
 
 #############################
 FROM base AS r11s

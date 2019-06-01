@@ -16,9 +16,9 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
 }
 
 export class SubSequence<T> extends BaseSegment {
-    public static readonly type: string = "SubSequence";
+    public static readonly typeString: string = "SubSequence";
     public static is(segment: ISegment): segment is SubSequence<any> {
-        return segment !== undefined && segment.type === SubSequence.type;
+        return segment !== undefined && segment.type === SubSequence.typeString;
     }
     public static fromJSONObject(spec: any) {
         // tslint:disable: no-unsafe-any
@@ -32,7 +32,7 @@ export class SubSequence<T> extends BaseSegment {
         return undefined;
     }
 
-    public readonly type = SubSequence.type;
+    public readonly type = SubSequence.typeString;
 
     constructor(public items: T[], seq?: number, clientId?: number) {
         super(seq, clientId);

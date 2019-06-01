@@ -18,10 +18,9 @@ export type UnboxedOper = undefined | boolean | number | string;
 // An empty segment that occupies 'cachedLength' positions.  SparseMatrix uses PaddingSegment
 // to "pad" a run of unoccupied cells.
 export class PaddingSegment extends BaseSegment {
-
-    public static readonly type = "PaddingSegment";
+    public static readonly typeString = "PaddingSegment";
     public static is(segment: ISegment): segment is PaddingSegment {
-        return segment !== undefined && segment.type === PaddingSegment.type;
+        return segment !== undefined && segment.type === PaddingSegment.typeString;
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "pad" in spec) {
@@ -33,7 +32,7 @@ export class PaddingSegment extends BaseSegment {
         }
         return undefined;
     }
-    public readonly type = PaddingSegment.type;
+    public readonly type = PaddingSegment.typeString;
 
     constructor(public size: number, seq?: number, clientId?: number) {
         super(seq, clientId);
@@ -86,9 +85,9 @@ export class PaddingSegment extends BaseSegment {
 }
 
 export class RunSegment extends SubSequence<UnboxedOper> {
-    public static readonly type = "RunSegment";
+    public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
-        return segment !== undefined && segment.type === RunSegment.type;
+        return segment !== undefined && segment.type === RunSegment.typeString;
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {
@@ -100,7 +99,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
         }
         return undefined;
     }
-    public readonly type = RunSegment.type;
+    public readonly type = RunSegment.typeString;
 
     private tags: any [];
 
