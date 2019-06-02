@@ -108,26 +108,27 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     public read(key: string, policy?: ReadPolicy): any | undefined {
         const data = this.readVersions(key);
 
-        if (data === undefined) {
-            return undefined;
-        }
+        if (data) {
+            // We don't support deletion. So there should be at least one value.
+            assert(data.length > 0, "Value should be undefined or non empty");
 
-        // We don't support deletion. So there should be at least one value.
-        assert(data.length > 0, "Value should be undefined or non empty");
+            // Default policy is atomic.
+            const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
 
-        // Default policy is atomic.
-        const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
-
-        /* tslint:disable:no-unsafe-any */
-        if (readPolicy === ReadPolicy.Atomic) {
-            return data[0].value.value;
-        } else {
-            return data[data.length - 1].value.value;
+            /* tslint:disable:no-unsafe-any */
+            if (readPolicy === ReadPolicy.Atomic) {
+                return data[0];
+            } else {
+                return data[data.length - 1];
+            }
         }
     }
 
     public readVersions(key: string): any[] | undefined {
-        return this.data.get(key);
+        const data = this.data.get(key);
+        if (data) {
+            return data.map((element: ILocalRegister) => element.value.value);
+        }
     }
 
     public keys(): string[] {
@@ -267,8 +268,8 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         const data = this.data.get(op.key);
         const refSeq = message.referenceSequenceNumber;
 
-        // Keep removing elements where incoming refseq is smaller that current.
-        while (data.length > 0 && refSeq < data[0].sequenceNumber) {
+        // Keep removing elements where incoming refseq is greater than or equals to current.
+        while (data.length > 0 && refSeq >= data[0].sequenceNumber) {
             data.shift();
         }
 

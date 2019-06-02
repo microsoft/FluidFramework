@@ -2,6 +2,7 @@ import * as api from "@prague/client-api";
 import {
     ConsensusRegisterCollectionExtension,
     IConsensusRegisterCollection,
+    ReadPolicy,
 } from "@prague/consensus-register-collection";
 import { ISharedMap } from "@prague/map";
 import * as assert from "assert";
@@ -76,6 +77,73 @@ function generate(name: string, type: string) {
             assert.strictEqual(collection1.read("key3"), undefined, "Reading non existent key should be undefined");
             assert.strictEqual(collection2.read("key3"), undefined, "Reading non existent key should be undefined");
             assert.strictEqual(collection3.read("key3"), undefined, "Reading non existent key should be undefined");
+        });
+
+        it("Should store all concurrent writings on a key in sequenced order", async () => {
+            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            root1.set("collection", collection1);
+
+            const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
+            const collection3 = await root3.wait<IConsensusRegisterCollection>("collection");
+
+            const write1P = collection1.write("key1", "value1");
+            const write2P = collection2.write("key1", "value2");
+            const write3P = collection3.write("key1", "value3");
+            await Promise.all([write1P, write2P, write3P]);
+            const versions = collection1.readVersions("key1");
+            assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
+            assert.strictEqual(versions[0], "value1", "Incorrect update sequence");
+            assert.strictEqual(versions[1], "value2", "Incorrect update sequence");
+            assert.strictEqual(versions[2], "value3", "Incorrect update sequence");
+
+            assert.strictEqual(collection1.read("key1"), "value1", "Default read policy is atomic");
+            assert.strictEqual(collection1.read("key1", ReadPolicy.Atomic), "value1", "Atomic policy should work");
+            assert.strictEqual(collection1.read("key1", ReadPolicy.LWW), "value3", "LWW policy should work");
+        });
+
+        it("Happened after updates should overwrite previous versions", async () => {
+            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            root1.set("collection", collection1);
+
+            const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
+            const collection3 = await root3.wait<IConsensusRegisterCollection>("collection");
+
+            const write1P = collection1.write("key1", "value1");
+            const write2P = collection2.write("key1", "value2");
+            const write3P = collection3.write("key1", "value3");
+            await Promise.all([write1P, write2P, write3P]);
+            const versions = collection1.readVersions("key1");
+            assert.strictEqual(versions.length, 3, "Concurrent updates were not preserved");
+
+            await collection3.write("key1", "value4");
+            const versions2 = collection1.readVersions("key1");
+            assert.strictEqual(versions2.length, 1, "Happened after value did not overwrite");
+            assert.strictEqual(versions2[0], "value4", "Happened after value did not overwrite");
+
+            await collection2.write("key1", "value5");
+            const versions3 = collection1.readVersions("key1");
+            assert.strictEqual(versions3.length, 1, "Happened after value did not overwrite");
+            assert.strictEqual(versions3[0], "value5", "Happened after value did not overwrite");
+
+            await collection1.write("key1", "value6");
+            const versions4 = collection1.readVersions("key1");
+            assert.strictEqual(versions4.length, 1, "Happened after value did not overwrite");
+            assert.strictEqual(versions4[0], "value6", "Happened after value did not overwrite");
+
+            const write7P = collection1.write("key1", "value7");
+            const write8P = collection2.write("key1", "value8");
+            const write9P = collection3.write("key1", "value9");
+            await Promise.all([write7P, write8P, write9P]);
+            const versions5 = collection3.readVersions("key1");
+            assert.strictEqual(versions5.length, 3, "Concurrent happened after updates should overwrite and preserve");
+            assert.strictEqual(versions5[0], "value7", "Incorrect update sequence");
+            assert.strictEqual(versions5[1], "value8", "Incorrect update sequence");
+            assert.strictEqual(versions5[2], "value9", "Incorrect update sequence");
+
+            await collection2.write("key1", "value10");
+            const versions6 = collection2.readVersions("key1");
+            assert.strictEqual(versions6.length, 1, "Happened after value did not overwrite");
+            assert.strictEqual(versions6[0], "value10", "Happened after value did not overwrite");
         });
 
         afterEach(async () => {

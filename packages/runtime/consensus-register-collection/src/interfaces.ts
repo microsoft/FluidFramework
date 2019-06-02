@@ -75,7 +75,7 @@ export interface IRegisterValue {
  * Read policies used when reading the map value.
  */
 export enum ReadPolicy {
-    // On a concurrent update, returns the agreed upon value amongst all clients.
+    // On a concurrent update, returns the first agreed upon value amongst all clients.
     Atomic,
 
     // Last writer wins. Simply returns the last written value.
