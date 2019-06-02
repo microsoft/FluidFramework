@@ -31,6 +31,7 @@ COPY packages/components/app-ui/package*.json packages/components/app-ui/
 COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/chart-view/package*.json packages/components/chart-view/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/collection-components/package*.json packages/components/collection-components/
 COPY packages/components/flow-document/package*.json packages/components/flow-document/
 COPY packages/components/flow-editor/package*.json packages/components/flow-editor/
 COPY packages/components/flow-host/package*.json packages/components/flow-host/
