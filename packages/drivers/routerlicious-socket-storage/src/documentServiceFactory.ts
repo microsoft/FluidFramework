@@ -12,6 +12,10 @@ import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";
 
+/**
+ * Factory for creating the routerlicious document service. Use this if you want to
+ * use the routerlicious implementation.
+ */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(
         private useDocumentService2: boolean = false,
@@ -23,6 +27,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     ) {
     }
 
+    /**
+     * Creates the document service after extracting different endpoints URLs from a resolved URL.
+     *
+     * @param resolvedUrl - URL containing different endpoint URLs.
+     * @returns Routerlicious document service.
+     */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
             // tslint:disable-next-line:max-line-length

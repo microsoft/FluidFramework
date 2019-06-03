@@ -1,7 +1,8 @@
 import * as api from "@prague/container-definitions";
 
 /**
- * Document access to underlying storage
+ * Document access to underlying storage. It is default implementation of a storage service.
+ * Does not read/write anything.
  */
 export class NullBlobStorageService implements api.IDocumentStorageService  {
     public get repositoryUrl(): string {

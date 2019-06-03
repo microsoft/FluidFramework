@@ -4,6 +4,12 @@ import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";
 
+/**
+ * Returns the document service associated with the factory.
+ *
+ * @deprecated - The createDocumentService of document service factory directly returns
+ *  the associated document service.
+ */
 export function createDocumentService2(
     ordererUrl: string,
     deltaStorageUrl: string,

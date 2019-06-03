@@ -32,6 +32,13 @@ export class DocumentService2 extends DocumentService {
             tenantId,
             documentId);
     }
+
+    /**
+     * Connects to a delta stream endpoint of provided documentService so as to fire ops.
+     *
+     * @param client - Client that connects to socket.
+     * @returns returns the delta stream service.
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return WSDeltaConnection.Create(
             this.tenantId,

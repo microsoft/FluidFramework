@@ -16,9 +16,20 @@ import { debug } from "./debug";
 const protocolVersion = "^0.1.0";
 
 /**
- * Represents a connection to a stream of delta updates
+ * Represents a connection to a stream of delta updates for routerlicious driver.
  */
 export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+
+    /**
+     * Represents a connection to a stream of delta updates for routerlicious driver.
+     *
+     * @param tenantId - Id of the tenant.
+     * @param id - Id of the document.
+     * @param token - Token for authorization.
+     * @param client - Client id of the client that connects to socket.
+     * @param urlStr - url to connect to delta stream.
+     * @returns Delta connection to the stream.
+     */
     public static Create(
         tenantId: string,
         id: string,

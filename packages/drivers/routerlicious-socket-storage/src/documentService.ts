@@ -28,6 +28,11 @@ export class DocumentService implements api.IDocumentService {
     ) {
     }
 
+    /**
+     * Connects to a storage endpoint for snapshot service.
+     *
+     * @returns returns the document storage service for routerlicious driver.
+     */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         if (this.gitUrl === undefined) {
             return new NullBlobStorageService();
@@ -74,11 +79,21 @@ export class DocumentService implements api.IDocumentService {
         return new DocumentStorageService(this.documentId, gitManager);
     }
 
+    /**
+     * Connects to a delta storage endpoint for getting ops between a range.
+     *
+     * @returns returns the document delta storage service for routerlicious driver.
+     */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId, this.tokenProvider, deltaStorage);
     }
 
+    /**
+     * Connects to a delta stream endpoint for emitting ops.
+     *
+     * @returns returns the document delta stream service for routerlicious driver.
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.Create(
             this.tenantId,

@@ -20,7 +20,7 @@ interface IGitPackfileHandle extends ISummaryPackfileHandle {
 }
 
 /**
- * Document access to underlying storage
+ * Document access to underlying storage for routerlicious driver.
  */
 export class DocumentStorageService implements IDocumentStorageService  {
     public get repositoryUrl(): string {

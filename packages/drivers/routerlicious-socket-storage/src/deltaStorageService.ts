@@ -21,7 +21,7 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 }
 
 /**
- * Provides access to the underlying delta storage on the server
+ * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
 export class DeltaStorageService implements api.IDeltaStorageService {
     constructor(private url: string) {

@@ -1,7 +1,7 @@
 import { IErrorTrackingService } from "@prague/container-definitions";
 
 /**
- * The default service does not track errors.
+ * The default error tracking service implementation. It does not track any errors.
  */
 export class DefaultErrorTracking implements IErrorTrackingService {
     public track<T>(func: () => T): T {
