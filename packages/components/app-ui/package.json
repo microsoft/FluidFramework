@@ -1,6 +1,6 @@
 {
   "name": "@prague/app-ui",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Prague App UI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
   "dependencies": {
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

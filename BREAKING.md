@@ -1,6 +1,7 @@
-# 0.3 Breaking Changes
+# 0.4 Breaking Changes
 
-This document lists the set of breaking changes as part of upgrading to 0.3
+# 0.3 Breaking Changes (June 3, 2019)
+
 - [Legacy chaincode API removal](#legacy-chaincode-api-removal)
 - [Container and Component Packages and Classes Renamed](#container-and-component-packages-and-classes-renamed)
 - [SparseMatrix moved](#sparsematrix-moved)

@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/monaco",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Monaco code editor",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -21,14 +21,14 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
-    "@prague/app-component": "^0.3.0",
-    "@prague/map": "^0.3.0",
-    "@prague/merge-tree": "^0.3.0",
-    "@prague/component-runtime": "^0.3.0",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "@prague/sequence": "^0.3.0",
-    "@prague/utils": "^0.3.0",
+    "@prague/app-component": "^0.4.0",
+    "@prague/map": "^0.4.0",
+    "@prague/merge-tree": "^0.4.0",
+    "@prague/component-runtime": "^0.4.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/sequence": "^0.4.0",
+    "@prague/utils": "^0.4.0",
     "@types/debug": "^0.0.31",
     "@types/google-maps": "^3.2.0",
     "@types/node": "^10.12.12",
@@ -38,7 +38,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@prague/prague-dev-server": "^3.3.8",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",

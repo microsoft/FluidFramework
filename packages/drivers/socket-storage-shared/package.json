@@ -1,6 +1,6 @@
 {
   "name": "@prague/socket-storage-shared",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Shared package across different socket-storage implementation",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -19,13 +19,13 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/utils": "^0.3.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/utils": "^0.4.0",
     "debug": "^4.1.1",
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "@types/socket.io-client": "^1.4.32",

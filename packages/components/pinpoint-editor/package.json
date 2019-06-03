@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/pinpoint-editor",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A web app for creating and editing Pinpoint maps.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -22,12 +22,12 @@
   },
   "dependencies": {
     "@kurtb/pinpoint": "^0.1.2",
-    "@prague/client-api": "^0.3.0",
-    "@prague/map": "^0.3.0",
-    "@prague/component-runtime": "^0.3.0",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "@prague/utils": "^0.3.0",
+    "@prague/client-api": "^0.4.0",
+    "@prague/map": "^0.4.0",
+    "@prague/component-runtime": "^0.4.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/utils": "^0.4.0",
     "@types/angular": "^1.6.50",
     "@types/angular-route": "^1.7.0",
     "@types/debug": "^0.0.31",
@@ -45,7 +45,7 @@
     "leaflet": "^1.3.4"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@prague/prague-dev-server": "^3.3.8",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",

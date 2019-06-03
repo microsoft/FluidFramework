@@ -1,6 +1,6 @@
 {
   "name": "@prague/utils",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Collection of utility functions for Prague",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -41,7 +41,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -55,8 +55,8 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/gitresources": "^0.3.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/gitresources": "^0.4.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0",

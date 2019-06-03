@@ -1,6 +1,6 @@
 {
   "name": "@prague/replay-tool",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A tool that lets the user to replay ops.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,17 +20,17 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "debug": "^4.1.1",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/file-socket-storage": "^0.3.0",
-    "@prague/client-api": "^0.3.0",
-    "@prague/routerlicious-host": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "@prague/container-loader": "^0.3.0",
-    "@prague/services-core": "^0.3.0",
-    "@prague/utils": "^0.3.0"
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/file-socket-storage": "^0.4.0",
+    "@prague/client-api": "^0.4.0",
+    "@prague/routerlicious-host": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/container-loader": "^0.4.0",
+    "@prague/services-core": "^0.4.0",
+    "@prague/utils": "^0.4.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",

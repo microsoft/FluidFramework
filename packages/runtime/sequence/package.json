@@ -1,6 +1,6 @@
 {
   "name": "@prague/sequence",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -43,10 +43,10 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "concurrently": "^4.1.0",
-    "@prague/gitresources": "^0.3.0",
-    "@prague/services-client": "^0.3.0",
+    "@prague/gitresources": "^0.4.0",
+    "@prague/services-client": "^0.4.0",
     "@types/diff": "^3.5.1",
     "@types/random-js": "^1.0.31",
     "@types/xmldoc": "^1.1.3",
@@ -63,12 +63,12 @@
     "nyc": "^13.0.1"
   },
   "dependencies": {
-    "@prague/shared-object-common": "^0.3.0",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/map": "^0.3.0",
-    "@prague/merge-tree": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "@prague/utils": "^0.3.0",
+    "@prague/shared-object-common": "^0.4.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/map": "^0.4.0",
+    "@prague/merge-tree": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/utils": "^0.4.0",
     "@types/uuid": "^3.4.4",
     "lodash": "^4.17.11",
     "uuid": "^3.3.2"

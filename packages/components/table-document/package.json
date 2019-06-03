@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/table-document",
   "description": "Chaincode component containing a table's data",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -27,21 +27,21 @@
     }
   },
   "dependencies": {
-    "@prague/shared-object-common": "^0.3.0",
-    "@prague/app-component": "^0.3.0",
-    "@prague/app-datastore": "^0.3.0",
-    "@prague/client-ui": "^0.3.0",
-    "@prague/component-runtime": "^0.3.0",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/flow-util": "^0.3.0",
-    "@prague/map": "^0.3.0",
-    "@prague/merge-tree": "^0.3.0",
-    "@prague/container-runtime": "^0.3.0",
-    "@prague/runtime-definitions": "^0.3.0",
-    "@prague/sequence": "^0.3.0"
+    "@prague/shared-object-common": "^0.4.0",
+    "@prague/app-component": "^0.4.0",
+    "@prague/app-datastore": "^0.4.0",
+    "@prague/client-ui": "^0.4.0",
+    "@prague/component-runtime": "^0.4.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/flow-util": "^0.4.0",
+    "@prague/map": "^0.4.0",
+    "@prague/merge-tree": "^0.4.0",
+    "@prague/container-runtime": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/sequence": "^0.4.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.0",
+    "@prague/build-common": "^0.4.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
