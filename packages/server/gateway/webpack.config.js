@@ -14,7 +14,7 @@ module.exports = env => {
     const defaultOptions = {
         devtool: 'source-map',
         resolve: {
-            extensions: [".ts", ".tsx", ".js", ".json"]
+            extensions: [".mjs", ".ts", ".tsx", ".js", ".json"]
         },
         module: {
             rules: [
@@ -97,6 +97,12 @@ module.exports = env => {
             source: false,
             errorDetails: false,
             publicPath: false
+        },
+        resolveLoader: {
+            alias: {
+                'blob-url-loader': require.resolve('./loaders/blobUrl'),
+                'compile-loader': require.resolve('./loaders/compile'),
+            },
         },
         plugins: [
             new ForkTsCheckerWebpackPlugin({

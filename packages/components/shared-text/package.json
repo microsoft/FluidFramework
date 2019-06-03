@@ -2,18 +2,20 @@
   "name": "@chaincode/shared-text",
   "version": "0.4.0",
   "description": "Shared text",
-  "module": "dist/index.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": [
     "./src/publicpath.ts"
   ],
   "scripts": {
     "build": "npm run build:compile",
-    "build:compile": "npm run tsc && npm run webpack:dev",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack:dev",
     "build:full": "npm run build",
-    "build:full:compile": "npm run tsc && npm run webpack",
+    "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"production\"",
     "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
@@ -75,6 +77,7 @@
   "devDependencies": {
     "@prague/build-common": "^0.4.0",
     "@prague/prague-dev-server": "^3.3.8",
+    "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "file-loader": "^2.0.0",
     "html-loader": "^0.5.5",

@@ -1,4 +1,5 @@
 // tslint:disable:ban-types
+import { addTranslation, downloadRawText, getInsights } from "@chaincode/shared-text";
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
@@ -10,7 +11,6 @@ import {
     IResolvedUrl,
     ISequencedClient,
 } from "@prague/container-definitions";
-import * as DistributedMap from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
@@ -21,7 +21,6 @@ import { IGitCache } from "@prague/services-client";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
-import * as request from "request";
 import * as url from "url";
 import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 import { BrowserErrorTrackingService } from "./errorTracking";
@@ -30,49 +29,6 @@ import { BrowserErrorTrackingService } from "./errorTracking";
 const clockStart = Date.now();
 
 export let theFlow: controls.FlowView;
-
-function downloadRawText(textUrl: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        request.get(url.resolve(document.baseURI, textUrl), (error, response, body: string) => {
-            if (error) {
-                reject(error);
-            } else if (response.statusCode !== 200) {
-                reject(response.statusCode);
-            } else {
-                resolve(body);
-            }
-        });
-    });
-}
-
-async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<DistributedMap.ISharedMap> {
-    const insights = await map.wait<DistributedMap.ISharedMap>("insights");
-    return insights.wait<DistributedMap.ISharedMap>(id);
-}
-
-async function addTranslation(
-    document: API.Document,
-    id: string,
-    fromLanguage: string,
-    toLanguage: string): Promise<void> {
-    // Create the translations map
-    const insights = await document.getRoot().wait<DistributedMap.ISharedMap>("insights");
-    const idMap = await insights.wait<DistributedMap.ISharedMap>(id);
-    if (!document.existing) {
-        idMap.set("translationsFrom", undefined, DistributedMap.DistributedSetValueType.Name);
-        idMap.set("translationsTo", undefined, DistributedMap.DistributedSetValueType.Name);
-    }
-
-    if (fromLanguage) {
-        const translationsFrom = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsFrom");
-        translationsFrom.add(fromLanguage);
-    }
-
-    if (toLanguage) {
-        const translationsTo = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsTo");
-        translationsTo.add(toLanguage);
-    }
-}
 
 export async function load(
     resolved: IPragueResolvedUrl,
@@ -84,8 +40,8 @@ export async function load(
     template: string,
     options: Object,
     from: number,
-    to: number) {
-
+    to: number,
+) {
     API.registerChaincodeRepo(config.npm);
 
     console.log(`Load Option: ${JSON.stringify(options)}`);
@@ -108,8 +64,8 @@ async function loadDocument(
     template: string,
     options: Object,
     from: number,
-    to: number) {
-
+    to: number,
+) {
     const host = new ui.BrowserContainerHost();
 
     const errorService = config.trackError

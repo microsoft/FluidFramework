@@ -6,7 +6,6 @@
     ],
     "compilerOptions": {
         "strictNullChecks": false,
-        "module": "esnext",
         "outDir": "dist",
     },
     "include": [

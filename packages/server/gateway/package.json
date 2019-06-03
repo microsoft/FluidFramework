@@ -47,6 +47,7 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
+    "@chaincode/shared-text": "^0.4.0",
     "@prague/agent": "^0.4.0",
     "@prague/shared-object-common": "^0.4.0",
     "@prague/client-api": "^0.4.0",

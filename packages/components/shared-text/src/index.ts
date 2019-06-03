@@ -4,12 +4,12 @@ import "./publicpath";
 
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import * as sharedTextComponent from "./component";
 
-const entryP = import(/* webpackChunkName: "runtime", webpackPreload: true */"./runtime");
+const entryP = import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    const entry = await entryP;
-    return entry.instantiateComponent(context);
+    return sharedTextComponent.instantiateComponent(context);
 }
 
 /**
@@ -19,3 +19,5 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     const entry = await entryP;
     return entry.instantiateRuntime(context);
 }
+
+export * from "./utils";
