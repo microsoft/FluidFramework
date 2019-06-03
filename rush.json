@@ -51,6 +51,10 @@
       "projectFolder": "packages/components/client-ui/"
     },
     {
+      "packageName": "@component/collection-components",
+      "projectFolder": "packages/components/collection-components/"
+    },
+    {
       "packageName": "@chaincode/flow-document",
       "projectFolder": "packages/components/flow-document/"
     },
