@@ -88,7 +88,43 @@ const t9: ITask = {
     },
     id: "t9",
 };
-const tasks = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9];
+const t10: ITask = {
+    callback: () => {
+        console.log(`Running t10...`);
+    },
+    id: "t10",
+};
+const t11: ITask = {
+    callback: () => {
+        console.log(`Running t11...`);
+    },
+    id: "t11",
+};
+const t12: ITask = {
+    callback: () => {
+        console.log(`Running t12...`);
+    },
+    id: "t12",
+};
+const t13: ITask = {
+    callback: () => {
+        console.log(`Running t13...`);
+    },
+    id: "t13",
+};
+const t14: ITask = {
+    callback: () => {
+        console.log(`Running t14...`);
+    },
+    id: "t14",
+};
+const t15: ITask = {
+    callback: () => {
+        console.log(`Running t15...`);
+    },
+    id: "t15",
+};
+const tasks = [t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15];
 
 // tslint:disable:no-unsafe-any
 async function readlineAsync(input: readline.ReadLine, prompt: string): Promise<string> {
@@ -131,6 +167,8 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
                 await taskScheduler.pick(tasks[id]);
             } else if (command === "release") {
                 await taskScheduler.release(tasks[id].id);
+            } else if (command === "register") {
+                await taskScheduler.register(id.toString());
             } else {
                 console.error(`Invalid command ${command}`);
             }
@@ -172,9 +210,9 @@ let action = false;
 commander
     .option("-d, --orderer [orderer]", "Orderer URL", "https://alfred.wu2-ppe.prague.office-int.com")
     .option("-h, --storage [storage]", "Storage URL", "https://historian.wu2-ppe.prague.office-int.com")
-    .option("-t, --tenant [tenant]", "Tenant", "prague")
-    .option("-s, --secret [secret]", "Secret", "43cfc3fbf04a97c0921fd23ff10f9e4b")
-    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.11")
+    .option("-t, --tenant [tenant]", "Tenant", "stupefied-kilby")
+    .option("-s, --secret [secret]", "Secret", "4a9211594f7c3daebca3deb8d6115fe2")
+    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.12")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
