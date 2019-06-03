@@ -1,4 +1,5 @@
 import * as cell from "@prague/cell";
+import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IDeltaManager,
     IDocumentMessage,
@@ -10,7 +11,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap, MapExtension } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import * as stream from "@prague/stream";
@@ -101,7 +102,7 @@ export class Document extends EventEmitter {
      * Constructs a new document from the provided details
      */
     constructor(
-        public readonly runtime: IComponentRuntime,
+        public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
         private root: ISharedMap,
     ) {
@@ -246,7 +247,7 @@ export async function load(
     serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory): Promise<Document> {
 
     // const classicPlatform = new PlatformFactory();
-    const runDeferred = new Deferred<{ runtime: IComponentRuntime; context: IComponentContext }>();
+    const runDeferred = new Deferred<{ runtime: ComponentRuntime; context: IComponentContext }>();
     const codeLoader = new CodeLoader(
         async (r, c) => {
             debug("Code loaded and resolved");

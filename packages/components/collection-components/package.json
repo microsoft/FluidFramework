@@ -1,10 +1,11 @@
 {
   "name": "@component/collection-components",
   "description": "Progress bar collection",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",

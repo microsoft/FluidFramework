@@ -55,7 +55,14 @@ export class CollectionManager extends EventEmitter implements IComponent {
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
-        return null;
+        switch (id) {
+            case "factories":
+                return ["progress"];
+            case "progress":
+                return this.progressCollection;
+            default:
+                return null;
+        }
     }
 
     public detach() {
@@ -65,7 +72,7 @@ export class CollectionManager extends EventEmitter implements IComponent {
     public async attach(platform: IPlatform): Promise<IPlatform> {
         const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
         if (!maybeDiv) {
-            return;
+            return this;
         }
 
         // Create the add button to make new progress bars
@@ -100,9 +107,11 @@ export class CollectionManager extends EventEmitter implements IComponent {
 
         // On click create and add a new progress bar
         button.onclick = () => {
-            const progress = this.progressCollection.createProgress();
+            const progress = this.progressCollection.create();
             console.log(progress);
         };
+
+        return this;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -117,7 +126,7 @@ export class CollectionManager extends EventEmitter implements IComponent {
         if (!this.runtime.existing) {
             await this.context.createAndAttachComponent(
                 "progress",
-                `@components/collection-components/dist/progress`);
+                `@component/collection-components/lib/progress`);
         }
 
         const runtime = await this.context.getComponentRuntime("progress", true);

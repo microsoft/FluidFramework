@@ -20,7 +20,7 @@ import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 
 class Chaincode implements IComponentFactory {
-    constructor(private runFn: (runtime: IComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(private runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
     }
 
     public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
@@ -77,7 +77,7 @@ class BackCompatLoader implements IComponentRegistry {
 }
 
 export class ChaincodeFactory implements IChaincodeFactory {
-    constructor(private runFn: (runtime: IComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(private runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -123,7 +123,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
 export class CodeLoader implements ICodeLoader {
     private factory: IChaincodeFactory;
 
-    constructor(runFn: (runtime: IComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
         this.factory = new ChaincodeFactory(runFn);
     }
 

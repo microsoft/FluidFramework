@@ -32,7 +32,7 @@ class ProgressBarView extends EventEmitter implements IPlatform {
             this.div = document.createElement("div");
             this.div.classList.add("progress");
             // tslint:disable-next-line:max-line-length no-inner-html
-            this.div.innerHTML = `<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
+            this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
             urlDiv.innerText = `/progress/${this.bar.id}`;
@@ -80,7 +80,11 @@ class ProgressBarView extends EventEmitter implements IPlatform {
 export class ProgressBar implements IComponent {
     private views = new Set<ProgressBarView>();
 
-    constructor(public value: number, public id: string, private collection: ProgressCollection) {
+    constructor(
+        public value: number,
+        public id: string,
+        private keyId: string,
+        private collection: ProgressCollection) {
     }
 
     // On attach create a specific binding from the model to the platform
@@ -93,7 +97,7 @@ export class ProgressBar implements IComponent {
     }
 
     public changeValue(newValue: number) {
-        this.collection.changeValue(this.id, newValue);
+        this.collection.changeValue(this.keyId, newValue);
     }
 
     public detach(view: ProgressBarView) {
@@ -129,7 +133,12 @@ export class ProgressCollection extends EventEmitter implements IComponent {
     }
 
     public async queryInterface<T>(id: string): Promise<any> {
-        return null;
+        switch (id) {
+            case "collection":
+                return this;
+            default:
+                return null;
+        }
     }
 
     public detach() {
@@ -144,11 +153,11 @@ export class ProgressCollection extends EventEmitter implements IComponent {
         this.root.set(key, newValue);
     }
 
-    public createProgress(): string {
+    public create(): ProgressBar {
         const id = `progress-${Date.now()}`;
         this.root.set(id, 50);
-
-        return `/${id}`;
+        // Relying on valueChanged event to create the bar is error prone
+        return this.progressBars.get(id);
     }
 
     public getProgress(): string[] {
@@ -181,21 +190,25 @@ export class ProgressCollection extends EventEmitter implements IComponent {
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root.attach();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
 
         for (const key of this.root.keys()) {
-            this.progressBars.set(key, new ProgressBar(this.root.get(key), key, this));
+            this.progressBars.set(
+                key,
+                new ProgressBar(this.root.get(key), `${this.id}/${key}`, key, this));
         }
 
-        this.root.on("valueChanged", (changed) => {
+        this.root.on("valueChanged", (changed, local) => {
             if (this.progressBars.has(changed.key)) {
                 this.progressBars.get(changed.key).update(this.root.get(changed.key));
             } else {
                 this.progressBars.set(
                     changed.key,
-                    new ProgressBar(this.root.get(changed.key), changed.key, this));
+                    new ProgressBar(
+                        this.root.get(changed.key), `${this.id}/${changed.key}`, changed.key, this));
                 this.emit("progressAdded", `/${changed.key}`);
             }
         });

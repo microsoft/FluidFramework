@@ -1,10 +1,11 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import * as api from "@prague/client-api";
-import { IGenericBlob, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { ServicePlatform } from "@prague/component-runtime";
+import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IComponentRuntime, IInboundSignalMessage } from "@prague/runtime-definitions";
+import { IComponent, IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
@@ -476,6 +477,12 @@ const commands: IFlowViewCmd[] = [
             f.insertInnerComponent("code", "@chaincode/monaco");
         },
         key: "insert monaco",
+    },
+    {
+        exec: (f) => {
+            f.insertInnerCollection("progress");
+        },
+        key: "insert progress",
     },
     {
         exec: (f) => {
@@ -3034,6 +3041,8 @@ export class FlowView extends ui.Component {
     private cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
+    private collections = new Map<string, { create: () => IComponent }>();
+
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
     // may have been invalidated.
@@ -3099,6 +3108,8 @@ export class FlowView extends ui.Component {
         collabDocument.runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
         });
+
+        this.openCollections();
 
         this.cursor = new FlowCursor(this.viewportDiv);
         this.setViewOption(this.options);
@@ -4716,6 +4727,17 @@ export class FlowView extends ui.Component {
         this.insertComponent("innerComponent", { id, chaincode });
     }
 
+    public insertInnerCollection(type: string) {
+        if (!this.collections.has(type)) {
+            return;
+        }
+
+        const collection = this.collections.get(type);
+        const component = collection.create();
+
+        this.insertComponent("innerComponent", { id: component.id });
+    }
+
     /** Insert an external Document */
     public insertDocument(url: string) {
         this.insertComponent("document", { url });
@@ -4767,6 +4789,36 @@ export class FlowView extends ui.Component {
             .catch((error) => {
                 console.log(error);
             });
+    }
+
+    private async openCollections() {
+        const collections = await this.openPlatform("collections");
+
+        const factories = await collections.queryInterface("factories") as string[];
+        console.log(factories);
+
+        const instances = await Promise.all(factories.map(async (factory) => {
+            const component = await collections.queryInterface(factory) as IComponent;
+            const platform = await component.attach(new ServicePlatform([]));
+            const collection = await platform.queryInterface("collection") as { create: () => IComponent };
+            return { factory, collection };
+        }));
+
+        for (const instance of instances) {
+            this.collections.set(instance.factory, instance.collection);
+        }
+    }
+
+    private async openPlatform(id: string): Promise<IPlatform> {
+        const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
+        const component = await runtime.request({ url: "/" });
+
+        if (component.status !== 200 || component.mimeType !== "prague/component") {
+            return Promise.reject("Not found");
+        }
+
+        const result = component.value as IComponent;
+        return result.attach(new ServicePlatform([]));
     }
 
     private insertBlobInternal(blob: IGenericBlob) {

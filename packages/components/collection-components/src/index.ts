@@ -1,5 +1,4 @@
-import * as collectionManager from "./collectionManager";
-export { collectionManager };
+export * from "./collectionManager";
 
 import * as progressBars from "./progressBars";
 export { progressBars };

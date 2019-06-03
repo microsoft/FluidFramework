@@ -47,6 +47,7 @@ import { createCacheHTML } from "./pageCacher";
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 const monaco = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/monaco");
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+const collections = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */"@component/collection-components");
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -127,7 +128,7 @@ class ViewPlatform extends EventEmitter implements IPlatform {
 }
 
 export class SharedTextRunner extends EventEmitter implements IPlatform {
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
+    public static async Load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
 
@@ -139,7 +140,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
     private rootView: ISharedMap;
     private collabDoc: Document;
 
-    private constructor(private runtime: IComponentRuntime, private context: IComponentContext) {
+    private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
         super();
     }
 
@@ -429,6 +430,16 @@ class MyRegistry implements IComponentRegistry {
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "@chaincode/charts") {
             return charts;
+        } else if (name === "@component/collection-components") {
+            return collections;
+        } else if (name === "@component/collection-components/lib/progress") {
+            const collectionsResolved = await collections;
+            return collectionsResolved.progressBars;
+        // Uncomment the below once adding in math.
+        // For multiple comonents within a package we might want to formalize the module lookup
+        // } else if (name === "@component/collection-components/lib/math") {
+        //     const collectionsResolved = await collections;
+        //     return collectionsResolved.math;
         } else if (name === "@chaincode/monaco") {
             return monaco;
         } else if (name === "@chaincode/pinpoint-editor") {
@@ -483,7 +494,11 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
     // On first boot create the base component
     if (!runtime.existing) {
-        runtime.createAndAttachComponent("text", "@chaincode/shared-text").catch((error) => {
+        await Promise.all([
+            runtime.createAndAttachComponent("collections", "@component/collection-components"),
+            runtime.createAndAttachComponent("text", "@chaincode/shared-text"),
+        ])
+        .catch((error) => {
             context.error(error);
         });
     }
