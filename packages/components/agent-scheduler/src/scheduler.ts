@@ -13,8 +13,12 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
     private scheduler: ConsensusRegisterCollection;
 
-    // List of all tasks client is capable of running. This is a strict superset of currently running tasks.
+    // List of all tasks client is capable of running. This is a strict superset of tasks
+    // running in the client.
     private readonly localTaskMap = new Map<string, () => void>();
+
+    // Set of registered tasks client not capable of running.
+    private readonly registeredTasks = new Set<string>();
 
     constructor() {
         super([
@@ -23,15 +27,28 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         ]);
     }
 
-    public register(...taskIds: string[]): void {
-        // TODO: Need to add a create method in consensus-register-collection
-        throw new Error("Not implemented yet");
+    public async register(...taskIds: string[]): Promise<void> {
+        for (const taskId of taskIds) {
+            if (this.registeredTasks.has(taskId)) {
+                return Promise.reject(`${taskId} is already registered`);
+            }
+        }
+        const unregisteredTasks: string[] = [];
+        for (const taskId of taskIds) {
+            this.registeredTasks.add(taskId);
+            // Only register for a new task.
+            const currentClient = this.getTaskClientId(taskId);
+            if (currentClient === undefined) {
+                unregisteredTasks.push(taskId);
+            }
+        }
+        return this.registerCore(unregisteredTasks);
     }
 
     public async pick(...tasks: ITask[]): Promise<void> {
         for (const task of tasks) {
             if (this.localTaskMap.has(task.id)) {
-                return Promise.reject(`${task.id} is already registered`);
+                return Promise.reject(`${task.id} is already attempted`);
             }
         }
 
@@ -39,8 +56,8 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         for (const task of tasks) {
             this.localTaskMap.set(task.id, task.callback);
             // Check the current status and express interest if it's a new one (undefined) or currently unpicked (null).
-            const currentStatus = this.scheduler.read(task.id);
-            if (currentStatus === undefined || currentStatus === null) {
+            const currentClient = this.getTaskClientId(task.id);
+            if (currentClient === undefined || currentClient === null) {
                 availableTasks.push(task);
             }
         }
@@ -52,7 +69,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             if (!this.localTaskMap.has(taskId)) {
                 return Promise.reject(`${taskId} was never registered`);
             }
-            if (this.scheduler.read(taskId) !== this.runtime.clientId) {
+            if (this.getTaskClientId(taskId) !== this.runtime.clientId) {
                 return Promise.reject(`${taskId} was never picked`);
             }
         }
@@ -62,7 +79,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     public pickedTasks(): string[] {
         const allPickedTasks = [];
         for (const taskId of this.scheduler.keys()) {
-            if (this.scheduler.read(taskId) === this.runtime.clientId) {
+            if (this.getTaskClientId(taskId) === this.runtime.clientId) {
                 allPickedTasks.push(taskId);
             }
         }
@@ -88,7 +105,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         const clearCandidates = [];
 
         for (const taskId of this.scheduler.keys()) {
-            if (!quorum.getMembers().has(this.scheduler.read(taskId))) {
+            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
                 clearCandidates.push(taskId);
             }
         }
@@ -99,9 +116,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         // All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
         this.scheduler.on("valueChanged", async (changed: IChanged) => {
-            const taskStatus = this.scheduler.read(changed.key);
+            const currentClient = this.getTaskClientId(changed.key);
             // Either a client registered for a new task or released a running task.
-            if (taskStatus === null) {
+            if (currentClient === null) {
                 await this.pickNewTasks([changed.key]);
             }
         });
@@ -111,7 +128,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             // TODO: We need a leader for this.
             const leftTasks: string[] = [];
             for (const taskId of this.scheduler.keys()) {
-                if (this.scheduler.read(taskId) === clientId) {
+                if (this.getTaskClientId(taskId) === clientId) {
                     leftTasks.push(taskId);
                 }
             }
@@ -120,7 +137,6 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         });
     }
 
-    // TODO: Host can provide a callback to check whether capability has changed.
     private async pickNewTasks(ids: string[]) {
         const possibleTasks: ITask[] = [];
         for (const id of ids) {
@@ -135,6 +151,32 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         return this.pickCore(possibleTasks);
     }
 
+    private async registerCore(taskIds: string[]): Promise<void> {
+        if (taskIds.length > 0) {
+            const registersP = [];
+            for (const taskId of taskIds) {
+                debug(`Registering ${taskId}`);
+                // tslint:disable no-null-keyword
+                registersP.push(this.scheduler.write(taskId, null));
+            }
+            await Promise.all(registersP);
+
+            // The registers should have up to date results now. Check the status.
+            for (const taskId of taskIds) {
+                const taskStatus = this.getTaskClientId(taskId);
+
+                // Task should be either registered (null) or picked up.
+                assert(taskStatus !== undefined, `Unsuccessful registration`);
+
+                if (taskStatus === null) {
+                    debug(`Registered ${taskId}`);
+                } else {
+                    debug(`${taskStatus} is running ${taskId}`);
+                }
+            }
+        }
+    }
+
     private async pickCore(tasks: ITask[]): Promise<void> {
         if (tasks.length > 0) {
             const picksP = [];
@@ -146,10 +188,15 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
             // The registers should have up to date results now. Start the respective task if this client was chosen.
             for (const task of tasks) {
-                const pickedClientId = this.scheduler.read(task.id);
+                const pickedClientId = this.getTaskClientId(task.id);
+
+                // At least one client should pick up.
                 assert(pickedClientId, `No client was chosen for ${task.id}`);
+
+                // Check if this client was chosen.
                 if (pickedClientId === this.runtime.clientId) {
                     assert(this.localTaskMap.has(task.id), `Client did not try to pick ${task.id}`);
+
                     // invoke the associated callback with the task
                     task.callback();
                     debug(`Running ${task.id}`);
@@ -167,14 +214,13 @@ export class AgentScheduler extends Component implements IAgentScheduler {
                 debug(`Releasing ${id}`);
                 // Remove from local map so that it can be picked later.
                 this.localTaskMap.delete(id);
-                // tslint:disable no-null-keyword
                 releasesP.push(this.scheduler.write(id, null));
             }
             await Promise.all(releasesP);
 
             // Releases are not contested by definition. So every id should have null value now.
             for (const id of taskIds) {
-                assert.equal(this.scheduler.read(id), null, `${id} was not released`);
+                assert.equal(this.getTaskClientId(id), null, `${id} was not released`);
                 debug(`Released ${id}`);
             }
         }
@@ -191,9 +237,13 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
             // All registers should be null now.
             for (const id of taskIds) {
-                assert.equal(this.scheduler.read(id), null, `${id} was not cleared`);
+                assert.equal(this.getTaskClientId(id), null, `${id} was not cleared`);
                 debug(`Cleared ${id}`);
             }
         }
+    }
+
+    private getTaskClientId(id: string): string | null | undefined {
+        return this.scheduler.read(id);
     }
 }

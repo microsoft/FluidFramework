@@ -18,8 +18,11 @@ export interface IAgentScheduler {
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
+     * Client can call pick() later if the capability changes.
+     *
+     * This method should only be called once per task. Duplicate calls will be rejected.
      */
-    register(...taskIds: string[]): void;
+    register(...taskIds: string[]): Promise<void>;
 
     /**
      * Attempts to pick a set of tasks. A client will only run the task if it's chosen based on consensus.
