@@ -1,7 +1,6 @@
 import {
     IContentMessage,
     IDocumentDeltaConnection,
-    IDocumentDeltaStorageService,
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -9,6 +8,7 @@ import {
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
+import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
 // Simulated delay interval for emitting the ops
 const DelayInterval = 50;
@@ -19,74 +19,74 @@ const ReplayMaxMessageSize = 16 * 1024;
 
 const fileProtocolVersion = "^0.1.0";
 
+/**
+ * Replay service used to play ops using the delta connection.
+ */
 export class Replayer {
-    public static isReplayDone = false;
-    private static currentReplayOp = 0;
-    // private replayP = Promise.resolve();
+    private currentReplayOp = 0;
+
     constructor(
         private deltaConnection: ReplayFileDeltaConnection,
-        private documentStorageService: IDocumentDeltaStorageService) {
+        private documentStorageService: FileDeltaStorageService) {
     }
 
     public get currentReplayedOp() {
-        return Replayer.currentReplayOp;
+        return this.currentReplayOp;
+    }
+
+    public set currentReplayedOp(op: number) {
+        this.currentReplayOp = op;
     }
 
     public async start() {
         let done: boolean;
         do {
-            const fetchedOps = await this.documentStorageService.get(
-                Replayer.currentReplayOp,
-                Replayer.currentReplayOp + 1);
+            const fetchedOps = await this.documentStorageService.getFromWebSocket(
+                this.currentReplayOp,
+                this.currentReplayOp + 1);
             if (fetchedOps.length <= 0) {
                 break;
             } else {
-                // this.replayP = this.replayP.then(() => {
-                //     const p = this.replayCore(fetchedOps);
-                //     return p;
-                // });
                 await this.replayCore(fetchedOps);
-                Replayer.currentReplayOp += fetchedOps.length;
+                this.currentReplayOp += fetchedOps.length;
                 done = fetchedOps[0].type === "op" ? true : false;
             }
         } while (!done);
     }
 
+    /**
+     * Replay the ops upto a certain number.
+     * @param replayTo - The last op number to be replayed.
+     */
     public async replay(replayTo: number) {
         let totalReplayedOps = 0;
-        Replayer.isReplayDone = false;
         let done: boolean;
         do {
-            const fetchToBatch = Replayer.currentReplayOp + MaxBatchDeltas;
+            const fetchToBatch = this.currentReplayOp + MaxBatchDeltas;
             const fetchTo = Math.min(fetchToBatch, replayTo);
 
-            const fetchedOps = await this.documentStorageService.get(Replayer.currentReplayOp, fetchTo);
+            const fetchedOps = await this.documentStorageService.getFromWebSocket(this.currentReplayOp, fetchTo);
 
             if (fetchedOps.length <= 0) {
                 break;
             } else {
-                // this.replayP = this.replayP.then(() => {
-                //     const p = this.replayCore(fetchedOps);
-                //     return p;
-                // });
                 this.emit(fetchedOps);
+                totalReplayedOps += fetchedOps.length;
+                this.currentReplayOp += fetchedOps.length;
+                done = this.isDoneFetch(replayTo);
             }
-            totalReplayedOps += fetchedOps.length;
-            Replayer.currentReplayOp += fetchedOps.length;
-            done = this.isDoneFetch(fetchedOps, replayTo);
         } while (!done);
         return totalReplayedOps;
     }
 
-    private isDoneFetch(fetchedOps: ISequencedDocumentMessage[], replayTo: number) {
+    private isDoneFetch(replayTo: number) {
         if (replayTo >= 0) {
-            return Replayer.currentReplayOp < replayTo;
+            return this.currentReplayOp < replayTo;
         }
         return false;
     }
 
     private emit(ops: ISequencedDocumentMessage[]) {
-        debug("emitting", ops.length);
         ops.map((op) => this.deltaConnection.emit("op", op.clientId, op));
     }
 
@@ -94,62 +94,34 @@ export class Replayer {
         let current = 0;
 
         const replayNextOps = () => {
-            // Emit the ops from replay to the end every "deltainterval" milliseconds
-            // to simulate the socket stream
             const currentOp = fetchedOps[current];
             const playbackOps = [currentOp];
             const nextInterval = DelayInterval;
             current += 1;
 
-            // debug(`Replay next ${this.replayCurrent + current}`);
             scheduleNext(nextInterval);
             this.emit(playbackOps);
         };
         const scheduleNext = (nextInterval: number) => {
             if (nextInterval >= 0 && current < fetchedOps.length) {
                 setTimeout(replayNextOps, nextInterval);
-                // debug(`Replay scheduled ${this.replayCurrent + current} ${nextInterval}`);
             } else {
-                // debug(`Replay done ${this.replayCurrent + current}`);
                 // this.replayCurrent += current;
             }
         };
         scheduleNext(DelayInterval);
-
-        // tslint:disable-next-line:promise-must-complete
-        // return new Promise((resolve, reject) => {
-        //     const replayNextOps = () => {
-        //         // Emit the ops from replay to the end every "deltainterval" milliseconds
-        //         // to simulate the socket stream
-        //         const currentOp = fetchedOps[current];
-        //         const playbackOps = [currentOp];
-        //         const nextInterval = DelayInterval;
-        //         current += 1;
-
-        //         // debug(`Replay next ${this.replayCurrent + current}`);
-        //         scheduleNext(nextInterval);
-        //         this.emit(playbackOps);
-        //     };
-        //     const scheduleNext = (nextInterval: number) => {
-        //         if (nextInterval >= 0 && current < fetchedOps.length) {
-        //             setTimeout(replayNextOps, nextInterval);
-        //             // debug(`Replay scheduled ${this.replayCurrent + current} ${nextInterval}`);
-        //         } else {
-        //             // debug(`Replay done ${this.replayCurrent + current}`);
-        //             // this.replayCurrent += current;
-        //             Replayer.isReplayDone = true;
-        //             resolve();
-        //         }
-        //     };
-        //     scheduleNext(DelayInterval);
-        // });
     }
 }
 
 export class ReplayFileDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
 
-    public static replayer: Replayer;
-    public static async Create(documentStorageService: IDocumentDeltaStorageService)
+    /**
+     * Mimic the delta connection to replay ops on it.
+     *
+     * @param documentDeltaStorageService - The delta storage service to get ops from.
+     * @returns Document delta connection.
+     */
+    public static async Create(documentDeltaStorageService: FileDeltaStorageService)
     : Promise<IDocumentDeltaConnection> {
 
         const connection = {
@@ -165,22 +137,27 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             version: fileProtocolVersion,
         };
         const deltaConnection = new ReplayFileDeltaConnection(connection);
-        this.fileDocumentStorageService = documentStorageService;
-        this.deltaConnection = deltaConnection;
-// tslint:disable-next-line: no-floating-promises
-        await this.createReplayer();
+        // tslint:disable-next-line: no-floating-promises
+        await this.CreateReplayer(documentDeltaStorageService, deltaConnection);
 
         return deltaConnection;
     }
 
-    public static async createReplayer() {
+    /**
+     * Creates the replay service to replay ops.
+     *
+     * @param documentDeltaStorageService - The delta storage service to get ops from.
+     * @param deltaConnection - Delta connection to be used to fire ops.
+     */
+    public static async CreateReplayer(
+        documentDeltaStorageService: FileDeltaStorageService,
+        deltaConnection: ReplayFileDeltaConnection,
+    ) {
         this.replayer =  new Replayer(
-            this.deltaConnection,
-            this.fileDocumentStorageService);
-// tslint:disable-next-line: no-floating-promises
-// tslint:disable-next-line: no-string-based-set-timeout
-        // setTimeout(this.replayer.start, 1000);
-// tslint:disable-next-line: no-floating-promises
+            deltaConnection,
+            documentDeltaStorageService);
+
+        // tslint:disable-next-line: no-floating-promises
         this.replayer.start();
     }
 
@@ -188,8 +165,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         return this.replayer;
     }
 
-    private static fileDocumentStorageService: IDocumentDeltaStorageService;
-    private static deltaConnection: ReplayFileDeltaConnection;
+    private static replayer: Replayer;
 
     public get clientId(): string {
         return this.details.clientId;

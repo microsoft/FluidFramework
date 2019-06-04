@@ -2,13 +2,23 @@ import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague
 import * as fs from "fs";
 import { FileDocumentService } from "./fileDocumentService";
 
+/**
+ * Factory for creating the file document service. Use this if you want to
+ * use the local file storage as underlying storage.
+ */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
-    constructor(private fileName: string) {}
+    constructor(private path: string) {}
 
+    /**
+     * Creates the file document service if the path exists.
+     *
+     * @param fileURL - Path of directory containing ops/snapshots.
+     * @returns file document service.
+     */
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
-        if (fs.existsSync(this.fileName)) {
-            return new FileDocumentService(this.fileName);
+        if (fs.existsSync(this.path)) {
+            return new FileDocumentService(this.path);
         } else {
             return Promise.reject("File does not exist");
         }

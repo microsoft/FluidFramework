@@ -11,6 +11,7 @@
         "no-unsafe-any": false,
         "non-literal-fs-path": false,
         "promise-function-async": false,
-        "prefer-readonly": false
+        "prefer-readonly": false,
+        "prefer-type-cast": false
     }
 }

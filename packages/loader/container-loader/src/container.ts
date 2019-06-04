@@ -10,7 +10,6 @@ import {
     IContainer,
     IDeltaManager,
     IDocumentAttributes,
-    IDocumentDeltaStorageService,
     IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
@@ -242,43 +241,6 @@ export class Container extends EventEmitter implements IContainer {
         return this.context!.request(path);
     }
 
-    public async snapshotCoreForReplayTool(
-        tagMessage: string,
-        fileDeltaStorageService: IDocumentDeltaStorageService,
-        replayFrom: number,
-        replayTo: number) {
-        // Snapshots base document state and currently running context
-        const root = this.snapshotBase();
-        const componentEntries = await this.context!.snapshot(tagMessage);
-
-        // And then combine
-        if (componentEntries) {
-            root.entries.push(...componentEntries.entries);
-        }
-
-        // Generate base snapshot message
-        const deltaDetails =
-            `${this._deltaManager!.referenceSequenceNumber}:${this._deltaManager!.minimumSequenceNumber}`;
-        const message = `Commit @${deltaDetails} ${tagMessage}`;
-
-        // Retrieve all deltas from replayFrom to replayTo
-        const deltas = await fileDeltaStorageService.get(replayFrom, replayTo);
-        // const parents = lastVersion.length > 0 ? [lastVersion[0].sha] : [];
-        const parents = [];
-        root.entries.push({
-            mode: FileMode.File,
-            path: "deltas",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(deltas),
-                encoding: "utf-8",
-            },
-        });
-
-        // Write the full snapshot
-        await this.storageService!.write(root, parents, message, "");
-    }
-
     // * EXPERIMENTAL - checked in to bring up the feature but please still use snapshots
     // If the app is in control - especially around proposal values - does generateSummary even exist in this
     // place? Or does the app hand a summary out with rules on how to apply it? Probably this actually
@@ -331,7 +293,7 @@ export class Container extends EventEmitter implements IContainer {
 
     public async snapshot(tagMessage: string): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
+        if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
             debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
@@ -455,10 +417,8 @@ export class Container extends EventEmitter implements IContainer {
             sequenceNumber = attributes.sequenceNumber;
         }
 
-        // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
-        // the snapshotSequenceNumber by 1 to include it.
-        // TODO We likely then want to filter the operation list to each component to use in its snapshot
         const deltas = await this._deltaManager!.getDeltas(sequenceNumber!, snapshotSequenceNumber! + 1);
+
         const parents = lastVersion.length > 0 ? [lastVersion[0].id] : [];
         root.entries.push({
             mode: FileMode.File,

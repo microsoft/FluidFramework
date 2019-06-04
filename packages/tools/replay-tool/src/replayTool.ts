@@ -5,21 +5,28 @@ export let replayTool: ReplayTool;
 
 const optionsArray =
     [
-        ["--filename", "Name of file containing ops"],
-        ["--from", "Play ops from --from"],
-        ["--to", "Play ops upto --to"],
-        ["--snapshot", "Add this to take snapshot after all the ops are replayed"],
-        ["--snapfreq", "Specify frequency so as to take a snapshot after every --snapfreq op"],
+        ["--indir", "name of the directory containing the output of the prague dumper tool"],
+        ["--to", "the last op number to be replayed"],
+        ["--snapshot", "Take snapshot after replaying all the ops(do not specify anything as value of this parameter"],
+        ["--snapfreq", "n. A snapshot will be taken after every nth op."],
+        ["--outdir", "Name of the output directory where the snapshots will appear. If not specified a directory",
+                     "will be created in current directory with name Output"],
+        ["--version", "Name of the directory inside the --indir containing the snapshot blobs if you want to load the",
+                     "document from a snapshot initially."],
     ];
 
+/**
+ * This is the main class used to take user input to replay ops for debugging purposes.
+ */
 export class ReplayTool {
 
-    public fileName: string;
+    public inDirName: string;
+    public outDirName: string;
     public from: number = 0;
     public to: number = -1;
-    public cd;
     public takeSnapshot = false;
     public snapFreq: number;
+    public version: string;
 
     constructor() {
         this.parseArguments();
@@ -29,13 +36,9 @@ export class ReplayTool {
         for (let i = 2; i < process.argv.length; i++) {
             const arg = process.argv[i];
             switch (arg) {
-                case "--filename":
+                case "--indir":
                     i += 1;
-                    this.fileName = this.parseStrArg(i, "File name");
-                    break;
-                case "--from":
-                    i += 1;
-                    this.from = this.parseIntArg(i, "From");
+                    this.inDirName = this.parseStrArg(i, "File name");
                     break;
                 case "--to":
                     i += 1;
@@ -47,6 +50,14 @@ export class ReplayTool {
                 case "--snapfreq":
                     i += 1;
                     this.snapFreq = this.parseIntArg(i, "Snapshot Frequency");
+                    break;
+                case "--outdir":
+                    i += 1;
+                    this.outDirName = this.parseStrArg(i, "Output Directory");
+                    break;
+                case "--version":
+                    i += 1;
+                    this.version = this.parseStrArg(i, "Snapshot Version");
                     break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);
@@ -92,20 +103,9 @@ export class ReplayTool {
 
 async function replayToolMain() {
     replayTool = new ReplayTool();
-    const documentServiceFactory = await initializeFileDocumentService(
-        replayTool.fileName,
-        replayTool.from,
-        replayTool.to);
+    const documentServiceFactory = await initializeFileDocumentService(replayTool.inDirName);
     await playMessagesFromFileStorage(replayTool, documentServiceFactory);
-    while (true) {
-        await delay(2000);
-    }
 }
-
-function delay(ms: number) {
-    // tslint:disable-next-line: no-string-based-set-timeout
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    }
 
 replayToolMain()
     .catch((error: string) => console.log(`ERROR: ${error}`))

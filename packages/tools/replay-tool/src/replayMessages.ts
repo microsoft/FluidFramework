@@ -1,11 +1,10 @@
 import * as API from "@prague/client-api";
-import { IDocumentDeltaStorageService,
-    IDocumentServiceFactory,
+import { IDocumentServiceFactory,
     IHost,
     IPragueResolvedUrl,
     IResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { FileDocumentService, Replayer, ReplayFileDeltaConnection } from "@prague/file-socket-storage";
+import { Replayer, ReplayFileDeltaConnection } from "@prague/file-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { generateToken } from "@prague/services-core";
@@ -15,6 +14,12 @@ import { ReplayTool } from "./replayTool";
 // tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
 const apiVersion = require("../package.json").version;
 
+/**
+ * This api will make calls to replay ops and take snapshots according to user input.
+ *
+ * @param replayTool - Replay tool object.
+ * @param documentServiceFactory - Document service to be used as source for ops/snapshots.
+ */
 export async function playMessagesFromFileStorage(
     replayTool: ReplayTool,
     documentServiceFactory: IDocumentServiceFactory) {
@@ -28,6 +33,9 @@ export async function playMessagesFromFileStorage(
         type: "prague",
         url: "prague://localhost:6000/prague/replay-tool",
     };
+    if (replayTool.version !== undefined) {
+        resolved.url = `prague://localhost:6000/prague/${replayTool.version}`;
+    }
 
     const resolver = new ContainerUrlResolver(
         "",
@@ -40,78 +48,46 @@ export async function playMessagesFromFileStorage(
         apiHost,
         { blockUpdateMarkers: true },
         documentServiceFactory);
-
-    const fileDocumentService: FileDocumentService =
-// tslint:disable-next-line: prefer-type-cast
-        await documentServiceFactory.createDocumentService(resolved) as FileDocumentService;
-    const fileDeltaStorageService: IDocumentDeltaStorageService = fileDocumentService.fileDeltaStorage;
     console.log("Document Created !!");
 
     const replayer: Replayer = ReplayFileDeltaConnection.getReplayer();
 
-    if (replayTool.from > replayer.currentReplayedOp) {
-        await replayer.replay(replayTool.from);
-        console.log("After from", replayer.currentReplayedOp);
-    }
-
-    let replayFrom = 0;
     let replayTo = -1;
 
+    replayer.currentReplayedOp = container.deltaManager.referenceSequenceNumber;
+    console.log("last replayed op = ", replayer.currentReplayedOp);
+    let snapshotMessage =
+        `Message:ReplayTool Snapshot;OutputDirectoryName:${replayTool.outDirName ? replayTool.outDirName : "output"}`;
     if (replayTool.snapFreq) {
         let opsCountToReplay: number;
         while (replayer.currentReplayedOp < replayTool.to) {
             opsCountToReplay = replayTool.snapFreq - (replayer.currentReplayedOp % replayTool.snapFreq);
             replayTo = Math.min(replayer.currentReplayedOp + opsCountToReplay, replayTool.to);
             await replayer.replay(replayTo);
-            await delay(1000);
-            await saveSnapshot(container, "save snapshot", fileDeltaStorageService, replayFrom, replayTo);
-            replayFrom = replayTo;
+            await isOpsProcessingDone(container);
+            snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
+            await container.snapshot(snapshotMessage);
+            if (replayer.currentReplayedOp < replayTo) {
+                break;
+            }
         }
     } else if (replayTool.takeSnapshot) {
         await replayer.replay(replayTool.to);
-        await delay(1000);
-        await saveSnapshot(container, "save snapshot", fileDeltaStorageService, replayFrom, replayTo);
     }
+    await isOpsProcessingDone(container);
+    snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
+    await container.snapshot(snapshotMessage);
 }
 
 function delay(ms: number) {
     // tslint:disable-next-line: no-string-based-set-timeout
-        return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function saveSnapshot(
-    container: Container,
-    tagMessage: string,
-    fileDeltaStorageService: IDocumentDeltaStorageService,
-    replayFrom: number,
-    replayTo: number): Promise<void> {
-    if (container.parentBranch) {
-        console.log(`Skipping snapshot due to being branch of ${container.parentBranch}`);
-        return;
-    }
-
-    // Only snapshot once a code quorum has been established
-    if (!container.getQuorum().has("code2")) {
-        console.log(`Skipping snapshot due to no code quorum`);
-        return;
-    }
-
-    // Stop inbound message processing while we complete the snapshot
-    try {
-        if (container.deltaManager !== undefined) {
-            container.deltaManager.inbound.pause();
-        }
-
-        await container.snapshotCoreForReplayTool(tagMessage, fileDeltaStorageService, replayFrom, replayTo);
-
-    } catch (ex) {
-        console.log("Snapshot error", ex);
-        throw ex;
-
-    } finally {
-        if (container.deltaManager !== undefined) {
-            container.deltaManager.inbound.resume();
-        }
+async function isOpsProcessingDone(container: Container) {
+    while (container.deltaManager && container.deltaManager.inbound.length > 0) {
+        await delay(10);
+        continue;
     }
 }
 
@@ -130,7 +106,6 @@ async function load(
         });
 
     // Load the Prague document
-    // For legacy purposes we currently fill in a default domain
     const loader = new Loader(host, serviceFactory, codeLoader, options);
     const container: Container = await loader.resolve({ url });
 
