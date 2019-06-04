@@ -28,6 +28,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     }
 
     public async register(...taskIds: string[]): Promise<void> {
+        if (!this.runtime.connected) {
+            return Promise.reject(`Client is not connected`);
+        }
         for (const taskId of taskIds) {
             if (this.registeredTasks.has(taskId)) {
                 return Promise.reject(`${taskId} is already registered`);
@@ -46,6 +49,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     }
 
     public async pick(...tasks: ITask[]): Promise<void> {
+        if (!this.runtime.connected) {
+            return Promise.reject(`Client is not connected`);
+        }
         for (const task of tasks) {
             if (this.localTaskMap.has(task.id)) {
                 return Promise.reject(`${task.id} is already attempted`);
@@ -65,6 +71,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     }
 
     public async release(...taskIds: string[]): Promise<void> {
+        if (!this.runtime.connected) {
+            return Promise.reject(`Client is not connected`);
+        }
         for (const taskId of taskIds) {
             if (!this.localTaskMap.has(taskId)) {
                 return Promise.reject(`${taskId} was never registered`);
@@ -157,7 +166,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             for (const taskId of taskIds) {
                 debug(`Registering ${taskId}`);
                 // tslint:disable no-null-keyword
-                registersP.push(this.scheduler.write(taskId, null));
+                registersP.push(this.writeCore(taskId, null));
             }
             await Promise.all(registersP);
 
@@ -182,7 +191,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             const picksP = [];
             for (const task of tasks) {
                 debug(`Requesting ${task.id}`);
-                picksP.push(this.scheduler.write(task.id, this.runtime.clientId));
+                picksP.push(this.writeCore(task.id, this.runtime.clientId));
             }
             await Promise.all(picksP);
 
@@ -214,7 +223,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
                 debug(`Releasing ${id}`);
                 // Remove from local map so that it can be picked later.
                 this.localTaskMap.delete(id);
-                releasesP.push(this.scheduler.write(id, null));
+                releasesP.push(this.writeCore(id, null));
             }
             await Promise.all(releasesP);
 
@@ -231,7 +240,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             const clearP = [];
             for (const id of taskIds) {
                 debug(`Clearing ${id}`);
-                clearP.push(this.scheduler.write(id, null));
+                clearP.push(this.writeCore(id, null));
             }
             await Promise.all(clearP);
 
@@ -245,5 +254,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
 
     private getTaskClientId(id: string): string | null | undefined {
         return this.scheduler.read(id);
+    }
+
+    private async writeCore(key: string, value: string | null): Promise<void> {
+        return this.scheduler.write(key, value);
     }
 }
