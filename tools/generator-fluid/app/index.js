@@ -170,7 +170,7 @@ module.exports = class extends Generator {
     this.log("       Builds the component into bundled js files");
     this.log("\n");
 
-    this.log(chalk.cyan("    npm deploy"));
+    this.log(chalk.cyan("    npm run deploy"));
     this.log(
       "       Publishes the chaincode to https://packages.wu2.prague.office-int.com/#/"
     );
