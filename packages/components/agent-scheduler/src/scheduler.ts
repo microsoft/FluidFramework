@@ -147,17 +147,19 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     }
 
     private async pickNewTasks(ids: string[]) {
-        const possibleTasks: ITask[] = [];
-        for (const id of ids) {
-            if (this.localTaskMap.has(id)) {
-                const task: ITask = {
-                    callback: this.localTaskMap.get(id),
-                    id,
-                };
-                possibleTasks.push(task);
+        if (this.runtime.connected) {
+            const possibleTasks: ITask[] = [];
+            for (const id of ids) {
+                if (this.localTaskMap.has(id)) {
+                    const task: ITask = {
+                        callback: this.localTaskMap.get(id),
+                        id,
+                    };
+                    possibleTasks.push(task);
+                }
             }
+            return this.pickCore(possibleTasks);
         }
-        return this.pickCore(possibleTasks);
     }
 
     private async registerCore(taskIds: string[]): Promise<void> {
@@ -236,7 +238,7 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     }
 
     private async clearTasks(taskIds: string[]) {
-        if (taskIds.length > 0) {
+        if (this.runtime.connected && taskIds.length > 0) {
             const clearP = [];
             for (const id of taskIds) {
                 debug(`Clearing ${id}`);
