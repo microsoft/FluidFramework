@@ -8,7 +8,7 @@ export interface IConfig {
     key: string;
 }
 
-// TODO (sabroner): stop using this directly
+// TODO: Issue-2280 stop using this directly
 export class ImageAnalyticsIntelligentService implements IIntelligentService {
     public name: string = "ImageAnalytics";
 
@@ -49,7 +49,7 @@ export class ImageAnalyticsIntelligentService implements IIntelligentService {
     }
 }
 
-// TODO (sabroner): Work this into intelWork
+// TODO: Issue-2280 Work this into intelWork
 export class ImageAnalyticsFactory implements IIntelligentServiceFactory {
     public create(config: IConfig): IIntelligentService {
         return new ImageAnalyticsIntelligentService(config.key);

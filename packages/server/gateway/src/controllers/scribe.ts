@@ -156,7 +156,7 @@ export function initialize(
     }
 
     if (loadFile) {
-        const inputElement = document.getElementById("file") as HTMLInputElement; // BINGO
+        const inputElement = document.getElementById("file") as HTMLInputElement;
         inputElement.addEventListener(
             "change",
             () => {

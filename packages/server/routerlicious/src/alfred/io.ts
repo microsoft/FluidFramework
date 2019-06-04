@@ -123,7 +123,7 @@ export function register(
 
                 return connectedMessage;
             } else {
-                // TODO (mdaumi): We should split storage stuff from orderer to get the following fields right.
+                // TODO: We should split storage stuff from orderer to get the following fields right.
                 const connectedMessage: IConnected = {
                     clientId,
                     existing: true, // Readonly client can only open an existing document.

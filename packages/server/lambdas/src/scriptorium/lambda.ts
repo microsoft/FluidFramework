@@ -102,7 +102,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
     }
 
     private async updateSequenceNumber(messages: ISequencedOperationMessage[]) {
-        // TODO (mdaumi): Temporary to back compat with local orderer.
+        // TODO: Temporary to back compat with local orderer.
         if (this.contentCollection === undefined) {
             return;
         }
