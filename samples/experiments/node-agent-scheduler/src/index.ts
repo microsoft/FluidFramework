@@ -16,7 +16,7 @@ interface ITask {
 }
 
 interface IAgentScheduler {
-    register(...taskIds: string[]): void;
+    register(...taskIds: string[]): Promise<void>;
     pick(...tasks: ITask[]): Promise<void>;
     release(...taskIds: string[]): Promise<void>;
     pickedTasks(): string[];
@@ -164,11 +164,17 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
             const command = parsed[0];
             const id = Number(parsed[1]);
             if (command === "pick") {
-                await taskScheduler.pick(tasks[id]);
+                await taskScheduler.pick(tasks[id]).catch((err) => {
+                    console.log(err);
+                });
             } else if (command === "release") {
-                await taskScheduler.release(tasks[id].id);
+                await taskScheduler.release(tasks[id].id).catch((err) => {
+                    console.log(err);
+                });
             } else if (command === "register") {
-                await taskScheduler.register(id.toString());
+                await taskScheduler.register(id.toString()).catch((err) => {
+                    console.log(err);
+                });
             } else {
                 console.error(`Invalid command ${command}`);
             }
@@ -212,7 +218,7 @@ commander
     .option("-h, --storage [storage]", "Storage URL", "https://historian.wu2-ppe.prague.office-int.com")
     .option("-t, --tenant [tenant]", "Tenant", "stupefied-kilby")
     .option("-s, --secret [secret]", "Secret", "4a9211594f7c3daebca3deb8d6115fe2")
-    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.12")
+    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.14")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
