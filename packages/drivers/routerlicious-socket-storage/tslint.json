@@ -3,11 +3,9 @@
     "rules": {
         "completed-docs": false,
         "function-name": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-non-null-assertion": false,
         "no-null-keyword": false,
-        "no-relative-imports": false,
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unnecessary-local-variable": false,

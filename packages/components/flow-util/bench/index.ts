@@ -1,6 +1,5 @@
 // tslint:disable:no-console
 // tslint:disable:no-bitwise
-// tslint:disable:no-relative-imports
 import { Suite } from "benchmark";
 import { bsearch } from "../src/bsearch";
 import { lis } from "../src/lis";

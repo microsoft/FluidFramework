@@ -1,4 +1,3 @@
-// tslint:disable-next-line:no-relative-imports
 import { Direction } from ".";
 
 export interface ICaretEvent extends CustomEvent {

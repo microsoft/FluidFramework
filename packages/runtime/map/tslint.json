@@ -2,11 +2,9 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
         "completed-docs": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-for-in": false,
         "no-null-keyword": false,
-        "no-relative-imports": false,
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-void-expression": false,

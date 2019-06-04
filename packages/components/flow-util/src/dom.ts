@@ -1,4 +1,3 @@
-// tslint:disable:no-relative-imports
 import { bsearch2 } from "./bsearch2";
 import { isBrowser } from "./isbrowser";
 

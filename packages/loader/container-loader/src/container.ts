@@ -1004,7 +1004,6 @@ export class Container extends EventEmitter implements IContainer {
         this.messagesSinceMSNChange.push(message);
         let index = 0;
 
-        // tslint:disable-next-line:no-increment-decrement
         for (; index < this.messagesSinceMSNChange.length; index++) {
             if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
                 break;

@@ -4,7 +4,6 @@
     "rules": {
         "completed-docs": false,
         "function-name": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-floating-promises": false,
         "no-null-keyword": false,

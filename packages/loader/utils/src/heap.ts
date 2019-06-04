@@ -1,5 +1,4 @@
 // tslint:disable:no-bitwise
-// tslint:disable:no-increment-decrement
 
 /**
  * Interface for a comparere

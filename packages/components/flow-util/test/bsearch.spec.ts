@@ -1,5 +1,4 @@
 // tslint:disable:no-import-side-effect
-// tslint:disable:no-relative-imports
 import * as assert from "assert";
 import "mocha";
 import { bsearch } from "../src/bsearch";

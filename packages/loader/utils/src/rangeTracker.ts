@@ -118,14 +118,12 @@ export class RangeTracker {
                 head.secondary = secondary;
             } else {
                 // The values in the range before this one are valid - but we need to create a new one for this update
-                // tslint:disable-next-line:no-increment-decrement
                 head.length--;
                 this.ranges.push({ length: 0, primary, secondary });
             }
         } else {
             if (primaryHead + 1 === primary && secondaryHead + 1 === secondary) {
                 // extend the length if both increase by the same amount
-                // tslint:disable-next-line:no-increment-decrement
                 head.length++;
             } else {
                 // Insert a new node
@@ -146,7 +144,6 @@ export class RangeTracker {
         // Find the first range where the starting position is greater than the primary. Our target range is
         // the one before it.
         let index = 1;
-        // tslint:disable-next-line:no-increment-decrement
         for (; index < this.ranges.length; index++) {
             if (primary < this.ranges[index].primary) {
                 break;
@@ -172,7 +169,6 @@ export class RangeTracker {
         // previous index by definition (since it's less than the current index's primary but greather than the
         // previous index's primary) and we know primary must be greater than the base.
         let index = 1;
-        // tslint:disable-next-line:no-increment-decrement
         for (; index < this.ranges.length; index++) {
             if (primary < this.ranges[index].primary) {
                 break;

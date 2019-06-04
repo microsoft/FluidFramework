@@ -1,6 +1,5 @@
 // tslint:disable:no-import-side-effect
 // tslint:disable:no-submodule-imports
-// tslint:disable:no-relative-imports
 // tslint:disable:object-literal-sort-keys
 import * as assert from "assert";
 import "mocha";

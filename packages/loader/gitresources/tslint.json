@@ -2,7 +2,6 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
         "no-console": false,
-        "no-relative-imports": false,
         "no-reserved-keywords": false
     }
 }

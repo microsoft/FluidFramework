@@ -1,4 +1,3 @@
-// tslint:disable-next-line:no-relative-imports
 import { CharCode } from "./charcode";
 
 export function findToken(tokenList: string, token: string) {

@@ -3,8 +3,6 @@
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "completed-docs": false,
-        "newline-before-return": false,
-        "no-relative-imports": false,
         "no-console": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,

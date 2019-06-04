@@ -1,6 +1,8 @@
 {
     "extends": ["tslint-microsoft-contrib", "tslint:recommended"], 
     "rules": {
+        "newline-before-return": false,
+        "no-empty": false,
         "no-increment-decrement": false,
         "no-backbone-get-set-outside-model": false,
         "no-this-assignment": [true, {"allow-destructuring": true}],
@@ -11,6 +13,7 @@
         "no-console": [true, "log", "warn", "error"],
         "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
         "no-implicit-dependencies": [true, "dev"],
+        "no-relative-imports": false,
         "function-name": [ true, { "method-regex": "^[a-z][\\w\\d]+$", "private-method-regex": "^[a-z][\\w\\d]+$", "protected-method-regex": "^[a-z][\\w\\d]+$", "static-method-regex": "^[A-Z][\\w\\d]+$", "function-regex": "^[a-z][\\w\\d]+$" } ],
 
         /**

@@ -3,13 +3,11 @@
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "informative-docs": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-dynamic-delete": false,
         "no-implicit-dependencies": false,
         "no-null-keyword": false,
         "no-parameter-reassignment": false,
-        "no-relative-imports": false,
         "no-single-line-block-comment": false,
         "no-submodule-imports": false,
         "no-suspicious-comment": false,

@@ -266,7 +266,6 @@ export class GitManager implements IGitManager {
         assert(entries.length === files.entries.length);
 
         // Construct a new tree from the collection of hashes
-        // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i < files.entries.length; i++) {
             const type = files.entries[i].type === api.TreeEntry[api.TreeEntry.Tree]
                 ? "tree"
@@ -289,7 +288,6 @@ export class GitManager implements IGitManager {
 
     private translateSymlink(link: string, depth: number): string {
         let prefix = "";
-        // tslint:disable-next-line:no-increment-decrement
         for (let i = 0; i <= depth; i++) {
             prefix += "../";
         }

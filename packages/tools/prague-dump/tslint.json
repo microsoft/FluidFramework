@@ -2,11 +2,9 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
-        "newline-before-return": false,
         "no-console": false,
         "no-constant-condition": false,
         "no-floating-promises": false,
-        "no-relative-imports": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
         "no-void-expression": false,

@@ -3,10 +3,8 @@
     "rules": {
         "completed-docs": false,
         "max-line-length": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-null-keyword": false,
-        "no-relative-imports": false,
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,

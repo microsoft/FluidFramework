@@ -3,10 +3,8 @@
     "rules": {
         "completed-docs": false,
         "function-name": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-null-keyword": false,
-        "no-relative-imports": false,
         "no-reserved-keywords": false,
         "no-submodule-imports": false,
         "prefer-type-cast": false,

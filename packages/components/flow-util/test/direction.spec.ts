@@ -1,5 +1,4 @@
 // tslint:disable:no-import-side-effect
-// tslint:disable:no-relative-imports
 // tslint:disable:no-bitwise
 import * as assert from "assert";
 import "mocha";

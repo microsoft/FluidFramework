@@ -232,7 +232,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 service: this.clientType,
                 timestamp: Date.now(),
             }];
-        // tslint:disable:no-increment-decrement
+
         const coreMessage: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents,
@@ -240,7 +240,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             traces,
             type,
         };
-        // tslint:enable:no-increment-decrement
 
         const message = this.createOutboundMessage(type, coreMessage);
         this.readonly = false;

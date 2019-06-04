@@ -8,7 +8,6 @@
         "informative-docs": false,
         "max-classes-per-file": false,
         "max-func-body-length": false,
-        "newline-before-return": false,
         "no-bitwise": false,
         "no-console": false,
         "no-duplicate-imports": false,

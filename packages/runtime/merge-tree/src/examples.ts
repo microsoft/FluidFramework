@@ -52,7 +52,6 @@ function overlappingInsert(bSeesTheCat = false) {
     clientB.insertTextRemote(0, "cat ", properties, sequenceNumber,
         referenceSequenceNumber, "A");
     console.log(clientB.mergeTree.toString());
-    // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
     // simulate server choosing B's two insert operations as sequence numbers 2 and 3
     clientB.mergeTree.ackPendingSegment({
@@ -66,7 +65,6 @@ function overlappingInsert(bSeesTheCat = false) {
         referenceSequenceNumber, "B");
     console.log(clientA.mergeTree.toString());
 
-    // tslint:disable-next-line:no-increment-decrement
     sequenceNumber++;
     if (bSeesTheCat) {
         clientB.insertTextLocal(8, "furry ");

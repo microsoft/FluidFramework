@@ -4,12 +4,10 @@
         "completed-docs": false,
         "function-name": false,
         "trailing-comma": false,
-        "newline-before-return": false,
         "no-console": false,
         "no-constant-condition": false,
         "no-floating-promises": false,
         "no-null-keyword": false,
-        "no-relative-imports": false,
         "no-void-expression": false,
         "promise-function-async": false
     }

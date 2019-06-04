@@ -8,7 +8,6 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
     const cli = MergeTree.LocalClientId;
 
     const paragraphs = content.split("\r\n");
-    // tslint:disable-next-line:no-increment-decrement
     for (let i = 0, len = paragraphs.length; i < len; i++) {
         paragraphs[i] = paragraphs[i]
             .replace(/\r\n/g, " ")
@@ -37,7 +36,6 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                 }
             } else {
                 const emphStrings = paragraph.split("_");
-                // tslint:disable-next-line:no-increment-decrement
                 for (let i = 0, len = emphStrings.length; i < len; i++) {
                     // tslint:disable-next-line:no-bitwise
                     if (i & 1) {
