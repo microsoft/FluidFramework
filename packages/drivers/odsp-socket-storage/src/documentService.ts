@@ -35,8 +35,8 @@ export class DocumentService implements api.IDocumentService {
         return DocumentDeltaConnection.Create(this.tenantId, this.documentId, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
     }
 
-    public async branch(): Promise<string | null> {
-        return null;
+    public branch(): Promise<string> {
+        return Promise.reject("Not implemented");
     }
 
     public getErrorTrackingService(): null {

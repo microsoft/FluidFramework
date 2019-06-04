@@ -11,7 +11,7 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
     constructor(private path: string) {}
 
     public get repositoryUrl(): string {
-        return "";
+        throw new Error("Not implemented.");
     }
 
     /**
@@ -93,8 +93,8 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
         tree: api.ITree,
         parents: string[],
         message: string,
-        ref: string): Promise<api.IVersion | null> {
-
+        ref: string,
+    ): Promise<api.IVersion | null> {
             const messages = message.split(";");
             let outDirName: string;
             let lastOp: string;
@@ -136,18 +136,18 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
     }
 
     public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
-        return Promise.reject("Method not implemented.");
+        return Promise.reject("Not implemented.");
     }
 
     public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
         return Promise.reject("Method not implemented.");
     }
 
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse | null> {
-        return null;
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+        return Promise.reject("Not implemented.");
     }
 
-    public getRawUrl(sha: string): string | null {
-        return null;
+    public getRawUrl(sha: string): string {
+        throw new Error("Not implemented.");
     }
 }

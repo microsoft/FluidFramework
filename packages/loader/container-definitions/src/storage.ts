@@ -19,12 +19,12 @@ export interface IDocumentAttributes {
     /**
      * Sequence number at which the snapshot was taken
      */
-    sequenceNumber: number | undefined | null;
+    sequenceNumber: number;
 
     /**
      * Minimum sequence number when the snapshot was taken
      */
-    minimumSequenceNumber: number | undefined;
+    minimumSequenceNumber: number;
 
     /**
      * List of clients when the snapshot was taken
@@ -93,8 +93,8 @@ export interface ITree {
 
 export interface ISnapshotTree {
     id: string | null;
-    blobs: { [path: string]: string | null};
-    commits: { [path: string]: string | null};
+    blobs: { [path: string]: string };
+    commits: { [path: string]: string };
     trees: { [path: string]: ISnapshotTree };
 }
 
@@ -143,7 +143,7 @@ export interface IDocumentStorageService {
     /**
      * Returns the snapshot tree.
      */
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null | undefined>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -153,27 +153,27 @@ export interface IDocumentStorageService {
     /**
      * Retrieves the content for the given version at the given path
      */
-    getContent(version: IVersion, path: string): Promise<string | undefined>;
+    getContent(version: IVersion, path: string): Promise<string>;
 
     /**
      * Reads the object with the given ID
      */
-    read(id: string): Promise<string | undefined>;
+    read(id: string): Promise<string>;
 
     /**
      * Writes to the object with the given ID
      */
-    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion | undefined | null>;
+    write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 
     /**
      * Creates a blob out of the given buffer
      */
-    createBlob(file: Buffer | undefined | null): Promise<ICreateBlobResponse>;
+    createBlob(file: Buffer): Promise<ICreateBlobResponse>;
 
     /**
      * Fetch blob Data url
      */
-    getRawUrl(blobId: string): string | null | undefined;
+    getRawUrl(blobId: string): string;
 
     /**
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
@@ -273,7 +273,7 @@ export interface IDocumentService {
     /**
      * Creates a branch of the document with the given ID. Returns the new ID.
      */
-    branch(): Promise<string | null>;
+    branch(): Promise<string>;
 
     /**
      * Returns the error tracking service

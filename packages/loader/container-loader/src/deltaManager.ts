@@ -57,14 +57,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly = true;
 
     // The minimum sequence number and last sequence number received from the server
-    private minSequenceNumber: number | undefined = 0;
+    private minSequenceNumber: number = 0;
 
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
     // * largestSequenceNumber is the largest seen sequence number
     private lastQueuedSequenceNumber: number | undefined;
     private largestSequenceNumber: number | undefined;
-    private baseSequenceNumber: number | undefined;
+    private baseSequenceNumber: number = 0;
 
     // tslint:disable:variable-name
     private _inbound: DeltaQueue<ISequencedDocumentMessage>;
@@ -94,11 +94,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this._inboundSignal;
     }
 
-    public get referenceSequenceNumber(): number | undefined {
+    public get referenceSequenceNumber(): number {
         return this.baseSequenceNumber;
     }
 
-    public get minimumSequenceNumber(): number | undefined {
+    public get minimumSequenceNumber(): number {
         return this.minSequenceNumber;
     }
 
@@ -182,7 +182,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(sequenceNumber: number | undefined, handler: IDeltaHandlerStrategy, resume: boolean) {
+    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
         // The MSN starts at the base the manager is initialized to

@@ -35,10 +35,12 @@ export class DocumentStorageService implements IDocumentStorageService  {
         if (!requestVersion) {
             const versions = await this.getVersions(this.id, 1);
             if (versions.length === 0) {
-                return Promise.resolve<ISnapshotTree | null>(null);
+                return null;
             }
+
             requestVersion = versions[0];
         }
+
         const tree = await this.manager.getTree(requestVersion.treeId);
         return buildHierarchy(tree);
     }

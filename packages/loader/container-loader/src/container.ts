@@ -727,7 +727,7 @@ export class Container extends EventEmitter implements IContainer {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
             partialOps: null,
-            sequenceNumber: null,
+            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
 
         const newContext = await ContainerContext.Load(

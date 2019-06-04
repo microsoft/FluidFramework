@@ -48,10 +48,10 @@ export interface IDeltaManager<T, U> extends EventEmitter {
     inboundSignal: IDeltaQueue<ISignalMessage | undefined>;
 
     // The current minimum sequence number
-    minimumSequenceNumber: number | undefined;
+    minimumSequenceNumber: number;
 
     // The last sequence number processed by the delta manager
-    referenceSequenceNumber: number | undefined;
+    referenceSequenceNumber: number;
 
     // Type of client
     clientType: string;

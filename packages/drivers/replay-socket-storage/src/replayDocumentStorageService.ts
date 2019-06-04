@@ -10,14 +10,14 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        return null;
+        return version ? Promise.reject("Invalid operation") : null;
     }
 
     public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
        return [];
     }
 
-    public async read(blobId: string): Promise<string | undefined> {
+    public async read(blobId: string): Promise<string> {
         return Promise.reject("Invalid operation");
     }
 
@@ -26,22 +26,22 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
     }
 
     public async getContent(version: api.IVersion, path: string): Promise<string> {
-        return "";
+        return Promise.reject("Invalid operation");
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | null> {
-        return null;
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+        return Promise.reject("Invalid operation");
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
-        return Promise.reject(new Error("ReplayDocumentStorageService.createBlob() not implemented"));
+        return Promise.reject("Invalid operation");
     }
 
     public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
         return Promise.reject("Invalid operation");
     }
 
-    public getRawUrl(blobId: string): string | undefined {
+    public getRawUrl(blobId: string): string {
         throw new Error("Invalid operation");
     }
 }

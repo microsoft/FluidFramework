@@ -25,7 +25,7 @@ export interface IBlobManager {
 export type IGenericBlob = IDataBlob | IImageBlob | IVideoBlob;
 
 export interface IBaseBlob {
-    content?: Buffer | null;
+    content: Buffer;
     id: string;
     size: number;
     fileName: string;

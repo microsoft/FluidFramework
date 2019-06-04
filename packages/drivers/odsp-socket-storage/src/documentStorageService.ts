@@ -15,19 +15,21 @@ export class DocumentStorageService implements api.IDocumentStorageService {
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
         const tree = await this.storageManager.getTree(version);
-        const hierarchicalTree = tree ? buildHierarchy(tree) : null;
-
-        if (hierarchicalTree) {
-            // decode commit paths
-            const commits = {};
-
-            const keys = Object.keys(hierarchicalTree.commits);
-            for (const key of keys) {
-                commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
-            }
-
-            hierarchicalTree.commits = commits;
+        if (!tree) {
+            return null;
         }
+
+        const hierarchicalTree = buildHierarchy(tree);
+
+        // decode commit paths
+        const commits = {};
+
+        const keys = Object.keys(hierarchicalTree.commits);
+        for (const key of keys) {
+            commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
+        }
+
+        hierarchicalTree.commits = commits;
 
         return hierarchicalTree;
     }
@@ -46,7 +48,7 @@ export class DocumentStorageService implements api.IDocumentStorageService {
         return response.content;
     }
 
-    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | undefined> {
+    public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         return this.storageManager.write(tree, parents, message);
     }
 

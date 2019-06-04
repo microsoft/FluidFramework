@@ -11,7 +11,7 @@ import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
     // blobId -> blob prefetchCache cache
-    private prefetchCache = new Map<string, Promise<string | undefined>>();
+    private prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
     constructor(private storage: IDocumentStorageService) {
@@ -21,7 +21,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.repositoryUrl;
     }
 
-    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | undefined | null> {
+    public getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         const p = this.storage.getSnapshotTree(version);
         if (p && this.prefetchEnabled) {
             // We don't care if the prefetch succeed
@@ -38,15 +38,15 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.getVersions(versionId, count);
     }
 
-    public async read(blobId: string): Promise<string | undefined> {
+    public async read(blobId: string): Promise<string> {
         return this.cachedRead(blobId);
     }
 
-    public async getContent(version: IVersion, path: string): Promise<string | undefined> {
+    public async getContent(version: IVersion, path: string): Promise<string> {
         return this.storage.getContent(version, path);
     }
 
-    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion | undefined | null> {
+    public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         return this.storage.write(tree, parents, message, ref);
     }
 
@@ -62,7 +62,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         return this.storage.createBlob(file);
     }
 
-    public getRawUrl(blobId: string): string | undefined | null {
+    public getRawUrl(blobId: string): string {
         return this.storage.getRawUrl(blobId);
     }
 
@@ -71,9 +71,9 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
         this.prefetchCache.clear();
     }
 
-    private cachedRead(blobId: string): Promise<string | undefined> {
+    private cachedRead(blobId: string): Promise<string> {
         if (this.prefetchEnabled) {
-            const prefetchedBlobP: Promise<string | undefined> | undefined = this.prefetchCache.get(blobId);
+            const prefetchedBlobP: Promise<string> | undefined = this.prefetchCache.get(blobId);
             if (prefetchedBlobP) {
                 return prefetchedBlobP;
             }

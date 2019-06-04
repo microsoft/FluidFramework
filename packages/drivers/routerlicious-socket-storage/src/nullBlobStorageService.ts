@@ -9,20 +9,20 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         throw new Error("Invalid operation");
     }
 
-    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null | undefined> {
-        return null;
+    public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+        return version ? Promise.reject("Invalid operation") : null;
     }
 
     public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
         return [];
     }
 
-    public async read(blobId: string): Promise<string | undefined> {
+    public async read(blobId: string): Promise<string> {
         return Promise.reject("Invalid operation");
     }
 
-    public async getContent(version: api.IVersion, path: string): Promise<string | undefined> {
-        return;
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
+        return Promise.reject("Invalid operation");
     }
 
     public write(tree: api.ITree, parents: string[], message: string, ref: string): Promise<api.IVersion> {
@@ -41,7 +41,7 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not create blob");
     }
 
-    public getRawUrl(blobId: string): string | undefined {
+    public getRawUrl(blobId: string): string {
         throw new Error("Invalid operation");
     }
 }

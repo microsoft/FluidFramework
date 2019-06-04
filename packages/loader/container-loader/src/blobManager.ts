@@ -20,7 +20,6 @@ export class BlobManager implements IBlobManager {
     public getBlobMetadata(): IGenericBlob[] {
         const blobs = [... this.blobs.values()];
         return blobs.map((value) => {
-            value.content = null;
             return value;
         });
     }

@@ -18,9 +18,11 @@ export class ReplayDocumentService implements api.IDocumentService {
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new ReplayDocumentStorageService();
     }
+
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         return new ReplayDeltaStorageService();
     }
+
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const documentDeltaStorageService: api.IDocumentDeltaStorageService =
             await this.documentService.connectToDeltaStorage();
@@ -30,9 +32,11 @@ export class ReplayDocumentService implements api.IDocumentService {
             this.replayTo,
             this.unitIsTime);
     }
-    public async branch(): Promise<string | null> {
-        return null;
+
+    public async branch(): Promise<string> {
+        return Promise.reject("Invalid operation");
     }
+
     public getErrorTrackingService() {
         return null;
     }

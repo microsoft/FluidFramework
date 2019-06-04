@@ -11,7 +11,7 @@ export interface IDocumentStorageManager {
     getRawUrl(blobid: string): string;
     getTree(version?: api.IVersion): Promise<resources.ITree | null>;
     getVersions(blobid: string, count: number): Promise<api.IVersion[]>;
-    write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | undefined>;
+    write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion>;
 }
 
 export class StandardDocumentStorageManager implements IDocumentStorageManager {
@@ -37,13 +37,12 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     public async getTree(version?: api.IVersion): Promise<resources.ITree | null> {
         // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
         const id = (version && version.id) ? version.id : "latest";
-        const tree = await this.restWrapper.get<resources.ITree>(`/trees/${id}`)
-            .catch((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
-        if (!tree || !tree.tree) {
-            return null;
-        }
 
-        return tree;
+        try {
+            return await this.restWrapper.get<resources.ITree>(`/trees/${id}`);
+        } catch (error) {
+            return error === 400 || error === 404 ? null : Promise.reject(error);
+        }
     }
 
     public async getBlob(blobid: string): Promise<resources.IBlob> {
@@ -84,9 +83,9 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
         return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.id, path });
     }
 
-    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion | undefined> {
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
-        return undefined;
+        return Promise.reject("Not implemented");
     }
 
     public getRawUrl(blobid: string): string {
