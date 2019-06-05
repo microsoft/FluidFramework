@@ -4,7 +4,7 @@
   "description": "A tool that lets the user to replay ops.",
   "main": "dist/index.js",
   "module": "lib/index.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/replayTool.d.ts",
   "bin": "./dist/replayTool.js",
   "sideEffects": "false",
   "scripts": {

@@ -27,7 +27,7 @@ export class FileDocumentService implements api.IDocumentService {
      * Connects to a delta storage endpoint of provided documentService to get ops and then replaying
      * them so as to mimic a delta stream endpoint.
      *
-     * @param client: Client that connects to socket.
+     * @param client - Client that connects to socket.
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
