@@ -51,10 +51,6 @@
       "projectFolder": "packages/components/client-ui/"
     },
     {
-      "packageName": "@component/collection-components",
-      "projectFolder": "packages/components/collection-components/"
-    },
-    {
       "packageName": "@chaincode/flow-document",
       "projectFolder": "packages/components/flow-document/"
     },
@@ -97,6 +93,10 @@
     {
       "packageName": "@chaincode/pinpoint-editor",
       "projectFolder": "packages/components/pinpoint-editor/"
+    },
+    {
+      "packageName": "@chaincode/progress-bars",
+      "projectFolder": "packages/components/progress-bars/"
     },
     {
       "packageName": "@chaincode/shared-text",

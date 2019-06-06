@@ -79,7 +79,7 @@
     "geocoder": "^0.2.3",
     "jquery": "^3.3.1",
     "jsonwebtoken": "^8.4.0",
-    "katex": "^0.10.1",
+    "katex": "^0.10.2",
     "node-geocoder": "^3.22.0",
     "parse-address": "^1.1.0",
     "performance-now": "^2.1.0",
