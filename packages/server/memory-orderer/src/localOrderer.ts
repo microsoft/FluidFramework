@@ -12,6 +12,7 @@ import {
     DeliLambda,
     ForemanLambda,
     NoopConsolidationTimeout,
+    ScribeLambda,
     ScriptoriumLambda,
 } from "@prague/lambdas";
 import {
@@ -37,6 +38,7 @@ import {
 } from "@prague/services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { IGitManager } from "../../services-client/dist";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 
@@ -264,10 +266,12 @@ export class LocalOrderer implements IOrderer {
         tenantManager: ITenantManager,
         permission: any,
         maxMessageSize: number,
+        gitManager?: IGitManager,
         pubSub: IPubSub = new PubSub(),
         broadcasterContext: IContext = new LocalContext(),
         scriptoriumContext: IContext = new LocalContext(),
         foremanContext: IContext = new LocalContext(),
+        scribeContext: IContext = new LocalContext(),
         deliContext: IContext = new LocalContext(),
         clientTimeout: number = ClientSequenceTimeout) {
 
@@ -285,12 +289,14 @@ export class LocalOrderer implements IOrderer {
             deltasCollection,
             taskMessageSender,
             tenantManager,
+            gitManager,
             permission,
             maxMessageSize,
             pubSub,
             broadcasterContext,
             scriptoriumContext,
             foremanContext,
+            scribeContext,
             deliContext,
             clientTimeout);
     }
@@ -299,6 +305,7 @@ export class LocalOrderer implements IOrderer {
 
     private scriptoriumLambda: ScriptoriumLambda;
     private foremanLambda: ForemanLambda;
+    private scribeLambda: ScribeLambda | undefined;
     private deliLambda: DeliLambda;
     private broadcasterLambda: BroadcasterLambda;
 
@@ -315,12 +322,14 @@ export class LocalOrderer implements IOrderer {
         deltasCollection: ICollection<any>,
         private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
+        gitManager: IGitManager | undefined,
         private permission: any,
         private maxMessageSize: number,
         private pubSub: IPubSub,
         private broadcasterContext: IContext,
         private scriptoriumContext: IContext,
         private foremanContext: IContext,
+        private scribeContext: IContext,
         private deliContext: IContext,
         clientTimeout: number,
     ) {
@@ -345,6 +354,15 @@ export class LocalOrderer implements IOrderer {
             this.permission,
             this.foremanContext);
 
+        if (gitManager) {
+            // Scribe lambda
+            this.scribeLambda = new ScribeLambda(
+                this.scribeContext,
+                documentCollection,
+                details.value,
+                gitManager);
+        }
+
         // Deli lambda
         this.deliLambda = new DeliLambda(
             this.deliContext,
@@ -366,9 +384,9 @@ export class LocalOrderer implements IOrderer {
         clientId: string,
         client: IClient): Promise<IOrdererConnection> {
 
-            const socketSubscriber = new WebSocketSubscriber(socket);
-            const orderer = this.connectInternal(socketSubscriber, clientId, client);
-            return orderer;
+        const socketSubscriber = new WebSocketSubscriber(socket);
+        const orderer = this.connectInternal(socketSubscriber, clientId, client);
+        return orderer;
     }
 
     public connectInternal(
@@ -403,6 +421,11 @@ export class LocalOrderer implements IOrderer {
         this.broadcasterLambda.close();
         this.scriptoriumLambda.close();
         this.foremanLambda.close();
+
+        if (this.scribeLambda) {
+            this.scribeLambda.close();
+        }
+
         this.deliLambda.close();
     }
 
@@ -418,6 +441,10 @@ export class LocalOrderer implements IOrderer {
             this.broadcasterLambda.handler(message);
             this.scriptoriumLambda.handler(message);
             this.foremanLambda.handler(message);
+
+            if (this.scribeLambda) {
+                this.scribeLambda.handler(message);
+            }
         });
     }
 }
@@ -438,8 +465,10 @@ class InMemoryKafka extends EventEmitter implements IProducer {
             topic,
             value: JSON.stringify(message),
         };
-        this.emit("message", kafkaMessage);
+
         this.offset++;
+
+        this.emit("message", kafkaMessage);
     }
 
     public close(): Promise<void> {

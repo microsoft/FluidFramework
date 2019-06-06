@@ -4,7 +4,7 @@ import {
     ISequencedDocumentSystemMessage,
     MessageType,
 } from "@prague/container-definitions";
-import { GitManager } from "@prague/services-client";
+import { IGitManager } from "@prague/services-client";
 import {
     extractBoxcar,
     ICollection,
@@ -33,7 +33,7 @@ export class ScribeLambda extends SequencedLambda {
         context: IContext,
         private collection: ICollection<IDocument>,
         private document: IDocument,
-        private storage: GitManager,
+        private storage: IGitManager,
     ) {
         super(context);
 
