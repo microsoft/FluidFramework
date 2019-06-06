@@ -11,10 +11,11 @@ import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
 
 const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
+const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@chaincode/math");
 const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@chaincode/monaco");
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
-const collections = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */"@component/collection-components");
+const progressBars = import(
+    /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/progress-bars");
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -37,18 +38,12 @@ class MyRegistry implements IComponentRegistry {
     }
 
     public async get(name: string): Promise<IComponentFactory> {
-        if (name === "@chaincode/charts") {
+        if (name === "@chaincode/math") {
+            return math;
+        } else if (name === "@chaincode/charts") {
             return charts;
-        } else if (name === "@component/collection-components") {
-            return collections;
-        } else if (name === "@component/collection-components/lib/progress") {
-            const collectionsResolved = await collections;
-            return collectionsResolved.progressBars;
-        // Uncomment the below once adding in math.
-        // For multiple comonents within a package we might want to formalize the module lookup
-        // } else if (name === "@component/collection-components/lib/math") {
-        //     const collectionsResolved = await collections;
-        //     return collectionsResolved.math;
+        } else if (name === "@chaincode/progress-bars") {
+            return progressBars;
         } else if (name === "@chaincode/monaco") {
             return monaco;
         } else if (name === "@chaincode/pinpoint-editor") {
@@ -104,8 +99,9 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     // On first boot create the base component
     if (!runtime.existing) {
         await Promise.all([
-            runtime.createAndAttachComponent("collections", "@component/collection-components"),
+            runtime.createAndAttachComponent("progress-bars", "@chaincode/progress-bars"),
             runtime.createAndAttachComponent("text", "@chaincode/shared-text"),
+            runtime.createAndAttachComponent("math", "@chaincode/math"),
         ])
         .catch((error) => {
             context.error(error);

@@ -1,5 +1,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
+import * as MathComponent from "@chaincode/math";
+import { ProgressCollection } from "@chaincode/progress-bars";
 import * as api from "@prague/client-api";
 import { ServicePlatform } from "@prague/component-runtime";
 import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
@@ -101,150 +103,155 @@ export interface IFlowViewCmd extends SearchMenu.ISearchMenuCommand<FlowView> {
 
 let viewOptions: Object;
 
-const fontSizes = (f: FlowView) => ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
+const fontSizeStrings = ["8", "9", "10", "11", "12", "14", "16", "18", "20", "24", "32"];
+const fontSizeTree = new MergeTree.TST<IFlowViewCmd>();
+for (const sizeString of fontSizeStrings) {
+    fontSizeTree.put(sizeString, { key: sizeString });
+}
+const fontSizes = (f: FlowView) => fontSizeTree;
 const defaultFontSize = (f: FlowView) => "18";
 
 const commands: IFlowViewCmd[] = [
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setBGImage(dinoImage);
         },
         key: "enable dinosaur",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setBGImage(dinoImage, true);
         },
         key: "jettison one dinosaur",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setBGImage(mrBennetEyeRoll);
         },
         key: "release the Bennets",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setBGImage(mrBennetEyeRoll, true);
         },
         key: "release one Bennet",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.copyFormat();
         },
         key: "copy format",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.paintFormat();
         },
         key: "paint format",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.geocodeAddress();
         },
         key: "geocode",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.toggleBlockquote();
         },
         key: "blockquote",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.toggleBold();
         },
         key: "bold",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.createBookmarks(5000);
         },
         key: "bookmark test: 5000",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.addCalendarEntries();
         },
         key: "cal create",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showCalendarEntries();
         },
         key: "cal show",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.addSequenceEntry();
         },
         key: "seq +",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showSequenceEntries();
         },
         key: "seq show",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.createComment();
         },
         key: "comment",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showCommentText();
         },
         key: "comment text",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showKatex();
         },
         key: "katex",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setColor("red");
         },
         key: "red",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setColor("green");
         },
         key: "green",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setColor("gold");
         },
         key: "gold",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setColor("pink");
         },
         key: "pink",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.makeBlink("pink");
         },
         key: "blink-pink",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma",
@@ -253,79 +260,79 @@ const commands: IFlowViewCmd[] = [
         ],
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setPGProps({ header: true });
         },
         key: "Heading 2",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setPGProps({ header: null });
         },
         key: "Normal",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setFont("georgia", "18px");
         },
         key: "Georgia font",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setFont("sans-serif", "18px");
         },
         key: "sans font",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setFont("cursive", "18px");
         },
         key: "cursive font",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.toggleItalic();
         },
         key: "italic",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setList();
         },
         key: "list ... 1.)",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.setList(1);
         },
         key: "list ... \u2022",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             showCell(f.cursor.pos, f);
         },
         key: "cell info",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             showTable(f.cursor.pos, f);
         },
         key: "table info",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.tableSummary();
         },
         key: "table summary",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showAdjacentBookmark();
         },
         key: "previous bookmark",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.showAdjacentBookmark(false);
         },
         key: "next bookmark",
@@ -334,7 +341,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showBookmarks;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showBookmarks = true;
             f.tempBookmarks = undefined;
             f.localQueueRender(f.cursor.pos);
@@ -345,7 +352,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showCursorLocation;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showCursorLocation = true;
             f.cursorLocation();
         },
@@ -355,7 +362,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showCursorLocation;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showCursorLocation = false;
             f.status.remove("cursor");
         },
@@ -365,7 +372,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showBookmarks;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showBookmarks = false;
             f.tempBookmarks = undefined;
             f.localQueueRender(f.cursor.pos);
@@ -376,7 +383,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showComments;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showComments = true;
             f.localQueueRender(f.cursor.pos);
         },
@@ -386,14 +393,14 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showComments;
         },
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.modes.showComments = false;
             f.localQueueRender(f.cursor.pos);
         },
         key: "hide comments",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             Table.createTable(f.cursor.pos, f.sharedString);
             f.localQueueRender(f.cursor.pos);
@@ -401,91 +408,97 @@ const commands: IFlowViewCmd[] = [
         key: "table test",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertPhoto();
         },
         key: "insert photo",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertList();
         },
         key: "insert list",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.addChildFlow();
         },
         key: "cflow test",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertColumn();
         },
         key: "insert column",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertRow();
         },
         key: "insert row",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.deleteRow();
         },
         key: "delete row",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.deleteColumn();
         },
         key: "delete column",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.toggleUnderline();
         },
         key: "underline",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertSheetlet();
         },
         key: "insert sheet",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertChart();
         },
         key: "insert chart",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertInnerComponent("chart", "@chaincode/charts");
         },
         key: "insert chart",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
         },
         key: "insert map",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             f.insertInnerComponent("code", "@chaincode/monaco");
         },
         key: "insert monaco",
     },
     {
-        exec: (f) => {
-            f.insertInnerCollection("progress");
+        exec: (c, p, f) => {
+           f.insertMathTest();
+        },
+        key: "insert math",
+    },
+    {
+         exec: (c, p, f) => {
+            f.insertProgressBar();
         },
         key: "insert progress",
     },
     {
-        exec: (f) => {
+         exec: (c, p, f) => {
             (navigator as any).clipboard.readText().then((text) => {
                 console.log(`Inserting ${text}`);
                 f.insertDocument(text);
@@ -2646,8 +2659,8 @@ export class FlowCursor extends Cursor {
         this.presenceDiv.style.position = "absolute";
         this.presenceDiv.style.color = "white";
         this.presenceDiv.style.backgroundColor = this.bgColor;
-        this.presenceDiv.style.font = "12px Arial";
-        this.presenceDiv.style.border = `3px solid ${this.bgColor}`;
+        this.presenceDiv.style.font = "10px Arial";
+        this.presenceDiv.style.border = `2px solid ${this.bgColor}`;
         this.presenceDiv.style.borderTopRightRadius = "1em";
         this.setPresenceDivEvents(this.presenceDiv);
         // go underneath local cursor
@@ -2719,8 +2732,8 @@ export class FlowCursor extends Cursor {
 
     protected blinkCursor() {
         if (this.presenceDiv) {
-            this.editSpan.classList.add("brieflyBlinking");
-            this.presenceDiv.classList.add("brieflyBlinking");
+            // this.editSpan.classList.add("brieflyBlinking");
+            // this.presenceDiv.classList.add("brieflyBlinking");
         } else {
             super.blinkCursor();
         }
@@ -3041,7 +3054,8 @@ export class FlowView extends ui.Component {
     private cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
-    private collections = new Map<string, { create: () => IComponent }>();
+    private progressBars: ProgressCollection;
+    private math: MathComponent.MathCollection;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
@@ -4727,15 +4741,14 @@ export class FlowView extends ui.Component {
         this.insertComponent("innerComponent", { id, chaincode });
     }
 
-    public insertInnerCollection(type: string) {
-        if (!this.collections.has(type)) {
-            return;
-        }
+    public insertMathTest() {
+        const instance = this.math.create();
+        this.insertComponent("innerComponent", { id: instance.id });
+    }
 
-        const collection = this.collections.get(type);
-        const component = collection.create();
-
-        this.insertComponent("innerComponent", { id: component.id });
+    public insertProgressBar() {
+        const instance = this.progressBars.create();
+        this.insertComponent("innerComponent", { id: instance.id });
     }
 
     /** Insert an external Document */
@@ -4792,24 +4805,16 @@ export class FlowView extends ui.Component {
     }
 
     private async openCollections() {
-        const collections = await this.openPlatform("collections");
+        const [math, progressBars] = await Promise.all([
+            this.openPlatform<MathComponent.MathCollection>("math"),
+            this.openPlatform<ProgressCollection>("progress-bars"),
+        ]);
 
-        const factories = await collections.queryInterface("factories") as string[];
-        console.log(factories);
-
-        const instances = await Promise.all(factories.map(async (factory) => {
-            const component = await collections.queryInterface(factory) as IComponent;
-            const platform = await component.attach(new ServicePlatform([]));
-            const collection = await platform.queryInterface("collection") as { create: () => IComponent };
-            return { factory, collection };
-        }));
-
-        for (const instance of instances) {
-            this.collections.set(instance.factory, instance.collection);
-        }
+        this.math = math;
+        this.progressBars = progressBars;
     }
 
-    private async openPlatform(id: string): Promise<IPlatform> {
+    private async openPlatform<T extends IPlatform>(id: string): Promise<T> {
         const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
         const component = await runtime.request({ url: "/" });
 
@@ -4818,7 +4823,7 @@ export class FlowView extends ui.Component {
         }
 
         const result = component.value as IComponent;
-        return result.attach(new ServicePlatform([]));
+        return result.attach(new ServicePlatform([])) as Promise<T>;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {

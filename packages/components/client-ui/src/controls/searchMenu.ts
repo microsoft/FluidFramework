@@ -10,13 +10,13 @@ export interface ISearchMenuParam<TContext = any> {
     name: string;
     suffix?: string;
     lruValue?: string;
-    values(context: TContext): string[];
+    values(context: TContext): MergeTree.TST<ISearchMenuCommand>;
     defaultValue(context: TContext): string;
 }
 
 export interface ISearchMenuCommand<TContext = any> {
     div?: HTMLDivElement;
-    exec?: (context?: TContext) => void;
+    exec?: (cmd: ISearchMenuCommand<TContext>, parameters: string[], context?: TContext) => void;
     enabled?: (context?: TContext) => boolean;
     iconHTML?: string;
     key: string;
@@ -39,15 +39,17 @@ export interface ISelectionListBox {
     hide(): void;
     prevItem();
     nextItem();
-    removeHighlight();
-    showSelectionList(selectionItems: ISearchMenuCommand[], hintSelection?: string);
-    selectItem(key: string);
+    removeHighlight(): void;
+    showSelectionList(selectionItems: ISearchMenuCommand[], hintSelection?: string): void;
+    selectItem(key: string): void;
+    setItemTextPrefix(prefix: string): void;
+    setItemTextSuffix(suffix: string): void;
     items(): ISearchMenuCommand[];
     getSelectedKey(): string;
     getSelectedItem(): ISearchMenuCommand;
     getSelectionIndex(): number;
-    setSelectionIndex(indx: number);
-    keydown(e: KeyboardEvent);
+    setSelectionIndex(indx: number): void;
+    keydown(e: KeyboardEvent): void;
 }
 
 export function selectionListBoxCreate(
@@ -63,6 +65,8 @@ export function selectionListBoxCreate(
     let itemCapacity: number;
     let selectionIndex = -1;
     let topSelection = 0;
+    let itemTextPrefix = "";
+    let itemTextSuffix = "";
 
     init();
 
@@ -80,6 +84,8 @@ export function selectionListBoxCreate(
         prevItem,
         removeHighlight,
         selectItem: selectItemByKey,
+        setItemTextPrefix,
+        setItemTextSuffix,
         setSelectionIndex,
         show: () => {
             listContainer.style.visibility = "visible";
@@ -93,6 +99,14 @@ export function selectionListBoxCreate(
 
     function setSelectionIndex(indx: number) {
         selectItem(indx);
+    }
+
+    function setItemTextPrefix(prefix: string) {
+        itemTextPrefix = prefix;
+    }
+
+    function setItemTextSuffix(suffix: string) {
+        itemTextSuffix = suffix;
     }
 
     function selectItemByKey(key: string) {
@@ -302,7 +316,8 @@ export interface ISearchBox {
 
 export interface IInputBox {
     elm: HTMLDivElement;
-    setText(text: string);
+    setPrefixText(text: string): void;
+    setText(text: string): void;
     getText(): string;
     initCursor(y: number);
     keydown(e: KeyboardEvent);
@@ -312,6 +327,8 @@ export interface IInputBox {
 export function inputBoxCreate(onsubmit: (s: string) => void,
     onchanged: (s: string) => void) {
     const elm = document.createElement("div");
+    const readOnlySpan = document.createElement("span");
+    elm.appendChild(readOnlySpan);
     const span = document.createElement("span");
     elm.appendChild(span);
     let cursor: Cursor;
@@ -322,6 +339,7 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
         initCursor,
         keydown,
         keypress,
+        setPrefixText,
         setText,
     } as IInputBox;
 
@@ -397,6 +415,10 @@ export function inputBoxCreate(onsubmit: (s: string) => void,
         span.innerText = text;
     }
 
+    function setPrefixText(text: string) {
+        readOnlySpan.innerText = text;
+    }
+
     function getText() {
         return span.innerText;
     }
@@ -408,6 +430,7 @@ interface IParameterState {
     params: string[];
 }
 
+// TODO: make generic in context type
 export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     cmdTree: MergeTree.TST<ISearchMenuCommand>,
     foldCase = true,
@@ -418,7 +441,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     let inputElm: HTMLElement;
     let inputBox: IInputBox;
     let selectionListBox: ISelectionListBox;
-    // let paramState: IParameterState;
+    let paramState: IParameterState;
 
     init();
 
@@ -434,8 +457,10 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         updateText,
     };
 
-    function showSelectionList(items: ISearchMenuCommand[]) {
+    function showSelectionList(items: ISearchMenuCommand[], prefix = "", suffix = "") {
         if (selectionListBox) {
+            selectionListBox.setItemTextPrefix(prefix);
+            selectionListBox.setItemTextSuffix(suffix);
             selectionListBox.showSelectionList(items);
         }
     }
@@ -456,16 +481,28 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         if (foldCase) {
             prefix = prefix.toLowerCase();
         }
-/*        if (paramState) {
-        } else */ {
-        const items = cmdTree.pairsWithPrefix(prefix).map((res) => {
-            return res.val;
-        }).filter((cmd) => {
-            return (!cmd.enabled) || cmd.enabled(context);
-        });
-
-        showSelectionList(items);
-    }
+        if (paramState) {
+            const paramIndex = paramState.params.length;
+            const paramCmd = paramState.paramCmd;
+            const param = paramCmd.parameters[paramIndex];
+            const paramCmdTree = param.values(context);
+            const items = paramCmdTree.pairsWithPrefix(prefix).map((res) => {
+                return res.val;
+            });
+            let suffix = "";
+            for (let i = paramIndex + 1; i < paramCmd.parameters.length; i++) {
+                const ithParam = paramCmd.parameters[i];
+                suffix += ` ${ithParam.name}: ${ithParam.defaultValue(context)}`;
+            }
+            showSelectionList(items, `${paramState.paramCmd.key} `, suffix);
+        } else {
+            const items = cmdTree.pairsWithPrefix(prefix).map((res) => {
+                return res.val;
+            }).filter((cmd) => {
+                return (!cmd.enabled) || cmd.enabled(context);
+            });
+            showSelectionList(items);
+        }
     }
 
     function getSelectedKey() {
@@ -484,6 +521,29 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         document.body.removeChild(container);
     }
 
+    // TODO: check param state already shows in parameter
+    function onTAB(shift: boolean) {
+        const cmd = getSelectedItem();
+        if (cmd) {
+            if (paramState) {
+                paramState.params.push(cmd.key);
+                const paramIndex = paramState.params.length;
+                if (paramIndex < paramState.paramCmd.parameters.length) {
+                    const paramName = paramState.paramCmd.parameters[paramIndex].name + ": ";
+                    inputBox.setPrefixText(paramName);
+                }
+            } else {
+                if (cmd.parameters) {
+                    paramState = { paramCmd: cmd, params: [] };
+                }
+            }
+        } else {
+            if (cmdParser) {
+                cmdParser(getSearchString(), cmd);
+            }
+        }
+    }
+
     function keydown(e: KeyboardEvent) {
         if (e.keyCode === KeyCode.leftArrow) {
             textSegKeydown(e);
@@ -493,6 +553,8 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             textSegKeydown(e);
         } else if (e.keyCode === KeyCode.downArrow) {
             selectionListBox.nextItem();
+        } else if (e.keyCode === KeyCode.TAB) {
+            onTAB(e.shiftKey);
         } else {
             textSegKeydown(e);
         }
@@ -502,13 +564,21 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         inputBox.keydown(e);
     }
 
+    // TODO: change exec to take parameters if any
+
     function keypress(e: KeyboardEvent) {
         if (e.charCode === CharacterCodes.cr) {
-            const cmd = getSelectedItem();
-
+            let cmd: ISearchMenuCommand;
+            let params = [] as string[];
+            if (paramState) {
+                cmd = paramState.paramCmd;
+                params = paramState.params;
+            } else {
+                cmd = getSelectedItem();
+            }
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
-                cmd.exec(context);
+                cmd.exec(cmd, params, context);
             } else {
                 if (cmdParser) {
                     cmdParser(getSearchString(), cmd);

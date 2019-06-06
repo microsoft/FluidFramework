@@ -34,9 +34,10 @@
   },
   "dependencies": {
     "@chaincode/charts": "^0.4.0",
+    "@chaincode/math": "^0.4.0",
     "@chaincode/monaco": "^0.4.0",
     "@chaincode/pinpoint-editor": "^0.4.0",
-    "@component/collection-components": "^0.4.0",
+    "@chaincode/progress-bars": "^0.4.0",
     "@prague/shared-object-common": "^0.4.0",
     "@prague/app-component": "^0.4.0",
     "@prague/app-ui": "^0.4.0",

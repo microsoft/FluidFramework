@@ -36,8 +36,11 @@
     "@prague/map": "^0.4.0",
     "@prague/merge-tree": "^0.4.0",
     "@prague/runtime-definitions": "^0.4.0",
+    "@prague/sequence": "^0.4.0",
+    "@prague/shared-object-common": "^0.4.0",
     "@prague/utils": "^0.4.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "katex": "^0.10.2"
   },
   "devDependencies": {
     "@prague/build-common": "^0.4.0",

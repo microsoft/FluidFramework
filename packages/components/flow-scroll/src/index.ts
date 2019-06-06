@@ -48,6 +48,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             [FlowHost.type, Promise.resolve(Component.createComponentFactory(FlowHost))],
             [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
             [FlowEditor.type, Promise.resolve(Component.createComponentFactory(FlowEditor))],
-            ["@chaincode/math", import("@chaincode/math").then((module) => Component.createComponentFactory(module.Math))],
+            ["@chaincode/math", import("@chaincode/math")],
         ]));
 }

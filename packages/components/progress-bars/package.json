@@ -1,5 +1,5 @@
 {
-  "name": "@component/collection-components",
+  "name": "@chaincode/progress-bars",
   "description": "Progress bar collection",
   "version": "0.4.0",
   "author": "Microsoft",
