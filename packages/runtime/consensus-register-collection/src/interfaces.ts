@@ -21,15 +21,21 @@ export interface IConsensusRegisterCollectionExtension extends ISharedObjectExte
 /**
  * Consensus Register Collection.
  *
- * An consensus register collection is a distributed data structure, which holds a set of linearizable registers.
- * A linearizable register behaves as if there is only a single copy of the data, and that every operation appears
- * to take effect atomically at one point in time. This definition implies that operations are executed in
- * an well-defined order.
+ * A consensus register collection is a distributed data structure, which holds a set of registers with update
+ * versions. On concurrent updates, a register internally stores all possible versions of a value by using reference
+ * sequence number of the incoming update.
  *
- * Any operation on a register is guranteed to be atomic. On a concurrent update, we perform a compare-and-set
- * operation, where we compare with the reference sequence number of the current value. On a collision, the earliest
- * operation wins and every client reaches to an agreement on the value. The sequence number when agreement was
- * reached is stored and that will be used on the next update.
+ * Using all the stored versions, we can then distinguish amongst different read policies. Below are the policies
+ * we support:
+ *
+ * Atomic: Atomicity requires a linearizable register. A linearizable register behaves as if there is only a single
+ * copy of the data, and that every operation appears to take effect atomically at one point in time. This definition
+ * implies that operations are executed in an well-defined order. On a concurrent update, we perform a compare-and-set
+ * operation, where we compare a register sequuence number with the incoming reference sequence number.
+ * The earliest operation overwriting prior sequence numbers wins since every client reaches to an agreement on
+ * the value. So we can safely return the first value.
+ *
+ * LWW: The last write to a key always wins.
  *
  */
 export interface IConsensusRegisterCollection extends ISharedObject {
@@ -84,8 +90,6 @@ export enum ReadPolicy {
 
 /**
  * Internal enum and interface describing the value serialization
- *
- * TODO: Refactor this to be common across how distributed data type handle values.
  */
 
 /**

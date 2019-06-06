@@ -12,7 +12,7 @@ export interface ITask {
 
 /**
  * Agent scheduler.
- * Distributes a set of tasks across connected clients.
+ * Distributes a set of tasks/variables across connected clients.
  */
 export interface IAgentScheduler {
     /**
