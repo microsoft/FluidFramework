@@ -115,6 +115,17 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         this.scheduler = await this.root.wait("scheduler") as ConsensusRegisterCollection;
         await this.connected;
 
+        // Nobody released the tasks held by last client in previous session.
+        // Check to see if this client needs to do this.
+        const quorum = this.runtime.getQuorum();
+        const clearCandidates = [];
+        for (const taskId of this.scheduler.keys()) {
+            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
+                clearCandidates.push(taskId);
+            }
+        }
+        await this.clearTasks(clearCandidates);
+
         // Each client expresses interest to be a leader.
         const leaderElectionTask: ITask = {
             callback: () => {
@@ -129,24 +140,10 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         const leaderClientId = this.getTaskClientId(LeaderTaskId);
         assert(leaderClientId, "No leader present");
 
-        // If this client is the leader.
+        // Set leadership info
         this._leader = leaderClientId === this.runtime.clientId;
 
-        // Nobody released the tasks held by last client in previous session.
-        // Check to see if this client needs to do this.
-        const clearCandidates = [];
-        const quorum = this.runtime.getQuorum();
-
-        for (const taskId of this.scheduler.keys()) {
-            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
-                clearCandidates.push(taskId);
-            }
-        }
-
-        await this.clearTasks(clearCandidates);
-
-        // Listeners for new/released tasks or left client tasks.
-        // All clients will try to grab at the same time.
+        // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
         this.scheduler.on("valueChanged", async (changed: IChanged) => {
             const currentClient = this.getTaskClientId(changed.key);
@@ -154,14 +151,17 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             if (currentClient === null) {
                 await this.pickNewTasks([changed.key]);
             }
+            // A new leader was picked. set leadership info.
             if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
                 this._leader = true;
                 this.emit("leader");
             }
         });
 
+        // A client left the quorum. Iterate and clear tasks held by that client.
+        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
+        // Probably okay for now to have every client do this.
         quorum.on("removeMember", async (clientId: string) => {
-            // Iterate and clear tasks held by the left client.
             const leftTasks: string[] = [];
             for (const taskId of this.scheduler.keys()) {
                 if (this.getTaskClientId(taskId) === clientId) {
