@@ -9,10 +9,13 @@
   },
   "dependencies": {
     "@ms/office-prague-container": "0.3.25-demo.12",
-    "@prague/container-definitions": "^0.2.5915",
-    "@prague/container-loader": "^0.2.5915",
-    "@prague/loader-web": "^0.2.5915",
-    "@prague/routerlicious-socket-storage": "^0.2.5915",
+    "@prague/container-definitions": "^0.3.0",
+    "@prague/container-loader": "^0.3.0",
+    "@prague/loader-web": "^0.3.0",
+    "@prague/odsp-socket-storage": "^0.3.0",
+    "@prague/routerlicious-host": "^0.3.0",
+    "@prague/routerlicious-socket-storage": "^0.3.0",
+    "@prague/odsp-utils": "^0.3.0",
     "jsonwebtoken": "^8.5.1",
     "url-parse": "^1.4.4"
   },

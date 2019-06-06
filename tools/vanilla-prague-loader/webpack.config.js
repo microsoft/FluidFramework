@@ -12,7 +12,7 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
                 loader: "ts-loader"
             }]
@@ -28,8 +28,15 @@ module.exports = env => {
         },
         devServer: {
             publicPath: '/dist'
-        }
+        },
+        node: {
+            dgram: 'empty',
+            fs: 'empty',
+            net: 'empty',
+            tls: 'empty',
+            child_process: 'empty',
+        },
     }, isProduction
-        ? require("./webpack.prod")
-        : require("./webpack.dev"));
+            ? require("./webpack.prod")
+            : require("./webpack.dev"));
 };
