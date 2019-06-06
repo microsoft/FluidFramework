@@ -15,6 +15,7 @@ describe("AgentScheduler", () => {
             id,
         };
     };
+    const leader = "leader";
 
     describe("Single client", () => {
         let host: TestHost;
@@ -37,29 +38,29 @@ describe("AgentScheduler", () => {
         });
 
         it("No tasks initially", async () => {
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
         });
 
         it("Can pick tasks", async () => {
             await scheduler.pick(createEmptyTask("task1"));
-            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
         });
 
         it("Can pick and release tasks", async () => {
             await scheduler.pick(createEmptyTask("task1"));
-            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
             await scheduler.release("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
         });
 
         it("Can register task without picking up", async () => {
             await scheduler.register("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks() , []);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader]);
         });
 
         it("Duplicate picking fails", async () => {
             await scheduler.pick(createEmptyTask("task1"));
-            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
             await scheduler.pick(createEmptyTask("task1")).catch((err) => {
                 assert.deepStrictEqual(err, "task1 is already attempted");
             });
@@ -72,11 +73,14 @@ describe("AgentScheduler", () => {
         });
         it("Should pick previously released task", async () => {
             await scheduler.pick(createEmptyTask("task1"));
-            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
             await scheduler.release("task1");
-            assert.deepStrictEqual(scheduler.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler.pickedTasks(), [leader]);
             await scheduler.pick(createEmptyTask("task1"));
-            assert.deepStrictEqual(scheduler.pickedTasks() , ["task1"]);
+            assert.deepStrictEqual(scheduler.pickedTasks() , [leader, "task1"]);
+        });
+        it("Single client must be the leader", async () => {
+            assert(scheduler.leader, "No leader present");
         });
     });
 
@@ -102,18 +106,18 @@ describe("AgentScheduler", () => {
         });
 
         it("No tasks initially", async () => {
-            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
         });
 
         it("Clients agree on picking tasks sequentially", async () => {
             await scheduler1.pick(createEmptyTask("task1"));
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), []);
             await scheduler2.pick(createEmptyTask("task2"));
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task2"]);
         });
 
@@ -121,7 +125,7 @@ describe("AgentScheduler", () => {
             await scheduler1.pick(createEmptyTask("task1"), createEmptyTask("task2"), createEmptyTask("task3"));
             await scheduler2.pick(createEmptyTask("task2"), createEmptyTask("task3"), createEmptyTask("task4"));
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task3"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task3"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4"]);
         });
 
@@ -131,7 +135,7 @@ describe("AgentScheduler", () => {
             scheduler1.pick(createEmptyTask("task4"), createEmptyTask("task5"));
             scheduler2.pick(createEmptyTask("task5"), createEmptyTask("task6"));
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task5"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
         });
 
@@ -158,17 +162,24 @@ describe("AgentScheduler", () => {
             scheduler1.pick(createEmptyTask("task4"), createEmptyTask("task5"));
             scheduler2.pick(createEmptyTask("task5"), createEmptyTask("task6"));
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task5"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task5"]);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task4", "task6"]);
             scheduler1.release("task2", "task1", "task5");
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
             await TestHost.sync(host2);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task1", "task2", "task4", "task5", "task6"]);
             scheduler1.pick(createEmptyTask("task1"), createEmptyTask("task2"), createEmptyTask("task5"), createEmptyTask("task6"));
             scheduler2.release("task2", "task1", "task4", "task5", "task6");
             await TestHost.sync(host1, host2);
-            assert.deepStrictEqual(scheduler1.pickedTasks(), ["task1", "task2", "task4", "task5", "task6"]);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task4", "task5", "task6"]);
+        });
+
+        it("Releasing leadership should automaticlly elect a new leader", async () => {
+            scheduler1.release(leader);
+            await TestHost.sync(host1, host2);
+            assert.deepStrictEqual(scheduler1.pickedTasks(), []);
+            assert.deepStrictEqual(scheduler2.pickedTasks(), [leader]);
         });
     });
 });

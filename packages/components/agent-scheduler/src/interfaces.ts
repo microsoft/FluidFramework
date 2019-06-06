@@ -15,6 +15,12 @@ export interface ITask {
  * Distributes a set of tasks/variables across connected clients.
  */
 export interface IAgentScheduler {
+
+    /**
+     * Whether this instance is the leader.
+     */
+    leader: boolean;
+
     /**
      * Registers a set of new tasks to distribute amongst connected clients. Only use this if a client wants
      * a new agent to run but does not have the capability to run the agent inside the host.
@@ -44,4 +50,9 @@ export interface IAgentScheduler {
      * Returns a list of all tasks running on this client
      */
     pickedTasks(): string[];
+
+    /**
+     * Attaches an event listener for the leader event
+     */
+    on(event: "leader", listener: (...args: any[]) => void): this;
 }

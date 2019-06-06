@@ -9,9 +9,14 @@ interface IChanged {
     key: string;
 }
 
+const LeaderTaskId = "leader";
+
 export class AgentScheduler extends Component implements IAgentScheduler {
 
     private scheduler: ConsensusRegisterCollection;
+
+    // tslint:disable-next-line:variable-name private fields exposed via getters
+    private _leader = false;
 
     // List of all tasks client is capable of running. This is a strict superset of tasks
     // running in the client.
@@ -25,6 +30,10 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             [MapExtension.Type, new MapExtension()],
             [ConsensusRegisterCollectionExtension.Type, new ConsensusRegisterCollectionExtension()],
         ]);
+    }
+
+    public get leader(): boolean {
+        return this._leader;
     }
 
     public async register(...taskIds: string[]): Promise<void> {
@@ -106,12 +115,27 @@ export class AgentScheduler extends Component implements IAgentScheduler {
         this.scheduler = await this.root.wait("scheduler") as ConsensusRegisterCollection;
         await this.connected;
 
-        const quorum = this.runtime.getQuorum();
+        // Each client expresses interest to be a leader.
+        const leaderElectionTask: ITask = {
+            callback: () => {
+                debug(`Elected as leader`);
+            },
+            id: LeaderTaskId,
+        };
+
+        await this.pick(leaderElectionTask);
+
+        // There must be a leader now.
+        const leaderClientId = this.getTaskClientId(LeaderTaskId);
+        assert(leaderClientId, "No leader present");
+
+        // If this client is the leader.
+        this._leader = leaderClientId === this.runtime.clientId;
 
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
-        // TODO: We need a leader in charge of this.
         const clearCandidates = [];
+        const quorum = this.runtime.getQuorum();
 
         for (const taskId of this.scheduler.keys()) {
             if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
@@ -130,18 +154,20 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             if (currentClient === null) {
                 await this.pickNewTasks([changed.key]);
             }
+            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                this._leader = true;
+                this.emit("leader");
+            }
         });
 
         quorum.on("removeMember", async (clientId: string) => {
             // Iterate and clear tasks held by the left client.
-            // TODO: We need a leader for this.
             const leftTasks: string[] = [];
             for (const taskId of this.scheduler.keys()) {
                 if (this.getTaskClientId(taskId) === clientId) {
                     leftTasks.push(taskId);
                 }
             }
-            // TODO: Pick in random order to have some fairness guarantee.
             await this.clearTasks(leftTasks);
         });
     }
