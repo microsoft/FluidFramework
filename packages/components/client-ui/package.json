@@ -58,6 +58,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
+    "@chaincode/progress-bars": "^0.4.0",
     "@prague/shared-object-common": "^0.4.0",
     "@prague/app-ui": "^0.4.0",
     "@prague/cell": "^0.4.0",
