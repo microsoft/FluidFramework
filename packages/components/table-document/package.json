@@ -27,6 +27,7 @@
     }
   },
   "dependencies": {
+    "@tiny-calc/nano": "^0.0.0",
     "@prague/shared-object-common": "^0.4.0",
     "@prague/app-component": "^0.4.0",
     "@prague/app-datastore": "^0.4.0",
