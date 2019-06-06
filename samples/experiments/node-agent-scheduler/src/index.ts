@@ -16,10 +16,12 @@ interface ITask {
 }
 
 interface IAgentScheduler {
+    leader: boolean;
     register(...taskIds: string[]): Promise<void>;
     pick(...tasks: ITask[]): Promise<void>;
     release(...taskIds: string[]): Promise<void>;
     pickedTasks(): string[];
+    on(event: "leader", listener: (...args: any[]) => void): this;
 }
 
 interface ISharedComponentWrapper {
@@ -152,6 +154,10 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
         await schedulerComponent.attach(platform);
         const taskScheduler = schedulerComponent.scheduler;
 
+        taskScheduler.on("leader", () => {
+            console.log(`Elected as leader`);
+        });
+
         console.log("");
         console.log("Enter command (ctrl+c to quit)");
         console.log("");
@@ -179,6 +185,10 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
                 console.error(`Invalid command ${command}`);
             }
             console.log(`Current status: ${taskScheduler.pickedTasks()}`);
+            if (taskScheduler.leader) {
+                console.log(`Leader`);
+            }
+
         }
     }
 }
@@ -218,7 +228,7 @@ commander
     .option("-h, --storage [storage]", "Storage URL", "https://historian.wu2-ppe.prague.office-int.com")
     .option("-t, --tenant [tenant]", "Tenant", "stupefied-kilby")
     .option("-s, --secret [secret]", "Secret", "4a9211594f7c3daebca3deb8d6115fe2")
-    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.14")
+    .option("-p, --package [package]", "Package", "@chaincode/agent-scheduler-test@0.3.16")
     .arguments("<documentId>")
     .action((documentId) => {
         action = true;
