@@ -1,14 +1,16 @@
 import { IChaincodeModule } from "@prague/runtime-definitions";
 
-export interface IExtension {
+/**
+ * Definitions of a shared extensions. Extensions follow a common model but enable custom behavior.
+ */
+export interface ISharedObjectExtension extends IChaincodeModule {
     /**
      * String representing the type of the extension.
      */
     type: string;
-}
-/**
- * Definitions of a shared extensions. Extensions follow a common model but enable custom behavior.
- */
-export interface ISharedObjectExtension extends IChaincodeModule, IExtension {
+
+    /**
+     * String representing the version of the snapshot. This value is updated when the format of snapshots changes.
+     */
     readonly snapshotFormatVersion: string;
 }

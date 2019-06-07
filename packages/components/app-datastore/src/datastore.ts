@@ -87,6 +87,8 @@ class InsecureUrlResolver implements IUrlResolver {
 
 /**
  * Instance of a Prague data store, used to open/create component instances.
+ *
+ * @deprecated This class is deprecated. Please use vanilla-loader instead
  */
 export class DataStore {
     /**

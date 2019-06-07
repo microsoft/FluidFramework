@@ -18,29 +18,61 @@ import { debug } from "./debug";
 import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
 
+/**
+ *  Base class from which all shared objects derive
+ */
 export abstract class SharedObject extends EventEmitter implements ISharedObject {
+    /**
+     * Marker to clearly identify the object as a shared object
+     */
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
 
+    /**
+     * Telemetry logger for the shared object
+     */
     protected readonly logger: ITelemetryLogger;
 
+    /**
+     * Connection state
+     */
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;
 
-    // Locally applied operations not yet ACK'd by the server
+    /**
+     * Locally applied operations not yet ACK'd by the server
+     */
     private readonly pendingOps = new Deque<{ clientSequenceNumber: number; content: any }>();
 
+    /**
+     * Services used by the shared object
+     */
     private services: ISharedObjectServices;
 
+    /**
+     * Gets the connection state
+     *
+     * @returns the state of the connection
+     */
     public get state(): ConnectionState {
         return this._state;
     }
 
+    /**
+     * @param id - the id of the shared object
+     * @param runtime - the IComponentRuntime which contains the shared object
+     * @param type - type of the shared object
+     */
     constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
         this.logger = ChildLogger.Create(runtime ? runtime.logger : undefined, type, {SharedObjectId: id});
     }
 
+    /**
+     * Creates a JSON object with information about the shared object
+     *
+     * @returns a JSON object containing the ValueType (always Shared) and the id of the shared object
+     */
     public toJSON() {
         return {
             type: ValueType[ValueType.Shared],
@@ -51,6 +83,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * A shared object, after construction, can either be loaded in the case that it is already part of
      * a shared document. Or later attached if it is being newly added.
+     *
+     * @param minimumSequenceNumber - the minimum sequence number at time of load
+     * @param headerOrigin - the document ID
+     * @param services - services used by the shared object
      */
     public async load(
         minimumSequenceNumber: number,
@@ -98,6 +134,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Returns whether the given shared object is local
+     *
+     * @returns true if the given shared object is local
      */
     public isLocal(): boolean {
         return !this.services;
@@ -105,6 +143,9 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Registers a listener on the specified events
+     *
+     * @param event - the event to listen for
+     * @param listener - the listener to register
      */
     public on(
             event: "pre-op" | "op",
@@ -118,19 +159,35 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Gets a form of the object that can be serialized.
+     *
+     * @returns a tree representing the snapshot of the shared object
      */
     public abstract snapshot(): ITree;
 
+    /**
+     * Set the owner of the object if it is an OwnedSharedObject
+     *
+     * @returns the owner of the object if it is an OwnedSharedObject, otherwise undefined
+     */
     protected setOwner(): string {
         return;
     }
 
+    /**
+     * Reads and sets the owner from storage if this is an ownedSharedObject
+     *
+     * @param storage - the storage used by the shared object
+     */
     protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
          return;
      }
 
     /**
      * Allows the distributed data type to perform custom loading
+     *
+     * @param minimumSequenceNumber - the minimum sequence number at time of load
+     * @param headerOrigin - the document ID
+     * @param services - storage used by the shared object
      */
     protected abstract loadCore(
         minimumSequenceNumber: number,
@@ -157,11 +214,19 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Prepares the given message for processing
+     *
+     * @param message - the message to prepare
+     * @param local - true if the object is local
+     * @returns resolved when message is prepared
      */
     protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
     /**
      * Derived classes must override this to do custom processing on a remote message
+     *
+     * @param message - the message to prepare
+     * @param local - true if the shared object is local
+     * @param context - additional context for the message
      */
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
 
@@ -172,11 +237,16 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
     /**
      * Called when the object has fully connected to the delta stream
+     *
+     * @param pending - messages recieved while disconnected
      */
     protected abstract onConnect(pending: any[]);
 
     /**
      * Processes a message by the local client
+     *
+     * @param content - content of the message
+     * @returns client sequence number
      */
     protected submitLocalMessage(content: any): number {
         assert(!this.isLocal());
@@ -194,10 +264,25 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         return clientSequenceNumber;
     }
 
+    /**
+     * Prepares the given message for processing
+     *
+     * @param message - message to be prepared
+     * @param local - true if the shared object is local
+     * @returns resolved when message is prepared
+     */
     protected prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return this.prepareCore(message, local);
     }
 
+    /**
+     * Report ignorable errors in code logic or data integrity to the logger.
+     * Hosting app / container may want to optimize out these call sites and make them no-op.
+     * It may also show assert dialog in non-production builds of application.
+     *
+     * @param condition - if false, assert is logged
+     * @param message - actual message to log; ideally should be unique message to identify call site
+     */
     protected debugAssert(condition: boolean, message: string) {
         this.logger.debugAssert(condition, message);
     }

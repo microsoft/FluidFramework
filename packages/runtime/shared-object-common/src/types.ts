@@ -2,14 +2,8 @@ import { ITree } from "@prague/container-definitions";
 import { IChannel } from "@prague/runtime-definitions";
 
 /**
- * Helper interface to wrap a snapshot with the sequence number it was taken at
+ * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObjectSnapshot {
-    sequenceNumber: number;
-
-    snapshot: any;
-}
-
 export interface ISharedObject extends IChannel {
     /**
      * The type of the shared object
