@@ -43,6 +43,7 @@ export abstract class Component extends EventEmitter implements IComponent {
         return `${this.constructor.name}${this.runtime ? `:'${this.runtime.id}'` : ""}`;
     }
 
+    protected get context() { return this._context; }
     protected get runtime() { return this._runtime; }
     protected get platform() { return this._platform; }
     protected get root() { return this._root; }
@@ -143,6 +144,9 @@ export abstract class Component extends EventEmitter implements IComponent {
     // tslint:disable-next-line:variable-name
     private _root: ISharedMap = null;
 
+    // tslint:disable-next-line:variable-name
+    private _context: IComponentContext = null;
+
     private ensureOpenedPromise: Promise<Component> = null;
 
     constructor(types?: ReadonlyArray<[string, ISharedObjectExtension]>) {
@@ -200,6 +204,7 @@ export abstract class Component extends EventEmitter implements IComponent {
      */
     private async initialize(context: IComponentContext): Promise<IComponentRuntime> {
         debug(`${this.dbgName}.instantiateComponent()`);
+        this._context = context;
 
         // Instantiation of underlying data model for the component
         debug(`${this.dbgName}.LoadFromSnapshot() - begin`);

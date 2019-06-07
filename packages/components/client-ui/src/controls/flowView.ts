@@ -4805,9 +4805,14 @@ export class FlowView extends ui.Component {
     }
 
     private async openCollections() {
+        const [mathPlatform, progressBarsPlatform] = await Promise.all([
+            this.openPlatform("math"),
+            this.openPlatform("progress-bars"),
+        ]);
+
         const [math, progressBars] = await Promise.all([
-            this.openPlatform<MathComponent.MathCollection>("math"),
-            this.openPlatform<ProgressCollection>("progress-bars"),
+            mathPlatform.queryInterface<MathComponent.MathCollection>("collection"),
+            progressBarsPlatform.queryInterface<ProgressCollection>("collection"),
         ]);
 
         this.math = math;

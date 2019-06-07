@@ -1,5 +1,6 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
+import { ICommand, KeyCode, Scheduler, Template, View } from "@prague/flow-util";
+import { IComponent } from "@prague/runtime-definitions";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
@@ -9,6 +10,7 @@ import * as style from "./index.css";
 interface IHostConfig {
     scheduler: Scheduler;
     doc: FlowDocument;
+    math: { create: () => IComponent };
 }
 
 const template = new Template(
@@ -43,9 +45,15 @@ export class HostView extends View<IHostConfig> {
             return start < end;
         };
 
-        const insertComponent = (type: string) => {
+        // const insertComponent = (type: string) => {
+        //     const position = viewport.editor.cursorPosition;
+        //     init.doc.insertInclusionComponent(position, randomId(), type);
+        // };
+
+        const insertMath = () => {
             const position = viewport.editor.cursorPosition;
-            init.doc.insertInclusionComponent(position, randomId(), type);
+            const instance = init.math.create();
+            init.doc.insertInclusionComponent(position, `/${instance.id}`);
         };
 
         const toggleSelection = (className: string) => {
@@ -56,7 +64,7 @@ export class HostView extends View<IHostConfig> {
         searchMenu.attach(template.get(root, "search"), {
             commands: [
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(style.bold) },
-                { name: "insert math", enabled: () => true, exec: () => insertComponent("@chaincode/math") },
+                { name: "insert math", enabled: () => true, exec: insertMath },
             ],
             onComplete: this.onComplete,
          });

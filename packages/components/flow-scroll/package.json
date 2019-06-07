@@ -32,9 +32,11 @@
     }
   },
   "dependencies": {
+    "@prague/component-runtime": "^0.4.0",
     "@chaincode/flow-document": "^0.4.0",
     "@chaincode/flow-editor": "^0.4.0",
     "@chaincode/math": "^0.4.0",
+    "@chaincode/progress-bars": "^0.4.0",
     "@prague/app-component": "^0.4.0",
     "@prague/app-datastore": "^0.4.0",
     "@prague/container-definitions": "^0.4.0",
@@ -57,6 +59,7 @@
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5",
     "typings-for-css-modules-loader": "^1.7.0",
+    "url-loader": "^1.1.1",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"

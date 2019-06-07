@@ -1,5 +1,6 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
+import { ServicePlatform } from "@prague/component-runtime";
 import { TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {
@@ -15,6 +16,7 @@ import {
     TextSegment,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
+import { IComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import { debug } from "./debug";
@@ -148,7 +150,19 @@ export class FlowDocument extends Component {
     }
 
     public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        await this.runtime.openComponent(marker.properties.docId, true, services);
+        const docId = marker.properties.docId as string;
+        if (docId.indexOf("/") === 0) {
+            const response = await this.context.hostRuntime.request({ url: marker.properties.docId });
+            if (response.status !== 200 || response.mimeType !== "prague/component") {
+                return Promise.reject("Not found");
+            }
+
+            const component = response.value as IComponent;
+            await component.attach(new ServicePlatform(services));
+
+        } else {
+            await this.runtime.openComponent(marker.properties.docId, true, services);
+        }
     }
 
     public getSegmentAndOffset(position: number) {
@@ -208,10 +222,13 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
     }
 
-    public insertInclusionComponent(position: number, docId: string, pkg: string) {
+    public insertInclusionComponent(position: number, docId: string, pkg?: string) {
         const docInfo = { kind: InclusionKind.Component, docId };
         this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-        this.runtime.createAndAttachComponent(docId, pkg);
+
+        if (pkg) {
+            this.runtime.createAndAttachComponent(docId, pkg);
+        }
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
