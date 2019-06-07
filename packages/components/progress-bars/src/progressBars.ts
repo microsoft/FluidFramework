@@ -4,6 +4,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/container-definitions";
+import { IView, IViewProvider } from "@prague/framework-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -22,45 +23,39 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires no-submodule-imports
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView extends EventEmitter implements IPlatform {
+class ProgressBarView implements IView {
     private div: HTMLDivElement;
 
-    constructor(private bar: ProgressBar, parent: HTMLDivElement) {
-        super();
+    constructor(private bar: ProgressBar) { }
 
-        if (parent) {
-            this.div = document.createElement("div");
-            this.div.classList.add("progress");
-            // tslint:disable-next-line:max-line-length no-inner-html
-            this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
+    public attach(parent: Element) {
+        this.div = document.createElement("div");
+        this.div.classList.add("progress");
+        // tslint:disable-next-line:max-line-length no-inner-html
+        this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
-            const urlDiv = document.createElement("div");
-            urlDiv.innerText = `/progress/${this.bar.id}`;
+        const urlDiv = document.createElement("div");
+        urlDiv.innerText = `/progress/${this.bar.id}`;
 
-            const downButton = document.createElement("button");
-            downButton.innerText = "down";
-            downButton.onclick = () => {
-                this.bar.changeValue(this.bar.value - 1);
-            };
+        const downButton = document.createElement("button");
+        downButton.innerText = "down";
+        downButton.onclick = () => {
+            this.bar.changeValue(this.bar.value - 1);
+        };
 
-            const upButton = document.createElement("button");
-            upButton.innerText = "up";
-            upButton.onclick = () => {
-                // Should be a counter
-                this.bar.changeValue(this.bar.value + 1);
-            };
+        const upButton = document.createElement("button");
+        upButton.innerText = "up";
+        upButton.onclick = () => {
+            // Should be a counter
+            this.bar.changeValue(this.bar.value + 1);
+        };
 
-            parent.appendChild(this.div);
-            parent.appendChild(urlDiv);
-            parent.appendChild(downButton);
-            parent.appendChild(upButton);
-        }
+        parent.appendChild(this.div);
+        parent.appendChild(urlDiv);
+        parent.appendChild(downButton);
+        parent.appendChild(upButton);
 
         this.render();
-    }
-
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
     }
 
     public detach() {
@@ -77,7 +72,7 @@ class ProgressBarView extends EventEmitter implements IPlatform {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements IComponent {
+export class ProgressBar implements IComponent, IViewProvider {
     private views = new Set<ProgressBarView>();
 
     constructor(
@@ -87,13 +82,15 @@ export class ProgressBar implements IComponent {
         private collection: ProgressCollection) {
     }
 
-    // On attach create a specific binding from the model to the platform
+    // TODO Remove: Temporarily, we still support attaching via passing a "div" into 'attach()'
+    //              for legacy hosts.
     public async attach(platform: IPlatform): Promise<IPlatform> {
         const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        const attached = new ProgressBarView(this, maybeDiv);
+        const attached = new ProgressBarView(this);
+        attached.attach(maybeDiv);
         this.views.add(attached);
 
-        return attached;
+        return null;
     }
 
     public changeValue(newValue: number) {
@@ -111,6 +108,18 @@ export class ProgressBar implements IComponent {
             view.render();
         }
     }
+
+    // Begin IViewProvider implementation
+
+    public readonly viewProvider = Promise.resolve(this);
+
+    public createView() {
+        const view = new ProgressBarView(this);
+        this.views.add(view);
+        return view;
+    }
+
+    // End IViewProvider implementation
 }
 
 export class ProgressCollection extends EventEmitter implements IComponent {
@@ -145,6 +154,7 @@ export class ProgressCollection extends EventEmitter implements IComponent {
         return;
     }
 
+    // TODO Remove
     public async attach(platform: IPlatform): Promise<IPlatform> {
         return this;
     }

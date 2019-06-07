@@ -29,6 +29,7 @@ dependencies:
   '@rush-temp/flow-page': 'file:projects/flow-page.tgz'
   '@rush-temp/flow-scroll': 'file:projects/flow-scroll.tgz'
   '@rush-temp/flow-util': 'file:projects/flow-util.tgz'
+  '@rush-temp/framework-definitions': 'file:projects/framework-definitions.tgz'
   '@rush-temp/gateway': 'file:projects/gateway.tgz'
   '@rush-temp/gitresources': 'file:projects/gitresources.tgz'
   '@rush-temp/intelligence-runner': 'file:projects/intelligence-runner.tgz'
@@ -99,7 +100,7 @@ dependencies:
   '@types/katex': 0.10.1
   '@types/keypress.js': 2.1.0
   '@types/leaflet': 1.4.4
-  '@types/lodash': 4.14.133
+  '@types/lodash': 4.14.134
   '@types/logform': 1.2.0
   '@types/minio': 7.0.2
   '@types/mocha': 5.2.7
@@ -745,13 +746,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==
-  /@types/express-serve-static-core/4.16.6:
+  /@types/express-serve-static-core/4.16.7:
     dependencies:
       '@types/node': 10.14.8
       '@types/range-parser': 1.2.3
     dev: false
     resolution:
-      integrity: sha512-8wr3CA/EMybyb6/V8qvTRKiNkPmgUA26uA9XWD6hlA0yFDuqi4r2L0C2B0U2HAYltJamoYJszlkaWM31vrKsHg==
+      integrity: sha512-847KvL8Q1y3TtFLRTXcVakErLJQgdpFSaq+k043xefz9raEf0C7HalpSY7OW5PyjCnY8P7bPW5t/Co9qqp+USg==
   /@types/express-session/1.15.12:
     dependencies:
       '@types/express': 4.17.0
@@ -762,7 +763,7 @@ packages:
   /@types/express/4.17.0:
     dependencies:
       '@types/body-parser': 1.17.0
-      '@types/express-serve-static-core': 4.16.6
+      '@types/express-serve-static-core': 4.16.7
       '@types/serve-static': 1.13.2
     dev: false
     resolution:
@@ -854,6 +855,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-/3JqnvPnY58GLzG3Y7fpphOhATV1DDZ/Ak3DQufjlRK5E4u+s0CfClfNFtAGBabw+jDGtRFbOZe+Z02ZMWCBNQ==
+  /@types/lodash/4.14.134:
+    dev: false
+    resolution:
+      integrity: sha512-2/O0khFUCFeDlbi7sZ7ZFRCcT812fAeOLm7Ev4KbwASkZ575TDrDcY7YyaoHdTOzKcNbfiwLYZqPmoC4wadrsw==
   /@types/logform/1.2.0:
     dev: false
     resolution:
@@ -1028,7 +1033,7 @@ packages:
       integrity: sha512-6bU8cLUb1qYv0YecMRWKxS4L0+mjPMcQq2ZXtsUe0ij4oALCUIvCvy7rsGqWbOKcNwauh6jiuF4V/vCsObmXkw==
   /@types/serve-static/1.13.2:
     dependencies:
-      '@types/express-serve-static-core': 4.16.6
+      '@types/express-serve-static-core': 4.16.7
       '@types/mime': 2.0.1
     dev: false
     resolution:
@@ -6362,7 +6367,7 @@ packages:
     engines:
       node: '>=6.4.0'
     optionalDependencies:
-      snappy: 6.2.2
+      snappy: 6.2.3
     resolution:
       integrity: sha512-id9bdOQ35OkrQHHbIjtpC02Y2kTpmLQw/B9wbe6uAzjkLaRyu30GnJoz22vZ8uBB9DZ0JgwjHrKOK7sB3i41LA==
   /kafka-rest/0.0.5:
@@ -9640,7 +9645,7 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha512-FtyOnWN/wCHTVXOMwvSv26d+ko5vWlIDD6zoUJ7LW8vh+ZBC8QdljveRP+crNrtBwioEUWy/4dMtbBjA4ioNlg==
-  /snappy/6.2.2:
+  /snappy/6.2.3:
     dependencies:
       bindings: 1.5.0
       nan: 2.14.0
@@ -9649,7 +9654,7 @@ packages:
     optional: true
     requiresBuild: true
     resolution:
-      integrity: sha512-JEKyTqddzxFJV1gjyAwM9ZUdJyrXGnFWX8InAY/PWn785dNChLOdrAtEDfeegOSXInOljao+hItidkRpcOCC2A==
+      integrity: sha512-HZpVoIxMfQ4fL3iDuMdI1R5xycw1o9YDCAndTKZCY/EHRoKFvzwplttuBBVGeEg2fd1hYiwAXos/sM24W7N1LA==
   /socket.io-adapter/1.1.1:
     dev: false
     resolution:
@@ -12183,7 +12188,7 @@ packages:
   'file:projects/cell.tgz':
     dependencies:
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/node': 10.14.8
       concurrently: 4.1.0
@@ -12330,7 +12335,7 @@ packages:
     dependencies:
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/node': 10.14.8
       '@types/scriptjs': 0.0.2
@@ -12412,7 +12417,7 @@ packages:
     dependencies:
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.0
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/node': 10.14.8
       concurrently: 4.1.0
@@ -12434,7 +12439,7 @@ packages:
     dependencies:
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/node': 10.14.8
       '@types/scriptjs': 0.0.2
@@ -12635,6 +12640,18 @@ packages:
       integrity: sha512-FkWCrHLAwm52HmtPNYB9x/hTVMkxpFSgRFnqp/9rrLC+OaG0XRtctKdHSeKLyoy68bPCRcVpU+NdkheR0+/TxA==
       tarball: 'file:projects/flow-util.tgz'
     version: 0.0.0
+  'file:projects/framework-definitions.tgz':
+    dependencies:
+      concurrently: 4.1.0
+      tslint: /tslint/5.17.0/typescript@3.4.5
+      tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.17.0+typescript@3.4.5
+      typescript: 3.4.5
+    dev: false
+    name: '@rush-temp/framework-definitions'
+    resolution:
+      integrity: sha512-a2F2gqR0ezQ+KCkWj6Ely26u6WRb/yLKx6cFJ+KVd1Y50T+FU2Uv2WJISjzMEOTyIUJvOr8OlKavfwxD6OnvFQ==
+      tarball: 'file:projects/framework-definitions.tgz'
+    version: 0.0.0
   'file:projects/gateway.tgz':
     dependencies:
       '@prague/odsp-utils': packages.wu2.prague.office-int.com/@prague/odsp-utils/0.3.6609/tslint@5.16.0+typescript@3.4.5
@@ -12652,7 +12669,7 @@ packages:
       '@types/jsdom': 12.2.3
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/mongodb': 3.1.28
       '@types/morgan': 1.7.35
@@ -12781,7 +12798,7 @@ packages:
     version: 0.0.0
   'file:projects/kafka-orderer.tgz':
     dependencies:
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/node': 10.14.8
       concurrently: 4.1.0
       lodash: 4.17.11
@@ -12819,7 +12836,7 @@ packages:
   'file:projects/lambdas-driver.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.8
@@ -12843,7 +12860,7 @@ packages:
   'file:projects/lambdas.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.8
@@ -12952,7 +12969,7 @@ packages:
   'file:projects/memory-orderer.tgz':
     dependencies:
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/node': 10.14.8
       '@types/uuid': 3.4.4
       '@types/ws': 6.0.1
@@ -13256,7 +13273,7 @@ packages:
       '@types/jsdom': 12.2.3
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/mocha': 5.2.7
       '@types/mongodb': 3.1.28
       '@types/morgan': 1.7.35
@@ -13477,7 +13494,7 @@ packages:
       '@azure/event-processor-host': 1.0.6
       '@types/amqplib': 0.5.12
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/minio': 7.0.2
       '@types/mongodb': 3.1.28
       '@types/node': 10.14.8
@@ -13711,7 +13728,7 @@ packages:
     version: 0.0.0
   'file:projects/test-utils.tgz':
     dependencies:
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/nconf': 0.0.37
       '@types/node': 10.14.8
       '@types/string-hash': 1.1.1
@@ -13734,7 +13751,7 @@ packages:
     dependencies:
       '@types/debug': 0.0.31
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/node': 10.14.8
       '@types/randomstring': 1.1.6
       async: 2.6.2
@@ -14253,7 +14270,7 @@ packages:
       '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7405
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.133
+      '@types/lodash': 4.14.134
       '@types/node': 10.14.8
       '@types/scriptjs': 0.0.2
       async: 2.6.2
@@ -14775,6 +14792,7 @@ specifiers:
   '@rush-temp/flow-page': 'file:./projects/flow-page.tgz'
   '@rush-temp/flow-scroll': 'file:./projects/flow-scroll.tgz'
   '@rush-temp/flow-util': 'file:./projects/flow-util.tgz'
+  '@rush-temp/framework-definitions': 'file:./projects/framework-definitions.tgz'
   '@rush-temp/gateway': 'file:./projects/gateway.tgz'
   '@rush-temp/gitresources': 'file:./projects/gitresources.tgz'
   '@rush-temp/intelligence-runner': 'file:./projects/intelligence-runner.tgz'

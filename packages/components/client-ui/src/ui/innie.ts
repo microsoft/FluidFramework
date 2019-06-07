@@ -4,6 +4,7 @@ import { IPlatform } from "@prague/container-definitions";
 import { IComponent } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
+import { isViewProvider } from "../../../../framework/framework-definitions/dist";
 import { debug } from "./debug";
 import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
@@ -84,15 +85,26 @@ export class InnerComponent extends Block<InnerDocumentState> {
             context.services.get("invalidateLayout")();
         };
 
+        const capabilities = {
+            invalidateLayout: Promise.resolve(invalidateLayout),
+        };
+
         const attachedP = collabDocument.context.hostRuntime.request({ url: `/${self.id}`}).then(async (response) => {
             if (response.status !== 200 || response.mimeType !== "prague/component") {
                 return Promise.reject(response);
             }
 
             const component = response.value as IComponent;
-            const platform = new InnerPlatform(div, invalidateLayout);
-            const innerPlatform = await component.attach(platform);
-            definitionGuide.addComponent(component.id, innerPlatform);
+            if (isViewProvider(component)) {
+                const view = (await component.viewProvider).createView(capabilities);
+                view.attach(div);
+            } else {
+                // TODO Remove: Temporarily, we still support attaching via passing a "div" into 'attach()'
+                //              for legacy components.
+                const platform = new InnerPlatform(div, invalidateLayout);
+                const innerPlatform = await component.attach(platform);
+                definitionGuide.addComponent(component.id, innerPlatform);
+            }
         });
 
         attachedP.catch((error) => {

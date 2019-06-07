@@ -1,0 +1,17 @@
+{
+    "extends": "@prague/build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "strict": true,
+        "strictNullChecks": false,
+        "declarationDir": "./dist",
+        "rootDir": "./src",
+        "outDir": "./dist"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
