@@ -31,9 +31,6 @@ async function loadAllSequencedMessages(
 
         sequencedMessages.push(...messages);
         curr = messages[messages.length - 1].sequenceNumber;
-        if (curr !== curr + batch - 1) {
-            break;
-        }
     }
 
     const client: IClient = { mode: undefined, permission: [], type: "browser", user: { id: "blah" } };
