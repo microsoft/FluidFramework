@@ -112,6 +112,10 @@ export interface IComponent {
     attach(platform: IPlatform): Promise<IPlatform>;
 }
 
+export interface IComponentRouter {
+    request(req: IRequest): Promise<IResponse>;
+}
+
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
@@ -240,4 +244,29 @@ export interface IComponentLayout {
     minimumHeightInline?: number;
     canInline?: boolean;
     preferInline?: boolean;
+}
+
+/**
+ * Direction from which the cursor has entered or left a component.
+ */
+export enum ComponentCursorDirection {
+    Left,
+    Right,
+    Top,
+    Bottom,
+    Airlift,
+}
+
+export interface IComponentCursor {
+    enter(direction: ComponentCursorDirection): void;
+    leave(direction: ComponentCursorDirection): void;
+    // returns true if cursor leaves the component
+    fwd(): boolean;
+    rev(): boolean;
+}
+
+// used when another component will forward keyboard events to this component
+export interface IComponentKeyHandlers {
+    onKeypress(e: KeyboardEvent): void;
+    onKeydown(e: KeyboardEvent): void;
 }

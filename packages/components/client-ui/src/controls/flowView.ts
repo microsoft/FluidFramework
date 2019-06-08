@@ -6,10 +6,8 @@ import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prag
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentDisplayType,
-    IComponent,
-    IComponentRenderHTML,
-    IInboundSignalMessage,
+    ComponentCursorDirection, ComponentDisplayType, IComponent,
+    IComponentCursor, IComponentKeyHandlers, IComponentRenderHTML, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -45,11 +43,10 @@ export interface IMathCollection extends IComponent, IPlatform {
     getInstance(id: string): IMathInstance;
 }
 
-export interface IMathInstance extends IComponent, IComponentRenderHTML {
+export interface IMathInstance extends IComponent, IComponentRenderHTML, IComponentCursor,
+    IComponentKeyHandlers {
     id: string;
     leafId: string;
-    cursorFwd(): boolean;
-    cursorVisible(b: boolean): void;
 }
 
 export interface IFlowViewUser extends IUser {
@@ -3065,6 +3062,7 @@ export class FlowView extends ui.Component {
     public viewportStartPos: number;
     public viewportEndPos: number;
     public cursorSpan: HTMLSpanElement;
+    public componentCursor: IComponentCursor;
     public viewportDiv: HTMLDivElement;
     public viewportRect: ui.Rectangle;
     public client: MergeTree.Client;
@@ -3678,6 +3676,11 @@ export class FlowView extends ui.Component {
                 computed += span.offset;
             }
             this.cursor.pos = span.segPos + computed;
+            this.cursor.enable();
+            if (this.componentCursor) {
+                this.componentCursor.leave(ComponentCursorDirection.Airlift);
+                this.componentCursor = undefined;
+            }
             const tilePos = findTile(this, this.cursor.pos, "pg", false);
             if (tilePos) {
                 this.curPG = tilePos.tile as MergeTree.Marker;
@@ -3763,6 +3766,11 @@ export class FlowView extends ui.Component {
     public setCursorPosFromPixels(targetLineDiv: ILineDiv, x: number) {
         const position = this.getPosFromPixels(targetLineDiv, x);
         if (position !== undefined) {
+            this.cursor.enable();
+            if (this.componentCursor) {
+                this.componentCursor.leave(ComponentCursorDirection.Airlift);
+                this.componentCursor = undefined;
+            }
             this.cursor.pos = position;
             return true;
         } else {
@@ -3794,16 +3802,17 @@ export class FlowView extends ui.Component {
             }
             const segoff = getContainingSegment(this, this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
-                if (segoff.segment.refType & MergeTree.ReferenceType.Tile) {
-                    if (segoff.segment.hasTileLabel("pg")) {
-                        if (segoff.segment.hasRangeLabel("table") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
+                const marker = segoff.segment as MergeTree.Marker;
+                if (marker.refType & MergeTree.ReferenceType.Tile) {
+                    if (marker.hasTileLabel("pg")) {
+                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorRev();
                         }
-                    } else if (segoff.segment.hasTileLabel("math")) {
+                    } else if (marker.hasTileLabel("math")) {
                         return;
                     }
-                } else if ((segoff.segment.refType === MergeTree.ReferenceType.NestEnd) && (segoff.segment.hasRangeLabel("cell"))) {
-                    const cellMarker = segoff.segment as Table.ICellMarker;
+                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
+                    const cellMarker = marker as Table.ICellMarker;
                     const endId = cellMarker.getId();
                     let beginMarker: Table.ICellMarker;
                     if (endId) {
@@ -3815,6 +3824,12 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorRev();
                     }
+                } else if (isMathComponentView(marker)) {
+                    const mathMarker = marker as IMathViewMarker;
+                    this.loadMath(mathMarker);
+                    this.cursor.disable();
+                    this.componentCursor = mathMarker.instance;
+                    mathMarker.instance.enter(ComponentCursorDirection.Right);
                 } else {
                     this.cursorRev();
                 }
@@ -3866,7 +3881,9 @@ export class FlowView extends ui.Component {
                 } else if (isMathComponentView(marker)) {
                     const mathMarker = marker as IMathViewMarker;
                     this.loadMath(mathMarker);
-                    mathMarker.instance.cursorVisible(true);
+                    this.cursor.disable();
+                    this.componentCursor = mathMarker.instance;
+                    mathMarker.instance.enter(ComponentCursorDirection.Left);
                 } else {
                     this.cursorFwd();
                 }
@@ -4248,6 +4265,9 @@ export class FlowView extends ui.Component {
                     if (this.cursor.pos > FlowView.docStartPosition) {
                         if (this.inMathGetMarker()) {
                             this.mathCursorRev();
+                        } else if (this.getMathViewMarker()) {
+                            const marker = getContainingSegment(this, this.cursor.pos).segment as IMathViewMarker;
+                            this.mathComponentViewCursorRev(marker);
                         } else {
                             if (this.cursor.pos === this.viewportStartPos) {
                                 this.scroll(true, true);
@@ -4367,6 +4387,8 @@ export class FlowView extends ui.Component {
                                 console.log(`unrecognized math input ${e.char}`);
                             }
                         }
+                    } else if (this.getMathViewMarker()) {
+                        this.mathComponentViewKeypress(e);
                     } else {
                         this.sharedString.insertText(String.fromCharCode(code), pos);
                         if (code === CharacterCodes.space) {
@@ -4398,13 +4420,35 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public mathComponentViewKeypress(e: KeyboardEvent) {
+        const marker = this.getMathViewMarker();
+        if (!marker.instance) {
+            this.loadMath(marker);
+        }
+        marker.instance.onKeypress(e);
+    }
+
     public mathComponentViewCursorFwd(marker: IMathViewMarker) {
         if (!marker.instance) {
             this.loadMath(marker);
         }
-        if (marker.instance.cursorFwd()) {
+        if (marker.instance.fwd()) {
+            marker.instance.leave(ComponentCursorDirection.Right);
+            this.cursor.enable();
             this.cursorFwd();
-            marker.instance.cursorVisible(false);
+        }
+        this.broadcastPresence();
+        this.cursor.updateView(this);
+    }
+
+    public mathComponentViewCursorRev(marker: IMathViewMarker) {
+        if (!marker.instance) {
+            this.loadMath(marker);
+        }
+        if (marker.instance.rev()) {
+            marker.instance.leave(ComponentCursorDirection.Left);
+            this.cursorRev();
+            this.cursor.enable();
         }
         this.broadcastPresence();
         this.cursor.updateView(this);
@@ -4919,6 +4963,11 @@ export class FlowView extends ui.Component {
     }
 
     private async openCollections() {
+        const [mathPlatform, progressBarsPlatform] = await Promise.all([
+            this.openPlatform("math"),
+            this.openPlatform("progress-bars"),
+        ]);
+
         const [progressBars, math] = await Promise.all([
             this.openPlatform<ProgressCollection>("progress-bars"),
             this.openPlatform<IMathCollection>("math"),
