@@ -131,11 +131,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.componentContext.leader;
     }
 
-    // Interface used to access the runtime code
-    public get platform(): IPlatform {
-        return this._platform;
-    }
-
     public get clientId(): string {
         return this.componentContext.clientId;
     }
@@ -153,9 +148,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
-
-    // tslint:disable-next-line:variable-name
-    private _platform: IPlatform;
 
     private constructor(
         private readonly componentContext: IComponentContext,

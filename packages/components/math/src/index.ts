@@ -1,9 +1,10 @@
 import * as ClientUI from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-    IPlatform,
+    IComponentRouter,
     IRequest,
     IResponse,
+    ISharedComponent,
 } from "@prague/container-definitions";
 import {
     CounterValueType,
@@ -15,12 +16,10 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentDisplayType,
-    IComponent,
     IComponentCollection,
     IComponentContext,
     IComponentLayout,
     IComponentRenderHTML,
-    IComponentRouter,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -33,34 +32,30 @@ interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
 }
 
 export class MathInstance extends EventEmitter
-    implements IComponent, IPlatform, IComponentRenderHTML, IComponentRouter, IComponentLayout {
+    implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentLayout {
+
+    public static supportedInterfaces = [
+        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentRenderHTML", "IComponentLayout"];
+
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public canInline = true;
     public cursorActive = false;
 
     constructor(
-        public id: string,
+        public url: string,
         public leafId: string,
         private readonly collection: MathCollection) {
         super();
         this.initialize();
     }
 
-    // On attach create a specific binding from the model to the platform
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this;
+    public async query(id: string): Promise<any> {
+        return MathInstance.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async queryInterface<T>(name: string): Promise<any> {
-        switch (name) {
-            case "IComponentLayout":
-            case "IComponentRenderHTML":
-            case "IComponentRouter":
-                return this;
-            default:
-                return undefined;
-        }
+    public async list(): Promise<string[]> {
+        return MathInstance.supportedInterfaces;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -145,7 +140,9 @@ function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
 
 const endIdPrefix = "end-";
 
-export class MathCollection extends EventEmitter implements IComponent, IComponentCollection, IComponentRouter, IPlatform {
+export class MathCollection extends EventEmitter implements ISharedComponent, IComponentCollection, IComponentRouter {
+    public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter", "IComponentCollection"];
+
     public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);
         await collection.initialize();
@@ -153,32 +150,23 @@ export class MathCollection extends EventEmitter implements IComponent, ICompone
         return collection;
     }
 
-    public id: string;
+    public url: string;
+
     private root: ISharedMap;
     private combinedMathText: Sequence.SharedString;
 
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
-        this.id = context.id;
+        this.url = context.id;
     }
 
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "IComponentCollection":
-            case "IComponentRouter":
-                return this;
-            default:
-                return undefined;
-        }
+    public async query(id: string): Promise<any> {
+        return MathCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public detach() {
-        return;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this;
+    public async list(): Promise<string[]> {
+        return MathCollection.supportedInterfaces;
     }
 
     public appendMathMarkers(id: string) {
@@ -209,7 +197,7 @@ export class MathCollection extends EventEmitter implements IComponent, ICompone
 
     public create(): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.id}/${leafId}`, leafId, this);
+        return new MathInstance(`${this.url}/${leafId}`, leafId, this);
     }
 
     public getText(instance: MathInstance) {
@@ -231,7 +219,9 @@ export class MathCollection extends EventEmitter implements IComponent, ICompone
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const instanceId = request.url.substr(1);
+        const instanceId = request.url
+            .substr(1)
+            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
 
         if (!instanceId) {
             return {
@@ -254,7 +244,7 @@ export class MathCollection extends EventEmitter implements IComponent, ICompone
         const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
         if (mathMarker !== undefined) {
             if (!mathMarker.instance) {
-                mathMarker.instance = new MathInstance(`${this.id}/${id}`, id, this);
+                mathMarker.instance = new MathInstance(`${this.url}/${id}`, id, this);
             }
             return mathMarker.instance;
         }

@@ -1,4 +1,4 @@
-import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
+import { IPlatform } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 class DefinitionGuide extends EventEmitter {
@@ -56,14 +56,5 @@ export class WebPlatform extends EventEmitter implements IPlatform {
 
     public detach() {
         return;
-    }
-}
-
-export class WebPlatformFactory implements IPlatformFactory {
-    constructor(private div: HTMLElement) {
-    }
-
-    public async create(): Promise<IPlatform> {
-        return new WebPlatform(this.div);
     }
 }

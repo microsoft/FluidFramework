@@ -2,12 +2,14 @@
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import { ProgressCollection } from "@chaincode/progress-bars";
 import * as api from "@prague/client-api";
-import { ServicePlatform } from "@prague/component-runtime";
 import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentDisplayType, IComponent, IComponentRenderHTML, IInboundSignalMessage,
+    ComponentDisplayType,
+    IComponent,
+    IComponentRenderHTML,
+    IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -4860,7 +4862,7 @@ export class FlowView extends ui.Component {
 
     public insertProgressBar() {
         const instance = this.progressBars.create();
-        this.insertComponent("innerComponent", { id: instance.id });
+        this.insertComponent("innerComponent", { id: instance.url });
     }
 
     /** Insert an external Document */
@@ -4917,17 +4919,16 @@ export class FlowView extends ui.Component {
     }
 
     private async openCollections() {
-        const [mathPlatform, progressBarsPlatform] = await Promise.all([
-            this.openPlatform("math"),
-            this.openPlatform("progress-bars"),
+        const [progressBars, math] = await Promise.all([
+            this.openPlatform<ProgressCollection>("progress-bars"),
+            this.openPlatform<IMathCollection>("math"),
         ]);
 
-        const progressBars = await progressBarsPlatform.queryInterface<ProgressCollection>("collection");
-        this.math = mathPlatform as IMathCollection;
         this.progressBars = progressBars;
+        this.math = math;
     }
 
-    private async openPlatform<T extends IPlatform>(id: string): Promise<T> {
+    private async openPlatform<T>(id: string): Promise<T> {
         const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
         const component = await runtime.request({ url: "/" });
 
@@ -4935,8 +4936,7 @@ export class FlowView extends ui.Component {
             return Promise.reject("Not found");
         }
 
-        const result = component.value as IComponent;
-        return result.attach(new ServicePlatform([])) as Promise<T>;
+        return component.value as T;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {

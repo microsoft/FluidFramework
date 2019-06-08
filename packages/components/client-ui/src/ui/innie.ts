@@ -1,43 +1,22 @@
 import { Block, BoxState } from "@prague/app-ui";
 import { Document } from "@prague/client-api";
-import { IPlatform } from "@prague/container-definitions";
-import { IComponent } from "@prague/runtime-definitions";
-import { EventEmitter } from "events";
+import { IComponent, IComponentHTMLViewable } from "@prague/container-definitions";
 import { parse } from "url";
-import { isViewProvider } from "../../../../framework/framework-definitions/dist";
 import { debug } from "./debug";
-import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
 
 const platformSym = Symbol("Document.platform");
 
-// TODO (mdaumi): Fix this later.
-class InnerPlatform extends EventEmitter implements IPlatform {
-    constructor(private div: HTMLElement, private readonly invalidateLayout: (width, height) => void) {
-        super();
+class Host implements IComponent {
+    constructor() {
     }
 
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "root":
-                return { entry: definitionGuide.getValue(), type: "IComponents" };
-            case "div":
-                return this.div;
-            case "dts":
-                return definitionGuide;
-            case "invalidateLayout":
-                return this.invalidateLayout;
-            default:
-                return null;
-        }
+    public async query<T>(id: string): Promise<T> {
+        return null;
     }
 
-    public update() {
-        this.emit("update");
-    }
-
-    public detach() {
-        return;
+    public async list(): Promise<string[]> {
+        return [];
     }
 }
 
@@ -79,15 +58,11 @@ export class InnerComponent extends Block<InnerDocumentState> {
         // This is my access to the document
         const collabDocument = context.services.get("document") as Document;
 
-        const invalidateLayout = (width: number, height: number) => {
-            div.style.width = `${width}px`;
-            div.style.height = `${height}px`;
-            context.services.get("invalidateLayout")();
-        };
-
-        const capabilities = {
-            invalidateLayout: Promise.resolve(invalidateLayout),
-        };
+        // const invalidateLayout = (width: number, height: number) => {
+        //     div.style.width = `${width}px`;
+        //     div.style.height = `${height}px`;
+        //     context.services.get("invalidateLayout")();
+        // };
 
         const attachedP = collabDocument.context.hostRuntime.request({ url: `/${self.id}`}).then(async (response) => {
             if (response.status !== 200 || response.mimeType !== "prague/component") {
@@ -95,16 +70,17 @@ export class InnerComponent extends Block<InnerDocumentState> {
             }
 
             const component = response.value as IComponent;
-            if (isViewProvider(component)) {
-                const view = (await component.viewProvider).createView(capabilities);
-                view.attach(div);
-            } else {
-                // TODO Remove: Temporarily, we still support attaching via passing a "div" into 'attach()'
-                //              for legacy components.
-                const platform = new InnerPlatform(div, invalidateLayout);
-                const innerPlatform = await component.attach(platform);
-                definitionGuide.addComponent(component.id, innerPlatform);
+            const viewable = await component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+            if (!viewable) {
+                return;
             }
+
+            // Attach our div to the host
+            const host = new Host();
+            viewable.addView(host, div);
+
+            // TODO bring d.ts back
+            // definitionGuide.addComponent(component.id, innerPlatform);
         });
 
         attachedP.catch((error) => {

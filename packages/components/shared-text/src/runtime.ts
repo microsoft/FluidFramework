@@ -38,7 +38,9 @@ class MyRegistry implements IComponentRegistry {
     }
 
     public async get(name: string): Promise<IComponentFactory> {
-        if (name === "@chaincode/math") {
+        if (name === "@chaincode/shared-text") {
+            return { instantiateComponent };
+        } else if (name === "@chaincode/math") {
             return math;
         } else if (name === "@chaincode/charts") {
             return charts;
@@ -48,8 +50,6 @@ class MyRegistry implements IComponentRegistry {
             return monaco;
         } else if (name === "@chaincode/pinpoint-editor") {
             return pinpoint;
-        } else if (name === "@chaincode/shared-text") {
-            return { instantiateComponent };
         } else {
             return this.context.codeLoader.load<IComponentFactory>(name);
         }

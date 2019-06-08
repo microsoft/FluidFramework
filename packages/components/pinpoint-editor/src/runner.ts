@@ -1,5 +1,5 @@
 import { Pinpoint } from "@kurtb/pinpoint";
-import { IPlatform } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as angular from "angular";
@@ -293,7 +293,9 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-export class PinpointRunner extends EventEmitter implements IPlatform {
+export class PinpointRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
+    public static supportedInterfaces = ["IComponentHTMLViewable"];
+
     public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
         const runner = new PinpointRunner(runtime);
         await runner.initialize();
@@ -314,22 +316,20 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
         super();
     }
 
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
+    public async query(id: string): Promise<any> {
+        return PinpointRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public detach() {
-        console.log("Chart detach");
-        return;
+    public async list(): Promise<string[]> {
+        return PinpointRunner.supportedInterfaces;
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        // If headless return early
-        this.mapHost = await platform.queryInterface<HTMLElement>("div");
-        if (!this.mapHost) {
-            return;
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        if (this.mapHost) {
+            return Promise.reject("Only one view supported");
         }
 
+        this.mapHost = element;
         this.editor = this.mapHost.id === "content";
 
         if (this.editor) {
@@ -355,8 +355,12 @@ export class PinpointRunner extends EventEmitter implements IPlatform {
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            embed(this.mapHost, this.collabDoc, this.rootView, platform);
+            embed(this.mapHost, this.collabDoc, this.rootView);
         }
+    }
+
+    public remove() {
+        this.mapHost = null;
     }
 
     private async initialize(): Promise<void> {

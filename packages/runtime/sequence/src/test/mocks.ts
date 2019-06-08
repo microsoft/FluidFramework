@@ -4,7 +4,6 @@ import {
     IDocumentMessage,
     IGenericBlob,
     ILoader,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
@@ -110,7 +109,6 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime  {
     public readonly connected: boolean;
     public readonly leader: boolean;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    public readonly platform: IPlatform;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.Create("prague:MockRuntime");
 

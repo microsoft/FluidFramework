@@ -1,5 +1,5 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { IPlatform } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import {
     IMergeTreeGroupMsg,
@@ -8,7 +8,7 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import { IComponent, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
@@ -49,7 +49,9 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-export class MonacoRunner extends EventEmitter implements IComponent, IPlatform {
+export class MonacoRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
+    public static supportedInterfaces = ["IComponentHTMLViewable"];
+
     public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
         const runner = new MonacoRunner(runtime);
         await runner.initialize();
@@ -70,23 +72,24 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
         super();
     }
 
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
+    public async query(id: string): Promise<any> {
+        return MonacoRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public detach() {
-        console.log("Text detach");
-        return;
+    public async list(): Promise<string[]> {
+        return MonacoRunner.supportedInterfaces;
     }
 
     // TODO can remove ? once document is fixed in main package
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        this.mapHost = await platform.queryInterface<HTMLElement>("div");
-        if (!this.mapHost) {
-            return;
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        if (this.mapHost) {
+            return Promise.reject("Only one view supported");
         }
 
-        const hostDts = await platform.queryInterface<any>("dts");
+        this.mapHost = element;
+
+        // TODO make my dts
+        const hostDts = null; // await platform.queryInterface<any>("dts");
 
         if (!this.mapHost.style.width) {
             this.mapHost.style.width = "100vw";
@@ -141,7 +144,7 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
 
         this.codeEditor.addCommand(
             monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => { this.runCode(outputModel.getValue(), platform); },
+            () => { this.runCode(outputModel.getValue()); },
             null);
 
         // outputEditor.addCommand(
@@ -190,6 +193,10 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
         });
 
         return this;
+    }
+
+    public remove() {
+        this.mapHost = null;
     }
 
     private async initialize(): Promise<void> {
@@ -254,13 +261,13 @@ export class MonacoRunner extends EventEmitter implements IComponent, IPlatform 
         return range;
     }
 
-    private async runCode(code: string, platform: IPlatform) {
-        const root = await platform.queryInterface<any>("root");
-        const host = root ? root.entry : null;
-        this.exec(host, code);
+    private async runCode(code: string) {
+        // const root = await platform.queryInterface<any>("root");
+        // const host = root ? root.entry : null;
+        this.exec(/* host, */ code);
     }
 
-    private async exec(host: any, code: string) {
+    private async exec(/* host: any, */ code: string) {
         eval(code);
     }
 }

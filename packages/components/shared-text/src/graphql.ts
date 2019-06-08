@@ -1,5 +1,4 @@
-import { IPlatform } from "@prague/container-definitions";
-import { IComponent } from "@prague/runtime-definitions";
+import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
@@ -7,58 +6,37 @@ import * as ReactDOM from "react-dom";
 import { SharedTextRunner } from "./component";
 import { GraphQLService } from "./database";
 
-class ViewPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-
-    public async detach() {
-        return;
-    }
-}
-
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-export class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
+export class GraphIQLView extends EventEmitter implements IComponent, IComponentHTMLViewable {
+    public static supportedInterfaces = ["IComponentHTMLViewable"];
+
     public readonly id = "graphiql";
 
     constructor(private realComponent: SharedTextRunner) {
         super();
     }
 
-    public async close(): Promise<void> {
-        return;
+    public async query(id: string): Promise<any> {
+        return GraphIQLView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
+    public async list(): Promise<string[]> {
+        return GraphIQLView.supportedInterfaces;
     }
 
-    public async detach() {
-        return;
-    }
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        const graphQLDiv = document.createElement("div");
+        element.appendChild(graphQLDiv);
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        // If the host provided a <div>, render the component into that Div
-        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        if (!maybeDiv) {
-            return;
-        }
-
-        maybeDiv.style.width = "100vw";
-        maybeDiv.style.height = "100vh";
+        graphQLDiv.style.width = "100vw";
+        graphQLDiv.style.height = "100vh";
 
         // tslint:disable-next-line:no-submodule-imports
         const css = require("graphiql/graphiql.css");
         const styleTag = document.createElement("style");
         styleTag.innerText = css;
         document.head.appendChild(styleTag);
-
-        // To get the base component to fully initialize we attach (so opened is called) and then await the
-        // component interface to make sure it has been fully created.
-        // TODO should be an easier and cleaner way to do this
-        await this.realComponent.attach(new ViewPlatform());
-        // await realPlatform.queryInterface("component");
 
         const graphQLServer = new GraphQLService(this.realComponent.getRoot().get("text"));
 
@@ -71,9 +49,11 @@ export class GraphIQLView extends EventEmitter implements IComponent, IPlatform 
                 GraphiQL,
                 { fetcher: graphQLFetcher },
             ),
-            maybeDiv,
+            graphQLDiv,
         );
 
-        return this;
+        return {
+            remove: () => { },
+        };
     }
 }

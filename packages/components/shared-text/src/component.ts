@@ -2,7 +2,7 @@ import { CellExtension } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IPlatform, IRequest } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLViewable, IHTMLView, IRequest } from "@prague/container-definitions";
 import * as Intelligence from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -46,7 +46,9 @@ import {
 
 const translationApiKey = "bd099a1e38724333b253fcff7523f76a";
 
-export class SharedTextRunner extends EventEmitter implements IPlatform {
+export class SharedTextRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
+    public static supportedInterfaces = ["IComponentHTMLViewable"];
+
     public static async Load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -63,39 +65,15 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         super();
     }
 
-    public async queryInterface(id: string): Promise<any> {
-        return null;
+    public async query(id: string): Promise<any> {
+        return SharedTextRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public detach() {
-        console.log("Text detach");
-        return;
+    public async list(): Promise<string[]> {
+        return SharedTextRunner.supportedInterfaces;
     }
 
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
-
-        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
-
-        this.sharedString = this.rootView.get("text") as SharedString;
-        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
-        debug(`Shared string ready - ${performanceNow()}`);
-        debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired: ${performanceNow()}`);
-
-        waitForFullConnection(this.runtime).then(() => {
-            this.runTask(this.context.clientType);
-        });
-
-        this.listenForLeaderEvent();
-
-        const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
-        if (!hostContent) {
-            // If headless exist early
-            return;
-        }
-
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
@@ -104,7 +82,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         require("katex/dist/katex.min.css");
         // tslint:enable
 
-        const host = new ui.BrowserContainerHost();
+        const browserContainerHost = new ui.BrowserContainerHost();
 
         const inkPlane = this.rootView.get("ink");
 
@@ -123,7 +101,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             this.rootView.get("pageInk") as IStream,
             {});
         const theFlow = container.flowView;
-        host.attach(container);
+        browserContainerHost.attach(container);
 
         const options = parse(window.location.search.substr(1));
         addTranslation(
@@ -152,7 +130,9 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
 
-        return this;
+        return {
+            remove: () => { },
+        };
     }
 
     public getRoot(): ISharedMap {
@@ -199,6 +179,23 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
 
             insights.set(newString.id, this.collabDoc.createMap());
         }
+
+        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
+        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
+
+        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
+
+        this.sharedString = this.rootView.get("text") as SharedString;
+        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
+        debug(`Shared string ready - ${performanceNow()}`);
+        debug(`id is ${this.runtime.id}`);
+        debug(`Partial load fired: ${performanceNow()}`);
+
+        waitForFullConnection(this.runtime).then(() => {
+            this.runTask(this.context.clientType);
+        });
+
+        this.listenForLeaderEvent();
     }
 
     // Leader can run tasks directly.

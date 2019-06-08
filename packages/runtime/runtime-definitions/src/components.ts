@@ -1,6 +1,8 @@
 import {
     ConnectionState,
     IBlobManager,
+    IComponent as INewComponent,
+    IComponentRouter,
     IDeltaManager,
     IDocumentMessage,
     IDocumentStorageService,
@@ -95,6 +97,9 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     getQuorum(): IQuorum;
 }
 
+/**
+ * @deprecated Being replaced with IComponent in container-definitions
+ */
 export interface IComponent {
     /**
      * Identifier for the component
@@ -105,10 +110,6 @@ export interface IComponent {
      * Allows for attachment to the given component
      */
     attach(platform: IPlatform): Promise<IPlatform>;
-}
-
-export interface IComponentRouter {
-    request(req: IRequest): Promise<IResponse>;
 }
 
 export interface IComponentContext extends EventEmitter {
@@ -198,8 +199,8 @@ export interface IComponentFactory {
  * components in the collection would be like-typed.
  */
 export interface IComponentCollection {
-    create(): IComponent;
-    remove(instance: IComponent): void;
+    create(): INewComponent;
+    remove(instance: INewComponent): void;
     // need iteration
 }
 

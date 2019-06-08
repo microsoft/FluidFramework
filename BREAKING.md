@@ -1,5 +1,10 @@
 # 0.4 Breaking Changes
 
+The IComponent in @prague/runtime-defintions and IPlatform in @prague/container-definitions have been deprecated and
+will be removed in the next release.
+
+They have been replaced with the IComponent inside of @prague/container-definitions.
+
 # 0.3 Breaking Changes (June 3, 2019)
 
 - [Legacy chaincode API removal](#legacy-chaincode-api-removal)

@@ -1,8 +1,6 @@
 import { Block, BoxState } from "@prague/app-ui";
 import * as api from "@prague/client-api";
-import { IPlatform, IPlatformFactory } from "@prague/container-definitions";
 import { WebPlatform } from "@prague/loader-web";
-import { IComponent } from "@prague/runtime-definitions";
 import { definitionGuide } from "./definitionGuide";
 import { FlowViewContext } from "./flowViewContext";
 
@@ -13,7 +11,7 @@ export class DocumentState extends BoxState {
     public [platformSym]: PlatformFactory;
 }
 
-export class Platform extends WebPlatform implements IPlatform {
+export class Platform extends WebPlatform {
     constructor(div: HTMLElement, private readonly invalidateLayout: (width, height) => void) {
         super(div);
     }
@@ -36,7 +34,7 @@ export class Platform extends WebPlatform implements IPlatform {
     }
 }
 
-export class PlatformFactory implements IPlatformFactory {
+export class PlatformFactory {
     // Very much a temporary thing as we flesh out the platform interfaces
     private lastPlatform: Platform;
 
@@ -46,7 +44,7 @@ export class PlatformFactory implements IPlatformFactory {
     ) {
     }
 
-    public async create(): Promise<IPlatform> {
+    public async create(): Promise<Platform> {
         if (this.div) {
             // tslint:disable-next-line:no-inner-html using to clear the list of children
             this.div.innerHTML = "";
@@ -139,7 +137,7 @@ export class Document extends Block<DocumentState> {
 
             switch (response.mimeType) {
                 case "prague/component":
-                    const component = response.value as IComponent;
+                    const component = response.value;
                     const platform = await platformFactory.create();
                     const componentPlatform = await component.attach(platform);
                     // query the runtime for its definition - if it exists

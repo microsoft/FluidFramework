@@ -1,6 +1,8 @@
 import {
     IChaincodeFactory,
     ICodeLoader,
+    IComponent,
+    IComponentHTMLViewable,
     IPraguePackage,
     IResolvedUrl,
 } from "@prague/container-definitions";
@@ -9,7 +11,7 @@ import { WebPlatform } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IComponent } from "@prague/runtime-definitions";
+import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
 import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 
@@ -109,25 +111,35 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-async function attach(loader: Loader, url: string, platform: LocalPlatform) {
+async function attach(loader: Loader, url: string, host: Host) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200) {
+    if (response.status !== 200 || response.mimeType !== "prague/component") {
         return;
     }
 
-    switch (response.mimeType) {
-        case "prague/component":
-            const component = response.value as IComponent;
-            component.attach(platform);
-            break;
+    // TODO included for back compat - can remove once we migrate to 0.5
+    if ("attach" in response.value) {
+        const legacy = response.value as ILegacyComponent;
+        legacy.attach(new LocalPlatform(host.div));
+        return;
     }
+
+    // Check if the component is viewable
+    const component = response.value as IComponent;
+    const viewable = await component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+    if (!viewable) {
+        return;
+    }
+
+    // Attach our div to the host
+    viewable.addView(host, host.div);
 }
 
-async function registerAttach(loader: Loader, container: Container, uri: string, platform: LocalPlatform) {
-    attach(loader, uri, platform);
+async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {
+    attach(loader, uri, host);
     container.on("contextChanged", (value) => {
-        attach(loader, uri, platform);
+        attach(loader, uri, host);
     });
 }
 
@@ -138,6 +150,19 @@ class LocalPlatform extends WebPlatform {
 
     public async detach() {
         return;
+    }
+}
+
+class Host implements IComponent {
+    constructor(public readonly div: HTMLElement) {
+    }
+
+    public async query<T>(id: string): Promise<T> {
+        return null;
+    }
+
+    public async list(): Promise<string[]> {
+        return [];
     }
 }
 
@@ -193,7 +218,7 @@ async function start(
 
     lastLoaded = container;
 
-    const platform = new LocalPlatform(document.getElementById("content"));
+    const platform = new Host(document.getElementById("content"));
     registerAttach(
         loader,
         container,

@@ -1,10 +1,13 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-    IPlatform,
+    IComponent,
+    IComponentHTMLViewable,
+    IComponentRouter,
+    IHTMLView,
     IRequest,
     IResponse,
+    ISharedComponent,
 } from "@prague/container-definitions";
-import { IView, IViewProvider } from "@prague/framework-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -13,7 +16,6 @@ import {
     registerDefaultValueType,
 } from "@prague/map";
 import {
-    IComponent,
     IComponentContext,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -23,42 +25,42 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires no-submodule-imports
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView implements IView {
+class ProgressBarView implements IHTMLView {
     private div: HTMLDivElement;
 
-    constructor(private bar: ProgressBar) { }
+    constructor(private bar: ProgressBar, parent: Element) {
+        if (parent) {
+            this.div = document.createElement("div");
+            this.div.classList.add("progress");
+            // tslint:disable-next-line:max-line-length no-inner-html
+            this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
-    public attach(parent: Element) {
-        this.div = document.createElement("div");
-        this.div.classList.add("progress");
-        // tslint:disable-next-line:max-line-length no-inner-html
-        this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
+            const urlDiv = document.createElement("div");
+            urlDiv.innerText = this.bar.url;
 
-        const urlDiv = document.createElement("div");
-        urlDiv.innerText = `/progress/${this.bar.id}`;
+            const downButton = document.createElement("button");
+            downButton.innerText = "down";
+            downButton.onclick = () => {
+                this.bar.changeValue(this.bar.value - 1);
+            };
 
-        const downButton = document.createElement("button");
-        downButton.innerText = "down";
-        downButton.onclick = () => {
-            this.bar.changeValue(this.bar.value - 1);
-        };
+            const upButton = document.createElement("button");
+            upButton.innerText = "up";
+            upButton.onclick = () => {
+                // Should be a counter
+                this.bar.changeValue(this.bar.value + 1);
+            };
 
-        const upButton = document.createElement("button");
-        upButton.innerText = "up";
-        upButton.onclick = () => {
-            // Should be a counter
-            this.bar.changeValue(this.bar.value + 1);
-        };
-
-        parent.appendChild(this.div);
-        parent.appendChild(urlDiv);
-        parent.appendChild(downButton);
-        parent.appendChild(upButton);
+            parent.appendChild(this.div);
+            parent.appendChild(urlDiv);
+            parent.appendChild(downButton);
+            parent.appendChild(upButton);
+        }
 
         this.render();
     }
 
-    public detach() {
+    public remove() {
         this.bar.detach(this);
     }
 
@@ -72,25 +74,30 @@ class ProgressBarView implements IView {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements IComponent, IViewProvider {
+export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IComponentRouter {
+    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLViewable", "IComponentRouter"];
     private views = new Set<ProgressBarView>();
 
     constructor(
         public value: number,
-        public id: string,
+        public url: string,
         private keyId: string,
         private collection: ProgressCollection) {
     }
 
-    // TODO Remove: Temporarily, we still support attaching via passing a "div" into 'attach()'
-    //              for legacy hosts.
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        const attached = new ProgressBarView(this);
-        attached.attach(maybeDiv);
+    public async query(id: string): Promise<any> {
+        return ProgressBar.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public async list(): Promise<string[]> {
+        return ProgressBar.supportedInterfaces;
+    }
+
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        const attached = new ProgressBarView(this, element);
         this.views.add(attached);
 
-        return null;
+        return attached;
     }
 
     public changeValue(newValue: number) {
@@ -109,20 +116,18 @@ export class ProgressBar implements IComponent, IViewProvider {
         }
     }
 
-    // Begin IViewProvider implementation
-
-    public readonly viewProvider = Promise.resolve(this);
-
-    public createView() {
-        const view = new ProgressBarView(this);
-        this.views.add(view);
-        return view;
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "prague/component",
+            status: 200,
+            value: this,
+        };
     }
-
-    // End IViewProvider implementation
 }
 
-export class ProgressCollection extends EventEmitter implements IComponent {
+export class ProgressCollection extends EventEmitter implements ISharedComponent, IComponentRouter {
+    public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter"];
+
     public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
@@ -130,7 +135,7 @@ export class ProgressCollection extends EventEmitter implements IComponent {
         return collection;
     }
 
-    public id: string;
+    public url: string;
 
     private progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
@@ -138,25 +143,15 @@ export class ProgressCollection extends EventEmitter implements IComponent {
     constructor(private runtime: IComponentRuntime, context: IComponentContext) {
         super();
 
-        this.id = context.id;
+        this.url = context.id;
     }
 
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "collection":
-                return this;
-            default:
-                return null;
-        }
+    public async query(id: string): Promise<any> {
+        return ProgressCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public detach() {
-        return;
-    }
-
-    // TODO Remove
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        return this;
+    public async list(): Promise<string[]> {
+        return ProgressCollection.supportedInterfaces;
     }
 
     public changeValue(key: string, newValue: number) {
@@ -176,7 +171,9 @@ export class ProgressCollection extends EventEmitter implements IComponent {
 
     public async request(request: IRequest): Promise<IResponse> {
         // TODO the request is not stripping / off the URL
-        const trimmed = request.url.substr(1);
+        const trimmed = request.url
+            .substr(1)
+            .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
 
         if (!trimmed) {
             return {
@@ -190,11 +187,7 @@ export class ProgressCollection extends EventEmitter implements IComponent {
         // or at least to request a value >= a sequence number
         await this.root.wait(trimmed);
 
-        return {
-            mimeType: "prague/component",
-            status: 200,
-            value: this.progressBars.get(trimmed),
-        };
+        return this.progressBars.get(trimmed).request({ url: trimmed.substr(1 + trimmed.length) });
     }
 
     private async initialize() {
@@ -208,7 +201,7 @@ export class ProgressCollection extends EventEmitter implements IComponent {
         for (const key of this.root.keys()) {
             this.progressBars.set(
                 key,
-                new ProgressBar(this.root.get(key), `${this.id}/${key}`, key, this));
+                new ProgressBar(this.root.get(key), `${this.url}/${key}`, key, this));
         }
 
         this.root.on("valueChanged", (changed, local) => {
@@ -218,7 +211,7 @@ export class ProgressCollection extends EventEmitter implements IComponent {
                 this.progressBars.set(
                     changed.key,
                     new ProgressBar(
-                        this.root.get(changed.key), `${this.id}/${changed.key}`, changed.key, this));
+                        this.root.get(changed.key), `${this.url}/${changed.key}`, changed.key, this));
                 this.emit("progressAdded", `/${changed.key}`);
             }
         });

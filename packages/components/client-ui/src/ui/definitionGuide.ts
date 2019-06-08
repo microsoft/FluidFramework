@@ -1,4 +1,3 @@
-import { IPlatform } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export class DefinitionGuide extends EventEmitter {
@@ -18,7 +17,7 @@ export class DefinitionGuide extends EventEmitter {
         return this.value;
     }
 
-    public async addComponent(id: string, platform: IPlatform) {
+    public async addComponent(id: string, platform) {
         const rootP = platform ? platform.queryInterface("root") : Promise.resolve(null);
         const dtsP = platform ? platform.queryInterface("dts") : Promise.resolve(null);
         const [root, dts] = await Promise.all([rootP, dtsP]);

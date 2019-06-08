@@ -2,7 +2,7 @@ import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
 import { ISharedMap } from "@prague/map";
 import { Document } from "./document";
 
-export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: ISharedMap, platform: any) {
+export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: ISharedMap) {
     const div = document.createElement("div");
     div.style.width = "300px";
     mapHost.appendChild(div);
@@ -41,7 +41,8 @@ export function embed(mapHost: HTMLElement, collabDoc: Document, rootView: IShar
             pinpoint = new Pinpoint(updatedDetails);
         });
 
-    platform.on("update", () => {
-        setTimeout(() => pinpoint.render(), 1);
-    });
+    // TODO need to use some kind of render() trigger
+    // platform.on("update", () => {
+    //     setTimeout(() => pinpoint.render(), 1);
+    // });
 }

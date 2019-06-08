@@ -1,6 +1,7 @@
 export * from "./blobs";
 export * from "./chaincode";
 export * from "./clients";
+export * from "./components";
 export * from "./consensus";
 export * from "./deltas";
 export * from "./loader";

@@ -93,7 +93,9 @@ export class ChaincodeWork extends EventEmitter {
         switch (response.mimeType) {
             case "prague/component":
                 const component = response.value as IComponent;
-                component.attach(platform);
+                if ("attach" in component) {
+                    component.attach(platform);
+                }
                 break;
         }
     }
