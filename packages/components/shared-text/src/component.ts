@@ -101,6 +101,7 @@ export class SharedTextRunner extends EventEmitter implements IPlatform {
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
+        require("katex/dist/katex.min.css");
         // tslint:enable
 
         const host = new ui.BrowserContainerHost();

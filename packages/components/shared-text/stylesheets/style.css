@@ -1,3 +1,15 @@
+.blinking {
+  animation:blinkrecipe 1s linear 15;
+}
+
+.brieflyBlinking {
+  animation:blinkrecipe 1s linear 2;
+}
+
+@keyframes blinkrecipe{
+  50%{    opacity: 0.0; }
+}
+
 body {
   touch-action: none;
   margin: 0px 0px 0px 0px;

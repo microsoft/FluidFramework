@@ -82,6 +82,6 @@ export interface IContainer extends EventEmitter {
 
 export interface ILoader {
     request(request: IRequest): Promise<IResponse>;
-
+    // add unload
     resolve(request: IRequest): Promise<IContainer | undefined>;
 }

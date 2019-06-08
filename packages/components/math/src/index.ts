@@ -1,3 +1,4 @@
+import * as ClientUI from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IPlatform,
@@ -11,82 +12,140 @@ import {
     MapExtension,
     registerDefaultValueType,
 } from "@prague/map";
+import * as MergeTree from "@prague/merge-tree";
 import {
+    ComponentDisplayType,
     IComponent,
+    IComponentCollection,
     IComponentContext,
+    IComponentLayout,
+    IComponentRenderHTML,
+    IComponentRouter,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import * as sequence from "@prague/sequence";
+import * as Sequence from "@prague/sequence";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
+import * as Katex from "katex";
 
-class MathView extends EventEmitter implements IPlatform {
-    private readonly div: HTMLDivElement;
-
-    constructor(private readonly instance: MathInstance, parent: HTMLDivElement) {
-        super();
-        if (parent) {
-            this.div = document.createElement("div");
-            parent.appendChild(this.div);
-        }
-
-        this.render();
-    }
-
-    public async queryInterface<T>(id: string): Promise<T> {
-        return undefined;
-    }
-
-    public detach() {
-        this.instance.detach(this);
-    }
-
-    public render() {
-        if (this.div) {
-            this.div.innerText = "YO! What up x squared??";
-            this.div.style.backgroundColor = "pink";
-        }
-    }
+interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
+    instance?: MathInstance;
 }
 
-// The "model" side of a progress bar
-export class MathInstance implements IComponent {
-    private readonly views = new Set<MathView>();
+export class MathInstance extends EventEmitter
+    implements IComponent, IPlatform, IComponentRenderHTML, IComponentRouter, IComponentLayout {
+    public endMarker: IMathMarkerInst;
+    public startMarker: MergeTree.Marker;
+    public canInline = true;
+    public cursorActive = false;
 
     constructor(
-        public value: number,
         public id: string,
-        private readonly keyId: string,
+        public leafId: string,
         private readonly collection: MathCollection) {
+        super();
+        this.initialize();
     }
 
     // On attach create a specific binding from the model to the platform
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        const attached = new MathView(this, maybeDiv);
-        this.views.add(attached);
-
-        return attached;
+        return this;
     }
 
-    public changeValue(newValue: number) {
-        this.collection.changeValue(this.keyId, newValue);
-    }
-
-    public detach(view: MathView) {
-        this.views.delete(view);
-    }
-
-    public update(value: number) {
-        this.value = value;
-
-        for (const view of this.views) {
-            view.render();
+    public async queryInterface<T>(name: string): Promise<any> {
+        switch (name) {
+            case "IComponentLayout":
+            case "IComponentRenderHTML":
+            case "IComponentRouter":
+                return this;
+            default:
+                return undefined;
         }
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "prague/component",
+            status: 200,
+            value: this,
+        };
+    }
+
+    public detach() {
+    }
+
+    public cursorVisible(v: boolean) {
+        this.cursorActive = v;
+    }
+
+    public cursorFwd() {
+        const mathMarker = this.endMarker;
+        mathMarker.mathTokenIndex = ClientUI.controls.mathTokFwd(mathMarker.mathTokenIndex,
+            mathMarker.mathTokens);
+        ClientUI.controls.printMathMarker(mathMarker);
+        if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
+            return true;
+        } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
+            const mathText = this.getMathText();
+            mathMarker.mathCursor = mathText.length;
+        } else {
+            mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+        }
+    }
+
+    public render(elm: HTMLElement, displayType: ComponentDisplayType) {
+        const span = document.createElement("span");
+        const mathText = this.getMathText();
+        let mathBuffer = mathText;
+        const mathMarker = this.endMarker;
+        span.style.marginLeft = "2px";
+        span.style.marginTop = "4px";
+        span.style.marginRight = "2px";
+        if (mathMarker.mathTokens === undefined) {
+            ClientUI.controls.initMathMarker(mathMarker, mathText);
+        }
+        if (this.cursorActive) {
+            span.style.borderLeft = "solid orange 2px";
+            span.style.borderRight = "solid orange 2px";
+            // showCursor
+            mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
+                ClientUI.controls.cursorTex +
+                mathBuffer.substring(mathMarker.mathCursor);
+            mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+        }
+        mathMarker.mathViewBuffer = mathBuffer;
+        Katex.render(mathBuffer, span,
+            { throwOnError: false });
+        if (this.cursorActive) {
+            const cursorElement = ClientUI.controls.findFirstMatch(span, (cursor: HTMLElement) => {
+                return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+            });
+            if (cursorElement) {
+                cursorElement.classList.add("blinking");
+            }
+        }
+        elm.appendChild(span);
+    }
+
+    private getMathText() {
+        return this.collection.getText(this);
+    }
+
+    private initialize() {
+        const markers = this.collection.appendMathMarkers(this.leafId);
+        this.endMarker = markers.end;
+        this.startMarker = markers.start as MergeTree.Marker;
+        this.endMarker.instance = this;
     }
 }
 
-export class MathCollection extends EventEmitter implements IComponent {
+function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
+    return client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber, client.getClientId());
+}
+
+const endIdPrefix = "end-";
+
+export class MathCollection extends EventEmitter implements IComponent, IComponentCollection, IComponentRouter, IPlatform {
     public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);
         await collection.initialize();
@@ -95,10 +154,8 @@ export class MathCollection extends EventEmitter implements IComponent {
     }
 
     public id: string;
-
-    private readonly mathInstances = new Map<string, MathInstance>();
     private root: ISharedMap;
-    private mathText: sequence.SharedString;
+    private combinedMathText: Sequence.SharedString;
 
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         super();
@@ -108,7 +165,8 @@ export class MathCollection extends EventEmitter implements IComponent {
 
     public async queryInterface<T>(id: string): Promise<any> {
         switch (id) {
-            case "collection":
+            case "IComponentCollection":
+            case "IComponentRouter":
                 return this;
             default:
                 return undefined;
@@ -123,25 +181,59 @@ export class MathCollection extends EventEmitter implements IComponent {
         return this;
     }
 
-    public changeValue(key: string, newValue: number) {
-        this.root.set(key, newValue);
+    public appendMathMarkers(id: string) {
+        let pos = this.combinedMathText.getLength();
+        this.combinedMathText.insertMarker(pos++, MergeTree.ReferenceType.Tile, {
+            [MergeTree.reservedTileLabelsKey]: ["math"],
+            [MergeTree.reservedMarkerIdKey]: id,
+            mathStart: true,
+        });
+        const endId = endIdPrefix + id;
+        this.combinedMathText.insertMarker(pos, MergeTree.ReferenceType.Tile, {
+            [MergeTree.reservedTileLabelsKey]: ["math"],
+            [MergeTree.reservedMarkerIdKey]: endId,
+            mathEnd: true,
+        });
+        const seg = this.combinedMathText.client.mergeTree.getSegmentFromId(endId);
+        const mathMarker = seg as ClientUI.controls.IMathMarker;
+        mathMarker.mathTokenIndex = 0;
+        mathMarker.mathTokens = [] as ClientUI.controls.MathToken[];
+        mathMarker.mathCursor = 0;
+        // for now, put in some math since we aren't editing yet
+        mathMarker.mathText = "x^{2}";
+        mathMarker.mathTokens = ClientUI.controls.lexMath(mathMarker.mathText);
+        ClientUI.controls.printMathMarker(mathMarker);
+        this.combinedMathText.insertTextRelative({ id }, mathMarker.mathText);
+        return { end: mathMarker, start: this.combinedMathText.client.mergeTree.getSegmentFromId(id) };
     }
 
     public create(): MathInstance {
-        const id = `math-${Date.now()}`;
-        this.root.set(id, 50);
-        // Relying on valueChanged event to create the bar is error prone
-        return this.mathInstances.get(id);
+        const leafId = `math-${Date.now()}`;
+        return new MathInstance(`${this.id}/${leafId}`, leafId, this);
     }
 
-    public getMath(): string[] {
-        return Array.from(this.root.keys()).map((key) => `/${key}`);
+    public getText(instance: MathInstance) {
+        const client = this.combinedMathText.client;
+        const startMarker = instance.startMarker;
+        const start = getOffset(client, startMarker) + startMarker.cachedLength;
+        const endMarker = instance.endMarker;
+        const end = getOffset(client, endMarker);
+        return this.combinedMathText.getText(start, end);
+    }
+
+    public remove(instance: MathInstance) {
+        const client = this.combinedMathText.client;
+        const startMarker = instance.startMarker;
+        const start = getOffset(client, startMarker);
+        const endMarker = instance.endMarker;
+        const end = getOffset(client, endMarker) + endMarker.cachedLength;
+        this.combinedMathText.removeRange(start, end);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        const trimmed = request.url.substr(1);
+        const instanceId = request.url.substr(1);
 
-        if (!trimmed) {
+        if (!instanceId) {
             return {
                 mimeType: "prague/component",
                 status: 200,
@@ -149,43 +241,36 @@ export class MathCollection extends EventEmitter implements IComponent {
             };
         }
 
-        await this.root.wait(trimmed);
+        const instance = this.getInstance(instanceId);
+        // FIX this using a routing toolkit (don't end route here!)
+        const trimmedRequest = { url: "/" };
+        if (instance !== undefined) {
+            return instance.request(trimmedRequest);
+        }
+    }
 
-        return {
-            mimeType: "prague/component",
-            status: 200,
-            value: this.mathInstances.get(trimmed),
-        };
+    public getInstance(id: string) {
+        const endId = endIdPrefix + id;
+        const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
+        if (mathMarker !== undefined) {
+            if (!mathMarker.instance) {
+                mathMarker.instance = new MathInstance(`${this.id}/${id}`, id, this);
+            }
+            return mathMarker.instance;
+        }
     }
 
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
-            this.mathText = this.runtime.createChannel("mathText", sequence.SharedStringExtension.Type) as sequence.SharedString;
+            this.combinedMathText = this.runtime.createChannel("mathText", Sequence.SharedStringExtension.Type) as Sequence.SharedString;
             this.root.attach();
-            this.mathText.attach();
+            this.combinedMathText.attach();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
-            this.mathText = await this.runtime.getChannel("mathText") as sequence.SharedString;
+            this.combinedMathText = await this.runtime.getChannel("mathText") as Sequence.SharedString;
         }
-
-        for (const key of this.root.keys()) {
-            this.mathInstances.set(
-                key,
-                new MathInstance(this.root.get(key), `${this.id}/${key}`, key, this));
-        }
-
-        this.root.on("valueChanged", (changed, local) => {
-            if (this.mathInstances.has(changed.key)) {
-                this.mathInstances.get(changed.key).update(this.root.get(changed.key));
-            } else {
-                this.mathInstances.set(
-                    changed.key,
-                    new MathInstance(
-                        this.root.get(changed.key), `${this.id}/${changed.key}`, changed.key, this));
-                this.emit("mathAdded", `/${changed.key}`);
-            }
-        });
+        // NEXT load math from shared string as needed
     }
 }
 
@@ -193,21 +278,21 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     // Register default map value types
     registerDefaultValueType(new DistributedSetValueType());
     registerDefaultValueType(new CounterValueType());
-    registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-    registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+    registerDefaultValueType(new Sequence.SharedStringIntervalCollectionValueType());
+    registerDefaultValueType(new Sequence.SharedIntervalCollectionValueType());
 
     const mapExtension = new MapExtension();
-    const sharedStringExtension = new sequence.SharedStringExtension();
+    const sharedStringExtension = new Sequence.SharedStringExtension();
 
     const dataTypes = new Map<string, ISharedObjectExtension>();
     dataTypes.set(mapExtension.type, mapExtension);
     dataTypes.set(sharedStringExtension.type, sharedStringExtension);
 
     const runtime = await ComponentRuntime.Load(context, dataTypes);
-    const progressCollectionP = MathCollection.Load(runtime, context);
+    const mathCollectionP = MathCollection.Load(runtime, context);
     runtime.registerRequestHandler(async (request: IRequest) => {
-        const progressCollection = await progressCollectionP;
-        return progressCollection.request(request);
+        const mathCollection = await mathCollectionP;
+        return mathCollection.request(request);
     });
 
     return runtime;

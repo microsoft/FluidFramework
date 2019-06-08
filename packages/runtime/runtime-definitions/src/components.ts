@@ -20,7 +20,7 @@ import {
 import { EventEmitter } from "events";
 import { IChannel, ISharedObjectServices } from "./channel";
 
-export interface IComponentRuntime extends EventEmitter {
+export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     readonly options: any;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -48,8 +48,6 @@ export interface IComponentRuntime extends EventEmitter {
     processSignal(message: any, local: boolean): void;
 
     changeConnectionState(value: ConnectionState, clientId: string);
-
-    request(request: IRequest): Promise<IResponse>;
 
     /**
      * Closes the component. Once closed the component will not receive any new ops and should
@@ -107,6 +105,10 @@ export interface IComponent {
      * Allows for attachment to the given component
      */
     attach(platform: IPlatform): Promise<IPlatform>;
+}
+
+export interface IComponentRouter {
+    request(req: IRequest): Promise<IResponse>;
 }
 
 export interface IComponentContext extends EventEmitter {
@@ -182,6 +184,59 @@ export interface IHostRuntime extends IRuntime {
     error(err: any): void;
 }
 
+/**
+ * The interface implemented by a component module.
+ */
 export interface IComponentFactory {
     instantiateComponent(context: IComponentContext): Promise<IComponentRuntime>;
+}
+
+// following are common conventions
+
+/**
+ * A component that implements a collection of components.  Typically, the
+ * components in the collection would be like-typed.
+ */
+export interface IComponentCollection {
+    create(): IComponent;
+    remove(instance: IComponent): void;
+    // need iteration
+}
+
+// Following is what loosely-coupled hosts need to show a component
+
+/**
+ * How to render the component.
+ */
+export enum ComponentDisplayType {
+    /**
+     * Render the component in on a separate line.
+     */
+    Block,
+    /**
+     * Render the component as part of an inline flow.
+     */
+    Inline,
+}
+
+/**
+ * Render the component into an HTML element. In the case of Block display,
+ * elm.getBoundingClientRect() defines the dimensions of the viewport in which
+ * to render. Typically, this means that elm should already be placed into the DOM.
+ * If elm has an empty client rect, then it is assumed that it will expand to hold the
+ * rendered component.
+ */
+export interface IComponentRenderHTML {
+    render(elm: HTMLElement, displayType: ComponentDisplayType): void;
+}
+
+/**
+ * Provide information about component preferences for layout.
+ */
+export interface IComponentLayout {
+    aspectRatio?: number;
+    minimumWidthBlock?: number;
+    minimumHeightInline?: number;
+    canInline?: boolean;
+    preferInline?: boolean;
 }

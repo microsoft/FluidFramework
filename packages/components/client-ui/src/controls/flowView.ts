@@ -1,13 +1,14 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import * as MathComponent from "@chaincode/math";
 import { ProgressCollection } from "@chaincode/progress-bars";
 import * as api from "@prague/client-api";
 import { ServicePlatform } from "@prague/component-runtime";
 import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IComponent, IInboundSignalMessage } from "@prague/runtime-definitions";
+import {
+    ComponentDisplayType, IComponent, IComponentRenderHTML, IInboundSignalMessage,
+} from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
@@ -32,6 +33,22 @@ import { PresenceSignal } from "./presenceSignal";
 import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
+
+interface IMathViewMarker extends MergeTree.Marker {
+    instance?: IMathInstance;
+}
+
+export interface IMathCollection extends IComponent, IPlatform {
+    create(): IMathInstance;
+    getInstance(id: string): IMathInstance;
+}
+
+export interface IMathInstance extends IComponent, IComponentRenderHTML {
+    id: string;
+    leafId: string;
+    cursorFwd(): boolean;
+    cursorVisible(b: boolean): void;
+}
 
 export interface IFlowViewUser extends IUser {
     name: string;
@@ -110,148 +127,174 @@ for (const sizeString of fontSizeStrings) {
 }
 const fontSizes = (f: FlowView) => fontSizeTree;
 const defaultFontSize = (f: FlowView) => "18";
+const cssColorStrings = ["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black",
+    "BlanchedAlmond", "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate",
+    "Coral", "CornflowerBlue", "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod",
+    "DarkGray", "DarkGrey", "DarkGreen", "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange",
+    "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey",
+    "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DimGrey", "DodgerBlue", "FireBrick",
+    "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey",
+    "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender",
+    "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral", "LightCyan",
+    "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon",
+    "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow",
+    "Lime", "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue",
+    "MediumOrchid", "MediumPurple", "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen",
+    "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose", "Moccasin", "NavajoWhite",
+    "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenRod", "PaleGreen",
+    "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue",
+    "Purple", "RebeccaPurple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown",
+    "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
+    "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat",
+    "White", "WhiteSmoke", "Yellow", "YellowGreen"];
+const cssColorTree = new MergeTree.TST<IFlowViewCmd>();
+for (const cssColor of cssColorStrings) {
+    fontSizeTree.put(cssColor, { key: cssColor });
+}
+const cssColors = (f: FlowView) => cssColorTree;
+const defaultColor = (f: FlowView) => "Black";
 
 const commands: IFlowViewCmd[] = [
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setBGImage(dinoImage);
         },
         key: "enable dinosaur",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setBGImage(dinoImage, true);
         },
         key: "jettison one dinosaur",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setBGImage(mrBennetEyeRoll);
         },
         key: "release the Bennets",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setBGImage(mrBennetEyeRoll, true);
         },
         key: "release one Bennet",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.copyFormat();
         },
         key: "copy format",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.paintFormat();
         },
         key: "paint format",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.geocodeAddress();
         },
         key: "geocode",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.toggleBlockquote();
         },
         key: "blockquote",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.toggleBold();
         },
         key: "bold",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.createBookmarks(5000);
         },
         key: "bookmark test: 5000",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.addCalendarEntries();
         },
         key: "cal create",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showCalendarEntries();
         },
         key: "cal show",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.addSequenceEntry();
         },
         key: "seq +",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showSequenceEntries();
         },
         key: "seq show",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.createComment();
         },
         key: "comment",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showCommentText();
         },
         key: "comment text",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showKatex();
         },
         key: "katex",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setColor("red");
         },
         key: "red",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setColor("green");
         },
         key: "green",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setColor("gold");
         },
         key: "gold",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setColor("pink");
         },
         key: "pink",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.makeBlink("pink");
         },
         key: "blink-pink",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setFont("courier new", "18px");
         },
         key: "Courier font",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setFont("tahoma", "18px");
         },
         key: "Tahoma",
@@ -260,79 +303,79 @@ const commands: IFlowViewCmd[] = [
         ],
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setPGProps({ header: true });
         },
         key: "Heading 2",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setPGProps({ header: null });
         },
         key: "Normal",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setFont("georgia", "18px");
         },
         key: "Georgia font",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setFont("sans-serif", "18px");
         },
         key: "sans font",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setFont("cursive", "18px");
         },
         key: "cursive font",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.toggleItalic();
         },
         key: "italic",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setList();
         },
         key: "list ... 1.)",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.setList(1);
         },
         key: "list ... \u2022",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             showCell(f.cursor.pos, f);
         },
         key: "cell info",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             showTable(f.cursor.pos, f);
         },
         key: "table info",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.tableSummary();
         },
         key: "table summary",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showAdjacentBookmark();
         },
         key: "previous bookmark",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.showAdjacentBookmark(false);
         },
         key: "next bookmark",
@@ -341,7 +384,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showBookmarks;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showBookmarks = true;
             f.tempBookmarks = undefined;
             f.localQueueRender(f.cursor.pos);
@@ -352,7 +395,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showCursorLocation;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showCursorLocation = true;
             f.cursorLocation();
         },
@@ -362,7 +405,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showCursorLocation;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showCursorLocation = false;
             f.status.remove("cursor");
         },
@@ -372,7 +415,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showBookmarks;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showBookmarks = false;
             f.tempBookmarks = undefined;
             f.localQueueRender(f.cursor.pos);
@@ -383,7 +426,7 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return !f.modes.showComments;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showComments = true;
             f.localQueueRender(f.cursor.pos);
         },
@@ -393,14 +436,14 @@ const commands: IFlowViewCmd[] = [
         enabled: (f) => {
             return f.modes.showComments;
         },
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.modes.showComments = false;
             f.localQueueRender(f.cursor.pos);
         },
         key: "hide comments",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             Table.createTable(f.cursor.pos, f.sharedString);
             f.localQueueRender(f.cursor.pos);
@@ -408,97 +451,97 @@ const commands: IFlowViewCmd[] = [
         key: "table test",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertPhoto();
         },
         key: "insert photo",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertList();
         },
         key: "insert list",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.addChildFlow();
         },
         key: "cflow test",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertColumn();
         },
         key: "insert column",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertRow();
         },
         key: "insert row",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.deleteRow();
         },
         key: "delete row",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.deleteColumn();
         },
         key: "delete column",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.toggleUnderline();
         },
         key: "underline",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertSheetlet();
         },
         key: "insert sheet",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertChart();
         },
         key: "insert chart",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertInnerComponent("chart", "@chaincode/charts");
         },
         key: "insert chart",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
         },
         key: "insert map",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertInnerComponent("code", "@chaincode/monaco");
         },
         key: "insert monaco",
     },
     {
         exec: (c, p, f) => {
-           f.insertMathTest();
+            f.insertMathTest();
         },
         key: "insert math",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             f.insertProgressBar();
         },
         key: "insert progress",
     },
     {
-         exec: (c, p, f) => {
+        exec: (c, p, f) => {
             (navigator as any).clipboard.readText().then((text) => {
                 console.log(`Inserting ${text}`);
                 f.insertDocument(text);
@@ -732,6 +775,13 @@ interface IMathEndMarker extends MergeTree.Marker {
     outerSpan: HTMLSpanElement;
 }
 
+function isMathComponentView(marker: MergeTree.Marker) {
+    if (marker.hasProperty("crefTest")) {
+        const refInfo = marker.properties.crefTest as IReferenceDoc;
+        return refInfo.type.name === "math";
+    }
+}
+
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -775,28 +825,40 @@ function renderSegmentIntoLine(
         // component.
         if (segment.refType === MergeTree.ReferenceType.Simple) {
             const typeName = segment.properties.ref && segment.properties.ref.type.name;
-            const maybeComponent = ui.refTypeNameToComponent.get(typeName);
-            // If it is a registered external component, ask it to render itself to HTML and
-            // insert the divs here.
-            if (maybeComponent) {
-                const context = new ui.FlowViewContext(
-                    document.createElement("canvas").getContext("2d"),
-                    lineContext.lineDiv.style,
-                    lineContext.flowView.services,
-                );
-
-                const newElement = maybeComponent.upsert(
-                    segment.properties.state,
-                    context,
-                    segment.properties.cachedElement,
-                );
-
-                if (newElement !== segment.properties.cachedElement) {
-                    segment.properties.cachedElement = newElement;
-                    allowDOMEvents(newElement);
+            const marker = segment as MergeTree.Marker;
+            if (isMathComponentView(marker)) {
+                const span = document.createElement("span");
+                const mathViewMarker = marker as IMathViewMarker;
+                if (!mathViewMarker.instance) {
+                    lineContext.flowView.loadMath(mathViewMarker);
                 }
+                mathViewMarker.instance.render(span, ComponentDisplayType.Inline);
+                mathViewMarker.properties.cachedElement = span;
+                lineContext.contentDiv.appendChild(span);
+            } else {
+                const maybeComponent = ui.refTypeNameToComponent.get(typeName);
+                // If it is a registered external component, ask it to render itself to HTML and
+                // insert the divs here.
+                if (maybeComponent) {
+                    const context = new ui.FlowViewContext(
+                        document.createElement("canvas").getContext("2d"),
+                        lineContext.lineDiv.style,
+                        lineContext.flowView.services,
+                    );
 
-                lineContext.contentDiv.appendChild(newElement);
+                    const newElement = maybeComponent.upsert(
+                        segment.properties.state,
+                        context,
+                        segment.properties.cachedElement,
+                    );
+
+                    if (newElement !== segment.properties.cachedElement) {
+                        segment.properties.cachedElement = newElement;
+                        allowDOMEvents(newElement);
+                    }
+
+                    lineContext.contentDiv.appendChild(newElement);
+                }
             }
         }
 
@@ -2933,7 +2995,7 @@ export interface IRefLayoutSpec {
 
 export interface IReferenceDoc {
     type: IReferenceDocType;
-    referenceDocId: string;
+    referenceDocId?: string;
     url: string;
     layout?: IRefLayoutSpec;
 }
@@ -3055,7 +3117,7 @@ export class FlowView extends ui.Component {
     private formatRegister: MergeTree.PropertySet;
 
     private progressBars: ProgressCollection;
-    private math: MathComponent.MathCollection;
+    private math: IMathCollection;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
@@ -3766,23 +3828,24 @@ export class FlowView extends ui.Component {
                 this.client.getClientId());
             if (MergeTree.Marker.is(segoff.segment)) {
                 // REVIEW: assume marker for now
-                if (segoff.segment.refType & MergeTree.ReferenceType.Tile) {
-                    if (segoff.segment.hasTileLabel("pg")) {
-                        if (segoff.segment.hasRangeLabel("table") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
+                const marker = segoff.segment as MergeTree.Marker;
+                if (marker.refType & MergeTree.ReferenceType.Tile) {
+                    if (marker.hasTileLabel("pg")) {
+                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorFwd();
                         } else {
                             return;
                         }
-                    } else if (segoff.segment.hasTileLabel("math")) {
+                    } else if (marker.hasTileLabel("math")) {
                         this.cursor.pos++;
                     }
-                } else if (segoff.segment.refType & MergeTree.ReferenceType.NestBegin) {
-                    if (segoff.segment.hasRangeLabel("table")) {
+                } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
+                    if (marker.hasRangeLabel("table")) {
                         this.cursor.pos += 3;
-                    } else if (segoff.segment.hasRangeLabel("row")) {
+                    } else if (marker.hasRangeLabel("row")) {
                         this.cursor.pos += 2;
-                    } else if (segoff.segment.hasRangeLabel("cell")) {
-                        if (Table.cellIsMoribund(segoff.segment)) {
+                    } else if (marker.hasRangeLabel("cell")) {
+                        if (Table.cellIsMoribund(marker)) {
                             this.tryMoveCell(this.cursor.pos);
                         } else {
                             this.cursor.pos += 1;
@@ -3790,14 +3853,18 @@ export class FlowView extends ui.Component {
                     } else {
                         this.cursorFwd();
                     }
-                } else if (segoff.segment.refType & MergeTree.ReferenceType.NestEnd) {
-                    if (segoff.segment.hasRangeLabel("row")) {
+                } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
+                    if (marker.hasRangeLabel("row")) {
                         this.cursorFwd();
-                    } else if (segoff.segment.hasRangeLabel("table")) {
+                    } else if (marker.hasRangeLabel("table")) {
                         this.cursor.pos += 2;
                     } else {
                         this.cursorFwd();
                     }
+                } else if (isMathComponentView(marker)) {
+                    const mathMarker = marker as IMathViewMarker;
+                    this.loadMath(mathMarker);
+                    mathMarker.instance.cursorVisible(true);
                 } else {
                     this.cursorFwd();
                 }
@@ -4151,6 +4218,9 @@ export class FlowView extends ui.Component {
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
                         if (this.inMathGetMarker()) {
                             this.mathCursorFwd();
+                        } else if (this.getMathViewMarker()) {
+                            const marker = getContainingSegment(this, this.cursor.pos).segment as IMathViewMarker;
+                            this.mathComponentViewCursorFwd(marker);
                         } else {
                             if (this.cursor.pos === this.viewportEndPos) {
                                 this.scroll(false, true);
@@ -4314,6 +4384,28 @@ export class FlowView extends ui.Component {
         this.on("keypress", keypressHandler);
         this.keypressHandler = keypressHandler;
         this.keydownHandler = keydownHandler;
+    }
+
+    // add caching
+    public getMathViewMarker() {
+        const segment = getContainingSegment(this, this.cursor.pos).segment;
+        if (MergeTree.Marker.is(segment)) {
+            if (isMathComponentView(segment as MergeTree.Marker)) {
+                return segment as IMathViewMarker;
+            }
+        }
+    }
+
+    public mathComponentViewCursorFwd(marker: IMathViewMarker) {
+        if (!marker.instance) {
+            this.loadMath(marker);
+        }
+        if (marker.instance.cursorFwd()) {
+            this.cursorFwd();
+            marker.instance.cursorVisible(false);
+        }
+        this.broadcastPresence();
+        this.cursor.updateView(this);
     }
 
     public mathCursorFwd() {
@@ -4741,9 +4833,29 @@ export class FlowView extends ui.Component {
         this.insertComponent("innerComponent", { id, chaincode });
     }
 
+    public loadMath(mathMarker: IMathViewMarker) {
+        if (!mathMarker.instance) {
+            const mathInstance = this.math.getInstance(mathMarker.properties.leafId);
+            mathMarker.instance = mathInstance;
+        }
+    }
+
     public insertMathTest() {
-        const instance = this.math.create();
-        this.insertComponent("innerComponent", { id: instance.id });
+        const mathInstance = this.math.create();
+        // for now, only inline math
+        const props = {
+            crefTest: {
+                type: {
+                    name: "math",
+                } as IReferenceDocType,
+                url: mathInstance.id,
+            },
+            leafId: mathInstance.leafId,
+        };
+        const markerPos = this.cursor.pos++;
+        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
+        const marker = getContainingSegment(this, markerPos).segment as IMathViewMarker;
+        marker.instance = mathInstance;
     }
 
     public insertProgressBar() {
@@ -4810,12 +4922,8 @@ export class FlowView extends ui.Component {
             this.openPlatform("progress-bars"),
         ]);
 
-        const [math, progressBars] = await Promise.all([
-            mathPlatform.queryInterface<MathComponent.MathCollection>("collection"),
-            progressBarsPlatform.queryInterface<ProgressCollection>("collection"),
-        ]);
-
-        this.math = math;
+        const progressBars = await progressBarsPlatform.queryInterface<ProgressCollection>("collection");
+        this.math = mathPlatform as IMathCollection;
         this.progressBars = progressBars;
     }
 
@@ -5588,6 +5696,7 @@ export class FlowView extends ui.Component {
         let opCursorPos: number;
         event.ranges.forEach((range) => {
             if (MergeTree.Marker.is(range.segment)) {
+                const marker = range.segment as MergeTree.Marker;
                 this.updatePGInfo(range.offset - 1);
             } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
