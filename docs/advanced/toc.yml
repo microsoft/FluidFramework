@@ -1,4 +1,4 @@
 - name: Advanced Topics
-  href: readme.md
+  href: README.md
 - name: Writing a Distributed Data Structure
   href: writing-dds.md

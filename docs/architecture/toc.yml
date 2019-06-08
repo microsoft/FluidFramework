@@ -1,13 +1,13 @@
 - name: Architecture
-  href: readme.md
+  href: README.md
   items:
     - name: "Routerlicious: Reference server"
-      href: server/routerlicious.md
+      href: server/README.md
       items:
         - name: "Build machine set up"
           href: server/build-machine.md
     - name: Components
-      href: components/readme.md
+      href: components/README.md
       items:
         - name: Web Component Model
           href: components/web-component-model.md

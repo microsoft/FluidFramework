@@ -3,15 +3,15 @@
   topicHref: get-started/yo-prague.md
 - name: Examples
   href: examples/
-  topicHref: examples/readme.md
+  topicHref: examples/README.md
 - name: Architecture
   href: architecture/
-  topicHref: architecture/readme.md
+  topicHref: architecture/README.md
 - name: Advanced Topics
   href: advanced/
-  topicHref: advanced/readme.md
+  topicHref: advanced/README.md
 - name: Contributing
   href: contributing/
-  topicHref: contributing/readme.md
+  topicHref: contributing/README.md
 - name: API Documentation
   href: api/
