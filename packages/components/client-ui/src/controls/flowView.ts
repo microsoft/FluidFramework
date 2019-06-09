@@ -2,7 +2,9 @@
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import { ProgressCollection } from "@chaincode/progress-bars";
 import * as api from "@prague/client-api";
-import { IGenericBlob, IPlatform, ISequencedDocumentMessage, IUser } from "@prague/container-definitions";
+import { IGenericBlob, IPlatform, ISequencedDocumentMessage,
+    ISharedComponent, IUser,
+} from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -43,8 +45,8 @@ export interface IMathCollection extends IComponent, IPlatform {
     getInstance(id: string): IMathInstance;
 }
 
-export interface IMathInstance extends IComponent, IComponentRenderHTML, IComponentCursor,
-    IComponentKeyHandlers {
+export interface IMathInstance extends ISharedComponent, IComponentRenderHTML, IComponentCursor,
+    IComponentKeyHandlers, SearchMenu.ISearchMenuClient {
     id: string;
     leafId: string;
 }
@@ -3052,7 +3054,7 @@ export interface ISeqTestItem {
     v: number;
 }
 
-export class FlowView extends ui.Component {
+export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
     public static docStartPosition = 0;
     public timeToImpression: number;
     public timeToLoad: number;
@@ -3983,6 +3985,23 @@ export class FlowView extends ui.Component {
         }
     }
 
+    public showSearchMenu(cmdTree: MergeTree.TST<SearchMenu.ISearchMenuCommand>,
+        foldCase = true,
+        showAllInitially = false,
+        cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
+        this.activeSearchBox =
+            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase,cmdParser);
+        if (showAllInitially) {
+            this.activeSearchBox.showAllItems();
+        }
+        return true;
+    }
+
+    public cancelSearchMenu() {
+        this.activeSearchBox.dismiss();
+        this.activeSearchBox = undefined;
+    }
+
     public setEdit(docRoot: types.ISharedMap) {
         this.docRoot = docRoot;
 
@@ -4189,6 +4208,8 @@ export class FlowView extends ui.Component {
                             const adjPos = beginTileInfo.pos + 1;
                             this.sharedString.removeText(adjPos + toRemoveMath.start, adjPos + toRemoveMath.end);
                         }
+                    } else if (this.getMathViewMarker()) {
+                        this.mathComponentViewKeydown(e);
                     } else {
                         let toRemove = this.cursor.getSelection();
                         if (toRemove) {
@@ -4426,6 +4447,14 @@ export class FlowView extends ui.Component {
             this.loadMath(marker);
         }
         marker.instance.onKeypress(e);
+    }
+
+    public mathComponentViewKeydown(e: KeyboardEvent) {
+        const marker = this.getMathViewMarker();
+        if (!marker.instance) {
+            this.loadMath(marker);
+        }
+        marker.instance.onKeydown(e);
     }
 
     public mathComponentViewCursorFwd(marker: IMathViewMarker) {
@@ -4883,6 +4912,9 @@ export class FlowView extends ui.Component {
         if (!mathMarker.instance) {
             const mathInstance = this.math.getInstance(mathMarker.properties.leafId);
             mathMarker.instance = mathInstance;
+            if (mathInstance.query("ISearchMenuClient")) {
+                mathInstance.registerSearchMenuHost(this);
+            }
         }
     }
 
@@ -4898,10 +4930,14 @@ export class FlowView extends ui.Component {
             },
             leafId: mathInstance.leafId,
         };
-        const markerPos = this.cursor.pos++;
+        const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-        const marker = getContainingSegment(this, markerPos).segment as IMathViewMarker;
-        marker.instance = mathInstance;
+        const mathMarker = getContainingSegment(this, markerPos).segment as IMathViewMarker;
+        mathMarker.instance = mathInstance;
+        mathInstance.registerSearchMenuHost(this);
+        this.cursor.disable();
+        this.componentCursor = mathMarker.instance;
+        mathMarker.instance.enter(ComponentCursorDirection.Left);
     }
 
     public insertProgressBar() {

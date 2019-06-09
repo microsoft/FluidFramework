@@ -4,7 +4,7 @@ import * as Katex from "katex";
 import { CharacterCodes } from "../text";
 import * as SearchMenu from "./searchMenu";
 
-export const cursorTex = " \\textcolor{#800080}{\\mid}";
+export const cursorTex = " \\textcolor{#800080}{\\vert}";
 export const cursorColor = "rgb(128, 0, 128)";
 export function boxEmptyParam(viewText: string) {
     return viewText.replace(/\{\}/g, "{\\Box}");
@@ -54,7 +54,7 @@ export function mathMenuCreate(context: any, boundingElm: HTMLElement,
     return SearchMenu.searchBoxCreate(context, boundingElm, mathCmdTree, false, onSubmit);
 }
 
-const mathCmdTree = new MergeTree.TST<IMathCommand>();
+export const mathCmdTree = new MergeTree.TST<IMathCommand>();
 const greekLetters = [
     "alpha", "beta", "gamma", "delta", "epsilon", "constepsilon",
     "zeta", "eta", "Gamma", "Delta", "Theta", "theta", "vartheta",
@@ -226,6 +226,15 @@ export function posAtToken(tokIndex: number, tokens: MathToken[]) {
         pos += (tok.end - tok.start);
     }
     return pos;
+}
+
+export function tokenAtPos(mathCursor: number, tokens: MathToken[]) {
+    for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i].start === mathCursor) {
+            return i;
+        }
+    }
+    return tokens.length;
 }
 
 export function mathTokFwd(tokIndex: number, tokens: MathToken[]) {

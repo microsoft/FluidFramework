@@ -35,17 +35,18 @@ interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
 
 export class MathInstance extends EventEmitter
     implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentLayout,
-    IComponentCursor {
+    IComponentCursor, ClientUI.controls.ISearchMenuClient {
 
     public static supportedInterfaces = [
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentRenderHTML",
-        "IComponentLayout", "IComponentCursor"];
+        "IComponentLayout", "IComponentCursor", "ISearchMenuClient"];
 
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
     public canInline = true;
     public cursorActive = false;
     public savedElm: HTMLElement;
+    public searchMenuHost: ClientUI.controls.ISearchMenuHost;
 
     constructor(
         public url: string,
@@ -62,6 +63,11 @@ export class MathInstance extends EventEmitter
 
     public async list(): Promise<string[]> {
         return MathInstance.supportedInterfaces;
+    }
+
+    // ISearchMenuClient
+    public registerSearchMenuHost(host: ClientUI.controls.ISearchMenuHost) {
+        this.searchMenuHost = host;
     }
 
     // IComponentCursor
@@ -109,7 +115,6 @@ export class MathInstance extends EventEmitter
         const mathMarker = this.endMarker;
         mathMarker.mathTokenIndex = ClientUI.controls.mathTokFwd(mathMarker.mathTokenIndex,
             mathMarker.mathTokens);
-        ClientUI.controls.printMathMarker(mathMarker);
         if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
             return true;
         } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
@@ -118,6 +123,27 @@ export class MathInstance extends EventEmitter
         } else {
             mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
         }
+    }
+
+    public remoteEdit(pos: number, len: number, isInsert: boolean) {
+        const mathMarker = this.endMarker;
+        let mathCursorNew = mathMarker.mathCursor;
+        if (isInsert) {
+            if (pos <= mathCursorNew) {
+                mathCursorNew += len;
+            }
+        } else {
+            if ((pos + len) <= mathCursorNew) {
+                mathCursorNew -= len;
+            } else {
+                mathCursorNew = pos;
+            }
+        }
+        mathMarker.mathCursor = mathCursorNew;
+        const mathText = this.collection.getText(this);
+        mathMarker.mathText = mathText;
+        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
+        mathMarker.mathTokenIndex = ClientUI.controls.tokenAtPos(mathCursorNew, mathMarker.mathTokens);
     }
 
     public postInsert() {
@@ -130,21 +156,52 @@ export class MathInstance extends EventEmitter
     }
 
     public onKeydown(e: KeyboardEvent) {
-    }
-
-    public onKeypress(e: KeyboardEvent) {
-        // add backslash menu
-        const toInsert = ClientUI.controls.transformInputCode(e.charCode);
-        if (toInsert) {
-            this.collection.insertText(toInsert, this.leafId, this.endMarker.mathCursor);
+        if (e.keyCode === ClientUI.controls.KeyCode.backspace) {
+            const mathMarker = this.endMarker;
+            const toRemoveMath = ClientUI.controls.bksp(mathMarker);
+            if (toRemoveMath) {
+                this.collection.removeText(this, toRemoveMath.start, toRemoveMath.end);
+            }
+            const mathText = this.collection.getText(this);
+            mathMarker.mathText = mathText;
+            mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
+            mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
             if (this.savedElm) {
                 ClientUI.controls.clearSubtree(this.savedElm);
                 this.render(this.savedElm, ComponentDisplayType.Inline);
             }
+        }
+    }
+
+    public insertText(text: string) {
+        this.collection.insertText(text, this.leafId, this.endMarker.mathCursor);
+        if (this.savedElm) {
+            ClientUI.controls.clearSubtree(this.savedElm);
+            this.render(this.savedElm, ComponentDisplayType.Inline);
+        }
+    }
+
+    public onKeypress(e: KeyboardEvent) {
+        let toInsert: string;
+        if (e.charCode === ClientUI.controls.CharacterCodes.backslash) {
+            if (this.searchMenuHost) {
+                this.searchMenuHost.showSearchMenu(ClientUI.controls.mathCmdTree, false, true,
+                    (s, cmd) => {
+                        let text = `\\${s}`;
+                        if (cmd) {
+                            text = (cmd as ClientUI.controls.IMathCommand).texString;
+                        }
+                        this.insertText(text);
+                    });
+            }
+        } else {
+            toInsert = ClientUI.controls.transformInputCode(e.charCode);
+        }
+        if (toInsert) {
+            this.insertText(toInsert);
         } else {
             console.log(`unrecognized math input ${e.char}`);
         }
-
     }
 
     public render(elm: HTMLElement, displayType: ComponentDisplayType) {
@@ -199,7 +256,7 @@ const endIdPrefix = "end-";
 
 export class MathCollection extends EventEmitter implements ISharedComponent, IComponentCollection, IComponentRouter {
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",
-    "IComponentCollection"];
+        "IComponentCollection"];
 
     public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);
@@ -227,7 +284,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         return MathCollection.supportedInterfaces;
     }
 
-     public appendMathMarkers(instance: MathInstance, inCombinedText: boolean) {
+    public appendMathMarkers(instance: MathInstance, inCombinedText: boolean) {
         const endId = endIdPrefix + instance.leafId;
         if (!inCombinedText) {
             let pos = this.combinedMathText.getLength();
@@ -305,6 +362,11 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         instance.postInsert();
     }
 
+    public removeText(instance: MathInstance, start: number, end: number) {
+        const startPos = this.getStartPos(instance);
+        this.combinedMathText.removeRange(startPos + start, startPos + end);
+    }
+
     public getInstance(id: string) {
         const endId = endIdPrefix + id;
         const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
@@ -339,23 +401,23 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         }
         this.combinedMathText.on("sequenceDelta", (event, target) => {
             if ((!event.isLocal) && (event.ranges.length > 0) && (event.clientId !== "original")) {
-                const range = event.ranges[0];
                 let pos: number;
-                if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
+                let len = 0;
+                event.ranges.forEach((range) => {
                     pos = range.offset;
-                } else {
-                    pos = range.offset + range.segment.cachedLength;
-                }
+                    len += range.segment.cachedLength;
+                });
                 console.log(`got event from ${event.clientId} pos: ${pos}`);
-                // adjust cursor pos by saving current token and re-fixing token index and mathCursor
-                // re-lexCU
                 const tileInfo = this.findTile(pos, "math", false);
                 if (tileInfo && (tileInfo.tile.properties.mathEnd)) {
                     const mathMarker = tileInfo.tile as IMathMarkerInst;
                     const leafId = mathMarker.getId().substring(endIdPrefix.length);
                     const instance = this.getInstance(leafId);
+                    const startPos = this.getStartPos(instance);
+                    instance.remoteEdit(pos - startPos, len, event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT);
                     console.log(`found math remote ${leafId} instance ${instance !== undefined}`);
                     if (instance.savedElm) {
+                        console.log("rendering");
                         ClientUI.controls.clearSubtree(instance.savedElm);
                         instance.render(instance.savedElm, ComponentDisplayType.Inline);
                     }

@@ -6,6 +6,20 @@ import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 
+export interface ISearchMenuHost {
+    // TD switch to options structure
+    showSearchMenu(
+        cmdTree: MergeTree.TST<ISearchMenuCommand>,
+        foldCase: boolean,
+        showAllInitially: boolean,
+        cmdParser?: (searchString: string, cmd?: ISearchMenuCommand) => void): boolean;
+    cancelSearchMenu(): void;
+}
+
+export interface ISearchMenuClient {
+    registerSearchMenuHost(host: ISearchMenuHost): void;
+}
+
 export interface ISearchMenuParam<TContext = any> {
     name: string;
     suffix?: string;

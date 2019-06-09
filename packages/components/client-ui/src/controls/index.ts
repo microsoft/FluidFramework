@@ -8,6 +8,7 @@ export * from "./layerPanel";
 export * from "./popup";
 export * from "./status";
 export * from "../text/characterCodes";
+export * from "./keycode";
 export * from "./searchMenu";
 export * from "./mathMenu";
 export * from "./domutils";

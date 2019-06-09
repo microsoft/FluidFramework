@@ -2,10 +2,10 @@
   "name": "@chaincode/math",
   "version": "0.4.0",
   "description": "Chaincode component that provides math.",
-  "main": "dist/index.js",
-  "module": "lib/index.js",
+  "main": "dist/mathComponent.js",
+  "module": "lib/mathComponent.js",
   "sideEffects": false,
-  "types": "dist/index.d.ts",
+  "types": "dist/mathComponent.d.ts",
   "prague": {
     "browser": {
       "entrypoint": "main",
