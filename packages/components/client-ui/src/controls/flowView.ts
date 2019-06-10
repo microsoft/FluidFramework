@@ -2,13 +2,18 @@
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import { ProgressCollection } from "@chaincode/progress-bars";
 import * as api from "@prague/client-api";
-import { IGenericBlob, IPlatform, ISequencedDocumentMessage,
-    ISharedComponent, IUser,
+import {
+    IComponent,
+    IGenericBlob,
+    IPlatform,
+    ISequencedDocumentMessage,
+    ISharedComponent,
+    IUser,
 } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentCursorDirection, ComponentDisplayType, IComponent,
+    ComponentCursorDirection, ComponentDisplayType,
     IComponentCursor, IComponentKeyHandlers, IComponentRenderHTML, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -38,6 +43,11 @@ import { UndoRedoStackManager } from "./undoRedo";
 
 interface IMathViewMarker extends MergeTree.Marker {
     instance?: IMathInstance;
+}
+
+interface IComponentViewMarker extends MergeTree.Marker {
+    instanceP?: Promise<IComponentRenderHTML>;
+    instance?: IComponentRenderHTML;
 }
 
 export interface IMathCollection extends IComponent, IPlatform {
@@ -507,12 +517,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertChart();
-        },
-        key: "insert chart",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertInnerComponent("chart", "@chaincode/charts");
         },
         key: "insert chart",
@@ -528,6 +532,24 @@ const commands: IFlowViewCmd[] = [
             f.insertInnerComponent("code", "@chaincode/monaco");
         },
         key: "insert monaco",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertComponentNew("charts", "@chaincode/charts");
+        },
+        key: "insert new chart",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertComponentNew("map", "@chaincode/pinpoint-editor");
+        },
+        key: "insert new map",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertComponentNew("code", "@chaincode/monaco");
+        },
+        key: "insert new monaco",
     },
     {
         exec: (c, p, f) => {
@@ -783,6 +805,13 @@ function isMathComponentView(marker: MergeTree.Marker) {
     }
 }
 
+function isComponentView(marker: MergeTree.Marker) {
+    if (marker.hasProperty("crefTest")) {
+        const refInfo = marker.properties.crefTest as IReferenceDoc;
+        return refInfo.type.name === "component";
+    }
+}
+
 function renderSegmentIntoLine(
     segment: MergeTree.ISegment, segpos: number, refSeq: number,
     clientId: number, start: number, end: number, lineContext: ILineContext) {
@@ -836,6 +865,39 @@ function renderSegmentIntoLine(
                 mathViewMarker.instance.render(span, ComponentDisplayType.Inline);
                 mathViewMarker.properties.cachedElement = span;
                 lineContext.contentDiv.appendChild(span);
+            } else if (isComponentView(marker)) {
+                const span = document.createElement("span");
+                const componentMarker = marker as IComponentViewMarker;
+
+                // Delay load the instance if not available
+                if (!componentMarker.instance) {
+                    if (!componentMarker.instanceP) {
+                        componentMarker.instanceP = lineContext.flowView.collabDocument.context.hostRuntime
+                            .request({ url: `/${componentMarker.properties.leafId}` })
+                            .then(async (response) => {
+                                if (response.status !== 200 || response.mimeType !== "prague/component") {
+                                    return Promise.reject(response);
+                                }
+
+                                const component = response.value as IComponent;
+                                const viewable = component.query<IComponentRenderHTML>("IComponentRenderHTML");
+                                if (!viewable) {
+                                    return Promise.reject("component is not viewable");
+                                }
+
+                                return viewable;
+                            });
+
+                        componentMarker.instanceP.then((instance) => {
+                            // TODO how do I trigger a re-render?
+                            componentMarker.instance = instance;
+                        });
+                    }
+                } else {
+                    componentMarker.instance.render(span, ComponentDisplayType.Inline);
+                    componentMarker.properties.cachedElement = span;
+                    lineContext.contentDiv.appendChild(span);
+                }
             } else {
                 const maybeComponent = ui.refTypeNameToComponent.get(typeName);
                 // If it is a registered external component, ask it to render itself to HTML and
@@ -4895,17 +4957,30 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.insertComponent("sheetlet", {});
     }
 
-    /** Insert a Chart. */
-    public insertChart() {
-        this.insertComponent("chart", {});
-    }
-
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
 
         this.collabDocument.context.createAndAttachComponent(id, chaincode);
 
         this.insertComponent("innerComponent", { id, chaincode });
+    }
+
+    public insertComponentNew(prefix: string, chaincode: string) {
+        const id = `${prefix}-${Date.now()}`;
+
+        this.collabDocument.context.createAndAttachComponent(id, chaincode);
+
+        const props = {
+            crefTest: {
+                type: {
+                    name: "component",
+                } as IReferenceDocType,
+                url: id,
+            },
+            leafId: id,
+        };
+        const markerPos = this.cursor.pos;
+        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
     }
 
     public loadMath(mathMarker: IMathViewMarker) {

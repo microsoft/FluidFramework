@@ -1,7 +1,18 @@
 import { Pinpoint } from "@kurtb/pinpoint";
-import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLViewable,
+    IComponentLoadable,
+    IHTMLView,
+    ISharedComponent,
+} from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import {
+    ComponentDisplayType,
+    IComponentContext,
+    IComponentRenderHTML,
+    IComponentRuntime,
+} from "@prague/runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -293,8 +304,14 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-export class PinpointRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
-    public static supportedInterfaces = ["IComponentHTMLViewable"];
+export class PinpointRunner extends EventEmitter
+    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+
+    public static supportedInterfaces = [
+        "IComponentHTMLViewable",
+        "IComponentRenderHTML",
+        "IComponentLoadable",
+    ];
 
     public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
         const runner = new PinpointRunner(runtime);
@@ -303,7 +320,7 @@ export class PinpointRunner extends EventEmitter implements IComponent, ICompone
         return runner;
     }
 
-    public get id(): string {
+    public get url(): string {
         return this.runtime.id;
     }
 
@@ -322,6 +339,18 @@ export class PinpointRunner extends EventEmitter implements IComponent, ICompone
 
     public list(): string[] {
         return PinpointRunner.supportedInterfaces;
+    }
+
+    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
+        if (!this.mapHost) {
+            this.mapHost = document.createElement("div");
+            embed(this.mapHost, this.collabDoc, this.rootView);
+        }
+
+        if (this.mapHost.parentElement !== elm) {
+            this.mapHost.remove();
+            elm.appendChild(this.mapHost);
+        }
     }
 
     public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {

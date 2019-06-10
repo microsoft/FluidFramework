@@ -1,5 +1,11 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLViewable,
+    IComponentLoadable,
+    IHTMLView,
+    ISharedComponent,
+} from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import {
     IMergeTreeGroupMsg,
@@ -8,7 +14,12 @@ import {
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import {
+    ComponentDisplayType,
+    IComponentContext,
+    IComponentRenderHTML,
+    IComponentRuntime,
+} from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
@@ -49,8 +60,14 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-export class MonacoRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
-    public static supportedInterfaces = ["IComponentHTMLViewable"];
+export class MonacoRunner extends EventEmitter
+    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+
+    public static supportedInterfaces = [
+        "IComponentHTMLViewable",
+        "IComponentRenderHTML",
+        "IComponentLoadable",
+    ];
 
     public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
         const runner = new MonacoRunner(runtime);
@@ -64,7 +81,7 @@ export class MonacoRunner extends EventEmitter implements IComponent, IComponent
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
     private rootView: ISharedMap;
 
-    public get id(): string {
+    public get url(): string {
         return this.runtime.id;
     }
 
@@ -80,14 +97,38 @@ export class MonacoRunner extends EventEmitter implements IComponent, IComponent
         return MonacoRunner.supportedInterfaces;
     }
 
+    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
+        if (!this.mapHost) {
+            this.mapHost = document.createElement("div");
+            elm.appendChild(this.mapHost);
+            this.initializeEditorDiv().catch((error) => { console.error(error); });
+        } else {
+            if (this.mapHost.parentElement !== elm) {
+                this.mapHost.remove();
+                elm.appendChild(this.mapHost);
+            }
+        }
+    }
+
     // TODO can remove ? once document is fixed in main package
     public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
         if (this.mapHost) {
             return Promise.reject("Only one view supported");
         }
 
-        this.mapHost = element;
+        this.mapHost = document.createElement("div");
+        element.appendChild(this.mapHost);
 
+        await this.initializeEditorDiv();
+
+        return this;
+    }
+
+    public remove() {
+        this.mapHost = null;
+    }
+
+    private async initializeEditorDiv() {
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
 
@@ -191,12 +232,6 @@ export class MonacoRunner extends EventEmitter implements IComponent, IComponent
                 ignoreModelContentChanges = false;
             }
         });
-
-        return this;
-    }
-
-    public remove() {
-        this.mapHost = null;
     }
 
     private async initialize(): Promise<void> {
