@@ -1,0 +1,65 @@
+{
+  "name": "@prague/sharepoint-socket-storage",
+  "version": "0.4.0",
+  "description": "Socket storage implementation for SPO and ODC",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "test": "mocha --recursive dist/test",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.4.0",
+    "concurrently": "^4.1.0",
+    "@types/mocha": "^5.2.5",
+    "@types/debug": "^0.0.31",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^13.0.1",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "~3.4.5"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/gitresources": "^0.4.0",
+    "@prague/services-client": "^0.4.0",
+    "@prague/socket-storage-shared": "^0.4.0",
+    "@prague/utils": "^0.4.0",
+    "axios": "^0.18.0",
+    "debug": "^4.1.1",
+    "socket.io-client": "^2.1.1"
+  }
+}

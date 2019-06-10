@@ -48,6 +48,7 @@ COPY packages/components/table-document/package*.json packages/components/table-
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/
 COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/
+COPY packages/drivers/sharepoint-socket-storage/package*.json packages/drivers/sharepoint-socket-storage/
 COPY packages/drivers/replay-socket-storage/package*.json packages/drivers/replay-socket-storage/
 COPY packages/drivers/file-socket-storage/package*.json packages/drivers/file-socket-storage/
 COPY packages/drivers/routerlicious-host/package*.json packages/drivers/routerlicious-host/
