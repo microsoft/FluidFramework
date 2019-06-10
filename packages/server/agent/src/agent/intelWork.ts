@@ -2,7 +2,7 @@ import {
     IDocumentServiceFactory,
     IHost,
 } from "@prague/container-definitions";
-import * as Intelligence from "@prague/intelligence-runner";
+import { TextAnalyzer } from "@prague/intelligence-runner";
 import { ISharedMap, MapExtension } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import * as uuid from "uuid/v4";
@@ -42,7 +42,8 @@ export class IntelWork extends BaseWork implements IWork {
             if (!insightsMap.has(sharedString.id)) {
                 const insightSlot = this.document.runtime.createChannel(uuid(), MapExtension.Type);
                 insightsMap.set(sharedString.id, insightSlot);
-                Intelligence.run(sharedString, insightsMap);
+                const textAnalyzer = new TextAnalyzer();
+                textAnalyzer.run(sharedString, insightsMap);
             }
         }
     }

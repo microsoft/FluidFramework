@@ -4,6 +4,7 @@ import {
     IRuntime,
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
+import { TextAnalyzer } from "@prague/intelligence-runner";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import * as Snapshotter from "@prague/snapshotter";
 import { instantiateComponent, SharedTextRunner } from "./component";
@@ -69,6 +70,9 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         if (request.url === "/graphiql") {
             const sharedText = (await runtime.request({ url: "/" })).value as SharedTextRunner;
             return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
+        } else if (request.url === "/text-analyzer") {
+            const textAnalyzer = new TextAnalyzer();
+            return textAnalyzer.request(request);
         } else {
             console.log(request.url);
             const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"

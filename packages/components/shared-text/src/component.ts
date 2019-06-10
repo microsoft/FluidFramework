@@ -3,7 +3,7 @@ import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IComponent, IComponentHTMLViewable, IHTMLView, IRequest } from "@prague/container-definitions";
-import * as Intelligence from "@prague/intelligence-runner";
+import { ITextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
     CounterValueType,
@@ -201,20 +201,31 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
     // Leader can run tasks directly.
     private listenForLeaderEvent() {
         if (this.context.leader) {
-            this.runTask("intel");
+            this.runTextAnalyzer();
         } else {
             this.runtime.on("leader", (clientId) => {
-                this.runTask("intel");
+                this.runTextAnalyzer();
             });
         }
     }
 
+    private runTextAnalyzer() {
+        this.context.hostRuntime.request({ url: `/text-analyzer`}).then((response) => {
+            if (response.status !== 200 || response.mimeType !== "prague/component") {
+                return Promise.reject(response);
+            }
+
+            const component = response.value as IComponent;
+            const textAnalyzer = component.query<ITextAnalyzer>("ITextAnalyzer");
+            textAnalyzer.run(this.sharedString, this.insightsMap);
+            console.log(`@chaincode/shared-text running text analyzer`);
+        }, (err) => {
+            console.error(`Component load error ${err}`);
+        });
+    }
+
     private runTask(clientType: string) {
         switch (clientType) {
-            case "intel":
-                console.log(`@chaincode/shared-text running ${clientType}`);
-                Intelligence.run(this.sharedString, this.insightsMap);
-                break;
             case "translation":
                 console.log(`@chaincode/shared-text running ${clientType}`);
                 Translator.run(
