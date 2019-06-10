@@ -5,6 +5,7 @@ import {
     TableDocument,
     TableDocumentType,
     TableSliceType,
+    TableSlice,
 } from "@chaincode/table-document";
 import * as assert from "assert";
 
@@ -233,13 +234,49 @@ describe("TableDocument", () => {
             table.insertCols(0, 7);    
 
             const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 0, 0, 2, 2);
+            assert.equal(slice.numCols, 3);
+            assert.equal(slice.numRows, 3);
+
+            slice.insertCols(1, 2);
+            assert.equal(slice.numCols, 5);
+            slice.insertRows(1, 2);
+            assert.equal(slice.numRows, 5);
+        });
+    });
+
+    describe("CellRange", () => {
+        it("forEachRowMajor visits all cells", async () => {
+            table.insertRows(0, 5);
+            table.insertCols(0, 7);    
+
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
             assert.equal(slice.numCols, 2);
             assert.equal(slice.numRows, 2);
 
-            slice.insertCols(1, 2);
-            assert.equal(slice.numCols, 4);
-            slice.insertRows(1, 2);
-            assert.equal(slice.numRows, 4);
+            const visited: string[] = [];
+            (slice as TableSlice).values.forEachRowMajor((row, col) => {
+                visited.push(`${row},${col}`);
+                return true;
+            });
+
+            assert.deepStrictEqual(visited, ["1,1", "1,2", "2,1", "2,2"]);
+        });
+
+        it("forEachColMajor visits all cells", async () => {
+            table.insertRows(0, 5);
+            table.insertCols(0, 7);    
+
+            const slice = await table.createSlice(makeId("Table-Slice"), "unnamed-slice", 1, 1, 2, 2);
+            assert.equal(slice.numCols, 2);
+            assert.equal(slice.numRows, 2);
+
+            const visited: string[] = [];
+            (slice as TableSlice).values.forEachColMajor((row, col) => {
+                visited.push(`${row},${col}`);
+                return true;
+            });
+
+            assert.deepStrictEqual(visited, ["1,1", "2,1", "1,2", "2,2"]);
         });
     });
 });

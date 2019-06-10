@@ -20,8 +20,9 @@ import {
     UnboxedOper,
 } from "@prague/sequence";
 import * as assert from "assert";
-import { CellInterval } from "./cellinterval";
+import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";
+import { debug } from "./debug";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -107,7 +108,7 @@ export class TableDocument extends Component implements ITable {
     public async getRange(label: string) {
         const intervals = this.matrix.getSharedIntervalCollection(label);
         const interval = (await intervals.getView()).nextInterval(0);
-        return new CellInterval(interval, this.localRefToRowCol);
+        return new CellRange(interval, this.localRefToRowCol);
     }
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
@@ -142,6 +143,7 @@ export class TableDocument extends Component implements ITable {
 
     // For internal use by TableSlice: Please do not use.
     public createInterval(label: string, minRow: number, minCol: number, maxRow: number, maxCol: number) {
+        debug(`createInterval(${label}, ${minRow}:${minCol}..${maxRow}:${maxCol})`);
         const start = rowColToPosition(minRow, minCol);
         const end = rowColToPosition(maxRow, maxCol);
         const intervals = this.matrix.getSharedIntervalCollection(label);

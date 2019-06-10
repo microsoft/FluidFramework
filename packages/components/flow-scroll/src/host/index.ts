@@ -1,5 +1,5 @@
 import { FlowDocument } from "@chaincode/flow-document";
-import { ICommand, KeyCode, Scheduler, Template, View } from "@prague/flow-util";
+import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
 import { IComponent } from "@prague/runtime-definitions";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
@@ -45,10 +45,10 @@ export class HostView extends View<IHostConfig> {
             return start < end;
         };
 
-        // const insertComponent = (type: string) => {
-        //     const position = viewport.editor.cursorPosition;
-        //     init.doc.insertInclusionComponent(position, randomId(), type);
-        // };
+        const insertComponent = (type: string) => {
+            const position = viewport.editor.cursorPosition;
+            init.doc.insertInclusionComponent(position, randomId(), type);
+        };
 
         const insertMath = () => {
             const position = viewport.editor.cursorPosition;
@@ -65,6 +65,8 @@ export class HostView extends View<IHostConfig> {
             commands: [
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(style.bold) },
                 { name: "insert math", enabled: () => true, exec: insertMath },
+                { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
+                { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
             ],
             onComplete: this.onComplete,
          });

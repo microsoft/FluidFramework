@@ -1,7 +1,7 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
-import { ConfigKeys } from "./configKeys";
+import { ConfigKey } from "./configKey";
 
 export const cellRangeExpr = /([a-zA-Z]+)(\d+):([a-zA-Z]+)(\d+)/;
 
@@ -61,8 +61,8 @@ export class ConfigView {
 
         this.done = new Promise<void>((accept) => {
             this.okButton.addEventListener("click", () => {
-                this.map.set(ConfigKeys.docId, this.idBox.value);
-                this.map.set(ConfigKeys.valuesText, this.valuesBox.value);
+                this.map.set(ConfigKey.docId, this.idBox.value);
+                this.map.set(ConfigKey.valuesText, this.valuesBox.value);
                 accept();
             });
         });

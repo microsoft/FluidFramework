@@ -1,5 +1,8 @@
+import { ChartView } from "@chaincode/chart-view";
 import { FlowDocument } from "@chaincode/flow-document";
 import { FlowEditor } from "@chaincode/flow-editor";
+import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
+import { TableView } from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import { ServicePlatform } from "@prague/component-runtime";
 import {
@@ -68,8 +71,14 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             [FlowHost.type, Promise.resolve(Component.createComponentFactory(FlowHost))],
             [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
             [FlowEditor.type, Promise.resolve(Component.createComponentFactory(FlowEditor))],
+
+            // Demo components
             ["@chaincode/math", import("@chaincode/math")],
             // Bootstrap CSS definitions conflict with flow-scroll
             // ["@chaincode/progress-bars", import("@chaincode/progress-bars")],
+            [TableDocumentType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableDocument))],
+            [TableSliceType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableSlice))],
+            ["@chaincode/chart-view", Promise.resolve(Component.createComponentFactory(ChartView))],
+            ["@chaincode/table-view", Promise.resolve(Component.createComponentFactory(TableView))],
         ]));
 }

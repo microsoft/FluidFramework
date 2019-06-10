@@ -1,4 +1,4 @@
-export const enum ConfigKeys {
+export const enum ConfigKey {
     name = "name",
     docId = "docId",
     serverUrl = "serverUrl",

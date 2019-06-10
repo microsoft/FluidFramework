@@ -2,8 +2,8 @@ import { Component } from "@prague/app-component";
 import { MapExtension } from "@prague/map";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { UnboxedOper } from "@prague/sequence";
-import { CellInterval, parseRange } from "./cellinterval";
-import { ConfigKeys } from "./configKeys";
+import { CellRange, parseRange } from "./cellrange";
+import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable } from "./table";
 
@@ -17,23 +17,16 @@ export interface ITableSliceConfig {
 }
 
 export class TableSlice extends Component implements ITable {
-    public get name() { return this.root.get(ConfigKeys.name); }
-    public set name(value: string) { this.root.set(ConfigKeys.name, value); }
+    public get name() { return this.root.get(ConfigKey.name); }
+    public set name(value: string) { this.root.set(ConfigKey.name, value); }
     public get values() { return this.maybeValues!; }
     private get doc() { return this.maybeDoc!; }
 
-    public get numRows() {
-        const {start, end} = this.values.getRange();
-        return end.row - start.row;
-    }
-
-    public get numCols() {
-        const {start, end} = this.values.getRange();
-        return end.col - start.col;
-    }
+    public get numRows() { return this.values.getRange().numRows; }
+    public get numCols() { return this.values.getRange().numCols; }
 
     private maybeDoc?: TableDocument;
-    private maybeValues?: CellInterval;
+    private maybeValues?: CellRange;
 
     constructor() {
         super([[MapExtension.Type, new MapExtension()]]);
@@ -99,8 +92,8 @@ export class TableSlice extends Component implements ITable {
     protected async create() {
         try {
             const maybeConfig = await this.platform.queryInterface<ITableSliceConfig>("config");
-            this.root.set(ConfigKeys.docId, maybeConfig.docId);
-            this.root.set(ConfigKeys.name, maybeConfig.name);
+            this.root.set(ConfigKey.docId, maybeConfig.docId);
+            this.root.set(ConfigKey.name, maybeConfig.name);
             await this.ensureDoc();
             this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
         } catch {
@@ -112,7 +105,7 @@ export class TableSlice extends Component implements ITable {
         await this.connected;
 
         await this.ensureDoc();
-        this.maybeValues = await this.doc.getRange(this.root.get(ConfigKeys.valuesKey));
+        this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
         this.doc.on("op", this.emitOp);
@@ -120,7 +113,7 @@ export class TableSlice extends Component implements ITable {
 
     private async ensureDoc() {
         if (!this.maybeDoc) {
-            const docId = this.root.get(ConfigKeys.docId);
+            const docId = this.root.get(ConfigKey.docId);
             this.maybeDoc = await this.runtime.openComponent(docId, true);
         }
     }
@@ -128,19 +121,19 @@ export class TableSlice extends Component implements ITable {
     private async createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
         // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
-        this.root.set(ConfigKeys.valuesKey, valuesRangeId);
+        this.root.set(ConfigKey.valuesKey, valuesRangeId);
         this.doc.createInterval(valuesRangeId, minRow, minCol, maxRow, maxCol);
     }
 
     // Checks whether or not a specified row/column combination is within this slice and throws if not.
     private validateInSlice(row?: number, col?: number) {
-        const {start, end} = this.values.getRange();
+        const range = this.values.getRange();
 
-        if (row !== undefined && row < start.row || row > end.row) {
+        if (row !== undefined && row < range.row || row >= (range.row + range.numRows)) {
             throw new Error("Unable to access specified row from this slice.");
         }
 
-        if (col !== undefined && col < start.col || col > end.col) {
+        if (col !== undefined && col < range.col || col >= (range.col + range.numCols)) {
             throw new Error("Unable to access specified column from this slice.");
         }
     }
@@ -160,7 +153,7 @@ export class TableSlice extends Component implements ITable {
         await this.ensureDoc();
 
         // Note: <input> pattern validation ensures that parsing will succeed.
-        const { minCol, minRow, maxCol, maxRow } = parseRange(this.root.get(ConfigKeys.valuesText));
+        const { minCol, minRow, maxCol, maxRow } = parseRange(this.root.get(ConfigKey.valuesText));
 
         this.createValuesRange(minCol, minRow, maxCol, maxRow);
     }
