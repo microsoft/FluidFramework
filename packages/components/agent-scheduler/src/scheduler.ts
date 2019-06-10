@@ -1,6 +1,10 @@
 import { Component } from "@prague/app-component";
 import { ConsensusRegisterCollection, ConsensusRegisterCollectionExtension } from "@prague/consensus-register-collection";
 import { MapExtension } from "@prague/map";
+import {
+    IComponentContext,
+    IComponentRuntime,
+} from "@prague/runtime-definitions";
 import * as assert from "assert";
 import * as debug from "debug";
 import { IAgentScheduler, ITask } from "./interfaces";
@@ -287,4 +291,9 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     private async writeCore(key: string, value: string | null): Promise<void> {
         return this.scheduler.write(key, value);
     }
+}
+
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    const factory =  Component.createComponentFactory(AgentScheduler);
+    return factory.instantiateComponent(context);
 }
