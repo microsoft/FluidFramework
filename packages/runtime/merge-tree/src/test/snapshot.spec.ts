@@ -1,7 +1,7 @@
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import { MockStorage, specToSegment, TestClient } from ".";
-import { Client,  UniversalSequenceNumber } from "..";
+import { UniversalSequenceNumber } from "..";
 import { Snapshot } from "../snapshot";
 
 describe("snapshot", () => {
@@ -20,7 +20,7 @@ describe("snapshot", () => {
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new Client("", specToSegment);
+        const client2 = new TestClient("");
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
@@ -44,7 +44,7 @@ describe("snapshot", () => {
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new Client("", specToSegment);
+        const client2 = new TestClient("");
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
