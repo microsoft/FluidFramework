@@ -85,11 +85,11 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IC
         private collection: ProgressCollection) {
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return ProgressBar.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return ProgressBar.supportedInterfaces;
     }
 
@@ -146,11 +146,11 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
         this.url = context.id;
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return ProgressCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return ProgressCollection.supportedInterfaces;
     }
 

@@ -17,11 +17,11 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
         super();
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return GraphIQLView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return GraphIQLView.supportedInterfaces;
     }
 

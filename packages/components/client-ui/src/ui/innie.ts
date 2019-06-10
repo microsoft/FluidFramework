@@ -11,11 +11,11 @@ class Host implements IComponent {
     constructor() {
     }
 
-    public async query<T>(id: string): Promise<T> {
-        return null;
+    public query<T>(id: string): T {
+        return undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return [];
     }
 }

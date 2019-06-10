@@ -316,11 +316,11 @@ export class PinpointRunner extends EventEmitter implements IComponent, ICompone
         super();
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return PinpointRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return PinpointRunner.supportedInterfaces;
     }
 

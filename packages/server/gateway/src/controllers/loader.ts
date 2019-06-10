@@ -127,7 +127,7 @@ async function attach(loader: Loader, url: string, host: Host) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = await component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+    const viewable = component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
     if (!viewable) {
         return;
     }
@@ -157,11 +157,11 @@ class Host implements IComponent {
     constructor(public readonly div: HTMLElement) {
     }
 
-    public async query<T>(id: string): Promise<T> {
-        return null;
+    public query<T>(id: string): T {
+        return undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return [];
     }
 }

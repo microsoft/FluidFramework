@@ -4,12 +4,12 @@ export interface IComponent {
     /**
      * Queries for an interface of the given ID
      */
-    query<T>(id: string): Promise<T>;
+    query<T>(id: string): T;
 
     /**
      * Returns a list of all interfaces
      */
-    list(): Promise<string[]>;
+    list(): string[];
 
     /**
      * Disposes of the reference to the component

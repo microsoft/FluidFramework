@@ -57,11 +57,11 @@ export class MathInstance extends EventEmitter
         this.initialize(inCombinedText);
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return MathInstance.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return MathInstance.supportedInterfaces;
     }
 
@@ -276,11 +276,11 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         this.url = context.id;
     }
 
-    public async query(id: string): Promise<any> {
+    public query(id: string): any {
         return MathCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    public async list(): Promise<string[]> {
+    public list(): string[] {
         return MathCollection.supportedInterfaces;
     }
 
