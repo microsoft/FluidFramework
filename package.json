@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "npm run build:compile && npm run tslint",
+    "build": "npm run build:compile && npm run tslint && npm run build:docs",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel && api-documenter yaml -i packages/_api-extractor-temp/doc-models/ -o docs/api/",
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
