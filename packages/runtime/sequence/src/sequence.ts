@@ -435,7 +435,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
-        return segSpecs.map(this.segmentFromSpec.bind(this));
+        const segToSpec = this.segmentFromSpec.bind(this);
+        return segSpecs.map((spec) => {
+            const seg = segToSpec(spec);
+            if (seg.seq === undefined) {
+                this.logger.sendError({eventName: "SegmentHasUndefinedSeq"});
+                seg.seq = MergeTree.UniversalSequenceNumber;
+            }
+            return seg;
+        });
     }
 
     protected didAttach() {
@@ -569,7 +577,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         // Deserialize each chunk segment and append it to the end of the MergeTree.
         mergeTree.insertSegments(
             mergeTree.root.cachedLength,
-            chunk2.segmentTexts.map((segSpec) => this.segmentFromSpec(segSpec)),
+            this.segmentsFromSpecs(chunk2.segmentTexts),
             MergeTree.UniversalSequenceNumber,
             clientId,
             MergeTree.UniversalSequenceNumber,
