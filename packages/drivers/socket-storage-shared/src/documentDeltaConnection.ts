@@ -17,8 +17,17 @@ const protocolVersion = "^0.1.0";
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-    // tslint:disable:max-func-body-length
-    // tslint:disable-next-line:function-name
+    /**
+     * Create a DocumentDeltaConnection
+     *
+     * @param tenantId - the ID of the tenant
+     * @param id - document ID
+     * @param token - authorization token for storage service
+     * @param io - websocket library
+     * @param client - information about the client
+     * @param url - websocket URL
+     */
+    // tslint:disable-next-line: max-func-body-length
     public static async Create(
         tenantId: string,
         id: string,
@@ -147,34 +156,74 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     private readonly emitter = new EventEmitter();
     private readonly submitManager: BatchManager<IDocumentMessage>;
 
+    /**
+     * Get the ID of the client who is sending the message
+     *
+     * @returns the client ID
+     */
     public get clientId(): string {
         return this.details.clientId;
     }
 
+    /**
+     * Get whether or not this is an existing document
+     *
+     * @returns true if the document exists
+     */
     public get existing(): boolean {
         return this.details.existing;
     }
 
+    /**
+     * Get the parent branch for the document
+     *
+     * @returns the parent branch
+     */
     public get parentBranch(): string | null {
         return this.details.parentBranch;
     }
 
+    /**
+     * Get the maximum size of a message before chunking is required
+     *
+     * @returns the maximum size of a message before chunking is required
+     */
     public get maxMessageSize(): number {
         return this.details.maxMessageSize;
     }
 
+    /**
+     * Get messages sent during the connection
+     *
+     * @returns messages sent during the connection
+     */
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details.initialMessages;
     }
 
+    /**
+     * Get contents sent during the connection
+     *
+     * @returns contents sent during the connection
+     */
     public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
     }
 
+    /**
+     * Get signals sent during the connection
+     *
+     * @returns signals sent during the connection
+     */
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
     }
 
+    /**
+     * @param socket - websocket to be used
+     * @param documentId - ID of the document
+     * @param details - details of the websocket connection
+     */
     constructor(
         private readonly socket: SocketIOClient.Socket,
         public documentId: string,
@@ -197,6 +246,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     /**
      * Subscribe to events emitted by the document
+     *
+     * @param event - event emitted by the document to listen to
+     * @param listener - listener for the event
      */
     public on(event: string, listener: (...args: any[]) => void): this {
         // Register for the event on socket.io
@@ -214,6 +266,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     /**
      * Submits a new delta operation to the server
+     *
+     * @param message - delta operation to submit
      */
     public submit(message: IDocumentMessage): void {
         this.submitManager.add("submitOp", message);
@@ -221,11 +275,18 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
     /**
      * Submits a new signal to the server
+     *
+     * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
         this.submitManager.add("submitSignal", message);
     }
 
+    /**
+     * Submits a new message to the server without queueing
+     *
+     * @param message - message to submit
+     */
     public async submitAsync(message: IDocumentMessage): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(
@@ -242,6 +303,9 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         });
     }
 
+    /**
+     * Disconnect from the websocket
+     */
     public disconnect() {
         this.socket.disconnect();
     }
