@@ -232,4 +232,35 @@ describe("client.applyMsg", () => {
         assert.equal(client.getLength(), initalLength - (end - start));
         assert.equal(client.getText(), intialText.substring(0, start) + intialText.substring(end));
     });
+
+    it("overlapping insert and delete", () => {
+        const remoteClient = new TestClient(client.getText());
+        remoteClient.startCollaboration("remoteUser");
+
+        let seq = 0;
+        const initalMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
+        client.applyMsg(initalMsg);
+        remoteClient.applyMsg(initalMsg);
+
+        assert.equal(remoteClient.getText(), client.getText());
+
+        const messages = [
+            client.makeOpMessage(client.insertTextLocal(0, "L"), ++seq),
+            client.makeOpMessage(client.removeRangeLocal(1, 2), ++seq),
+            remoteClient.makeOpMessage(remoteClient.insertTextLocal(0, "R"), ++seq),
+            remoteClient.makeOpMessage(remoteClient.removeRangeLocal(1, 2), ++seq),
+        ];
+
+        console.log(`${client.getText()} | ${remoteClient.getText()}`);
+
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            client.applyMsg(msg);
+            remoteClient.applyMsg(msg);
+            console.log(`${client.getText()} | ${remoteClient.getText()}`);
+        }
+
+        assert.equal(remoteClient.getText(), client.getText());
+        console.log(remoteClient.getText());
+    });
 });

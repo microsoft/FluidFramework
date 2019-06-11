@@ -2021,6 +2021,7 @@ export class MergeTree {
     static zamboniSegmentsMaxCount = 2;
     static options = {
         incrementalUpdate: true,
+        insertAfterRemovedSegs: false,
         zamboniSegments: true,
         measureWindowTime: true,
         measureOrdinalTime: true,
@@ -3391,7 +3392,7 @@ export class MergeTree {
         let found = false;
         for (childIndex = 0; childIndex < block.childCount; childIndex++) {
             child = children[childIndex];
-            let len = this.nodeLength(child, refSeq, clientId);
+            const len = this.nodeLength(child, refSeq, clientId);
             if (MergeTree.traceTraversal) {
                 let segInfo: string;
                 if ((!child.isLeaf()) && this.collabWindow.collaborating) {
@@ -3441,11 +3442,13 @@ export class MergeTree {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
                     const segment = child as ISegment;
-                    const branchId = this.getBranchId(clientId);
-                    const segmentBranchId = this.getBranchId(segment.clientId);
-                    const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
-                    if(removalInfo && removalInfo.removedSeq){
-                        continue;
+                    if (MergeTree.options.insertAfterRemovedSegs === true && len === 0) {
+                        const branchId = this.getBranchId(clientId);
+                        const segmentBranchId = this.getBranchId(segment.clientId);
+                        const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
+                        if (removalInfo && removalInfo.removedSeq) {
+                            continue;
+                        }
                     }
 
                     let segmentChanges = context.leaf(segment, pos, context);
