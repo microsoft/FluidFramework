@@ -16,7 +16,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { Deferred } from "@prague/utils";
+import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
@@ -53,7 +53,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         super(id, document, extensionType);
         /* tslint:disable:no-unsafe-any */
-        this.client = new MergeTree.Client("", this.segmentFromSpec.bind(this), document.options);
+        this.client = new MergeTree.Client(
+            "",
+            this.segmentFromSpec.bind(this),
+            ChildLogger.Create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
+            document.options);
 
         super.on("newListener", (event) => {
             switch (event) {

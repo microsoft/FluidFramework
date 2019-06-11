@@ -1,4 +1,4 @@
-import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, ITelemetryLogger, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
@@ -50,6 +50,7 @@ export class Client {
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
         // (See https://github.com/Microsoft/Prague/issues/1791).
         private readonly specToSegment: (spec: ops.IJSONSegment) => ISegment,
+        private readonly logger: ITelemetryLogger,
         options?: Properties.PropertySet,
     ) {
         this.mergeTree = new MergeTree(initText, options);
@@ -425,6 +426,22 @@ export class Client {
         if (start === undefined
             || start < 0
             || start > length) {
+            this.logger.sendError({
+                currentSeq: this.getCurrentSeq(),
+                eventName: "InvalidOpRange",
+                invalidPosition: "start",
+                length,
+                local: clientArgs.clientId === this.getClientId(),
+                minSeq: this.mergeTree.collabWindow.minSeq,
+                opPos1: op.pos1,
+                opPos1Relative: op.relativePos1 === undefined,
+                opPos2: op.pos2,
+                opPos2Relative: op.relativePos2 === undefined,
+                opRefSeq: clientArgs.referenceSequenceNumber,
+                opSeq: clientArgs.sequenceNumber,
+                opType: op.type,
+                start,
+            });
             return undefined;
         }
 
@@ -435,7 +452,24 @@ export class Client {
         // valid end if not insert, or insert has end
         //
         if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
-            if (end === undefined ||  end < start) {
+            if (end === undefined || end < start) {
+                this.logger.sendError({
+                    currentSeq: this.getCurrentSeq(),
+                    end,
+                    eventName: "InvalidOpRange",
+                    invalidPosition: "end",
+                    length,
+                    local: clientArgs.clientId === this.getClientId(),
+                    minSeq: this.mergeTree.collabWindow.minSeq,
+                    opPos1: op.pos1,
+                    opPos1Relative: op.relativePos1 === undefined,
+                    opPos2: op.pos2,
+                    opPos2Relative: op.relativePos2 === undefined,
+                    opRefSeq: clientArgs.referenceSequenceNumber,
+                    opSeq: clientArgs.sequenceNumber,
+                    opType: op.type,
+                    start,
+                });
                 return undefined;
             }
         }
@@ -571,7 +605,7 @@ export class Client {
         return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
     cloneFromSegments() {
-        let clone = new Client("", this.specToSegment, this.mergeTree.options);
+        let clone = new Client("", this.specToSegment, this.logger, this.mergeTree.options);
         let segments = <ISegment[]>[];
         let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;

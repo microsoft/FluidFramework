@@ -1,4 +1,5 @@
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as random from "random-js";
 import { Client } from "../client";
@@ -53,6 +54,7 @@ export class TestClient extends Client {
                     }
                 }
             },
+        DebugLogger.Create("prague:testClient"),
         options);
     }
 
