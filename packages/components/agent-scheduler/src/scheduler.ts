@@ -1,12 +1,15 @@
-import { Component } from "@prague/app-component";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusRegisterCollection, ConsensusRegisterCollectionExtension } from "@prague/consensus-register-collection";
-import { MapExtension } from "@prague/map";
+import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
+import { ISharedMap, MapExtension } from "@prague/map";
 import {
     IComponentContext,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as debug from "debug";
+import { EventEmitter } from "events";
 import { IAgentScheduler, ITask } from "./interfaces";
 
 interface IChanged {
@@ -15,8 +18,18 @@ interface IChanged {
 
 const LeaderTaskId = "leader";
 
-export class AgentScheduler extends Component implements IAgentScheduler {
+export class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
 
+    public static supportedInterfaces = ["IAgentScheduler"];
+
+    public static async Load(runtime: IComponentRuntime) {
+        const collection = new AgentScheduler(runtime);
+        await collection.initialize();
+
+        return collection;
+    }
+
+    private root: ISharedMap;
     private scheduler: ConsensusRegisterCollection;
 
     // tslint:disable-next-line:variable-name private fields exposed via getters
@@ -29,11 +42,24 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     // Set of registered tasks client not capable of running.
     private readonly registeredTasks = new Set<string>();
 
-    constructor() {
-        super([
-            [MapExtension.Type, new MapExtension()],
-            [ConsensusRegisterCollectionExtension.Type, new ConsensusRegisterCollectionExtension()],
-        ]);
+    constructor(private readonly runtime: IComponentRuntime) {
+        super();
+    }
+
+    public query(id: string): any {
+        return AgentScheduler.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return AgentScheduler.supportedInterfaces;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "prague/component",
+            status: 200,
+            value: this,
+        };
     }
 
     public get leader(): boolean {
@@ -106,74 +132,6 @@ export class AgentScheduler extends Component implements IAgentScheduler {
             }
         }
         return allPickedTasks;
-    }
-
-    protected async create() {
-        const scheduler = this.runtime.createChannel(
-            "scheduler",
-            ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection;
-        this.root.set("scheduler", scheduler);
-    }
-
-    protected async opened() {
-        this.scheduler = await this.root.wait("scheduler") as ConsensusRegisterCollection;
-        await this.connected;
-
-        // Nobody released the tasks held by last client in previous session.
-        // Check to see if this client needs to do this.
-        const quorum = this.runtime.getQuorum();
-        const clearCandidates = [];
-        for (const taskId of this.scheduler.keys()) {
-            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
-                clearCandidates.push(taskId);
-            }
-        }
-        await this.clearTasks(clearCandidates);
-
-        // Each client expresses interest to be a leader.
-        const leaderElectionTask: ITask = {
-            callback: () => {
-                debug(`Elected as leader`);
-            },
-            id: LeaderTaskId,
-        };
-
-        await this.pick(leaderElectionTask);
-
-        // There must be a leader now.
-        const leaderClientId = this.getTaskClientId(LeaderTaskId);
-        assert(leaderClientId, "No leader present");
-
-        // Set leadership info
-        this._leader = leaderClientId === this.runtime.clientId;
-
-        // Listeners for new/released tasks. All clients will try to grab at the same time.
-        // May be we want a randomized timer (Something like raft) to reduce chattiness?
-        this.scheduler.on("valueChanged", async (changed: IChanged) => {
-            const currentClient = this.getTaskClientId(changed.key);
-            // Either a client registered for a new task or released a running task.
-            if (currentClient === null) {
-                await this.pickNewTasks([changed.key]);
-            }
-            // A new leader was picked. set leadership info.
-            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
-                this._leader = true;
-                this.emit("leader");
-            }
-        });
-
-        // A client left the quorum. Iterate and clear tasks held by that client.
-        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
-        // Probably okay for now to have every client do this.
-        quorum.on("removeMember", async (clientId: string) => {
-            const leftTasks: string[] = [];
-            for (const taskId of this.scheduler.keys()) {
-                if (this.getTaskClientId(taskId) === clientId) {
-                    leftTasks.push(taskId);
-                }
-            }
-            await this.clearTasks(leftTasks);
-        });
     }
 
     private async pickNewTasks(ids: string[]) {
@@ -291,9 +249,96 @@ export class AgentScheduler extends Component implements IAgentScheduler {
     private async writeCore(key: string, value: string | null): Promise<void> {
         return this.scheduler.write(key, value);
     }
+
+    private async initialize() {
+        if (!this.runtime.existing) {
+            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root.attach();
+            this.scheduler = this.runtime.createChannel(
+                "scheduler",
+                ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection;
+            this.scheduler.attach();
+            this.root.set("scheduler", this.scheduler);
+        } else {
+            this.root = await this.runtime.getChannel("root") as ISharedMap;
+            this.scheduler = await this.root.wait("scheduler") as ConsensusRegisterCollection;
+        }
+
+        if (!this.runtime.connected) {
+            // tslint:disable-next-line
+            await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
+        }
+
+        // Nobody released the tasks held by last client in previous session.
+        // Check to see if this client needs to do this.
+        const quorum = this.runtime.getQuorum();
+        const clearCandidates = [];
+        for (const taskId of this.scheduler.keys()) {
+            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
+                clearCandidates.push(taskId);
+            }
+        }
+        await this.clearTasks(clearCandidates);
+
+        // Each client expresses interest to be a leader.
+        const leaderElectionTask: ITask = {
+            callback: () => {
+                debug(`Elected as leader`);
+            },
+            id: LeaderTaskId,
+        };
+
+        await this.pick(leaderElectionTask);
+
+        // There must be a leader now.
+        const leaderClientId = this.getTaskClientId(LeaderTaskId);
+        assert(leaderClientId, "No leader present");
+
+        // Set leadership info
+        this._leader = leaderClientId === this.runtime.clientId;
+
+        // Listeners for new/released tasks. All clients will try to grab at the same time.
+        // May be we want a randomized timer (Something like raft) to reduce chattiness?
+        this.scheduler.on("valueChanged", async (changed: IChanged) => {
+            const currentClient = this.getTaskClientId(changed.key);
+            // Either a client registered for a new task or released a running task.
+            if (currentClient === null) {
+                await this.pickNewTasks([changed.key]);
+            }
+            // A new leader was picked. set leadership info.
+            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                this._leader = true;
+                this.emit("leader");
+            }
+        });
+
+        // A client left the quorum. Iterate and clear tasks held by that client.
+        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
+        // Probably okay for now to have every client do this.
+        quorum.on("removeMember", async (clientId: string) => {
+            const leftTasks: string[] = [];
+            for (const taskId of this.scheduler.keys()) {
+                if (this.getTaskClientId(taskId) === clientId) {
+                    leftTasks.push(taskId);
+                }
+            }
+            await this.clearTasks(leftTasks);
+        });
+    }
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    const factory =  Component.createComponentFactory(AgentScheduler);
-    return factory.instantiateComponent(context);
+
+    const dataTypes = new Map<string, ISharedObjectExtension>();
+    dataTypes.set(MapExtension.Type, new MapExtension());
+    dataTypes.set(ConsensusRegisterCollectionExtension.Type, new ConsensusRegisterCollectionExtension());
+
+    const runtime = await ComponentRuntime.Load(context, dataTypes);
+    const agentSchedulerP = AgentScheduler.Load(runtime);
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        const agentScheduler = await agentSchedulerP;
+        return agentScheduler.request(request);
+    });
+
+    return runtime;
 }

@@ -1,3 +1,5 @@
+// tslint:disable no-useless-files
+/*
 // tslint:disable no-import-side-effect
 // tslint:disable no-empty
 import { Component } from "@prague/app-component";
@@ -183,3 +185,4 @@ describe("AgentScheduler", () => {
         });
     });
 });
+*/

@@ -1,2 +1,2 @@
-export { AgentScheduler } from "./scheduler";
-export * from "./interfaces";
+export { instantiateComponent } from "./scheduler";
+export { IAgentScheduler, ITask } from "./interfaces";
