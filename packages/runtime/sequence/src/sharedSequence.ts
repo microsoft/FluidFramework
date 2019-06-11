@@ -170,7 +170,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     }
 
     public segmentFromSpec(segSpec: IJSONRunSegment<T>) {
-        const seg = new SubSequence<T>(segSpec.items);
+        const seg = new SubSequence<T>(segSpec.items, UniversalSequenceNumber);
         if (segSpec.props) {
             seg.addProperties(segSpec.props);
         }
