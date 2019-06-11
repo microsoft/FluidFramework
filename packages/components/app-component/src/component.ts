@@ -40,15 +40,20 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
  */
 export abstract class Component extends EventEmitter implements IComponent {
     private get dbgName() {
-        return `${this.constructor.name}${this.runtime ? `:'${this.runtime.id}'` : ""}`;
+        return `${this.constructor.name}:'${this._runtime ? this._runtime.id : ""}'`;
     }
 
     protected get context() { return this._context; }
-    protected get runtime() { return this._runtime; }
+    protected get runtime() {
+        if (!this._runtime) {
+            throw new Error("ComponentRuntime not initialized");
+        }
+        return this._runtime;
+    }
     protected get platform() { return this._platform; }
     protected get root() { return this._root; }
 
-    public get id() { return this._runtime.id; }
+    public get id() { return this.runtime.id; }
 
     /**
      * Returns a promise that resolves once the component is synchronized with its date store.
@@ -136,18 +141,18 @@ export abstract class Component extends EventEmitter implements IComponent {
     private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
 
     // tslint:disable-next-line:variable-name
-    private _runtime: ComponentRuntime;
+    private _runtime: ComponentRuntime | undefined;
 
     // tslint:disable-next-line:variable-name
-    private _platform: IPlatform = null;
+    private _platform: IPlatform | null = null;
 
     // tslint:disable-next-line:variable-name
-    private _root: ISharedMap = null;
+    private _root: ISharedMap | null = null;
 
     // tslint:disable-next-line:variable-name
-    private _context: IComponentContext = null;
+    private _context: IComponentContext | null = null;
 
-    private ensureOpenedPromise: Promise<Component> = null;
+    private ensureOpenedPromise: Promise<Component> | undefined;
 
     constructor(types?: ReadonlyArray<[string, ISharedObjectExtension]>) {
         super();
@@ -215,7 +220,7 @@ export abstract class Component extends EventEmitter implements IComponent {
         // The promise is awaited on when URL request are made against the component.
         this._runtime.registerRequestHandler(async (request: IRequest) => {
             debug(`request(url=${request.url})`);
-            return request.url && request.url !== "/"
+            return request.url !== "" && request.url !== "/"
                 ? this.request(request)
                 : { status: 200, mimeType: "prague/component", value: this };
         });

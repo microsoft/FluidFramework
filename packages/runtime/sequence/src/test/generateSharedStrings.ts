@@ -1,6 +1,6 @@
 import { Snapshot, TextSegment } from "@prague/merge-tree";
+import * as mocks from "@prague/runtime-test-utils";
 import { SharedString } from "../sharedString";
-import * as mocks from "./mocks";
 
 export function* generateStrings() {
     const documentId = "fakeId";

@@ -47,7 +47,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Services used by the shared object
      */
-    private services: ISharedObjectServices;
+    private services: ISharedObjectServices | undefined;
 
     /**
      * Gets the connection state
@@ -65,7 +65,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      */
     constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
-        this.logger = ChildLogger.Create(runtime ? runtime.logger : undefined, type, {SharedObjectId: id});
+        // runtime could be null since some package hasn't turn on strictNullChecks yet
+        // We should remove the null check once that is done
+        this.logger = ChildLogger.Create(
+            runtime !== null ? runtime.logger : undefined, type, { SharedObjectId: id });
     }
 
     /**
@@ -148,8 +151,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * @param listener - the listener to register
      */
     public on(
-            event: "pre-op" | "op",
-            listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */
@@ -169,7 +172,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      *
      * @returns the owner of the object if it is an OwnedSharedObject, otherwise undefined
      */
-    protected setOwner(): string {
+    protected setOwner(): string | undefined {
         return;
     }
 
@@ -179,8 +182,8 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * @param storage - the storage used by the shared object
      */
     protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
-         return;
-     }
+        return;
+    }
 
     /**
      * Allows the distributed data type to perform custom loading
@@ -254,13 +257,15 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         // Send if we are connected - otherwise just add to the sent list
         let clientSequenceNumber = -1;
         if (this.state === ConnectionState.Connected) {
-            clientSequenceNumber = this.services.deltaConnection.submit(content);
+            // This assert !isLocal above means services can't be undefined.
+            // tslint:disable-next-line: no-non-null-assertion
+            clientSequenceNumber = this.services!.deltaConnection.submit(content);
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
             // Store the message for when it is ACKed and then submit to the server if connected
         }
 
-        this.pendingOps.push({ clientSequenceNumber, content});
+        this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
     }
 
@@ -291,7 +296,9 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         // Allows objects to start listening for events
         this.didAttach();
 
-        this.services.deltaConnection.attach({
+        // attachDeltaHandler is only called after services is assigned
+        // tslint:disable-next-line: no-non-null-assertion
+        this.services!.deltaConnection.attach({
             prepare: (message, local) => {
                 return this.prepare(message, local);
             },
@@ -304,7 +311,9 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         });
 
         // Trigger initial state
-        this.setConnectionState(this.services.deltaConnection.state);
+        // attachDeltaHandler is only called after services is assigned
+        // tslint:disable-next-line: no-non-null-assertion
+        this.setConnectionState(this.services!.deltaConnection.state);
     }
 
     private setConnectionState(state: ConnectionState) {
@@ -353,26 +362,35 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      */
     private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         if (message.type === MessageType.Operation && local) {
-            // disconnected ops should never be processed. They should have been fully sent on connected
-            assert(
-                this.pendingOps.length === 0 || this.pendingOps.peekFront().clientSequenceNumber !== -1,
-                `process for disconnected op ${this.pendingOps.peekFront().clientSequenceNumber}`);
-
-            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
-            // in order we only need to check the beginning of the local list.
-            if (this.pendingOps.length > 0 &&
-                this.pendingOps.peekFront().clientSequenceNumber === message.clientSequenceNumber) {
-                this.pendingOps.shift();
-                if (this.pendingOps.length === 0) {
-                    this.emit("processed");
-                }
-            } else {
-                debug(`Duplicate ack received ${message.clientSequenceNumber}`);
-            }
+            this.processPendingOp(message);
         }
 
         this.emit("pre-op", message, local);
         this.processCore(message, local, context);
         this.emit("op", message, local);
+    }
+
+    private processPendingOp(message: ISequencedDocumentMessage) {
+        const firstPendingOp = this.pendingOps.peekFront();
+
+        // disconnected ops should never be processed. They should have been fully sent on connected
+        if (firstPendingOp !== undefined) {
+            assert(firstPendingOp.clientSequenceNumber !== -1,
+                `processing disconnected op ${firstPendingOp.clientSequenceNumber}`);
+
+            // One of our messages was sequenced. We can remove it from the local message list. Given these arrive
+            // in order we only need to check the beginning of the local list.
+
+            if (firstPendingOp.clientSequenceNumber === message.clientSequenceNumber) {
+                this.pendingOps.shift();
+                if (this.pendingOps.length === 0) {
+                    this.emit("processed");
+                }
+                return;
+            }
+        }
+
+        // TODO: should this be an assert?
+        debug(`Duplicate ack received ${message.clientSequenceNumber}`);
     }
 }

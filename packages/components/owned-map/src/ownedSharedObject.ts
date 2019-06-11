@@ -56,7 +56,6 @@ export abstract class OwnedSharedObject extends SharedObject {
         if (this.owner !== undefined) {
             return this.owner;
         } else if (this.runtime.clientId === undefined) {
-            // tslint:disable-next-line:no-console
             debug("Attempted to set owner, but no clientId");
             return undefined;
         }

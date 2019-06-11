@@ -94,7 +94,7 @@ export interface IOrderedCollection<T = any> extends ISnapshotable {
     /**
      * Retrieves a value from the collection.
      */
-    remove(): T;
+    remove(): T | undefined;
 
     /**
      * Return the size of the collection

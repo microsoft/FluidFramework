@@ -1,22 +1,18 @@
 import { ITree } from "@prague/container-definitions";
 import { TextSegment } from "@prague/merge-tree";
-import {
-    MockStorage,
-// tslint:disable-next-line:no-submodule-imports
-} from "@prague/merge-tree/dist/test/";
 import { ISharedObjectServices } from "@prague/runtime-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { SharedString } from "../sharedString";
-import * as mocks from "./mocks";
 
 describe("SharedString", () => {
 
     const documentId = "fakeId";
-    let deltaConnectionFactory: mocks.MockDeltaConnectionFactory;
+    let deltaConnectionFactory: MockDeltaConnectionFactory;
     let sharedString: SharedString;
     beforeEach(() => {
-        const runtime = new mocks.MockRuntime();
-        deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
+        const runtime = new MockRuntime();
+        deltaConnectionFactory = new MockDeltaConnectionFactory();
         const services: ISharedObjectServices = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),
@@ -170,7 +166,7 @@ describe("SharedString", () => {
 
         async function CreateStringAndCompare(tree: ITree): Promise<void> {
 
-            const runtime = new mocks.MockRuntime();
+            const runtime = new MockRuntime();
             const services: ISharedObjectServices = {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(tree),

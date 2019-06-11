@@ -12,7 +12,7 @@ class SnapshotableStack<T> extends SnapshotableArray<T> implements IOrderedColle
         this.data.push(value);
     }
 
-    public remove(): T {
+    public remove(): T | undefined {
         return this.data.pop();
     }
 }

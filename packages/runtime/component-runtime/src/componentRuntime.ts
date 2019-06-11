@@ -72,7 +72,7 @@ export class ServicePlatform extends EventEmitter implements IPlatform {
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
-    get(name: string): ISharedObjectExtension;
+    get(name: string): ISharedObjectExtension | undefined;
 }
 
 /**

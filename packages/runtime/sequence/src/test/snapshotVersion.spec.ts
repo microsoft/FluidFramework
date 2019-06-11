@@ -1,9 +1,9 @@
+import * as mocks from "@prague/runtime-test-utils";
 import { GitManager } from "@prague/services-client";
 import * as assert from "assert";
 import * as fs from "fs";
 import { SharedString } from "../sharedString";
 import { generateStrings } from "./generateSharedStrings";
-import * as mocks from "./mocks";
 /* tslint:disable:non-literal-fs-path */
 
 describe("SharedString Snapshot Version", () => {

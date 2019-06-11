@@ -172,7 +172,7 @@ export interface ISegment extends IMergeNode, IRemovalInfo {
      *
      * Throws error if the segment state doesn't match segment group or op.
      * E.g. Segment group not first is pending queue.
-     * Inserted segment does not have unassigned sequeuence number.
+     * Inserted segment does not have unassigned sequence number.
      *
      * Returns true if the op  modifies the segment, otherwise false.
      * The only current false case is overlapping remove, where a segment is removed

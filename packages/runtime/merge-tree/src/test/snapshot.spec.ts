@@ -1,6 +1,7 @@
+import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
-import { MockStorage, specToSegment, TestClient } from ".";
+import { specToSegment, TestClient } from ".";
 import { Client,  UniversalSequenceNumber } from "..";
 import { Snapshot } from "../snapshot";
 

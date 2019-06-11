@@ -6,7 +6,6 @@
     ],
     "compilerOptions": {
         "strict": true,
-        "strictNullChecks": false,
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist"

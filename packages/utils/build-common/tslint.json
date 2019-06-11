@@ -1,21 +1,52 @@
 {
-    "extends": ["tslint-microsoft-contrib", "tslint:recommended"], 
+    "extends": [
+        "tslint-microsoft-contrib",
+        "tslint:recommended"
+    ],
     "rules": {
         "newline-before-return": false,
         "no-empty": false,
         "no-increment-decrement": false,
         "no-backbone-get-set-outside-model": false,
-        "no-this-assignment": [true, {"allow-destructuring": true}],
+        "no-this-assignment": [
+            true,
+            {
+                "allow-destructuring": true
+            }
+        ],
         "newline-per-chained-call": false,
         "max-classes-per-file": false,
         "linebreak-style": false,
         "export-name": false,
-        "no-console": [true, "log", "warn", "error"],
-        "strict-boolean-expressions": [true, "allow-null-union", "allow-undefined-union", "allow-string", "allow-number"],
-        "no-implicit-dependencies": [true, "dev"],
+        "no-console": [
+            true,
+            "log",
+            "warn",
+            "error"
+        ],
+        "strict-boolean-expressions": [
+            true,
+            "allow-null-union",
+            "allow-undefined-union",
+            "allow-string",
+            "allow-number"
+        ],
+        "no-implicit-dependencies": [
+            true,
+            "dev"
+        ],
         "no-relative-imports": false,
-        "function-name": [ true, { "method-regex": "^[a-z][\\w\\d]+$", "private-method-regex": "^[a-z][\\w\\d]+$", "protected-method-regex": "^[a-z][\\w\\d]+$", "static-method-regex": "^[A-Z][\\w\\d]+$", "function-regex": "^[a-z][\\w\\d]+$" } ],
-
+        "function-name": [
+            true,
+            {
+                "method-regex": "^[a-z][\\w\\d]+$",
+                "private-method-regex": "^[a-z][\\w\\d]+$",
+                "protected-method-regex": "^[a-z][\\w\\d]+$",
+                "static-method-regex": "^[A-Z][\\w\\d]+$",
+                "function-regex": "^[a-z][\\w\\d]+$"
+            },
+            "validate-private-statics-as-static"
+        ],
         /**
          * Security Rules. The following rules should be turned on because they find security issues
          * or are recommended in the Microsoft Secure Development Lifecycle (SDL)
@@ -30,7 +61,10 @@
         "no-eval": true,
         "no-exec-script": true,
         "function-constructor": true,
-        "no-http-string": [true, "http://.*"],
+        "no-http-string": [
+            true,
+            "http://.*"
+        ],
         "no-inner-html": true,
         "no-octal-literal": true,
         "no-reserved-keywords": false,
@@ -42,7 +76,6 @@
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
-
         // Deprecated Rules. These rules are deprecated. Disabling them so that they don't get applied.
         "no-function-constructor-with-string-args": false,
         "no-unnecessary-bind": false

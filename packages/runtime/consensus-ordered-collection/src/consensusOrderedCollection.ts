@@ -9,10 +9,17 @@ import { ConsensusValueType, IConsensusOrderedCollectionValue } from "./values";
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionOperation {
-    opName: string;
-    value?: IConsensusOrderedCollectionValue;
+interface IConsensusOrderedCollectionRemoveOperation {
+    opName: "remove";
 }
+
+interface IConsensusOrderedCollectionAddOperation {
+    opName: "add";
+    value: IConsensusOrderedCollectionValue;
+}
+
+type IConsensusOrderedCollectionOperation =
+    IConsensusOrderedCollectionAddOperation | IConsensusOrderedCollectionRemoveOperation;
 
 /**
  * A record of the pending operation
@@ -99,7 +106,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             };
         }
 
-        const op: IConsensusOrderedCollectionOperation = {
+        const op: IConsensusOrderedCollectionAddOperation = {
             opName: "add",
             value: operationValue,
         };
@@ -212,7 +219,9 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * @param value - the value related to the operation
      */
     private processLocalMessage(message: ISequencedDocumentMessage, value: any) {
-        const pending = this.promiseResolveQueue.shift();
+        // tslint:disable-next-line: no-non-null-assertion
+        const pending = this.promiseResolveQueue.shift()!;
+        assert(pending);
         assert(message.contents.opName === pending.message.opName);
         assert(message.clientSequenceNumber === -1
             || message.clientSequenceNumber === pending.clientSequenceNumber);
@@ -239,9 +248,10 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     }
 
     private removeCore(): T {
-        // Call should check if it is empty first
+        // Caller should check if it is empty first
         assert(this.data.size() !== 0);
-        const value = this.data.remove();
+        // tslint:disable-next-line: no-non-null-assertion
+        const value = this.data.remove()!;
 
         // Note remove event only fires if there are value removed
         // Not if it is empty

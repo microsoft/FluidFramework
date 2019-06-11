@@ -29,8 +29,8 @@ import * as uuid from "uuid/v4";
 
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
-    private messages: ISequencedDocumentMessage[] = [];
-    private deltaConnections: MockDeltaConnection[] = [];
+    private readonly messages: ISequencedDocumentMessage[] = [];
+    private readonly deltaConnections: MockDeltaConnection[] = [];
     public createDeltaConnection(runtime: IComponentRuntime): IDeltaConnection {
         const delta = new MockDeltaConnection(this, runtime);
         this.deltaConnections.push(delta);
@@ -98,7 +98,7 @@ class MockDeltaConnection implements IDeltaConnection {
 }
 
 // Mock implementation of IRuntime
-export class MockRuntime extends EventEmitter implements IComponentRuntime  {
+export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
@@ -184,19 +184,19 @@ export class MockHistorian implements IHistorian {
     public endpoint: string;
 
     private idCounter: number = 0;
-    private blobMap = new Map();
+    private readonly blobMap = new Map<string, git.ITree | git.IBlob>();
     private tree: git.ICreateTreeParams;
 
     public async read(path: string) {
-        const content =  await this.read_r(path, this.tree);
+        const content = await this.read_r(path, this.tree);
         return Buffer.from(content).toString("base64");
     }
 
-    public async read_r(path: string, baseBlob) {
+    public async read_r(path: string, baseBlob: git.ITree | git.ICreateTreeParams): Promise<string> {
         if (!path.includes("/")) {
             for (const blob of baseBlob.tree) {
                 if (blob.path === path) {
-                    return this.blobMap.get(blob.sha).content;
+                    return (this.blobMap.get(blob.sha) as git.IBlob).content;
                 }
             }
             assert(false, `historian.read() blob not found (base case): ${path}`);
@@ -206,7 +206,7 @@ export class MockHistorian implements IHistorian {
 
             for (const blob of baseBlob.tree) {
                 if (blob.path === head) {
-                    return this.read_r(tail, this.blobMap.get(blob.sha));
+                    return this.read_r(tail, this.blobMap.get(blob.sha) as git.ITree);
                 }
 
             }
@@ -215,7 +215,7 @@ export class MockHistorian implements IHistorian {
     }
 
     public async getBlob(sha: string): Promise<git.IBlob> {
-        return this.blobMap.get(sha);
+        return this.blobMap.get(sha) as git.IBlob;
     }
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
         const newBlob = {
@@ -277,7 +277,7 @@ export class MockHistorian implements IHistorian {
     }
     public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
         this.tree = tree;
-        const newTree =  {
+        const newTree = {
             sha: `id${this.idCounter}`,
             tree: tree.tree.map((treeEntry) => ({
                 mode: treeEntry.mode,
@@ -293,7 +293,7 @@ export class MockHistorian implements IHistorian {
         return newTree;
     }
     public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
-        return this.blobMap.get(sha);
+        return this.blobMap.get(sha) as git.ITree;
     }
 
     /**

@@ -7,9 +7,9 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 
-// An implementtion of IObjectStorageService based on ITree input.
+// An implementation of IObjectStorageService based on ITree input.
 export class MockStorage implements IObjectStorageService {
-    public static readCore(tree: ITree, paths: string[]): string {
+    private static ReadCore(tree: ITree, paths: string[]): string {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
@@ -20,7 +20,7 @@ export class MockStorage implements IObjectStorageService {
                             .toString("base64");
                     }
                     if (entry.type === "Tree") {
-                        return MockStorage.readCore(entry.value as ITree, paths.slice(1));
+                        return MockStorage.ReadCore(entry.value as ITree, paths.slice(1));
                     }
                     assert(false);
                 }
@@ -33,6 +33,6 @@ export class MockStorage implements IObjectStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        return MockStorage.readCore(this.tree, path.split("/"));
+        return MockStorage.ReadCore(this.tree, path.split("/"));
     }
 }

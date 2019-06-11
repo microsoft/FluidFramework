@@ -1,3 +1,4 @@
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { ConsensusQueueExtension, ConsensusStackExtension } from "../extension";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionExtension } from "../interfaces";
@@ -17,7 +18,7 @@ describe("Routerlicious", () => {
                 let testCollection: IConsensusOrderedCollection;
 
                 beforeEach(async () => {
-                    testCollection = extension.create(null, "consensus-ordered-collection");
+                    testCollection = extension.create(new MockRuntime(), "consensus-ordered-collection");
                 });
 
                 it("Can create a collection", () => {

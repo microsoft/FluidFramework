@@ -70,6 +70,7 @@ COPY packages/runtime/map/package*.json packages/runtime/map/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
+COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
 COPY packages/runtime/stream/package*.json packages/runtime/stream/
 COPY packages/server/agent/package*.json packages/server/agent/
