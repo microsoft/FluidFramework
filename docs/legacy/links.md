@@ -1,6 +1,6 @@
 # Links
 
-A set of links helpful to understanding the architecture or technology behind Prague
+A set of links helpful to understanding the architecture or technology behind Fluid
 
 ## Git
 
@@ -12,7 +12,7 @@ A set of links helpful to understanding the architecture or technology behind Pr
 * https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying
 * https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
 * http://bookkeeper.apache.org/distributedlog/technical-review/2016/09/19/kafka-vs-distributedlog.html
- 
+
 ## Block chain
 
 * https://arxiv.org/abs/1801.10228

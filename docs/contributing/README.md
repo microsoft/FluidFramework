@@ -1,6 +1,6 @@
 # How to Contribute
 
-There are many ways to contribute to the Prague project: logging bugs, submitting pull requests with bug fixes or
+There are many ways to contribute to the Fluid project: logging bugs, submitting pull requests with bug fixes or
 new features, reporting issues, and adding to documentation.
 
 Check out the [issues list](https://github.com/Microsoft/Prague/issues) for ways you can contribute. Issues

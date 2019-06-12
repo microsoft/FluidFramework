@@ -14,7 +14,7 @@ Responsibilities of the server:
 * Broadcast ops to all connected clients
 * Data persistence
 
-The server responsibilities are intentionally lightweight. We provide a reference implementation of a Prague server
+The server responsibilities are intentionally lightweight. We provide a reference implementation of a Fluid server
 called <xref:r11s>.
 
 ## Client
@@ -23,7 +23,7 @@ called <xref:r11s>.
 
 ## Read more
 
-The following links are helpful to understanding the architecture and technology behind Prague:
+The following links are helpful to understanding the architecture and technology behind Fluid:
 
 ### Git
 

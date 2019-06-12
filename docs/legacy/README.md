@@ -1,13 +1,13 @@
 # Legacy docs
 
 > [!WARNING]
-> This folder contains examples using Prague's v0.1.x API. It is kept for historical reasons only.
+> This folder contains examples using Fluid's v0.1.x API. It is kept for historical reasons only.
 
 ## Running against our API
 
 ### Private NPM Repository
 
-The simplest way to get up and running with Prague is to install our npm module and then run against our production
+The simplest way to get up and running with Fluid is to install our npm module and then run against our production
 service. From there you can choose whether to webpack, browserify, etc.
 
 To get started simply
@@ -19,7 +19,7 @@ To get started simply
 * IMPORTANT NOTE: VSTS will give you a line like this to put into your .npmrc file:
   `registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
 
-  You need to prefix that line with @prague in order to not force all package lookups to go to the Prague registry. The line you add to your .npmrc file should actually look like this:
+  You need to prefix that line with @prague in order to not force all package lookups to go to the Fluid registry. The line you add to your .npmrc file should actually look like this:
   `@prague:registry=https://offnet.pkgs.visualstudio.com/_packaging/prague@Release/npm/registry/`
 
 The [sequence, flowview, and threejs](./api/examples) examples are all setup using the above approach.
@@ -31,7 +31,7 @@ If you'd like to recieve email notifications when breaking changes are introduce
 #### Projects
 
 ##### @prague/routerlicious
-The core Prague project. This contains the client side code you need to run Prague.
+The core Fluid project. This contains the client side code you need to run Fluid.
 
 You can choose to run against our production endpoints or run the service yourself locally. See the [Routerlicious
 README](../server/routerlicious) for more information

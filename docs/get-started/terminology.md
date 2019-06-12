@@ -6,6 +6,9 @@ uid: terminology
 
 ## Chaincode
 
+A chaincode is an installable block of code. Chaincode typically create components following the
+[Fluid component model](xref:component-model).
+
 ## Component
 
 See [Components](xref:concepts#components)
@@ -15,6 +18,8 @@ See [Components](xref:concepts#components)
 ## Container
 
 See [Containers](xref:concepts#containers)
+
+## Driver
 
 ## Loader
 

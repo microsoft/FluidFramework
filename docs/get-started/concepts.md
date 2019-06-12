@@ -5,13 +5,13 @@ uid: concepts
 # Concepts
 
 * This section will contain deeper information about the key concepts that developers should understand to be effective
-  with Prague.
+  with Fluid.
 
 ## Components
 
-A component is little more than a JavaScript object. What makes Prague components special is the following:
+A component is little more than a JavaScript object. What makes Fluid components special is the following:
 
-* They are instantiated by the Prague runtime
+* They are instantiated by the Fluid runtime
 * They are opened/created via a unique URL
 * The code executing inside the component is the current code package accepted by the container's quorum
 * They are per-client singletons (i.e., opening the same URL multiple times on the same client returns the same

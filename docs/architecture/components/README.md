@@ -4,7 +4,7 @@ uid: component-architecture
 
 # Component architecture
 
-* [Prague web component model](./web-component-model.md)
-* [Prague component mechanism](./component-mechanism.md)
+* [Fluid web component model](./web-component-model.md)
+* [Fluid component mechanism](./component-mechanism.md)
 
 ![Container Diagram](./Container-Diagram.JPG "Container Diagram")
