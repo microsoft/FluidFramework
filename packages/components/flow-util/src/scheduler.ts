@@ -5,10 +5,19 @@ const idleThresholdMS = 60;
 const idleTaskTurnBreak = 2;
 
 export class Scheduler {
+    private static readonly done = Promise.resolve();
     private lastDispatchMS = Date.now();
+    private readonly turnTasks: TaskCallback[] = [];
     private readonly layoutTasks: TaskCallback[] = [];
     private readonly postLayoutTasks: TaskCallback[] = [];
     private readonly idleTasks: TaskCallback[] = [];
+
+    public readonly onTurnEnd = (callback: TaskCallback) => {
+        if (this.turnTasks.push(callback) === 1) {
+            // tslint:disable-next-line:no-floating-promises
+            Scheduler.done.then(this.processTurnTasks);
+        }
+    }
 
     public readonly onLayout = (callback: TaskCallback) => {
         this.layoutTasks.push(callback);
@@ -51,17 +60,21 @@ export class Scheduler {
         };
     }
 
+    private dispatch(tasks: TaskCallback[]) {
+        for (const task of tasks) {
+            task();
+        }
+        tasks.length = 0;
+    }
+
+    private readonly processTurnTasks = () => {
+        this.dispatch(this.turnTasks);
+        this.lastDispatchMS = Date.now();
+    }
+
     private readonly processLayoutTasks = () => {
-        for (const task of this.layoutTasks) {
-            task();
-        }
-        this.layoutTasks.length = 0;
-
-        for (const task of this.postLayoutTasks) {
-            task();
-        }
-        this.postLayoutTasks.length = 0;
-
+        this.dispatch(this.layoutTasks);
+        this.dispatch(this.postLayoutTasks);
         this.lastDispatchMS = Date.now();
     }
 

@@ -1,19 +1,14 @@
-import { DocSegmentKind, FlowDocument, getDocSegmentKind, getInclusionHtml, getInclusionKind, InclusionKind, SegmentSpan } from "@chaincode/flow-document";
-import { bsearch2, Char, Dom } from "@prague/flow-util";
+import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "@chaincode/flow-document";
+import { bsearch2, Dom } from "@prague/flow-util";
 import {
-    ISegment,
-    Marker,
     TextSegment,
 } from "@prague/merge-tree";
 import { IFlowViewComponent, View } from "../";
 import { debug, nodeAndOffsetToString } from "../../debug";
 import { PagePosition } from "../../pagination";
 import { InclusionView } from "../inclusion";
-import { LineBreakView } from "../linebreak";
-import { ParagraphView } from "../paragraph";
-import { TextLayout, TextView } from "../text";
+import { DocumentLayout } from "./layout";
 import { DocumentViewState, IViewInfo, LayoutContext } from "./layoutcontext";
-import { LayoutSink } from "./layoutsink";
 import { template } from "./template";
 import { ITrackedPosition } from "./trackedposition";
 
@@ -30,96 +25,6 @@ export interface IDocumentProps {
 
 interface IRect { top: number; bottom: number; left: number; right: number; }
 type FindVerticalPredicate = (top: number, bottom: number, best: IRect, candidate: IRect) => boolean;
-
-const inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
-
-class DocumentLayout extends LayoutSink<{}> {
-    public onPush(context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number): {} {
-        return {};
-    }
-
-    public tryAppend(state: {}, context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        const kind = getDocSegmentKind(segment);
-        const span = new SegmentSpan(position, segment, startOffset, endOffset);
-
-        switch (kind) {
-            case DocSegmentKind.Text:
-                context.pushLayout(TextLayout, position, segment, startOffset, endOffset);
-                return true;
-
-            case DocSegmentKind.Paragraph:
-                this.syncParagraph(context, span);
-                return true;
-
-            case DocSegmentKind.LineBreak:
-                this.syncLineBreak(context, span);
-                return true;
-
-            case DocSegmentKind.Inclusion:
-                this.syncInclusion(context, span, segment as Marker);
-                return true;
-
-            case DocSegmentKind.EOF:
-                this.syncText(context, span, Char.zeroWidthSpace, "");
-                return true;
-
-            default:
-                throw new Error(`Unknown DocSegmentKind '${kind}'.`);
-        }
-    }
-
-    public onPop() { /* do nothing */ }
-
-    // Ensures that the paragraph's view is mounted and up to date.
-    private syncParagraph(context: LayoutContext, span: SegmentSpan) {
-        context.emitNode(span, ParagraphView.factory, {});
-    }
-
-    // Ensures that the lineBreak's view is mounted and up to date.
-    private syncLineBreak(context: LayoutContext, span: SegmentSpan) {
-        context.emitNode(span, LineBreakView.factory, {});
-    }
-
-    // Ensures that the text's view is mounted and up to date.
-    private syncText(context: LayoutContext, span: SegmentSpan, text: string, classList: string) {
-        context.emitNode(span, TextView.factory, { text, classList });
-    }
-
-    // Ensures that a foreign inclusion's view is mounted and up to date.
-    private syncInclusion(context: LayoutContext, span: SegmentSpan, marker: Marker) {
-        let child: HTMLElement;
-        const kind = getInclusionKind(marker);
-
-        child = (marker.properties as any)[inclusionRootSym];
-        if (!child) {
-            switch (kind) {
-                case InclusionKind.HTML:
-                    child = getInclusionHtml(marker);
-                    break;
-
-                case InclusionKind.Component:
-                    // DANGER: Note that Inclusion.caretEnter(..) compensates for the extra <span> required
-                    //         for the "div" style mounting.
-                    child = document.createElement("span");
-                    context.doc.getInclusionContainerComponent(marker, [["div", Promise.resolve(child)]]);
-                    break;
-
-                default:
-                    console.assert(kind === InclusionKind.Chaincode);
-
-                    // DANGER: Note that Inclusion.caretEnter(..) compensates for the extra <span> required
-                    //         for the "div" style mounting.
-                    child = document.createElement("span");
-                    context.doc.getInclusionComponent(marker, [["div", Promise.resolve(child)]]);
-            }
-            (marker.properties as any)[inclusionRootSym] = child;
-        }
-
-        context.emitNode(span, InclusionView.factory, { child });
-    }
-}
-
-const documentLayout = new DocumentLayout();
 
 // IView that renders a FlowDocument.
 export class DocumentView extends View<IDocumentProps, DocumentViewState> {
@@ -147,13 +52,13 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
 
     private static readonly findBelowPredicate: FindVerticalPredicate =
         (top, bottom, best, candidate) => {
-            return candidate.top > top              // Must be below original top
+            return candidate.bottom > bottom        // Must be below original bottom
                 && candidate.top <= best.top;       // Must higher/closer than best match
         }
 
     private static readonly findAbovePredicate: FindVerticalPredicate =
         (top, bottom, best, candidate) => {
-            return candidate.bottom < bottom        // Must be above original bottom
+            return candidate.top < top              // Must be above original top
                 && candidate.bottom >= best.bottom; // Must be lower/closer than best match
         }
 
@@ -172,24 +77,27 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    public readonly findBelow = (x: number, top: number, bottom: number) => {
-        return this.findVertical(x, top, bottom, DocumentView.findBelowPredicate);
+    public readonly findBelow = (start: number, end: number, x: number, top: number, bottom: number) => {
+        return this.findVertical(start, end, x, top, bottom, DocumentView.findBelowPredicate);
     }
 
     /**
      * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    public readonly findAbove = (x: number, top: number, bottom: number) => {
-        return this.findVertical(x, top, bottom, DocumentView.findAbovePredicate);
+    public readonly findAbove = (start: number, end: number, x: number, top: number, bottom: number) => {
+        return this.findVertical(start, end, x, top, bottom, DocumentView.findAbovePredicate);
     }
 
     public getInclusionView(position: number): InclusionView {
-        const { segment } = this.state.doc.getSegmentAndOffset(position);
+        if (position < this.doc.length) {
+            const { segment } = this.state.doc.getSegmentAndOffset(position);
+            if (getDocSegmentKind(segment) === DocSegmentKind.inclusion) {
+                return this.state.segmentToViewInfo.get(segment).view as InclusionView;
+            }
+        }
 
-        return getDocSegmentKind(segment) === DocSegmentKind.Inclusion
-            ? this.state.segmentToViewInfo.get(segment).view as InclusionView
-            : undefined;
+        return undefined;
     }
 
     public nodeOffsetToPosition(node: Node, nodeOffset = 0) {
@@ -202,7 +110,10 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         }
 
         const { segment, offset } = this.nodeOffsetToSegmentOffset(node, nodeOffset);
-        const position = this.state.doc.getPosition(segment) + Math.min(offset, segment.cachedLength - 1);
+        const max = getDocSegmentKind(segment) === DocSegmentKind.text
+            ? segment.cachedLength
+            : segment.cachedLength - 1;
+        const position = this.state.doc.getPosition(segment) + Math.min(offset, max);
 
         debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> ${position}`);
 
@@ -224,7 +135,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         const { segment } = this.doc.getSegmentAndOffset(position);
 
         switch (getDocSegmentKind(segment)) {
-            case DocSegmentKind.Text:
+            case DocSegmentKind.text:
                 return {
                     node,
                     nodeOffset: Math.min(
@@ -263,7 +174,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
                     const seg = viewInfo.span.firstSegment;
 
                     switch (getDocSegmentKind(seg)) {
-                        case DocSegmentKind.Inclusion:
+                        case DocSegmentKind.inclusion:
                             remainingChars = 0;
                             break;
 
@@ -421,7 +332,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     private syncRange(context: LayoutContext, start: number, end: number, halt: (context: LayoutContext) => boolean) {
         debug(`  syncRange([${start}..${end}))`);
 
-        context.pushLayout(documentLayout, NaN, undefined, NaN, NaN);
+        context.pushLayout(DocumentLayout.instance, NaN, undefined, NaN, NaN);
 
         try {
             context.doc.visitRange((position, segment, startOffset, endOffset) => {
@@ -455,27 +366,26 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     }
 
     /**
-     * Returns the closest { segment, offset } below the text cursor occupying the 0-width rect
+     * Returns the closest { segment, offset } from the text cursor occupying the 0-width rect
      * described by x/top/bottom.
      */
-    private findVertical(x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
-        debug(`looking below: ${bottom}`);
+    private findVertical(start: number, end: number, x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
+        debug(`findVertical(${start}..${end}, ${x}, ${top}-${bottom})`);
 
-        const state = this.state;
         let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
         let bestDx = +Infinity;
         let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
 
-        for (const viewInfo of state.elementToViewInfo.values()) {
-            const segmentKind = getDocSegmentKind(viewInfo.span.firstSegment);
-            if (segmentKind !== DocSegmentKind.Text && segmentKind !== DocSegmentKind.Inclusion) {
-                continue;
+        this.doc.visitRange((position, segment) => {
+            const viewInfo = this.state.segmentToViewInfo.get(segment);
+            if (!viewInfo) {
+                return true;
             }
 
             const view = viewInfo.view;
             const node = view.root;
             const rects = node.getClientRects();
-            debug(`rects: ${rects.length} for ${node.textContent}`);
+            debug(`rects: ${rects.length} for ${getDocSegmentKind(segment)}:'${node.textContent}'`);
 
             for (const rect of rects) {
                 debug(`    ${JSON.stringify(rect)}`);
@@ -490,12 +400,14 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
                     continue;
                 }
 
+                debug(`    ==> Best candidate: ${viewInfo.view.root.id}: '${viewInfo.view.root.textContent}' dx=${dx} dyTop=${bestRect.top - rect.top} dyBottom=${bestRect.bottom - rect.bottom}`);
                 bestRect = rect;
                 bestDx = dx;
                 bestViewInfo = viewInfo;
-                debug(`    ==> Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
             }
-        }
+
+            return true;
+        }, start, end);
 
         if (!bestViewInfo) {
             debug(`No best candidate found.`);
@@ -505,7 +417,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         debug(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
         debug(`    rect: ${JSON.stringify(bestRect)}`);
 
-        return getDocSegmentKind(bestViewInfo.span.firstSegment) === DocSegmentKind.Text
+        return getDocSegmentKind(bestViewInfo.span.firstSegment) === DocSegmentKind.text
             ? this.nodeOffsetToSegmentOffset(
                 bestViewInfo.view.cursorTarget,
                 Dom.findNodeOffset(

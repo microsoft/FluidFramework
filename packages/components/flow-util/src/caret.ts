@@ -1,4 +1,5 @@
 import { Direction } from ".";
+import { getTabDirection } from "./direction";
 
 export interface ICaretEvent extends CustomEvent {
     detail: {
@@ -23,8 +24,13 @@ export namespace Caret {
     }
 
     export function caretEnter(target: Element, direction: Direction, caretBounds: ClientRect) {
-        if ("focus" in target) {
-            (target as HTMLElement).focus();
+        const focusable = target.querySelectorAll(":enabled, [tabindex]");
+        const focusTarget = (getTabDirection(direction) > 0
+            ? focusable[0]
+            : focusable[focusable.length - 1]) as Element | HTMLElement;
+
+        if (focusTarget && "focus" in focusTarget) {
+            focusTarget.focus();
         }
 
         return dispatchCaretEvent(CaretEventType.enter, target, direction, caretBounds);

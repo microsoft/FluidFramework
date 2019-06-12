@@ -1,17 +1,22 @@
 import { Component } from "@prague/app-component";
-import { DataStore } from "@prague/app-datastore";
 import { ServicePlatform } from "@prague/component-runtime";
-import { TokenList } from "@prague/flow-util";
+import { randomId, TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {
     BaseSegment,
+    createInsertSegmentOp,
+    createRemoveRangeOp,
+    IMergeTreeRemoveMsg,
     ISegment,
     LocalReference,
     Marker,
     MergeTree,
+    MergeTreeDeltaType,
     PropertySet,
     ReferencePosition,
     ReferenceType,
+    reservedMarkerIdKey,
+    reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
     UniversalSequenceNumber,
@@ -19,32 +24,26 @@ import {
 import { IComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
+import * as assert from "assert";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
 export { SegmentSpan };
 
-export enum DocSegmentKind {
-    Text = "text",
-    Paragraph = "<p>",
-    LineBreak = "<br>",
-    Inclusion = "<?>",
-    EOF = "<eof>",
+export const enum DocSegmentKind {
+    text = "text",
+    paragraph = "<p>",
+    lineBreak = "<br>",
+    beginTag = "<t>",
+    inclusion = "<?>",
+    endRange = "</>",
 }
 
-export enum InclusionKind {
-    HTML = "<html>",
-    Chaincode = "<@chaincode>",
-    Component = "<@component>",
-}
+const tilesAndRanges = [ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTag, DocSegmentKind.inclusion ];
 
-export const getInclusionKind = (marker: Marker): InclusionKind => marker.properties.kind;
-export const getInclusionHtml = (marker: Marker) => {
-    const template = document.createElement("template");
-    // tslint:disable-next-line:no-inner-html
-    template.innerHTML = marker.properties.content;
-    return template.content.firstElementChild as HTMLElement;
-};
+export const enum DocTile {
+    paragraph = DocSegmentKind.paragraph,
+}
 
 const styleProperty = "style";
 export const getStyle = (segment: BaseSegment): CSSStyleDeclaration => segment.properties && segment.properties[styleProperty];
@@ -54,27 +53,25 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     if (TextSegment.is(segment)) {
-        return DocSegmentKind.Text;
+        return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
         switch (markerType) {
             case ReferenceType.Tile:
+            case ReferenceType.NestBegin:
                 const tileLabel = segment.getTileLabels()[0];
-                switch (tileLabel) {
-                    case DocSegmentKind.Paragraph:
-                    case DocSegmentKind.LineBreak:
-                    case DocSegmentKind.EOF:
-                        return tileLabel;
-                    default:
-                        throw new Error(`Unknown Marker.tileLabel '${tileLabel}'.`);
-                }
-            case ReferenceType.Simple:
-                return DocSegmentKind.Inclusion;
+                const kind = (tileLabel || segment.getRangeLabels()[0]) as DocSegmentKind;
+
+                assert(tilesAndRanges.indexOf(kind) >= 0,
+                    `Unknown tile/range label ${kind}.`);
+
+                return kind;
             default:
-                throw new Error(`Unknown Marker.refType '${markerType}'.`);
+                assert(markerType === ReferenceType.NestEnd);
+                return DocSegmentKind.endRange;
         }
     } else {
-        throw new Error(`Unknown Segment Type.`);
+        assert.fail(`Unknown Segment Type: '${segment.toJSONObject()}'`);
     }
 };
 
@@ -103,6 +100,13 @@ const accumAsLeafAction = {
     ) => (accum as LeafAction)(position, segment, startOffset, endOffset),
 };
 
+// TODO: We need the ability to create LocalReferences to the end of the document. Our
+//       workaround creates a LocalReference with a sentinal segment that is never inserted
+//       into the MergeTree.  We then special case this segment in localRefToPosition.
+//
+//       See: https://github.com/microsoft/Prague/issues/2408
+const endOfTextSegment = {} as unknown as BaseSegment;
+
 export class FlowDocument extends Component {
     public get ready() {
         return this.readyDeferred.promise;
@@ -118,13 +122,12 @@ export class FlowDocument extends Component {
 
     public static readonly type = `${require("../package.json").name}@${require("../package.json").version}`;
 
-    public static markAsParagraph(marker: Marker) {
-        marker.properties = Object.assign(marker.properties || {}, FlowDocument.paragraphTileProperties);
-        return marker;
-    }
-    private static readonly paragraphTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.Paragraph] };
-    private static readonly lineBreakTileProperties = { [reservedTileLabelsKey]: [DocSegmentKind.LineBreak] };
-    private static readonly eofTileProperties       = { [reservedTileLabelsKey]: [DocSegmentKind.EOF] };
+    private static readonly paragraphProperties = { [reservedTileLabelsKey]: [DocSegmentKind.paragraph] };
+    private static readonly lineBreakProperties = { [reservedTileLabelsKey]: [DocSegmentKind.lineBreak] };
+    private static readonly inclusionProperties = { [reservedTileLabelsKey]: [DocSegmentKind.inclusion] };
+
+    private static readonly beginTagProperties  = { [reservedRangeLabelsKey]: [DocSegmentKind.beginTag] };
+    private static readonly endRangeProperties  = { };
 
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
@@ -138,30 +141,18 @@ export class FlowDocument extends Component {
         ]);
     }
 
-    public async getInclusionComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const store = await DataStore.from(marker.properties.serverUrl, "anonymous-coward");
-
-        // TODO: Component should record serverUrl, not rely on passed-through datastore instance?
-        return store.open(
-            marker.properties.docId,
-            marker.properties.chaincode,
-            "",
-            services.concat([["datastore", Promise.resolve(store)]]));
-    }
-
-    public async getInclusionContainerComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
-        const docId = marker.properties.docId as string;
-        if (docId.indexOf("/") === 0) {
-            const response = await this.context.hostRuntime.request({ url: marker.properties.docId });
+    public async getComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
+        const url = marker.properties.url as string;
+        if (url.indexOf("/") === 0) {
+            const response = await this.context.hostRuntime.request({ url });
             if (response.status !== 200 || response.mimeType !== "prague/component") {
                 return Promise.reject("Not found");
             }
 
             const component = response.value as IComponent;
             await component.attach(new ServicePlatform(services));
-
         } else {
-            await this.runtime.openComponent(marker.properties.docId, true, services);
+            await this.runtime.openComponent(url, true, services);
         }
     }
 
@@ -174,6 +165,11 @@ export class FlowDocument extends Component {
     }
 
     public addLocalRef(position: number) {
+        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        if (position === this.length) {
+            return new LocalReference(endOfTextSegment);
+        }
+
         const { segment, offset } = this.getSegmentAndOffset(position);
         const localRef = new LocalReference(segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
         this.mergeTree.addLocalReference(localRef);
@@ -181,10 +177,20 @@ export class FlowDocument extends Component {
     }
 
     public removeLocalRef(localRef: LocalReference) {
-        this.mergeTree.removeLocalReference(localRef.getSegment(), localRef);
+        const segment = localRef.getSegment();
+
+        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        if (segment !== endOfTextSegment) {
+            this.mergeTree.removeLocalReference(segment, localRef);
+        }
     }
 
     public localRefToPosition(localRef: LocalReference) {
+        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        if (localRef.getSegment() === endOfTextSegment) {
+            return this.length;
+        }
+
         return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, this.clientId);
     }
 
@@ -200,35 +206,134 @@ export class FlowDocument extends Component {
 
     public remove(start: number, end: number) {
         debug(`remove(${start},${end})`);
-        this.sharedString.removeText(start, end);
+        const ops: IMergeTreeRemoveMsg[] = [];
+
+        this.visitRange((position: number, segment: ISegment) => {
+            switch (getDocSegmentKind(segment)) {
+                case DocSegmentKind.beginTag: {
+                    // Removing a start tag implicitly removes its matching end tag.
+                    // Check if the end tag is already included in the range being removed.
+                    const endTag = this.getEnd(segment as Marker);
+                    const endPos = this.getPosition(endTag);
+
+                    // Note: The end tag must appear after the position of the current start tag.
+                    console.assert(position < endPos);
+
+                    if (!(endPos < end)) {
+                        // If not, add the end tag removal to the group op.
+                        debug(`  also remove end tag '</${endTag.properties.tag}>' at ${endPos}.`);
+                        ops.push(createRemoveRangeOp(endPos, endPos + 1));
+                    }
+                    break;
+                }
+                case DocSegmentKind.endRange: {
+                    // The end tag should be preserved unless the start tag is also included in
+                    // the removed range.  Check if range being removed includes the start tag.
+                    const startTag = this.getStart(segment as Marker);
+                    const startPos = this.getPosition(startTag);
+
+                    // Note: The start tag must appear before the position of the current end tag.
+                    console.assert(startPos < position);
+
+                    if (!(start <= startPos)) {
+                        // If not, remove any positions up to, but excluding the current segment
+                        // and adjust the pending removal range to just after this marker.
+                        debug(`  exclude end tag '</${segment.properties.tag}>' at ${position}.`);
+                        ops.push(createRemoveRangeOp(start, position));
+                        start = position + 1;
+                    }
+                    break;
+                }
+                default:
+            }
+            return true;
+        }, start, end);
+
+        if (start !== end) {
+            ops.push(createRemoveRangeOp(start, end));
+        }
+
+        // Perform removals in descending order, otherwise earlier deletions will shift the positions
+        // of later ops.  Because each effected interval is non-overlapping, a simple sort suffices.
+        ops.sort((left, right) => right.pos1 - left.pos1);
+
+        this.sharedString.groupOperation({
+            ops,
+            type: MergeTreeDeltaType.GROUP,
+        });
     }
 
     public insertParagraph(position: number) {
         debug(`insertParagraph(${position})`);
-        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.paragraphTileProperties);
+        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.paragraphProperties);
     }
 
     public insertLineBreak(position: number) {
         debug(`insertLineBreak(${position})`);
-        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakTileProperties);
+        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertHTML(position: number, content: HTMLElement) {
-        this.sharedString.insertMarker(position, ReferenceType.Simple, { kind: InclusionKind.HTML, content: content.outerHTML });
+    public insertComponent(position: number, url: string) {
+        const ops = [];
+        const id = randomId();
+
+        const endMarker = new Marker(ReferenceType.NestEnd);
+        endMarker.properties = { tag: "SPAN", ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
+        ops.push(createInsertSegmentOp(position, endMarker));
+
+        const inclusionMarker = new Marker(ReferenceType.Tile);
+        inclusionMarker.properties = { url, ...FlowDocument.inclusionProperties };
+        ops.push(createInsertSegmentOp(position, inclusionMarker));
+
+        const beginMarker = new Marker(ReferenceType.NestBegin);
+        beginMarker.properties = {  tag: "SPAN", ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
+        ops.push(createInsertSegmentOp(position, beginMarker));
+
+        // Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
+        //       change in positions.
+        this.sharedString.groupOperation({
+            ops,
+            type: MergeTreeDeltaType.GROUP,
+        });
     }
 
-    public insertComponent(position: number, serverUrl: string, docId: string, chaincode?: string) {
-        const docInfo = { kind: InclusionKind.Chaincode, serverUrl, docId, chaincode };
-        this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
-    }
+    public insertTags(tags: string[], start: number, end: number) {
+        const ops = [];
+        for (const tag of tags) {
+            const id = randomId();
 
-    public insertInclusionComponent(position: number, docId: string, pkg?: string) {
-        const docInfo = { kind: InclusionKind.Component, docId };
-        this.sharedString.insertMarker(position, ReferenceType.Simple, docInfo);
+            const endMarker = new Marker(ReferenceType.NestEnd);
+            endMarker.properties = { tag, ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
+            ops.push(createInsertSegmentOp(end, endMarker));
 
-        if (pkg) {
-            this.runtime.createAndAttachComponent(docId, pkg);
+            const beginMarker = new Marker(ReferenceType.NestBegin);
+            beginMarker.properties = { tag, ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
+            ops.push(createInsertSegmentOp(start, beginMarker));
+
+            // Increment start/end prior to inserting the next tag.
+            start++;
+            end++;
         }
+
+        // Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
+        //       change in positions.
+        this.sharedString.groupOperation({
+            ops,
+            type: MergeTreeDeltaType.GROUP,
+        });
+    }
+
+    public getStart(marker: Marker) {
+        return this.getOppositeMarker(marker, /* "end".length = */ 3, "begin");
+    }
+
+    public getEnd(marker: Marker) {
+        return this.getOppositeMarker(marker, /* "begin".length = */ 5, "end");
+    }
+
+    public getTags(position: number) {
+        const tags = this.mergeTree.getStackContext(position, this.clientId, ["tag"]).tag;
+        return tags && tags.items;
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
@@ -244,9 +349,9 @@ export class FlowDocument extends Component {
 
     public removeCssClass(start: number, end: number, ...classNames: string[]) {
         this.updateCssClassList(start, end,
-                (classList) => classNames.reduce(
-                    (updatedList, className) => TokenList.unset(updatedList, className),
-                    classList));
+            (classList) => classNames.reduce(
+                (updatedList, className) => TokenList.unset(updatedList, className),
+                classList));
     }
 
     public toggleCssClass(start: number, end: number, ...classNames: string[]) {
@@ -265,25 +370,23 @@ export class FlowDocument extends Component {
         this.addCssClass(start, end, ...toAdd);
     }
 
-    public findTile(startPos: number, tileType: string, preceding): { tile: ReferencePosition, pos: number } {
-        return this.mergeTree.findTile(startPos, this.clientId, tileType, preceding);
+    public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
+        return this.mergeTree.findTile(position, this.clientId, tileType as unknown as string, preceding);
     }
 
     public findParagraph(position: number) {
-        position = Math.min(position, this.length - 1);
-
-        const maybeStart = this.findTile(position, DocSegmentKind.Paragraph, /* preceding: */ true);
+        const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
         const start = maybeStart ? maybeStart.pos : 0;
 
-        const maybeEnd = this.findTile(position, DocSegmentKind.Paragraph, /* preceding: */ false);
-        const end = maybeEnd ? maybeEnd.pos : this.length;
+        const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
+        const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
 
         return { start, end };
     }
 
-    public visitRange(callback: LeafAction, startPosition = 0, endPosition = +Infinity) {
+    public visitRange(callback: LeafAction, start = 0, end = +Infinity) {
         // Early exit if passed an empty or invalid range (e.g., NaN).
-        if (!(startPosition < endPosition)) {
+        if (!(start < end)) {
             return;
         }
 
@@ -295,8 +398,17 @@ export class FlowDocument extends Component {
             UniversalSequenceNumber,
             this.clientId,
             /* accum: */ callback,
-            startPosition,
-            endPosition);
+            start,
+            end);
+    }
+
+    protected async create() {
+        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
+        // (See: https://github.com/Microsoft/Prague/pull/1118)
+        Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
+
+        const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
+        this.root.set("text", text);
     }
 
     protected async opened() {
@@ -308,14 +420,8 @@ export class FlowDocument extends Component {
         this.readyDeferred.resolve();
     }
 
-    protected async create() {
-        // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
-        // (See: https://github.com/Microsoft/Prague/pull/1118)
-        Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
-
-        const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
-        text.insertMarker(0, ReferenceType.Tile, FlowDocument.eofTileProperties);
-        this.root.set("text", text);
+    private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
+        return this.mergeTree.idToSegment[`${newPrefix}${marker.getId().slice(oldPrefixLength)}`];
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {

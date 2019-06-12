@@ -63,10 +63,6 @@
       "projectFolder": "packages/components/flow-editor/"
     },
     {
-      "packageName": "@chaincode/flow-host",
-      "projectFolder": "packages/components/flow-host/"
-    },
-    {
       "packageName": "@chaincode/flow-page",
       "projectFolder": "packages/components/flow-page/"
     },

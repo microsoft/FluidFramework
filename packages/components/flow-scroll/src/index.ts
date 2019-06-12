@@ -4,10 +4,8 @@ import { FlowEditor } from "@chaincode/flow-editor";
 import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import { TableView } from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
-import { ServicePlatform } from "@prague/component-runtime";
 import {
     IContainerContext,
-    IPlatform,
     IRuntime,
 } from "@prague/container-definitions";
 import { IComponent } from "@prague/runtime-definitions";
@@ -36,18 +34,17 @@ export class FlowHost extends Component {
 
     protected async opened() {
         const docP = this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true);
-        const mathP = this.openPlatform("math").then(
-            (platform) => platform.queryInterface<{ create: () => IComponent }>("collection"));
+        const mathP = this.openPlatform<{ create: () => IComponent }>("math");
         const div = await this.platform.queryInterface<Element>("div");
 
         const scheduler = new Scheduler();
         const viewport = new HostView();
-        viewport.attach(div, { scheduler, doc: await docP, math: await mathP });
+        viewport.attach(div, { scheduler, doc: await docP, math: await mathP, context: this.context });
     }
 
     private get docId() { return `${this.id}-doc`; }
 
-    private async openPlatform(id: string): Promise<IPlatform> {
+    private async openPlatform<T>(id: string): Promise<T> {
         const runtime = await this.context.getComponentRuntime(id, true);
         const component = await runtime.request({ url: "/" });
 
@@ -55,8 +52,7 @@ export class FlowHost extends Component {
             return Promise.reject("Not found");
         }
 
-        const result = component.value as IComponent;
-        return result.attach(new ServicePlatform([]));
+        return component.value as T;
     }
 }
 

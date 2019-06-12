@@ -1,6 +1,6 @@
 import { FlowDocument } from "@chaincode/flow-document";
 import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
-import { IComponent } from "@prague/runtime-definitions";
+import { IComponent, IComponentContext } from "@prague/runtime-definitions";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
@@ -8,6 +8,7 @@ import * as style from "./index.css";
 
 // tslint:disable-next-line:no-empty-interface
 interface IHostConfig {
+    context: IComponentContext;
     scheduler: Scheduler;
     doc: FlowDocument;
     math: { create: () => IComponent };
@@ -47,13 +48,20 @@ export class HostView extends View<IHostConfig> {
 
         const insertComponent = (type: string) => {
             const position = viewport.editor.cursorPosition;
-            init.doc.insertInclusionComponent(position, randomId(), type);
+            const id = randomId();
+            init.context.createAndAttachComponent(id, type);
+            init.doc.insertComponent(position, id);
+        };
+
+        const insertTags = (tags: string[]) => {
+            const selection = viewport.editor.selection;
+            init.doc.insertTags(tags, selection.start, selection.end);
         };
 
         const insertMath = () => {
             const position = viewport.editor.cursorPosition;
             const instance = init.math.create();
-            init.doc.insertInclusionComponent(position, `/${instance.id}`);
+            init.doc.insertComponent(position, `/${instance.id}`);
         };
 
         const toggleSelection = (className: string) => {
@@ -64,6 +72,7 @@ export class HostView extends View<IHostConfig> {
         searchMenu.attach(template.get(root, "search"), {
             commands: [
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(style.bold) },
+                { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
                 { name: "insert math", enabled: () => true, exec: insertMath },
                 { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
                 { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },

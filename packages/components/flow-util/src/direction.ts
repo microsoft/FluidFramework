@@ -22,10 +22,19 @@ export const enum Direction {
     down    = DirectionFlag.vertical,
 }
 
+export const enum TabDirection {
+    backward = -1,
+    forward = 1,
+}
+
 export function getDeltaX(direction: Direction) {
     return (direction << DirectionFlag.horizontalLsh) >> DirectionFlag.horizontalRsh;
 }
 
 export function getDeltaY(direction: Direction) {
     return (direction << DirectionFlag.verticalLsh) >> DirectionFlag.verticalRsh;
+}
+
+export function getTabDirection(direction: Direction): TabDirection {
+    return getDeltaX(direction) || getDeltaY(direction);
 }

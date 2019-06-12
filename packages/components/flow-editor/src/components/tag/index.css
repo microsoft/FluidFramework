@@ -1,0 +1,20 @@
+.tag::before { 
+    content: "<" attr(data-tag-name) ">";
+    border: 1px solid #d97;
+    background: #d97;
+}
+
+.tag::after { 
+    content: "</" attr(data-tag-name) ">";
+    border: 1px solid #796;
+    background: #796;
+}
+
+.tag::before, .tag::after {
+    color: white;
+    text-transform: lowercase;
+    font-size: 0.4em;
+    vertical-align: middle;
+    display: table-cell;
+    border-radius: 1em;
+}

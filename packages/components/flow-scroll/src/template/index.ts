@@ -16,9 +16,8 @@ export async function importDoc(docP: Promise<FlowDocument>, file: string) {
 
             const lines = decoder.decode(value).split(/\r?\n/);
             for (const paragraph of lines) {
-                // -1 to stay in front of the EOF marker.
-                doc.insertText(doc.length - 1, paragraph);
-                doc.insertParagraph(doc.length - 1);
+                doc.insertText(doc.length, paragraph);
+                doc.insertParagraph(doc.length);
             }
         }
     } finally {

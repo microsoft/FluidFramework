@@ -13,4 +13,5 @@ export { TokenList } from "./tokenlist";
 export { randomId } from "./random";
 export { ICommand } from "./command";
 export { ICaretEvent, CaretEventType, Caret } from "./caret";
-export { Direction, getDeltaX, getDeltaY } from "./direction";
+export { Direction, getDeltaX, getDeltaY, getTabDirection, TabDirection } from "./direction";
+export { areStringsEquivalent } from "./string";

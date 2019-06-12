@@ -85,14 +85,17 @@ export class LayoutContext {
     // tslint:disable-next-line:array-type
     private readonly layouts: { layout: LayoutSink<unknown>, state: unknown }[] = [];
 
+    private readonly parentAndPrevious: Array<{ parent: Element, previous: Element }>;
+
     constructor(
         readonly doc: FlowDocument,
         readonly state: DocumentViewState,
-        public root: Element,
+        root: Element,
         trackedPositions: ITrackedPosition[],
         private readonly halt: (context: LayoutContext) => boolean,
     ) {
         this.emitted.length = 0;
+        this.parentAndPrevious = [{ parent: root, previous: undefined }];
 
         // Initialize 'pendingTrackedPositions' by copying and sorting the tracked positions.
         this.pendingTrackedPositions = trackedPositions
@@ -146,6 +149,15 @@ export class LayoutContext {
 
     public elementToViewInfo(element: Element) { return this.state.elementToViewInfo.get(element); }
 
+    public pushNode<TProps, TView extends IFlowViewComponent<TProps>>(
+        span: SegmentSpan,
+        factory: () => TView,
+        props: TProps,
+    ) {
+        const viewInfo = this.emitNode(span, factory, props);
+        this.parentAndPrevious.push({ parent: viewInfo.view.root, previous: undefined });
+    }
+
     /**
      * Ensure that the IView for the given set of Segments has been created and that it's root DOM node
      * is at the correct position within the current parent.
@@ -155,8 +167,8 @@ export class LayoutContext {
         factory: () => TView,
         props: TProps,
     ): IViewInfo<TProps, TView> {
-        const parent = this.root;
-        const previous = this.lastEmitted && this.lastEmitted.view.root;
+        const parent = this.parent;
+        const previous = this.previous;
 
         let viewInfo = this.state.segmentToViewInfo.get(span.firstSegment);
         if (viewInfo) {
@@ -189,12 +201,18 @@ export class LayoutContext {
 
         // Add the emitted node to our tracking data structures.
         this.state.segmentToViewInfo.set(viewInfo.span.firstSegment, viewInfo);
-        this.state.elementToViewInfo.set(viewInfo.view.root, viewInfo);
+        const viewRoot = viewInfo.view.root;
+        this.state.elementToViewInfo.set(viewRoot, viewInfo);
+        this.previous = viewRoot;
         this.emitted.push(viewInfo);
 
         this.notifyTrackedPositionListeners(viewInfo.view.cursorTarget, span);
 
         return viewInfo as IViewInfo<TProps, TView>;
+    }
+
+    public popNode() {
+        this.parentAndPrevious.pop();
     }
 
     public pushLayout(layout: LayoutSink<unknown>, position: number, segment: ISegment, startOffset: number, endOffset: number) {
@@ -242,6 +260,11 @@ export class LayoutContext {
         layout.onPop(state, this);
         return true;
     }
+
+    private get topParentAndPrevious() { return this.parentAndPrevious[this.parentAndPrevious.length - 1]; }
+    private get parent() { return this.topParentAndPrevious.parent; }
+    private get previous() { return this.topParentAndPrevious.previous; }
+    private set previous(value: Element) { this.topParentAndPrevious.previous = value; }
 
     /**
      * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.

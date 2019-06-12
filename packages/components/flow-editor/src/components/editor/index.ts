@@ -1,4 +1,4 @@
-import { CaretEventType, Direction, getDeltaX, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
+import { CaretEventType, Direction, getDeltaX, getDeltaY, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
 import { IViewState, View } from "..";
 import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";
 import { debug } from "../../debug";
@@ -40,26 +40,13 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         const direction = e.detail.direction;
         const extendSelection = false;
 
-        const dx = getDeltaX(direction);
-        if (dx !== 0) {
+        if (getDeltaX(direction) !== 0) {
             this.cursor.moveTo(this.state.docView.nodeOffsetToPosition(e.target as Node), extendSelection);
-            this.horizontalArrow(e, dx, extendSelection);
+            this.horizontalArrow(e, direction, extendSelection);
         } else {
-            const searchFn = direction === Direction.down
-                ? this.state.docView.findBelow
-                : this.state.docView.findAbove;
-
-            const caretBounds = e.detail.caretBounds;
-            const segmentAndOffset = searchFn(caretBounds.left, caretBounds.top, caretBounds.bottom);
-            if (segmentAndOffset) {
-                const { segment, offset } = segmentAndOffset;
-                const position = this.doc.getPosition(segment) + offset;
-                this.cursor.moveTo(position, extendSelection);
-            }
+            this.cursor.moveTo(this.state.docView.nodeOffsetToPosition(e.target as Node), extendSelection);
+            this.verticalArrow(e, direction, e.detail.caretBounds, extendSelection);
         }
-
-        e.preventDefault();
-        e.stopPropagation();
     }) as EventHandlerNonNull;
 
     public paginate(start: PagePosition, budget: number) {
@@ -150,7 +137,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         this.state.docView.update(this.props);
     }
 
-    private delete(deltaStart: number, deltaEnd: number) {
+    private delete(e: Event, deltaStart: number, deltaEnd: number) {
         const { start, end } = this.cursor.selection;
         if (start === end) {
             // If no range is currently selected, delete the preceding character (if any).
@@ -159,6 +146,8 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             // Otherwise, delete the selected range.
             this.doc.remove(Math.min(start, end), Math.max(start, end));
         }
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     private insertText(text: string) {
@@ -170,22 +159,44 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
     }
 
-    private horizontalArrow(ev: Event | KeyboardEvent, deltaX: number, extendSelection: boolean) {
-        if ("metaKey" in ev) {
-            if (ev.metaKey || ev.altKey || ev.ctrlKey) {
-                return;
-            }
-        }
+    private horizontalArrow(e: Event, direction: Direction, extendSelection: boolean) {
+        this.cursor.setDirection(direction);
+        this.cursor.moveBy(getDeltaX(direction), extendSelection);
 
-        this.cursor.setDirection(deltaX < 0 ? Direction.left : Direction.right);
-        this.cursor.moveBy(deltaX, extendSelection);
-
-        ev.preventDefault();
-        ev.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
     }
 
-    private verticalArrow(ev: Event, deltaY: number, caretBounds: ClientRect, extendSelection: boolean) {
-        this.cursor.setDirection(deltaY < 0 ? Direction.up : Direction.down);
+    private verticalArrow(e: Event, direction: Direction, caretBounds: ClientRect, extendSelection: boolean) {
+        this.cursor.setDirection(direction);
+
+        const initial = this.cursorPosition;
+        const range = this.doc.findParagraph(initial + getDeltaY(direction));
+        const length = this.doc.length;
+
+        let start: number;
+        let end: number;
+        if (direction === Direction.down) {
+            start = Math.min(initial + 1, length);
+            end = Math.min(this.doc.findParagraph(range.end).end, length);
+        } else {
+            start = Math.max(this.doc.findParagraph(range.start - 1).start, 0);
+            end = Math.max(initial - 1, 0);
+        }
+
+        const searchFn = direction === Direction.down
+            ? this.state.docView.findBelow
+            : this.state.docView.findAbove;
+
+        const segmentAndOffset = searchFn(start, end, caretBounds.left, caretBounds.top, caretBounds.bottom);
+        if (segmentAndOffset) {
+            const { segment, offset } = segmentAndOffset;
+            const position = this.doc.getPosition(segment) + offset;
+            this.cursor.moveTo(position, extendSelection);
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     private readonly onKeyDown = (ev: KeyboardEvent) => {
@@ -193,31 +204,27 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         switch (keyCode) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
-                this.delete(/* deltaStart: */ -1, /* deltaEnd: */ 0);
-                ev.preventDefault();
-                ev.stopPropagation();
+                this.delete(ev, /* deltaStart: */ -1, /* deltaEnd: */ 0);
                 break;
             }
             case KeyCode.delete: {
-                this.delete(/* deltaStart: */ 0, /* deltaEnd: */ 1);
-                ev.preventDefault();
-                ev.stopPropagation();
+                this.delete(ev, /* deltaStart: */ 0, /* deltaEnd: */ 1);
                 break;
             }
             case KeyCode.arrowLeft: {
-                this.horizontalArrow(ev, -1, ev.shiftKey);
+                this.horizontalArrow(ev, Direction.left, ev.shiftKey);
                 break;
             }
             case KeyCode.arrowRight: {
-                this.horizontalArrow(ev, +1, ev.shiftKey);
+                this.horizontalArrow(ev, Direction.right, ev.shiftKey);
                 break;
             }
             case KeyCode.arrowDown: {
-                this.verticalArrow(ev, 1, this.cursor.bounds, ev.shiftKey);
+                this.verticalArrow(ev, Direction.down, this.cursor.bounds, ev.shiftKey);
                 break;
             }
             case KeyCode.arrowUp: {
-                this.verticalArrow(ev, -1, this.cursor.bounds, ev.shiftKey);
+                this.verticalArrow(ev, Direction.up, this.cursor.bounds, ev.shiftKey);
                 break;
             }
             default: {
@@ -247,11 +254,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             }
         } else {
             switch (ev.code) {
-                case KeyCode.pageUp:
-                case KeyCode.pageDown:
-                    // Do not prevent default on pageUp/Down.
-                    return;
-
                 case KeyCode.backspace: {
                     // Note: Backspace handled on 'keydown' event to support Chrome 69 (see comment in 'onKeyDown').
                     break;
@@ -271,7 +273,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         }
         ev.stopPropagation();
         ev.preventDefault();
-}
+    }
 
     private readonly onMouseDown = (ev: MouseEvent) => {
         const maybeSegmentAndOffset = this.state.docView.hitTest(ev.x, ev.y);

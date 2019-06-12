@@ -1,3 +1,5 @@
+import { areStringsEquivalent } from "@prague/flow-util";
+
 export interface IViewState {
     readonly root: Element;
 }
@@ -35,6 +37,15 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
     protected abstract mounting(props: Readonly<TProps>): TState;
     protected abstract updating(props: Readonly<TProps>, state: TState): TState;
     protected abstract unmounting(state: TState): void;
+
+    protected syncCss(element: HTMLElement, classList: string | undefined, style: string | undefined) {
+        if (!areStringsEquivalent(classList, element.className)) {
+            element.className = classList;
+        }
+        if (!areStringsEquivalent(style, element.style.cssText)) {
+            element.style.cssText = style;
+        }
+    }
 }
 
 export interface IFlowViewComponent<TProps> extends IView<TProps> {

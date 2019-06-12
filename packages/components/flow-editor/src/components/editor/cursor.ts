@@ -1,8 +1,14 @@
-import { FlowDocument } from "@chaincode/flow-document";
-import { Direction, Dom, Scheduler } from "@prague/flow-util";
+import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "@chaincode/flow-document";
+import { Direction, Dom, getTabDirection, Scheduler } from "@prague/flow-util";
 import { LocalReference } from "@prague/merge-tree";
 import { debug, domRangeToString, windowSelectionToString } from "../../debug";
 import { DocumentView } from "../document";
+
+const enum CaretStopKind {
+    none,
+    normal,
+    endOfPrevious,
+}
 
 export class Cursor {
     public get bounds() {
@@ -45,8 +51,8 @@ export class Cursor {
                 }
             } else {
                 // tslint:disable:prefer-const
-                let { node: startNode, nodeOffset: startOffset } = this.docView.positionToNodeOffset(this.doc.localRefToPosition(this.startRef));
-                let { node: endNode, nodeOffset: endOffset } = this.docView.positionToNodeOffset(end);
+                let { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(this.startRef);
+                let { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(this.endRef);
                 // tslint:enable:prefer-const
 
                 const selection = window.getSelection();
@@ -82,7 +88,7 @@ export class Cursor {
     }
 
     public moveBy(delta: number, extendSelection: boolean) {
-        this.moveTo(this.position + delta, extendSelection);
+        this.moveTo(this.slideCursor(this.position + delta, delta > 0 ? Direction.right : Direction.left).position, extendSelection);
     }
 
     public setSelection(start: number, end: number) {
@@ -100,8 +106,84 @@ export class Cursor {
         this.lastDirection = direction;
     }
 
+    private positionToNodeOffset(ref: LocalReference) {
+        const { position, kind } = this.slideCursor(this.doc.localRefToPosition(ref), Direction.right);
+        switch (kind) {
+            case CaretStopKind.endOfPrevious:
+                const { node } = this.docView.positionToNodeOffset(position - 1);
+                return { node, nodeOffset: node.textContent.length };
+            default:
+                return this.docView.positionToNodeOffset(position);
+        }
+    }
+
+    private getSegmentKindAt(position: number) {
+        return position < this.doc.length
+            ? getDocSegmentKind(this.doc.getSegmentAndOffset(position).segment)
+            : undefined;
+    }
+
+    private getCaretStop(position: number) {
+        const endKind = this.getSegmentKindAt(position);
+        switch (endKind) {
+            case DocSegmentKind.text:
+            case DocSegmentKind.inclusion:
+            case DocSegmentKind.paragraph:
+            case DocSegmentKind.lineBreak:
+                return CaretStopKind.normal;
+            default:
+                if (position > 0) {
+                    switch (this.getSegmentKindAt(position - 1)) {
+                        case DocSegmentKind.text:
+                            return CaretStopKind.endOfPrevious;
+                        case DocSegmentKind.beginTag:
+                            if (endKind === DocSegmentKind.endRange) {
+                                return CaretStopKind.endOfPrevious;
+                            }
+                            break;
+                        default:
+                    }
+                }
+        }
+
+        return CaretStopKind.none;
+    }
+
+    private slideCursor(start: number, direction: Direction) {
+        const dx = getTabDirection(direction);
+
+        // Note: The '-1' here is to avoid stepping over the 'end-of-text' marker at the end of the document.
+        const length = this.doc.length;
+
+        // Clamp the starting position to the current document range;
+        let position = Math.max(Math.min(start, length), 0);
+        let kind: CaretStopKind;
+
+        // tslint:disable:no-constant-condition
+        do {
+            kind = this.getCaretStop(position);
+            if (kind !== CaretStopKind.none) {
+                break;
+            }
+
+            // If the next position exceeds the legal range, exit.
+            const nextPos = position + dx;
+            if (nextPos < 0 || nextPos > length) {
+                break;
+            }
+
+            position = nextPos;
+        } while (true);
+
+        if (position !== start) {
+            debug(`      slideCursor: ${start} -> ${position}`);
+        }
+
+        return { position, kind };
+    }
+
     private updateRef(doc: FlowDocument, ref: LocalReference, position: number) {
-        position = Math.min(Math.max(position, 0), doc.length - 1);
+        position = this.slideCursor(position, Direction.right).position;
         const oldPosition = doc.localRefToPosition(ref);
         if (position === oldPosition) {
             debug(`      ${position} (unchanged)`);

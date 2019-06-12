@@ -13,3 +13,9 @@
 .documentOverlay {
     pointer-events: none;
 }
+
+.trailingSpan::after {
+    content: "ᅜ";
+    color: #ccc;
+    padding: 0px 2px 0px 3px;
+}

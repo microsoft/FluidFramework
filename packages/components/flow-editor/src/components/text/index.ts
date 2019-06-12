@@ -1,14 +1,15 @@
 import { Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
-import * as styles from "./index.css";
+import * as style from "./index.css";
 
 export { TextLayout } from "./layout";
 
-const template = new Template({ tag: "p", props: { className: styles.text }});
+const template = new Template({ tag: "p", props: { className: style.text }});
 
 export interface ITextProps {
     text: string;
-    classList: string;
+    style?: string;
+    classList?: string;
 }
 
 // tslint:disable-next-line:no-empty-interface
@@ -25,24 +26,24 @@ export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
     public get cursorTarget() { return this.state.root.firstChild; }
 
     public updating(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {
-        console.assert(props.text !== "",
-            "Should not emit a TextView for empty text.");
+        const { text, classList } = props;
+        console.assert(text, "Should not emit a TextView for empty text.");
 
+        // Ensure the text content of the <p> tag is up to date (note that 'text' must be non-empty,
+        // therefore a simple strict equality check will suffice.)
         const root = state.root;
-
-        const text = props.text;
         if (root.textContent !== text) {
             root.textContent = text;
         }
 
-        const classList = props.classList;
-        const className = classList.length > 0
-            ? `${styles.text} ${props.classList}`
-            : styles.text;
+        // The <p> tag's 'className' is the 'style.text' style followed by any CSS style classes
+        // listed in 'props.classList'.
+        const className = classList
+            ? `${style.text} ${props.classList}`
+            : style.text;
 
-        if (root.className !== className) {
-            root.className = className;
-        }
+        // Ensure the <p> tag's 'className' and 'style' properties are up to date.
+        this.syncCss(root as HTMLElement, className, props.style);
 
         return state;
     }
