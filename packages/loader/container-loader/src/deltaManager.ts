@@ -12,10 +12,12 @@ import {
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
+    ITelemetryInformationalEvent,
+    ITelemetryLogger,
     ITrace,
     MessageType,
 } from "@prague/container-definitions";
-import { Deferred, isSystemType } from "@prague/utils";
+import { Deferred, isSystemType, PerformanceEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ContentCache } from "./contentCache";
@@ -114,7 +116,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     constructor(
         private service: IDocumentService,
-        private client: IClient) {
+        private client: IClient | null,
+        private readonly logger: ITelemetryLogger) {
         super();
 
         /* tslint:disable:strict-boolean-expressions */
@@ -196,7 +199,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (resume) {
             this._inbound.systemResume();
             this._inboundSignal.systemResume();
-            this.fetchMissingDeltas(sequenceNumber);
+            this.fetchMissingDeltas("DocumentOpen", sequenceNumber);
         }
     }
 
@@ -254,10 +257,19 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection!.submitSignal(content);
     }
 
-    public async getDeltas(from: number | undefined, to?: number): Promise<ISequencedDocumentMessage[]> {
-        const deferred = new Deferred<ISequencedDocumentMessage[]>();
-        this.getDeltasCore(from, to, [], deferred, 0);
+    public async getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+        const event: ITelemetryInformationalEvent = {
+            eventName: "GetDeltas",
+            from,
+            reason,
+        };
+        if (to) {
+            event.to = to;
+        }
+        const telemetryEvent = PerformanceEvent.Start(this.logger, event);
 
+        const deferred = new Deferred<ISequencedDocumentMessage[]>();
+        this.getDeltasCore(from, to, [], deferred, 0, telemetryEvent);
         return deferred.promise;
     }
 
@@ -308,21 +320,23 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private getDeltasCore(
-        from: number | undefined,
+        from: number,
         to: number | undefined,
         allDeltas: ISequencedDocumentMessage[],
         deferred: Deferred<ISequencedDocumentMessage[]>,
         retry: number,
+        telemetryEvent: PerformanceEvent,
         ): void {
-        if (this.closed || from === undefined) {
+        if (this.closed) {
+            telemetryEvent.cancel({reason: "GetDeltasConnectionClosed"});
             return;
         }
 
         const maxFetchTo = from + MaxBatchDeltas;
+        const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
         // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
         const deltasP = this.deltaStorageP!.then((deltaStorage) => {
-            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
             return deltaStorage.get(from, fetchTo);
         });
 
@@ -337,6 +351,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
                 // we will look to try again
                 if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
+                    telemetryEvent.end({lastFetch, totalDeltas: allDeltas.length, retries: retry});
                     deferred.resolve(allDeltas);
                     return null;
                 } else {
@@ -345,8 +360,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     return { from: lastFetch, to, retry: deltas.length === 0 ? retry + 1 : 0 };
                 }
             },
-            () => {
+            (error) => {
                 // There was an error fetching the deltas. Up the retry counter
+                this.logger.logException({eventName: "GetDeltasError", fetchTo, from, retry: retry + 1}, error);
                 return { from, to, retry: retry + 1 };
             });
 
@@ -360,13 +376,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 const delay = Math.min(
                     MaxFetchDelay,
                     replay.retry !== 0 ? MissingFetchDelay * Math.pow(2, replay.retry) : 0);
+
+                telemetryEvent.reportProgress({
+                    delay,
+                    deltasRetrieved: allDeltas.length,
+                    replayFrom: replay.from,
+                    replayTo: replay.to,
+                    retry: replay.retry,
+                });
+
                 setTimeout(
-                    () => this.getDeltasCore(replay.from, replay.to, allDeltas, deferred, replay.retry),
+                    () => this.getDeltasCore(replay.from, replay.to, allDeltas, deferred, replay.retry, telemetryEvent),
                     delay);
-            },
-            (error) => {
-                // replayP is guaranteed to always resolve
-                assert(false, error as Error);
             });
     }
 
@@ -376,7 +397,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         DeltaConnection.Connect(
             this.service,
-            this.client).then(
+            this.client!).then(
             (connection) => {
                 this.connection = connection;
 
@@ -488,15 +509,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private enqueInitalOps(
-        messages: ISequencedDocumentMessage[] | undefined,
-        contents: IContentMessage[] | undefined): void {
+            messages: ISequencedDocumentMessage[] | undefined,
+            contents: IContentMessage[] | undefined): void {
         if (contents && contents.length > 0) {
             for (const content of contents) {
                 this.contentCache.set(content);
             }
         }
         if (messages && messages.length > 0) {
-            this.catchUp(messages);
+            this.catchUp("enqueInitalOps", messages);
         }
     }
 
@@ -619,37 +640,37 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      */
     private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
         if (this.lastQueuedSequenceNumber !== undefined && message.sequenceNumber <= this.lastQueuedSequenceNumber) {
-            debug(`Received duplicate message ${message.sequenceNumber}`);
+            this.logger.sendTelemetryEvent({
+                eventName: "DuplicateMessage",
+                lastQueued: this.lastQueuedSequenceNumber!,
+                sequenceNumber: message.sequenceNumber,
+            });
             return;
         }
 
-        // tslint:disable-next-line:max-line-length
-        debug(`Out of order message ${message.sequenceNumber} ${this.lastQueuedSequenceNumber}`);
         this.pending.push(message);
-        this.fetchMissingDeltas(this.lastQueuedSequenceNumber!, message.sequenceNumber);
+        if (this.lastQueuedSequenceNumber === undefined) {
+            return;
+        }
+        this.fetchMissingDeltas("HandleOutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 
     /**
      * Retrieves the missing deltas between the given sequence numbers
      */
-    private fetchMissingDeltas(from: number | undefined, to?: number) {
+    private fetchMissingDeltas(reason: string, from: number, to?: number) {
         // Exit out early if we're already fetching deltas
         if (this.fetching) {
+            this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasAlreadyFetching", from: from!, reason});
             return;
         }
 
         this.fetching = true;
 
-        this.getDeltas(from, to).then(
+        this.getDeltas(reason, from, to).then(
             (messages) => {
                 this.fetching = false;
-                this.catchUp(messages);
-            },
-            (error) => {
-                // Retry on failure
-                debug(error.toString());
-                this.fetching = false;
-                this.fetchMissingDeltas(from, to);
+                this.catchUp(reason, messages);
             });
     }
 
@@ -686,7 +707,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         clientSeqNumber: number,
         seqNumber: number): Promise<IContentMessage> {
         return new Promise<IContentMessage>((resolve, reject) => {
-            this.getDeltas(seqNumber, seqNumber).then(
+            this.getDeltas("fetchContent", seqNumber, seqNumber).then(
                 (messages) => {
                     assert.ok(messages.length > 0, "Content not found in DB");
                     const message = messages[0];
@@ -698,20 +719,18 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         clientSequenceNumber: message.clientSequenceNumber,
                         contents: message.contents,
                     });
-                },
-                (error) => {
-                    // Retry on failure
-                    debug(error.toString());
-                    this.fetchContent(clientId, clientSeqNumber, seqNumber)
-                        .catch((fetchError) => {
-                            // fetchContent guaranteed to always resolve
-                            assert(false, fetchError);
-                        });
                 });
         });
     }
 
-    private catchUp(messages: ISequencedDocumentMessage[]): void {
+    private catchUp(reason: string, messages: ISequencedDocumentMessage[]): void {
+        this.logger.sendPerformanceEvent({
+            eventName: "CatchUp",
+            messageCount: messages.length,
+            pendingCount: this.pending.length,
+            reason,
+        });
+
         // Apply current operations
         this.enqueueMessages(messages);
 

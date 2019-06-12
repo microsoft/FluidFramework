@@ -89,7 +89,7 @@ export class TestDeltaManager
         throw new Error("Method not implemented.");
     }
 
-    public getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+    public getDeltas(eventName: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
         throw new Error("Method not implemented.");
     }
 

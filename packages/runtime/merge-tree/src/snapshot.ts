@@ -141,7 +141,7 @@ export class Snapshot {
         // Issue #1995 tracks following up on the core of the problem.
         // In the meantime, this code makes sure we will write out all segments properly
         if (this.header.segmentsTotalLength != totalLength) {
-            this.logger.sendError({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
+            this.logger.sendErrorEvent({eventName: "SegmentsTotalLengthMismatch", totalLength, segmentsTotalLength: this.header.segmentsTotalLength});
             this.header.segmentsTotalLength = totalLength;
         }
 

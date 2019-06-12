@@ -70,7 +70,7 @@ export interface IDeltaManager<T, U> extends EventEmitter {
 
     connect(reason: string): Promise<IConnectionDetails>;
 
-    getDeltas(from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
+    getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]>;
 
     attachOpHandler(sequenceNumber: number | undefined | null, handler: IDeltaHandlerStrategy, resume: boolean);
 

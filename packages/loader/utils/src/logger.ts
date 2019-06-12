@@ -4,8 +4,12 @@ import {
     ITelemetryErrorEvent,
     ITelemetryInformationalEvent,
     ITelemetryLogger,
+    ITelemetryPerformanceEvent,
+    TelemetryPerfType,
 } from "@prague/container-definitions";
 import * as registerDebug from "debug";
+// tslint:disable-next-line:no-var-requires
+const performanceNow = require("performance-now") as (() => number);
 
 /**
  * Null logger
@@ -28,6 +32,34 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLogger {
+    public static readonly eventNamespaceSeparator = ":";
+
+    public static FormatTick(tick: number): string {
+        return tick.toFixed(0);
+    }
+
+    protected static prepareErrorObject(error: any): any {
+        if (typeof error !== "object") {
+            // tslint:disable-next-line:no-unsafe-any
+            return error;
+        }
+
+        // Exceptions have these properties:
+        // - JSON.stringify() produces empty object output ("{}")
+        // - toString() prints error message, but without useful stack
+        // - there are non-enumerable properties on exception object that we can tap on
+        //   (but no guarantee they will be there in future or different environments)
+        // Solution:
+        //   Copy all non-enumerable own properties (i.e. we are not walking prototype chain)
+        const errorAsObject: object = error as object;
+        const error2: object = {...errorAsObject};
+        Object.getOwnPropertyNames(errorAsObject).forEach((prop: string) => {
+            error2[prop] = errorAsObject[prop];
+        });
+
+        return error2;
+    }
+
     protected constructor(
         private readonly namespace?: string,
         private readonly properties?: object) {
@@ -54,18 +86,45 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public sendError(event: ITelemetryErrorEvent) {
+    public sendErrorEvent(event: ITelemetryErrorEvent) {
         this.send({ ...event, category: "error" });
     }
 
     /**
-     * Log an exception with the logger
+     * Send error telemetry event
+     * @param event - Event to send
+     */
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent): void {
+        const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
+
+        if (event.duration) {
+            perfEvent.duration = TelemetryLogger.FormatTick(event.duration);
+        }
+        const tick = event.tick ? event.tick : performanceNow();
+        perfEvent.tick = TelemetryLogger.FormatTick(tick);
+
+        this.send(perfEvent);
+    }
+
+    /**
+     * Log generic error with the logger
      *
      * @param eventName - the name of the event
-     * @param exception - the exception to include in the event, require to be JSON-able
+     * @param error - the error object to include in the event, require to be JSON-able
      */
-    public logException(eventName: string, exception: any) {
-        this.sendError({ eventName, exception: JSON.stringify(exception) });
+    public logGenericError(eventName: string, error: any) {
+        // tslint:disable-next-line:no-unsafe-any
+        this.sendErrorEvent({ eventName, error: TelemetryLogger.prepareErrorObject(error) });
+    }
+
+    /**
+     * Helper method to log exceptions
+     * @param event - the event to send
+     * @param exception - Exception object to add to an event
+     */
+    public logException(event: ITelemetryErrorEvent, exception: any): void {
+        // tslint:disable-next-line:no-unsafe-any
+        this.sendErrorEvent({ ...event, isException: true, error: TelemetryLogger.prepareErrorObject(exception) });
     }
 
     /**
@@ -86,14 +145,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public shipAssert(condition: boolean, message: string): void {
         if (!condition) {
-            this.sendError({ eventName: "Assert", message });
+            this.sendErrorEvent({ eventName: "Assert", message });
         }
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent = { ...this.properties, ...event };
         if (this.namespace !== undefined) {
-            newEvent.eventName = `${this.namespace}:${newEvent.eventName}`;
+            newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
 
         return newEvent;
@@ -242,7 +301,7 @@ export class DebugLogger extends TelemetryLogger {
         let logger = newEvent.category === "error" ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
-        const index = newEvent.eventName.lastIndexOf(":");
+        const index = newEvent.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
         const name = newEvent.eventName.substring(index + 1);
         if (index > 0) {
             logger = logger.extend(newEvent.eventName.substring(0, index));
@@ -250,9 +309,61 @@ export class DebugLogger extends TelemetryLogger {
 
         // Filter out event name and category from json payload
         const payload = JSON.stringify(newEvent, (k, v) => {
-            return (k !== "eventName" && k !== "category") ? v : undefined;
+            return (k !== "eventName") ? v : undefined;
         });
 
         logger(payload === "{}" ? name : `${name} ${payload}`);
+    }
+}
+
+/**
+ * Helper class to log performance events
+ */
+export class PerformanceEvent {
+    public static Start(logger: ITelemetryLogger, event: ITelemetryInformationalEvent) {
+        return new PerformanceEvent(logger, event);
+    }
+
+    private event?: ITelemetryInformationalEvent;
+    private readonly startTime = performanceNow();
+
+    protected constructor(
+            private readonly logger: ITelemetryLogger,
+            event: ITelemetryInformationalEvent) {
+        this.event = {...event, tick: this.startTime};
+        this.reportEvent("start");
+    }
+
+    public reportProgress(props?: object): void {
+        this.reportEvent("progress", props);
+    }
+
+    public end(props?: object): void {
+        this.reportEvent("end", props);
+        this.event = undefined;
+    }
+
+    public cancel(props?: object): void {
+        this.reportEvent("cancel", props);
+        this.event = undefined;
+    }
+
+    public reportEvent(perfType: TelemetryPerfType, props?: object): void {
+        if (!this.event) {
+            this.logger.sendErrorEvent({
+                eventName: "PerformanceEventAfterStop",
+                perfEventName: this.event!.eventName,
+                perfType,
+            });
+            return;
+        }
+
+        const tick = performanceNow();
+        const event: ITelemetryPerformanceEvent = {...this.event, ...props, perfType, tick};
+        if (perfType !== "start") {
+            event.duration = tick - this.startTime;
+        }
+
+        this.logger.sendPerformanceEvent(event);
     }
 }

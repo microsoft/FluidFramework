@@ -439,7 +439,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return segSpecs.map((spec) => {
             const seg = segToSpec(spec);
             if (seg.seq === undefined) {
-                this.logger.sendError({eventName: "SegmentHasUndefinedSeq"});
+                this.logger.sendErrorEvent({eventName: "SegmentHasUndefinedSeq"});
                 seg.seq = MergeTree.UniversalSequenceNumber;
             }
             return seg;

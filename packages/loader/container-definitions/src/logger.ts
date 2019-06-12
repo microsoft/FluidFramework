@@ -1,4 +1,7 @@
-export type telemetryEventCategory = "telemetryEvent" | "error";
+export type TelemetryEventCategory = "telemetryEvent" | "error" | "performance";
+export type TelemetryPerfType = "start" | "end" | "cancel" | "progress";
+export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
+
 /**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
@@ -6,9 +9,9 @@ export type telemetryEventCategory = "telemetryEvent" | "error";
  * @param eventName - name of the event.
  */
 export interface ITelemetryBaseEvent {
-    category: telemetryEventCategory;
+    category: TelemetryEventCategory;
     eventName: string;
-    [index: string]: string | number | boolean;
+    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
@@ -25,7 +28,7 @@ export interface ITelemetryBaseLogger {
  */
 export interface ITelemetryInformationalEvent {
     eventName: string;
-    [index: string]: string | number | boolean;
+    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
@@ -34,7 +37,19 @@ export interface ITelemetryInformationalEvent {
  */
 export interface ITelemetryErrorEvent {
     eventName: string;
-    [index: string]: string | number | boolean;
+    [index: string]: TelemetryEventPropertyType;
+}
+
+/**
+ * Performance telemetry event.
+ * Maps to category = "performance"
+ */
+export interface ITelemetryPerformanceEvent {
+    eventName: string;
+    duration?: number;            // Duration of event (optional)
+    tick?: number;                // Event time, relative to start of page load. Filled in by logger if not specified.
+    perfType?: TelemetryPerfType;
+    [index: string]: TelemetryEventPropertyType;
 }
 
 /**
@@ -60,14 +75,27 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * Send error telemetry event
      * @param event - Event to send
      */
-    sendError(event: ITelemetryErrorEvent): void;
+    sendErrorEvent(event: ITelemetryErrorEvent): void;
+
+    /**
+     * Send error telemetry event
+     * @param event - Event to send
+     */
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent): void;
+
+    /**
+     * Helper method to log generic errors
+     * @param eventName - Name of the event
+     * @param error - the error object to include in the event, require to be JSON-able
+     */
+    logGenericError(eventName: string, error: any): void;
 
     /**
      * Helper method to log exceptions
-     * @param eventName - Name of the event
-     * @param exception - Exception to log
+     * @param event - the event to send
+     * @param exception - Exception object to add to an event
      */
-    logException(eventName: string, exception: any): void;
+    logException(event: ITelemetryErrorEvent, exception: any): void;
 
     /**
      * Report ignorable errors in code logic or data integrity.

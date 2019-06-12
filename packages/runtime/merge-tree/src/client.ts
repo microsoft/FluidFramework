@@ -426,7 +426,7 @@ export class Client {
         if (start === undefined
             || start < 0
             || start > length) {
-            this.logger.sendError({
+            this.logger.sendErrorEvent({
                 currentSeq: this.getCurrentSeq(),
                 eventName: "InvalidOpRange",
                 invalidPosition: "start",
@@ -453,7 +453,7 @@ export class Client {
         //
         if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
             if (end === undefined || end < start) {
-                this.logger.sendError({
+                this.logger.sendErrorEvent({
                     currentSeq: this.getCurrentSeq(),
                     end,
                     eventName: "InvalidOpRange",

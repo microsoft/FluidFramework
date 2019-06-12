@@ -3,6 +3,7 @@ import {
     FileMode,
     IChaincodeFactory,
     IChunkedOp,
+    IClient,
     IClientJoin,
     ICodeLoader,
     ICommittedProposal,
@@ -42,6 +43,7 @@ import {
     ChildLogger,
     DebugLogger,
     flatten,
+    PerformanceEvent,
     readAndParse,
 } from "@prague/utils";
 import * as assert from "assert";
@@ -53,8 +55,6 @@ import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullRuntime";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { Quorum } from "./quorum";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now") as () => number;
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails | null>;
@@ -184,15 +184,16 @@ export class Container extends EventEmitter implements IContainer {
 
         // create logger for components to use
         this.subLogger = DebugLogger.MixinDebugLogger(
-            "Prague",
+            "prague:telemetry",
             {documentId: this.id},
             logger);
+
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.Create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
             // tslint:disable-next-line:no-unsafe-any
-            this.logger.sendError({eventName: "onError", error});
+            this.logger.logGenericError("onError", error);
         });
     }
 
@@ -314,7 +315,7 @@ export class Container extends EventEmitter implements IContainer {
             await this.snapshotCore(tagMessage);
 
         } catch (ex) {
-            this.logger.logException("SnapshotExceptionError", ex);
+            this.logger.logException({eventName: "SnapshotExceptionError"}, ex);
             throw ex;
 
         } finally {
@@ -417,7 +418,10 @@ export class Container extends EventEmitter implements IContainer {
             sequenceNumber = attributes.sequenceNumber;
         }
 
-        const deltas = await this._deltaManager!.getDeltas(sequenceNumber!, snapshotSequenceNumber! + 1);
+        // Retrieve all deltas from sequenceNumber to snapshotSequenceNumber. Range is exclusive so we increment
+        // the snapshotSequenceNumber by 1 to include it.
+        // TODO We likely then want to filter the operation list to each component to use in its snapshot
+        const deltas = await this._deltaManager!.getDeltas("Snapshot", sequenceNumber!, snapshotSequenceNumber! + 1);
 
         const parents = lastVersion.length > 0 ? [lastVersion[0].id] : [];
         root.entries.push({
@@ -509,6 +513,8 @@ export class Container extends EventEmitter implements IContainer {
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
+        const perfEvent = PerformanceEvent.Start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
+
         const storageP = this.service.connectToStorage()
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
 
@@ -583,6 +589,8 @@ export class Container extends EventEmitter implements IContainer {
                 this.blobManager = blobManager;
                 this.pkg = chaincode.pkg;
 
+                perfEvent.reportProgress({stage: "BeforeContextLoad"});
+
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
                 if (version) {
@@ -592,6 +600,8 @@ export class Container extends EventEmitter implements IContainer {
                     const details = await connectResult.detailsP;
                     this._existing = details!.existing;
                     this._parentBranch = details!.parentBranch;
+
+                    perfEvent.reportProgress({stage: "AfterSocketConnect"});
                 }
 
                 this.context = await ContainerContext.Load(
@@ -616,20 +626,17 @@ export class Container extends EventEmitter implements IContainer {
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
                     if (!pause) {
-                        this.logger.sendTelemetryEvent({eventName: "ConnectedResume"});
+                        perfEvent.reportProgress({ stage: "resuming" });
                         this._deltaManager!.inbound.resume();
                         this._deltaManager!.outbound.resume();
                         this._deltaManager!.inboundSignal.resume();
-                    } else {
-                        this.logger.sendTelemetryEvent({eventName: "ConnectedWaiting"});
                     }
                 }
 
                 // Internal context is fully loaded at this point
                 this.loaded = true;
 
-                /* tslint:disable:no-unsafe-any */
-                debug(`Document loaded ${this.id}}: ${now()}`);
+                perfEvent.end({ stage: "Loaded" });
             });
     }
 
@@ -676,7 +683,7 @@ export class Container extends EventEmitter implements IContainer {
                     // Stop processing inbound messages/signals as we transition to the new code
                     this.deltaManager!.inbound.systemPause();
                     this.deltaManager!.inboundSignal.systemPause();
-                    this.transitionRuntime(value).then(
+                    this.transitionRuntime(value as string).then(
                         () => {
                             // Resume once transition is complete
                             this.deltaManager!.inbound.systemResume();
@@ -753,8 +760,8 @@ export class Container extends EventEmitter implements IContainer {
         this.emit("contextChanged", this.pkg);
     }
 
-    private async loadCodeFromQuorum(quorum: Quorum): Promise<{ pkg: string, chaincode: IChaincodeFactory }> {
-        const pkg = quorum.has("code2") ? quorum.get("code2") : null;
+    private async loadCodeFromQuorum(quorum: Quorum): Promise<{ pkg: string | null, chaincode: IChaincodeFactory }> {
+        const pkg = quorum.has("code2") ? (quorum.get("code2") as string) : null;
         const chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
@@ -763,16 +770,19 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: string): Promise<IChaincodeFactory> {
+    private async loadCode(pkg: string | null): Promise<IChaincodeFactory> {
         return pkg ? this.codeLoader.load(pkg) : new NullChaincode();
     }
 
     private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): IConnectResult {
         // Create the DeltaManager and begin listening for connection events
-        const clientDetails = this.options ? this.options.client : null;
+        // tslint:disable-next-line:no-unsafe-any
+        const clientDetails = this.options ? (this.options.client as IClient) : null;
         this._deltaManager = new DeltaManager(
             this.service,
-            clientDetails);
+            clientDetails,
+            ChildLogger.Create(this.logger, "DeltaManager"),
+        );
 
         if (connect) {
             // Open a connection - the DeltaManager will automatically reconnect
@@ -858,8 +868,13 @@ export class Container extends EventEmitter implements IContainer {
             return;
         }
 
-        this.logger.sendTelemetryEvent({eventName: "ConnectionStateChange",
-            from: ConnectionState[this.connectionState], reason, to: ConnectionState[value]});
+        this.logger.sendPerformanceEvent({
+            eventName: "ConnectionStateChange",
+            from: ConnectionState[this.connectionState],
+            reason,
+            to: ConnectionState[value],
+        });
+
         this._connectionState = value;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
@@ -924,7 +939,7 @@ export class Container extends EventEmitter implements IContainer {
         const contentLength = content.length;
         const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
         let offset = 0;
-        let clientSequenceNumber;
+        let clientSequenceNumber: number = 0;
         for (let i = 1; i <= chunkN; i = i + 1) {
             const chunkedOp: IChunkedOp = {
                 chunkId: i,
@@ -1061,7 +1076,7 @@ export class Container extends EventEmitter implements IContainer {
 
             case MessageType.BlobUploaded:
                 // tslint:disable-next-line:no-floating-promises
-                this.blobManager!.addBlob(message.contents);
+                this.blobManager!.addBlob(message.contents as IGenericBlob);
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
