@@ -11,7 +11,7 @@ describe("snapshot", () => {
         const client1 = new TestClient("");
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; i++) {
-            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`,  { segment: i });
+            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             client1.applyMsg(client1.makeOpMessage(op, i + 1));
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk);
@@ -28,14 +28,16 @@ describe("snapshot", () => {
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
-    });
+    })
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    .timeout(5000);
 
     it("header and body", async () => {
 
         const client1 = new TestClient("");
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk + 100; i++) {
-            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`,  { segment: i });
+            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             client1.applyMsg(client1.makeOpMessage(op, i + 1));
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 100);
@@ -61,7 +63,7 @@ describe("snapshot", () => {
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
-    });
-})
-// seeing timeouts in automation
-.timeout(5000);
+    })
+    // tslint:disable-next-line: mocha-no-side-effect-code
+    .timeout(5000);
+});

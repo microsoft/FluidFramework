@@ -1709,7 +1709,7 @@ if (testTST) {
 }
 
 const baseDir = "../../../../server/gateway/public/literature";
-const testTimeout = 30000;
+const testTimeout = 60000;
 
 describe("Routerlicious", () => {
     describe("merge-tree", () => {
