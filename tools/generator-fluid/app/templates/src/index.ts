@@ -45,19 +45,19 @@ export class Clicker extends Document {
     titleInput.id = "titleInput";
     titleInput.type = "text";
     titleInput.oninput = ( e) => { this.root.set("title", (e.target as any).value) };
-    host.appendChild(titleInput)
+    host.appendChild(titleInput);
     */
 
     const counterSpan = document.createElement("span");
     counterSpan.id = "counterSpan";
-    host.appendChild(counterSpan)
-    
+    host.appendChild(counterSpan);
+
     const counterButton = document.createElement("button");
     counterButton.id = "counterButton";
     counterButton.textContent = "+";
     counterButton.onclick = () => counter.increment(1);
-    host.appendChild(counterButton)
-    
+    host.appendChild(counterButton);
+
     this.render();
   }
 
