@@ -87,8 +87,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                debug(`Socket connection timeout`);
-                reject();
+                reject("Socket connection timed out");
             });
 
             socket.on("connect_document_success", (response: messages.IConnected) => {
@@ -137,8 +136,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             socket.on("connect_document_error", ((error) => {
-                debug(`Error connecting to the document after connecting to the socket. Error:[${error}]`);
 
+                socket.emit("error", error);
                 socket.disconnect();
 
                 reject(error);
@@ -153,7 +152,6 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return deltaConnection;
     }
 
-    private readonly emitter = new EventEmitter();
     private readonly submitManager: BatchManager<IDocumentMessage>;
 
     /**
@@ -236,11 +234,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     submitType,
                     this.details.clientId,
                     work,
-                    (error) => {
-                        if (error) {
-                            debug("Emit error", error);
-                        }
-                    });
+                    (error) => this.emit("error", error),
+                );
             });
     }
 
@@ -255,11 +250,11 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         this.socket.on(
             event,
             (...args: any[]) => {
-                this.emitter.emit(event, ...args);
+                this.emit(event, ...args);
             });
 
         // And then add the listener to our event emitter
-        this.emitter.on(event, listener);
+        super.on(event, listener);
 
         return this;
     }

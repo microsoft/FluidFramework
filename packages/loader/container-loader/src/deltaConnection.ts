@@ -79,6 +79,10 @@ export class DeltaConnection extends EventEmitter {
         connection.on("pong", (latency: number) => {
             this.emit("pong", latency);
         });
+
+        connection.on("error", (error) => {
+            this.emit("error", error);
+        });
     }
 
     /**

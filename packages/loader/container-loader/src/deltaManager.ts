@@ -467,6 +467,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.emit("pong", latency);
                 });
 
+                connection.on("error", (error) => {
+                    this.emit("error", error);
+                });
+
                 this.processInitialMessages(
                     connection.details.initialMessages,
                     connection.details.initialContents,
@@ -481,6 +485,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // tslint:disable-next-line:no-parameter-reassignment
                 reason = `Connection failed - trying again in ${delay}ms`;
                 debug(reason, error);
+                this.logger.logException({eventName: "DeltaConnectionFailure", delay}, error);
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
     }

@@ -11,7 +11,6 @@ import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as ws from "isomorphic-ws";
 import * as url from "url";
-import { debug } from "./debug";
 
 const protocolVersion = "^0.1.0";
 
@@ -105,7 +104,14 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
                 token,
                 versions: [protocolVersion],
             };
-            this.socket.send(JSON.stringify(["connect", connectMessage]));
+            this.socket.send(
+                JSON.stringify(["connect", connectMessage]),
+                (error) => {
+                    if (error) {
+                        this.emit("error", error);
+                    }
+                },
+            );
         };
 
         this.socket.onmessage = (ev) => {
@@ -118,7 +124,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
         this.socket.onerror = (error) => {
             // TODO need to understand if an error will always result in a close
-            debug(error);
+            this.emit("error", error);
 
             if (this.socket.readyState === ws.CONNECTING || this.socket.readyState === ws.OPEN) {
                 this.socket.close(-1, error.toString());
@@ -130,7 +136,14 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         });
 
         this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
-            this.socket.send(JSON.stringify([submitType, this.details!.clientId, work]));
+            this.socket.send(
+                JSON.stringify([submitType, this.details!.clientId, work]),
+                (error) => {
+                    if (error) {
+                        this.emit("error", error);
+                    }
+                },
+            );
         });
     }
 
@@ -153,7 +166,8 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return new Promise<void>((resolve, reject) => {
             this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, message]), (error) => {
                 if (error) {
-                    reject();
+                    this.emit("error", error);
+                    reject(error);
                 } else {
                     resolve();
                 }
