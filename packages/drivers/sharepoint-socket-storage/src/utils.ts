@@ -108,7 +108,11 @@ export function getWithRetryForTokenRefresh<T>(get: (refresh: boolean) => Promis
             return get(true);
         }
 
-        console.error(e);
-        return (undefined as any) as T;
+        // All code paths (deltas, blobs, trees) already throw exceptions.
+        // Throwing is better than returning null as most code paths do not return nullable-objects,
+        // and error reporting is better (for example, getDeltas() will log error to telemetry)
+        // getTree() path is the only potential exception where returning null might result in
+        // document being opened, though there maybe really bad user experience (consuming thousands of ops)
+        throw e;
     });
 }

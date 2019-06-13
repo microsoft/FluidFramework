@@ -38,7 +38,14 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
             if (this.ops !== undefined && this.ops !== null && from) {
                 const returnOps = this.ops;
                 this.ops = undefined;
-                return returnOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+
+                // If cache is empty, it's much better to allow actual request to go through.
+                // This request is asynchronous from POV of Container load sequence (when we start with snapshot)
+                // But if we have a gap, we figure it out later in time (when websocket connects and we receive initial ops / first op),
+                // and we will have to wait for actual data to come in - it's better to make this call earlier in time!
+                if (returnOps.length > 0) {
+                    return returnOps.filter((op) => op.sequenceNumber > from).map((op) => op.op);
+                }
             }
         }
 
