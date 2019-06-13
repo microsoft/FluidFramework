@@ -115,6 +115,10 @@
       "projectFolder": "packages/drivers/odsp-socket-storage/"
     },
     {
+      "packageName": "@prague/sharepoint-socket-storage",
+      "projectFolder": "packages/drivers/sharepoint-socket-storage/"
+    },
+    {
       "packageName": "@prague/replay-socket-storage",
       "projectFolder": "packages/drivers/replay-socket-storage/"
     },
@@ -197,6 +201,10 @@
     {
       "packageName": "@prague/runtime-definitions",
       "projectFolder": "packages/runtime/runtime-definitions/"
+    },
+    {
+      "packageName": "@prague/runtime-test-utils",
+      "projectFolder": "packages/runtime/runtime-test-utils/"
     },
     {
       "packageName": "@prague/sequence",
