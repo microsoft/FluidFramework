@@ -233,12 +233,6 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
                 clearP.push(this.writeCore(id, null));
             }
             await Promise.all(clearP);
-
-            // All registers should be null now.
-            for (const id of taskIds) {
-                assert.equal(this.getTaskClientId(id), null, `${id} was not cleared`);
-                debug(`Cleared ${id}`);
-            }
         }
     }
 
