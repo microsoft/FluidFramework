@@ -4,13 +4,58 @@ import { RestWrapper } from "@prague/services-client";
 import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { TokenProvider } from "./token";
 
+/**
+ * Interface for creating/getting/writing blobs to the underlying storage.
+ */
 export interface IDocumentStorageManager {
+    /**
+     * Create blob response containing url from a buffer.
+     * @param file - Buffer to create a blob response from.
+     * @returns A blob response.
+     */
     createBlob(file: Buffer): Promise<api.ICreateBlobResponse>;
+
+    /**
+     * Get the blob for a particular blobid from storage.
+     * @param blobid - Id for the blob.
+     * @returns A blob.
+     */
     getBlob(blobid: string): Promise<resources.IBlob>;
+
+    /**
+     * Get the content for a particular version id.
+     * @param version - Version for which to get the content.
+     * @param path - Path of the blob
+     * @returns Blobs for the given version id.
+     */
     getContent(version: api.IVersion, path: string): Promise<resources.IBlob>;
+
+    /**
+     * Get the url for the given blobid.
+     * @param blobid - Id of the blob.
+     */
     getRawUrl(blobid: string): string;
+
+    /**
+     * Get the snapshot tree for a given version id.
+     * @param version - Id of the snapshot to be read.
+     * @returns ITree for the snapshot.
+     */
     getTree(version?: api.IVersion): Promise<resources.ITree | null>;
+
+    /**
+     * Gets a list of versions for the given blobid.
+     * @param blobid - Id of the blob.
+     * @param count - Number of versions requested.
+     */
     getVersions(blobid: string, count: number): Promise<api.IVersion[]>;
+
+    /**
+     * Writes the snapshot to the underlying storage.
+     * @param tree - Snapshot to write to storage.
+     * @param parents - Parents of the given snapshot.
+     * @param message - Message to be saved with the snapshot.
+     */
     write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion>;
 }
 

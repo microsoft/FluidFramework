@@ -4,6 +4,9 @@ export interface IGetter {
   get<T>(url: string, id: string, headers: HeadersInit): Promise<T>;
 }
 
+/**
+ * Get responses with retry for requests.
+ */
 export class HttpGetter implements IGetter {
   public get<T>(url: string, _: string, headers: HeadersInit): Promise<T> {
     return fetchWithRetry(

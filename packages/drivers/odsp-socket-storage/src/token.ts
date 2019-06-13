@@ -1,5 +1,8 @@
 import { ITokenProvider } from "@prague/container-definitions";
 
+/**
+ * Provides basic token related apis.
+ */
 export class TokenProvider implements ITokenProvider {
 
     /**

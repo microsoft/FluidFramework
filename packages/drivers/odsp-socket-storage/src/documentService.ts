@@ -7,6 +7,10 @@ import { NoopDocumentStorageManager } from "./noopDocumentStorageManager";
 import { StandardDocumentStorageManager } from "./standardDocumentStorageManager";
 import { TokenProvider } from "./token";
 
+/**
+ * The DocumentService manages the Socket.IO connection and manages routing requests to connected
+ * clients
+ */
 export class DocumentService implements api.IDocumentService {
     constructor(
         private readonly snapshotUrl: string,
@@ -19,6 +23,11 @@ export class DocumentService implements api.IDocumentService {
         ) {
     }
 
+    /**
+     * Connects to a storage endpoint for snapshot service.
+     *
+     * @returns returns the document storage service for legacy odsp driver.
+     */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         const documentManager = this.bypassSnapshot ?
             new NoopDocumentStorageManager() :
@@ -26,11 +35,21 @@ export class DocumentService implements api.IDocumentService {
         return new DocumentStorageService(documentManager);
     }
 
+    /**
+     * Connects to a delta storage endpoint for getting ops between a range.
+     *
+     * @returns returns the document delta storage service for legacy odsp driver.
+     */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId, this.tokenProvider, deltaStorage);
     }
 
+    /**
+     * Connects to a delta stream endpoint for emitting ops.
+     *
+     * @returns returns the document delta stream service for legacy odsp driver.
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         return DocumentDeltaConnection.Create(this.tenantId, this.documentId, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
     }

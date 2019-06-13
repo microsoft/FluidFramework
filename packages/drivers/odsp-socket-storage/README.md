@@ -1,11 +1,4 @@
-# `@prague/odsp-socket-storage`
+## Odsp-Socket-Storage
 
-> TODO: description
-
-## Usage
-
-```
-const standardSocketStorage = require('@prague/odsp-socket-storage');
-
-// TODO: DEMONSTRATE API
-```
+This is an implementation of a driver which provides a DocumentService which uses sharepoint to interact with different endpoints 
+like Document Storage, Delta Storage and Delta stream. It also provides implementation of Document Storage, Delta Storage and Delta stream.

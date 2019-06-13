@@ -4,7 +4,7 @@ import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
 import { HttpGetter, IGetter } from "./Getter";
 import { SharepointDocumentService } from "./SharepointDocumentService";
 
-export interface ISnapshot {
+export interface ISharepointSnapshot {
     id: string;
     sha: string;
     trees: resources.ITree[];
@@ -12,21 +12,25 @@ export interface ISnapshot {
     ops: ISequencedDeltaOpMessage[];
 }
 
+/**
+ * Factory for creating the sharepoint document service. Use this if you want to
+ * use the sharepoint implementation.
+ */
 export class SharepointDocumentServiceFactory implements IDocumentServiceFactory {
     private readonly storageGetter: IGetter;
     private readonly deltasGetter: IGetter;
 
     /**
-     * @param appId app id used for telemetry for network requests
-     * @param snapshot snapshot
-     * @param socketStorageDiscovery the initial JoinSession response
-     * @param joinSession function to invoke to re-run JoinSession
-     * @param storageGetter if not provided httpgetter will be used
-     * @param deltasGetter if not provided httpgetter will be used
+     * @param appId - app id used for telemetry for network requests
+     * @param snapshot - snapshot
+     * @param socketStorageDiscovery - the initial JoinSession response
+     * @param joinSession - function to invoke to re-run JoinSession
+     * @param storageGetter - if not provided httpgetter will be used
+     * @param deltasGetter - if not provided httpgetter will be used
      */
     constructor(
         private readonly appId: string,
-        private readonly snapshot: Promise<ISnapshot | undefined>,
+        private readonly snapshot: Promise<ISharepointSnapshot | undefined>,
         private readonly socketStorageDiscoveryP: Promise<ISocketStorageDiscovery>,
         private readonly joinSession: () => Promise<ISocketStorageDiscovery>,
         storageGetter?: IGetter,

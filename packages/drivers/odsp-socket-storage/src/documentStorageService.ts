@@ -3,6 +3,7 @@ import { buildHierarchy } from "@prague/utils";
 import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
 /**
+ * Document access to underlying storage for legacy odsp driver..
  * The current implementation of this aligns with SPO's implementation of SnapShot
  */
 export class DocumentStorageService implements api.IDocumentStorageService {

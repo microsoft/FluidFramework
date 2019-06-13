@@ -1,3 +1,6 @@
+/**
+ * Provides exponential backup functionality.
+ */
 export function exponentialBackoff(backoffTimeMs: number): BackoffFunction {
     return (n: number) => Math.pow(2, n) * backoffTimeMs;
 }

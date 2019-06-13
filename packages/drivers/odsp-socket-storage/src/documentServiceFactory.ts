@@ -3,6 +3,10 @@ import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./token";
 
+/**
+ * Factory for creating the legacy odsp document service. Use this if you want to
+ * use the legacy odsp implementation.
+ */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(private readonly bypassSnapshot = false) { }
 

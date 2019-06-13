@@ -5,11 +5,15 @@ import { DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentService } from "./documentService";
 import { IGetter } from "./Getter";
 import { SharepointDeltaStorageService } from "./SharepointDeltaStorageService";
-import { ISnapshot } from "./SharepointDocumentServiceFactory";
+import { ISharepointSnapshot } from "./SharepointDocumentServiceFactory";
 import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageManager";
 import { SharepointDocumentStorageService } from "./SharepointDocumentStorageService";
 import { TokenProvider } from "./token";
 
+/**
+ * The DocumentService manages the Socket.IO connection and manages routing requests to connected
+ * clients
+ */
 export class SharepointDocumentService implements api.IDocumentService {
     private attemptedDeltaStreamConnection: boolean;
     private readonly joinSessionP: SinglePromise<ISocketStorageDiscovery>;
@@ -17,7 +21,7 @@ export class SharepointDocumentService implements api.IDocumentService {
 
     constructor(
         private readonly appId: string,
-        private readonly snapshot: Promise<ISnapshot | undefined>,
+        private readonly snapshot: Promise<ISharepointSnapshot | undefined>,
         private readonly storageGetter: IGetter,
         private readonly deltasGetter: IGetter,
         private socketStorageDiscovery: ISocketStorageDiscovery,
@@ -28,6 +32,11 @@ export class SharepointDocumentService implements api.IDocumentService {
         this.tokenProvider = new TokenProvider(socketStorageDiscovery.storageToken, socketStorageDiscovery.socketToken);
     }
 
+    /**
+     * Connects to a storage endpoint for snapshot service.
+     *
+     * @returns returns the document storage service for sharepoint driver.
+     */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         let blobs: resources.IBlob[] | undefined;
         let trees: resources.ITree[] | undefined;
@@ -59,6 +68,11 @@ export class SharepointDocumentService implements api.IDocumentService {
         );
     }
 
+    /**
+     * Connects to a delta storage endpoint for getting ops between a range.
+     *
+     * @returns returns the document delta storage service for sharepoint driver.
+     */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         const snapshot = await this.snapshot;
         const ops = snapshot ? snapshot.ops || [] : undefined;
@@ -87,6 +101,11 @@ export class SharepointDocumentService implements api.IDocumentService {
         );
     }
 
+    /**
+     * Connects to a delta stream endpoint for emitting ops.
+     *
+     * @returns returns the document delta stream service for sharepoint driver.
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         // TODO: we should add protection to ensure we are only ever processing one connectToDeltaStream
 

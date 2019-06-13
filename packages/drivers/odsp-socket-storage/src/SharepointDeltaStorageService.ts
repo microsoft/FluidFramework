@@ -10,6 +10,9 @@ interface IDeltasResponse {
     value: api.ISequencedDocumentMessage[];
 }
 
+/**
+ * Provides access to the underlying delta storage on the server for sharepoint driver.
+ */
 export class SharepointDeltaStorageService implements api.IDeltaStorageService {
     private firstGetRequest = true;
     private readonly standardDeltaStorage: api.IDeltaStorageService;

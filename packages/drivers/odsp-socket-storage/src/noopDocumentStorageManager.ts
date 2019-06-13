@@ -2,6 +2,9 @@ import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { IDocumentStorageManager } from "./standardDocumentStorageManager";
 
+/**
+ * Dummy implementation for a storage manager.
+ */
 export class NoopDocumentStorageManager implements IDocumentStorageManager {
     private static readonly notSupportedMessage = "Method not supported.";
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {

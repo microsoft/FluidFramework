@@ -15,6 +15,10 @@ export interface ISocketStorageDiscovery {
     socketToken: string;
 }
 
+/**
+ * Interface for delta storage response.
+ * Contains either SequencedDocumentMessages or SequencedDeltaOpMessage.
+ */
 export interface IDeltaStorageGetResponse {
     value: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[];
 }

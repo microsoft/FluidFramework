@@ -2,6 +2,9 @@ import * as api from "@prague/container-definitions";
 import { buildHierarchy } from "@prague/utils";
 import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageManager";
 
+/**
+ * Document access to underlying storage for sharepoint driver.
+ */
 export class SharepointDocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: SharepointDocumentStorageManager) { }
     public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
