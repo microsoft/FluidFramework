@@ -1,5 +1,5 @@
 import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection, ConsensusRegisterCollectionExtension } from "@prague/consensus-register-collection";
+import { ConsensusRegisterCollection, ConsensusRegisterCollectionExtension, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
 import { ISharedMap, MapExtension } from "@prague/map";
 import {
@@ -30,7 +30,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 
     private root: ISharedMap;
-    private scheduler: ConsensusRegisterCollection;
+    private scheduler: IConsensusRegisterCollection;
 
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _leader = false;
@@ -299,7 +299,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
-        this.scheduler.on("valueChanged", async (changed: IChanged) => {
+        this.scheduler.on("atomicChanged", async (changed: IChanged) => {
             const currentClient = this.getTaskClientId(changed.key);
             // Either a client registered for a new task or released a running task.
             if (currentClient === null) {

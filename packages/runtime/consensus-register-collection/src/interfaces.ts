@@ -59,6 +59,19 @@ export interface IConsensusRegisterCollection extends ISharedObject {
      * Returns the keys.
      */
     keys(): string[];
+
+    /**
+     * Event listeners
+     */
+    on(event: "atomicChanged" | "versionChanged", listener: (...args: any[]) => void): this;
+}
+
+export interface ILocalData {
+    // Atomic version.
+    atomic: ILocalRegister;
+
+    // All versions.
+    versions: ILocalRegister[];
 }
 
 export interface ILocalRegister {

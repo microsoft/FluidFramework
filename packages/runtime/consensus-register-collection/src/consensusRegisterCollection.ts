@@ -11,6 +11,7 @@ import * as assert from "assert";
 import { debug } from "./debug";
 import {
     IConsensusRegisterCollection,
+    ILocalData,
     ILocalRegister,
     IRegisterValue,
     ReadPolicy,
@@ -46,7 +47,7 @@ const snapshotFileName = "header";
  * Implementation of a consensus rgister collection
  */
 export class ConsensusRegisterCollection extends SharedObject implements IConsensusRegisterCollection {
-    private readonly data = new Map<string, ILocalRegister[]>();
+    private readonly data = new Map<string, ILocalData>();
     private readonly promiseResolveQueue = new Array<IPendingRecord>();
 
     /**
@@ -106,28 +107,28 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      * to read the most recent linearizable value for that register.
      */
     public read(key: string, policy?: ReadPolicy): any | undefined {
-        const data = this.readVersions(key);
+        // Default policy is atomic.
+        const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
 
-        if (data) {
+        if (readPolicy === ReadPolicy.Atomic) {
+            return this.readAtomic(key);
+        }
+
+        const versions = this.readVersions(key);
+
+        if (versions) {
             // We don't support deletion. So there should be at least one value.
-            assert(data.length > 0, "Value should be undefined or non empty");
-
-            // Default policy is atomic.
-            const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
+            assert(versions.length > 0, "Value should be undefined or non empty");
 
             /* tslint:disable:no-unsafe-any */
-            if (readPolicy === ReadPolicy.Atomic) {
-                return data[0];
-            } else {
-                return data[data.length - 1];
-            }
+            return versions[versions.length - 1];
         }
     }
 
     public readVersions(key: string): any[] | undefined {
         const data = this.data.get(key);
         if (data) {
-            return data.map((element: ILocalRegister) => element.value.value);
+            return data.versions.map((element: ILocalRegister) => element.value.value);
         }
     }
 
@@ -136,25 +137,17 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
     }
 
     public snapshot(): ITree {
-        const serialized: any = {};
+        const serialized: { [key: string]: ILocalData } = {};
         this.data.forEach((items, key) => {
-            const serializedValues = [];
-            for (const element of items) {
-                let innerValue: any;
-                if (element.value.type === RegisterValueType[RegisterValueType.Shared]) {
-                    innerValue = (element.value.value as ISharedObject).id;
-                } else {
-                    innerValue = element.value.value;
-                }
-                serializedValues.push({
-                    sequenceNumber: element.sequenceNumber,
-                    value: {
-                        type: element.value.type,
-                        value: innerValue,
-                    },
-                });
+            const serializedAtomic = this.snapshotItem(items.atomic);
+            const serializedVersions: ILocalRegister[] = [];
+            for (const element of items.versions) {
+                serializedVersions.push(this.snapshotItem(element));
             }
-            serialized[key] = serializedValues;
+            serialized[key] = {
+                atomic: serializedAtomic,
+                versions: serializedVersions,
+            };
         });
         // And then construct the tree for it
         const tree: ITree = {
@@ -181,33 +174,20 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        const data: { [key: string]: ILocalRegister[] } = header ? JSON.parse(Buffer.from(header, "base64")
+        const data: { [key: string]: ILocalData } = header ? JSON.parse(Buffer.from(header, "base64")
         .toString("utf-8")) : {};
 
         for (const key of Object.keys(data)) {
             const serializedValues = data[key];
-            const loadedValues: ILocalRegister[] = [];
-            for (const element of serializedValues) {
-                switch (element.value.type) {
-                    case RegisterValueType[RegisterValueType.Plain]:
-                        loadedValues.push(element);
-                        break;
-                    case RegisterValueType[RegisterValueType.Shared]:
-                        const channel = await this.runtime.getChannel(element.value.value as string);
-                        const fullValue: ILocalRegister = {
-                            sequenceNumber: element.sequenceNumber,
-                            value: {
-                                type: element.value.type,
-                                value: channel,
-                            },
-                        };
-                        loadedValues.push(fullValue);
-                        break;
-                    default:
-                        assert(false, "Invalid value type");
-                }
+            const loadedVersions: ILocalRegister[] = [];
+            const loadedAtomic = await this.loadItem(serializedValues.atomic);
+            for (const element of serializedValues.versions) {
+                loadedVersions.push(await this.loadItem(element));
             }
-            this.data.set(key, loadedValues);
+            this.data.set(key, {
+                atomic: loadedAtomic,
+                versions: loadedVersions,
+            });
         }
     }
 
@@ -261,30 +241,51 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         }
     }
 
+    private readAtomic(key: string): any | undefined {
+        const data = this.data.get(key);
+        if (data) {
+            return data.atomic.value.value;
+        }
+    }
+
     private processInboundWrite(message: ISequencedDocumentMessage, op: IRegisterOperation, local: boolean) {
         if (!this.data.has(op.key)) {
-            this.data.set(op.key, []);
+            this.data.set(op.key, {
+                atomic: undefined,
+                versions: [],
+            });
         }
         const data = this.data.get(op.key);
-        const refSeq = message.referenceSequenceNumber;
 
-        // Keep removing elements where incoming refseq is greater than or equals to current.
-        while (data.length > 0 && refSeq >= data[0].sequenceNumber) {
-            data.shift();
+        const refSeq = message.referenceSequenceNumber;
+        // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
+        if (!data.atomic || refSeq >= data.atomic.sequenceNumber) {
+            const atomicUpdate: ILocalRegister = {
+                sequenceNumber: message.sequenceNumber,
+                value: op.value,
+            };
+            data.atomic = atomicUpdate;
+            this.emit("atomicChanged", { key: op.key }, local, message);
         }
 
-        const value: ILocalRegister = {
+        // Keep removing versions where incoming refseq is greater than or equals to current.
+        while (data.versions.length > 0 && refSeq >= data.versions[0].sequenceNumber) {
+            data.versions.shift();
+        }
+
+        const versionUpdate: ILocalRegister = {
             sequenceNumber: message.sequenceNumber,
             value: op.value,
         };
 
         assert(
-            data.length === 0 || value.sequenceNumber > data[data.length - 1].sequenceNumber,
+            data.versions.length === 0 ||
+            versionUpdate.sequenceNumber > data.versions[data.versions.length - 1].sequenceNumber,
             "Invalid incoming sequence number");
 
         // Push the new element.
-        data.push(value);
-        this.emit("valueChanged", { key: op.key }, local, message);
+        data.versions.push(versionUpdate);
+        this.emit("versionChanged", { key: op.key }, local, message);
     }
 
     private processLocalMessage(message: ISequencedDocumentMessage) {
@@ -305,4 +306,40 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
             this.promiseResolveQueue.push({ resolve, clientSequenceNumber });
         });
     }
+
+    private snapshotItem(item: ILocalRegister): ILocalRegister {
+        let innerValue: any;
+        if (item.value.type === RegisterValueType[RegisterValueType.Shared]) {
+            innerValue = (item.value.value as ISharedObject).id;
+        } else {
+            innerValue = item.value.value;
+        }
+        return {
+            sequenceNumber: item.sequenceNumber,
+            value: {
+                type: item.value.type,
+                value: innerValue,
+            },
+        };
+    }
+
+    private async loadItem(item: ILocalRegister): Promise<ILocalRegister> {
+        switch (item.value.type) {
+            case RegisterValueType[RegisterValueType.Plain]:
+                return item;
+            case RegisterValueType[RegisterValueType.Shared]:
+                const channel = await this.runtime.getChannel(item.value.value as string);
+                const fullValue: ILocalRegister = {
+                    sequenceNumber: item.sequenceNumber,
+                    value: {
+                        type: item.value.type,
+                        value: channel,
+                    },
+                };
+                return fullValue;
+            default:
+                assert(false, "Invalid value type");
+        }
+    }
+
 }
