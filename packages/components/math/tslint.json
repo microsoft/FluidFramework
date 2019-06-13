@@ -2,8 +2,7 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
-        "binary-expression-operand-order": false,
-        "completed-docs": false,
+          "completed-docs": false,
         "max-line-length": false,
         "no-console": false,
         "no-floating-promises": false,
@@ -11,7 +10,6 @@
         "no-parameter-reassignment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "object-literal-sort-keys": false,
-        "prefer-type-cast": false
+        "object-literal-sort-keys": false
     }
 }

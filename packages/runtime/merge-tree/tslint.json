@@ -2,15 +2,10 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
         "completed-docs": false,
-        "function-name": false,
         "no-console": false,
         "no-null-keyword": false,
         "no-reserved-keywords": false,
-        "no-unnecessary-local-variable": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
-        "prefer-method-signature": false,
-        "prefer-type-cast": false,
-        "type-literal-delimiter": false
+        "prefer-method-signature": false
     }
 }

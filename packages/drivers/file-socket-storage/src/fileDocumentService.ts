@@ -9,8 +9,8 @@ import { FileDocumentStorageService } from "./fileDocumentStorageService";
  */
 export class FileDocumentService implements api.IDocumentService {
 
-    private fileDeltaStorageService: FileDeltaStorageService;
-    constructor(private path: string) {
+    private readonly fileDeltaStorageService: FileDeltaStorageService;
+    constructor(private readonly path: string) {
         this.fileDeltaStorageService = new FileDeltaStorageService(this.path);
     }
 

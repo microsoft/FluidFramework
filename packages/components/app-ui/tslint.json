@@ -5,8 +5,6 @@
         "completed-docs": false,
         "no-console": false,
         "no-suspicious-comment": false,
-        "no-unsafe-any": false,
-        "prefer-type-cast": false,
-        "type-literal-delimiter": false
+        "no-unsafe-any": false
     }
 }

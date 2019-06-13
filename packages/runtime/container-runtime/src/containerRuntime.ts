@@ -164,10 +164,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     // Components tracked by the Domain
-    private componentContexts = new Map<string, ComponentContext>();
-    private componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
+    private readonly componentContexts = new Map<string, ComponentContext>();
+    private readonly componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
-    private pendingAttach = new Map<string, IAttachMessage>();
+    private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
     private lastMinSequenceNumber: number;
 

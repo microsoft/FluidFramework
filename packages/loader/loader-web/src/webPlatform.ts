@@ -2,7 +2,7 @@ import { IPlatform } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 
 export class WebPlatform extends EventEmitter implements IPlatform {
-    constructor(private div: HTMLElement) {
+    constructor(private readonly div: HTMLElement) {
         super();
     }
 

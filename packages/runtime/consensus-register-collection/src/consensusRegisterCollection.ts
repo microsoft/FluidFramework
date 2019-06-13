@@ -44,7 +44,7 @@ interface IPendingRecord {
 const snapshotFileName = "header";
 
 /**
- * Implementation of a consensus rgister collection
+ * Implementation of a consensus register collection
  */
 export class ConsensusRegisterCollection extends SharedObject implements IConsensusRegisterCollection {
     private readonly data = new Map<string, ILocalData>();

@@ -33,14 +33,14 @@ export class Histogram {
  * Helper class to monitor throughput
  */
 export class ThroughputCounter {
-    private produceCounter = new RateCounter();
-    private acknowledgeCounter = new RateCounter();
+    private readonly produceCounter = new RateCounter();
+    private readonly acknowledgeCounter = new RateCounter();
     private interval;
 
     constructor(
-        private log: (value: string) => void,
-        private prefix = "",
-        private intervalTime: number = 5000) {
+        private readonly log: (value: string) => void,
+        private readonly prefix = "",
+        private readonly intervalTime: number = 5000) {
     }
 
     public produce(count: number = 1) {

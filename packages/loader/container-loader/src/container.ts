@@ -94,7 +94,7 @@ export class Container extends EventEmitter implements IContainer {
     public runtime: any = null;
 
     public subLogger: ITelemetryLogger;
-    private logger: ITelemetryLogger;
+    private readonly logger: ITelemetryLogger;
 
     private pendingClientId: string | undefined;
     private loaded = false;
@@ -109,7 +109,7 @@ export class Container extends EventEmitter implements IContainer {
     private _clientId: string | undefined;
     private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
     private _existing: boolean | undefined;
-    private _id: string;
+    private readonly _id: string;
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     // tslint:enable:variable-name
@@ -118,10 +118,10 @@ export class Container extends EventEmitter implements IContainer {
     private pkg: string | null = null;
 
     // Local copy of incomplete received chunks.
-    private chunkMap = new Map<string, string[]>();
+    private readonly chunkMap = new Map<string, string[]>();
 
     // Local copy of sent but unacknowledged chunks.
-    private unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
+    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     public get id(): string {
         return this._id;
@@ -172,9 +172,9 @@ export class Container extends EventEmitter implements IContainer {
     constructor(
         id: string,
         public readonly options: any,
-        private service: IDocumentService,
-        private codeLoader: ICodeLoader,
-        private loader: ILoader,
+        private readonly service: IDocumentService,
+        private readonly codeLoader: ICodeLoader,
+        private readonly loader: ILoader,
         logger?: ITelemetryBaseLogger,
     ) {
         super();

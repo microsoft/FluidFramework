@@ -13,7 +13,6 @@
         "no-unnecessary-class": false,
         "no-unnecessary-type-assertion": false,
         "prefer-array-literal": false,
-        "prefer-method-signature": false,
-        "prefer-type-cast": false
+        "prefer-method-signature": false
     }
 }

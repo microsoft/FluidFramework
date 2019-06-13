@@ -1,7 +1,6 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "completed-docs": false,
         "no-console": false,
         "no-non-null-assertion": false,
         "no-null-keyword": false,
@@ -10,7 +9,6 @@
         "no-suspicious-comment": false,
         "prefer-array-literal": false,
         "prefer-template": false,
-        "prefer-type-cast": false,
         "strict-boolean-expressions": false
     }
 }

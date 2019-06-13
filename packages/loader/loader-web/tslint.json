@@ -4,9 +4,6 @@
         "completed-docs": false,
         "no-console": false,
         "no-null-keyword": false,
-        "no-suspicious-comment": false,
-        "no-void-expression": false,
-        "prefer-readonly": false,
-        "prefer-type-cast": false
+        "no-suspicious-comment": false
     }
 }

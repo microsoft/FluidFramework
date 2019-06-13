@@ -32,12 +32,12 @@ export class DeltaConnection extends EventEmitter {
     }
 
     // tslint:disable:variable-name
-    private _details: IConnectionDetails;
+    private readonly _details: IConnectionDetails;
     private _nacked = false;
     private _connected = true;
     // tslint:enable:variable-name
 
-    private constructor(private connection: IDocumentDeltaConnection) {
+    private constructor(private readonly connection: IDocumentDeltaConnection) {
         super();
 
         this._details = {

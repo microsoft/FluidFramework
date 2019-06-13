@@ -6,9 +6,9 @@ import * as fs from "fs";
  */
 export class FileDeltaStorageService implements api.IDocumentDeltaStorageService {
 
-    private messages: api.ISequencedDocumentMessage[];
+    private readonly messages: api.ISequencedDocumentMessage[];
     private isGetCalledFirstTime = true;
-    constructor(private path: string) {
+    constructor(private readonly path: string) {
         const data = fs.readFileSync(`${this.path}//messages.json`);
         this.messages = JSON.parse(data.toString("utf-8"));
     }

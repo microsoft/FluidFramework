@@ -7,11 +7,8 @@
         "no-floating-promises": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
-        "prefer-type-cast": false,
         "strict-boolean-expressions": false,
-        "switch-final-break": false,
-        "type-literal-delimiter": false
+        "switch-final-break": false
     }
 }

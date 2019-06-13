@@ -11,10 +11,10 @@ import { debug } from "./debug";
 
 export class PrefetchDocumentStorageService implements IDocumentStorageService {
     // blobId -> blob prefetchCache cache
-    private prefetchCache = new Map<string, Promise<string>>();
+    private readonly prefetchCache = new Map<string, Promise<string>>();
     private prefetchEnabled = true;
 
-    constructor(private storage: IDocumentStorageService) {
+    constructor(private readonly storage: IDocumentStorageService) {
     }
 
     public get repositoryUrl(): string {

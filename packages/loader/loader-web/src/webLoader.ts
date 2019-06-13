@@ -19,7 +19,7 @@ async function loadScript(scriptUrl: string): Promise<{}> {
 }
 
 export class WebLoader implements ICodeLoader {
-    constructor(private baseUrl: string) {
+    constructor(private readonly baseUrl: string) {
     }
 
     public async load<T>(source: string): Promise<T> {

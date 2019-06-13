@@ -31,7 +31,7 @@ export interface IConsensusRegisterCollectionExtension extends ISharedObjectExte
  * Atomic: Atomicity requires a linearizable register. A linearizable register behaves as if there is only a single
  * copy of the data, and that every operation appears to take effect atomically at one point in time. This definition
  * implies that operations are executed in an well-defined order. On a concurrent update, we perform a compare-and-set
- * operation, where we compare a register sequuence number with the incoming reference sequence number.
+ * operation, where we compare a register sequence number with the incoming reference sequence number.
  * The earliest operation overwriting prior sequence numbers wins since every client reaches to an agreement on
  * the value. So we can safely return the first value.
  *

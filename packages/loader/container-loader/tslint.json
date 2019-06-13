@@ -2,7 +2,6 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
         "completed-docs": false,
-        "function-name": false,
         "max-func-body-length": false,
         "no-console": false,
         "no-floating-promises": false,
@@ -11,14 +10,9 @@
         "no-require-imports": false,
         "no-reserved-keywords": false,
         "no-suspicious-comment": false,
-        "no-unnecessary-local-variable": false,
         "no-unnecessary-type-assertion": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
-        "prefer-readonly": false,
-        "prefer-type-cast": false,
         "promise-function-async": false,
-        "strict-boolean-expressions": false,
-        "type-literal-delimiter": false
+        "strict-boolean-expressions": false
     }
 }

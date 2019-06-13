@@ -13,7 +13,7 @@ export class ComponentStorageService implements IDocumentStorageService {
         return this.storageService.repositoryUrl;
     }
 
-    constructor(private storageService: IDocumentStorageService, private blobs: Map<string, string>) {
+    constructor(private readonly storageService: IDocumentStorageService, private readonly blobs: Map<string, string>) {
     }
 
     // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself

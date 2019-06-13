@@ -14,11 +14,11 @@ import { debug } from "./debug";
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.
 class PendingProposal implements IPendingProposal, ISequencedProposal {
-    public rejections: Set<string>;
+    public readonly rejections: Set<string>;
     private canReject = true;
 
     constructor(
-        private sendReject: (sequenceNumber: number) => void,
+        private readonly sendReject: (sequenceNumber: number) => void,
         public sequenceNumber: number,
         public key: string,
         public value: any,
@@ -56,23 +56,23 @@ export interface IQuorumSnapshot {
  * they have agreed upon and any pending proposals.
  */
 export class Quorum extends EventEmitter implements IQuorum {
-    private members: Map<string, ISequencedClient>;
-    private proposals: Map<number, PendingProposal>;
-    private values: Map<string, ICommittedProposal>;
+    private readonly members: Map<string, ISequencedClient>;
+    private readonly proposals: Map<number, PendingProposal>;
+    private readonly values: Map<string, ICommittedProposal>;
 
     // List of commits that have been approved but not yet committed
-    private pendingCommit: Map<string, ICommittedProposal>;
+    private readonly pendingCommit: Map<string, ICommittedProposal>;
 
     // Locally generated proposals
-    private localProposals = new Map<number, Deferred<void>>();
+    private readonly localProposals = new Map<number, Deferred<void>>();
 
     constructor(
         private minimumSequenceNumber: number  | undefined,
         members: Array<[string, ISequencedClient]>,
         proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, ICommittedProposal]>,
-        private sendProposal: (key: string, value: any) => number,
-        private sendReject: (sequenceNumber: number) => void) {
+        private readonly sendProposal: (key: string, value: any) => number,
+        private readonly sendReject: (sequenceNumber: number) => void) {
         super();
 
         this.members = new Map(members);

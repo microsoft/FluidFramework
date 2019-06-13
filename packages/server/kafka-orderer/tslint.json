@@ -10,7 +10,6 @@
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "prefer-readonly": false,
-        "prefer-type-cast": false,
         "promise-function-async": false
     }
 }

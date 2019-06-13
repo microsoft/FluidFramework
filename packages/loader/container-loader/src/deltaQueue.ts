@@ -4,7 +4,7 @@ import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
-    private q = new Deque<T>();
+    private readonly q = new Deque<T>();
 
     // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
     // But the internal system itself also sometimes needs to override these changes. The system field takes precedence.
@@ -30,7 +30,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return !this.processing && this.q.length === 0;
     }
 
-    constructor(private worker: (value: T | undefined, callback: (error) => void) => void) {
+    constructor(private readonly worker: (value: T | undefined, callback: (error) => void) => void) {
         super();
     }
 

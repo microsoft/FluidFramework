@@ -30,9 +30,9 @@ class DefinitionGuide extends EventEmitter {
 }
 
 export class WebPlatform extends EventEmitter implements IPlatform {
-    private definitions = new DefinitionGuide();
+    private readonly definitions = new DefinitionGuide();
 
-    constructor(private div: HTMLElement) {
+    constructor(private readonly div: HTMLElement) {
         super();
     }
 

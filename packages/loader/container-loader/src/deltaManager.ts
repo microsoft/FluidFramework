@@ -69,9 +69,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private baseSequenceNumber: number = 0;
 
     // tslint:disable:variable-name
-    private _inbound: DeltaQueue<ISequencedDocumentMessage>;
-    private _inboundSignal: DeltaQueue<ISignalMessage>;
-    private _outbound: DeltaQueue<IDocumentMessage>;
+    private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
+    private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
+    private readonly _outbound: DeltaQueue<IDocumentMessage>;
     // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails> | undefined | null;
@@ -82,7 +82,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private handler: IDeltaHandlerStrategy | undefined;
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
 
-    private contentCache = new ContentCache(DefaultContentBufferSize);
+    private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage | undefined> {
         return this._inbound;
@@ -115,8 +115,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     constructor(
-        private service: IDocumentService,
-        private client: IClient | null,
+        private readonly service: IDocumentService,
+        private readonly client: IClient | null,
         private readonly logger: ITelemetryLogger) {
         super();
 

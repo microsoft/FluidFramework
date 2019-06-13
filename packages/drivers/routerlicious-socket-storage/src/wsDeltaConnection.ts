@@ -55,8 +55,8 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         });
     }
 
-    private socket: ws;
-    private submitManager: BatchManager<IDocumentMessage>;
+    private readonly socket: ws;
+    private readonly submitManager: BatchManager<IDocumentMessage>;
     private details: IConnected | undefined;
 
     public get clientId(): string {

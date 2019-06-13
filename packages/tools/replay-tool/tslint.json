@@ -1,14 +1,12 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "completed-docs": false,
         "function-name": false,
         "trailing-comma": false,
         "no-console": false,
         "no-constant-condition": false,
         "no-floating-promises": false,
         "no-null-keyword": false,
-        "no-void-expression": false,
         "promise-function-async": false
     }
 }

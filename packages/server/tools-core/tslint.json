@@ -3,8 +3,7 @@
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "await-promise": false,
-        "binary-expression-operand-order": false,
-        "import-name": false,
+          "import-name": false,
         "max-func-body-length": false,
         "no-console": false,
         "no-floating-promises": false,
@@ -15,10 +14,8 @@
         "no-unnecessary-callback-wrapper": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
         "prefer-template": false,
-        "prefer-type-cast": false,
         "promise-must-complete": false,
         "restrict-plus-operands": false
     }

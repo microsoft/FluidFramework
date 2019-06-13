@@ -25,11 +25,11 @@ class Replayer {
     private replayP = Promise.resolve();
     private firstTimeStamp: number | undefined;
     constructor(
-        private deltaConnection: ReplayDocumentDeltaConnection,
-        private documentStorageService: IDocumentDeltaStorageService,
-        private replayFrom: number,
-        private replayTo: number,
-        private unitIsTime: boolean | undefined) {
+        private readonly deltaConnection: ReplayDocumentDeltaConnection,
+        private readonly documentStorageService: IDocumentDeltaStorageService,
+        private readonly replayFrom: number,
+        private readonly replayTo: number,
+        private readonly unitIsTime: boolean | undefined) {
     }
 
     public async start() {

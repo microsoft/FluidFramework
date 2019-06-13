@@ -1,9 +1,9 @@
 import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
 
 export class BlobManager implements IBlobManager {
-    private blobs: Map<string, IGenericBlob>;
+    private readonly blobs: Map<string, IGenericBlob>;
 
-    constructor(private storage: IDocumentStorageService) {
+    constructor(private readonly storage: IDocumentStorageService) {
         this.blobs = new Map<string, IGenericBlob>();
     }
 

@@ -4,9 +4,9 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 export class ContentCache extends EventEmitter {
-    private cache = new Map<string, RingBuffer>();
+    private readonly cache = new Map<string, RingBuffer>();
 
-    constructor(private log2Capacity: number) {
+    constructor(private readonly log2Capacity: number) {
         super();
     }
 

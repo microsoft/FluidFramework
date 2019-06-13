@@ -27,7 +27,7 @@ interface IParsedUrl {
  * Manages Prague resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
-    private containers = new Map<string, Promise<Container>>();
+    private readonly containers = new Map<string, Promise<Container>>();
 
     constructor(
         private readonly containerHost: IHost,

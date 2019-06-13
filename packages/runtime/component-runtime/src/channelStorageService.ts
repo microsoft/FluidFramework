@@ -14,9 +14,9 @@ export class ChannelStorageService implements IObjectStorageService {
         }
     }
 
-    private flattenedTree: { [path: string]: string } = {};
+    private readonly flattenedTree: { [path: string]: string } = {};
 
-    constructor(tree: ISnapshotTree, private storage: IDocumentStorageService) {
+    constructor(tree: ISnapshotTree, private readonly storage: IDocumentStorageService) {
         // Create a map from paths to blobs
         /* tslint:disable:strict-boolean-expressions */
         if (tree) {

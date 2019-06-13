@@ -2,7 +2,7 @@ import { IBlob, ITree, TreeEntry } from "@prague/container-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
 
 export class LocalChannelStorageService implements IObjectStorageService {
-    constructor(private tree: ITree) {
+    constructor(private readonly tree: ITree) {
     }
 
     public async read(path: string): Promise<string> {

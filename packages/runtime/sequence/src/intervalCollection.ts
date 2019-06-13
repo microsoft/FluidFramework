@@ -101,7 +101,7 @@ export class Interval implements ISerializableInterval {
 
 export class SharedStringInterval implements ISerializableInterval {
     public properties: MergeTree.PropertySet;
-    private checkMergeTree: MergeTree.MergeTree;
+    private readonly checkMergeTree: MergeTree.MergeTree;
 
     constructor(
         public start: MergeTree.LocalReference,
@@ -262,13 +262,13 @@ export function createIntervalIndex(conflict?: MergeTree.IntervalConflictResolve
 }
 
 export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
-    private intervalTree = new MergeTree.IntervalTree<TInterval>();
-    private endIntervalTree: MergeTree.RedBlackTree<TInterval, TInterval>;
+    private readonly intervalTree = new MergeTree.IntervalTree<TInterval>();
+    private readonly endIntervalTree: MergeTree.RedBlackTree<TInterval, TInterval>;
     private conflictResolver: MergeTree.IntervalConflictResolver<TInterval>;
     private endConflictResolver: MergeTree.ConflictAction<TInterval, TInterval>;
 
-    constructor(private client: MergeTree.Client, private label: string,
-        private helpers: IIntervalHelpers<TInterval>) {
+    constructor(private readonly client: MergeTree.Client, private readonly label: string,
+        private readonly helpers: IIntervalHelpers<TInterval>) {
 
         this.endIntervalTree =
             new MergeTree.RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
@@ -393,8 +393,8 @@ export class SharedStringIntervalCollectionValueType
     }
 
     // tslint:disable:variable-name
-    private _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>>;
-    private _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>;
+    private readonly _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>>;
+    private readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>;
     // tslint:enable:variable-name
 
     constructor() {
@@ -474,8 +474,8 @@ export class SharedIntervalCollectionValueType
     }
 
     // tslint:disable:variable-name
-    private _factory: IValueFactory<SharedIntervalCollection<Interval>>;
-    private _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>>;
+    private readonly _factory: IValueFactory<SharedIntervalCollection<Interval>>;
+    private readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>>;
     // tslint:enable:variable-name
 
     constructor() {
@@ -509,17 +509,17 @@ export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => 
 export type DeserializeCallback = (value: ISerializableInterval, context: any) => void;
 
 export class SharedIntervalCollectionView<TInterval extends ISerializableInterval> extends EventEmitter {
-    private localCollection: LocalIntervalCollection<TInterval>;
+    private readonly localCollection: LocalIntervalCollection<TInterval>;
     private onPrepareDeserialize: PrepareDeserializeCallback;
     private onDeserialize: DeserializeCallback;
     private attachingP = Promise.resolve();
 
     constructor(
-        private client: MergeTree.Client,
+        private readonly client: MergeTree.Client,
         savedSerializedIntervals: ISerializedInterval[],
         label: string,
         helpers: IIntervalHelpers<TInterval>,
-        private emitter: IValueOpEmitter) {
+        private readonly emitter: IValueOpEmitter) {
         super();
 
         // Instantiate the local interval collection based on the saved intervals
@@ -670,8 +670,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         return !!this.view;
     }
 
-    constructor(private helpers: IIntervalHelpers<TInterval>, private requiresClient: boolean,
-        private emitter: IValueOpEmitter,
+    constructor(private readonly helpers: IIntervalHelpers<TInterval>, private readonly requiresClient: boolean,
+        private readonly emitter: IValueOpEmitter,
         serializedIntervals: ISerializedInterval[]) {
         this.savedSerializedIntervals = serializedIntervals;
     }

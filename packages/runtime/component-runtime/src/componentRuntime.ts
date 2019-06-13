@@ -143,10 +143,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.componentContext.loader;
     }
 
-    private channels = new Map<string, IChannelState>();
-    private channelsDeferred = new Map<string, Deferred<IChannel>>();
+    private readonly channels = new Map<string, IChannelState>();
+    private readonly channelsDeferred = new Map<string, Deferred<IChannel>>();
     private closed = false;
-    private pendingAttach = new Map<string, IAttachMessage>();
+    private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     private constructor(
@@ -156,13 +156,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly parentBranch: string,
         public existing: boolean,
         public readonly options: any,
-        private blobManager: IBlobManager,
+        private readonly blobManager: IBlobManager,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-        private quorum: IQuorum,
-        private storageService: IDocumentStorageService,
-        private snapshotFn: (message: string) => Promise<void>,
-        private closeFn: () => void,
-        private registry: ISharedObjectRegistry,
+        private readonly quorum: IQuorum,
+        private readonly storageService: IDocumentStorageService,
+        private readonly snapshotFn: (message: string) => Promise<void>,
+        private readonly closeFn: () => void,
+        private readonly registry: ISharedObjectRegistry,
         public readonly logger: ITelemetryLogger) {
         super();
         this.attachListener();

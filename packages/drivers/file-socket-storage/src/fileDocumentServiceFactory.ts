@@ -8,7 +8,7 @@ import { FileDocumentService } from "./fileDocumentService";
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
-    constructor(private path: string) {}
+    constructor(private readonly path: string) {}
 
     /**
      * Creates the file document service if the path exists.

@@ -8,10 +8,10 @@ import { TokenProvider} from "./tokens";
  */
 export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
     constructor(
-        private tenantId: string,
-        private id: string,
-        private tokenProvider: api.ITokenProvider,
-        private storageService: api.IDeltaStorageService) {
+        private readonly tenantId: string,
+        private readonly id: string,
+        private readonly tokenProvider: api.ITokenProvider,
+        private readonly storageService: api.IDeltaStorageService) {
     }
 
     /* tslint:disable:promise-function-async */
@@ -24,7 +24,7 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
  * Provides access to the underlying delta storage on the server for routerlicious driver.
  */
 export class DeltaStorageService implements api.IDeltaStorageService {
-    constructor(private url: string) {
+    constructor(private readonly url: string) {
     }
 
     public async get(

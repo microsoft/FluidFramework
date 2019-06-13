@@ -25,7 +25,6 @@ import { debug } from "./debug";
 // tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
 const apiVersion = require("../../package.json").version;
 
-// TODO: All these should be enforced by server as a part of document creation.
 const rootMapId = "root";
 const insightsMapId = "insights";
 
@@ -104,7 +103,7 @@ export class Document extends EventEmitter {
     constructor(
         public readonly runtime: ComponentRuntime,
         public readonly context: IComponentContext,
-        private root: ISharedMap,
+        private readonly root: ISharedMap,
     ) {
         super();
 
@@ -283,7 +282,5 @@ export async function load(
     }
 
     // Return the document
-    const document = new Document(runtime, context, root);
-
-    return document;
+    return new Document(runtime, context, root);
 }

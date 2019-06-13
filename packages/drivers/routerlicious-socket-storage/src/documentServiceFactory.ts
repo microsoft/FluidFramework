@@ -18,12 +18,12 @@ import { TokenProvider } from "./tokens";
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(
-        private useDocumentService2: boolean = false,
-        private errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
-        private disableCache: boolean = false,
-        private historianApi: boolean = true,
-        private gitCache: IGitCache | null = null,
-        private credentials?: ICredentials,
+        private readonly useDocumentService2: boolean = false,
+        private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),
+        private readonly disableCache: boolean = false,
+        private readonly historianApi: boolean = true,
+        private readonly gitCache: IGitCache | null = null,
+        private readonly credentials?: ICredentials,
     ) {
     }
 

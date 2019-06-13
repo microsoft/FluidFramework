@@ -27,6 +27,9 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
 import * as uuid from "uuid/v4";
 
+/**
+ * Factory to create MockDeltaConnection for testing
+ */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
     private readonly messages: ISequencedDocumentMessage[] = [];
@@ -56,7 +59,9 @@ export class MockDeltaConnectionFactory {
     }
 }
 
-// Mock implementation IDeltaConnection that does nothing
+/**
+ * Mock implementation IDeltaConnection for testing that does nothing
+ */
 class MockDeltaConnection implements IDeltaConnection {
     public get state(): ConnectionState {
         return this.connectionState;
@@ -97,7 +102,9 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 }
 
-// Mock implementation of IRuntime
+/**
+ * Mock implementation of IRuntime for testing that does nothing
+ */
 export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly documentId: string;
     public readonly id: string;
@@ -180,6 +187,9 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     }
 }
 
+/**
+ * Mock implementation of IHistorian for testing that keeps the blobs in memory
+ */
 export class MockHistorian implements IHistorian {
     public endpoint: string;
 

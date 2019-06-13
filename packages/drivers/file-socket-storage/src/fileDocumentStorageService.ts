@@ -8,7 +8,7 @@ import * as util from "util";
 export class FileDocumentStorageService implements api.IDocumentStorageService  {
 
     private versionName: string;
-    constructor(private path: string) {}
+    constructor(private readonly path: string) {}
 
     public get repositoryUrl(): string {
         throw new Error("Not implemented.");

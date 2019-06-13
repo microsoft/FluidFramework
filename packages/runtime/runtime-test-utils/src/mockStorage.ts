@@ -7,7 +7,9 @@ import {
 } from "@prague/runtime-definitions";
 import * as assert from "assert";
 
-// An implementation of IObjectStorageService based on ITree input.
+/**
+ * Mock implementation of IObjectStorageService based on ITree input.
+ */
 export class MockStorage implements IObjectStorageService {
     private static ReadCore(tree: ITree, paths: string[]): string {
         if (tree) {

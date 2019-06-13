@@ -11,11 +11,8 @@
         "no-single-line-block-comment": false,
         "no-submodule-imports": false,
         "no-suspicious-comment": false,
-        "no-unnecessary-local-variable": false,
         "no-unsafe-any": false,
         "prefer-readonly": false,
-        "prefer-type-cast": false,
-        "promise-function-async": false,
-        "type-literal-delimiter": false
+        "promise-function-async": false
     }
 }

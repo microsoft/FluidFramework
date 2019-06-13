@@ -10,9 +10,7 @@
         "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
-        "prefer-type-cast": false,
         "promise-function-async": false,
         "react-a11y-input-elements": false,
         "react-this-binding-issue": false

@@ -3,8 +3,7 @@
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "await-promise": false,
-        "binary-expression-operand-order": false,
-        "completed-docs": false,
+          "completed-docs": false,
         "function-name": false,
         "max-func-body-length": false,
         "mocha-no-side-effect-code": false,
@@ -15,18 +14,14 @@
         "no-require-imports": false,
         "no-suspicious-comment": false,
         "no-unnecessary-callback-wrapper": false,
-        "no-unnecessary-local-variable": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "non-literal-fs-path": false,
         "prefer-array-literal": false,
         "prefer-readonly": false,
         "prefer-template": false,
-        "prefer-type-cast": false,
         "promise-function-async": false,
         "restrict-plus-operands": false,
-        "space-within-parens": false,
-        "type-literal-delimiter": false
+        "space-within-parens": false
     }
 }

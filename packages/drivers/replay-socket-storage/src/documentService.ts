@@ -9,10 +9,10 @@ import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
  * and emitting them with a pre determined delay
  */
 export class ReplayDocumentService implements api.IDocumentService {
-    constructor(private replayFrom: number,
-                private replayTo: number,
-                private documentService: api.IDocumentService,
-                private unitIsTime: boolean | undefined) {
+    constructor(private readonly replayFrom: number,
+                private readonly replayTo: number,
+                private readonly documentService: api.IDocumentService,
+                private readonly unitIsTime: boolean | undefined) {
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {

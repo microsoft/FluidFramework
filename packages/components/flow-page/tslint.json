@@ -12,12 +12,9 @@
         "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "object-literal-sort-keys": false,
         "prefer-method-signature": false,
-        "prefer-type-cast": false,
         "react-this-binding-issue": false,
-        "type-literal-delimiter": false,
         "import-name": false
     }
 }

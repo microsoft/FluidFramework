@@ -16,7 +16,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         public objectId: string,
         // tslint:disable-next-line:variable-name
         private _state: ConnectionState,
-        private submitFn: (message: IDocumentMessage) => number) {
+        private readonly submitFn: (message: IDocumentMessage) => number) {
     }
 
     public attach(handler: IDeltaHandler) {

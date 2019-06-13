@@ -5,7 +5,6 @@
         "no-console": false,
         "no-null-keyword": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "no-non-null-assertion": false
     }
 }

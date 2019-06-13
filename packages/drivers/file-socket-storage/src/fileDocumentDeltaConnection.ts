@@ -26,8 +26,8 @@ export class Replayer {
     private currentReplayOp = 0;
 
     constructor(
-        private deltaConnection: ReplayFileDeltaConnection,
-        private documentStorageService: FileDeltaStorageService) {
+        private readonly deltaConnection: ReplayFileDeltaConnection,
+        private readonly documentStorageService: FileDeltaStorageService) {
     }
 
     public get currentReplayedOp() {

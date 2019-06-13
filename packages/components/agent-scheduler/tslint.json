@@ -13,8 +13,6 @@
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "object-literal-sort-keys": false,
-        "prefer-array-literal": false,
-        "prefer-type-cast": false,
-        "type-literal-delimiter": false
+        "prefer-array-literal": false
     }
 }

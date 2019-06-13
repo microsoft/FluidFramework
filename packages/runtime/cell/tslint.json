@@ -1,10 +1,6 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "no-console": false,
-        "no-null-keyword": false,
-        "no-reserved-keywords": false,
-        "no-unnecessary-local-variable": false,
-        "prefer-type-cast": false
+        "no-null-keyword": false
     }
 }

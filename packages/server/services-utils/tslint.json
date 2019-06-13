@@ -8,7 +8,6 @@
         "no-unsafe-any": false,
         "prefer-readonly": false,
         "prefer-template": false,
-        "prefer-type-cast": false,
         "restrict-plus-operands": false
     }
 }

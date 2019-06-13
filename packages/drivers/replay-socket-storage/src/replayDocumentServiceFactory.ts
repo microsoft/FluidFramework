@@ -4,9 +4,9 @@ import { createReplayDocumentService } from "./registration";
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
     constructor(
-        private from: number,
-        private to: number,
-        private documentServiceFactory: IDocumentServiceFactory) {}
+        private readonly from: number,
+        private readonly to: number,
+        private readonly documentServiceFactory: IDocumentServiceFactory) {}
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         return Promise.resolve(createReplayDocumentService(

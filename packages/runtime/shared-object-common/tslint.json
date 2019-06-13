@@ -1,9 +1,6 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "completed-docs": false,
-        "no-console": false,
-        "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
         "promise-function-async": false

@@ -9,13 +9,10 @@
         "no-floating-promises": false,
         "no-null-keyword": false,
         "no-suspicious-comment": false,
-        "no-unnecessary-local-variable": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
         "prefer-array-literal": false,
         "prefer-method-signature": false,
         "prefer-readonly": false,
-        "prefer-type-cast": false,
         "promise-function-async": false
     }
 }

@@ -109,11 +109,11 @@ export class ContainerContext implements IContainerContext {
 
     private runtime: IRuntime | undefined;
     // tslint:disable:variable-name allowing _ for params exposed with getter
-    private _minimumSequenceNumber: number | undefined;
+    private readonly _minimumSequenceNumber: number | undefined;
     // tslint:enable:variable-name
 
     constructor(
-        private container: Container,
+        private readonly container: Container,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IChaincodeFactory,
         public readonly baseSnapshot: ISnapshotTree | null,

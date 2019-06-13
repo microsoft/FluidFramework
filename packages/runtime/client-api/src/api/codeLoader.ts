@@ -18,9 +18,10 @@ import {
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
+import { debug } from "./debug";
 
 class Chaincode implements IComponentFactory {
-    constructor(private runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
     }
 
     public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
@@ -59,7 +60,7 @@ class Chaincode implements IComponentFactory {
 
         this.runFn(component, context).catch(
             (error) => {
-                console.error(error);
+                debug(error);
             });
 
         return component;
@@ -67,17 +68,17 @@ class Chaincode implements IComponentFactory {
 }
 
 class BackCompatLoader implements IComponentRegistry {
-    constructor(private chaincode: Chaincode) {
+    constructor(private readonly chaincode: Chaincode) {
     }
 
-    public get(name: string): Promise<IComponentFactory> {
+    public async get(name: string): Promise<IComponentFactory> {
         // Back compat loader simply returns a kitchen sink component with all the data types
         return Promise.resolve(this.chaincode);
     }
 }
 
 export class ChaincodeFactory implements IChaincodeFactory {
-    constructor(private runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -88,7 +89,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {
-            console.log(request.url);
+            debug(request.url);
             const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
                 ? request.url.substr(1)
                 : request.url;
@@ -121,13 +122,13 @@ export class ChaincodeFactory implements IChaincodeFactory {
 }
 
 export class CodeLoader implements ICodeLoader {
-    private factory: IChaincodeFactory;
+    private readonly factory: IChaincodeFactory;
 
-    constructor(runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
         this.factory = new ChaincodeFactory(runFn);
     }
 
-    public load<T>(source: string): Promise<T> {
+    public async load<T>(source: string): Promise<T> {
         return Promise.resolve(this.factory as any);
     }
 }

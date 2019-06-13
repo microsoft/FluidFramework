@@ -13,8 +13,6 @@
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "prefer-object-spread": false,
-        "prefer-type-cast": false,
-        "promise-function-async": false,
-        "type-literal-delimiter": false
+        "promise-function-async": false
     }
 }

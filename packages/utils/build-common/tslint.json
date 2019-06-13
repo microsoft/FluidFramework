@@ -4,6 +4,7 @@
         "tslint:recommended"
     ],
     "rules": {
+        "binary-expression-operand-order": false,
         "newline-before-return": false,
         "no-empty": false,
         "no-increment-decrement": false,
@@ -71,11 +72,15 @@
         "no-string-based-set-immediate": true,
         "no-string-based-set-interval": true,
         "no-string-based-set-timeout": true,
+        "no-unnecessary-local-variable": false,
+        "no-void-expression": false,
         "non-literal-require": true,
         "possible-timing-attack": true,
+        "prefer-type-cast": false,
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
+        "type-literal-delimiter": false,
         // Deprecated Rules. These rules are deprecated. Disabling them so that they don't get applied.
         "no-function-constructor-with-string-args": false,
         "no-unnecessary-bind": false

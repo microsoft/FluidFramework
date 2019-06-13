@@ -8,8 +8,6 @@
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "no-void-expression": false,
-        "prefer-type-cast": false,
         "promise-function-async": false
     }
 }

@@ -4,7 +4,6 @@
         "completed-docs": false,
         "no-console": false,
         "no-non-null-assertion": false,
-        "prefer-readonly": false,
         "promise-function-async": false
     }
 }

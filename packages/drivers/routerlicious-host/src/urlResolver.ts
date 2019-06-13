@@ -6,11 +6,11 @@ import {
 import Axios from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {
-    private cache = new Map<string, Promise<IResolvedUrl>>();
+    private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
     constructor(
-        private baseUrl: string,
-        private jwt: string,
+        private readonly baseUrl: string,
+        private readonly jwt: string,
         cache?: Map<string, IResolvedUrl>,
     ) {
         if (cache) {

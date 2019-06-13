@@ -1,8 +1,6 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "no-console": false,
-        "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "prefer-method-signature": false
     }
