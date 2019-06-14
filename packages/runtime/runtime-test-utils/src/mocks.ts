@@ -119,6 +119,10 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.Create("prague:MockRuntime");
 
+    public get connectionState(): ConnectionState {
+        return ConnectionState.Connected;
+    }
+
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }

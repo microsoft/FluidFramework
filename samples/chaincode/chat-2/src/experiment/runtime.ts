@@ -283,6 +283,8 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         if (value === ConnectionState.Connected) {
             this.emit("connected", this.clientId);
+        } else {
+            this.emit("disconnected");
         }
     }
 

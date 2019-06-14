@@ -20,10 +20,11 @@ import {
     ITree,
     MessageType,
 } from "@prague/container-definitions";
+import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
-export class ContainerContext implements IContainerContext {
+export class ContainerContext extends EventEmitter implements IContainerContext {
     public static async Load(
         container: Container,
         codeLoader: ICodeLoader,
@@ -98,6 +99,10 @@ export class ContainerContext implements IContainerContext {
         return this.container.connectionState;
     }
 
+    public get connected(): boolean {
+        return this.connectionState === ConnectionState.Connected;
+    }
+
     public get canSummarize(): boolean {
         return "summarize" in this.runtime!;
     }
@@ -130,6 +135,7 @@ export class ContainerContext implements IContainerContext {
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
     ) {
+        super();
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
         this.logger = container.subLogger;
     }
@@ -148,6 +154,11 @@ export class ContainerContext implements IContainerContext {
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.runtime!.changeConnectionState(value, clientId);
+        if (value === ConnectionState.Connected) {
+            this.emit("connected", this.clientId);
+        } else {
+            this.emit("disconnected");
+        }
     }
 
     public async stop(): Promise<ITree | null> {

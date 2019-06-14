@@ -178,6 +178,8 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
 
         if (value === ConnectionState.Connected) {
             this.emit("connected", clientId);
+        } else {
+            this.emit("disconnected");
         }
     }
 

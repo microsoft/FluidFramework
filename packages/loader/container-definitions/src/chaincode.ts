@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
@@ -130,7 +131,7 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IContainerContext {
+export interface IContainerContext extends EventEmitter {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -141,6 +142,7 @@ export interface IContainerContext {
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connectionState: ConnectionState;
+    readonly connected: boolean;
     readonly branch: string;
     readonly minimumSequenceNumber: number | undefined;
     readonly baseSnapshot: ISnapshotTree | null;

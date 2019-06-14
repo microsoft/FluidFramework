@@ -794,7 +794,6 @@ export class Container extends EventEmitter implements IContainer {
 
             this._deltaManager.on("disconnect", (nack: boolean) => {
                 this.setConnectionState(ConnectionState.Disconnected, `nack === ${nack}`);
-                this.emit("disconnect");
             });
 
             this._deltaManager.on("error", (error) => {
@@ -899,6 +898,8 @@ export class Container extends EventEmitter implements IContainer {
 
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId);
+        } else {
+            this.emit("disconnected");
         }
     }
 

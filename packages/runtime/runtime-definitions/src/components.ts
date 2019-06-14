@@ -37,6 +37,8 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
 
     readonly parentBranch: string;
 
+    readonly connectionState: ConnectionState;
+
     readonly connected: boolean;
 
     readonly loader: ILoader;

@@ -123,8 +123,12 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return runtime;
     }
 
+    public get connectionState(): ConnectionState {
+        return this.componentContext.connectionState;
+    }
+
     public get connected(): boolean {
-        return this.componentContext.connected;
+        return this.connectionState === ConnectionState.Connected;
     }
 
     public get leader(): boolean {
@@ -295,6 +299,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
         if (value === ConnectionState.Connected) {
             this.emit("connected", clientId);
+        } else {
+            this.emit("disconnected", clientId);
         }
     }
 
