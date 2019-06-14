@@ -47,6 +47,10 @@
       "projectFolder": "packages/components/chart-view/"
     },
     {
+      "packageName": "@chaincode/clicker",
+      "projectFolder": "packages/components/clicker/"
+    },
+    {
       "packageName": "@prague/client-ui",
       "projectFolder": "packages/components/client-ui/"
     },
@@ -137,6 +141,10 @@
     {
       "packageName": "@prague/framework-definitions",
       "projectFolder": "packages/framework/framework-definitions/"
+    },
+    {
+      "packageName": "@prague/aqueduct",
+      "projectFolder": "packages/framework/aqueduct/"
     },
     {
       "packageName": "@prague/container-definitions",

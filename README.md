@@ -35,6 +35,12 @@ yo fluid
 
 \* For Yo Fluid setup issues: [Unauthorized - Stack Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
+### Adding a package
+
+Update [Dockerfile](.\server\routerlicious\Dockerfile) with a reference to your package.json.  
+
+Update  [rush](./rush.json) with a reference to your package name.
+
 ## Documentation
 
 [Fluid Docs](https://praguedocs.azurewebsites.net/) is our alpha version of our documentation and tutorial website.
@@ -124,7 +130,6 @@ Developers looking to make deep/advanced Prague changes can find our latest impl
 |[Headless Chrome](./tools/headless-chrome)|[![Headless Chrome Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/19/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=19)|
 |[Prague metrics](./tools/prague-metrics)|[![Metrics Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/20/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=20)|
 |[Prague metrics chart](./server/charts/prague-metrics)|[![Prague Metrics Chart Build Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/21/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=21)|
-
 
 ## Deployment Regions
 To ensure minimal latency and smoother user experience, we deploy our backend in a few different Azure regions. If you are closer to west coast, use the following endpoints located at Washington:
