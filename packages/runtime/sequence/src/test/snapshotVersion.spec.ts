@@ -74,7 +74,7 @@ describe("SharedString Snapshot Version", () => {
     }).timeout(3000);
 
     it("snapshot diff", async () => {
-        const message = "SharedString snapshot format has changed." +
+        const message = "SharedString snapshot format has changed. " +
         "Please update the snapshotFormatVersion if appropriate " +
         "and then run npm test:newsnapfiles to create new snapshot test files.";
 
@@ -83,8 +83,19 @@ describe("SharedString Snapshot Version", () => {
             const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
-            assert(data === JSON.stringify(testString.snapshot()), message);
+            const testData = JSON.stringify(testString.snapshot());
+            if (data !== testData) {
+                assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
+            }
             ++i;
         }
     });
+
+    function diff(s1: string, s2: string): string {
+        let i = 0;
+        while (i < s1.length && i < s2.length && s1[i] === s2[i]) {
+            ++i;
+        }
+        return `... ${s1.slice(Math.max(i - 20, 0), Math.min(i + 200, s1.length - 1))} ...`;
+    }
 });
