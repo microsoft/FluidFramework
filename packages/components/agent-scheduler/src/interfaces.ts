@@ -7,7 +7,7 @@ export interface ITask {
     id: string;
 
     // callback run by agent scheduler when the task gets picked by the client.
-    callback(): void;
+    callback?(): void;
 }
 
 /**
@@ -52,7 +52,7 @@ export interface IAgentScheduler {
     pickedTasks(): string[];
 
     /**
-     * Attaches an event listener for the leader event
+     * Event listeners
      */
-    on(event: "leader", listener: (...args: any[]) => void): this;
+    on(event: "leader" | "picked", listener: (...args: any[]) => void): this;
 }

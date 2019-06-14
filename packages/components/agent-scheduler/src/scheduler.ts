@@ -196,9 +196,12 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
                 if (pickedClientId === this.runtime.clientId) {
                     assert(this.localTaskMap.has(task.id), `Client did not try to pick ${task.id}`);
 
-                    // invoke the associated callback with the task
-                    task.callback();
-                    debug(`Running ${task.id}`);
+                    // invoke the associated callback if present.
+                    if (task.callback) {
+                        task.callback();
+                    }
+                    debug(`Picked ${task.id}`);
+                    this.emit("picked", task.id);
                 } else {
                     debug(`${pickedClientId} is running ${task.id}`);
                 }
@@ -276,9 +279,6 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
         // Each client expresses interest to be a leader.
         const leaderElectionTask: ITask = {
-            callback: () => {
-                debug(`Elected as leader`);
-            },
             id: LeaderTaskId,
         };
 
