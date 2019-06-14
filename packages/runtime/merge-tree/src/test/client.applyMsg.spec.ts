@@ -8,8 +8,8 @@ describe("client.applyMsg", () => {
     let client: TestClient;
 
     beforeEach(() => {
-        client = new TestClient("hello world");
-
+        client = new TestClient();
+        client.insertTextLocal(0, "hello world");
         client.startCollaboration(localUserLongId);
     });
 
@@ -234,7 +234,8 @@ describe("client.applyMsg", () => {
     });
 
     it("overlapping insert and delete", () => {
-        const remoteClient = new TestClient(client.getText());
+        const remoteClient = new TestClient();
+        remoteClient.insertTextLocal(0, client.getText());
         remoteClient.startCollaboration("remoteUser");
 
         let seq = 0;

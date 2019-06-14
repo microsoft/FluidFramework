@@ -132,6 +132,54 @@ return Component.instantiateRuntime(
             ["@chaincode/flow-document", Promise.resolve(Component.createComponentFactory(flowDocument.FlowDocument))],
         ]));
 ```
+### @prague/merge-tree Remove ISegment.getType() and SegmentType enum
+
+We are trying to decouple merge tree from specific segment types, as
+the segment types are defined by the sequence, like sharedstring.
+So we've removed the centralized enum of segment types from mergeTree
+and it's useage on ISegment.
+
+```typescript
+if(segment.getType() === SegmentType.Text){
+    const text = segment as TextSegment
+    ...
+} else if(segment.getType() === SegmentType.Marker){
+    const marker = segment as Marker
+    ...
+}
+
+```
+Becomes:
+
+```typescript
+if(TextSegment.Is(segment)) {
+    // segment will now know it's a text segment
+    // and can be used as such
+    ...
+}else if (Marker.is(segment)) {
+    // segment will now know it's a marker
+    // and can be used as such
+    ...
+}
+```
+
+### @prague/merge-tree Remove text specific functions from merge tree and move to SharedString
+
+We are trying to decouple merge tree from specific segment types, as
+the segment types are defined by the sequence, like sharedstring.
+So we've moved all text specific method to shared string from client
+and merge tree.
+
+```typescript
+sharedString.client.getTextAndMarkers("pg");
+sharedString.client.getText();
+```
+Becomes:
+
+```typescript
+sharedString.getTextAndMarkers("pg");
+sharedString.getText(start?, end?);
+```
 ## Container and Component Packages and Classes Renamed
 
 The following classes and packages are renamed to align with what they are.

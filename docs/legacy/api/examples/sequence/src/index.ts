@@ -54,14 +54,14 @@ async function run(id: string): Promise<void> {
     const text = rootView.get("text");
 
     const textElement = document.getElementById("text");
-    textElement.innerText = text.client.getText();
+    textElement.innerText = text.getText();
 
     // Update the text after being loaded as well as when receiving ops
     text.loaded.then(() => {
-        textElement.innerText = text.client.getText();
+        textElement.innerText = text.getText();
     });
     text.on("op", (msg) => {
-        textElement.innerText = text.client.getText();
+        textElement.innerText = text.getText();
     });
 
     const insertElement = document.getElementById("insertForm") as HTMLFormElement;

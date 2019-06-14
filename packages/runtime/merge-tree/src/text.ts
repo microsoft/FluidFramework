@@ -1,5 +1,6 @@
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
+import { TextSegment } from "./textSegment";
 
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
     // tslint:disable-next-line:no-parameter-reassignment
@@ -29,10 +30,10 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
             if ((paragraph.indexOf("Chapter") >= 0) || (paragraph.indexOf("PRIDE AND PREJ") >= 0)) {
                 if (markers) {
                     pgMarker.addProperties({ header: 2 });
-                    segments.push(new MergeTree.TextSegment(paragraph, seq, cli));
+                    segments.push(new TextSegment(paragraph, seq, cli));
                 } else {
                     segments.push(
-                        MergeTree.TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+                        TextSegment.Make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
                 }
             } else {
                 const emphStrings = paragraph.split("_");
@@ -41,17 +42,17 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                     if (i & 1) {
                         if (emphStrings[i].length > 0) {
                             segments.push(
-                                MergeTree.TextSegment.make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
+                                TextSegment.Make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
                         }
                     } else {
                         if (emphStrings[i].length > 0) {
-                            segments.push(new MergeTree.TextSegment(emphStrings[i], seq, cli));
+                            segments.push(new TextSegment(emphStrings[i], seq, cli));
                         }
                     }
                 }
             }
         } else {
-            segments.push(new MergeTree.TextSegment(paragraph, seq, cli));
+            segments.push(new TextSegment(paragraph, seq, cli));
         }
         if (markers) {
             segments.push(pgMarker);

@@ -101,7 +101,7 @@ class Translator {
     private async translate(): Promise<void> {
         const from = "en";
 
-        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
+        const textAndMarkers = this.sharedString.getTextAndMarkers("pg");
         const numParagraphs = textAndMarkers.paralellText.length;
 
         const translations = await translate(from, this.language, textAndMarkers.paralellText);

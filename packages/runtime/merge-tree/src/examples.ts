@@ -13,13 +13,15 @@ function overlappingInsert(bSeesTheCat = false) {
     let sequenceNumber = 1;
     const properties = undefined;
     // create merge tree with content 'on the mat.'
-    const clientA = new TestClient("on the mat.");
+    const clientA = new TestClient();
+    clientA.insertTextLocal(0, "on the mat.");
     // have client print out all operations
     clientA.verboseOps = true;
     // establish min sequence number of 0 and assign client id
     clientA.startCollaboration("A");
     // create merge tree with content 'on the mat.'
-    const clientB = new TestClient("on the mat.");
+    const clientB = new TestClient();
+    clientB.insertTextLocal(0, "on the mat.");
     // establish min sequence number of 0 and assign client id
     clientB.startCollaboration("B");
     clientB.verboseOps = true;

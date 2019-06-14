@@ -20,7 +20,7 @@ export type UnboxedOper = undefined | boolean | number | string;
 export class PaddingSegment extends BaseSegment {
     public static readonly typeString = "PaddingSegment";
     public static is(segment: ISegment): segment is PaddingSegment {
-        return segment !== undefined && segment.type === PaddingSegment.typeString;
+        return segment.type === PaddingSegment.typeString;
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "pad" in spec) {
@@ -87,7 +87,7 @@ export class PaddingSegment extends BaseSegment {
 export class RunSegment extends SubSequence<UnboxedOper> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
-        return segment !== undefined && segment.type === RunSegment.typeString;
+        return segment.type === RunSegment.typeString;
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {

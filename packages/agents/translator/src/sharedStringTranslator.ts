@@ -112,7 +112,7 @@ export class SharedStringTranslator {
             return;
         }
 
-        const textAndMarkers = this.sharedString.client.getTextAndMarkers("pg");
+        const textAndMarkers = this.sharedString.getTextAndMarkers("pg");
         // tslint:disable-next-line
         for (let i = 0; i < textAndMarkers.parallelMarkers.length; ++i) {
             const pgMarker = textAndMarkers.parallelMarkers[i];

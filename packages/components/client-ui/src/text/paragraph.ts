@@ -594,7 +594,7 @@ export function isReference(marker: MergeTree.Marker) {
 export function segmentToItems(
     segment: MergeTree.ISegment, segpos: number, refSeq: number, clientId: number,
     start: number, end: number, context: IItemsContext) {
-    if (MergeTree.TextSegment.is(segment)) {
+    if (MergeTree.TextSegment.Is(segment)) {
         context.paragraphLexer.lex(segment);
     } else if (MergeTree.Marker.is(segment)) {
         if (isReference(segment)) {

@@ -31,7 +31,7 @@ export class IntelligentServicesManager {
                         const output = this.documentInsights.get(this.sharedString.id) as ISharedMap;
 
                         // Run the shared services
-                        const text = this.sharedString.client.getText();
+                        const text = this.sharedString.getText();
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);
                             return output.set(service.name, result);

@@ -13,12 +13,16 @@ import {
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
+
+    private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
+
     constructor(
         document: IComponentRuntime,
         public id: string,
         services?: ISharedObjectServices) {
 
         super(document, id, SharedStringExtension.Type, services);
+        this.mergeTreeTextHelper = new MergeTree.MergeTreeTextHelper(this.client.mergeTree);
     }
 
     /**
@@ -67,10 +71,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
             this.submitSequenceMessage(insertOp);
         }
         return insertOp;
-    }
-
-    public getText(start?: number, end?: number): string {
-        return this.client.getText(start, end);
     }
 
     /**
@@ -122,7 +122,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
-            const segment = MergeTree.TextSegment.make(text, props);
+            const segment = MergeTree.TextSegment.Make(text, props);
             const insertOp = this.client.insertSegmentLocal(start, segment);
             this.submitSequenceMessage(MergeTree.createGroupOp(removeOp, insertOp));
         }
@@ -183,8 +183,32 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
+    public getTextAndMarkers(label: string) {
+        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        return this.mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
+    }
+    public getText(start?: number, end?: number) {
+        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
+    }
+    /**
+     * Adds spaces for markers and components, so that position calculations account for them
+     */
+    public getTextWithPlaceholders() {
+        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
+    }
+    public getTextRangeWithPlaceholders(start: number, end: number) {
+        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
+    }
+    public getTextRangeWithMarkers(start: number, end: number) {
+        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
+    }
+
     public segmentFromSpec(spec: any) {
-        const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
+        const maybeText = MergeTree.TextSegment.FromJSONObject(spec);
         if (maybeText) { return maybeText; }
 
         const maybeMarker = MergeTree.Marker.fromJSONObject(spec);

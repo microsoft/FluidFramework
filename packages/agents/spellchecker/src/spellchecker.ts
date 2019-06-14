@@ -81,7 +81,7 @@ class Speller {
                         }
                     }
                 }
-            } else if (MergeTree.TextSegment.is(segment)) {
+            } else if (MergeTree.TextSegment.Is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     pgText += segment.text;
                 }

@@ -1,12 +1,12 @@
 import * as assert from "assert";
-import { TextSegment } from "../mergeTree";
+import { TextSegment } from "..";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { TestClient } from "./testClient";
 
 describe("MergeTree.markRangeRemoved", () => {
     let client: TestClient;
     beforeEach(() => {
-        client = new TestClient("");
+        client = new TestClient();
         client.startCollaboration("local");
         for (const char of "hello world") {
             client.applyMsg(
@@ -53,7 +53,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         client.applyMsg(
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.make("text")),
+                createInsertSegmentOp(0, TextSegment.Make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote"));
@@ -72,7 +72,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         const insertMsg =
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.make("text")),
+                createInsertSegmentOp(0, TextSegment.Make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote");
@@ -86,7 +86,7 @@ describe("MergeTree.markRangeRemoved", () => {
     it("remote insert followed by remote remove", () => {
         const insertMsg =
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.make("text")),
+                createInsertSegmentOp(0, TextSegment.Make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote");

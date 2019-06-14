@@ -12,7 +12,7 @@ describe("SequenceDeltaEvent", () => {
     let client: TestClient;
 
     beforeEach(() => {
-        client = new TestClient("");
+        client = new TestClient();
         client.startCollaboration(localUserLongId);
     });
 

@@ -1,9 +1,11 @@
 // tslint:disable
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { ClientSeq, compareNumbers, clientSeqComparer } from "../mergeTree";
+import { ClientSeq, compareNumbers, clientSeqComparer, IncrementalMapState, ISegment, MergeTree, IncrementalExecOp } from "../mergeTree";
 import * as Collections from "../collections";
 import * as Properties from "../properties";
 import { TestClient } from "./testClient";
+import { MergeTreeTextHelper, TextSegment } from "../textSegment";
+import { IIntegerRange } from "..";
 
 /**
  * Server for tests.  Simulates client communication by directing placing
@@ -15,8 +17,8 @@ export class TestServer extends TestClient {
     listeners: TestClient[]; // listeners do not generate edits
     clientSeqNumbers: Collections.Heap<ClientSeq>;
     upstreamMap: Collections.RedBlackTree<number, number>;
-    constructor(initText: string, options?: Properties.PropertySet) {
-        super(initText, options);
+    constructor(options?: Properties.PropertySet) {
+        super(options);
     }
     addUpstreamClients(upstreamClients: TestClient[]) {
         // assumes addClients already called
@@ -116,6 +118,53 @@ export class TestServer extends TestClient {
         }
         return false;
     }
+    public incrementalGetText(start?: number, end?: number) {
+        const range: IIntegerRange = {start, end};
+        if (range.start === undefined) {
+            range.start = 0;
+        }
+        if (range.end === undefined) {
+            range.end = this.getLength();
+        }
+        const context = new TextSegment("");
+        const stack = new Collections.Stack<IncrementalMapState<TextSegment>>();
+        const initialState = new IncrementalMapState(
+            this.mergeTree.root,
+            { leaf: incrementalGatherText },
+            0,
+            this.getCurrentSeq(),
+            this.getClientId(),
+            context,
+            range.start,
+            range.end,
+            0);
+        stack.push(initialState);
+
+        while (!stack.empty()) {
+            this.mergeTree.incrementalBlockMap(stack);
+        }
+        return context.text;
+    }
+}
+
+function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
+    if (TextSegment.Is(segment)) {
+        if (MergeTree.traceGatherText) {
+            console.log(
+                `@cli ${state.clientId ? state.clientId : -1} ` +
+                `gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
+        }
+        if ((state.start <= 0) && (state.end >= segment.text.length)) {
+            state.context.text += segment.text;
+        } else {
+            if (state.end >= segment.text.length) {
+                state.context.text += segment.text.substring(state.start);
+            } else {
+                state.context.text += segment.text.substring(state.start, state.end);
+            }
+        }
+    }
+    state.op = IncrementalExecOp.Go;
 }
 
 /**
@@ -124,7 +173,7 @@ export class TestServer extends TestClient {
 export function checkTextMatchRelative(refSeq: number, clientId: number, server: TestServer,
     msg: ISequencedDocumentMessage) {
     let client = server.clients[clientId];
-    let serverText = server.mergeTree.getText(refSeq, clientId);
+    let serverText = new MergeTreeTextHelper(server.mergeTree).getText(refSeq, clientId);
     let cliText = client.checkQ.dequeue();
     if ((cliText === undefined) || (cliText != serverText)) {
         console.log(`mismatch `);

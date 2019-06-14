@@ -44,15 +44,15 @@ class Sequence extends DatastoreDocument {
             div.innerHTML = html;
 
             const textElement = div.querySelector(".sequence-text") as HTMLDivElement;
-            textElement.innerText = text.client.getText();
+            textElement.innerText = text.getText();
 
             // Update the text after being loaded as well as when receiving ops
             text.loaded.then(() => {
-                textElement.innerText = text.client.getText();
+                textElement.innerText = text.getText();
             });
 
             text.on("op", (msg) => {
-                textElement.innerText = text.client.getText();
+                textElement.innerText = text.getText();
             });
 
             const insertElement = div.querySelector(".sequence-insert-form") as HTMLFormElement;
@@ -68,7 +68,7 @@ class Sequence extends DatastoreDocument {
             };
         } else {
             text.on("op", () => {
-                console.log(`WOOOTEXT----Text: ${text.client.getText()}`);
+                console.log(`WOOOTEXT----Text: ${text.getText()}`);
             });
         }
     }

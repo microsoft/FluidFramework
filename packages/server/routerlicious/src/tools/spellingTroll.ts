@@ -137,7 +137,7 @@ class Speller {
                         }
                     }
                 }
-            } else if (TextSegment.is(segment)) {
+            } else if (TextSegment.Is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     pgText += segment.text;
                 }
@@ -187,7 +187,7 @@ class Speller {
                 if (segment.hasTileLabel("pg")) {
                     return false;
                 }
-            } else if (TextSegment.is(segment)) {
+            } else if (TextSegment.Is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
                         words = segment.text + words;
@@ -215,7 +215,7 @@ class Speller {
                 if (segment.hasTileLabel("pg")) {
                     return false;
                 }
-            } else if (TextSegment.is(segment)) {
+            } else if (TextSegment.Is(segment)) {
                 if (mergeTree.localNetLength(segment)) {
                     if (!wordsFound) {
                         fwdWords = fwdWords + segment.text;

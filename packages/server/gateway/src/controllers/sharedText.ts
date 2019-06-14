@@ -145,7 +145,7 @@ async function loadDocument(
         const starterText = template ? await downloadRawText(template) : " ";
         const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (MergeTree.TextSegment.is(segment)) {
+            if (MergeTree.TextSegment.Is(segment)) {
                 newString.insertText(segment.text, newString.client.getLength(),
                 segment.properties);
             } else {

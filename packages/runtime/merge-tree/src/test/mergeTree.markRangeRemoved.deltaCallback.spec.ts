@@ -1,7 +1,10 @@
 import * as assert from "assert";
 import {
+    LocalClientId,
     MergeTree,
+    TextSegment,
     UnassignedSequenceNumber,
+    UniversalSequenceNumber,
 } from "..";
 
 describe("MergeTree", () => {
@@ -10,7 +13,14 @@ describe("MergeTree", () => {
     let currentSequenceNumber: number;
     const branchId = 0;
     beforeEach(() => {
-        mergeTree = new MergeTree("hello world!");
+        mergeTree = new MergeTree();
+        mergeTree.insertSegments(
+            0,
+            [TextSegment.Make("hello world!")],
+            UniversalSequenceNumber,
+            LocalClientId,
+            UniversalSequenceNumber,
+            undefined);
         currentSequenceNumber = 0;
         mergeTree.startCollaboration(
             localClientId,

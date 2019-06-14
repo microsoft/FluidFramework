@@ -1,7 +1,15 @@
 // tslint:disable: no-object-literal-type-assertion max-func-body-length
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
-import { BaseSegment, Marker, MergeTree, UnassignedSequenceNumber } from "../mergeTree";
+import { TextSegment } from "..";
+import {
+    BaseSegment,
+    LocalClientId,
+    Marker,
+    MergeTree,
+    UnassignedSequenceNumber,
+    UniversalSequenceNumber ,
+} from "../mergeTree";
 import { ICombiningOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 
 describe("MergeTree", () => {
@@ -21,7 +29,15 @@ describe("MergeTree", () => {
     const splitPos = Math.floor((annotateEnd - annotateStart) / 2) + annotateStart;
 
     beforeEach(() => {
-        mergeTree = new MergeTree("hello world!");
+        mergeTree = new MergeTree();
+        mergeTree.insertSegments(
+            0,
+            [TextSegment.Make("hello world!")],
+            UniversalSequenceNumber,
+            LocalClientId,
+            UniversalSequenceNumber,
+            undefined);
+
         currentSequenceNumber = 0;
         mergeTree.insertSegments(
             markerPosition,

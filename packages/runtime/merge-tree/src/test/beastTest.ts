@@ -10,6 +10,7 @@ import * as random from "random-js";
 import * as MergeTree from "..";
 import * as Base from "../base";
 import { createRemoveRangeOp } from "../opBuilder";
+import { TextSegment } from "../textSegment";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import {
@@ -198,13 +199,13 @@ let accumTime = 0;
 
 function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textSegment: MergeTree.TextSegment,
     verbose = false) {
-    let checkText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    let checkText = new MergeTree.MergeTreeTextHelper(mergeTree).getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     checkText = editFlat(checkText, pos, 0, textSegment.text);
     let clockStart = clock();
     insertText(mergeTree, pos, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber,
         textSegment.text, undefined, undefined);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    let updatedText = new MergeTree.MergeTreeTextHelper(mergeTree).getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${checkText}`);
@@ -214,12 +215,13 @@ function checkInsertMergeTree(mergeTree: MergeTree.MergeTree, pos: number, textS
 }
 
 function checkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    let origText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    const helper = new MergeTree.MergeTreeTextHelper(mergeTree);
+    let origText = helper.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
     mergeTree.removeRange(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    let updatedText = helper.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${origText}`);
@@ -230,12 +232,13 @@ function checkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end
 }
 
 function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
-    let origText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    const helper = new MergeTree.MergeTreeTextHelper(mergeTree);
+    let origText = helper.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let checkText = editFlat(origText, start, end - start);
     let clockStart = clock();
     mergeTree.markRangeRemoved(start, end, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, false, undefined);
     accumTime += elapsedMicroseconds(clockStart);
-    let updatedText = mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
+    let updatedText = helper.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let result = (checkText == updatedText);
     if ((!result) && verbose) {
         console.log(`mismatch(o): ${origText}`);
@@ -246,7 +249,8 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
 }
 
 export function mergeTreeTest1() {
-    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
+    let mergeTree = new MergeTree.MergeTree();
+    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
@@ -258,13 +262,14 @@ export function mergeTreeTest1() {
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let segoff = mergeTree.getContainingSegment(4, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     console.log(mergeTree.getOffset(segoff.segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
-    console.log(mergeTree.getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
+    console.log(new MergeTree.MergeTreeTextHelper(mergeTree).getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
     console.log(mergeTree.toString());
     TestPack().firstTest();
 }
 
 export function mergeTreeLargeTest() {
-    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
+    let mergeTree = new MergeTree.MergeTree();
+    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     const insertCount = 1000000;
     const removeCount = 980000;
     let mt = random.engines.mt19937();
@@ -326,7 +331,8 @@ export function mergeTreeLargeTest() {
 }
 
 export function mergeTreeCheckedTest() {
-    let mergeTree = new MergeTree.MergeTree("the cat is on the mat");
+    let mergeTree = new MergeTree.MergeTree();
+    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     const insertCount = 2000;
     const removeCount = 1400;
     const largeRemoveCount = 20;
@@ -571,7 +577,7 @@ export function TestPack(verbose = true) {
         const mergeTreeCount = 2000000;
         let a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
         for (let i = 0; i < mergeTreeCount; i++) {
-            a[i] = new MergeTree.MergeTree("");
+            a[i] = new MergeTree.MergeTree();
         }
         for (; ;);
     }
@@ -586,7 +592,8 @@ export function TestPack(verbose = true) {
         if (!startFile) {
             initString = "don't ask for whom the bell tolls; it tolls for thee";
         }
-        let server = new TestServer(initString);
+        let server = new TestServer();
+        server.insertTextLocal(0, initString);
         server.measureOps = true;
         if (startFile) {
             loadTextFromFile(startFile, server.mergeTree, fileSegCount);
@@ -594,7 +601,8 @@ export function TestPack(verbose = true) {
 
         let clients = new Array<TestClient>(clientCount);
         for (let i = 0; i < clientCount; i++) {
-            clients[i] = new TestClient(initString);
+            clients[i] = new TestClient();
+            clients[i].insertTextLocal(0, initString);
             clients[i].measureOps = true;
             if (startFile) {
                 loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);
@@ -603,10 +611,6 @@ export function TestPack(verbose = true) {
         }
         server.startCollaboration("theServer");
         server.addClients(clients);
-        function incrGetText(client: MergeTree.Client) {
-            let collabWindow = client.mergeTree.getCollabWindow();
-            return client.mergeTree.incrementalGetText(collabWindow.currentSeq, collabWindow.clientId);
-        }
 
         function checkTextMatch() {
             //console.log(`checking text match @${server.getCurrentSeq()}`);
@@ -616,7 +620,7 @@ export function TestPack(verbose = true) {
             getTextCalls++;
             if (checkIncr) {
                 clockStart = clock();
-                let serverIncrText = incrGetText(server);
+                let serverIncrText = server.incrementalGetText();
                 incrGetTextTime += elapsedMicroseconds(clockStart);
                 incrGetTextCalls++;
                 if (serverIncrText != serverText) {
@@ -937,9 +941,11 @@ export function TestPack(verbose = true) {
         let insertRounds = 40;
         let removeRounds = 32;
 
-        let cliA = new TestClient("a stitch in time saves nine");
+        let cliA = new TestClient();
+        cliA.insertTextLocal(0, "a stitch in time saves nine");
         cliA.startCollaboration("FredA");
-        let cliB = new TestClient("a stitch in time saves nine");
+        let cliB = new TestClient();
+        cliB.insertTextLocal(0, "a stitch in time saves nine");
         cliB.startCollaboration("FredB");
         function checkTextMatch(checkSeq: number) {
             let error = false;
@@ -1092,7 +1098,8 @@ export function TestPack(verbose = true) {
 
     let clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
     function firstTest() {
-        let cli = new TestClient("on the mat.");
+        let cli = new TestClient();
+        cli.insertTextLocal(0, "on the mat.");
         cli.startCollaboration("Fred1");
         for (let cname of clientNames) {
             cli.addLongClientId(cname, null);
@@ -1144,7 +1151,8 @@ export function TestPack(verbose = true) {
                 console.log(`${specToSegment(seg)}`);
             }
         }
-        cli = new TestClient(" old sock!");
+        cli = new TestClient();
+        cli.insertTextLocal(0, " old sock!");
         cli.startCollaboration("Fred2");
         for (let cname of clientNames) {
             cli.addLongClientId(cname, null);
@@ -1174,7 +1182,8 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli = new TestClient("abcdefgh");
+        cli = new TestClient();
+        cli.insertTextLocal(0, "abcdefgh");
         cli.startCollaboration("Fred3");
         for (let cname of clientNames) {
             cli.addLongClientId(cname, null);
@@ -1595,7 +1604,7 @@ export class DocumentTree {
     }
 
     private generateClient() {
-        let client = new TestClient("", { blockUpdateMarkers: true });
+        let client = new TestClient({ blockUpdateMarkers: true });
         client.startCollaboration("Fred");
         for (let child of this.children) {
             this.addToMergeTree(client, child);
@@ -1660,7 +1669,7 @@ export class DocumentTree {
 }
 
 function findReplacePerf(filename: string) {
-    let client = new TestClient("", { blockUpdateMarkers: true });
+    let client = new TestClient({ blockUpdateMarkers: true });
     loadTextFromFile(filename, client.mergeTree);
 
     let clockStart = clock();

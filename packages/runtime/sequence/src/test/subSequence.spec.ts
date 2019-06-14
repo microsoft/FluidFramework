@@ -9,8 +9,7 @@ const verbose = true;
 
 class SubSequenceTestClient extends TestClient {
     constructor() {
-        super("",
-            undefined,
+        super(undefined,
             (spec) =>  SubSequence.fromJSONObject(spec));
     }
 
@@ -41,7 +40,7 @@ class SubSequenceTestClient extends TestClient {
             0,
             this.getLength(),
             (s) => {
-                if (s instanceof SubSequence) {
+                if (SubSequence.is(s)) {
                     items += s.items.toString();
                 }
             });

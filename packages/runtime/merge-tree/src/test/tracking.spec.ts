@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as MergeTree from "../mergeTree";
 import { TrackingGroup } from "../mergeTreeTracking";
+import { TextSegment } from "../textSegment";
 
 describe("MergeTree.tracking", () => {
     const localClientId = 43;
@@ -9,7 +10,7 @@ describe("MergeTree.tracking", () => {
 
     beforeEach(() => {
         referenceSequenceNumber = 0;
-        mergeTree = new MergeTree.MergeTree("");
+        mergeTree = new MergeTree.MergeTree();
         mergeTree.startCollaboration(localClientId, referenceSequenceNumber, 0);
     });
 
@@ -17,7 +18,7 @@ describe("MergeTree.tracking", () => {
         () => {
             mergeTree.insertSegments(
                 0,
-                [MergeTree.TextSegment.make("abc")],
+                [TextSegment.Make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -42,7 +43,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 0,
-                [MergeTree.TextSegment.make("abc")],
+                [TextSegment.Make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -69,7 +70,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 0,
-                [MergeTree.TextSegment.make("abc")],
+                [TextSegment.Make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -80,7 +81,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 1,
-                [MergeTree.TextSegment.make("z")],
+                [TextSegment.Make("z")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,

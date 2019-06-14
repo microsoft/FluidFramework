@@ -357,11 +357,10 @@ function addNodeReferences(mergeTree: MergeTree, node: IMergeNode,
                     }
                 }
             } else {
-                // TODO: generalize to other segment types
-                const textSegment = node as TextSegment;
-                if (textSegment.localRefs && (textSegment.hierRefCount !== undefined) &&
-                    (textSegment.hierRefCount > 0)) {
-                    for (let lref of textSegment.localRefs) {
+                const baseSegment = node as BaseSegment;
+                if (baseSegment.localRefs && (baseSegment.hierRefCount !== undefined) &&
+                    (baseSegment.hierRefCount > 0)) {
+                    for (let lref of baseSegment.localRefs) {
                         if (lref.refType & ops.ReferenceType.Tile) {
                             addTile(lref, rightmostTiles);
                             addTileIfNotPresent(lref, leftmostTiles);
@@ -818,7 +817,7 @@ export interface IJSONMarkerSegment extends ops.IJSONSegment {
 export class Marker extends BaseSegment implements ReferencePosition {
     public static readonly type = "Marker";
     public static is(segment: ISegment): segment is Marker {
-        return segment !== undefined && segment.type === Marker.type;
+        return segment.type === Marker.type;
     }
     public readonly type = Marker.type;
 
@@ -981,134 +980,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     append() { throw new Error("Can not append to marker"); }
 }
 
-export interface IJSONTextSegment extends ops.IJSONSegment {
-    text: string;
-}
-
-export class TextSegment extends BaseSegment {
-    public static readonly type = "TextSegment";
-
-    public static is(segment: ISegment): segment is TextSegment {
-        return segment !== undefined && segment.type === TextSegment.type;
-    }
-
-    public readonly type = TextSegment.type;
-
-    public static make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
-        let tseg = new TextSegment(text, seq, clientId);
-        if (props) {
-            tseg.addProperties(props);
-        }
-        return tseg;
-    }
-
-    constructor(public text: string, seq?: number, clientId?: number) {
-        super(seq, clientId);
-        this.cachedLength = text.length;
-    }
-
-    toJSONObject() {
-        // To reduce snapshot/ops size, we serialize a TextSegment as a plain 'string' if it is
-        // not annotated.
-        return this.properties
-            ? { text: this.text, props: this.properties }
-            : this.text;
-    }
-
-    static fromJSONObject(spec: any) {
-        if (typeof spec === "string") {
-            return new TextSegment(spec, UniversalSequenceNumber, LocalClientId);
-        }
-        else if (spec && typeof spec === "object" && "text" in spec) {
-            return TextSegment.make(spec.text, spec.props as Properties.PropertySet,
-                UniversalSequenceNumber,
-                LocalClientId);
-        }
-        return undefined;
-    }
-
-    protected createSplitSegmentAt(pos: number) {
-        if (pos > 0) {
-            let remainingText = this.text.substring(pos);
-            this.text = this.text.substring(0, pos);
-            this.cachedLength = this.text.length;
-            let leafSegment = new TextSegment(remainingText, this.seq, this.clientId);
-            return leafSegment;
-        }
-    }
-
-    clone(start = 0, end?: number) {
-        let text = this.text;
-        if (end === undefined) {
-            text = text.substring(start);
-        } else {
-            text = text.substring(start, end);
-        }
-        let b = TextSegment.make(text, this.properties, this.seq, this.clientId);
-        this.cloneInto(b);
-        return b;
-    }
-
-
-    canAppend(segment: ISegment) {
-        return this.text.charAt(this.text.length - 1) !== '\n'
-            && TextSegment.is(segment)
-            && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
-                segment.cachedLength <= MergeTree.TextSegmentGranularity);
-    }
-
-    toString() {
-        return this.text;
-    }
-
-    append(segment: ISegment) {
-        if (TextSegment.is(segment)) {
-            // Note: Must call 'appendLocalRefs' before modifying this segment's length as
-            //'this.cachedLength' is used to adjust the offsets of the local refs.
-            this.appendLocalRefs(segment);
-            this.text += segment.text;
-            this.cachedLength = this.text.length;
-        } else {
-            throw new Error("can only append text segment");
-        }
-    }
-
-    // TODO: retain removed text for undo
-    // returns true if entire string removed
-    removeRange(start: number, end: number) {
-        let remnantString = "";
-        let len = this.text.length;
-        if (start > 0) {
-            remnantString += this.text.substring(0, start);
-        }
-        if (end < len) {
-            remnantString += this.text.substring(end);
-        }
-        this.text = remnantString;
-        this.cachedLength = remnantString.length;
-        return (remnantString.length == 0);
-    }
-}
-
-function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-    if (TextSegment.is(segment)) {
-        if (MergeTree.traceGatherText) {
-            console.log(`@cli ${state.clientId ? state.clientId : -1} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
-        }
-        if ((state.start <= 0) && (state.end >= segment.text.length)) {
-            state.context.text += segment.text;
-        }
-        else {
-            if (state.end >= segment.text.length) {
-                state.context.text += segment.text.substring(state.start);
-            }
-            else {
-                state.context.text += segment.text.substring(state.start, state.end);
-            }
-        }
-    }
-    state.op = IncrementalExecOp.Go;
-}
 
 export enum IncrementalExecOp {
     Go,
@@ -1885,7 +1756,7 @@ var LRUSegmentComparer: Collections.Comparer<LRUSegment> = {
     compare: (a, b) => a.maxSeq - b.maxSeq
 }
 
-function glc(mergeTree: MergeTree, id: number) {
+export function glc(mergeTree: MergeTree, id: number) {
     if (mergeTree.getLongClientId) {
         return mergeTree.getLongClientId(id);
     }
@@ -1898,15 +1769,6 @@ export interface SegmentAccumulator {
     segments: ISegment[];
 }
 
-export interface TextAccumulator {
-    textSegment: TextSegment;
-    placeholder?: string;
-    parallelArrays?: boolean;
-    parallelText?: string[];
-    parallelMarkers?: Marker[];
-    parallelMarkerLabel?: string;
-    tagsInProgress: string[];
-}
 
 interface IReferenceSearchInfo {
     mergeTree: MergeTree;
@@ -2062,7 +1924,7 @@ export class MergeTree {
     mergeTreeDeltaCallback: MergeTreeDeltaCallback;
 
     // TODO: make and use interface describing options
-    constructor(public text: string, public options?: Properties.PropertySet) {
+    constructor(public options?: Properties.PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         if (options) {
             if (options.blockUpdateMarkers) {
@@ -2072,7 +1934,7 @@ export class MergeTree {
                 this.collabWindow.localMinSeq = options.localMinSeq;
             }
         }
-        this.root = this.initialTextNode(this.text);
+        this.root = this.initialNode();
     }
 
     private makeBlock(childCount: number) {
@@ -2087,11 +1949,9 @@ export class MergeTree {
         return block;
     }
 
-    private initialTextNode(text: string) {
-        let block = this.makeBlock(1);
-        block.ordinal = "";
-        block.assignChild(new TextSegment(text, UniversalSequenceNumber, LocalClientId), 0);
-        block.cachedLength = text.length;
+    private initialNode() {
+        let block = this.makeBlock(0);
+        block.cachedLength = 0
         return block;
     }
 
@@ -2100,7 +1960,7 @@ export class MergeTree {
             blockUpdateMarkers: this.blockUpdateMarkers,
             localMinSeq: this.collabWindow.localMinSeq
         };
-        let b = new MergeTree("", options);
+        let b = new MergeTree(options);
         // for now assume that b will not collaborate
         b.root = b.blockClone(this.root);
     }
@@ -2269,7 +2129,7 @@ export class MergeTree {
                         }
                         else {
                             if (MergeTree.traceZRemove) {
-                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${(<TextSegment>segment).text}; cli ${this.getLongClientId(segment.clientId)}`);
+                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
                             }
                             segment.parent = undefined;
                         }
@@ -2287,7 +2147,7 @@ export class MergeTree {
 
                             if (canAppend) {
                                 if (MergeTree.traceAppend) {
-                                    console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${(<TextSegment>prevSegment).text} + ${(<TextSegment>segment).text}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
+                                    console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${prevSegment["text"]} + ${segment["text"]}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
                                 }
                                 prevSegment.append(segment);
                                 segment.parent = undefined;
@@ -2549,177 +2409,24 @@ export class MergeTree {
         return totalOffset;
     }
 
-    private gatherSegment = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accumSegments: SegmentAccumulator) => {
-        if (start < 0) {
-            start = 0;
-        }
-        if (end > segment.cachedLength) {
-            end = segment.cachedLength;
-        }
-        if (TextSegment.is(segment)) {
-            accumSegments.segments.push(segment.clone(start, end));
-        } else {
-            const marker = segment as Marker;
-            accumSegments.segments.push(marker.clone());
-        }
-        return true;
-    }
-
-    private gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
-        end: number, accumText: TextAccumulator) => {
-        if (TextSegment.is(segment)) {
-            if (MergeTree.traceGatherText) {
-                console.log(`@cli ${this.getLongClientId(this.collabWindow.clientId)} gather seg seq ${segment.seq} rseq ${segment.removedSeq} text ${segment.text}`);
-            }
-            let beginTags = "";
-            let endTags = "";
-            if (accumText.parallelArrays) {
-                // TODO: let clients pass in function to get tag
-                let tags = <string[]>[];
-                let initTags = <string[]>[];
-
-                if (segment.properties && (segment.properties["font-weight"])) {
-                    tags.push("b");
-                }
-                if (segment.properties && (segment.properties["text-decoration"])) {
-                    tags.push("u");
-                }
-                let remTags = <string[]>[];
-                if (tags.length > 0) {
-                    for (let tag of tags) {
-                        if (accumText.tagsInProgress.indexOf(tag) < 0) {
-                            beginTags += `<${tag}>`;
-                            initTags.push(tag);
-                        }
-                    }
-                    for (let accumTag of accumText.tagsInProgress) {
-                        if (tags.indexOf(accumTag) < 0) {
-                            endTags += `</${accumTag}>`;
-                            remTags.push(accumTag);
-                        }
-                    }
-                    for (let initTag of initTags.reverse()) {
-                        accumText.tagsInProgress.push(initTag);
-                    }
-                } else {
-                    for (let accumTag of accumText.tagsInProgress) {
-                        endTags += `</${accumTag}>`;
-                        remTags.push(accumTag);
-                    }
-                }
-                for (let remTag of remTags) {
-                    let remdex = accumText.tagsInProgress.indexOf(remTag);
-                    if (remdex >= 0) {
-                        accumText.tagsInProgress.splice(remdex, 1);
-                    }
-                }
-            }
-            accumText.textSegment.text += endTags;
-            accumText.textSegment.text += beginTags;
-            if ((start <= 0) && (end >= segment.text.length)) {
-                accumText.textSegment.text += segment.text;
-            }
-            else {
-                if (start < 0) {
-                    start = 0;
-                }
-                if (end >= segment.text.length) {
-                    accumText.textSegment.text += segment.text.substring(start);
-                }
-                else {
-                    accumText.textSegment.text += segment.text.substring(start, end);
-                }
-            }
-        }
-        else {
-            if (accumText.placeholder && (accumText.placeholder.length > 0)) {
-                if (accumText.placeholder === "*") {
-                    let marker = <Marker>segment;
-                    accumText.textSegment.text += `\n${marker.toString()}`;
-                } else {
-                    for (let i = 0; i < segment.cachedLength; i++) {
-                        accumText.textSegment.text += accumText.placeholder;
-                    }
-                }
-            } else if (accumText.parallelArrays) {
-                let marker = <Marker>segment;
-                if (marker.hasTileLabel(accumText.parallelMarkerLabel)) {
-                    accumText.parallelMarkers.push(marker);
-                    accumText.parallelText.push(accumText.textSegment.text);
-                    accumText.textSegment.text = "";
-                }
-
-            }
-        }
-
-        return true;
-    }
-
-    incrementalGetText(refSeq: number, clientId: number, start?: number, end?: number) {
-        if (start === undefined) {
-            start = 0;
-        }
-        if (end === undefined) {
-            end = this.blockLength(this.root, refSeq, clientId);
-        }
-        let context = new TextSegment("");
-        let stack = new Collections.Stack<IncrementalMapState<TextSegment>>();
-        let initialState = new IncrementalMapState(this.root, { leaf: incrementalGatherText },
-            0, refSeq, clientId, context, start, end, 0);
-        stack.push(initialState);
-
-        while (!stack.empty()) {
-            this.incrementalBlockMap(stack);
-        }
-        return context.text;
-    }
-
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number) {
-        if (start === undefined) {
-            start = 0;
-        }
-        if (end === undefined) {
-            end = this.blockLength(this.root, refSeq, clientId);
-        }
-        let accum = <TextAccumulator>{
-            textSegment: new TextSegment(""), parallelMarkerLabel: label, parallelArrays: true, parallelMarkers: [], parallelText: [],
-            tagsInProgress: []
-        };
-
-        if (MergeTree.traceGatherText) {
-            console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
-        }
-        this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
-        return { parallelText: accum.parallelText, parallelMarkers: accum.parallelMarkers };
-    }
-
     cloneSegments(refSeq: number, clientId: number, start = 0, end?: number) {
+
+        const gatherSegment = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
+            end: number, accumSegments: SegmentAccumulator) => {
+            accumSegments.segments.push(segment.clone());
+            return true;
+        }
+
         if (end === undefined) {
             end = this.blockLength(this.root, refSeq, clientId);
         }
         let accum = <SegmentAccumulator>{
             segments: <ISegment[]>[]
         };
-        this.mapRange<SegmentAccumulator>({ leaf: this.gatherSegment }, refSeq, clientId, accum, start, end);
+        this.mapRange<SegmentAccumulator>({ leaf: gatherSegment }, refSeq, clientId, accum, start, end);
         return accum.segments;
     }
 
-    getText(refSeq: number, clientId: number, placeholder = "", start?: number, end?: number) {
-        if (start === undefined) {
-            start = 0;
-        }
-        if (end === undefined) {
-            end = this.blockLength(this.root, refSeq, clientId);
-        }
-        let accum = <TextAccumulator>{ textSegment: new TextSegment(""), placeholder };
-
-        if (MergeTree.traceGatherText) {
-            console.log(`get text on cli ${glc(this, this.collabWindow.clientId)} ref cli ${glc(this, clientId)} refSeq ${refSeq}`);
-        }
-        this.mapRange<TextAccumulator>({ leaf: this.gatherText }, refSeq, clientId, accum, start, end);
-        return accum.textSegment.text;
-    }
 
     getContainingSegment(pos: number, refSeq: number, clientId: number) {
         let segment: ISegment;
@@ -3981,7 +3688,7 @@ export class MergeTree {
         return this.nodeToString(this.root, "", 0);
     }
 
-    private incrementalBlockMap<TContext>(stateStack: Collections.Stack<IncrementalMapState<TContext>>) {
+    public incrementalBlockMap<TContext>(stateStack: Collections.Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             let state = stateStack.top();
             if (state.op != IncrementalExecOp.Go) {
@@ -4004,7 +3711,7 @@ export class MergeTree {
                 let len = this.nodeLength(child, state.refSeq, state.clientId);
                 if (MergeTree.traceIncrTraversal) {
                     if (child.isLeaf()) {
-                        console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${(<TextSegment>child).text} len ${len} seq ${(<ISegment>child).seq} rseq ${(<ISegment>child).removedSeq} cli ${glc(this, (<ISegment>child).clientId)}`);
+                        console.log(`considering (r ${state.refSeq} c ${glc(this, state.clientId)}) seg with text ${child["text"]} len ${len} seq ${(<ISegment>child).seq} rseq ${(<ISegment>child).removedSeq} cli ${glc(this, (<ISegment>child).clientId)}`);
                     }
                 }
                 if ((len > 0) && (state.start < len) && (state.end > 0)) {
@@ -4015,7 +3722,7 @@ export class MergeTree {
                     }
                     else {
                         if (MergeTree.traceIncrTraversal) {
-                            console.log(`action on seg with text ${(<TextSegment>child).text}`);
+                            console.log(`action on seg with text ${child["text"]}`);
                         }
                         state.actions.leaf(<ISegment>child, state);
                     }

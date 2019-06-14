@@ -819,7 +819,7 @@ function renderSegmentIntoLine(
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
-    if (MergeTree.TextSegment.is(segment)) {
+    if (MergeTree.TextSegment.Is(segment)) {
         if (lineContext.mathMode) {
             // will be whole segment
             // TODO: show math box if cursor in math
@@ -1202,7 +1202,7 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         const computedEnd = lineEnd;
         const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
         const comments = flowView.commentsView.findOverlappingIntervals(lineStart, computedEnd);
-        const lineText = client.getText(lineStart, computedEnd);
+        const lineText = flowView.sharedString.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
             showBookmark(undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
                 computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
@@ -1551,7 +1551,7 @@ function showCell(pos: number, flowView: FlowView) {
         const end = getOffset(flowView, endMarker) + 1;
         // tslint:disable:max-line-length
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
-        console.log(`cell contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
+        console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
 }
 
@@ -1565,7 +1565,7 @@ function showTable(pos: number, flowView: FlowView) {
         const endMarker = tableMarker.table.endTableMarker;
         const end = getOffset(flowView, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
-        console.log(`table contents: ${flowView.client.getTextRangeWithMarkers(start, end)}`);
+        console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
 }
 
@@ -2960,7 +2960,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordBackward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.is(segment)) {
+            if (MergeTree.TextSegment.Is(segment)) {
                 const innerOffset = segment.text.length - 1;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordStart < maxWord.wordEnd) {
@@ -2977,7 +2977,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordForward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.is(segment)) {
+            if (MergeTree.TextSegment.Is(segment)) {
                 const innerOffset = 0;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordEnd > innerOffset) {
@@ -2992,7 +2992,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const segoff = mergeTree.getContainingSegment(pos,
         MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
-    if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
+    if (segoff.segment && (MergeTree.TextSegment.Is(segoff.segment))) {
         const maxWord = maximalWord(segoff.segment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
             const segStartPos = pos - segoff.offset;
@@ -3625,7 +3625,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
 
         // Estimate placement location
-        const text = this.client.getText(lineDiv.linePos, position);
+        const text = this.sharedString.getText(lineDiv.linePos, position);
         const textWidth = domutils.getTextWidth(text, lineDiv.style.font);
         const lineDivRect = lineDiv.getBoundingClientRect();
 
@@ -4793,7 +4793,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
-        if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
+        if (segoff.segment && MergeTree.TextSegment.Is((segoff.segment))) {
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
     }
@@ -4859,7 +4859,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
-            if (MergeTree.TextSegment.is(segment)) {
+            if (MergeTree.TextSegment.Is(segment)) {
                 if (segment.properties && segment.properties[name] === valueOn) {
                     someSet = true;
                 }
@@ -4908,7 +4908,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public geocodeAddress() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            const text = this.client.getText(sel.start, sel.end);
+            const text = this.sharedString.getText(sel.start, sel.end);
             Geocoder.geocode(text, (err, data) => console.log(data),
                 { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
         }
@@ -4917,7 +4917,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public showKatex() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            const text = this.client.getText(sel.start, sel.end);
+            const text = this.sharedString.getText(sel.start, sel.end);
             const html = Katex.renderToString(text, { throwOnError: false });
             this.statusMessage("math", html);
         }
@@ -4928,7 +4928,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.cursor.pos + 1);
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
-            const commentText = commentInterval.properties["story"].client.getText();
+            const commentText = commentInterval.properties["story"].getText();
             this.statusMessage("comment", "Comment Text: " + commentText);
             setTimeout(() => {
                 this.status.remove("comment");
@@ -5438,7 +5438,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public testWordInfo() {
-        const text = this.sharedString.client.getText();
+        const text = this.sharedString.getText();
         const nonWhitespace = text.split(/\s+/g);
         console.log(`non ws count: ${nonWhitespace.length}`);
         const obj = new Object();
@@ -5858,7 +5858,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             if (MergeTree.Marker.is(range.segment)) {
                 const marker = range.segment as MergeTree.Marker;
                 this.updatePGInfo(range.offset - 1);
-            } else if (MergeTree.TextSegment.is(range.segment)) {
+            } else if (MergeTree.TextSegment.Is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
                     opCursorPos = range.offset;
                 } else {

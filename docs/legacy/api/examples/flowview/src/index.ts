@@ -57,7 +57,7 @@ async function run(id: string): Promise<void> {
         const starterText = " ";
         const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
-            if (MergeTree.TextSegment.is(segment)) {
+            if (MergeTree.TextSegment.Is(segment)) {
                 newString.insertText(segment.text, newString.client.getLength(),
                     segment.properties);
             } else {

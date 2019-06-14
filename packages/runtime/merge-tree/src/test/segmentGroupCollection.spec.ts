@@ -1,10 +1,11 @@
 import * as assert from "assert";
-import { ISegment,  TextSegment } from "../mergeTree";
+import { ISegment } from "../mergeTree";
+import { TextSegment } from "../textSegment";
 
 describe("segmentGroupCollection", () => {
     let segment: ISegment;
     beforeEach(() => {
-        segment = TextSegment.make("abc");
+        segment = TextSegment.Make("abc");
     });
     it(".empty", () => {
         assert(segment.segmentGroups.empty);
@@ -63,7 +64,7 @@ describe("segmentGroupCollection", () => {
             segment.segmentGroups.enqueue({ segments: [] });
         }
 
-        const segmentCopy = TextSegment.make("");
+        const segmentCopy = TextSegment.Make("");
         segment.segmentGroups.copyTo(segmentCopy);
 
         assert.equal(segment.segmentGroups.size, segmentGroupCount);

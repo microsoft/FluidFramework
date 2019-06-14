@@ -8,7 +8,7 @@ import { Snapshot } from "../snapshot";
 describe("snapshot", () => {
     it("header only", async () => {
 
-        const client1 = new TestClient("");
+        const client1 = new TestClient();
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
@@ -21,7 +21,7 @@ describe("snapshot", () => {
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new TestClient("");
+        const client2 = new TestClient(undefined, specToSegment);
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
@@ -34,7 +34,7 @@ describe("snapshot", () => {
 
     it("header and body", async () => {
 
-        const client1 = new TestClient("");
+        const client1 = new TestClient();
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk + 100; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
@@ -47,7 +47,7 @@ describe("snapshot", () => {
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new TestClient("");
+        const client2 = new TestClient(undefined, specToSegment);
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));

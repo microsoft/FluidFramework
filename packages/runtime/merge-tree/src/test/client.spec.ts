@@ -1,5 +1,7 @@
 import * as assert from "assert";
 import * as MergeTree from "..";
+import { UniversalSequenceNumber } from "../mergeTree";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 describe("TestClient", () => {
@@ -8,7 +10,14 @@ describe("TestClient", () => {
     let client: TestClient;
 
     beforeEach(() => {
-        client = new TestClient("");
+        client = new TestClient();
+        client.mergeTree.insertSegments(
+            0,
+            [TextSegment.Make("")],
+            UniversalSequenceNumber,
+            client.getClientId(),
+            UniversalSequenceNumber,
+            undefined);
         client.startCollaboration(localUserLongId);
     });
 

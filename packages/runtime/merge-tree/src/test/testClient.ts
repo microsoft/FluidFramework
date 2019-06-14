@@ -4,14 +4,19 @@ import * as assert from "assert";
 import * as random from "random-js";
 import { Client } from "../client";
 import * as Collections from "../collections";
-import { ISegment, Marker, TextSegment, UnassignedSequenceNumber } from "../mergeTree";
+import {
+    ISegment,
+    Marker,
+    UnassignedSequenceNumber,
+} from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IMarkerDef, IMergeTreeOp, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
+import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 export function specToSegment(spec: any) {
-    const maybeText = TextSegment.fromJSONObject(spec);
+    const maybeText = TextSegment.FromJSONObject(spec);
     if (maybeText) {
         return maybeText;
     }
@@ -40,12 +45,12 @@ export class TestClient extends Client {
     protected readonly q: Collections.List<ISequencedDocumentMessage> =
         Collections.ListMakeHead<ISequencedDocumentMessage>();
 
+    private readonly textHelper: MergeTreeTextHelper;
+
     constructor(
-        initText: string,
         options?: PropertySet,
         ...handlers: Array<(spec: any) => ISegment>) {
         super(
-            initText,
             (spec: any) => {
                 for (const handler of handlers.concat(specToSegment)) {
                     const segment = handler(spec);
@@ -56,6 +61,11 @@ export class TestClient extends Client {
             },
         DebugLogger.Create("prague:testClient"),
         options);
+        this.textHelper = new MergeTreeTextHelper(this.mergeTree);
+    }
+
+    public getText(start?: number, end?: number): string {
+        return this.textHelper.getText(this.getCurrentSeq(), this.getClientId(), "", start, end);
     }
 
     public enqueueTestString() {
@@ -148,7 +158,7 @@ export class TestClient extends Client {
     }
 
     public relText(clientId: number, refSeq: number) {
-        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.mergeTree.getText(refSeq, clientId)}`;
+        return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${this.textHelper.getText(refSeq, clientId)}`;
     }
 
     public makeOpMessage(

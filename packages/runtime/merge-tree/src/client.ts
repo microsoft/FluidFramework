@@ -46,14 +46,13 @@ export class Client {
     private readonly pendingConsensus = new Map<string, IConsensusInfo>();
 
     constructor(
-        initText: string,
         // Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
         // (See https://github.com/Microsoft/Prague/issues/1791).
         private readonly specToSegment: (spec: ops.IJSONSegment) => ISegment,
         private readonly logger: ITelemetryLogger,
         options?: Properties.PropertySet,
     ) {
-        this.mergeTree = new MergeTree(initText, options);
+        this.mergeTree = new MergeTree(options);
         this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
@@ -605,7 +604,7 @@ export class Client {
         return this.undoSingleSequenceNumber(this.redoSegments, this.undoSegments);
     }
     cloneFromSegments() {
-        let clone = new Client("", this.specToSegment, this.logger, this.mergeTree.options);
+        let clone = new Client(this.specToSegment, this.logger, this.mergeTree.options);
         let segments = <ISegment[]>[];
         let newRoot = this.mergeTree.blockClone(this.mergeTree.root, segments);
         clone.mergeTree.root = newRoot;
@@ -901,29 +900,7 @@ export class Client {
     getClientId() {
         return this.mergeTree.getCollabWindow().clientId;
     }
-    getTextAndMarkers(label: string) {
-        let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
-    }
-    getText(start?: number, end?: number) {
-        let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
-    }
-    /**
-     * Adds spaces for markers and components, so that position calculations account for them
-     */
-    getTextWithPlaceholders() {
-        let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
-    }
-    getTextRangeWithPlaceholders(start: number, end: number) {
-        let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
-    }
-    getTextRangeWithMarkers(start: number, end: number) {
-        let segmentWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
-    }
+
     getLength() {
         let segmentWindow = this.mergeTree.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);

@@ -1,8 +1,11 @@
 import * as assert from "assert";
 import {
     IMergeBlock,
+    LocalClientId,
     MaxNodesInBlock,
     MergeTree,
+    MergeTreeTextHelper,
+    TextSegment,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "..";
@@ -15,6 +18,7 @@ interface ITestTreeFactory {
 
 interface ITestData {
     readonly mergeTree: MergeTree;
+    readonly textHelper: MergeTreeTextHelper;
     readonly initialText: string;
     readonly middle: number;
     readonly refSeq: number;
@@ -26,7 +30,14 @@ const treeFactories: ITestTreeFactory[] = [
     {
         create: () => {
             const initialText = "hello world";
-            const mergeTree = new MergeTree(initialText);
+            const mergeTree = new MergeTree();
+            mergeTree.insertSegments(
+                0,
+                [TextSegment.Make(initialText)],
+                UniversalSequenceNumber,
+                LocalClientId,
+                UniversalSequenceNumber,
+                undefined);
             mergeTree.startCollaboration(
                 localClientId,
                 UniversalSequenceNumber,
@@ -36,6 +47,7 @@ const treeFactories: ITestTreeFactory[] = [
                 mergeTree,
                 middle: Math.round(initialText.length / 2),
                 refSeq: UniversalSequenceNumber,
+                textHelper: new MergeTreeTextHelper(mergeTree),
             };
         },
         name: "single segment tree",
@@ -43,7 +55,14 @@ const treeFactories: ITestTreeFactory[] = [
     {
         create: () => {
             let initialText = "0";
-            const mergeTree = new MergeTree(initialText);
+            const mergeTree = new MergeTree();
+            mergeTree.insertSegments(
+                0,
+                [TextSegment.Make(initialText)],
+                UniversalSequenceNumber,
+                LocalClientId,
+                UniversalSequenceNumber,
+                undefined);
             for (let i = 1; i < MaxNodesInBlock - 1; i++) {
                 const text = i.toString();
                 insertText(
@@ -58,8 +77,9 @@ const treeFactories: ITestTreeFactory[] = [
                 initialText += text;
             }
 
+            const textHelper = new MergeTreeTextHelper(mergeTree);
             assert.equal(
-                mergeTree.getText(UniversalSequenceNumber, localClientId),
+                textHelper.getText(UniversalSequenceNumber, localClientId),
                 initialText);
 
             const nodes: IMergeBlock[] = [mergeTree.root];
@@ -82,6 +102,7 @@ const treeFactories: ITestTreeFactory[] = [
                 mergeTree,
                 middle: Math.round(MaxNodesInBlock / 2),
                 refSeq: UniversalSequenceNumber,
+                textHelper,
             };
         },
         name: "Full single layer tree",
@@ -89,7 +110,14 @@ const treeFactories: ITestTreeFactory[] = [
     {
         create: () => {
             let initialText = "0";
-            const mergeTree = new MergeTree(initialText);
+            const mergeTree = new MergeTree();
+            mergeTree.insertSegments(
+                0,
+                [TextSegment.Make(initialText)],
+                UniversalSequenceNumber,
+                LocalClientId,
+                UniversalSequenceNumber,
+                undefined);
             for (let i = 1; i < MaxNodesInBlock * 4; i++) {
                 const text = i.toString();
                 insertText(
@@ -137,6 +165,7 @@ const treeFactories: ITestTreeFactory[] = [
                 mergeTree,
                 middle: Math.round(initialText.length / 2),
                 refSeq: UniversalSequenceNumber,
+                textHelper: new MergeTreeTextHelper(mergeTree),
             };
         },
         name: "Tree with remove segments",
@@ -171,7 +200,7 @@ describe("MergeTree.insertingWalk", () => {
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
                         testData.initialText.length + 1);
-                    const currentValue = testData.mergeTree.getText(
+                    const currentValue = testData.textHelper.getText(
                         testData.refSeq,
                         localClientId);
                     assert.equal(currentValue.length, testData.initialText.length + 1);
@@ -192,7 +221,7 @@ describe("MergeTree.insertingWalk", () => {
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
                         testData.initialText.length + 1);
-                    const currentValue = testData.mergeTree.getText(
+                    const currentValue = testData.textHelper.getText(
                         testData.refSeq,
                         localClientId);
                     assert.equal(currentValue.length, testData.initialText.length + 1);
@@ -213,7 +242,7 @@ describe("MergeTree.insertingWalk", () => {
                     assert.equal(
                         testData.mergeTree.getLength(testData.refSeq, localClientId),
                         testData.initialText.length + 1);
-                    const currentValue = testData.mergeTree.getText(
+                    const currentValue = testData.textHelper.getText(
                         testData.refSeq,
                         localClientId);
                     assert.equal(currentValue.length, testData.initialText.length + 1);

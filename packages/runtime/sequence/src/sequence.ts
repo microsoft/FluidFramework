@@ -54,7 +54,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         super(id, document, extensionType);
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
-            "",
             this.segmentFromSpec.bind(this),
             ChildLogger.Create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
             document.options);

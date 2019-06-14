@@ -19,7 +19,7 @@ class TextLayoutSink extends LayoutSink<ITextLayoutState> {
 
     public tryAppend({ span, classList }: ITextLayoutState, context: LayoutContext, position: number, segment: ISegment, startOffset: number, endOffset: number) {
         // Terminate if the next segment is not a text segment.
-        if (TextSegment.is(segment) && classList === getCssClassList(segment)) {
+        if (TextSegment.Is(segment) && classList === getCssClassList(segment)) {
             span.append(position, segment, startOffset, endOffset);
             return true;
         }
