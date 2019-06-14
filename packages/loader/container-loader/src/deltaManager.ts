@@ -12,7 +12,6 @@ import {
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    ITelemetryInformationalEvent,
     ITelemetryLogger,
     ITrace,
     MessageType,
@@ -257,20 +256,81 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.connection!.submitSignal(content);
     }
 
-    public async getDeltas(reason: string, from: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        const event: ITelemetryInformationalEvent = {
+    public async getDeltas(reason: string, fromInitial: number, to?: number): Promise<ISequencedDocumentMessage[]> {
+        if (this.closed) {
+            // Might need to change to non-error event
+            this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
+            return [];
+        }
+
+        let retry: number = 0;
+        let from: number = fromInitial;
+        const allDeltas: ISequencedDocumentMessage[] = [];
+
+        const telemetryEvent = PerformanceEvent.Start(this.logger, {
             eventName: "GetDeltas",
             from,
             reason,
-        };
-        if (to) {
-            event.to = to;
-        }
-        const telemetryEvent = PerformanceEvent.Start(this.logger, event);
+            to,
+        });
 
-        const deferred = new Deferred<ISequencedDocumentMessage[]>();
-        this.getDeltasCore(from, to, [], deferred, 0, telemetryEvent);
-        return deferred.promise;
+        // tslint:disable-next-line:no-constant-condition
+        while (true) {
+            const maxFetchTo = from + MaxBatchDeltas;
+            const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
+
+            // Let exceptions here propagate through, without hitting retry logic below
+            const deltaStorage = await this.deltaStorageP!;
+
+            let deltasRetrievedLast = 0;
+            let success = true;
+
+            try {
+                // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
+                const deltas = await deltaStorage.get(from, fetchTo);
+
+                // Note that server (or driver code) can push here something unexpected, like undefined
+                // Exception thrown as result of it will result in us retrying
+                allDeltas.push(...deltas);
+
+                deltasRetrievedLast = deltas.length;
+                const lastFetch = deltasRetrievedLast > 0 ? deltas[deltasRetrievedLast - 1].sequenceNumber : from;
+
+                // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
+                // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
+                // we will look to try again
+                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
+                    telemetryEvent.end({lastFetch, totalDeltas: allDeltas.length, retries: retry});
+                    return allDeltas;
+                }
+
+                // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
+                // count since something prevented us from seeing those deltas
+                from = lastFetch;
+            } catch (error) {
+                // There was an error fetching the deltas. Up the retry counter
+                this.logger.logException({eventName: "GetDeltasError", fetchTo, from, retry: retry + 1}, error);
+                success = false;
+            }
+
+            retry = deltasRetrievedLast === 0 ? retry + 1 : 0;
+            const delay = Math.min(
+                MaxFetchDelay,
+                retry !== 0 ? MissingFetchDelay * Math.pow(2, retry) : 0);
+
+            telemetryEvent.reportProgress({
+                delay,
+                deltasRetrievedLast,
+                deltasRetrievedTotal: allDeltas.length,
+                replayFrom: from,
+                retry,
+                success,
+            });
+
+            await new Promise((resolve) => {
+                setTimeout(() => { resolve(); }, delay);
+            });
+        }
     }
 
     public enableReadonlyMode(): void {
@@ -317,78 +377,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         } else {
             return coreMessage;
         }
-    }
-
-    private getDeltasCore(
-        from: number,
-        to: number | undefined,
-        allDeltas: ISequencedDocumentMessage[],
-        deferred: Deferred<ISequencedDocumentMessage[]>,
-        retry: number,
-        telemetryEvent: PerformanceEvent,
-        ): void {
-        if (this.closed) {
-            telemetryEvent.cancel({reason: "GetDeltasConnectionClosed"});
-            return;
-        }
-
-        const maxFetchTo = from + MaxBatchDeltas;
-        const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
-
-        // Grab a chunk of deltas - limit the number fetched to MaxBatchDeltas
-        const deltasP = this.deltaStorageP!.then((deltaStorage) => {
-            return deltaStorage.get(from, fetchTo);
-        });
-
-        // Process the received deltas
-        const replayP = deltasP.then(
-            (deltas) => {
-                allDeltas.push(...deltas);
-
-                const lastFetch = deltas.length > 0 ? deltas[deltas.length - 1].sequenceNumber : from;
-
-                // If we have no upper bound and fetched less than the max deltas - meaning we got as many as exit -
-                // then we can resolve the promise. We also resolve if we fetched up to the expected to. Otherwise
-                // we will look to try again
-                if ((to === undefined && maxFetchTo !== lastFetch + 1) || to === lastFetch + 1) {
-                    telemetryEvent.end({lastFetch, totalDeltas: allDeltas.length, retries: retry});
-                    deferred.resolve(allDeltas);
-                    return null;
-                } else {
-                    // Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
-                    // count since something prevented us from seeing those deltas
-                    return { from: lastFetch, to, retry: deltas.length === 0 ? retry + 1 : 0 };
-                }
-            },
-            (error) => {
-                // There was an error fetching the deltas. Up the retry counter
-                this.logger.logException({eventName: "GetDeltasError", fetchTo, from, retry: retry + 1}, error);
-                return { from, to, retry: retry + 1 };
-            });
-
-        // If an error or we missed fetching ops - call back with a timer to fetch any missing values
-        replayP.then(
-            (replay) => {
-                if (!replay) {
-                    return;
-                }
-
-                const delay = Math.min(
-                    MaxFetchDelay,
-                    replay.retry !== 0 ? MissingFetchDelay * Math.pow(2, replay.retry) : 0);
-
-                telemetryEvent.reportProgress({
-                    delay,
-                    deltasRetrieved: allDeltas.length,
-                    replayFrom: replay.from,
-                    replayTo: replay.to,
-                    retry: replay.retry,
-                });
-
-                setTimeout(
-                    () => this.getDeltasCore(replay.from, replay.to, allDeltas, deferred, replay.retry, telemetryEvent),
-                    delay);
-            });
     }
 
     private connectCore(reason: string, delay: number): void {
