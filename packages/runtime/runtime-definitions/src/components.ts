@@ -203,9 +203,11 @@ export interface IComponentFactory {
 /**
  * A component that implements a collection of components.  Typically, the
  * components in the collection would be like-typed.
+ * INewComponent is temporarily used for backward compatibility (but has the members of the new
+ * IComponent interface).
  */
 export interface IComponentCollection {
-    create(): INewComponent;
+    create<TOpt = object>(options?: TOpt): INewComponent;
     remove(instance: INewComponent): void;
     // need iteration
 }
@@ -224,6 +226,10 @@ export enum ComponentDisplayType {
      * Render the component as part of an inline flow.
      */
     Inline,
+    /**
+     * Render the component as part of an inline flow, but in a single block.
+     */
+    InlineBlock,
 }
 
 /**
@@ -234,7 +240,7 @@ export enum ComponentDisplayType {
  * rendered component.
  */
 export interface IComponentRenderHTML {
-    render(elm: HTMLElement, displayType: ComponentDisplayType): void;
+    render(elm: HTMLElement, displayType?: ComponentDisplayType): void;
 }
 
 /**
@@ -246,6 +252,7 @@ export interface IComponentLayout {
     minimumHeightInline?: number;
     canInline?: boolean;
     preferInline?: boolean;
+    heightInLines?: () => number;
 }
 
 /**

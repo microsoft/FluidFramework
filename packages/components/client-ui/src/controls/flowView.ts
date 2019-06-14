@@ -14,7 +14,7 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentCursorDirection, ComponentDisplayType,
-    IComponentCursor, IComponentKeyHandlers, IComponentRenderHTML, IInboundSignalMessage,
+    IComponentCursor, IComponentKeyHandlers, IComponentLayout, IComponentRenderHTML, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -45,18 +45,41 @@ interface IMathViewMarker extends MergeTree.Marker {
     instance?: IMathInstance;
 }
 
+function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
+    if (marker && marker.properties && marker.properties.crefTest) {
+        const crefTest: IReferenceDoc = marker.properties.crefTest;
+        if ((!crefTest.layout) || (!crefTest.layout.inline)) {
+            return marker as IBlockViewMarker;
+        }
+    }
+}
+
+interface IRenderComponent extends IComponent, IComponentRenderHTML {
+}
+
+interface IBlockViewMarker extends MergeTree.Marker {
+    instance?: IRenderComponent;
+}
+
 interface IComponentViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IComponentRenderHTML>;
     instance?: IComponentRenderHTML;
 }
 
-export interface IMathCollection extends IComponent, IPlatform {
-    create(): IMathInstance;
-    getInstance(id: string): IMathInstance;
+interface IMathCollection extends IComponent, IPlatform {
+    create(options?: IMathOptions): IMathInstance;
+    getInstance(id: string, options?: IMathOptions): IMathInstance;
+}
+
+// the following interfaces should come from the math component but are
+// here due to package dependencies
+
+interface IMathOptions {
+    displayType?: ComponentDisplayType;
 }
 
 export interface IMathInstance extends ISharedComponent, IComponentRenderHTML, IComponentCursor,
-    IComponentKeyHandlers, SearchMenu.ISearchMenuClient {
+    IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     id: string;
     leafId: string;
 }
@@ -553,9 +576,15 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertMathTest();
+            f.insertMath();
         },
         key: "insert math",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertMath(false);
+        },
+        key: "insert math block",
     },
     {
         exec: (c, p, f) => {
@@ -862,7 +891,7 @@ function renderSegmentIntoLine(
                 if (!mathViewMarker.instance) {
                     lineContext.flowView.loadMath(mathViewMarker);
                 }
-                mathViewMarker.instance.render(span, ComponentDisplayType.Inline);
+                mathViewMarker.instance.render(span);
                 mathViewMarker.properties.cachedElement = span;
                 lineContext.contentDiv.appendChild(span);
             } else if (isComponentView(marker)) {
@@ -2389,7 +2418,35 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
         const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
 
-        if (isBlock(maybeComponent)) {
+        const newBlock = getComponentBlock(asMarker);
+        if (newBlock) {
+            const refDoc = newBlock.properties.crefTest;
+            let ch: number;
+            if (!newBlock.instance) {
+                // for now, use math; later need to load route async
+                layoutContext.flowView.loadMath(newBlock as IMathViewMarker);
+            }
+            const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
+            if (layout) {
+                if (layout.heightInLines) {
+                    ch = layout.heightInLines() * docContext.defaultLineDivHeight;
+                }
+            } else {
+                ch = Math.round(0.2 * layoutContext.viewport.maxHeight);
+            }
+            const lineDiv = makeLineDiv(
+                new ui.Rectangle(
+                    0,
+                    layoutContext.viewport.getLineTop(),
+                    parseInt(layoutContext.viewport.div.style.width, 10),
+                    ch),
+                layoutContext.docContext.fontstr);
+
+            newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+            layoutContext.viewport.vskip(ch);
+            currentPos++;
+            segoff = undefined;
+        } else if (isBlock(maybeComponent)) {
             const context = new ui.FlowViewContext(
                 document.createElement("canvas").getContext("2d"),
                 layoutContext.viewport.div.style,
@@ -3047,10 +3104,13 @@ export interface IReferenceDocType {
 }
 
 export interface IRefLayoutSpec {
+    inline?: boolean;
     minWidth?: number;
     minHeight?: number;
     reqWidth?: number;
     reqHeight?: number;
+    heightPct?: number;
+    heightLines?: number;
     ar?: number;
     dx?: number;
     dy?: number;
@@ -4052,7 +4112,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         showAllInitially = false,
         cmdParser?: (searchString: string, cmd?: SearchMenu.ISearchMenuCommand) => void) {
         this.activeSearchBox =
-            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase,cmdParser);
+            SearchMenu.searchBoxCreate(this, this.viewportDiv, cmdTree, foldCase, cmdParser);
         if (showAllInitially) {
             this.activeSearchBox.showAllItems();
         }
@@ -4985,7 +5045,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public loadMath(mathMarker: IMathViewMarker) {
         if (!mathMarker.instance) {
-            const mathInstance = this.math.getInstance(mathMarker.properties.leafId);
+            const inline = mathMarker.properties.crefTest.layout.inline;
+            const mathOptions: IMathOptions = { displayType: inline ? ComponentDisplayType.Inline : ComponentDisplayType.Block };
+            const mathInstance = this.math.getInstance(mathMarker.properties.leafId, mathOptions);
             mathMarker.instance = mathInstance;
             if (mathInstance.query("ISearchMenuClient")) {
                 mathInstance.registerSearchMenuHost(this);
@@ -4993,18 +5055,23 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public insertMathTest() {
-        const mathInstance = this.math.create();
-        // for now, only inline math
+    public insertMath(inline = true) {
+        const mathOptions: IMathOptions = { displayType: inline ? ComponentDisplayType.Inline : ComponentDisplayType.Block };
+        const mathInstance = this.math.create(mathOptions);
         const props = {
             crefTest: {
+                layout: { inline },
                 type: {
                     name: "math",
                 } as IReferenceDocType,
                 url: mathInstance.id,
             },
+            // change this to just use url and IComponentRouter on collection
             leafId: mathInstance.leafId,
         };
+        if (!inline) {
+            this.insertParagraph(this.cursor.pos++);
+        }
         const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
         const mathMarker = getContainingSegment(this, markerPos).segment as IMathViewMarker;

@@ -41,8 +41,10 @@ export class MathInstance extends EventEmitter
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentRenderHTML",
         "IComponentLayout", "IComponentCursor", "ISearchMenuClient"];
 
+    public static defaultOptions: IMathOptions = { displayType: ComponentDisplayType.Inline };
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
+    // IComponentLayout
     public canInline = true;
     public cursorActive = false;
     public savedElm: HTMLElement;
@@ -52,6 +54,7 @@ export class MathInstance extends EventEmitter
         public url: string,
         public leafId: string,
         private readonly collection: MathCollection,
+        public readonly options = MathInstance.defaultOptions,
         inCombinedText = false) {
         super();
         this.initialize(inCombinedText);
@@ -81,6 +84,11 @@ export class MathInstance extends EventEmitter
             this.endMarker.mathCursor = mathText.length;
             this.endMarker.mathTokenIndex = this.endMarker.mathTokens.length;
         }
+    }
+
+    // IComponentLayout
+    public heightInLines() {
+        return 5;
     }
 
     public leave(direction: ComponentCursorDirection) {
@@ -168,7 +176,7 @@ export class MathInstance extends EventEmitter
             mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
             if (this.savedElm) {
                 ClientUI.controls.clearSubtree(this.savedElm);
-                this.render(this.savedElm, ComponentDisplayType.Inline);
+                this.render(this.savedElm, this.options.displayType);
             }
         }
     }
@@ -177,7 +185,7 @@ export class MathInstance extends EventEmitter
         this.collection.insertText(text, this.leafId, this.endMarker.mathCursor);
         if (this.savedElm) {
             ClientUI.controls.clearSubtree(this.savedElm);
-            this.render(this.savedElm, ComponentDisplayType.Inline);
+            this.render(this.savedElm, this.options.displayType);
         }
     }
 
@@ -204,39 +212,58 @@ export class MathInstance extends EventEmitter
         }
     }
 
-    public render(elm: HTMLElement, displayType: ComponentDisplayType) {
-        this.savedElm = elm;
-        const span = document.createElement("span");
+    public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
+        if (displayType === undefined) {
+            displayType = this.options.displayType;
+        }
         const mathText = this.getMathText();
         let mathBuffer = mathText;
         const mathMarker = this.endMarker;
-        span.style.marginLeft = "2px";
-        span.style.marginTop = "4px";
-        span.style.marginRight = "2px";
+        this.savedElm = elm;
         if (mathMarker.mathTokens === undefined) {
             ClientUI.controls.initMathMarker(mathMarker, mathText);
         }
-        if (this.cursorActive) {
-            span.style.borderLeft = "solid orange 2px";
-            span.style.borderRight = "solid orange 2px";
-            // showCursor
-            mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
-                ClientUI.controls.cursorTex +
-                mathBuffer.substring(mathMarker.mathCursor);
-            mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+        let innerElm: HTMLElement;
+        if (displayType === ComponentDisplayType.Inline) {
+            innerElm = document.createElement("span");
+            innerElm.style.marginLeft = "2px";
+            innerElm.style.marginTop = "4px";
+            innerElm.style.marginRight = "2px";
+            if (this.cursorActive) {
+                innerElm.style.borderLeft = "solid orange 2px";
+                innerElm.style.borderRight = "solid orange 2px";
+                // showCursor
+                mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
+                    ClientUI.controls.cursorTex +
+                    mathBuffer.substring(mathMarker.mathCursor);
+                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+            }
+            mathMarker.mathViewBuffer = mathBuffer;
+            Katex.render(mathBuffer, innerElm,
+                { throwOnError: false });
+        } else {
+            innerElm = document.createElement("div");
+            if (this.cursorActive) {
+                // showCursor
+                mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
+                    ClientUI.controls.cursorTex +
+                    mathBuffer.substring(mathMarker.mathCursor);
+                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+            }
+            mathBuffer = `\\tag{3.2} ${mathBuffer}`;
+            mathMarker.mathViewBuffer = mathBuffer;
+            Katex.render(mathBuffer, innerElm,
+                { throwOnError: false, displayMode: true });
         }
-        mathMarker.mathViewBuffer = mathBuffer;
-        Katex.render(mathBuffer, span,
-            { throwOnError: false });
         if (this.cursorActive) {
-            const cursorElement = ClientUI.controls.findFirstMatch(span, (cursor: HTMLElement) => {
+            const cursorElement = ClientUI.controls.findFirstMatch(innerElm, (cursor: HTMLElement) => {
                 return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
             });
             if (cursorElement) {
                 cursorElement.classList.add("blinking");
             }
         }
-        elm.appendChild(span);
+        elm.appendChild(innerElm);
     }
 
     private getMathText() {
@@ -253,6 +280,10 @@ function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
 }
 
 const endIdPrefix = "end-";
+
+export interface IMathOptions {
+    displayType?: ComponentDisplayType;
+}
 
 export class MathCollection extends EventEmitter implements ISharedComponent, IComponentCollection, IComponentRouter {
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",
@@ -311,9 +342,9 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         mathMarker.mathTokens = ClientUI.controls.lexMath(mathMarker.mathText);
     }
 
-    public create(): MathInstance {
+    public create(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.url}/${leafId}`, leafId, this);
+        return new MathInstance(`${this.url}/${leafId}`, leafId, this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -367,12 +398,12 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         this.combinedMathText.removeRange(startPos + start, startPos + end);
     }
 
-    public getInstance(id: string) {
+    public getInstance(id: string, options = MathInstance.defaultOptions) {
         const endId = endIdPrefix + id;
         const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
         if (mathMarker !== undefined) {
             if (!mathMarker.instance) {
-                mathMarker.instance = new MathInstance(`${this.url}/${id}`, id, this, true);
+                mathMarker.instance = new MathInstance(`${this.url}/${id}`, id, this, options, true);
             }
             return mathMarker.instance;
         }
@@ -419,7 +450,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
                     if (instance.savedElm) {
                         console.log("rendering");
                         ClientUI.controls.clearSubtree(instance.savedElm);
-                        instance.render(instance.savedElm, ComponentDisplayType.Inline);
+                        instance.render(instance.savedElm, instance.options.displayType);
                     }
                 }
 
