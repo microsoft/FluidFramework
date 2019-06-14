@@ -15,9 +15,7 @@ import {
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
 import {
-    ComponentDisplayType,
     IComponentContext,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
@@ -61,7 +59,7 @@ const defaultCompilerOptions = {
 // tslint:enable
 
 export class MonacoRunner extends EventEmitter
-    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+    implements ISharedComponent, IComponentHTMLViewable, IComponentLoadable {
 
     public static supportedInterfaces = [
         "IComponentHTMLViewable",
@@ -97,31 +95,16 @@ export class MonacoRunner extends EventEmitter
         return MonacoRunner.supportedInterfaces;
     }
 
-    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
-        if (!this.mapHost) {
-            this.mapHost = document.createElement("div");
-            elm.appendChild(this.mapHost);
-            this.initializeEditorDiv().catch((error) => { console.error(error); });
-        } else {
-            if (this.mapHost.parentElement !== elm) {
-                this.mapHost.remove();
-                elm.appendChild(this.mapHost);
-            }
-        }
-    }
-
     // TODO can remove ? once document is fixed in main package
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+    public async createView(host: IComponent): Promise<IHTMLView> {
         if (this.mapHost) {
             return Promise.reject("Only one view supported");
         }
 
         this.mapHost = document.createElement("div");
-        element.appendChild(this.mapHost);
-
         await this.initializeEditorDiv();
 
-        return this;
+        return this.mapHost;
     }
 
     public remove() {

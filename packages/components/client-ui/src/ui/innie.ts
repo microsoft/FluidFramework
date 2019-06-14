@@ -76,8 +76,7 @@ export class InnerComponent extends Block<InnerDocumentState> {
             }
 
             // Attach our div to the host
-            const host = new Host();
-            viewable.addView(host, div);
+            div.appendChild(await viewable.createView(new Host()));
 
             // TODO bring d.ts back
             // definitionGuide.addComponent(component.id, innerPlatform);

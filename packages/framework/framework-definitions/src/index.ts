@@ -1,1 +1,1 @@
-export { IViewProvider, IView } from "./view";
+export const placeholder = "TODO: Add Framework-Definitions";

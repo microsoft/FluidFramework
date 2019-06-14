@@ -8,9 +8,7 @@ import {
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import {
-    ComponentDisplayType,
     IComponentContext,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as angular from "angular";
@@ -305,11 +303,10 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter
-    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+    implements ISharedComponent, IComponentHTMLViewable, IComponentLoadable {
 
     public static supportedInterfaces = [
         "IComponentHTMLViewable",
-        "IComponentRenderHTML",
         "IComponentLoadable",
     ];
 
@@ -341,24 +338,14 @@ export class PinpointRunner extends EventEmitter
         return PinpointRunner.supportedInterfaces;
     }
 
-    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
-        if (!this.mapHost) {
-            this.mapHost = document.createElement("div");
-            embed(this.mapHost, this.collabDoc, this.rootView);
-        }
-
-        if (this.mapHost.parentElement !== elm) {
-            this.mapHost.remove();
-            elm.appendChild(this.mapHost);
-        }
-    }
-
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+    public async createView(host: IComponent): Promise<IHTMLView> {
         if (this.mapHost) {
             return Promise.reject("Only one view supported");
         }
 
-        this.mapHost = element;
+        this.mapHost = document.createElement("div");
+
+        // TODO: Use custom element 'connectedCallback()' to check parent id?
         this.editor = this.mapHost.id === "content";
 
         if (this.editor) {
@@ -386,11 +373,13 @@ export class PinpointRunner extends EventEmitter
         } else {
             embed(this.mapHost, this.collabDoc, this.rootView);
         }
+
+        return this.mapHost;
     }
 
-    public remove() {
-        this.mapHost = null;
-    }
+    // public remove() {
+    //     this.mapHost = null;
+    // }
 
     private async initialize(): Promise<void> {
         this.collabDoc = await Document.Load(this.runtime);
