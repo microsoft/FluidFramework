@@ -414,56 +414,48 @@ export class Client {
         clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
 
         let start: number = op.pos1;
-
         if (start === undefined && op.relativePos1) {
             start = this.mergeTree.posFromRelativePos(op.relativePos1);
-        }
-
-        // valid start position
-        //
-        const length = this.mergeTree.getLength(clientArgs.referenceSequenceNumber, clientArgs.clientId);
-        if (start === undefined
-            || start < 0
-            || start > length) {
-            this.logger.sendErrorEvent({
-                currentSeq: this.getCurrentSeq(),
-                eventName: "InvalidOpRange",
-                invalidPosition: "start",
-                length,
-                local: clientArgs.clientId === this.getClientId(),
-                minSeq: this.mergeTree.collabWindow.minSeq,
-                opPos1: op.pos1,
-                opPos1Relative: op.relativePos1 === undefined,
-                opPos2: op.pos2,
-                opPos2Relative: op.relativePos2 === undefined,
-                opRefSeq: clientArgs.referenceSequenceNumber,
-                opSeq: clientArgs.sequenceNumber,
-                opType: op.type,
-                start,
-            });
-            return undefined;
         }
 
         let end: number = op.pos2;
         if (end === undefined && op.relativePos2) {
             end = this.mergeTree.posFromRelativePos(op.relativePos2);
         }
-        // valid end if not insert, or insert has end
-        //
-        if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
-            if (end === undefined || end < start) {
+
+        // validate if local op
+        if (clientArgs.clientId === this.getClientId()) {
+            const length = this.getLength();
+
+            const invalidPositions: string[] = [];
+
+            // validate start position
+            //
+            if (start === undefined
+                || start < 0
+                || start > length
+                || start === length && op.type !== ops.MergeTreeDeltaType.INSERT) {
+                invalidPositions.push("start");
+            }
+            // validate end if not insert, or insert has end
+            //
+            if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
+                if (end === undefined || end < start) {
+                    invalidPositions.push("end");
+                }
+            }
+
+            if (invalidPositions.length > 0) {
                 this.logger.sendErrorEvent({
                     currentSeq: this.getCurrentSeq(),
                     end,
                     eventName: "InvalidOpRange",
-                    invalidPosition: "end",
+                    invalidPositions,
                     length,
-                    local: clientArgs.clientId === this.getClientId(),
-                    minSeq: this.mergeTree.collabWindow.minSeq,
                     opPos1: op.pos1,
-                    opPos1Relative: op.relativePos1 === undefined,
+                    opPos1Relative: op.relativePos1 !== undefined,
                     opPos2: op.pos2,
-                    opPos2Relative: op.relativePos2 === undefined,
+                    opPos2Relative: op.relativePos2 !== undefined,
                     opRefSeq: clientArgs.referenceSequenceNumber,
                     opSeq: clientArgs.sequenceNumber,
                     opType: op.type,

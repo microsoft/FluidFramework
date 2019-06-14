@@ -1883,7 +1883,7 @@ export class MergeTree {
     static zamboniSegmentsMaxCount = 2;
     static options = {
         incrementalUpdate: true,
-        insertAfterRemovedSegs: false,
+        insertAfterRemovedSegs: true,
         zamboniSegments: true,
         measureWindowTime: true,
         measureOrdinalTime: true,

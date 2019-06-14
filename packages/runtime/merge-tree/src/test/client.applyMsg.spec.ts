@@ -264,4 +264,32 @@ describe("client.applyMsg", () => {
         assert.equal(remoteClient.getText(), client.getText());
         console.log(remoteClient.getText());
     });
+
+    it("intersecting insert after local delete", () => {
+        const clientA = new TestClient();
+        clientA.startCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startCollaboration("B");
+        const clientC = new TestClient();
+        clientC.startCollaboration("C");
+
+        const clients = [clientA, clientB, clientC];
+
+        let seq = 0;
+
+        const messages = [
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "1"), ++seq),
+            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
+            clientB.makeOpMessage(clientB.insertTextLocal(0, "2"), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "3"), ++seq),
+        ];
+
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            clients.forEach((c) => c.applyMsg(msg));
+            console.log(clients.map((c) => c.getText().padEnd(5)).join(" | "));
+        }
+
+        assert.equal(clientC.getText(), clientB.getText());
+    });
 });

@@ -1048,7 +1048,7 @@ export function TestPack(verbose = true) {
                 const cliBMsgs: ISequencedDocumentMessage[] = [];
                 for (let j = 0; j < removeCount; j++) {
                     let dlen = randTextLength();
-                    let preLen = cliB.getLength();
+                    let preLen = cliB.getLength() - 1;
                     let pos = random.integer(0, preLen)(mt);
                     cliBMsgs.push(cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen), sequenceNumber++));
                     cliA.applyMsg(cliBMsgs[cliBMsgs.length - 1]);
