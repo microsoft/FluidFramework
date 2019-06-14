@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/agent-scheduler-test",
-  "version": "0.3.16",
+  "version": "0.4.14",
   "description": "Chaincode wrapping agent-scheduler component",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -31,14 +31,16 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.4.7492",
-    "@prague/container-definitions": "^0.4.7492",
-    "@chaincode/agent-scheduler": "^0.4.7492",
+    "@prague/app-component": "^0.4.7702",
+    "@prague/container-definitions": "^0.4.7702",
+    "@prague/container-runtime": "^0.4.7702",
+    "@prague/runtime-definitions": "^0.4.7702",
+    "@chaincode/agent-scheduler": "^0.4.7702",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.7492",
+    "@prague/build-common": "^0.4.7702",
     "@types/node": "^10.12.12",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
