@@ -176,27 +176,17 @@ export class OwnedSharedMap extends OwnedSharedObject implements ISharedMap {
     }
 
     public submitMapClearMessage(op: IMapOperation): void {
-        const clientSequenceNumber = this.submitMapMessage(op);
+        const clientSequenceNumber = this.submitLocalMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingClearClientSequenceNumber = clientSequenceNumber;
         }
     }
 
     public submitMapKeyMessage(op: IMapOperation): void {
-        const clientSequenceNumber = this.submitMapMessage(op);
+        const clientSequenceNumber = this.submitLocalMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingKeys.set(op.key, clientSequenceNumber);
         }
-    }
-
-    public submitMapMessage(op: IMapOperation): number {
-        // Local operations do not require any extra processing
-        if (this.isLocal()) {
-            return -1;
-        }
-
-        // Once we have performed the attach submit the local operation
-        return this.submitLocalMessage(op);
     }
 
     /**
@@ -286,7 +276,7 @@ export class OwnedSharedMap extends OwnedSharedObject implements ISharedMap {
         }
 
         // Allow content to catch up
-        this.onConnectContent(contentMessages);
+        super.onConnect(contentMessages);
     }
 
     protected async loadCore(
@@ -378,17 +368,6 @@ export class OwnedSharedMap extends OwnedSharedObject implements ISharedMap {
      * Message sent to notify derived content of disconnection
      */
     protected onDisconnectContent() {
-        return;
-    }
-
-    /**
-     * Message sent upon reconnecting to the delta stream
-     */
-    protected onConnectContent(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
         return;
     }
 

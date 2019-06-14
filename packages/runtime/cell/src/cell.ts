@@ -100,7 +100,7 @@ export class Cell extends SharedObject implements ICell {
         };
 
         this.setCore(value);
-        this.submitIfAttached(op);
+        this.submitLocalMessage(op);
     }
 
     // Deletes the value from the cell.
@@ -110,7 +110,7 @@ export class Cell extends SharedObject implements ICell {
         };
 
         this.deleteCore();
-        this.submitIfAttached(op);
+        this.submitLocalMessage(op);
     }
 
     /**
@@ -184,14 +184,6 @@ export class Cell extends SharedObject implements ICell {
         debug(`Cell ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
-        return;
-    }
-
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === MessageType.Operation && !local) {
             const op: ICellOperation = message.contents;
@@ -221,14 +213,6 @@ export class Cell extends SharedObject implements ICell {
                     throw new Error("Unknown operation");
             }
         }
-    }
-
-    private submitIfAttached(message) {
-        if (this.isLocal()) {
-            return;
-        }
-
-        this.submitLocalMessage(message);
     }
 
     private setCore(value: any) {

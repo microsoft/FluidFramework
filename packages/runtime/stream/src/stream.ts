@@ -141,20 +141,6 @@ export class Stream extends SharedMap implements IStream {
     }
 
     /**
-     * Submit pending local messages when connecting.
-     *
-     * @param pending - Collection of pending messages
-     */
-    protected onConnectContent(pending: any[]) {
-        // Stream can resend messages under new client id
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
-        return;
-    }
-
-    /**
      * Initialize the stream with data from an existing snapshot.
      *
      * @param data - The snapshot to initialize from

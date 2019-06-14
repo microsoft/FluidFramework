@@ -168,14 +168,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         debug(`ConsensusCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
-        return;
-    }
-
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === MessageType.Operation && !local) {
             const op: IConsensusOrderedCollectionOperation = message.contents;

@@ -182,12 +182,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public submitMapMessage(op: IMapOperation): number {
-        // Local operations do not require any extra processing
-        if (this.isLocal()) {
-            return -1;
-        }
-
-        // Once we have performed the attach submit the local operation
         return this.submitLocalMessage(op);
     }
 
@@ -383,13 +377,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     /**
      * Message sent upon reconnecting to the delta stream
+     * Allows Sequence to overwrite nap's default behavior
      */
     protected onConnectContent(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
-        return;
+        super.onConnect(pending);
     }
 
     /**

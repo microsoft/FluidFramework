@@ -337,10 +337,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
-        if (this.isLocal()) {
-            return;
-        }
-
         this.submitLocalMessage(message);
     }
 
@@ -418,6 +414,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.collabStarted = true;
     }
 
+    // Need some comment on why we are not using 'pending' content
     protected onConnectContent(pending: any[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
         if (this.collabStarted) {

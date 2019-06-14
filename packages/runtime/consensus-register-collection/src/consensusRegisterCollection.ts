@@ -203,14 +203,6 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected onConnect(pending: any[]) {
-        for (const message of pending) {
-            this.submitLocalMessage(message);
-        }
-
-        return;
-    }
-
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === MessageType.Operation && !local) {
             const op: IRegisterOperation = message.contents;

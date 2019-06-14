@@ -668,52 +668,44 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private async waitForContent(
-        clientId: string,
-        clientSeqNumber: number,
-        seqNumber: number): Promise<IContentMessage> {
-        return new Promise<IContentMessage>((resolve, reject) => {
-            const lateContentHandler = (clId: string) => {
-                if (clientId === clId) {
-                    const lateContent = this.contentCache.peek(clId);
-                    if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
-                        this.contentCache.removeListener("content", lateContentHandler);
-                        debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
-                        resolve(this.contentCache.get(clientId));
-                    }
-                }
-            };
-            this.contentCache.on("content", lateContentHandler);
-            this.fetchContent(clientId, clientSeqNumber, seqNumber).then(
-                (content) => {
+            clientId: string,
+            clientSeqNumber: number,
+            seqNumber: number): Promise<IContentMessage> {
+        const lateContentHandler = (clId: string) => {
+            if (clientId === clId) {
+                const lateContent = this.contentCache.peek(clId);
+                if (lateContent && lateContent.clientSequenceNumber === clientSeqNumber) {
                     this.contentCache.removeListener("content", lateContentHandler);
-                    resolve(content);
-                },
-                (error) => {
-                    // fetchContent guaranteed to always resolve
-                    assert(false, error);
-                });
-        });
+                    debug(`Late content fetched from buffer ${clientId}: ${clientSeqNumber}`);
+                    return this.contentCache.get(clientId);
+                }
+            }
+        };
+
+        this.contentCache.on("content", lateContentHandler);
+        const content = await this.fetchContent(clientId, clientSeqNumber, seqNumber);
+        this.contentCache.removeListener("content", lateContentHandler);
+
+        return content;
     }
 
     private async fetchContent(
-        clientId: string,
-        clientSeqNumber: number,
-        seqNumber: number): Promise<IContentMessage> {
-        return new Promise<IContentMessage>((resolve, reject) => {
-            this.getDeltas("fetchContent", seqNumber, seqNumber).then(
-                (messages) => {
-                    assert.ok(messages.length > 0, "Content not found in DB");
-                    const message = messages[0];
-                    assert.equal(message.clientId, clientId, "Invalid fetched content");
-                    assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
-                    debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
-                    resolve({
-                        clientId: message.clientId,
-                        clientSequenceNumber: message.clientSequenceNumber,
-                        contents: message.contents,
-                    });
-                });
-        });
+            clientId: string,
+            clientSeqNumber: number,
+            seqNumber: number): Promise<IContentMessage> {
+        const messages = await this.getDeltas("fetchContent", seqNumber, seqNumber);
+        assert.ok(messages.length > 0, "Content not found in DB");
+
+        const message = messages[0];
+        assert.equal(message.clientId, clientId, "Invalid fetched content");
+        assert.equal(message.clientSequenceNumber, clientSeqNumber, "Invalid fetched content");
+
+        debug(`Late content fetched from DB ${clientId}: ${clientSeqNumber}`);
+        return {
+            clientId: message.clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            contents: message.contents,
+        };
     }
 
     private catchUp(reason: string, messages: ISequencedDocumentMessage[]): void {

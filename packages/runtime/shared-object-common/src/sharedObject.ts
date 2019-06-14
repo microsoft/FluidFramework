@@ -239,20 +239,15 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     protected abstract onDisconnect();
 
     /**
-     * Called when the object has fully connected to the delta stream
-     *
-     * @param pending - messages recieved while disconnected
-     */
-    protected abstract onConnect(pending: any[]);
-
-    /**
      * Processes a message by the local client
      *
      * @param content - content of the message
      * @returns client sequence number
      */
     protected submitLocalMessage(content: any): number {
-        assert(!this.isLocal());
+        if (this.isLocal()) {
+            return -1;
+        }
 
         // Send if we are connected - otherwise just add to the sent list
         let clientSequenceNumber = -1;
@@ -267,6 +262,20 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
 
         this.pendingOps.push({ clientSequenceNumber, content });
         return clientSequenceNumber;
+    }
+
+    /**
+     * Called when the object has fully connected to the delta stream
+     * Default implementation for DDS, override if different behavior is required.
+     *
+     * @param pending - messages received while disconnected
+     */
+    protected onConnect(pending: any[]) {
+        for (const message of pending) {
+            this.submitLocalMessage(message);
+        }
+
+        return;
     }
 
     /**
