@@ -136,10 +136,10 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             socket.on("connect_document_error", ((error) => {
-
-                socket.emit("error", error);
+                // This is not an error for the socket - it's a protocol error.
+                // In this case we disconnect the socket and indicate that we were unable to create the
+                // DocumentDeltaConnection.
                 socket.disconnect();
-
                 reject(error);
             }));
 
@@ -234,8 +234,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     submitType,
                     this.details.clientId,
                     work,
-                    (error) => this.emit("error", error),
-                );
+                    (error) => {
+                        // A truthy value indicates error - otherwise success - of the message send
+                        // This behavior is not required and likely can be removed (although is a breaking protocol
+                        // change) for a performance gain. Socket.IO internally needs to track the callback
+                        // given the remote server will be 'invoking' it.
+                        if (error) {
+                            debug("Emit error", error);
+                        }
+                    });
             });
     }
 

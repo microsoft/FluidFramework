@@ -39,7 +39,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     protected static prepareErrorObject(error: any): any {
-        if (typeof error !== "object") {
+        if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
             return error;
         }
