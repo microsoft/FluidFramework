@@ -19,7 +19,7 @@ export class ChatRunner {
 }
 
 export async function instantiateRuntime(context: IContainerContext): Promise<Runtime> {
-  const runtime = await Runtime.Load(context);
+  const runtime = await Runtime.load(context);
 
   runtime.registerRequestHandler(async (request) => {
     return { status: 200, mimeType: "prague/component", value: new ChatRunner(runtime) };

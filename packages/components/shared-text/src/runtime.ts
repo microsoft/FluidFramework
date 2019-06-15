@@ -61,7 +61,7 @@ class MyRegistry implements IComponentRegistry {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const runtime = await ContainerRuntime.Load(context, new MyRegistry(context));
+    const runtime = await ContainerRuntime.load(context, new MyRegistry(context));
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {

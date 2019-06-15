@@ -18,7 +18,7 @@ import { EventEmitter } from "events";
 import { ProgressCollection } from "./progressBars";
 
 export class CollectionManager extends EventEmitter {
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new CollectionManager(runtime, context);
         await collection.initialize();
 
@@ -78,8 +78,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     const dataTypes = new Map<string, ISharedObjectExtension>();
     dataTypes.set(MapExtension.Type, new MapExtension());
 
-    const runtime = await ComponentRuntime.Load(context, dataTypes);
-    const progressCollectionP = CollectionManager.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+    const progressCollectionP = CollectionManager.load(runtime, context);
     runtime.registerRequestHandler(async (request: IRequest) => {
         const progressCollection = await progressCollectionP;
         return progressCollection.request(request);

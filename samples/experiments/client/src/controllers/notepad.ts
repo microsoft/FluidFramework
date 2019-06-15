@@ -3,7 +3,7 @@ import * as jwt from "jsonwebtoken";
 import { NoteList } from "../models";
 
 async function addNote(noteId: string, token: string) {
-    const notes = await NoteList.Load(token);
+    const notes = await NoteList.load(token);
     if (!notes.has(noteId)) {
         console.log(`Adding note ${noteId}`);
         notes.addNote(noteId);

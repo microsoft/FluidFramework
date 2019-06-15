@@ -8,7 +8,7 @@ const insightsMapId = "insights";
  * A document is a collection of collaborative types.
  */
 export class Document {
-    public static async Load(runtime: IRuntime): Promise<Document> {
+    public static async load(runtime: IRuntime): Promise<Document> {
         let root: IMap;
 
         if (!runtime.existing) {

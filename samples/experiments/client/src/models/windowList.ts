@@ -10,7 +10,7 @@ export interface IWindow {
 }
 
 export class WindowList extends EventEmitter {
-    public static async Load(token: string): Promise<WindowList> {
+    public static async load(token: string): Promise<WindowList> {
         const claims = jwt.decode(token) as core.ITokenClaims;
         const document = await api.load(claims.documentId, { token });
         const connectedP = new Promise<void>((resolve) => {

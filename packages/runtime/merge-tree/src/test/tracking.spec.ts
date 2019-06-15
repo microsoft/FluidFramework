@@ -18,7 +18,7 @@ describe("MergeTree.tracking", () => {
         () => {
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make("abc")],
+                [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -43,7 +43,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make("abc")],
+                [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -70,7 +70,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make("abc")],
+                [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,
@@ -81,7 +81,7 @@ describe("MergeTree.tracking", () => {
 
             mergeTree.insertSegments(
                 1,
-                [TextSegment.Make("z")],
+                [TextSegment.make("z")],
                 referenceSequenceNumber,
                 localClientId,
                 MergeTree.UnassignedSequenceNumber,

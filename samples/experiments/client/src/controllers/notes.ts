@@ -28,7 +28,7 @@ function renderNotes(notes: NoteList, openNote: (id: string) => void) {
 }
 
 export async function loadNotes(token: string, openNote: (id: string) => void): Promise<void> {
-    const notes = await NoteList.Load(token);
+    const notes = await NoteList.load(token);
 
     renderNotes(notes, openNote);
     notes.on("notesChanged", () => {

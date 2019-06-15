@@ -267,7 +267,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];
 
-        const telemetryEvent = PerformanceEvent.Start(this.logger, {
+        const telemetryEvent = PerformanceEvent.start(this.logger, {
             eventName: "GetDeltas",
             from,
             reason,
@@ -383,7 +383,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Reconnection is only enabled for browser clients.
         const reconnect = this.clientType === Browser;
 
-        DeltaConnection.Connect(
+        DeltaConnection.connect(
             this.service,
             this.client!).then(
             (connection) => {

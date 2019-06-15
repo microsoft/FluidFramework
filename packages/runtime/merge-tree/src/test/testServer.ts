@@ -148,7 +148,7 @@ export class TestServer extends TestClient {
 }
 
 function incrementalGatherText(segment: ISegment, state: IncrementalMapState<TextSegment>) {
-    if (TextSegment.Is(segment)) {
+    if (TextSegment.is(segment)) {
         if (MergeTree.traceGatherText) {
             console.log(
                 `@cli ${state.clientId ? state.clientId : -1} ` +

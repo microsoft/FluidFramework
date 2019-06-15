@@ -16,7 +16,7 @@ describe("snapshot", () => {
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk);
 
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.Create("prague:snapshot"));
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
@@ -42,7 +42,7 @@ describe("snapshot", () => {
         }
         client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 100);
 
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.Create("prague:snapshot"));
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);

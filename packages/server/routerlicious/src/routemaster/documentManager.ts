@@ -2,7 +2,7 @@ import * as core from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 
 export class DocumentManager {
-    public static async Create(
+    public static async create(
         tenantId: string,
         documentId: string,
         collection: core.ICollection<core.IDocument>,

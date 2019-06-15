@@ -15,7 +15,7 @@ import { EventEmitter } from "events";
 const testProtoclVersion = "^0.1.0";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-    public static async Create(
+    public static async create(
         tenantId: string,
         id: string,
         token: string,

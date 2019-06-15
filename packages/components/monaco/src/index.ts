@@ -33,8 +33,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.Load(context, modules);
-    const runnerP = MonacoRunner.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, modules);
+    const runnerP = MonacoRunner.load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {
         const runner = await runnerP;

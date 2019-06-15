@@ -3,7 +3,7 @@ import * as promisify from "es6-promisify";
 import * as collabClient from "../../collab/client";
 
 export class RichText {
-    public static GetOrCreate(connection, id): Promise<RichText> {
+    public static getOrCreate(connection, id): Promise<RichText> {
         // Load the model from the server
         let doc = connection.get("documents", id);
 

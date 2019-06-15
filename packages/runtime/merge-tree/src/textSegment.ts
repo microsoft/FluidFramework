@@ -18,11 +18,11 @@ export interface IJSONTextSegment extends ops.IJSONSegment {
 export class TextSegment extends BaseSegment {
     public static readonly type = "TextSegment";
 
-    public static Is(segment: ISegment): segment is TextSegment {
+    public static is(segment: ISegment): segment is TextSegment {
         return segment.type === TextSegment.type;
     }
 
-    public static Make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
+    public static make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
         const tseg = new TextSegment(text, seq, clientId);
         if (props) {
             tseg.addProperties(props);
@@ -30,13 +30,13 @@ export class TextSegment extends BaseSegment {
         return tseg;
     }
 
-    public static FromJSONObject(spec: any) {
+    public static fromJSONObject(spec: any) {
         if (typeof spec === "string") {
             return new TextSegment(spec, UniversalSequenceNumber, LocalClientId);
         // tslint:disable-next-line: no-unsafe-any
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
-            return TextSegment.Make(textSpec.text, textSpec.props as Properties.PropertySet,
+            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet,
                 UniversalSequenceNumber,
                 LocalClientId);
         }
@@ -65,14 +65,14 @@ export class TextSegment extends BaseSegment {
         } else {
             text = text.substring(start, end);
         }
-        const b = TextSegment.Make(text, this.properties, this.seq, this.clientId);
+        const b = TextSegment.make(text, this.properties, this.seq, this.clientId);
         this.cloneInto(b);
         return b;
     }
 
     public canAppend(segment: ISegment) {
         return this.text.charAt(this.text.length - 1) !== "\n"
-            && TextSegment.Is(segment)
+            && TextSegment.is(segment)
             && (this.cachedLength <= MergeTree.TextSegmentGranularity ||
                 segment.cachedLength <= MergeTree.TextSegmentGranularity);
     }
@@ -82,7 +82,7 @@ export class TextSegment extends BaseSegment {
     }
 
     public append(segment: ISegment) {
-        if (TextSegment.Is(segment)) {
+        if (TextSegment.is(segment)) {
             // Note: Must call 'appendLocalRefs' before modifying this segment's length as
             // 'this.cachedLength' is used to adjust the offsets of the local refs.
             this.appendLocalRefs(segment);
@@ -199,7 +199,7 @@ export class MergeTreeTextHelper {
 
     private readonly gatherText = (segment: ISegment, pos: number, refSeq: number, clientId: number, start: number,
                                    end: number, accumText: ITextAccumulator) => {
-        if (TextSegment.Is(segment)) {
+        if (TextSegment.is(segment)) {
             if (MergeTree.traceGatherText) {
                 console.log(
                     `@cli ${this.mergeTree.getLongClientId(this.mergeTree.collabWindow.clientId)} ` +

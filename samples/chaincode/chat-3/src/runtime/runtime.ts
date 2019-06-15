@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from "events";
 
 export class Runtime extends EventEmitter {
-    public static async Load(context: IContainerContext): Promise<Runtime> {
+    public static async load(context: IContainerContext): Promise<Runtime> {
         const runtime = new Runtime(context);
         return runtime;
     }

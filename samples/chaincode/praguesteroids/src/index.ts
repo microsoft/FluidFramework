@@ -17,8 +17,8 @@ class Runner {
     }
 
     private async start(runtime: IRuntime, platform: IPlatform) {
-        const collabDoc = await Document.Load(runtime);
-        PragueSteroids.Start(collabDoc, platform);
+        const collabDoc = await Document.load(runtime);
+        PragueSteroids.start(collabDoc, platform);
     }
 }
 

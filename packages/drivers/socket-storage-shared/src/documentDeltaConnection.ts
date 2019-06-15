@@ -28,7 +28,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      * @param url - websocket URL
      */
     // tslint:disable-next-line: max-func-body-length
-    public static async Create(
+    public static async create(
         tenantId: string,
         id: string,
         token: string | null,

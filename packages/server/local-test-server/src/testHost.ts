@@ -99,7 +99,7 @@ export class TestHost {
         private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
         deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
-        this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.Create();
+        this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
         // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
         const store = new DataStore(

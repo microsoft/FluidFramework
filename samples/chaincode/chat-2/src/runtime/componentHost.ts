@@ -48,7 +48,7 @@ class ServicePlatform extends EventEmitter implements IPlatform {
  * Base component class
  */
 export class ComponentHost extends EventEmitter implements IComponentDeltaHandler, IRuntime {
-    public static async LoadFromSnapshot(
+    public static async loadFromSnapshot(
         componentRuntime: IComponentRuntime,
         chaincode: IChaincode,
     ) {

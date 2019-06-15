@@ -32,7 +32,7 @@ describe("MergeTree", () => {
         mergeTree = new MergeTree();
         mergeTree.insertSegments(
             0,
-            [TextSegment.Make("hello world!")],
+            [TextSegment.make("hello world!")],
             UniversalSequenceNumber,
             LocalClientId,
             UniversalSequenceNumber,

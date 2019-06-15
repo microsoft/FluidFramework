@@ -22,7 +22,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     public static supportedInterfaces = ["IAgentScheduler"];
 
-    public static async Load(runtime: IComponentRuntime) {
+    public static async load(runtime: IComponentRuntime) {
         const collection = new AgentScheduler(runtime);
         await collection.initialize();
 
@@ -327,8 +327,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     dataTypes.set(MapExtension.Type, new MapExtension());
     dataTypes.set(ConsensusRegisterCollectionExtension.Type, new ConsensusRegisterCollectionExtension());
 
-    const runtime = await ComponentRuntime.Load(context, dataTypes);
-    const agentSchedulerP = AgentScheduler.Load(runtime);
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+    const agentSchedulerP = AgentScheduler.load(runtime);
     runtime.registerRequestHandler(async (request: IRequest) => {
         const agentScheduler = await agentSchedulerP;
         return agentScheduler.request(request);

@@ -67,7 +67,7 @@ export class MonacoRunner extends EventEmitter
         "IComponentLoadable",
     ];
 
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
         const runner = new MonacoRunner(runtime);
         await runner.initialize();
 
@@ -218,7 +218,7 @@ export class MonacoRunner extends EventEmitter
     }
 
     private async initialize(): Promise<void> {
-        const collabDoc = await Document.Load(this.runtime);
+        const collabDoc = await Document.load(this.runtime);
         this.rootView = await collabDoc.getRoot();
 
         if (!this.runtime.existing) {

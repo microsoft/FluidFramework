@@ -113,7 +113,7 @@ async function initializeChaincode(loaderDoc: pragueLoader.Document, pkg: string
 }
 
 export class PragueDocument {
-    public static async Load(server: string, documentId: string) {
+    public static async load(server: string, documentId: string) {
 
         const settings = settingCollection[server];
         const user = {

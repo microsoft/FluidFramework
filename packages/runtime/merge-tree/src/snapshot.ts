@@ -44,7 +44,7 @@ export class Snapshot {
 
     constructor(public mergeTree: MergeTree.MergeTree, logger: ITelemetryLogger, public filename?: string,
         public onCompletion?: () => void) {
-        this.logger = ChildLogger.Create(logger, "Snapshot");
+        this.logger = ChildLogger.create(logger, "Snapshot");
     }
 
     getSeqLengthSegs(allSegments: ops.IJSONSegment[], allLengths: number[], approxSequenceLength: number,

@@ -79,12 +79,12 @@ export interface ISharedObjectRegistry {
  * Base component class
  */
 export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
-    public static async Load(
+    public static async load(
         context: IComponentContext,
         registry: ISharedObjectRegistry,
     ) {
         const tree = context.baseSnapshot;
-        const logger = ChildLogger.Create(context.hostRuntime.logger, undefined, {componentId: context.id});
+        const logger = ChildLogger.create(context.hostRuntime.logger, undefined, {componentId: context.id});
         const runtime = new ComponentRuntime(
             context,
             context.documentId,

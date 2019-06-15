@@ -37,7 +37,7 @@ export function insertText(
     props: Properties.PropertySet,
     opArgs: IMergeTreeDeltaOpArgs,
 ) {
-    mergeTree.insertSegments(pos, [TextSegment.Make(text, props, seq, clientId)], refSeq, clientId, seq, opArgs);
+    mergeTree.insertSegments(pos, [TextSegment.make(text, props, seq, clientId)], refSeq, clientId, seq, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {

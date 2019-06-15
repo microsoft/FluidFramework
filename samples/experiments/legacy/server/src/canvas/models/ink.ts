@@ -3,7 +3,7 @@ import * as promisify from "es6-promisify";
 import * as collabClient from "../../collab/client";
 
 export class Ink {
-    public static GetOrCreate(connection, id, compose: boolean): Promise<Ink> {
+    public static getOrCreate(connection, id, compose: boolean): Promise<Ink> {
         // Load the model from the server
         let doc = connection.get("ink", id);
 

@@ -25,7 +25,7 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
 export class ContainerContext extends EventEmitter implements IContainerContext {
-    public static async Load(
+    public static async load(
         container: Container,
         codeLoader: ICodeLoader,
         chaincode: IChaincodeFactory,

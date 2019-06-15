@@ -10,7 +10,7 @@ const rootMapId = "root";
  * A document is a collection of collaborative types.
  */
 export class Document {
-    public static async Load(runtime: IComponentRuntime): Promise<Document> {
+    public static async load(runtime: IComponentRuntime): Promise<Document> {
         let root: ISharedMap;
 
         if (!runtime.existing) {

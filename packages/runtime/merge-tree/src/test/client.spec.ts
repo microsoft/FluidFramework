@@ -13,7 +13,7 @@ describe("TestClient", () => {
         client = new TestClient();
         client.mergeTree.insertSegments(
             0,
-            [TextSegment.Make("")],
+            [TextSegment.make("")],
             UniversalSequenceNumber,
             client.getClientId(),
             UniversalSequenceNumber,

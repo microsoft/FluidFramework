@@ -46,7 +46,7 @@ abstract class SavedInput {
 }
 
 class SavedValueInput extends SavedInput {
-    public static Create(name: string, defaultValue: string, state?: any): SavedValueInput {
+    public static create(name: string, defaultValue: string, state?: any): SavedValueInput {
         const s = new SavedValueInput(name, defaultValue);
         s.initialize(state);
         return s;
@@ -61,7 +61,7 @@ class SavedValueInput extends SavedInput {
 
 }
 class SavedCheckBoxInput extends SavedInput {
-    public static Create(name: string, defaultValue: boolean, state?: any): SavedCheckBoxInput {
+    public static create(name: string, defaultValue: boolean, state?: any): SavedCheckBoxInput {
         const s = new SavedCheckBoxInput(name, defaultValue);
         s.initialize(state);
         return s;
@@ -76,7 +76,7 @@ class SavedCheckBoxInput extends SavedInput {
 }
 
 class SavedSelectInput extends SavedValueInput {
-    public static Create(name: string, collection: any, defaultValue: string, state?: any): SavedSelectInput {
+    public static create(name: string, collection: any, defaultValue: string, state?: any): SavedSelectInput {
         const element = document.getElementById(name) as HTMLSelectElement;
 
         for (const i of Object.keys(settingCollection)) {
@@ -123,13 +123,13 @@ function randomDocPrefix() {
 
 const bgPage = chrome.extension.getBackgroundPage();
 const streamState = bgPage ? (bgPage.window as any).getStreamingState() : undefined;
-const docName = SavedValueInput.Create("docId", randomDocPrefix(), streamState);
-const background = SavedCheckBoxInput.Create("background", true, streamState);
-const batchOps = SavedCheckBoxInput.Create("batchOps", true, streamState);
-const fullView = SavedCheckBoxInput.Create("fullView", false);
-const debugView = SavedCheckBoxInput.Create("debugView", false);
-const serverDropDown = SavedSelectInput.Create("server", settingCollection, globalConfig.defaultServer, streamState);
-const autoIncrement = SavedCheckBoxInput.Create("autoIncrement", true);
+const docName = SavedValueInput.create("docId", randomDocPrefix(), streamState);
+const background = SavedCheckBoxInput.create("background", true, streamState);
+const batchOps = SavedCheckBoxInput.create("batchOps", true, streamState);
+const fullView = SavedCheckBoxInput.create("fullView", false);
+const debugView = SavedCheckBoxInput.create("debugView", false);
+const serverDropDown = SavedSelectInput.create("server", settingCollection, globalConfig.defaultServer, streamState);
+const autoIncrement = SavedCheckBoxInput.create("autoIncrement", true);
 
 // ------------------------
 // Buttons

@@ -34,7 +34,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export abstract class TelemetryLogger implements ITelemetryLogger {
     public static readonly eventNamespaceSeparator = ":";
 
-    public static FormatTick(tick: number): string {
+    public static formatTick(tick: number): string {
         return tick.toFixed(0);
     }
 
@@ -98,10 +98,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         const perfEvent: ITelemetryBaseEvent = { ...event, category: "performance" };
 
         if (event.duration) {
-            perfEvent.duration = TelemetryLogger.FormatTick(event.duration);
+            perfEvent.duration = TelemetryLogger.formatTick(event.duration);
         }
         const tick = event.tick ? event.tick : performanceNow();
-        perfEvent.tick = TelemetryLogger.FormatTick(tick);
+        perfEvent.tick = TelemetryLogger.formatTick(tick);
 
         this.send(perfEvent);
     }
@@ -172,7 +172,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      */
-    public static Create(
+    public static create(
         baseLogger?: ITelemetryBaseLogger,
         namespace?: string,
         properties?: object): TelemetryLogger {
@@ -203,7 +203,7 @@ export class ChildLogger extends TelemetryLogger {
 /**
  * Multi-sink logger
  * Takes multiple ITelemetryBaseLogger objects (sinks) and logs all events into each sink
- * Implements ITelemetryBaseLogger (through static Create() method)
+ * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[] = new Array<ITelemetryBaseLogger>();
@@ -249,7 +249,7 @@ export class DebugLogger extends TelemetryLogger {
      * @param namespace - Telemetry event name prefix to add to all events
      * @param properties - Base properties to add to all events
      */
-    public static Create(namespace: string, properties?: object): TelemetryLogger {
+    public static create(namespace: string, properties?: object): TelemetryLogger {
         // setup base logger upfront, such that host can disable it (if needed)
         const debug = registerDebug(namespace);
         debug.enabled = true;
@@ -268,17 +268,17 @@ export class DebugLogger extends TelemetryLogger {
      * @param properties - Base properties to add to all events
      * @param baseLogger - Base logger to output events (in addition to debug logger being created). Can be undefined.
      */
-    public static MixinDebugLogger(
+    public static mixinDebugLogger(
         namespace: string,
         properties?: object,
         baseLogger?: ITelemetryBaseLogger): TelemetryLogger {
-        const debugLogger = DebugLogger.Create(namespace, properties);
+        const debugLogger = DebugLogger.create(namespace, properties);
         if (!baseLogger) {
             return debugLogger;
         }
         const multiSinkLogger = new MultiSinkLogger();
         multiSinkLogger.addLogger(debugLogger);
-        multiSinkLogger.addLogger(ChildLogger.Create(baseLogger, namespace, properties));
+        multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace, properties));
 
         return multiSinkLogger;
     }
@@ -320,7 +320,7 @@ export class DebugLogger extends TelemetryLogger {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
-    public static Start(logger: ITelemetryLogger, event: ITelemetryInformationalEvent) {
+    public static start(logger: ITelemetryLogger, event: ITelemetryInformationalEvent) {
         return new PerformanceEvent(logger, event);
     }
 

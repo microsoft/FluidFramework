@@ -418,7 +418,7 @@ export function TestPack(verbose = true) {
                     client.insertTextLocal(pos, word1.text) :
                     client.insertSiblingSegment(
                         client.mergeTree.getContainingSegment(pos, client.getCurrentSeq(), client.getClientId()).segment,
-                        TextSegment.Make(word1.text))
+                        TextSegment.make(word1.text))
 
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(
@@ -1470,7 +1470,7 @@ function makeCollabTextSegment(text: string, seq = MergeTree.UniversalSequenceNu
 
 export function mergeTreeCheckedTest() {
     let mergeTree = new MergeTree.MergeTree();
-    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
+    mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     const insertCount = 2000;
     const removeCount = 1400;
     const largeRemoveCount = 20;
@@ -1949,7 +1949,7 @@ function printOverlayTree(client: MergeTree.Client) {
         return attrStrbuf;
     }
     function leaf(segment: MergeTree.ISegment) {
-        if (MergeTree.TextSegment.Is(segment)) {
+        if (MergeTree.TextSegment.is(segment)) {
             strbuf += MergeTree.internedSpaces(indentAmt);
             strbuf += segment.text;
             strbuf += "\n";

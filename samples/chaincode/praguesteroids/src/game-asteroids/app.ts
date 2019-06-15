@@ -39,7 +39,7 @@ function getHearts(count: number) {
 // const height = 400;
 
 export class PragueSteroids {
-    public static async Start(collabDoc: Document, platform: IPlatform) {
+    public static async start(collabDoc: Document, platform: IPlatform) {
         const gameDiv: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!gameDiv) {
             return;

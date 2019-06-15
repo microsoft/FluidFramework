@@ -73,7 +73,7 @@ class TestOrderManager implements IOrdererManager {
 }
 
 export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
-    public static Create(): ITestDeltaConnectionServer {
+    public static create(): ITestDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";

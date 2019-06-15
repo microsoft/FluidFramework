@@ -122,7 +122,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     public replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet) {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
-            const segment = MergeTree.TextSegment.Make(text, props);
+            const segment = MergeTree.TextSegment.make(text, props);
             const insertOp = this.client.insertSegmentLocal(start, segment);
             this.submitSequenceMessage(MergeTree.createGroupOp(removeOp, insertOp));
         }
@@ -208,7 +208,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     }
 
     public segmentFromSpec(spec: any) {
-        const maybeText = MergeTree.TextSegment.FromJSONObject(spec);
+        const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 
         const maybeMarker = MergeTree.Marker.fromJSONObject(spec);

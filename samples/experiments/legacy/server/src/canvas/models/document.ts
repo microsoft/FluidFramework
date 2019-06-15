@@ -37,7 +37,7 @@ export interface IShareDBModel<T> {
 }
 
 export class Document {
-    public static GetOrCreate(connection, id: string, compose: boolean): Promise<Document> {
+    public static getOrCreate(connection, id: string, compose: boolean): Promise<Document> {
         // Load the model from the server
         let doc = connection.get("canvas", id);
 
@@ -47,8 +47,8 @@ export class Document {
         let subscribeP: Promise<any> = subscribe();
         let docP = subscribeP.then(() => {
             if (!doc.type) {
-                let inkP = Ink.GetOrCreate(connection, uuid.v4(), compose);
-                let richTextP = RichText.GetOrCreate(connection, uuid.v4());
+                let inkP = Ink.getOrCreate(connection, uuid.v4(), compose);
+                let richTextP = RichText.getOrCreate(connection, uuid.v4());
 
                 return Promise.all([inkP, richTextP]).then((results) => {
                     let initial: IDocument = {
@@ -81,8 +81,8 @@ export class Document {
 
     private constructor(private connection: any, private model: IShareDBModel<IDocument>, compose: boolean) {
         // Listen for updates and then fetch the promises for the given types
-        this.inkP = Ink.GetOrCreate(connection, model.data.ink.id, compose);
-        this.richTextP = RichText.GetOrCreate(connection, model.data.richText.id);
+        this.inkP = Ink.getOrCreate(connection, model.data.ink.id, compose);
+        this.richTextP = RichText.getOrCreate(connection, model.data.richText.id);
     }
 
     public getInkLayer(): Promise<Ink> {

@@ -49,7 +49,7 @@ const translationApiKey = "bd099a1e38724333b253fcff7523f76a";
 export class SharedTextRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
     public static supportedInterfaces = ["IComponentHTMLViewable"];
 
-    public static async Load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
+    public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
 
@@ -139,7 +139,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
     }
 
     private async initialize(): Promise<void> {
-        this.collabDoc = await Document.Load(this.runtime);
+        this.collabDoc = await Document.load(this.runtime);
         this.rootView = await this.collabDoc.getRoot();
 
         if (!this.runtime.existing) {
@@ -164,7 +164,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
 
             const segments = MergeTree.loadSegments(starterText, 0, true);
             for (const segment of segments) {
-                if (MergeTree.TextSegment.Is(segment)) {
+                if (MergeTree.TextSegment.is(segment)) {
                     newString.insertText(segment.text, newString.client.getLength(),
                     segment.properties);
                 } else {
@@ -274,8 +274,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.Load(context, modules);
-    const runnerP = SharedTextRunner.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, modules);
+    const runnerP = SharedTextRunner.load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {
         debug(`request(url=${request.url})`);

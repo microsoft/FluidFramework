@@ -83,7 +83,7 @@ export abstract class Component extends EventEmitter implements IComponent {
         registry: IComponentRegistry,
     ): Promise<IRuntime> {
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.Load(context, registry);
+        const runtime = await ContainerRuntime.load(context, registry);
         debug("runtime loaded.");
 
         // Register path handler for inbound messages
@@ -213,7 +213,7 @@ export abstract class Component extends EventEmitter implements IComponent {
 
         // Instantiation of underlying data model for the component
         debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
-        this._runtime = await ComponentRuntime.Load(context, new Map(this[typeToFactorySym]));
+        this._runtime = await ComponentRuntime.load(context, new Map(this[typeToFactorySym]));
         debug(`${this.dbgName}.LoadFromSnapshot() - end`);
 
         // Load the app specific code. We do not await on it because it is not needed to begin inbounding operations.

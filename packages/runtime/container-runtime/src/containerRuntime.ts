@@ -49,7 +49,7 @@ export interface IComponentRegistry {
 
 // Context will define the component level mappings
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
-    public static async Load(
+    public static async load(
         context: IContainerContext,
         registry: IComponentRegistry,
     ): Promise<ContainerRuntime> {

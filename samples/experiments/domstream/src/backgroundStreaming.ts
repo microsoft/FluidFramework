@@ -26,7 +26,7 @@ export class BackgroundStreaming {
             console.error("Shouldn't start background stream when there is already an collabDoc");
             return;
         }
-        collabDoc = await PragueDocument.Load(server, docId);
+        collabDoc = await PragueDocument.load(server, docId);
         currentTabId = tabId;
         mapBatchOps = batchOps;
         debug("Start streaming tab", tabId, docId);

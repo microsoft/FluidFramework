@@ -310,7 +310,7 @@ export class PinpointRunner extends EventEmitter
         "IComponentLoadable",
     ];
 
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
         const runner = new PinpointRunner(runtime);
         await runner.initialize();
 
@@ -382,7 +382,7 @@ export class PinpointRunner extends EventEmitter
     // }
 
     private async initialize(): Promise<void> {
-        this.collabDoc = await Document.Load(this.runtime);
+        this.collabDoc = await Document.load(this.runtime);
         this.rootView = await this.collabDoc.getRoot();
 
         // Add in the text string if it doesn't yet exist

@@ -46,7 +46,7 @@ class PollRunner extends EventEmitter implements IPlatform {
     }
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        const collabDoc = await Document.Load(runtime);
+        const collabDoc = await Document.load(runtime);
         const rootMap = collabDoc.getRoot();
         const rootView = await rootMap.getView();
 

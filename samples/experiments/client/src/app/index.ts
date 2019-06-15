@@ -124,8 +124,8 @@ export async function start(): Promise<void> {
         tokenManager.getWindowsTokens(),
     ]);
 
-    const windowListP = WindowList.Load(windowsToken);
-    const noteListP = NoteList.Load(notesToken);
+    const windowListP = WindowList.load(windowsToken);
+    const noteListP = NoteList.load(notesToken);
 
     const [windowList, noteList] = await Promise.all([windowListP, noteListP]);
 

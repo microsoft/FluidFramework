@@ -33,7 +33,7 @@ const treeFactories: ITestTreeFactory[] = [
             const mergeTree = new MergeTree();
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make(initialText)],
+                [TextSegment.make(initialText)],
                 UniversalSequenceNumber,
                 LocalClientId,
                 UniversalSequenceNumber,
@@ -58,7 +58,7 @@ const treeFactories: ITestTreeFactory[] = [
             const mergeTree = new MergeTree();
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make(initialText)],
+                [TextSegment.make(initialText)],
                 UniversalSequenceNumber,
                 LocalClientId,
                 UniversalSequenceNumber,
@@ -113,7 +113,7 @@ const treeFactories: ITestTreeFactory[] = [
             const mergeTree = new MergeTree();
             mergeTree.insertSegments(
                 0,
-                [TextSegment.Make(initialText)],
+                [TextSegment.make(initialText)],
                 UniversalSequenceNumber,
                 LocalClientId,
                 UniversalSequenceNumber,

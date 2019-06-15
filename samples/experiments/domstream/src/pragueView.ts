@@ -137,7 +137,7 @@ class FrameLoaderCallbacks implements IFrameLoaderCallbacks {
 async function initFromPrague(server: string, documentId: string) {
     setStatusMessage("Loading document " + documentId);
 
-    const collabDoc = await PragueDocument.Load(server, documentId);
+    const collabDoc = await PragueDocument.load(server, documentId);
     const rootView = await collabDoc.getRoot().getView();
 
     FrameLoader.syncRoot(iframe, rootView, new FrameLoaderCallbacks());

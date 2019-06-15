@@ -15,7 +15,7 @@ export class StockContainerRuntimeFactory {
         registry: IComponentRegistry,
     ): Promise<IRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.Load(context, registry);
+        const runtime = await ContainerRuntime.load(context, registry);
         // debug("runtime loaded.");
 
         // Register path handler for inbound messages

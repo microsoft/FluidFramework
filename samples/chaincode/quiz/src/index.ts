@@ -20,7 +20,7 @@ class Runner {
     }
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
-        const collabDoc = await Document.Load(runtime);
+        const collabDoc = await Document.load(runtime);
 
         const hostContent: HTMLElement = await platform.queryInterface<HTMLElement>("div");
         if (!hostContent) {

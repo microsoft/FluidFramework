@@ -5,7 +5,7 @@ import { TextSegment } from "../textSegment";
 describe("segmentGroupCollection", () => {
     let segment: ISegment;
     beforeEach(() => {
-        segment = TextSegment.Make("abc");
+        segment = TextSegment.make("abc");
     });
     it(".empty", () => {
         assert(segment.segmentGroups.empty);
@@ -64,7 +64,7 @@ describe("segmentGroupCollection", () => {
             segment.segmentGroups.enqueue({ segments: [] });
         }
 
-        const segmentCopy = TextSegment.Make("");
+        const segmentCopy = TextSegment.make("");
         segment.segmentGroups.copyTo(segmentCopy);
 
         assert.equal(segment.segmentGroups.size, segmentGroupCount);

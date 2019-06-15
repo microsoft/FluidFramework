@@ -32,7 +32,7 @@ class PhotoPlatformRunner extends EventEmitter implements IPlatform {
     }
 
     public async run(runtime: IRuntime, platform: IPlatform): Promise<IPlatform> {
-        this.start(await Document.Load(runtime), platform).catch((error) => console.error(error));
+        this.start(await Document.load(runtime), platform).catch((error) => console.error(error));
         return this;
     }
 

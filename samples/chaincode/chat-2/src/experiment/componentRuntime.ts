@@ -49,7 +49,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return component;
     }
 
-    public static async LoadFromSnapshot(
+    public static async loadFromSnapshot(
         hostRuntime: IHostRuntime,
         id: string,
         pkg: string,

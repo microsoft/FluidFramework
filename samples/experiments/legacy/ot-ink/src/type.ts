@@ -22,7 +22,7 @@ export function create(initial: ISnapshot): Snapshot {
  * Applies the delta to the provided snapshot
  */
 export function apply(snapshot: Snapshot, delta: IDelta) {
-    let newSnapshot = Snapshot.Clone(snapshot);
+    let newSnapshot = Snapshot.clone(snapshot);
     newSnapshot.apply(delta);
     return newSnapshot;
 }

@@ -150,7 +150,7 @@ export class Loader extends EventEmitter implements ILoader {
         documentService: IDocumentService,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
-        const container = await Container.Load(
+        const container = await Container.load(
             id,
             version,
             documentService,

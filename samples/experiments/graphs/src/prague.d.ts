@@ -149,8 +149,8 @@ declare module 'prague/api/document' {
         * A document is a collection of collaborative types.
         */
     export class Document {
-            static Create(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
-            static Load(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
+            static create(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
+            static load(id: string, registry: Registry, service: IDocumentService, options: Object, version: resources.ICommit, connect: boolean): Promise<Document>;
             readonly clientId: string;
             readonly id: string;
             /**
@@ -1279,7 +1279,7 @@ declare module 'prague/ink/snapshot' {
         layerIndex: {
             [key: string]: number;
         };
-        static Clone(snapshot: ISnapshot): Snapshot;
+        static clone(snapshot: ISnapshot): Snapshot;
         constructor(layers?: IInkLayer[], layerIndex?: {
             [key: string]: number;
         });

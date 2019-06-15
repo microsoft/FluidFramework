@@ -4,7 +4,7 @@ import * as jwt from "jsonwebtoken";
 import { rev } from "../constants";
 
 export class VideoDocument extends EventEmitter {
-    public static async Load(id: string, tenantId: string, secret: string): Promise<VideoDocument> {
+    public static async load(id: string, tenantId: string, secret: string): Promise<VideoDocument> {
         const revedId = `${id}${rev}`;
         const token = jwt.sign(
             {

@@ -12,7 +12,7 @@ const secret = "f9349c025fc7e98d9b8cdec6bbe4320e";
 prague.socketStorage.registerAsDefault(routerlicious, historian, tenantId);
 
 async function run(user: IUser): Promise<void> {
-    const video = await VideoDocument.Load(user.login, tenantId, secret);
+    const video = await VideoDocument.load(user.login, tenantId, secret);
 
     ReactDOM.render(
         <Picker video={video} ></Picker>,

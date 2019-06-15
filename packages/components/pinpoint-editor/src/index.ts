@@ -14,8 +14,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     const mapExtension = new MapExtension();
     modules.set(MapExtension.Type, mapExtension);
 
-    const runtime = await ComponentRuntime.Load(context, modules);
-    const runnerP = PinpointRunner.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, modules);
+    const runnerP = PinpointRunner.load(runtime, context);
 
     runtime.registerRequestHandler(async (request: IRequest) => {
         const runner = await runnerP;

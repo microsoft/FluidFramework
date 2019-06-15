@@ -54,7 +54,7 @@ export class NodeManager extends EventEmitter {
     }
 
     private async getNode(id: string): Promise<IConcreteNode> {
-        const node = await RemoteNode.Connect(id, this.mongoManager, this.nodeCollectionName);
+        const node = await RemoteNode.connect(id, this.mongoManager, this.nodeCollectionName);
         this.nodes.set(id, node);
 
         // TODO Register for node events here

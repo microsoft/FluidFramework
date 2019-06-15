@@ -48,7 +48,7 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
    * This becomes the standard practice for creating components in the new world.
    * Using a static allows us to have async calls in class creation that you can't have in a constructor
    */
-  public static async Load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
+  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
     const clicker = new Clicker(runtime, context, Clicker.SupportedInterfaces);
     await clicker.initialize();
 
@@ -144,10 +144,10 @@ export async function instantiateComponent(context: IComponentContext): Promise<
   dataTypes.set(MapExtension.Type, new MapExtension());
 
   // Create a new runtime for our component
-  const runtime = await ComponentRuntime.Load(context, dataTypes);
+  const runtime = await ComponentRuntime.load(context, dataTypes);
 
   // Create a new instance of our component
-  const counterNewP = Clicker.Load(runtime, context);
+  const counterNewP = Clicker.load(runtime, context);
 
   // Add a handler for the request() on our runtime to send it to our component
   // This will define how requests to the runtime object we just created gets handled

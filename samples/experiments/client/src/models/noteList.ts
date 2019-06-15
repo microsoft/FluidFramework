@@ -15,7 +15,7 @@ export interface INote {
 }
 
 export class NoteList extends EventEmitter {
-    public static async Load(token: string): Promise<NoteList> {
+    public static async load(token: string): Promise<NoteList> {
         const claims = jwt.decode(token) as core.ITokenClaims;
         const document = await api.load(claims.documentId, { token });
         const connectedP = new Promise<void>((resolve) => {
@@ -37,7 +37,7 @@ export class NoteList extends EventEmitter {
         return new NoteList(notes, notesView);
     }
 
-    private static ParseId(id: string): { id: string, created: number } {
+    private static parseId(id: string): { id: string, created: number } {
         const split = id.indexOf("-");
 
         const created = Number.parseInt(id.substring(0, split));
@@ -46,7 +46,7 @@ export class NoteList extends EventEmitter {
         return { id: documentId, created };
     }
 
-    private static CreateId(id: string): string {
+    private static createId(id: string): string {
         return `${Date.now()}-${id}`;
     }
 
@@ -98,7 +98,7 @@ export class NoteList extends EventEmitter {
     }
 
     public addNote(id = moniker.choose()) {
-        const key = NoteList.CreateId(id);
+        const key = NoteList.createId(id);
         const note = this.addNoteCore(key, "", true);
         this.emit("notesChanged");
 
@@ -117,7 +117,7 @@ export class NoteList extends EventEmitter {
         }
 
         // And then create the parsed local version
-        const parsed = NoteList.ParseId(id);
+        const parsed = NoteList.parseId(id);
         const note: INote = {
             created: parsed.created,
             id: parsed.id,

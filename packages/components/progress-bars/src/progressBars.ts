@@ -138,7 +138,7 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IC
 export class ProgressCollection extends EventEmitter implements ISharedComponent, IComponentRouter {
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter"];
 
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
         await collection.initialize();
 
@@ -236,8 +236,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     const dataTypes = new Map<string, ISharedObjectExtension>();
     dataTypes.set(MapExtension.Type, new MapExtension());
 
-    const runtime = await ComponentRuntime.Load(context, dataTypes);
-    const progressCollectionP = ProgressCollection.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+    const progressCollectionP = ProgressCollection.load(runtime, context);
     runtime.registerRequestHandler(async (request: IRequest) => {
         const progressCollection = await progressCollectionP;
         return progressCollection.request(request);

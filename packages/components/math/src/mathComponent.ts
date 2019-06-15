@@ -289,7 +289,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",
         "IComponentCollection"];
 
-    public static async Load(runtime: IComponentRuntime, context: IComponentContext) {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);
         await collection.initialize();
 
@@ -474,8 +474,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     dataTypes.set(mapExtension.type, mapExtension);
     dataTypes.set(sharedStringExtension.type, sharedStringExtension);
 
-    const runtime = await ComponentRuntime.Load(context, dataTypes);
-    const mathCollectionP = MathCollection.Load(runtime, context);
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+    const mathCollectionP = MathCollection.load(runtime, context);
     runtime.registerRequestHandler(async (request: IRequest) => {
         const mathCollection = await mathCollectionP;
         return mathCollection.request(request);

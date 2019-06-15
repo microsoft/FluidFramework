@@ -34,7 +34,7 @@ export interface IComponentRegistry {
 
 // Context will define the component level mappings
 export class Runtime extends EventEmitter implements IHostRuntime {
-    public static async Load(
+    public static async load(
         registry: IComponentRegistry,
         context: IContainerContext,
     ): Promise<Runtime> {
@@ -162,7 +162,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
         const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
-        const componentP = ComponentRuntime.LoadFromSnapshot(
+        const componentP = ComponentRuntime.loadFromSnapshot(
             this,
             id,
             details.pkg,
@@ -428,7 +428,7 @@ export class Runtime extends EventEmitter implements IHostRuntime {
 
         // create storage service that wraps the attach data
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
-        const component = await ComponentRuntime.LoadFromSnapshot(
+        const component = await ComponentRuntime.loadFromSnapshot(
             this,
             attachMessage.id,
             attachMessage.type,

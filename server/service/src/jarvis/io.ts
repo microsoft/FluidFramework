@@ -52,7 +52,7 @@ class WebSocket implements core.IWebSocket {
 }
 
 class SocketConnection {
-    public static Attach(
+    public static attach(
         socket: ws,
         orderFactory: OrdererManager,
         tenantManager: core.ITenantManager,
@@ -194,7 +194,7 @@ export function register(
     const subscriber = new RedisSubscriptionManager(redisConfig.host, redisConfig.port);
 
     webSocketServer.on("connection", (socket: ws) => {
-        SocketConnection.Attach(
+        SocketConnection.attach(
             socket,
             orderFactory,
             tenantManager,

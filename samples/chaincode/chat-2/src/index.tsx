@@ -122,7 +122,7 @@ export class ChatComponent implements IChaincodeComponent {
   public async run(runtime: IComponentRuntime): Promise<IComponentDeltaHandler> {
       const chaincode = this.chaincode;
 
-      const component = await ComponentHost.LoadFromSnapshot(runtime, chaincode);
+      const component = await ComponentHost.loadFromSnapshot(runtime, chaincode);
       this.component = component;
 
       return component;

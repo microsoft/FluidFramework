@@ -34,7 +34,7 @@ export interface IShareDBModel<T> {
 }
 
 export class Canvas {
-    public static LoadOrCreate(connection, id: string, compose: boolean): Promise<Canvas> {
+    public static loadOrCreate(connection, id: string, compose: boolean): Promise<Canvas> {
         // Load the model from the server
         let doc = connection.get("canvas", id);
 
@@ -44,7 +44,7 @@ export class Canvas {
         let subscribeP: Promise<any> = subscribe();
         let docP = subscribeP.then(() => {
             if (!doc.type) {
-                let inkP = Ink.GetOrCreate(connection, uuid.v4(), compose);
+                let inkP = Ink.getOrCreate(connection, uuid.v4(), compose);
                 return inkP.then((ink) => {
                     let initial: ICanvas = {
                         ink: {
@@ -73,7 +73,7 @@ export class Canvas {
 
     private constructor(private connection: any, private model: IShareDBModel<ICanvas>, compose: boolean) {
         // Listen for updates and then fetch the promises for the given types
-        this.inkLayerP = Ink.GetOrCreate(connection, model.data.ink.id, compose);
+        this.inkLayerP = Ink.getOrCreate(connection, model.data.ink.id, compose);
     }
 
     public getInkLayer(): Promise<Ink> {

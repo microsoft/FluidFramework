@@ -12,7 +12,7 @@ import {
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {
-    public static async Connect(
+    public static async connect(
         service: IDocumentService,
         client: IClient) {
         const connection = await service.connectToDeltaStream(client);

@@ -71,7 +71,7 @@ interface IPendingConnection {
  * Connection to a remote node
  */
 export class RemoteNode extends EventEmitter implements IConcreteNode {
-    public static async Connect(
+    public static async connect(
         id: string,
         mongoManager: MongoManager,
         nodeCollectionName: string): Promise<RemoteNode> {
@@ -82,7 +82,7 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
         const details = await nodeCollection.findOne({ _id: id });
 
         const socket = details.expiration >= Date.now()
-            ? await Socket.Connect<INodeMessage>(details.address, id)
+            ? await Socket.connect<INodeMessage>(details.address, id)
             : null;
         const node = new RemoteNode(id, socket);
 

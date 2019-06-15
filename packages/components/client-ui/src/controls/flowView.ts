@@ -848,7 +848,7 @@ function renderSegmentIntoLine(
         lineContext.lineDiv.linePos = segpos + start;
         lineContext.lineDiv.lineEnd = lineContext.lineDiv.linePos;
     }
-    if (MergeTree.TextSegment.Is(segment)) {
+    if (MergeTree.TextSegment.is(segment)) {
         if (lineContext.mathMode) {
             // will be whole segment
             // TODO: show math box if cursor in math
@@ -3017,7 +3017,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordBackward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.Is(segment)) {
+            if (MergeTree.TextSegment.is(segment)) {
                 const innerOffset = segment.text.length - 1;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordStart < maxWord.wordEnd) {
@@ -3034,7 +3034,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const expandWordForward = (segment: MergeTree.ISegment) => {
         if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.Is(segment)) {
+            if (MergeTree.TextSegment.is(segment)) {
                 const innerOffset = 0;
                 const maxWord = maximalWord(segment, innerOffset);
                 if (maxWord.wordEnd > innerOffset) {
@@ -3049,7 +3049,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 
     const segoff = mergeTree.getContainingSegment(pos,
         MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
-    if (segoff.segment && (MergeTree.TextSegment.Is(segoff.segment))) {
+    if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
         const maxWord = maximalWord(segoff.segment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
             const segStartPos = pos - segoff.offset;
@@ -4853,7 +4853,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public copyFormat() {
         const segoff = getContainingSegment(this, this.cursor.pos);
-        if (segoff.segment && MergeTree.TextSegment.Is((segoff.segment))) {
+        if (segoff.segment && MergeTree.TextSegment.is((segoff.segment))) {
             this.formatRegister = MergeTree.extend(MergeTree.createMap(), segoff.segment.properties);
         }
     }
@@ -4919,7 +4919,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public toggleRange(name: string, valueOn: string, valueOff: string, start: number, end: number) {
         let someSet = false;
         const findPropSet = (segment: MergeTree.ISegment) => {
-            if (MergeTree.TextSegment.Is(segment)) {
+            if (MergeTree.TextSegment.is(segment)) {
                 if (segment.properties && segment.properties[name] === valueOn) {
                     someSet = true;
                 }
@@ -5925,7 +5925,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             if (MergeTree.Marker.is(range.segment)) {
                 const marker = range.segment as MergeTree.Marker;
                 this.updatePGInfo(range.offset - 1);
-            } else if (MergeTree.TextSegment.Is(range.segment)) {
+            } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
                     opCursorPos = range.offset;
                 } else {

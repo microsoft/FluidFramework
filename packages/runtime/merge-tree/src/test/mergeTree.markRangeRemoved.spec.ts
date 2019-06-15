@@ -53,7 +53,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         client.applyMsg(
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.Make("text")),
+                createInsertSegmentOp(0, TextSegment.make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote"));
@@ -72,7 +72,7 @@ describe("MergeTree.markRangeRemoved", () => {
 
         const insertMsg =
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.Make("text")),
+                createInsertSegmentOp(0, TextSegment.make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote");
@@ -86,7 +86,7 @@ describe("MergeTree.markRangeRemoved", () => {
     it("remote insert followed by remote remove", () => {
         const insertMsg =
             client.makeOpMessage(
-                createInsertSegmentOp(0, TextSegment.Make("text")),
+                createInsertSegmentOp(0, TextSegment.make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq ,
                 "remote");

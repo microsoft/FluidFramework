@@ -121,7 +121,7 @@ class VideoPlayer {
 
         const id = author.username;
         if (!this.videoDocMap.has(id)) {
-            const videoP = VideoDocument.Load(id, tenantId, secret);
+            const videoP = VideoDocument.load(id, tenantId, secret);
             this.videoDocMap.set(id, videoP);
         }
         const video = await this.videoDocMap.get(id);

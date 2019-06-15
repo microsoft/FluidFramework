@@ -257,7 +257,7 @@ class LocalOrdererConnection implements IOrdererConnection {
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
 export class LocalOrderer implements IOrderer {
-    public static async Load(
+    public static async load(
         storage: IDocumentStorage,
         databaseManager: IDatabaseManager,
         tenantId: string,

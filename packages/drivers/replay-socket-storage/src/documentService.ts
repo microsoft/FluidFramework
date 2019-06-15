@@ -26,7 +26,7 @@ export class ReplayDocumentService implements api.IDocumentService {
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const documentDeltaStorageService: api.IDocumentDeltaStorageService =
             await this.documentService.connectToDeltaStorage();
-        return ReplayDocumentDeltaConnection.Create(
+        return ReplayDocumentDeltaConnection.create(
             documentDeltaStorageService,
             this.replayFrom,
             this.replayTo,

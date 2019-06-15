@@ -69,7 +69,7 @@ interface IBufferedChunk {
 }
 
 export class Container extends EventEmitter implements IContainer {
-    public static async Load(
+    public static async load(
         id: string,
         version: string,
         service: IDocumentService,
@@ -183,13 +183,13 @@ export class Container extends EventEmitter implements IContainer {
         this._id = decodeURI(documentId);
 
         // create logger for components to use
-        this.subLogger = DebugLogger.MixinDebugLogger(
+        this.subLogger = DebugLogger.mixinDebugLogger(
             "prague:telemetry",
             {documentId: this.id},
             logger);
 
         // Prefix all events in this file with container-loader
-        this.logger = ChildLogger.Create(this.subLogger, "Container");
+        this.logger = ChildLogger.create(this.subLogger, "Container");
 
         this.on("error", (error: any) => {
             // tslint:disable-next-line:no-unsafe-any
@@ -513,7 +513,7 @@ export class Container extends EventEmitter implements IContainer {
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
-        const perfEvent = PerformanceEvent.Start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
+        const perfEvent = PerformanceEvent.start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
 
         const storageP = this.service.connectToStorage()
             .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
@@ -604,7 +604,7 @@ export class Container extends EventEmitter implements IContainer {
                     perfEvent.reportProgress({stage: "AfterSocketConnect"});
                 }
 
-                this.context = await ContainerContext.Load(
+                this.context = await ContainerContext.load(
                     this,
                     this.codeLoader,
                     chaincode.chaincode,
@@ -737,7 +737,7 @@ export class Container extends EventEmitter implements IContainer {
             sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
 
-        const newContext = await ContainerContext.Load(
+        const newContext = await ContainerContext.load(
             this,
             this.codeLoader,
             chaincode,
@@ -781,7 +781,7 @@ export class Container extends EventEmitter implements IContainer {
         this._deltaManager = new DeltaManager(
             this.service,
             clientDetails,
-            ChildLogger.Create(this.logger, "DeltaManager"),
+            ChildLogger.create(this.logger, "DeltaManager"),
         );
 
         if (connect) {

@@ -249,7 +249,7 @@ class NotebookRunner extends EventEmitter implements IPlatform {
 
     private async start(runtime: IRuntime, platform: IPlatform): Promise<void> {
         this.runtime = runtime;
-        const collabDoc = await Document.Load(runtime);
+        const collabDoc = await Document.load(runtime);
 
         this.mapHost = await platform.queryInterface<HTMLElement>("div");
         if (!this.mapHost) {

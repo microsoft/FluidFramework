@@ -24,7 +24,7 @@ sharedb.types.register(otInk.type);
  * Canvas app
  */
 export default class Canvas {
-    public static Create(connection: any, modelP: Promise<CanvasModel>, compose: boolean): Promise<Canvas> {
+    public static create(connection: any, modelP: Promise<CanvasModel>, compose: boolean): Promise<Canvas> {
         return modelP.then((model) => {
             return new Canvas(connection, model, compose);
         });
@@ -231,7 +231,7 @@ export default class Canvas {
         this.canvasObjects[object.id] = true;
 
         // let inkP = Ink.GetOrCreate(this.connection, )
-        let documentP = DocumentModel.GetOrCreate(this.connection, object.id, this.compose);
+        let documentP = DocumentModel.getOrCreate(this.connection, object.id, this.compose);
         documentP.then((richText) => {
             // TODO/NOTES - We want some kind of loading animation here. But trying to avoid
             // a race condition with creating the new document and broadcasting it exists to others.

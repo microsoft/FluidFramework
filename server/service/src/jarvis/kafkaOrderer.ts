@@ -3,7 +3,7 @@ import * as core from "@prague/services-core";
 import * as moniker from "moniker";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {
-    public static async Create(
+    public static async create(
         existing: boolean,
         document: core.IDocument,
         producer: core.IProducer,
@@ -144,7 +144,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 }
 
 export class KafkaOrderer {
-    public static async Create(
+    public static async create(
         storage: core.IDocumentStorage,
         producer: core.IProducer,
         tenantId: string,
@@ -167,7 +167,7 @@ export class KafkaOrderer {
     }
 
     public async connect(user: IUser, client: IClient): Promise<KafkaOrdererConnection> {
-        const connection = KafkaOrdererConnection.Create(
+        const connection = KafkaOrdererConnection.create(
             this.existing,
             this.details.value,
             this.producer,
@@ -200,7 +200,7 @@ export class KafkaOrdererFactory {
     public async create(tenantId: string, documentId: string): Promise<KafkaOrderer> {
         const fullId = `${tenantId}/${documentId}`;
         if (!this.ordererMap.has(fullId)) {
-            const orderer = KafkaOrderer.Create(
+            const orderer = KafkaOrderer.create(
                 this.storage,
                 this.producer,
                 tenantId,

@@ -121,7 +121,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @param documentDeltaStorageService - The delta storage service to get ops from.
      * @returns Document delta connection.
      */
-    public static async Create(documentDeltaStorageService: FileDeltaStorageService)
+    public static async create(documentDeltaStorageService: FileDeltaStorageService)
     : Promise<IDocumentDeltaConnection> {
 
         const connection = {
@@ -138,7 +138,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         };
         const deltaConnection = new ReplayFileDeltaConnection(connection);
         // tslint:disable-next-line: no-floating-promises
-        await this.CreateReplayer(documentDeltaStorageService, deltaConnection);
+        await this.createReplayer(documentDeltaStorageService, deltaConnection);
 
         return deltaConnection;
     }
@@ -149,7 +149,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @param documentDeltaStorageService - The delta storage service to get ops from.
      * @param deltaConnection - Delta connection to be used to fire ops.
      */
-    public static async CreateReplayer(
+    public static async createReplayer(
         documentDeltaStorageService: FileDeltaStorageService,
         deltaConnection: ReplayFileDeltaConnection,
     ) {

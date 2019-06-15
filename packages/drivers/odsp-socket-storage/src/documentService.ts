@@ -51,7 +51,7 @@ export class DocumentService implements api.IDocumentService {
      * @returns returns the document delta stream service for legacy odsp driver.
      */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return DocumentDeltaConnection.Create(this.tenantId, this.documentId, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
+        return DocumentDeltaConnection.create(this.tenantId, this.documentId, this.tokenProvider.socketToken, io, client, this.webSocketUrl);
     }
 
     public branch(): Promise<string> {

@@ -117,7 +117,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly leader: boolean;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
-    public readonly logger: ITelemetryLogger = DebugLogger.Create("prague:MockRuntime");
+    public readonly logger: ITelemetryLogger = DebugLogger.create("prague:MockRuntime");
 
     public get connectionState(): ConnectionState {
         return ConnectionState.Connected;

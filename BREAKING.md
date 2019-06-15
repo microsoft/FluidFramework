@@ -5,6 +5,8 @@ will be removed in the next release.
 
 They have been replaced with the IComponent inside of @prague/container-definitions.
 
+All static methods have been changed from PascalCase to camelCase.
+
 # 0.3 Breaking Changes (June 3, 2019)
 
 - [Legacy chaincode API removal](#legacy-chaincode-api-removal)

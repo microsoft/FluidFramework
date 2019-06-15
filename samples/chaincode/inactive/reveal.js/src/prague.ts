@@ -6,7 +6,7 @@ import * as jwt from "jsonwebtoken";
 import * as URL from "url-parse";
 
 class PraguePlugin {
-    public static Create(Reveal: any): PraguePlugin {
+    public static create(Reveal: any): PraguePlugin {
         const plugin = new PraguePlugin();
 
         Reveal.addEventListener(
@@ -91,5 +91,5 @@ class PraguePlugin {
 
 if (typeof window !== "undefined") {
     const Reveal = window["Reveal"];
-    window["PragueEmbed"] = window["PragueEmbed"] || PraguePlugin.Create(Reveal);
+    window["PragueEmbed"] = window["PragueEmbed"] || PraguePlugin.create(Reveal);
 }

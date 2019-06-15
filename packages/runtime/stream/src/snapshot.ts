@@ -25,7 +25,7 @@ export class Snapshot implements ISnapshot {
      *
      * @param snapshot - Existing snapshot to be cloned
      */
-    public static Clone(snapshot: ISnapshot) {
+    public static clone(snapshot: ISnapshot) {
         return new Snapshot(snapshot.layers, snapshot.layerIndex);
     }
 

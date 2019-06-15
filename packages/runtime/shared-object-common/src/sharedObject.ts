@@ -67,7 +67,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         super();
         // runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
-        this.logger = ChildLogger.Create(
+        this.logger = ChildLogger.create(
             runtime !== null ? runtime.logger : undefined, type, { SharedObjectId: id });
     }
 

@@ -52,7 +52,7 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
 };
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
-    if (TextSegment.Is(segment)) {
+    if (TextSegment.is(segment)) {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;

@@ -250,7 +250,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
 
 export function mergeTreeTest1() {
     let mergeTree = new MergeTree.MergeTree();
-    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
+    mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
@@ -269,7 +269,7 @@ export function mergeTreeTest1() {
 
 export function mergeTreeLargeTest() {
     let mergeTree = new MergeTree.MergeTree();
-    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
+    mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     const insertCount = 1000000;
     const removeCount = 980000;
     let mt = random.engines.mt19937();
@@ -332,7 +332,7 @@ export function mergeTreeLargeTest() {
 
 export function mergeTreeCheckedTest() {
     let mergeTree = new MergeTree.MergeTree();
-    mergeTree.insertSegments(0, [TextSegment.Make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
+    mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId, MergeTree.UniversalSequenceNumber, undefined);
     const insertCount = 2000;
     const removeCount = 1400;
     const largeRemoveCount = 20;
@@ -1145,7 +1145,7 @@ export function TestPack(verbose = true) {
             }
         }
         cli.updateMinSeq(6);
-        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree, DebugLogger.Create("prague:snapshot")).extractSync();
+        let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree, DebugLogger.create("prague:snapshot")).extractSync();
         if (verbose) {
             for (let seg of segs) {
                 console.log(`${specToSegment(seg)}`);

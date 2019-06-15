@@ -25,7 +25,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
     }
 
     public async create(): Promise<LocalNode> {
-        const node = LocalNode.Connect(
+        const node = LocalNode.connect(
             `${this.hostname}-${uuid()}`,
             this.address,
             this.storage,

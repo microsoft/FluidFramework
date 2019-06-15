@@ -11,7 +11,7 @@ import * as assert from "assert";
  * Mock implementation of IObjectStorageService based on ITree input.
  */
 export class MockStorage implements IObjectStorageService {
-    private static ReadCore(tree: ITree, paths: string[]): string {
+    private static readCore(tree: ITree, paths: string[]): string {
         if (tree) {
             for (const entry of tree.entries) {
                 if (entry.path === paths[0]) {
@@ -22,7 +22,7 @@ export class MockStorage implements IObjectStorageService {
                             .toString("base64");
                     }
                     if (entry.type === "Tree") {
-                        return MockStorage.ReadCore(entry.value as ITree, paths.slice(1));
+                        return MockStorage.readCore(entry.value as ITree, paths.slice(1));
                     }
                     assert(false);
                 }
@@ -35,6 +35,6 @@ export class MockStorage implements IObjectStorageService {
     }
 
     public async read(path: string): Promise<string> {
-        return MockStorage.ReadCore(this.tree, path.split("/"));
+        return MockStorage.readCore(this.tree, path.split("/"));
     }
 }

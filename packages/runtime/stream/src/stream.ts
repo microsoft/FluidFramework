@@ -146,6 +146,6 @@ export class Stream extends SharedMap implements IStream {
      * @param data - The snapshot to initialize from
      */
     private initialize(data: ISnapshot) {
-        this.inkSnapshot = Snapshot.Clone(data);
+        this.inkSnapshot = Snapshot.clone(data);
     }
 }

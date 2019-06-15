@@ -16,7 +16,7 @@ import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 export function specToSegment(spec: any) {
-    const maybeText = TextSegment.FromJSONObject(spec);
+    const maybeText = TextSegment.fromJSONObject(spec);
     if (maybeText) {
         return maybeText;
     }
@@ -59,7 +59,7 @@ export class TestClient extends Client {
                     }
                 }
             },
-        DebugLogger.Create("prague:testClient"),
+        DebugLogger.create("prague:testClient"),
         options);
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
     }

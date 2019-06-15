@@ -3,7 +3,7 @@ import * as ws from "ws";
 import { debug } from "./debug";
 
 export class Socket<T> extends EventEmitter {
-    public static async Connect<T>(address: string, path: string): Promise<Socket<T>> {
+    public static async connect<T>(address: string, path: string): Promise<Socket<T>> {
         const socket = new ws(`ws://${address}/${path}`);
         await new Promise<void>((resolve, reject) => {
             const errorListener = (error) => reject(error);

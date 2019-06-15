@@ -27,7 +27,7 @@ export class TestDocumentService implements api.IDocumentService {
     }
 
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return TestDocumentDeltaConnection.Create(
+        return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,
             this.tokenProvider.token,

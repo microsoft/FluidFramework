@@ -25,7 +25,7 @@ describe("Map", () => {
     let root3: ISharedMap;
 
     beforeEach(async () => {
-        testDeltaConnectionServer = TestDeltaConnectionServer.Create();
+        testDeltaConnectionServer = TestDeltaConnectionServer.create();
         documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
         const serviceFactory = new TestDocumentServiceFactory(testDeltaConnectionServer);
         const resolver = new TestResolver();

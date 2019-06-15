@@ -50,7 +50,7 @@ class RemoteSubscriber implements ISubscriber {
 // Local node manages maintaining the reservation. As well as handling managing the local orderers.
 // Messages sent to it are directly routed.
 export class LocalNode extends EventEmitter implements IConcreteNode {
-    public static async Connect(
+    public static async connect(
         id: string,
         address: string,
         storage: IDocumentStorage,
@@ -63,7 +63,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         maxMessageSize: number) {
 
         // Look up any existing information for the node or create a new one
-        const node = await LocalNode.Create(
+        const node = await LocalNode.create(
             id,
             address,
             databaseManager,
@@ -81,7 +81,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
             maxMessageSize);
     }
 
-    private static async Create(
+    private static async create(
         id: string,
         address: string,
         databaseManager: IDatabaseManager,
@@ -100,7 +100,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         return node;
     }
 
-    private static async UpdateExpiration(
+    private static async updateExpiration(
         existing: INode,
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
@@ -220,7 +220,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         const fullId = `${tenantId}/${documentId}`;
         // Our node is responsible for sequencing messages
         debug(`${this.id} Becoming leader for ${fullId}`);
-        const orderer = await LocalOrderer.Load(
+        const orderer = await LocalOrderer.load(
             this.storage,
             this.databaseManager,
             tenantId,
@@ -252,7 +252,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
             setTimeout(
                 () => {
-                    const updateP = LocalNode.UpdateExpiration(
+                    const updateP = LocalNode.updateExpiration(
                         this.node,
                         this.databaseManager,
                         this.timeoutLength);

@@ -21,7 +21,7 @@ describe("LocalTestServer", () => {
   let user2SharedString: SharedString;
 
   beforeEach(async () => {
-    testDeltaConnectionServer = TestDeltaConnectionServer.Create();
+    testDeltaConnectionServer = TestDeltaConnectionServer.create();
     documentDeltaEventManager = new DocumentDeltaEventManager(testDeltaConnectionServer);
 
     const resolver = new TestResolver();

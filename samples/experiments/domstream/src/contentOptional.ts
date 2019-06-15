@@ -106,7 +106,7 @@ import { RewriteDOMTree } from "./rewriteDOMTree";
     let collabDocToClose;
     async function saveDOMToPrague(server: string, documentId: string, options: ISaveDOMOptions) {
         // Load in the latest and connect to the document
-        const collabDoc = await PragueDocument.Load(server, documentId);
+        const collabDoc = await PragueDocument.load(server, documentId);
         await saveDOM(new PragueMapWrapperFactory(collabDoc, options.batchOps), options);
         if (options.stream) {
             collabDocToClose = collabDoc;

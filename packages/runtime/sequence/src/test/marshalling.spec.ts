@@ -11,7 +11,7 @@ import { SubSequence } from "../sharedSequence";
 const segmentTypes = [
     {
         ctor: () => new TextSegment("text", UniversalSequenceNumber, LocalClientId),
-        fromJSON: TextSegment.FromJSONObject,
+        fromJSON: TextSegment.fromJSONObject,
         name: "TextSegment",
     },
     {

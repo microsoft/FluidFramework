@@ -24,7 +24,7 @@ export class RouteMasterLambdaFactory extends EventEmitter implements IPartition
         const documentId = config.get("documentId");
         const tenantId = config.get("tenantId");
 
-        const documentDetails = await DocumentManager.Create(tenantId, documentId, this.collection, this.deltas);
+        const documentDetails = await DocumentManager.create(tenantId, documentId, this.collection, this.deltas);
 
         return new RouteMasterLambda(documentDetails, this.producer, context);
     }

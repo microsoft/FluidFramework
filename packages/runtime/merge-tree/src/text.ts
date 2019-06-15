@@ -33,7 +33,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                     segments.push(new TextSegment(paragraph, seq, cli));
                 } else {
                     segments.push(
-                        TextSegment.Make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+                        TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
                 }
             } else {
                 const emphStrings = paragraph.split("_");
@@ -42,7 +42,7 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                     if (i & 1) {
                         if (emphStrings[i].length > 0) {
                             segments.push(
-                                TextSegment.Make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
+                                TextSegment.make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
                         }
                     } else {
                         if (emphStrings[i].length > 0) {

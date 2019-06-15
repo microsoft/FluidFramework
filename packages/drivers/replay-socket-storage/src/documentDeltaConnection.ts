@@ -173,7 +173,7 @@ class Replayer {
 }
 
 export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-    public static async Create(
+    public static async create(
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
         replayTo: number,
@@ -192,13 +192,13 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         };
         const deltaConnection = new ReplayDocumentDeltaConnection(connection);
         // tslint:disable-next-line:no-floating-promises
-        this.FetchAndEmitOps(
+        this.fetchAndEmitOps(
             deltaConnection, documentStorageService, replayFrom, replayTo, unitIsTime);
 
         return deltaConnection;
     }
 
-    private static FetchAndEmitOps(
+    private static fetchAndEmitOps(
         deltaConnection: ReplayDocumentDeltaConnection,
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,
