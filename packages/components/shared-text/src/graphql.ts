@@ -25,7 +25,7 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
         return GraphIQLView.supportedInterfaces;
     }
 
-    public async createView(host: IComponent): Promise<IHTMLView> {
+    public createView(host: IComponent): IHTMLView {
         const graphQLDiv = document.createElement("div");
 
         graphQLDiv.style.width = "100vw";

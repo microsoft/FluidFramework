@@ -100,7 +100,7 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IC
         return ProgressBar.supportedInterfaces;
     }
 
-    public async createView(host?: IComponent): Promise<IHTMLView> {
+    public createView(host?: IComponent): IHTMLView {
         const view = document.createElement(ProgressBarView.tagName) as ProgressBarView;
         view.bar = this;
         return view;

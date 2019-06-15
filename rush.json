@@ -47,10 +47,6 @@
       "projectFolder": "packages/components/chart-view/"
     },
     {
-      "packageName": "@chaincode/clicker",
-      "projectFolder": "packages/components/clicker/"
-    },
-    {
       "packageName": "@prague/client-ui",
       "projectFolder": "packages/components/client-ui/"
     },
@@ -139,12 +135,12 @@
       "projectFolder": "packages/drivers/socket-storage-shared/"
     },
     {
-      "packageName": "@prague/framework-definitions",
-      "projectFolder": "packages/framework/framework-definitions/"
-    },
-    {
       "packageName": "@prague/aqueduct",
       "projectFolder": "packages/framework/aqueduct/"
+    },
+    {
+      "packageName": "@prague/framework-definitions",
+      "projectFolder": "packages/framework/framework-definitions/"
     },
     {
       "packageName": "@prague/container-definitions",

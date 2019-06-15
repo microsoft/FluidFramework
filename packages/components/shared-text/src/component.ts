@@ -73,7 +73,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         return SharedTextRunner.supportedInterfaces;
     }
 
-    public async createView(host: IComponent): Promise<IHTMLView> {
+    public createView(host: IComponent): IHTMLView {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");

@@ -96,13 +96,13 @@ export class MonacoRunner extends EventEmitter
     }
 
     // TODO can remove ? once document is fixed in main package
-    public async createView(host: IComponent): Promise<IHTMLView> {
+    public createView(host: IComponent): IHTMLView {
         if (this.mapHost) {
-            return Promise.reject("Only one view supported");
+            throw new Error("Only one view supported");
         }
 
         this.mapHost = document.createElement("div");
-        await this.initializeEditorDiv();
+        this.initializeEditorDiv();
 
         return this.mapHost;
     }

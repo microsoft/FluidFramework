@@ -338,9 +338,9 @@ export class PinpointRunner extends EventEmitter
         return PinpointRunner.supportedInterfaces;
     }
 
-    public async createView(host: IComponent): Promise<IHTMLView> {
+    public createView(host: IComponent): IHTMLView {
         if (this.mapHost) {
-            return Promise.reject("Only one view supported");
+            throw new Error("Only one view supported");
         }
 
         this.mapHost = document.createElement("div");
@@ -362,13 +362,14 @@ export class PinpointRunner extends EventEmitter
                 return new MapDetailsService($rootScope, this.collabDoc.getRoot(), this.rootView);
             }]);
 
-            await googleP;
-            angular.element(document).ready(() => {
-                angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
-                    configServiceProvider.config(config);
-                }]);
+            googleP.then(() => {
+                angular.element(document).ready(() => {
+                    angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
+                        configServiceProvider.config(config);
+                    }]);
 
-                angular.bootstrap(document, ["pinpointTool"]);
+                    angular.bootstrap(document, ["pinpointTool"]);
+                });
             });
         } else {
             embed(this.mapHost, this.collabDoc, this.rootView);
