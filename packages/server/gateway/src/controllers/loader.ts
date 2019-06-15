@@ -133,7 +133,7 @@ async function attach(loader: Loader, url: string, host: Host) {
     }
 
     // Attach our div to the host
-    host.div.appendChild(viewable.createView(host));
+    viewable.addView(host, host.div);
 }
 
 async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {

@@ -8,7 +8,9 @@ import {
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import {
+    ComponentDisplayType,
     IComponentContext,
+    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as angular from "angular";
@@ -303,10 +305,11 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter
-    implements ISharedComponent, IComponentHTMLViewable, IComponentLoadable {
+    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
 
     public static supportedInterfaces = [
         "IComponentHTMLViewable",
+        "IComponentRenderHTML",
         "IComponentLoadable",
     ];
 
@@ -338,14 +341,24 @@ export class PinpointRunner extends EventEmitter
         return PinpointRunner.supportedInterfaces;
     }
 
-    public createView(host: IComponent): IHTMLView {
-        if (this.mapHost) {
-            throw new Error("Only one view supported");
+    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
+        if (!this.mapHost) {
+            this.mapHost = document.createElement("div");
+            embed(this.mapHost, this.collabDoc, this.rootView);
         }
 
-        this.mapHost = document.createElement("div");
+        if (this.mapHost.parentElement !== elm) {
+            this.mapHost.remove();
+            elm.appendChild(this.mapHost);
+        }
+    }
 
-        // TODO: Use custom element 'connectedCallback()' to check parent id?
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        if (this.mapHost) {
+            return Promise.reject("Only one view supported");
+        }
+
+        this.mapHost = element;
         this.editor = this.mapHost.id === "content";
 
         if (this.editor) {
@@ -362,25 +375,22 @@ export class PinpointRunner extends EventEmitter
                 return new MapDetailsService($rootScope, this.collabDoc.getRoot(), this.rootView);
             }]);
 
-            googleP.then(() => {
-                angular.element(document).ready(() => {
-                    angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
-                        configServiceProvider.config(config);
-                    }]);
+            await googleP;
+            angular.element(document).ready(() => {
+                angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
+                    configServiceProvider.config(config);
+                }]);
 
-                    angular.bootstrap(document, ["pinpointTool"]);
-                });
+                angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
             embed(this.mapHost, this.collabDoc, this.rootView);
         }
-
-        return this.mapHost;
     }
 
-    // public remove() {
-    //     this.mapHost = null;
-    // }
+    public remove() {
+        this.mapHost = null;
+    }
 
     private async initialize(): Promise<void> {
         this.collabDoc = await Document.load(this.runtime);

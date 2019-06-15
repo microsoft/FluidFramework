@@ -25,48 +25,43 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires no-submodule-imports
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView extends HTMLElement implements IHTMLView {
-    public static readonly tagName: string = "example-progressbarview";
-
-    public bar: ProgressBar;
+class ProgressBarView implements IHTMLView {
     private div: HTMLDivElement;
 
-    public connectedCallback() {
-        this.bar.attachView(this);
+    constructor(private bar: ProgressBar, parent: Element) {
+        if (parent) {
+            this.div = document.createElement("div");
+            this.div.classList.add("progress");
+            // tslint:disable-next-line:max-line-length no-inner-html
+            this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
-        this.div = document.createElement("div");
-        this.div.classList.add("progress");
-        // tslint:disable-next-line:max-line-length no-inner-html
-        this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
+            const urlDiv = document.createElement("div");
+            urlDiv.innerText = this.bar.url;
 
-        const urlDiv = document.createElement("div");
-        urlDiv.innerText = this.bar.url;
+            const downButton = document.createElement("button");
+            downButton.innerText = "down";
+            downButton.onclick = () => {
+                this.bar.changeValue(this.bar.value - 1);
+            };
 
-        const downButton = document.createElement("button");
-        downButton.innerText = "down";
-        downButton.onclick = () => {
-            this.bar.changeValue(this.bar.value - 1);
-        };
+            const upButton = document.createElement("button");
+            upButton.innerText = "up";
+            upButton.onclick = () => {
+                // Should be a counter
+                this.bar.changeValue(this.bar.value + 1);
+            };
 
-        const upButton = document.createElement("button");
-        upButton.innerText = "up";
-        upButton.onclick = () => {
-            // Should be a counter
-            this.bar.changeValue(this.bar.value + 1);
-        };
+            parent.appendChild(this.div);
+            parent.appendChild(urlDiv);
+            parent.appendChild(downButton);
+            parent.appendChild(upButton);
+        }
 
-        this.appendChild(this.div);
-        this.appendChild(urlDiv);
-        this.appendChild(downButton);
-        this.appendChild(upButton);
         this.render();
     }
 
-    public disconnectedCallback() {
-        while (this.firstChild) {
-            this.firstChild.remove();
-        }
-        this.bar.detachView(this);
+    public remove() {
+        this.bar.detach(this);
     }
 
     public render() {
@@ -77,8 +72,6 @@ class ProgressBarView extends HTMLElement implements IHTMLView {
         (this.div.firstElementChild as HTMLDivElement).style.width = `${this.bar.value}%`;
     }
 }
-
-customElements.define(ProgressBarView.tagName, ProgressBarView);
 
 // The "model" side of a progress bar
 export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IComponentRouter {
@@ -100,21 +93,18 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IC
         return ProgressBar.supportedInterfaces;
     }
 
-    public createView(host?: IComponent): IHTMLView {
-        const view = document.createElement(ProgressBarView.tagName) as ProgressBarView;
-        view.bar = this;
-        return view;
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+        const attached = new ProgressBarView(this, element);
+        this.views.add(attached);
+
+        return attached;
     }
 
     public changeValue(newValue: number) {
         this.collection.changeValue(this.keyId, newValue);
     }
 
-    public attachView(view: ProgressBarView) {
-        this.views.add(view);
-    }
-
-    public detachView(view: ProgressBarView) {
+    public detach(view: ProgressBarView) {
         this.views.delete(view);
     }
 

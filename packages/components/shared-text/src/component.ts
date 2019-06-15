@@ -73,7 +73,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         return SharedTextRunner.supportedInterfaces;
     }
 
-    public createView(host: IComponent): IHTMLView {
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
@@ -130,8 +130,9 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
 
-        // TODO: Currently, BrowserContainerHost parents itself to the document.body.
-        return document.body.firstElementChild as HTMLElement;
+        return {
+            remove: () => { },
+        };
     }
 
     public getRoot(): ISharedMap {

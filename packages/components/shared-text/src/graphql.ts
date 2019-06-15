@@ -25,8 +25,9 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
         return GraphIQLView.supportedInterfaces;
     }
 
-    public createView(host: IComponent): IHTMLView {
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
         const graphQLDiv = document.createElement("div");
+        element.appendChild(graphQLDiv);
 
         graphQLDiv.style.width = "100vw";
         graphQLDiv.style.height = "100vh";
@@ -51,6 +52,8 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
             graphQLDiv,
         );
 
-        return graphQLDiv;
+        return {
+            remove: () => { },
+        };
     }
 }
