@@ -9,8 +9,9 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
+    "css-d-ts": "tcm src",
     "build": "npm run build:compile",
-    "build:compile": "npm run webpack",
+    "build:compile": "npm run css-d-ts && npm run webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -54,8 +55,8 @@
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
+    "typed-css-modules": "^0.4.2",
     "typescript": "~3.4.5",
-    "typings-for-css-modules-loader": "^1.7.0",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
