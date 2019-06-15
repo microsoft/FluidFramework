@@ -39,7 +39,8 @@
     "start": "cd server/routerlicious && npm run start",
     "start:debug": "cd server/routerlicious && npm run start:debug",
     "stop": "cd server/routerlicious && npm run stop",
-    "stop:full": "cd server/routerlicious && npm run stop:full"
+    "stop:full": "cd server/routerlicious && npm run stop:full",
+    "policy-check": "git ls-files | node ./common/scripts/all-files-policy-check.js"
   },
   "devDependencies": {
     "@microsoft/api-documenter": "^7.2.1",
