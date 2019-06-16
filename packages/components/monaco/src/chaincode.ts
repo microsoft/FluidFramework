@@ -17,6 +17,7 @@ import {
 import {
     ComponentDisplayType,
     IComponentContext,
+    IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -60,13 +61,14 @@ const defaultCompilerOptions = {
 };
 // tslint:enable
 
-export class MonacoRunner extends EventEmitter
-    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+export class MonacoRunner extends EventEmitter implements
+    ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
 
     public static supportedInterfaces = [
         "IComponentHTMLViewable",
         "IComponentRenderHTML",
         "IComponentLoadable",
+        "IComponentLayout",
     ];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
@@ -75,6 +77,13 @@ export class MonacoRunner extends EventEmitter
 
         return runner;
     }
+
+    // The chart probably has a preferred aspect ratio - but it can also fill any bounds
+    public aspectRatio?: number;
+    public minimumWidthBlock?: number;
+    public minimumHeightInline?: number;
+    public readonly canInline = true;
+    public readonly preferInline = false;
 
     private mapHost: HTMLElement;
     private codeModel: monaco.editor.ITextModel;
@@ -97,9 +106,18 @@ export class MonacoRunner extends EventEmitter
         return MonacoRunner.supportedInterfaces;
     }
 
+    public heightInLines() {
+        // Component will want to describe its height in pixels
+        // Right now we're assuming it's 22px per line
+        // 30 is simply an arbitrary number and was chosen to differ from the pinpoint map's choice of 24
+        return 30;
+    }
+
     public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
+            this.mapHost.style.width = "100%";
+            this.mapHost.style.height = "100%";
             elm.appendChild(this.mapHost);
             this.initializeEditorDiv().catch((error) => { console.error(error); });
         } else {
@@ -135,9 +153,6 @@ export class MonacoRunner extends EventEmitter
         if (!this.mapHost.style.width) {
             this.mapHost.style.width = "100vw";
             this.mapHost.style.height = "100vh";
-        } else {
-            this.mapHost.style.width = "100%";
-            // this.mapHost.style.height = "100%";
         }
 
         const hostWrapper = document.createElement("div");

@@ -10,6 +10,7 @@ import { ISharedMap } from "@prague/map";
 import {
     ComponentDisplayType,
     IComponentContext,
+    IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -22,7 +23,7 @@ import "../style.css";
 import { MapDetailController, MapListController } from "./controllers";
 import * as directives from "./directives";
 import { Document } from "./document";
-import { embed } from "./embed";
+import { PinpointEmbed } from "./embed";
 import { MapDetailsService } from "./services";
 
 // tslint:disable:no-var-requires
@@ -304,13 +305,14 @@ pinpointTool.filter("html", ($sce) => {
     };
 });
 
-export class PinpointRunner extends EventEmitter
-    implements ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable {
+export class PinpointRunner extends EventEmitter implements
+    ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
 
     public static supportedInterfaces = [
         "IComponentHTMLViewable",
         "IComponentRenderHTML",
         "IComponentLoadable",
+        "IComponentLayout",
     ];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
@@ -324,10 +326,18 @@ export class PinpointRunner extends EventEmitter
         return this.runtime.id;
     }
 
+    // Aspect ratio of the map may change - "wide", "square", "tall" are what pinpoint defines
+    public aspectRatio?: number;
+    public minimumWidthBlock?: number;
+    public minimumHeightInline?: number;
+    public readonly canInline = true;
+    public readonly preferInline = false;
+
     private collabDoc: Document;
     private rootView: ISharedMap;
     private editor: boolean = false;
     private mapHost: HTMLElement;
+    private embed: PinpointEmbed;
 
     constructor(private runtime: IComponentRuntime) {
         super();
@@ -341,16 +351,18 @@ export class PinpointRunner extends EventEmitter
         return PinpointRunner.supportedInterfaces;
     }
 
+    public heightInLines() {
+        // Component will want to describe its height in pixels
+        // Right now we're assuming it's 22px per line
+        return 24;
+    }
+
     public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
-        if (!this.mapHost) {
-            this.mapHost = document.createElement("div");
-            embed(this.mapHost, this.collabDoc, this.rootView);
+        if (!this.embed) {
+            this.embed = new PinpointEmbed(this.collabDoc, this.rootView);
         }
 
-        if (this.mapHost.parentElement !== elm) {
-            this.mapHost.remove();
-            elm.appendChild(this.mapHost);
-        }
+        this.embed.render(elm, displayType);
     }
 
     public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
@@ -384,7 +396,7 @@ export class PinpointRunner extends EventEmitter
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            embed(this.mapHost, this.collabDoc, this.rootView);
+            this.render(element, ComponentDisplayType.Block);
         }
     }
 

@@ -58,6 +58,7 @@ interface IRenderComponent extends IComponent, IComponentRenderHTML {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
+    instanceP?: Promise<IRenderComponent>;
     instance?: IRenderComponent;
 }
 
@@ -2420,29 +2421,90 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
         const newBlock = getComponentBlock(asMarker);
         if (newBlock) {
-            const refDoc = newBlock.properties.crefTest;
+            const refDoc = newBlock.properties.crefTest as IReferenceDoc;
             let ch: number;
-            if (!newBlock.instance) {
-                // for now, use math; later need to load route async
-                layoutContext.flowView.loadMath(newBlock as IMathViewMarker);
-            }
-            const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
-            if (layout) {
-                if (layout.heightInLines) {
-                    ch = layout.heightInLines() * docContext.defaultLineDivHeight;
+            if (refDoc.type.name === "math") {
+                if (!newBlock.instance) {
+                    // for now, use math; later need to load route async
+                    layoutContext.flowView.loadMath(newBlock as IMathViewMarker);
                 }
-            } else {
-                ch = Math.round(0.2 * layoutContext.viewport.maxHeight);
-            }
-            const lineDiv = makeLineDiv(
-                new ui.Rectangle(
-                    0,
-                    layoutContext.viewport.getLineTop(),
-                    parseInt(layoutContext.viewport.div.style.width, 10),
-                    ch),
-                layoutContext.docContext.fontstr);
+                const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
+                if (layout) {
+                    if (layout.heightInLines) {
+                        ch = layout.heightInLines() * docContext.defaultLineDivHeight;
+                    }
+                } else {
+                    ch = Math.round(0.2 * layoutContext.viewport.maxHeight);
+                }
+                const lineDiv = makeLineDiv(
+                    new ui.Rectangle(
+                        0,
+                        layoutContext.viewport.getLineTop(),
+                        parseInt(layoutContext.viewport.div.style.width, 10),
+                        ch),
+                    layoutContext.docContext.fontstr);
 
-            newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+                newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+            } else {
+                if (newBlock.instance) {
+                    const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
+
+                    // TODO pinpoint layout only makes sense if the desired width/height is given since the title,
+                    // description, etc... text will flow based on the given width
+                    ch = layout && layout.heightInLines
+                        ? layout.heightInLines() * docContext.defaultLineDivHeight
+                        : 520;
+
+                    const lineDiv = makeLineDiv(
+                        new ui.Rectangle(
+                            0,
+                            layoutContext.viewport.getLineTop(),
+                            parseInt(layoutContext.viewport.div.style.width, 10),
+                            ch),
+                        layoutContext.docContext.fontstr);
+
+                    newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+                } else {
+                    // Delay load the instance if not available
+                    if (!newBlock.instanceP) {
+                        newBlock.instanceP = layoutContext.flowView.collabDocument.context.hostRuntime
+                            .request({ url: `/${newBlock.properties.leafId}` })
+                            .then(async (response) => {
+                                if (response.status !== 200 || response.mimeType !== "prague/component") {
+                                    return Promise.reject(response);
+                                }
+
+                                const component = response.value as IComponent;
+                                // TODO below is a temporary workaround. Should every QI interface also implement
+                                // IComponent. Then you can go from IComponentRenderHTML to IComponentLayout.
+                                // Or should you query for each one individually.
+                                const viewable = component.query<any>("IComponentRenderHTML") as IRenderComponent;
+                                if (!viewable) {
+                                    return Promise.reject("component is not viewable");
+                                }
+
+                                return viewable;
+                            });
+
+                        newBlock.instanceP.then((instance) => {
+                            newBlock.instance = instance;
+                            const compPos = getOffset(layoutContext.flowView, asMarker);
+                            layoutContext.flowView.localQueueRender(compPos);
+                        });
+                    }
+
+                    ch = 10;
+                    const lineDiv = makeLineDiv(
+                        new ui.Rectangle(
+                            0,
+                            layoutContext.viewport.getLineTop(),
+                            parseInt(layoutContext.viewport.div.style.width, 10),
+                            ch),
+                        layoutContext.docContext.fontstr);
+                    lineDiv.style.backgroundColor = "red";
+                }
+            }
+
             layoutContext.viewport.vskip(ch);
             currentPos++;
             segoff = undefined;
@@ -5025,13 +5087,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.insertComponent("innerComponent", { id, chaincode });
     }
 
-    public insertComponentNew(prefix: string, chaincode: string) {
+    public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
         this.collabDocument.context.createAndAttachComponent(id, chaincode);
 
         const props = {
             crefTest: {
+                layout: { inline },
                 type: {
                     name: "component",
                 } as IReferenceDocType,
@@ -5039,6 +5102,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             },
             leafId: id,
         };
+
+        if (!inline) {
+            this.insertParagraph(this.cursor.pos++);
+        }
+
         const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
     }
