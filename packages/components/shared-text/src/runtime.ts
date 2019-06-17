@@ -17,6 +17,8 @@ const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 const progressBars = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/progress-bars");
+const videoPlayers = import(
+    /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/video-players");
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -47,6 +49,8 @@ class MyRegistry implements IComponentRegistry {
             return charts;
         } else if (name === "@chaincode/progress-bars") {
             return progressBars;
+        } else if (name === "@chaincode/video-players") {
+            return videoPlayers;
         } else if (name === "@chaincode/monaco") {
             return monaco;
         } else if (name === "@chaincode/pinpoint-editor") {
@@ -106,6 +110,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             runtime.createAndAttachComponent("progress-bars", "@chaincode/progress-bars"),
             runtime.createAndAttachComponent("text", "@chaincode/shared-text"),
             runtime.createAndAttachComponent("math", "@chaincode/math"),
+            runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
         ])
         .catch((error) => {
             context.error(error);

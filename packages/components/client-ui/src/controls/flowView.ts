@@ -14,7 +14,8 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentCursorDirection, ComponentDisplayType,
-    IComponentCursor, IComponentKeyHandlers, IComponentLayout, IComponentRenderHTML, IInboundSignalMessage,
+    IComponentCollection, IComponentCursor, IComponentKeyHandlers, IComponentLayout, IComponentRenderHTML,
+    IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -592,6 +593,12 @@ const commands: IFlowViewCmd[] = [
             f.insertProgressBar();
         },
         key: "insert progress",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertVideoPlayer();
+        },
+        key: "insert morton",
     },
     {
         exec: (c, p, f) => {
@@ -3304,6 +3311,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private progressBars: ProgressCollection;
     private math: IMathCollection;
+    private videoPlayers: IComponentCollection;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
@@ -5150,6 +5158,29 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         mathMarker.instance.enter(ComponentCursorDirection.Left);
     }
 
+    public insertVideoPlayer(inline = false) {
+        // TODO - we may want to have a shared component collection?
+        const instance = this.videoPlayers.create() as ISharedComponent;
+
+        const props = {
+            crefTest: {
+                layout: { inline },
+                type: {
+                    name: "component",
+                } as IReferenceDocType,
+                url: instance.url,
+            },
+            leafId: instance.url,
+        };
+
+        if (!inline) {
+            this.insertParagraph(this.cursor.pos++);
+        }
+
+        const markerPos = this.cursor.pos;
+        this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
+    }
+
     public insertProgressBar() {
         const instance = this.progressBars.create();
         this.insertComponent("innerComponent", { id: instance.url });
@@ -5212,17 +5243,33 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const [mathPlatform, progressBarsPlatform] = await Promise.all([
             this.openPlatform("math"),
             this.openPlatform("progress-bars"),
+            this.openPlatform("video-players"),
         ]);
 
-        const [progressBars, math] = await Promise.all([
+        const [progressBars, math, videoPlayers] = await Promise.all([
             this.openPlatform<ProgressCollection>("progress-bars"),
             this.openPlatform<IMathCollection>("math"),
+            this.openCollection("video-players"),
         ]);
 
         this.progressBars = progressBars;
         this.math = math;
+        this.videoPlayers = videoPlayers;
     }
 
+    private async openCollection(id: string): Promise<IComponentCollection> {
+        const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
+        const request = await runtime.request({ url: "/" });
+
+        if (request.status !== 200 || request.mimeType !== "prague/component") {
+            return Promise.reject("Not found");
+        }
+
+        const component = request.value as IComponent;
+        return component.query<IComponentCollection>("IComponentCollection");
+    }
+
+    // TODO openPlatform should be removed in favor of openCollection
     private async openPlatform<T>(id: string): Promise<T> {
         const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
         const component = await runtime.request({ url: "/" });

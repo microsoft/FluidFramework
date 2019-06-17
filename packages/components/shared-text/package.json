@@ -38,6 +38,7 @@
     "@chaincode/monaco": "^0.5.0",
     "@chaincode/pinpoint-editor": "^0.5.0",
     "@chaincode/progress-bars": "^0.5.0",
+    "@chaincode/video-players": "^0.5.0",
     "@prague/app-component": "^0.5.0",
     "@prague/app-ui": "^0.5.0",
     "@prague/cell": "^0.5.0",

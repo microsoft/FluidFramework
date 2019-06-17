@@ -1,0 +1,46 @@
+{
+  "name": "@chaincode/video-players",
+  "description": "Video player collection",
+  "version": "0.5.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@prague/app-component": "^0.5.0",
+    "@prague/component-runtime": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/framework-definitions": "^0.5.0",
+    "@prague/map": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/shared-object-common": "^0.5.0",
+    "@types/node": "^10.12.12",
+    "bootstrap": "^3.3.7"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.5.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "~3.4.5"
+  }
+}
