@@ -3,7 +3,7 @@ import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IComponent, IComponentHTMLViewable, IHTMLView, IRequest } from "@prague/container-definitions";
-import { ITextAnalyzer } from "@prague/intelligence-runner";
+import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
     CounterValueType,
@@ -23,9 +23,9 @@ import {
     SharedStringExtension,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
-import * as Spellchecker from "@prague/spellchecker";
+import { SpellChecker } from "@prague/spellchecker";
 import { IStream, StreamExtension } from "@prague/stream";
-import * as Translator from "@prague/translator";
+import { Translator } from "@prague/translator";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable-next-line:no-submodule-imports
@@ -198,47 +198,39 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         this.listenForLeaderEvent();
     }
 
-    // Leader can run tasks directly.
+    // TODO: Leader only runs intel now until we figure out web worker story.
     private listenForLeaderEvent() {
         if (this.context.leader) {
-            this.runTextAnalyzer();
+            this.runTask("intel");
         } else {
             this.runtime.on("leader", (clientId) => {
-                this.runTextAnalyzer();
+                this.runTask("intel");
             });
         }
     }
 
-    private runTextAnalyzer() {
-        this.context.hostRuntime.request({ url: `/text-analyzer`}).then((response) => {
-            if (response.status !== 200 || response.mimeType !== "prague/component") {
-                return Promise.reject(response);
-            }
-
-            const component = response.value as IComponent;
-            const textAnalyzer = component.query<ITextAnalyzer>("ITextAnalyzer");
-            textAnalyzer.run(this.sharedString, this.insightsMap);
-            console.log(`@chaincode/shared-text running text analyzer`);
-        }, (err) => {
-            console.error(`Component load error ${err}`);
-        });
-    }
-
-    private runTask(clientType: string) {
-        switch (clientType) {
+    // TODO: Eventually agent-scheduler will request for specific task.
+    private runTask(taskType: string) {
+        switch (taskType) {
+            case "intel":
+                console.log(`@chaincode/shared-text running ${taskType}`);
+                const textAnalyzer = new TextAnalyzer();
+                textAnalyzer.run(this.sharedString, this.insightsMap);
             case "translation":
-                console.log(`@chaincode/shared-text running ${clientType}`);
-                Translator.run(
+                console.log(`@chaincode/shared-text running ${taskType}`);
+                const translator = new Translator();
+                translator.run(
                     this.sharedString,
                     this.insightsMap,
                     translationApiKey);
                 break;
             case "spell":
-                console.log(`@chaincode/shared-text running ${clientType}`);
-                Spellchecker.run(this.sharedString);
+                console.log(`@chaincode/shared-text running ${taskType}`);
+                const speller = new SpellChecker();
+                speller.run(this.sharedString);
                 break;
             case "cache":
-                console.log(`@chaincode/shared-text running ${clientType}`);
+                console.log(`@chaincode/shared-text running ${taskType}`);
                 // Todo: Wrap this in a snapshot like scheduler
                 setInterval(() => {
                     console.log(`Generated cached page in chaincode`);

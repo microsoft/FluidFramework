@@ -4,7 +4,7 @@ import {
 } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
-import * as Spellchecker from "@prague/spellchecker";
+import {SpellChecker} from "@prague/spellchecker";
 import { BaseWork } from "./baseWork";
 import { IWork } from "./definitions";
 
@@ -42,7 +42,8 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         const sharedString = rootMap.get("text") as Sequence.SharedString;
 
         if (sharedString) {
-            Spellchecker.run(sharedString, this.dictionary);
+            const speller = new SpellChecker();
+            speller.run(sharedString, this.dictionary);
         }
     }
 

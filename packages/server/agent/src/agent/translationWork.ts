@@ -4,7 +4,7 @@ import {
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
-import * as Translator from "@prague/translator";
+import { Translator } from "@prague/translator";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 
@@ -37,7 +37,8 @@ export class TranslationWork extends BaseWork implements IWork {
 
         if (sharedString && insightsMap) {
             await insightsMap.wait(sharedString.id);
-            Translator.run(
+            const translator = new Translator();
+            translator.run(
                 sharedString,
                 insightsMap,
                 this.config.intelligence.translation.key);
