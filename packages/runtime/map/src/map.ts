@@ -54,7 +54,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected view: MapView;
     protected readonly pendingKeys: Map<string, number>;
     protected pendingClearClientSequenceNumber: number;
-    private serializeFilter: SerializeFilter;
+    protected serializeFilter: SerializeFilter;
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
     /**
