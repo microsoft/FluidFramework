@@ -1,6 +1,6 @@
 {
   "name": "@prague/runtime-test-utils",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -18,15 +18,15 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/gitresources": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0",
-    "@prague/services-client": "^0.4.0",
-    "@prague/utils": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/gitresources": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/services-client": "^0.5.0",
+    "@prague/utils": "^0.5.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@types/node": "^10.12.12",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",

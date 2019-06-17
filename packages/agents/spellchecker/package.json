@@ -1,6 +1,6 @@
 {
   "name": "@prague/spellchecker",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Spellchecker for sharedString",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
@@ -28,9 +28,9 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/merge-tree": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/sequence": "^0.4.0",
+    "@prague/merge-tree": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/sequence": "^0.5.0",
     "debug": "^4.1.1",
     "request": "^2.88.0"
   }

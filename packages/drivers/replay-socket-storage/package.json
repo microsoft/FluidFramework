@@ -1,6 +1,6 @@
 {
   "name": "@prague/replay-socket-storage",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Document replay version of Socket.IO implementation",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -19,15 +19,15 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/routerlicious-socket-storage": "^0.4.0",
-    "@prague/socket-storage-shared": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/routerlicious-socket-storage": "^0.5.0",
+    "@prague/socket-storage-shared": "^0.5.0",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
     "keypress": "^0.2.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/nock": "^9.3.0",

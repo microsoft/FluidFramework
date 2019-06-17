@@ -1,6 +1,6 @@
 {
   "name": "@prague/app-component",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Chaincodeable component base class",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,7 +20,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
@@ -31,15 +31,15 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/shared-object-common": "^0.4.0",
-    "@prague/component-runtime": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/cell": "^0.4.0",
-    "@prague/map": "^0.4.0",
-    "@prague/container-runtime": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0",
-    "@prague/sequence": "^0.4.0",
-    "@prague/stream": "^0.4.0",
+    "@prague/shared-object-common": "^0.5.0",
+    "@prague/component-runtime": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/cell": "^0.5.0",
+    "@prague/map": "^0.5.0",
+    "@prague/container-runtime": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/sequence": "^0.5.0",
+    "@prague/stream": "^0.5.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   }

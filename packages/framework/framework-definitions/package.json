@@ -1,6 +1,6 @@
 {
   "name": "@prague/framework-definitions",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Definitions for fluid framework.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,7 +20,7 @@
   "repository": "microsoft/prague",
   "dependencies": {},
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

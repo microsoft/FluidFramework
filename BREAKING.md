@@ -1,4 +1,6 @@
-# 0.4 Breaking Changes
+# 0.5 Breaking Changes
+
+# 0.4 Breaking Changes (June 17, 2019)
 
 The IComponent in @prague/runtime-defintions and IPlatform in @prague/container-definitions have been deprecated and
 will be removed in the next release.

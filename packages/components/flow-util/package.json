@@ -1,6 +1,6 @@
 {
   "name": "@prague/flow-util",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Shared utility code for Flow-* packages.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -23,7 +23,7 @@
   "repository": "microsoft/prague",
   "dependencies": {},
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@types/benchmark": "^1.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

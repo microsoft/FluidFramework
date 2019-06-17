@@ -1,6 +1,6 @@
 {
   "name": "@prague/container-loader",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Prague container loader",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -42,8 +42,8 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/utils": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/utils": "^0.5.0",
     "@types/double-ended-queue": "^2.1.0",
     "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
@@ -51,7 +51,7 @@
     "performance-now": "^2.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/lodash": "^4.14.118",

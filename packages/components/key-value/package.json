@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/key-value",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Chaincode representing a key-value pair",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -31,14 +31,14 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/map": "^0.4.0",
+    "@prague/app-component": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/map": "^0.5.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@types/node": "^10.12.12",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",

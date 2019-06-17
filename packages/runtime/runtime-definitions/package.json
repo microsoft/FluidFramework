@@ -1,6 +1,6 @@
 {
   "name": "@prague/runtime-definitions",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Prague Runtime definitions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
@@ -26,9 +26,9 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/gitresources": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/gitresources": "^0.5.0",
     "@types/node": "^10.12.12",
-    "@prague/utils": "^0.4.0"
+    "@prague/utils": "^0.5.0"
   }
 }

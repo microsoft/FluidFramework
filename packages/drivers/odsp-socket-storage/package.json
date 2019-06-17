@@ -1,6 +1,6 @@
 {
   "name": "@prague/odsp-socket-storage",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Socket storage implementation for SPO and ODC",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -41,7 +41,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "@types/mocha": "^5.2.5",
     "@types/debug": "^0.0.31",
@@ -54,11 +54,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/gitresources": "^0.4.0",
-    "@prague/services-client": "^0.4.0",
-    "@prague/socket-storage-shared": "^0.4.0",
-    "@prague/utils": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/gitresources": "^0.5.0",
+    "@prague/services-client": "^0.5.0",
+    "@prague/socket-storage-shared": "^0.5.0",
+    "@prague/utils": "^0.5.0",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
     "socket.io-client": "^2.1.1"

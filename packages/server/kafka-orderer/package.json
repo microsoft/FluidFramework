@@ -1,6 +1,6 @@
 {
   "name": "@prague/kafka-orderer",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Prague ordering services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
@@ -24,8 +24,8 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/services-core": "^0.4.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/services-core": "^0.5.0",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",
     "lodash": "^4.17.11",

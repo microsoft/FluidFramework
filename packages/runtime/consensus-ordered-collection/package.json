@@ -1,6 +1,6 @@
 {
   "name": "@prague/consensus-ordered-collection",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Consensus Collection",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -41,14 +41,14 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/shared-object-common": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/shared-object-common": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
-    "@prague/runtime-test-utils": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
+    "@prague/runtime-test-utils": "^0.5.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

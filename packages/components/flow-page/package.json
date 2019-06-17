@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-page",
   "description": "Experimental Flow-Editor pagination demo.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
@@ -33,18 +33,18 @@
     }
   },
   "dependencies": {
-    "@chaincode/flow-document": "^0.4.0",
-    "@chaincode/flow-editor": "^0.4.0",
-    "@prague/app-component": "^0.4.0",
-    "@prague/app-datastore": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/flow-util": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0",
-    "@prague/utils": "^0.4.0",
+    "@chaincode/flow-document": "^0.5.0",
+    "@chaincode/flow-editor": "^0.5.0",
+    "@prague/app-component": "^0.5.0",
+    "@prague/app-datastore": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/flow-util": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/utils": "^0.5.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "@prague/prague-dev-server": "^3.4.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
