@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 FROM node:8.11.4-alpine
 
 RUN apk add --no-cache tini

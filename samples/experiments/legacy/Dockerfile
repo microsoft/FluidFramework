@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 FROM node:6.9.4-alpine
 
 # Add git since we reference certain npm modules with git

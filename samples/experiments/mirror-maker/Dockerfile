@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 # A simple Kafka based Dockerfile heavily influenced by https://hub.docker.com/r/wurstmeister/kafka/~/dockerfile/
 FROM openjdk:8u171-jre-stretch
 

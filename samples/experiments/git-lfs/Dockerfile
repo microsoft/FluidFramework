@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 FROM golang:1.10.2-alpine
 
 RUN apk add --no-cache bash

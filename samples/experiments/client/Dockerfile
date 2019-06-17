@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 FROM node:8.11.1-alpine
 
 # tini so node doesn't run as PID 1 

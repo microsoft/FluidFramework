@@ -1,3 +1,6 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
 FROM maven:3.5.0-jdk-8-alpine
 
 # Copy over and build the server
