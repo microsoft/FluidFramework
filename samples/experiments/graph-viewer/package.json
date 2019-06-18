@@ -33,5 +33,7 @@
     "docker": "^1.0.0",
     "typescript": "^2.6.2",
     "webpack": "^3.10.0"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

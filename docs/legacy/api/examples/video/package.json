@@ -39,5 +39,6 @@
     "webpack": "webpack --config webpack.config.js"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague"
+  "repository": "microsoft/prague",
+  "license": "MIT"
 }

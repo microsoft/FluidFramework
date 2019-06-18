@@ -42,5 +42,7 @@
         "dist/main.bundle.js"
       ]
     }
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

@@ -49,5 +49,6 @@
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
-  }
+  },
+  "license": "MIT"
 }

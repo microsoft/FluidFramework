@@ -90,5 +90,7 @@
     "typescript": "~3.4.5",
     "uglifyjs-webpack-plugin": "^1.2.2",
     "webpack": "^3.10.0"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

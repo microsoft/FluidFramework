@@ -207,5 +207,6 @@
     "typescript": "~3.4.5",
     "url-loader": "^1.1.1",
     "ws": "^6.1.2"
-  }
+  },
+  "license": "MIT"
 }

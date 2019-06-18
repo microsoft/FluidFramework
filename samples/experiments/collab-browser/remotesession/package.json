@@ -36,5 +36,6 @@
         "dist/main.bundle.js"
       ]
     }
-  }
+  },
+  "license": "MIT"
 }

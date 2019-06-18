@@ -30,5 +30,6 @@
     "@types/node": "^10.12.12",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2"
-  }
+  },
+  "license": "MIT"
 }

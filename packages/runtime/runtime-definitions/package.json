@@ -30,5 +30,6 @@
     "@prague/gitresources": "^0.5.0",
     "@types/node": "^10.12.12",
     "@prague/utils": "^0.5.0"
-  }
+  },
+  "license": "MIT"
 }

@@ -36,5 +36,6 @@
     "debug": "^4.1.1",
     "tslint-microsoft-contrib": "^6.0.0",
     "uuid": "^3.3.2"
-  }
+  },
+  "license": "MIT"
 }

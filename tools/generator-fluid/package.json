@@ -13,8 +13,8 @@
     "yeoman-generator"
   ],
   "files": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "dependencies": {
     "chalk": "^2.4.2",
     "ts-morph": "^1.2.0",

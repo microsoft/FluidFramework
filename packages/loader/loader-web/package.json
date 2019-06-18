@@ -34,5 +34,6 @@
     "@types/node": "^10.12.12",
     "chalk": "^2.4.1",
     "source-map-loader": "^0.2.4"
-  }
+  },
+  "license": "MIT"
 }

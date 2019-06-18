@@ -15,5 +15,7 @@
     "stop:full": "docker-compose down && docker volume prune --force"
   },
   "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {},
+  "author": "Microsoft",
+  "license": "MIT"
 }

@@ -91,5 +91,6 @@
     "analyze-bundle": "babel-node ./tools/analyzeBundle.js",
     "open:src": "babel-node tools/srcServer.js",
     "open:dist": "babel-node tools/distServer.js"
-  }
+  },
+  "author": "Microsoft"
 }

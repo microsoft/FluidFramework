@@ -16,5 +16,6 @@
     "webpack-cli": "^3.1.0",
     "webpack-merge": "^4.1.4",
     "webpack-serve": "^2.0.2"
-  }
+  },
+  "license": "MIT"
 }

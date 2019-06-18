@@ -4,7 +4,7 @@
   "description": "Node loader for key-value chaincode",
   "main": "index.js",
   "author": "Microsoft",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@chaincode/key-value": "^0.3.2"
   }

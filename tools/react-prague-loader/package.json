@@ -24,5 +24,6 @@
   "scripts": {
     "build": "tsc",
     "pack:dev": "webpack"
-  }
+  },
+  "license": "MIT"
 }

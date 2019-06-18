@@ -42,7 +42,8 @@
     "nconf": "^0.10.0",
     "string-hash": "^1.1.3"
   },
-  "browser" : {
-    "moniker" : "@prague/services-core/dist/dockerNames.js"
-  }
+  "browser": {
+    "moniker": "@prague/services-core/dist/dockerNames.js"
+  },
+  "license": "MIT"
 }

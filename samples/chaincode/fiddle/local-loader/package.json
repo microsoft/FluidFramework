@@ -35,5 +35,6 @@
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "post-deploy": "node getRoute.js",
     "tsc": "tsc"
-  }
+  },
+  "license": "MIT"
 }

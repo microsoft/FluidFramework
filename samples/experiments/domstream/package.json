@@ -56,5 +56,6 @@
         "dist/component/pragueViewComponent.js"
       ]
     }
-  }
+  },
+  "license": "MIT"
 }

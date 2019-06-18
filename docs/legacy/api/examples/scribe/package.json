@@ -34,5 +34,6 @@
     "tslint": "tslint 'src/**/*.ts'",
     "webpack": "webpack --config webpack.config.js"
   },
-  "author": "Microsoft"
+  "author": "Microsoft",
+  "license": "MIT"
 }

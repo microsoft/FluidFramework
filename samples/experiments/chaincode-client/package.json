@@ -26,5 +26,7 @@
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
     "winston": "^3.0.0"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

@@ -26,5 +26,7 @@
     "@types/jsonwebtoken": "^7.2.7",
     "@types/node": "^9.6.7",
     "tslint": "^5.9.1"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

@@ -4,7 +4,7 @@
   "description": "Headless chaincode loader",
   "main": "index.js",
   "author": "Microsoft",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@chaincode/chat-3": "0.0.38"
   }

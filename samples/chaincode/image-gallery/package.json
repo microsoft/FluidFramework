@@ -45,5 +45,6 @@
     "react-dom": "^16.8.3",
     "react-image-gallery": "^0.8.14",
     "style-loader": "^0.23.1"
-  }
+  },
+  "license": "MIT"
 }

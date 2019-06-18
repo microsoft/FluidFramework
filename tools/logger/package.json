@@ -18,5 +18,6 @@
     "@types/node": "^8.10.17",
     "tslint": "^5.10.0",
     "typescript": "~3.4.5"
-  }
+  },
+  "license": "MIT"
 }

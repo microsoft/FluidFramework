@@ -26,5 +26,6 @@
     "@prague/routerlicious-socket-storage": "^0.2.6121",
     "@types/jsonwebtoken": "^8.3.2",
     "jsonwebtoken": "^8.5.1"
-  }
+  },
+  "license": "MIT"
 }

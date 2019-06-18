@@ -32,5 +32,6 @@
     "webpack": "webpack --config webpack.config.js",
     "webpack:serve": "webpack-dev-server --config webpack.config.js --open"
   },
-  "author": "Microsoft"
+  "author": "Microsoft",
+  "license": "MIT"
 }

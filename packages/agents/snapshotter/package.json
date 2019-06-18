@@ -30,5 +30,6 @@
     "@prague/container-definitions": "^0.5.0",
     "@prague/container-runtime": "^0.5.0",
     "debug": "^4.1.1"
-  }
+  },
+  "license": "MIT"
 }

@@ -44,5 +44,6 @@
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "sillyname": "^0.1.0"
-  }
+  },
+  "license": "MIT"
 }

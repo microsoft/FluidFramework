@@ -43,6 +43,8 @@ if (pathArg) {
  * helper functions and constants
  */
 const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
+const licenseId = 'MIT';
+const author = 'Microsoft';
 
 // promise wrappers over existing file IO callback methods
 async function readFile(file) {
@@ -109,12 +111,43 @@ const handlers = [
         }
     },
     {
-        name: "npm-package-author",
+        name: "npm-package-author-license",
         match: /(^|\/)package\.json/i,
         handler: async file => {
-            if (!/"author":\s*"Microsoft"/i.test(await readFile(file))) {
-                return 'Package missing "author": "Microsoft" entry';
+            const json = JSON.parse(await readFile(file));
+            let ret = [];
+
+            if (json.author !== author) {
+                ret.push(`${author} author entry`);
             }
+
+            if (json.license !== licenseId) {
+                ret.push(`${licenseId} license entry`);
+            }
+
+            if (ret.length > 0) {
+                return 'Package missing ' + ret.join(' and ');
+            }
+        },
+        resolver: async file => {
+            let json = JSON.parse(await readFile(file));
+            let resolved = true;
+
+            if (!json.author) {
+                json.author = author;
+            } else if (json.author !== author) {
+                resolved = false;
+            }
+
+            if (!json.license) {
+                json.license = licenseId;
+            } else if (json.license !== licenseId) {
+                resolved = false;
+            }
+
+            await writeFile(file, JSON.stringify(json, undefined, 2) + newline);
+
+            return { resolved: resolved };
         }
     }
 ];

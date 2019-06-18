@@ -4,5 +4,5 @@
   "description": "Headless chaincode loader",
   "main": "index.js",
   "author": "Microsoft",
-  "license": "ISC"
+  "license": "MIT"
 }

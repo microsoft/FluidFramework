@@ -55,5 +55,6 @@
     "typescript": "^3.2.2",
     "webpack": "^4.28.3",
     "webpack-cli": "^3.2.1"
-  }
+  },
+  "license": "MIT"
 }

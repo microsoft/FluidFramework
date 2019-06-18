@@ -18,5 +18,7 @@
     "fabric-ca-client": "^1.1.2",
     "fabric-client": "^1.1.2",
     "fabric-shim": "^1.1.2"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

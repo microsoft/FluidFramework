@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "dependencies": {
     "json-stringify-safe": "^5.0.1",
     "nodemailer": "^4.7.0"

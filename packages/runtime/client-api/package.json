@@ -84,5 +84,6 @@
     "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5",
     "xmldoc": "^1.1.2"
-  }
+  },
+  "license": "MIT"
 }

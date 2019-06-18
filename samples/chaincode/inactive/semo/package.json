@@ -50,5 +50,6 @@
     "style-loader": "^0.23.0",
     "url-loader": "^1.1.2",
     "uuid": "^3.3.2"
-  }
+  },
+  "license": "MIT"
 }

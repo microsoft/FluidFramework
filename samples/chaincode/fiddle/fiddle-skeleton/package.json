@@ -37,5 +37,6 @@
     "@prague/app-component": "^0.2.5246",
     "@prague/container-definitions": "^0.2.5246",
     "@prague/map": "^0.2.5246"
-  }
+  },
+  "license": "MIT"
 }

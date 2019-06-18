@@ -18,5 +18,7 @@
     "@types/node": "^10.3.6",
     "tslint": "^5.10.0",
     "typescript": "^2.9.2"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

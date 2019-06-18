@@ -33,5 +33,6 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague"
+  "repository": "microsoft/prague",
+  "license": "MIT"
 }

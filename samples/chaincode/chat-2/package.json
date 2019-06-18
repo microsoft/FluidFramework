@@ -42,5 +42,6 @@
     "@stardust-ui/react": "^0.17.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0"
-  }
+  },
+  "license": "MIT"
 }

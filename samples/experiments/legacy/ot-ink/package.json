@@ -24,5 +24,6 @@
   "dependencies": {
     "@types/node": "^6.0.52",
     "node-uuid": "^1.4.7"
-  }
+  },
+  "license": "MIT"
 }

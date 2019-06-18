@@ -1,31 +1,32 @@
 {
-	"name": "packfile",
-	"version": "0.0.1",
-	"description": "Experiment with packfile",
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
-	"sideEffects": "false",
-	"scripts": {
-		"build": "npm run tsc && npm run build:esnext && npm run tslint",
-		"build:full": "npm run build",
-		"clean": "rimraf dist && rimraf lib",
-		"start": "node dist/index.js",
-		"tsc": "tsc",
-		"build:esnext": "tsc --outDir lib --m esnext",
-		"tslint": "tslint --project tsconfig.json --format verbose"
-	},
-	"author": "Microsoft",
-	"repository": "microsoft/prague",
-	"devDependencies": {
-		"@types/node": "^10.12.12",
-		"@types/sha.js": "^2.4.0",
-		"rimraf": "^2.6.2",
-		"tslint": "^5.11.0",
-		"tslint-microsoft-contrib": "^6.0.0",
-		"typescript": "^3.2.2"
-	},
-	"dependencies": {
-		"sha.js": "^2.4.11"
-	}
+  "name": "packfile",
+  "version": "0.0.1",
+  "description": "Experiment with packfile",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "start": "node dist/index.js",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/node": "^10.12.12",
+    "@types/sha.js": "^2.4.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "sha.js": "^2.4.11"
+  },
+  "license": "MIT"
 }

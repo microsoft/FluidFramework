@@ -30,5 +30,6 @@
     "webpack": "webpack --config webpack.config.js --env.production=0",
     "webpack-prod": "webpack --config webpack.config.js --env.production"
   },
-  "author": "Microsoft"
+  "author": "Microsoft",
+  "license": "MIT"
 }

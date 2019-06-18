@@ -51,5 +51,7 @@
     "rimraf": "^2.6.2",
     "typescript": "~3.4.5"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "author": "Microsoft",
+  "license": "MIT"
 }

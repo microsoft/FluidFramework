@@ -42,5 +42,6 @@
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "style-loader": "^0.23.1"
-  }
+  },
+  "license": "MIT"
 }

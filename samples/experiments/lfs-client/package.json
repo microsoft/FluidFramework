@@ -9,7 +9,7 @@
     "start": "tsc && node dist/index.js -p",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Microsoft",
   "dependencies": {
     "commander": "^2.15.1"
   },
@@ -17,5 +17,6 @@
     "@types/commander": "^2.12.2",
     "@types/node": "^8.10.10",
     "typescript": "^2.8.3"
-  }
+  },
+  "license": "MIT"
 }

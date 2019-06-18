@@ -45,5 +45,6 @@
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0"
-  }
+  },
+  "license": "MIT"
 }

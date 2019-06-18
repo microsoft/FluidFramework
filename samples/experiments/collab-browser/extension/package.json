@@ -27,5 +27,6 @@
   },
   "dependencies": {
     "jsonwebtoken": "^8.3.0"
-  }
+  },
+  "license": "MIT"
 }

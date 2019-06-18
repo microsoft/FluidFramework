@@ -42,5 +42,7 @@
   },
   "dependencies": {
     "routerlicious": "file:../routerlicious"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

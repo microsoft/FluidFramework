@@ -30,5 +30,7 @@
     "@types/uuid": "^3.4.4",
     "tslint": "^5.10.0",
     "typescript": "~3.4.5"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

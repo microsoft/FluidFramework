@@ -10,8 +10,8 @@
     "upload": "npm run build && npm run push && npm run deploy",
     "endpoint": "kubectl get endpoints -n nuclio reverser"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "dependencies": {
     "moment": "^2.22.2"
   }

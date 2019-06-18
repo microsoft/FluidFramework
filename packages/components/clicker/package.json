@@ -41,5 +41,6 @@
     "@prague/shared-object-common": "^0.4.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
-  }
+  },
+  "license": "MIT"
 }

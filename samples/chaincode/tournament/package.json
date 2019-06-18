@@ -43,5 +43,6 @@
     "@prague/map": "^0.3.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
-  }
+  },
+  "license": "MIT"
 }

@@ -20,5 +20,6 @@
     "start": "node dist/index.js"
   },
   "author": "Microsoft",
-  "repository": "microsoft/prague"
+  "repository": "microsoft/prague",
+  "license": "MIT"
 }

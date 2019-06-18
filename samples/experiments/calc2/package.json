@@ -16,5 +16,6 @@
   },
   "dependencies": {
     "@ms/excel-online-calc": "^8.18.4"
-  }
+  },
+  "license": "MIT"
 }

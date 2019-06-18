@@ -62,5 +62,6 @@
     "axios": "^0.18.0",
     "debug": "^4.1.1",
     "socket.io-client": "^2.1.1"
-  }
+  },
+  "license": "MIT"
 }

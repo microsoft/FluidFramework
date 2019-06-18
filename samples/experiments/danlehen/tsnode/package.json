@@ -11,5 +11,7 @@
   },
   "dependencies": {
     "@types/node": "^10.12.0"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

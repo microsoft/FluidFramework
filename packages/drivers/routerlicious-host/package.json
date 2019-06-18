@@ -35,5 +35,6 @@
     "@types/debug": "^0.0.31",
     "axios": "^0.18.0",
     "debug": "^4.1.1"
-  }
+  },
+  "license": "MIT"
 }

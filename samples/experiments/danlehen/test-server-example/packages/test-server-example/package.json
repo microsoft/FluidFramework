@@ -28,5 +28,7 @@
     "@prague/routerlicious": "^0.1.0",
     "@prague/runtime-definitions": "^0.1.0",
     "@prague/socket-storage": "^0.1.0"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }

@@ -1,43 +1,44 @@
 {
-	"name": "node-agent-scheduler",
-	"version": "0.0.1",
-	"description": "Pure Node.js client to interact with the agent-scheduler chaincode",
-	"main": "dist/index.js",
-	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
-	"sideEffects": "false",
-	"scripts": {
-		"build": "npm run tsc && npm run build:esnext && npm run tslint",
-		"build:full": "npm run build",
-		"clean": "rimraf dist && rimraf lib",
-		"start": "node dist/index.js",
-		"tsc": "tsc",
-		"build:esnext": "tsc --outDir lib --m esnext",
-		"tslint": "tslint --project tsconfig.json --format verbose"
-	},
-	"author": "Microsoft",
-	"repository": "microsoft/prague",
-	"devDependencies": {
-		"rimraf": "^2.6.2",
-		"tslint": "^5.11.0",
-		"tslint-microsoft-contrib": "^6.0.0",
-		"typescript": "^3.2.2"
-	},
-	"dependencies": {
-		"@prague/container-definitions": "^0.4.7492",
-		"@prague/container-loader": "^0.4.7492",
-		"@prague/map": "^0.4.7492",
-		"@prague/routerlicious-host": "^0.4.7492",
-		"@prague/routerlicious-socket-storage": "^0.4.7492",
-		"@prague/runtime-definitions": "^0.4.7492",
-		"@prague/services": "^0.4.7492",
-		"@types/commander": "^2.12.2",
-		"@types/jsonwebtoken": "^8.3.0",
-		"@types/node": "^10.12.12",
-		"@types/ora": "^1.3.4",
-		"commander": "^2.17.1",
-		"jsonwebtoken": "^8.4.0",
-		"ora": "^3.0.0",
-		"readline": "^1.3.0"
-	}
+  "name": "node-agent-scheduler",
+  "version": "0.0.1",
+  "description": "Pure Node.js client to interact with the agent-scheduler chaincode",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "npm run tsc && npm run build:esnext && npm run tslint",
+    "build:full": "npm run build",
+    "clean": "rimraf dist && rimraf lib",
+    "start": "node dist/index.js",
+    "tsc": "tsc",
+    "build:esnext": "tsc --outDir lib --m esnext",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {
+    "@prague/container-definitions": "^0.4.7492",
+    "@prague/container-loader": "^0.4.7492",
+    "@prague/map": "^0.4.7492",
+    "@prague/routerlicious-host": "^0.4.7492",
+    "@prague/routerlicious-socket-storage": "^0.4.7492",
+    "@prague/runtime-definitions": "^0.4.7492",
+    "@prague/services": "^0.4.7492",
+    "@types/commander": "^2.12.2",
+    "@types/jsonwebtoken": "^8.3.0",
+    "@types/node": "^10.12.12",
+    "@types/ora": "^1.3.4",
+    "commander": "^2.17.1",
+    "jsonwebtoken": "^8.4.0",
+    "ora": "^3.0.0",
+    "readline": "^1.3.0"
+  },
+  "license": "MIT"
 }

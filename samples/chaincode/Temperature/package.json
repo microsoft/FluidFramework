@@ -37,5 +37,6 @@
     "@prague/runtime": "^0.2.5038",
     "@prague/runtime-definitions": "^0.2.5038",
     "@prague/container-definitions": "^0.2.5038"
-  }
+  },
+  "license": "MIT"
 }

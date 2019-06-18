@@ -11,6 +11,6 @@
   "dependencies": {
     "tslint-microsoft-contrib": "^6.0.0"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {},
+  "license": "MIT"
 }

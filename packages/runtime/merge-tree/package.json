@@ -65,5 +65,6 @@
     "@prague/runtime-definitions": "^0.5.0",
     "@prague/utils": "^0.5.0",
     "debug": "^4.1.1"
-  }
+  },
+  "license": "MIT"
 }

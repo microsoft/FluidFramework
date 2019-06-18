@@ -41,7 +41,8 @@
     "uuid": "^3.3.2",
     "ws": "^6.1.2"
   },
-  "browser" : {
-    "moniker" : "@prague/services-core/dist/dockerNames.js"
-  }
+  "browser": {
+    "moniker": "@prague/services-core/dist/dockerNames.js"
+  },
+  "license": "MIT"
 }

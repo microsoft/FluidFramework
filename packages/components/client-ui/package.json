@@ -84,5 +84,6 @@
     "performance-now": "^2.1.0",
     "shape-detector": "^0.2.1",
     "webcola": "^3.3.8"
-  }
+  },
+  "license": "MIT"
 }

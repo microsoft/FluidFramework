@@ -9,8 +9,8 @@
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "dependencies": {
     "chalk": "^2.4.1",
     "commander": "^2.19.0",

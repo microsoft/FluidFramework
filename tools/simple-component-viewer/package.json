@@ -7,8 +7,8 @@
     "start": "webpack-dev-server",
     "auth": "npx --package vsts-npm-auth@latest vsts-npm-auth -config .npmrc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "dependencies": {
     "@prague/vanilla-loader": "^0.0.14"
   },

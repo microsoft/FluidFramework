@@ -39,5 +39,6 @@
     "@prague/container-definitions": "^0.3.0",
     "@prague/map": "^0.3.0",
     "roosterjs": "^7.3.2"
-  }
+  },
+  "license": "MIT"
 }

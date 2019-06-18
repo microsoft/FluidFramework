@@ -37,5 +37,6 @@
     "tsc": "tsc",
     "pack:dev": "webpack",
     "tslint": "tslint --project tsconfig.json --format verbose"
-  }
+  },
+  "license": "MIT"
 }

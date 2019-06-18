@@ -70,5 +70,6 @@
   },
   "browser": {
     "winston": false
-  }
+  },
+  "license": "MIT"
 }

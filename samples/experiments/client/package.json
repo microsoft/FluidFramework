@@ -16,10 +16,7 @@
     "dist-win": "electron-builder --windows",
     "webpack": "webpack --config webpack.config.js"
   },
-  "author": {
-    "email": "kurtb@microsoft.com",
-    "name": "Prague Team"
-  },
+  "author": "Microsoft",
   "homepage": "https://nota.eu.prague.office-int.com/",
   "build": {
     "appId": "com.microsoft.nota",
@@ -64,5 +61,6 @@
     "typescript": "^2.9.2",
     "webpack": "^4.16.3",
     "webpack-cli": "^3.1.0"
-  }
+  },
+  "license": "MIT"
 }

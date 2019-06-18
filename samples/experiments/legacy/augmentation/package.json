@@ -1,35 +1,35 @@
 {
-    "name": "augmentation",
-    "version": "0.0.1",
-    "description": "Augmentation loop experimentation",
-    "scripts": {
-        "build": "concurrently \"npm run tslint\" \"npm run tsc\"",
-        "tsc": "tsc",
-        "tslint": "tslint 'src/*.ts'",
-        "start": "docker-compose up",
-        "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up"
-    },
-    "author": "Microsoft",
-    "license": "Apache-2.0",
-    "repository": "microsoft/prague",
-    "devDependencies": {
-        "@types/async": "^2.0.40",
-        "@types/cors": "^2.8.1",
-        "@types/lodash": "^4.14.76",
-        "@types/node": "^8.0.14",
-        "@types/request": "^2.0.3",
-        "concurrently": "^3.4.0",
-        "nodemon": "^1.18.7",
-        "tslint": "^4.5.1",
-        "typescript": "2.3.x"
-    },
-    "dependencies": {
-        "async": "^2.5.0",
-        "body-parser": "^1.18.3",
-        "cors": "^2.8.4",
-        "express": "^4.16.3",
-        "hjs": "0.0.6",
-        "lodash": "^4.17.10",
-        "request": "^2.87.0"
-    }
+  "name": "augmentation",
+  "version": "0.0.1",
+  "description": "Augmentation loop experimentation",
+  "scripts": {
+    "build": "concurrently \"npm run tslint\" \"npm run tsc\"",
+    "tsc": "tsc",
+    "tslint": "tslint 'src/*.ts'",
+    "start": "docker-compose up",
+    "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.debug.yml up"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "repository": "microsoft/prague",
+  "devDependencies": {
+    "@types/async": "^2.0.40",
+    "@types/cors": "^2.8.1",
+    "@types/lodash": "^4.14.76",
+    "@types/node": "^8.0.14",
+    "@types/request": "^2.0.3",
+    "concurrently": "^3.4.0",
+    "nodemon": "^1.18.7",
+    "tslint": "^4.5.1",
+    "typescript": "2.3.x"
+  },
+  "dependencies": {
+    "async": "^2.5.0",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "hjs": "0.0.6",
+    "lodash": "^4.17.10",
+    "request": "^2.87.0"
+  }
 }

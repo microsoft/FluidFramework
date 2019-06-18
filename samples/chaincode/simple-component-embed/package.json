@@ -38,5 +38,6 @@
     "@chaincode/counter": "0.0.6694",
     "@prague/app-component": "^0.3.0",
     "@prague/container-definitions": "^0.3.0"
-  }
+  },
+  "license": "MIT"
 }

@@ -42,5 +42,6 @@
     "@prague/stream": "^0.5.0",
     "debug": "^4.1.1",
     "uuid": "^3.3.2"
-  }
+  },
+  "license": "MIT"
 }

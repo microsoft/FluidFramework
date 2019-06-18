@@ -10,8 +10,8 @@
     "upload": "npm run build && npm run push && npm run deploy",
     "endpoint": "kubectl get endpoints -n nuclio scribe"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Microsoft",
+  "license": "MIT",
   "devDependencies": {
     "@types/uuid": "^3.4.4",
     "ts-loader": "^5.3.1",

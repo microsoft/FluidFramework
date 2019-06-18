@@ -43,5 +43,6 @@
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "reinvented-color-wheel": "^0.2.4"
-  }
+  },
+  "license": "MIT"
 }

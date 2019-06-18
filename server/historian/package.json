@@ -46,5 +46,7 @@
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
     "typescript": "~3.4.5"
-  }
+  },
+  "author": "Microsoft",
+  "license": "MIT"
 }
