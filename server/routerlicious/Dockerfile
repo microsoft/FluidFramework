@@ -33,6 +33,7 @@ COPY packages/components/app-datastore/package*.json packages/components/app-dat
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
 COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/chart-view/package*.json packages/components/chart-view/
+COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
 COPY packages/components/progress-bars/package*.json packages/components/progress-bars/
 COPY packages/components/video-players/package*.json packages/components/video-players/

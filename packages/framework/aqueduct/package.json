@@ -1,6 +1,6 @@
 {
   "name": "@prague/aqueduct",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A set of implementations for fluid framework interfaces.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -19,13 +19,13 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/container-runtime": "^0.4.0",
-    "@prague/map": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0"
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/container-runtime": "^0.5.0",
+    "@prague/map": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.4.0",
+    "@prague/build-common": "^0.5.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",

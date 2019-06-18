@@ -1,27 +1,36 @@
 {
   "name": "@chaincode/clicker",
   "description": "Minimal @chaincode sample to implement a collaborative counter.",
-  "version": "0.0.1",
+  "version": "0.5.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\"",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:webpack": "webpack --env=\"production\"",
+    "build:webpack:dev": "webpack --env=\"development\"",
     "start": "prague-dev-server --config webpack.config.js --live --package package.json",
-    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "devDependencies": {
     "@prague/prague-dev-server": "^3.4.0",
     "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.2",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0"
   },
   "prague": {
     "browser": {
@@ -32,13 +41,13 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.4.0",
-    "@prague/component-runtime": "^0.4.0",
-    "@prague/container-definitions": "^0.4.0",
-    "@prague/aqueduct": "^0.4.0",
-    "@prague/map": "^0.4.0",
-    "@prague/runtime-definitions": "^0.4.0",
-    "@prague/shared-object-common": "^0.4.0",
+    "@prague/app-component": "^0.5.0",
+    "@prague/component-runtime": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/aqueduct": "^0.5.0",
+    "@prague/map": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/shared-object-common": "^0.5.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

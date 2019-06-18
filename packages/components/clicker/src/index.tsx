@@ -58,36 +58,22 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
   // start IComponentHTMLViewable
 
   /**
-   * IComponentHTMLViewable interface is way overkill here.
-   * We don't need to return anything we just need a way to render
-   * We are using it here because the controller loader for routerlicious knows how to handle this
-   * We should be using something more like IComponentRenderHTML
+   * Will return a new Clicker view
    */
-  public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+  public async addView(host: IComponent): Promise<IHTMLView> {
     // Get our counter object that we set in initialize and pass it in to the view.
     const counter = this.root.get("clicks");
-    return new CounterView(element as HTMLDivElement, this.root, counter);
+
+    const div = document.createElement("div");
+    ReactDOM.render(
+      <CounterReactView map={this.root} counter={counter} />,
+      div
+    );
+
+    return div;
   }
 
   // end IComponentHTMLViewable
-}
-
-// ----- View STUFF -----
-
-/**
- * having two classes to do a simple view is not very clean
- */
-class CounterView implements IHTMLView {
-  constructor(div: HTMLDivElement, map: ISharedMap, counter: Counter) {
-    ReactDOM.render(
-      <CounterReactView map={map} counter={counter} />,
-      div
-    );
-  }
-
-  remove() {
-    // nothing
-  }
 }
 
 // ----- REACT STUFF -----
