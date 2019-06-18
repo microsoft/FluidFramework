@@ -22,6 +22,9 @@ import {
 import { EventEmitter } from "events";
 import { IChannel, ISharedObjectServices } from "./channel";
 
+/**
+ * Represents the runtime for the component. Contains helper functions/state of the component.
+ */
 export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     readonly options: any;
 
@@ -45,12 +48,27 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
 
     readonly logger: ITelemetryLogger;
 
+    /**
+     * Prepares the op to be processed.
+     */
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
+    /**
+     * Processes the op.
+     */
     process(message: ISequencedDocumentMessage, local: boolean, context: any): void;
 
+    /**
+     * Processes the signal.
+     */
     processSignal(message: any, local: boolean): void;
 
+    /**
+     * Notifies this object about changes in the connection state.
+     * @param value - New connection state.
+     * @param clientId - ID of the client. It's old ID when in disconnected state and
+     * it's new client ID when we are connecting or connected.
+     */
     changeConnectionState(value: ConnectionState, clientId: string);
 
     /**
@@ -70,15 +88,22 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     getChannel(id: string): Promise<IChannel>;
 
     /**
-     * Creates a new channel of the given type
+     * Creates a new channel of the given type.
+     * @param id - ID of the channel to be created.
+     * @param type - Type of the channel.
      */
     createChannel(id: string, type: string): IChannel;
 
     /**
      * Attaches the channel to the runtime - exposing it to remote clients
+     * @param channel - Channel to be attached to the runtime.
      */
     attachChannel(channel: IChannel): ISharedObjectServices;
 
+    /**
+     * Api for generating the snapshot of the component.
+     * @param message - Message for the snapshot.
+     */
     snapshot(message: string): Promise<void>;
 
     /**
@@ -87,15 +112,33 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     save(message: string);
 
     // Blob related calls
-
+    /**
+     * Api to upload a blob of data.
+     * @param file - blob to be uploaded.
+     */
     uploadBlob(file: IGenericBlob): Promise<IGenericBlob>;
 
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
     submitSignal(type: string, content: any): void;
 
+    /**
+     * Api to get the blob for a particular id.
+     * @param blobId - ID of the required blob.
+     */
     getBlob(blobId: string): Promise<IGenericBlob>;
 
+    /**
+     * Api to get the blob metadata.
+     */
     getBlobMetadata(): Promise<IGenericBlob[]>;
 
+    /**
+     * Returns the current quorum.
+     */
     getQuorum(): IQuorum;
 }
 
@@ -118,6 +161,9 @@ export interface IComponentRouter {
     request(req: IRequest): Promise<IResponse>;
 }
 
+/**
+ * Represents the context for the component. This context is passed to the component runtime.
+ */
 export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
@@ -139,21 +185,51 @@ export interface IComponentContext extends EventEmitter {
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 
+    /**
+     * Returns the current quorum.
+     */
     getQuorum(): IQuorum;
 
     error(err: any): void;
 
+    /**
+     * Submits the message to be sent to other clients.
+     * @param type - Type of the message.
+     * @param content - Content of the message.
+     */
     submitMessage(type: string, content: any): number;
 
+    /**
+     * Submits the signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
     submitSignal(type: string, content: any): void;
 
+    /**
+     * Creates a component and then attaches it to the container.
+     * @param id - ID of the chaincode package.
+     * @param pkg - Package name of the component.
+     */
     createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
+    /**
+     * Returns the runtime of the component.
+     * @param id - Id supplied during creating the component.
+     * @param wait - True if you want to wait for it.
+     */
     getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime>;
 
+    /**
+     * Make request to the component.
+     * @param request - Request.
+     */
     request(request: IRequest): Promise<IResponse>;
 }
 
+/**
+ * Represents the runtime of the container. Contains helper functions/state of the container.
+ */
 export interface IHostRuntime extends IRuntime {
     readonly id: string;
     readonly existing: boolean;
@@ -176,16 +252,29 @@ export interface IHostRuntime extends IRuntime {
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
 
-    // I believe these next two things won't be necessary
-
+    /**
+     * Returns the runtime of the component.
+     * @param id - Id supplied during creating the component.
+     * @param wait - True if you want to wait for it.
+     */
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
-    // TODO at some point we may want to split create from attach for components. But the distributed data
-    // structures aren't yet prepared for this. For simplicity we just offer a createAndAttachComponent
+    /**
+     * Creates a component and then attaches it to the container.
+     * @param id - ID of the chaincode package.
+     * @param pkg - Package name of the component.
+     */
     createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
+    /**
+     * Returns the current quorum.
+     */
     getQuorum(): IQuorum;
 
+    /**
+     * Returns the component factory for a particular package.
+     * @param name - Name of the package.
+     */
     getPackage(name: string): Promise<IComponentFactory>;
 
     error(err: any): void;
@@ -195,6 +284,10 @@ export interface IHostRuntime extends IRuntime {
  * The interface implemented by a component module.
  */
 export interface IComponentFactory {
+    /**
+     * Generates runtime for the component from the component context.
+     * @param context - Conext for the component.
+     */
     instantiateComponent(context: IComponentContext): Promise<IComponentRuntime>;
 }
 

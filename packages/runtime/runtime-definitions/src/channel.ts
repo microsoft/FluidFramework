@@ -6,7 +6,7 @@ import {
 
 export interface IChannel {
     /**
-     * A readonly identifier for the collaborative object
+     * A readonly identifier for the shared object
      */
     readonly id: string;
 
@@ -16,11 +16,22 @@ export interface IChannel {
 
     readonly snapshotFormatVersion?: string;
 
+    /**
+     * Generates snapshot of the shared object.
+     */
     snapshot(): ITree;
 
+    /**
+     * True if the data structure is local i.e. one that is not attached, and thus known only to this client.
+     * It will be lost on browser tab closure if not attached.
+     */
     isLocal(): boolean;
 }
 
+/**
+ * Message send by client attaching local data structure.
+ * Contains snapshot of data structure which is the current state of this data structure.
+ */
 export interface IAttachMessage {
     // The identifier for the object
     id: string;
@@ -32,9 +43,18 @@ export interface IAttachMessage {
     snapshot: ITree;
 }
 
+/**
+ * Handler provided by shared data structure to process incoming ops.
+ */
 export interface IDeltaHandler {
+    /**
+     * Prepares the op to be processed.
+     */
     prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
 
+    /**
+     * Processes the op.
+     */
     process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
 
    /**
@@ -61,6 +81,9 @@ export interface IDeltaConnection {
     attach(handler: IDeltaHandler): void;
 }
 
+/**
+ * Storage services to read the objects at a given path.
+ */
 export interface IObjectStorageService {
     /**
      * Reads the object contained at the given path. Returns a base64 string representation for the object.
@@ -68,6 +91,9 @@ export interface IObjectStorageService {
     read(path: string): Promise<string>;
 }
 
+/**
+ * Storage services to read the objects at a given path using the given delta connection.
+ */
 export interface ISharedObjectServices {
     deltaConnection: IDeltaConnection;
 

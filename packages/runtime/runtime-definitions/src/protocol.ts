@@ -19,6 +19,9 @@ export interface IHelpMessage {
     version?: string;
 }
 
+/**
+ * Represents a message in queue to be processed.
+ */
 export interface IQueueMessage {
 
     message: IHelpMessage;
@@ -30,6 +33,9 @@ export interface IQueueMessage {
     token: string;
 }
 
+/**
+ * Represents ISignalMessage with its type.
+ */
 export interface IInboundSignalMessage extends ISignalMessage {
 
     type: string;

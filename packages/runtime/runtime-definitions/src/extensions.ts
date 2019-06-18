@@ -7,11 +7,11 @@ export interface IChaincodeModule  {
      * that is ever directly loaded is the document itself. Load will then only be called on documents that
      * were created and added to a shared object.
      *
-     * document: The document the object is part of
-     * connection: Interface used to retrieve updates from remote clients
-     * version: Document version being loaded
-     * header: Base64 encoded stored header for a snapshot. Or null if a new data type.
-     * storage: Access to the data store to retrieve more information.
+     * @param runtime - Component runtime containing state/info/helper methods about the component.
+     * @param id - ID of the shared object.
+     * @param minimumSequenceNumber - Current MSN.
+     * @param services - Services to read objects at a given path using the delta connection.
+     * @param headerOrigin - The document ID.
      *
      * Thought: should the storage object include the version information and limit access to just files
      * for the given object? The latter seems good in general. But both are probably good things. We then just
