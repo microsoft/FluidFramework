@@ -1,3 +1,3 @@
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("prague:owned");
+export const debug = registerDebug("prague:key-value");
