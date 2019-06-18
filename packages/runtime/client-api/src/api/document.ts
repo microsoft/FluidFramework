@@ -10,15 +10,13 @@ import {
     ISequencedDocumentMessage,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 import { CodeLoader } from "./codeLoader";
 import { debug } from "./debug";
 
@@ -115,15 +113,6 @@ export class Document extends EventEmitter {
         });
     }
 
-    /**
-     * Constructs a new shared object that can be attached to the document
-     * @param type - the identifier for the shared object type
-     */
-    public create(type: string, id = uuid()): ISharedObject {
-        const channel = this.runtime.createChannel(id, type);
-        return channel as ISharedObject;
-    }
-
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         this.runtime.on(event, listener);
         return this;
@@ -146,28 +135,28 @@ export class Document extends EventEmitter {
      * Creates a new shared map
      */
     public createMap(): ISharedMap {
-        return this.create(MapExtension.Type) as ISharedMap;
+        return SharedMap.create(this.runtime);
     }
 
     /**
      * Creates a new shared cell.
      */
     public createCell(): cell.ICell {
-        return this.create(cell.CellExtension.Type) as cell.ICell;
+        return cell.Cell.create(this.runtime);
     }
 
     /**
      * Creates a new shared string
      */
     public createString(): sequence.SharedString {
-        return this.create(sequence.SharedStringExtension.Type) as sequence.SharedString;
+        return sequence.SharedString.create(this.runtime);
     }
 
     /**
      * Creates a new ink shared object
      */
     public createStream(): stream.IStream {
-        return this.create(stream.StreamExtension.Type) as stream.IStream;
+        return stream.Stream.create(this.runtime);
     }
 
     /**
@@ -272,13 +261,13 @@ export async function load(
     // Initialize core data structures
     let root: ISharedMap;
     if (!runtime.existing) {
-        root = runtime.createChannel(rootMapId, MapExtension.Type) as ISharedMap;
+        root = SharedMap.create(runtime, rootMapId);
         root.attach();
 
-        const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
+        const insights = SharedMap.create(runtime, insightsMapId);
         root.set(insightsMapId, insights);
     } else {
-        root = await runtime.getChannel("root") as ISharedMap;
+        root = await runtime.getChannel(rootMapId) as ISharedMap;
     }
 
     // Return the document

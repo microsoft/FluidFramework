@@ -9,7 +9,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
-import { SharedObject } from "@prague/shared-object-common";
+import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
 import { MapExtension } from "./extension";
@@ -49,6 +49,26 @@ export interface IMapMessageHandler {
  * Implementation of a map shared object
  */
 export class SharedMap extends SharedObject implements ISharedMap {
+    /**
+     * Create a new shared map
+     *
+     * @param runtime - component runtime the new shared map belongs to
+     * @param id - optional name of the shared map
+     * @returns newly create shared map (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedObject.getIdForCreate(id), MapExtension.Type) as SharedMap;
+    }
+
+    /**
+     * Get a factory for SharedMap to register with the component.
+     *
+     * @returns a factory that creates and load SharedMap
+     */
+    public static getFactory(): ISharedObjectExtension {
+        return new MapExtension();
+    }
+
     public [Symbol.toStringTag]: string;
     protected readonly messageHandler: Map<string, IMapMessageHandler>;
     protected view: MapView;
@@ -242,10 +262,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     public on(event: "valueChanged", listener: (
-                                            changed: IValueChanged,
-                                            local: boolean,
-                                            op: ISequencedDocumentMessage,
-                                            target: this) => void): this;
+        changed: IValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: this) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */

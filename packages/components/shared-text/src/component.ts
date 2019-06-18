@@ -28,8 +28,6 @@ import { IStream, StreamExtension } from "@prague/stream";
 import { Translator } from "@prague/translator";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("prague:shared-text");
@@ -152,9 +150,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
             debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
             this.rootView.set("users", this.collabDoc.createMap());
             this.rootView.set("calendar", undefined, SharedIntervalCollectionValueType.Name);
-            const seq = this.collabDoc.createChannel(
-                uuid(),
-                SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+            const seq = SharedNumberSequence.create(this.collabDoc.runtime);
             this.rootView.set("sequence-test", seq);
             const newString = this.collabDoc.createString() as SharedString;
 

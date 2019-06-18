@@ -1,7 +1,6 @@
-import { ISharedMap, MapExtension } from "@prague/map";
-import { IChannel, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString, SharedStringExtension } from "@prague/sequence";
-import * as uuid from "uuid/v4";
+import { ISharedMap, SharedMap } from "@prague/map";
+import { IComponentRuntime } from "@prague/runtime-definitions";
+import { SharedString } from "@prague/sequence";
 
 const rootMapId = "root";
 
@@ -13,7 +12,7 @@ export class Document {
         let root: ISharedMap;
 
         if (!runtime.existing) {
-            root = runtime.createChannel(rootMapId, MapExtension.Type) as ISharedMap;
+            root = SharedMap.create(runtime, rootMapId);
             root.attach();
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
@@ -41,15 +40,11 @@ export class Document {
         return this.root;
     }
 
-    public createMap(id: string = uuid()): ISharedMap {
-        return this.runtime.createChannel(id, MapExtension.Type) as ISharedMap;
+    public createMap(id?: string): ISharedMap {
+        return SharedMap.create(this.runtime, id);
     }
 
-    public createString(id: string = uuid()): SharedString {
-        return this.runtime.createChannel(id, SharedStringExtension.Type) as SharedString;
-    }
-
-    public createChannel(id: string, type: string): IChannel {
-        return this.runtime.createChannel(id, type);
+    public createString(id?: string): SharedString {
+        return SharedString.create(this.runtime, id);
     }
 }

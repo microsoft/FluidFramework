@@ -3,9 +3,8 @@ import {
     IHost,
 } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
-import * as uuid from "uuid/v4";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 
@@ -37,10 +36,10 @@ export class IntelWork extends BaseWork implements IWork {
         const insightsMap = rootMap.get("insights") as ISharedMap;
 
         if (sharedString && insightsMap) {
-            // This is a patchup for our legacy stuff when both agents uses the same map key to populate results.
+            // This is a patch up for our legacy stuff when both agents uses the same map key to populate results.
             // To play nice with back-compat, intel runner creates the map and translator waits on the key.
             if (!insightsMap.has(sharedString.id)) {
-                const insightSlot = this.document.runtime.createChannel(uuid(), MapExtension.Type);
+                const insightSlot = SharedMap.create(this.document.runtime);
                 insightsMap.set(sharedString.id, insightSlot);
                 const textAnalyzer = new TextAnalyzer();
                 textAnalyzer.run(sharedString, insightsMap);

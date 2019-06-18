@@ -4,18 +4,21 @@ import {
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-    TreeEntry } from "@prague/container-definitions";
+    TreeEntry,
+} from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
+import { ConsensusRegisterCollectionExtension } from "./extension";
 import {
     IConsensusRegisterCollection,
     ILocalData,
     ILocalRegister,
     IRegisterValue,
     ReadPolicy,
-    RegisterValueType } from "./interfaces";
+    RegisterValueType,
+} from "./interfaces";
 
 /**
  * An operation for consensus register collection
@@ -47,6 +50,27 @@ const snapshotFileName = "header";
  * Implementation of a consensus register collection
  */
 export class ConsensusRegisterCollection extends SharedObject implements IConsensusRegisterCollection {
+    /**
+     * Create a new consensus register collection
+     *
+     * @param runtime - component runtime the new consensus register collection belongs to
+     * @param id - optional name of the consensus register collection
+     * @returns newly create consensus register collection (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedObject.getIdForCreate(id),
+            ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection;
+    }
+
+    /**
+     * Get a factory for ConsensusRegisterCollection to register with the component.
+     *
+     * @returns a factory that creates and load ConsensusRegisterCollection
+     */
+    public static getFactory() {
+        return new ConsensusRegisterCollectionExtension();
+    }
+
     private readonly data = new Map<string, ILocalData>();
     private readonly promiseResolveQueue = new Array<IPendingRecord>();
 
@@ -175,7 +199,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
 
         const header = await storage.read(snapshotFileName);
         const data: { [key: string]: ILocalData } = header ? JSON.parse(Buffer.from(header, "base64")
-        .toString("utf-8")) : {};
+            .toString("utf-8")) : {};
 
         for (const key of Object.keys(data)) {
             const serializedValues = data[key];

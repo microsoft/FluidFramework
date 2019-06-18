@@ -3,8 +3,8 @@ import { IRequest } from "@prague/container-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
@@ -23,12 +23,12 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
     // Create channel extensions
-    const mapExtension = new MapExtension();
-    const sharedStringExtension = new sequence.SharedStringExtension();
-    const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
-    const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
+    const mapExtension = SharedMap.getFactory();
+    const sharedStringExtension = sequence.SharedString.getFactory();
+    const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
+    const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
 
-    modules.set(MapExtension.Type, mapExtension);
+    modules.set(mapExtension.type, mapExtension);
     modules.set(sharedStringExtension.type, sharedStringExtension);
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);

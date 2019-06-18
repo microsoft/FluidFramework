@@ -1,7 +1,7 @@
 import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection, ConsensusRegisterCollectionExtension, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
+import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentContext,
     IComponentRuntime,
@@ -249,16 +249,14 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root = SharedMap.create(this.runtime, "root");
             this.root.attach();
-            this.scheduler = this.runtime.createChannel(
-                "scheduler",
-                ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection;
+            this.scheduler = ConsensusRegisterCollection.create(this.runtime, "scheduler");
             this.scheduler.attach();
             this.root.set("scheduler", this.scheduler);
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
-            this.scheduler = await this.root.wait("scheduler") as ConsensusRegisterCollection;
+            this.scheduler = await this.root.wait<ConsensusRegisterCollection>("scheduler");
         }
 
         if (!this.runtime.connected) {
@@ -323,9 +321,11 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
 
+    const mapExtension = SharedMap.getFactory();
+    const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
     const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(MapExtension.Type, new MapExtension());
-    dataTypes.set(ConsensusRegisterCollectionExtension.Type, new ConsensusRegisterCollectionExtension());
+    dataTypes.set(mapExtension.type, mapExtension);
+    dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
     const agentSchedulerP = AgentScheduler.load(runtime);

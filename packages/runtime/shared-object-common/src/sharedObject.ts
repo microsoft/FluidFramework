@@ -14,6 +14,8 @@ import { ChildLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
@@ -22,6 +24,16 @@ import { ValueType } from "./valueType";
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObject extends EventEmitter implements ISharedObject {
+    /**
+     * Get an id for a sharedobject for creation
+     *
+     * @param id - user specified id or undefined if it is not specified
+     * @returns generated id if the parameter `id` is undefined, value of `id` otherwise
+     */
+    protected static getIdForCreate(id?: string): string {
+        return id === undefined ? uuid() : id;
+    }
+
     /**
      * Marker to clearly identify the object as a shared object
      */

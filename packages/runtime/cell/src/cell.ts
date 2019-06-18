@@ -54,6 +54,26 @@ const snapshotFileName = "header";
  * Implementation of a cell shared object
  */
 export class Cell extends SharedObject implements ICell {
+    /**
+     * Create a new shared cell
+     *
+     * @param runtime - component runtime the new shared map belongs to
+     * @param id - optional name of the shared map
+     * @returns newly create shared map (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedObject.getIdForCreate(id), CellExtension.Type) as Cell;
+    }
+
+    /**
+     * Get a factory for SharedCell to register with the component.
+     *
+     * @returns a factory that creates and load SharedCell
+     */
+    public static getFactory() {
+        return new CellExtension();
+    }
+
     private data: any;
 
     /**

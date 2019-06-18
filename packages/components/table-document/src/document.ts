@@ -171,20 +171,20 @@ export class TableDocument extends Component implements ITable {
     }
 
     protected async create() {
-        const rows = this.runtime.createChannel("rows", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+        const rows = SharedNumberSequence.create(this.runtime, "rows");
         this.root.set("rows", rows);
 
-        const cols = this.runtime.createChannel("cols", SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+        const cols = SharedNumberSequence.create(this.runtime, "cols");
         this.root.set("cols", cols);
 
-        const matrix = this.runtime.createChannel("matrix", SparseMatrixExtension.Type) as SparseMatrix;
+        const matrix = SparseMatrix.create(this.runtime, "matrix");
         this.root.set("matrix", matrix);
     }
 
     protected async opened() {
-        this.maybeMatrix = await this.root.wait("matrix") as SparseMatrix;
-        this.maybeRows = await this.root.wait("rows") as SharedNumberSequence;
-        this.maybeCols = await this.root.wait("cols") as SharedNumberSequence;
+        this.maybeMatrix = await this.root.wait<SparseMatrix>("matrix");
+        this.maybeRows = await this.root.wait<SharedNumberSequence>("rows");
+        this.maybeCols = await this.root.wait<SharedNumberSequence>("cols");
         await this.connected;
 
         this.matrix.on("op", (op, local, target) => {

@@ -7,7 +7,7 @@ import {
     IRuntime,
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapExtension, SharedMap } from "@prague/map";
 import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
@@ -251,7 +251,7 @@ export abstract class Component extends EventEmitter implements IComponent {
             // If this is the first client to attempt opening the component, create the component's
             // root map and call 'create()' to give the component author a chance to initialize the
             // component's shared data structures.
-            this._root = this.runtime.createChannel(Component.rootMapId, MapExtension.Type) as ISharedMap;
+            this._root = SharedMap.create(this. runtime, Component.rootMapId);
             this._root.attach();
             debug(`${this.dbgName}.create() - begin`);
             await this.create();

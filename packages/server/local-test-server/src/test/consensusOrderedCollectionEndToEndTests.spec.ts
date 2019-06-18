@@ -1,10 +1,11 @@
 import * as api from "@prague/client-api";
 import {
-    ConsensusQueueExtension,
-    ConsensusStackExtension,
+    ConsensusQueue,
+    ConsensusStack,
     IConsensusOrderedCollection,
 } from "@prague/consensus-ordered-collection";
 import { ISharedMap } from "@prague/map";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
@@ -14,9 +15,16 @@ import {
     TestResolver,
 } from "..";
 
-generate("ConsensusQueue", ConsensusQueueExtension.Type, [1, 2, 3], [1, 2, 3]);
-generate("ConsensusStack", ConsensusStackExtension.Type, [1, 2, 3], [3, 2, 1]);
-function generate(name: string, type: string, input: any[], output: any[]) {
+interface ISharedObjectConstructor<T> {
+    create(runtime: IComponentRuntime, id?: string): T;
+}
+
+generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
+generate("ConsensusStack", ConsensusStack, [1, 2, 3], [3, 2, 1]);
+function generate(
+    name: string, ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
+    input: any[], output: any[]) {
+
     describe(name, () => {
         const id = "prague://test.com/test/test";
 
@@ -51,7 +59,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         });
 
         it("Should initialize after attach", async () => {
-            const collection1 = user1Document.create(type) as IConsensusOrderedCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             for (const item of input) {
                 await collection1.add(item);
             }
@@ -68,7 +76,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         });
 
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
-            const collection1 = user1Document.create(type) as IConsensusOrderedCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
@@ -102,7 +110,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         });
 
         it("Wait resolves", async () => {
-            const collection1 = user1Document.create(type) as IConsensusOrderedCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
@@ -147,7 +155,7 @@ function generate(name: string, type: string, input: any[], output: any[]) {
         });
 
         it("Events", async () => {
-            const collection1 = user1Document.create(type) as IConsensusOrderedCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
             const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
             const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");

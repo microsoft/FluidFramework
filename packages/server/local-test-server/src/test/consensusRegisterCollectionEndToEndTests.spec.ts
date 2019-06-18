@@ -1,10 +1,11 @@
 import * as api from "@prague/client-api";
 import {
-    ConsensusRegisterCollectionExtension,
+    ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@prague/consensus-register-collection";
 import { ISharedMap } from "@prague/map";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,
@@ -14,8 +15,12 @@ import {
     TestResolver,
 } from "..";
 
-generate("ConsensusRegisterCollection", ConsensusRegisterCollectionExtension.Type);
-function generate(name: string, type: string) {
+interface ISharedObjectConstructor<T> {
+    create(runtime: IComponentRuntime, id?: string): T;
+}
+
+generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
+function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     describe(name, () => {
         const id = "prague://test.com/test/test";
 
@@ -50,7 +55,7 @@ function generate(name: string, type: string) {
         });
 
         it("Should not work before attach", async () => {
-            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             collection1.write("test-key", "test-value").then(() => {
                 assert(false, "Writing to local did not fail");
             }).catch((reason) => {
@@ -59,7 +64,7 @@ function generate(name: string, type: string) {
         });
 
         it("Should work after attach", async () => {
-            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
@@ -80,7 +85,7 @@ function generate(name: string, type: string) {
         });
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
-            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
 
             const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
@@ -102,7 +107,7 @@ function generate(name: string, type: string) {
         });
 
         it("Happened after updates should overwrite previous versions", async () => {
-            const collection1 = user1Document.create(type) as IConsensusRegisterCollection;
+            const collection1 = ctor.create(user1Document.runtime);
             root1.set("collection", collection1);
 
             const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");

@@ -12,8 +12,8 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import {
     IComponentContext,
@@ -192,7 +192,7 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root = SharedMap.create(this.runtime, "root");
             this.root.attach();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
@@ -224,7 +224,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new CounterValueType());
 
     const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(MapExtension.Type, new MapExtension());
+    const mapExtension = SharedMap.getFactory();
+    dataTypes.set(mapExtension.type, mapExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
     const progressCollectionP = ProgressCollection.load(runtime, context);

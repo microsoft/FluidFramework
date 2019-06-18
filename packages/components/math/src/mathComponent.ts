@@ -10,8 +10,8 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -422,8 +422,8 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
-            this.combinedMathText = this.runtime.createChannel("mathText", Sequence.SharedStringExtension.Type) as Sequence.SharedString;
+            this.root = SharedMap.create(this.runtime, "root");
+            this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
             this.root.attach();
             this.combinedMathText.attach();
         } else {
@@ -467,8 +467,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new Sequence.SharedStringIntervalCollectionValueType());
     registerDefaultValueType(new Sequence.SharedIntervalCollectionValueType());
 
-    const mapExtension = new MapExtension();
-    const sharedStringExtension = new Sequence.SharedStringExtension();
+    const mapExtension = SharedMap.getFactory();
+    const sharedStringExtension = Sequence.SharedString.getFactory();
 
     const dataTypes = new Map<string, ISharedObjectExtension>();
     dataTypes.set(mapExtension.type, mapExtension);

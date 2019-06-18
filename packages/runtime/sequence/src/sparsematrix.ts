@@ -101,7 +101,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
     }
     public readonly type = RunSegment.typeString;
 
-    private tags: any [];
+    private tags: any[];
 
     constructor(public items: UnboxedOper[], seq?: number, clientId?: number) {
         super(items, seq, clientId);
@@ -177,10 +177,31 @@ export function rowColToPosition(row: number, col: number) {
 export function positionToRowCol(position: number) {
     const row = Math.floor(position / maxCols);
     const col = position - (row * maxCols);
-    return {row, col};
+    return { row, col };
 }
 
 export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+    /**
+     * Create a new sparse matrix
+     *
+     * @param runtime - component runtime the new sparse matrix belongs to
+     * @param id - optional name of the sparse matrix
+     * @returns newly create sparse matrix (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
+            SparseMatrixExtension.Type) as SparseMatrix;
+    }
+
+    /**
+     * Get a factory for SharedMap to register with the component.
+     *
+     * @returns a factory that creates and load SharedMap
+     */
+    public static getFactory(): ISharedObjectExtension {
+        return new SparseMatrixExtension();
+    }
+
     constructor(
         document: IComponentRuntime,
         public id: string,
@@ -342,7 +363,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         // Note: The removes/inserts need to be made atomic:
         // (See https://github.com/Microsoft/Prague/issues/1840)
 
-        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
+        for (let r = 0, rowStart = 0; r < this.numRows; r++ , rowStart += maxCols) {
             this.removeRange(rowStart + removeColStart, rowStart + removeColEnd);
 
             const insertPos = rowStart + destCol;

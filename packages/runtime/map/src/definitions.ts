@@ -14,10 +14,3 @@ export interface IMapValue {
     // The actual value
     value: any;
 }
-
-export interface IMapDataCompatibility {
-
-    data: IMapValue;
-
-    reject: Promise<any>;
-}

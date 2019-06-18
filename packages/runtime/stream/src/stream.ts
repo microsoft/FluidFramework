@@ -15,15 +15,6 @@ import { IDelta, IInkLayer, IStream } from "./interfaces";
 import { ISnapshot, Snapshot } from "./snapshot";
 
 /**
- * Ink snapshot definition.
- */
-export interface IInkSnapshot {
-    minimumSequenceNumber: number;
-    sequenceNumber: number;
-    snapshot: ISnapshot;
-}
-
-/**
  * Filename where the snapshot is stored.
  */
 const snapshotFileName = "header";
@@ -37,6 +28,26 @@ const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
  * Inking data structure.
  */
 export class Stream extends SharedMap implements IStream {
+    /**
+     * Create a new shared stream
+     *
+     * @param runtime - component runtime the new shared stream belongs to
+     * @param id - optional name of the shared stream
+     * @returns newly create shared stream (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedMap.getIdForCreate(id), StreamExtension.Type) as Stream;
+    }
+
+    /**
+     * Get a factory for SharedStream to register with the component.
+     *
+     * @returns a factory that creates and load SharedStream
+     */
+    public static getFactory() {
+        return new StreamExtension();
+    }
+
     /**
      * The current ink snapshot.
      */

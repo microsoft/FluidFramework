@@ -1,3 +1,4 @@
 export * from "./consensusOrderedCollection";
-export * from "./extension";
+export * from "./consensusQueue";
+export * from "./consensusStack";
 export * from "./interfaces";

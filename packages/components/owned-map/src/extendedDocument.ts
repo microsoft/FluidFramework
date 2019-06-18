@@ -4,13 +4,12 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
-import * as uuid from "uuid/v4";
-import { OwnedMapExtension } from "./extension";
+import { OwnedSharedMap } from "./ownedMap";
 
 export abstract class ExtendedDocument extends Component {
     constructor() {
@@ -21,13 +20,13 @@ export abstract class ExtendedDocument extends Component {
         registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
         // Create channel extensions
-        const ownedMapExtension = new OwnedMapExtension();
-        const mapExtension = new MapExtension();
-        const sharedStringExtension = new sequence.SharedStringExtension();
-        const streamExtension = new stream.StreamExtension();
-        const cellExtension = new cell.CellExtension();
-        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
+        const ownedMapExtension = OwnedSharedMap.getFactory();
+        const mapExtension = SharedMap.getFactory();
+        const sharedStringExtension = sequence.SharedString.getFactory();
+        const streamExtension = stream.Stream.getFactory();
+        const cellExtension = cell.Cell.getFactory();
+        const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
+        const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
 
         // Register channel extensions
         super([
@@ -51,37 +50,35 @@ export abstract class ExtendedDocument extends Component {
     /**
      * Creates a new shared map
      */
-    public createMap(id: string = uuid()): ISharedMap {
-        return this.runtime.createChannel(id, MapExtension.Type) as ISharedMap;
+    public createMap(id?: string): ISharedMap {
+        return SharedMap.create(this.runtime, id);
     }
 
     /**
      * Creates a new shared map
      */
-    public createOwnedMap(id: string = uuid()): ISharedMap {
-        return this.runtime.createChannel(id, OwnedMapExtension.Type) as ISharedMap;
+    public createOwnedMap(id?: string): ISharedMap {
+        return OwnedSharedMap.create(this.runtime, id);
     }
 
     /**
      * Creates a new shared cell.
      */
-    public createCell(id: string = uuid()): cell.ICell {
-        return this.runtime.createChannel(id, cell.CellExtension.Type) as cell.ICell;
+    public createCell(id?: string): cell.ICell {
+        return cell.Cell.create(this.runtime, id);
     }
 
     /**
      * Creates a new shared string
      */
-    public createString(id: string = uuid()): sequence.SharedString {
-        return this.runtime.createChannel(
-            id,
-            sequence.SharedStringExtension.Type) as sequence.SharedString;
+    public createString(id?: string): sequence.SharedString {
+        return sequence.SharedString.create(this.runtime, id);
     }
 
     /**
      * Creates a new ink shared object
      */
-    public createStream(id: string = uuid()): stream.IStream {
-        return this.runtime.createChannel(id, stream.StreamExtension.Type) as stream.IStream;
+    public createStream(id?: string): stream.IStream {
+        return stream.Stream.create(this.runtime, id);
     }
 }

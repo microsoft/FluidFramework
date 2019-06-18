@@ -13,6 +13,26 @@ import {
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
+    /**
+     * Create a new shared string
+     *
+     * @param runtime - component runtime the new shared string belongs to
+     * @param id - optional name of the shared string
+     * @returns newly create shared string (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
+            SharedStringExtension.Type) as SharedString;
+    }
+
+    /**
+     * Get a factory for SharedString to register with the component.
+     *
+     * @returns a factory that creates and load SharedMap
+     */
+    public static getFactory() {
+        return new SharedStringExtension();
+    }
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 

@@ -7,7 +7,6 @@ import {
 import {
     ISharedMap,
     IValueChanged,
-    MapExtension,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -20,8 +19,6 @@ import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
-// tslint:disable-next-line:no-submodule-imports
-import * as uuid from "uuid/v4";
 import {
     ISerializableInterval,
     SharedIntervalCollection,
@@ -359,7 +356,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected initializeContent() {
-        const intervalCollections = this.runtime.createChannel(uuid(), MapExtension.Type) as ISharedMap;
+        const intervalCollections = SharedMap.create(this.runtime);
         this.set("intervalCollections", intervalCollections);
         assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
         this.loadFinished();

@@ -1,7 +1,7 @@
 import * as cell from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusQueueExtension, ConsensusStackExtension } from "@prague/consensus-ordered-collection";
-import { ConsensusRegisterCollectionExtension } from "@prague/consensus-register-collection";
+import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
+import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import {
     IChaincodeFactory,
     ICodeLoader,
@@ -32,16 +32,16 @@ class Chaincode implements IComponentFactory {
         map.registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
 
         // Create channel extensions
-        const mapExtension = new map.MapExtension();
-        const sharedStringExtension = new sequence.SharedStringExtension();
-        const streamExtension = new stream.StreamExtension();
-        const cellExtension = new cell.CellExtension();
-        const objectSequenceExtension = new sequence.SharedObjectSequenceExtension();
-        const numberSequenceExtension = new sequence.SharedNumberSequenceExtension();
-        const consensusQueueExtension = new ConsensusQueueExtension();
-        const consensusStackExtension = new ConsensusStackExtension();
-        const consensusRegisterCollectionExtension = new ConsensusRegisterCollectionExtension();
-        const sparseMatrixExtension = new sequence.SparseMatrixExtension();
+        const mapExtension = map.SharedMap.getFactory();
+        const sharedStringExtension = sequence.SharedString.getFactory();
+        const streamExtension = stream.Stream.getFactory();
+        const cellExtension = cell.Cell.getFactory();
+        const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
+        const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
+        const consensusQueueExtension = ConsensusQueue.getFactory();
+        const consensusStackExtension = ConsensusStack.getFactory();
+        const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
+        const sparseMatrixExtension = sequence.SparseMatrix.getFactory();
 
         // Register channel extensions
         const modules = new Map<string, any>();

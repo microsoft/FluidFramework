@@ -6,10 +6,9 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { ISharedMap, SharedMap } from "@prague/map";
-import {
-    IObjectStorageService,
-} from "@prague/runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { debug } from "./debug";
+import { OwnedMapExtension } from "./extension";
 
 const snapshotFileName = "header";
 const ownerPath = "owner";
@@ -19,6 +18,26 @@ const contentPath = "content";
  * Implementation of a map shared object
  */
 export class OwnedSharedMap extends SharedMap implements ISharedMap {
+    /**
+     * Create a new owned shared map
+     *
+     * @param runtime - component runtime the new owned shared map belongs to
+     * @param id - optional name of the owned shared map
+     * @returns newly create owned shared map (but not attached yet)
+     */
+    public static create(runtime: IComponentRuntime, id?: string) {
+        return runtime.createChannel(OwnedSharedMap.getIdForCreate(id), OwnedMapExtension.Type) as OwnedSharedMap;
+    }
+
+    /**
+     * Get a factory for OwnedSharedMap to register with the component.
+     *
+     * @returns a factory that creates and load OwnedSharedMap
+     */
+    public static getFactory() {
+        return new OwnedMapExtension();
+    }
+
     public owner: string;
 
     public getOwner() {

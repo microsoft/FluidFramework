@@ -1,4 +1,4 @@
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 
 const rootMapId = "root";
@@ -12,10 +12,10 @@ export class Document {
         let root: ISharedMap;
 
         if (!runtime.existing) {
-            root = runtime.createChannel(rootMapId, MapExtension.Type) as ISharedMap;
+            root = SharedMap.create(runtime, rootMapId);
             root.attach();
 
-            const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
+            const insights = SharedMap.create(runtime, insightsMapId);
             root.set(insightsMapId, insights);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;

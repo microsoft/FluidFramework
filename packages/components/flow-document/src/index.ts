@@ -407,7 +407,7 @@ export class FlowDocument extends Component {
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: Object.assign(this.runtime.options || {}, { blockUpdateMarkers: true }) });
 
-        const text = this.runtime.createChannel("text", SharedStringExtension.Type) as SharedString;
+        const text = SharedString.create(this.runtime, "text");
         this.root.set("text", text);
     }
 
