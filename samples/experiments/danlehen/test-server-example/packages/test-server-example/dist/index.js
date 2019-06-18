@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const local_test_server_1 = require("@prague/local-test-server");

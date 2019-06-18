@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component } from "@prague/datastore";
 import { MapExtension } from "@prague/map";
 import { IChaincode } from "@prague/runtime-definitions";

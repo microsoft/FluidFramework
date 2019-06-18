@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const MaxBatchSize = 100;
 /**
  * Manages a queue of work to be batch processed at next javascript turn of execution

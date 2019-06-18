@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 ////////////////////////////////////////////////// populateHomeworkList
 // Expects an array of objects to add to the given UL element
 function populateEntitiesList(unorderedList, entities) {

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TestConsumer, TestKafka } from "@prague/test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";

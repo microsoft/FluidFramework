@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { bsearch2 } from "./bsearch2";
 import { isBrowser } from "./isbrowser";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MidiNumbers } from 'react-piano';
 import { Song, restNoteMidiNumber } from './Song';
 import { Note, NoteType } from './Note';

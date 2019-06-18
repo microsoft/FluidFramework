@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as agent from "@prague/routerlicious/dist/agent";
 import { EventEmitter } from "events";
 import * as winston from "winston";

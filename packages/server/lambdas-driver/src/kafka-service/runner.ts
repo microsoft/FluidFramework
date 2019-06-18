@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IConsumer, IPartitionLambdaFactory } from "@prague/services-core";
 import { IRunner } from "@prague/services-utils";
 import { Deferred } from "@prague/utils";

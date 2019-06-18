@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as Kafka from "node-rdkafka";

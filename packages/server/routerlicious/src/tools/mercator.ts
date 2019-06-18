@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { run } from "@prague/tools-core";
 import * as commander from "commander";
 import * as moniker from "moniker";

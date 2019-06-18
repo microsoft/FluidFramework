@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:align
 import * as MergeTree from "@prague/merge-tree";
 import { CharacterCodes } from "../text";

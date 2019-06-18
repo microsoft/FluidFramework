@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IOrderer } from "@prague/services-core";
 import * as assert from "assert";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";

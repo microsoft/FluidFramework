@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as uuid from "node-uuid";
 import * as actions from "./actions";
 import * as core from "./core";

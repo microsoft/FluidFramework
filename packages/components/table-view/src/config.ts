@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TableDocumentType } from "@chaincode/table-document";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { Template } from "@prague/flow-util";

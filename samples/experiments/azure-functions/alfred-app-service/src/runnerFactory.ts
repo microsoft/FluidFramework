@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { KafkaOrdererFactory } from "@prague/kafka-orderer";
 import { DocumentStorage, EventHubProducer, HttpServer, MongoDbFactory, Tenant, WebServer } from "@prague/services";
 import { GitManager, Historian } from "@prague/services-client";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export function loadScript(identifier: string, scriptUrl: string, crossOriginAttributeValue?: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script");

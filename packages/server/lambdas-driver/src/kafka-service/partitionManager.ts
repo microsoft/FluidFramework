@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IConsumer, IKafkaMessage, IPartition, IPartitionLambdaFactory } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";

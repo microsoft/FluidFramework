@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as api from "@prague/container-definitions";
 import { ReplayDeltaStorageService } from "./deltaStorageService";
 import { ReplayDocumentDeltaConnection } from "./documentDeltaConnection";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable
 import * as API from "@prague/client-api";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";

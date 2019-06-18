@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * The IViewProvider interface exposes this object's capability to present itself via the DOM.
  */

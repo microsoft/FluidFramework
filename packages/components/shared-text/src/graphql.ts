@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IComponent, IComponentHTMLViewable, IHTMLView } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export function getParameterByName(name: string, url?: string) {
     if (!url) {
         url = window.location.href;

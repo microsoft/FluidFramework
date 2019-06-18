@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISharedMap, IValueChanged, SharedMap } from "@prague/map";
 import {
     createGroupOp,

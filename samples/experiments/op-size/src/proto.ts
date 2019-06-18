@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { op } from "../op";
 
 export function convertToProto(input: any): op.SequencedOp {

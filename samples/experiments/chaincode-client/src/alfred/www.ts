@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as nconf from "nconf";
 import * as path from "path";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MapExtension } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { CollaborativeStringExtension } from "@prague/shared-string";

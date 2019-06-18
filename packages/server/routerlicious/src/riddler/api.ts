@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MongoManager } from "@prague/services-core";
 import { Response, Router } from "express";
 import { TenantManager } from "./tenantManager";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // The main app code
 import { Promise } from "es6-promise";
 import * as $ from "jquery";

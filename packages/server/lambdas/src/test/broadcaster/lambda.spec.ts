@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPartitionLambda } from "@prague/services-core";
 import { IEvent, KafkaMessageFactory, MessageFactory, TestContext, TestPublisher } from "@prague/test-utils";
 import * as assert from "assert";

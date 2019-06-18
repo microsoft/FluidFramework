@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BBCLambda } from "@prague/lambdas";
 import { IContext, IPartitionLambda, IPartitionLambdaFactory, IPublisher, ITopic } from "@prague/services-core";
 import { EventEmitter } from "events";

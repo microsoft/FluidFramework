@@ -47,6 +47,16 @@
                 "function-regex": "^[a-z][\\w\\d]+$"
             }
         ],
+        // Copyright file header
+        "file-header": [
+            true,
+            {
+                "match": "Copyright \\(c\\) Microsoft Corporation\\. All rights reserved\\.[\\*\\s\\/]*Licensed under the MIT License\\.",
+                "allow-single-line-comments": true,
+                "default": "Copyright (c) Microsoft Corporation. All rights reserved.\nLicensed under the MIT License.",
+                "enforce-trailing-newline": false // disabled for false-positives bug in tslint
+            }
+        ],
         /**
          * Security Rules. The following rules should be turned on because they find security issues
          * or are recommended in the Microsoft Secure Development Lifecycle (SDL)

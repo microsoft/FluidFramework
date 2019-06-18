@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ChaincodeReponse, error as shimError, Iterators, Stub, success } from "fabric-shim";
 
 export interface IChaincode {

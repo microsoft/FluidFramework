@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { controls, ui } from "@prague/client-ui";
 import { IMap } from "@prague/map";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable: newline-per-chained-call
 // tslint:disable: no-backbone-get-set-outside-model
 import * as assert from "assert";

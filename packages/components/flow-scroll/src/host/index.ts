@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { FlowDocument } from "@chaincode/flow-document";
 import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
 import { IComponent, IComponentContext } from "@prague/runtime-definitions";

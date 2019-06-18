@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Counter, ISharedMap } from "@prague/map";
 import { Chat } from "@stardust-ui/react";
 import { ChatRenderer } from "./chat-renderer";

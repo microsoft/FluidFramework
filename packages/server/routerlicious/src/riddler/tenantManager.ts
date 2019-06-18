@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITenantConfig, ITenantOrderer, ITenantStorage } from "@prague/services-core";
 import { getRandomName, MongoManager } from "@prague/services-core";
 import * as crypto from "crypto";

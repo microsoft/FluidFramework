@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IWebServer, IWebServerFactory } from "@prague/routerlicious/dist/core";
 import {Deferred } from "@prague/routerlicious/dist/core-utils";
 import * as utils from "@prague/routerlicious/dist/utils";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Router } from "express";
 import { Provider } from "nconf";
 import { GitHub, IPassportUser } from "../github";

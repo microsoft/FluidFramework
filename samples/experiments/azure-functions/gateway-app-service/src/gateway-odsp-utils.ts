@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getODSPPragueResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
 import { URL } from "url";
 

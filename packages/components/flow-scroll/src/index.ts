@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ChartView } from "@chaincode/chart-view";
 import { FlowDocument } from "@chaincode/flow-document";
 import { FlowEditor } from "@chaincode/flow-editor";

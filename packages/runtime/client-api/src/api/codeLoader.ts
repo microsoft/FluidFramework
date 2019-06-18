@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as cell from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SheetGridRange, SheetGridCell, sheetGridCell, gridCell } from "@ms/excel-online-calc/lib/lang/location";
 
 export function forEachInRange(range: SheetGridRange, f: (cell: SheetGridCell) => void): void {

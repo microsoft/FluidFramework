@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const nodemailer = require('nodemailer');
 const stringify = require('json-stringify-safe');
 

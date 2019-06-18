@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDeltaQueue } from "@prague/container-definitions";
 import { Deferred } from "@prague/utils";
 import * as Deque from "double-ended-queue";

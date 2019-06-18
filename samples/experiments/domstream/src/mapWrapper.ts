@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 export interface IMapWrapper {
     set(key: string, value: string | number | boolean): void;

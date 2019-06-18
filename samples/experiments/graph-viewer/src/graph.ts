@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as d3 from "d3";
 import * as cola from "webcola";
 import { Link, Node } from "webcola";

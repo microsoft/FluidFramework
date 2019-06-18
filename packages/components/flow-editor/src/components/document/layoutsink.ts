@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISegment } from "@prague/merge-tree";
 import { LayoutContext } from "./layoutcontext";
 

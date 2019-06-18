@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { ISharedMap, IValueChanged } from "@prague/map";

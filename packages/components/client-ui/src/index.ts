@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Packaging and re-exporting of prague UI framework
 
 import * as ui from "./ui";

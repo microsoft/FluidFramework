@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var margin = { top: 20, right: 120, bottom: 20, left: 120 };
 
 var i = 0;

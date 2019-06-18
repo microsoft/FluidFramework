@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Block, BoxState } from "@prague/app-ui";
 import { ResultKind } from "../../ext/calc";
 import * as Charts from "../../ext/microsoft-charts/";

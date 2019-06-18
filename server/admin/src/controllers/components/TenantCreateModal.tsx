@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Form, Icon, Input, Modal, Radio } from "antd";
 import { FormComponentProps } from "antd/lib/form";
 import "antd/lib/form/style/css";

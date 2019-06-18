@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Returns a longest increasing subsequence of the given array 'x' in O(n log n) time.
  * {@link https://en.wikipedia.org/wiki/Longest_increasing_subsequence}

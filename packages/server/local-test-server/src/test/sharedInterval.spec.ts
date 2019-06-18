@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { registerDefaultValueType } from "@prague/map";
 import { IntervalType } from "@prague/merge-tree";
 import {

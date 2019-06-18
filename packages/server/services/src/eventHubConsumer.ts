@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
 import { BoxcarType, IBoxcarMessage, IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
 import { EventEmitter } from "events";

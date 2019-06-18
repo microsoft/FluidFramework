@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { FlowDocument } from "@chaincode/flow-document";
 
 export async function importDoc(docP: Promise<FlowDocument>, file: string) {

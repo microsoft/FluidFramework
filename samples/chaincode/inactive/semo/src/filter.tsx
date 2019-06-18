@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // TODO: Find a way to implemengt a content filter without the clients having the profanity list
 
 const profane_words = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];

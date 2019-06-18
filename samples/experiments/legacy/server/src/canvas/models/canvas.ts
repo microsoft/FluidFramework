@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Promise } from "es6-promise";
 import * as promisify from "es6-promisify";
 import * as uuid from "node-uuid";

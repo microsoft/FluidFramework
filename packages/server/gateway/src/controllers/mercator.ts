@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getRandomName } from "@prague/services-core";
 import { run } from "@prague/tools-core";
 

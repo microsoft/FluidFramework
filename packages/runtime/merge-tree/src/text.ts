@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import { TextSegment } from "./textSegment";

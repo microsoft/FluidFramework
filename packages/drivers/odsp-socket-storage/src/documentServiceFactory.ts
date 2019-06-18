@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import { parse } from "url";
 import { DocumentService } from "./documentService";

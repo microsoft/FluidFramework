@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const docGetter = require("./src/main.js");
 
 exports.handler = function(context, event) {

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPraguePackage, IUser } from "@prague/container-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { generateToken } from "@prague/services-core";

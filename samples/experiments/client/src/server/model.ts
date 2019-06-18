@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:max-line-length
 import { AuthorizationCode, BaseModel, Client, Token, User } from "oauth2-server";
 

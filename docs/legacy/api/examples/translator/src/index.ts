@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { load } from "@prague/routerlicious/dist/api";
 import { IMergeTreeOp, MergeTreeDeltaType } from "@prague/routerlicious/dist/merge-tree";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";

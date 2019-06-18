@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable
 import * as MergeTree from "@prague/merge-tree";
 import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@prague/merge-tree/dist/overlayTree";

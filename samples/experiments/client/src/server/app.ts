@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as bodyParser from "body-parser";
 import { ensureLoggedIn } from "connect-ensure-login";
 import * as express from "express";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const SAMPLERATE = 44100;
 const PERIOD = 1 / SAMPLERATE;
 

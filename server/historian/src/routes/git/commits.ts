@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICommit, ICreateCommitParams } from "@prague/gitresources";
 import { Router } from "express";
 import * as nconf from "nconf";

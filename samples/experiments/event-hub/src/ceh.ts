@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EventHubClient, EventPosition } from "azure-event-hubs";
 
 // tslint:disable-next-line

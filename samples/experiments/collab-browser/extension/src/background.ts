@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SharingTab, RemotingTab } from "./sharingtab";
 import { ScreenShare } from "./screenshare";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Setup the configuration system first since modules may depend on it being configured
 import * as http from "http";
 import * as nconf from "nconf";

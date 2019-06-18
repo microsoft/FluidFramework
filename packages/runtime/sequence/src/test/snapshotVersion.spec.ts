@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as mocks from "@prague/runtime-test-utils";
 import { GitManager } from "@prague/services-client";
 import * as assert from "assert";

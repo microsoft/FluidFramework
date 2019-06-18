@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Promise } from "es6-promise";
 import { Deferred } from "../promise-utils/index";
 import { IMessage, IPacket, MessageType, PostMessageSocketProtocol } from "./messages";

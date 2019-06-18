@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Request, Response } from "express";
 let express = require("express");
 let exphbs  = require("express-handlebars");

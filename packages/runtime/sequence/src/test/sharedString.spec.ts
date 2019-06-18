@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITree } from "@prague/container-definitions";
 import { TextSegment } from "@prague/merge-tree";
 import { ISharedObjectServices } from "@prague/runtime-definitions";

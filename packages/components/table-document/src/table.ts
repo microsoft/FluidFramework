@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { UnboxedOper } from "@prague/sequence";
 

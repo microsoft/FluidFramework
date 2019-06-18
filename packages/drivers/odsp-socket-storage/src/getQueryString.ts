@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Generates query string from the given query parameters.
  * @param queryParams - Query parametres from which to create a query.

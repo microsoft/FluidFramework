@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /*
  * Port of fabcar example from HyperLedger source code
  * https://github.com/hyperledger/fabric-samples/tree/release-1.1/fabcar

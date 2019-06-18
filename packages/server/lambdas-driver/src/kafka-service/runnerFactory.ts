@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IRunner, IRunnerFactory } from "@prague/services-utils";
 import { IKafkaResources } from "./resourcesFactory";
 import { KafkaRunner } from "./runner";

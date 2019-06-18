@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
  * Utility to run a forced garbage collector.
  * To expose gc, run node --expose-gc dist/paparazzi/index.js.

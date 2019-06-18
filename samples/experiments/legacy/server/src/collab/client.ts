@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as ink from "ot-ink";
 import * as json from "ot-json0";
 import * as richText from "rich-text";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { DefaultButton, Fabric, TextField } from "office-ui-fabric-react";
 import { Range } from "rc-slider";
 import "rc-slider/assets/index.css";

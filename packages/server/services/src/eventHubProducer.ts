@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EventData, EventHubClient } from "@azure/event-hubs";
 import { IPendingBoxcar, IProducer } from "@prague/services-core";
 import * as utils from "@prague/utils";

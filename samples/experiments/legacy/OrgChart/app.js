@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var bodyParser = require('body-parser');
 var express = require('express');
 var sql = require("mssql");

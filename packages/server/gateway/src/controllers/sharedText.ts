@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:ban-types
 import { addTranslation, downloadRawText, getInsights } from "@chaincode/shared-text";
 import * as agent from "@prague/agent";

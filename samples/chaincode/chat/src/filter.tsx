@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // TODO: Consider hashing this list and matching it to hashed messages so that clients don't have the list.
 const profane_words = ["belichick", "boston", "brady", "bruins", "celtics", "new england", "red sox", "patriots"];
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";

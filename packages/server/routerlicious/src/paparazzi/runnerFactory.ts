@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
 import * as utils from "@prague/services-utils";

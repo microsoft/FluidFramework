@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const path = require('path');
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 // var Visualizer = require('webpack-visualizer-plugin');

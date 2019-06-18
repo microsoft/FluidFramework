@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export type TelemetryEventCategory = "telemetryEvent" | "error" | "performance";
 export type TelemetryPerfType = "start" | "end" | "cancel" | "progress";
 export type TelemetryEventPropertyType = string | number | boolean | object | undefined;

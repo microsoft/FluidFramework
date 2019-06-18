@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as pragueLoader from "@prague/loader";
 import * as loaderWeb from "@prague/loader-web";
 import { IMapView } from "@prague/map";

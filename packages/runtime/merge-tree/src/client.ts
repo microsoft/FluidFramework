@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISequencedDocumentMessage, ITelemetryLogger, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";

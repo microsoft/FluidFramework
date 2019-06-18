@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EventEmitter } from "events";
 import * as puppeteer from "puppeteer";
 import * as winston from "winston";

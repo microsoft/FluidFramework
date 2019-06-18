@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:variable-name
 // tslint:disable:binary-expression-operand-order
 import { ISegment } from "@prague/merge-tree";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IClient, IDocumentMessage } from "@prague/container-definitions";
 import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@prague/services-core";
 import { Deferred } from "@prague/utils";

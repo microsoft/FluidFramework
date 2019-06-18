@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BroadcasterLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
 import { IPartitionLambdaFactory } from "@prague/services-core";

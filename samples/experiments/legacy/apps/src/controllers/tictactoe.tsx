@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api } from "@prague/routerlicious";
 import * as React from "react";
 import * as ReactDOM from "react-dom";

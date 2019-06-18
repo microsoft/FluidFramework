@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as builder from "botbuilder";
 import * as request from "request";
 import * as urlJoin from "url-join";

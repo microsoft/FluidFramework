@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
 import * as aria from "aria-nodejs-sdk";
 import { Provider } from "nconf";

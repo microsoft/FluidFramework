@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ChildProcess, fork } from "child_process";
 import { EventEmitter } from "events";
 import * as path from "path";

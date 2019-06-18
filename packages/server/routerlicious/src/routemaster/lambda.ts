@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { SequencedLambda } from "@prague/lambdas";
 import * as core from "@prague/services-core";

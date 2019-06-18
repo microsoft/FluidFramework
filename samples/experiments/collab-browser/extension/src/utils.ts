@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export const tabFromId = (tabId: number) => new Promise<chrome.tabs.Tab>(resolve => chrome.tabs.get(tabId, resolve));
 
 // Promisification of Chrome Extension APIs.

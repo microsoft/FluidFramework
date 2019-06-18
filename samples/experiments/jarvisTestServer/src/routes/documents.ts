@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentStorage } from "@prague/services-core";
 import { Router } from "express";
 import { IAlfredTenant } from "../tenant";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api, map, socketStorage, types } from "@prague/routerlicious/dist/client-api";
 
 import * as React from "react";

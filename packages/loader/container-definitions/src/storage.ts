@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
 import { IResolvedUrl } from "./loader";

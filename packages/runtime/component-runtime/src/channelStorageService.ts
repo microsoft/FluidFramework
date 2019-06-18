@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentStorageService, ISnapshotTree } from "@prague/container-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as bodyParser from "body-parser";
 import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as aria from "aria-nodejs-sdk";
 import * as commander from "commander";
 import * as fs from "fs";

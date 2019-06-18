@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { load } from "@prague/routerlicious/dist/api";
 import * as socketStorage from "@prague/routerlicious/dist/socket-storage";
 import * as jwt from "jsonwebtoken";

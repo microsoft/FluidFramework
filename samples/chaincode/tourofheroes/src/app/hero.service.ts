@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Injectable, Inject } from '@angular/core';
 import { graphql, parse, subscribe, ExecutionResult } from "graphql";
 import { PubSub } from "graphql-subscriptions";

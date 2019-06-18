@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IClientConfig } from "@prague/odsp-utils";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";

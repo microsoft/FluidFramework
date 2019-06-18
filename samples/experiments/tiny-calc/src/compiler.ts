@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IRef, parse } from "./parser";
 
 export function compile(formula: string, cellResolver: ($: RegExpExecArray) => string) {

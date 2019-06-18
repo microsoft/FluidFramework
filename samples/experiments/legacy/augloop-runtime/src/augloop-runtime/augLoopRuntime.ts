@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {runtime} from "@augloop/runtime-client";
 import { IClientMetadata } from "@augloop/schemas";
 import { SliceManager } from "../augloop-worker";

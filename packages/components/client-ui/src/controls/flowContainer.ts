@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:ban-types
 import * as api from "@prague/client-api";
 import { ISharedMap } from "@prague/map";

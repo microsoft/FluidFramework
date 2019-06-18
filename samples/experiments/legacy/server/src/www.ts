@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Load in configuration first before resolving other modules
 import * as debug from "debug";
 import * as http from "http";

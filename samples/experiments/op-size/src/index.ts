@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as proto from "./proto";
 
 const contents = "{\"address\":\"root\",\"contents\":{\"content\":{\"address\":\"160c115d-26dc-4163-980a-16419672a3f3\",\"contents\":{\"clientSequenceNumber\":30,\"contents\":{\"pos1\":27,\"text\":\"e\",\"type\":0},\"referenceSequenceNumber\":29,\"type\":\"op\"}},\"type\":\"objOp\"}}";

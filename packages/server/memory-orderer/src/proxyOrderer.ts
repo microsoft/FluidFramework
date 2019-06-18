@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IClient } from "@prague/container-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IConsumer } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";

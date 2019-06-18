@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
 import {
     Angular2DataTableModule,

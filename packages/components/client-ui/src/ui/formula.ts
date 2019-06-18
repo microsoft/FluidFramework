@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // TODO: Should move Formula to a separate file.
 import { BoxState, Inline } from "@prague/app-ui";
 import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";

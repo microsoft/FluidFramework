@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as WebSocketJSONStream from "websocket-json-stream";
 import * as WebSocket from "ws";
 import { default as shareDb } from "./db";

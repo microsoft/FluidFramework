@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {IHostCallbacks, runtime} from "@augloop/runtime-client";
 import * as winston from "winston";
 import {IDocTile, inputSchemaName} from "./common";

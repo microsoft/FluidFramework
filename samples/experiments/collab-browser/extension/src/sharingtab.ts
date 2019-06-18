@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TabRef } from "./tabRef";
 import { navigateTab, getCurrentWindow, updateWindow, createWindow, queryTabs, windowFromTabId } from "./utils";
 

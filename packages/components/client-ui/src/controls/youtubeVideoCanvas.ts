@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISharedMap } from "@prague/map";
 import * as ui from "../ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "../utils/youtubeHelper";

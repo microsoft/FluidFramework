@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@prague/merge-tree";
 // tslint:disable-next-line: no-submodule-imports

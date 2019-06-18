@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";

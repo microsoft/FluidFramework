@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPragueResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import { Router } from "express";

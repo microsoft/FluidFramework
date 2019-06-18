@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Context } from "@azure/functions";
 import { IBoxcarMessage, BoxcarType, IKafkaMessage, IPartitionLambda } from "@prague/services-core";
 import * as safeStringify from "json-stringify-safe";

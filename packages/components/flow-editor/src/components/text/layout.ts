@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { getCssClassList, SegmentSpan } from "@chaincode/flow-document";
 import { ISegment, TextSegment } from "@prague/merge-tree";
 import { TextView } from ".";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentService, IErrorTrackingService } from "@prague/container-definitions";
 import { ICredentials } from "@prague/services-client";
 import { DocumentService2 } from "./documentService2";

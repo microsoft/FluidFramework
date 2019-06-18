@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var browserify = require('browserify');
 var del        = require('del');
 var gulp       = require('gulp');

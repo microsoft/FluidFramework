@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
 import { Browser, IClient, IHost, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";

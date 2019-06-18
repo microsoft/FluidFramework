@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentServiceFactory, IHost, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork } from "./definitions";

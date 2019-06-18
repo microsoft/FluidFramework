@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as prague from "./prague";
 import { refTypeNameToComponent, FlowViewContext, SheetletState } from "../../../routerlicious/packages/client-ui/src/ui";
 import { CollaborativeWorkbook } from "../../../routerlicious/packages/client-ui/src/calc"

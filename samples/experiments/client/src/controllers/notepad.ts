@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api as prague, ui as pragueUi } from "@prague/routerlicious";
 import * as jwt from "jsonwebtoken";
 import { NoteList } from "../models";

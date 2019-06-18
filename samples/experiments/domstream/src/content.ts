@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { debug, debugFrame, debugPort } from "./debug";
 import { FrameManager } from "./frameManager";
 import { MessageEnum } from "./portHolder";

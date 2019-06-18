@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // The main app code
 import * as api from "@prague/client-api";
 import { IGenericBlob, MessageType } from "@prague/container-definitions";

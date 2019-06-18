@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
 import { ISharedMap } from "@prague/map";
 import { ComponentDisplayType } from "@prague/runtime-definitions";

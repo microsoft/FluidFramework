@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITrace } from "@prague/container-definitions";
 
 // Message to indicate successful round trip.

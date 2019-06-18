@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { analyze, config, formula, location, parse, runtime, util, value } from "@ms/excel-online-calc";
 
 import AnalyzeGlobals = analyze.AnalyzeGlobals;

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as actions from "./actions";
 import { IDelta } from "./delta";
 import * as operations from "./operations";

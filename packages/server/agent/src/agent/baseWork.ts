@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as api from "@prague/client-api";
 import { Browser, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";

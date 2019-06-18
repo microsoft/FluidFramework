@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Pinpoint } from "@kurtb/pinpoint";
 import { IChaincode, IPlatform, IRuntime } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";

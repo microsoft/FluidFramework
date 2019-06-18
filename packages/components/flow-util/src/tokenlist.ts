@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { CharCode } from "./charcode";
 
 export function findToken(tokenList: string, token: string) {

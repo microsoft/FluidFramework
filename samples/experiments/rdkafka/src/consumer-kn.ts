@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as kafkaNode from "kafka-node";
 
 const endpoint = "kafka:9092";

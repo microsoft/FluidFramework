@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IImageBlob } from "@prague/container-definitions";
 import * as request from "request";
 import { IIntelligentService, IIntelligentServiceFactory } from "./api";

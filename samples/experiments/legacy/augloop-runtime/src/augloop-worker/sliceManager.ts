@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { MergeTree } from "@prague/routerlicious/dist/client-api";
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import {AugLoopRuntime, IAugResult, IDocTile, inputSchemaName } from "../augloop-runtime";

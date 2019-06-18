@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TableDocument } from "@chaincode/table-document";
 import { KeyCode, Scheduler, Template } from "@prague/flow-util";
 import { BorderRect } from "./borderstyle";

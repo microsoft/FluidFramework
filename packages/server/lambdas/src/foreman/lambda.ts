@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { IHelpMessage, IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";

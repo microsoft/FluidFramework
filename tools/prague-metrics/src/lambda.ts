@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as core from "@prague/routerlicious/dist/core";
 import { IContext, IPartitionLambda } from "@prague/routerlicious/dist/kafka-service/lambdas";
 import * as utils from "@prague/routerlicious/dist/utils";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITokenClaims, IUser } from "@prague/container-definitions";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";

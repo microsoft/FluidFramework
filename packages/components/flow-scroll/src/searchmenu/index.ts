@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Dom, ICommand, KeyCode, randomId, Template, View } from "@prague/flow-util";
 import { debug } from "../debug";
 import * as style from "./index.css";

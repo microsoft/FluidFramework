@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { mapperContext, recalcMapper } from "@ms/excel-online-calc/lib/calc";
 import * as assert from "assert";
 import { Cell, CellState } from "./cell";

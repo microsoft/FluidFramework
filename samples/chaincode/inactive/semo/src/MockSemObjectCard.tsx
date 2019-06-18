@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as React from "react";
 import { Counter, IMap, IMapView } from "@prague/map";
 import SemObjectCard from "./SemObjectCard";

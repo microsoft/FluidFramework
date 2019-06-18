@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BlankOper } from "@ms/excel-online-calc/lib/lang/value";
 import { OperKind } from "@ms/excel-online-calc/lib/lang/types";
 import { CheckedFormula, WellFormedFormula } from "@ms/excel-online-calc/lib/lang/formula";

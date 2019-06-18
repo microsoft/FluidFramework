@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { DistributedSet, DistributedSetValueType, ISharedMap } from "@prague/map";
 import { default as axios } from "axios";
 

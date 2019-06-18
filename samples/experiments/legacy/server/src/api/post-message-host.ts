@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Promise } from "es6-promise";
 import * as _ from "lodash";
 import * as postMessageSockets from "../post-message-sockets/index";

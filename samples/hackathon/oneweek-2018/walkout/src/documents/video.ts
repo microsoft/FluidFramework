@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api as prague } from "@prague/routerlicious";
 import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";

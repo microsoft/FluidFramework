@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export interface IBlobManager {
     // Rehydrate a blob manager from a snapshot
     loadBlobMetadata(blobs: IGenericBlob[]);

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TestDeltaConnectionServer, TestLoader, createTestDocumentService } from "@prague/local-test-server";
 import { IRuntime, IPlatform } from "@prague/runtime-definitions";
 import { Component, DataStore } from "@prague/datastore";

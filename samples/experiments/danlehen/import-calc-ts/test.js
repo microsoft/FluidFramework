@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Simple demo which evaluates '=2+2' to show that '@ms/excel-online-calc' successfully imports and runs in a node environment.
 
 // ES6 module loading is bootstrapped via 'esm' in index.js

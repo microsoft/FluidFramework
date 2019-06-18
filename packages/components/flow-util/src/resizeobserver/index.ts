@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:import-name
 // tslint:disable:variable-name
 import { isBrowser } from "../isbrowser";

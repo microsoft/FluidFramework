@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { debugDOM } from "./debug";
 import * as FMDOM from "./flatMapDOMTree";
 import { IMapViewWrapper } from "./mapWrapper";

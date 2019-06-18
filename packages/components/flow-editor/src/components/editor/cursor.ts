@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "@chaincode/flow-document";
 import { Direction, Dom, getTabDirection, Scheduler } from "@prague/flow-util";
 import { LocalReference } from "@prague/merge-tree";

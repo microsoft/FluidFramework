@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as api from "@prague/routerlicious/dist/api-core";
 import * as core from "@prague/routerlicious/dist/core";
 import { ThroughputCounter } from "@prague/routerlicious/dist/core-utils";

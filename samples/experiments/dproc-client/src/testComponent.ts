@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IChaincodeComponent, IChaincodeHost, IContext, IHostRuntime } from "@prague/container-definitions";
 import { IPlatform } from "@prague/runtime-definitions";
 import { debug } from "./debug";

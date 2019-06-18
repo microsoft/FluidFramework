@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export enum MessageType {
     // Empty operation message. Used to send an updated reference sequence number.
     NoOp = "noop",

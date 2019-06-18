@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";

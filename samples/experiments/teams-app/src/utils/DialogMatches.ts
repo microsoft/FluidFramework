@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Regular Expressions and intent strings for Dialogs
 // tslint:disable-next-line:variable-name
 export const DialogMatches = {

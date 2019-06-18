@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IAlfredTenant } from "@prague/services-core";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";

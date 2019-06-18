@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { DocSegmentKind, getDocSegmentKind, SegmentSpan } from "@chaincode/flow-document";
 import { ISegment, Marker } from "@prague/merge-tree";
 import { TagView } from ".";

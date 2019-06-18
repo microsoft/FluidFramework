@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IRequest } from "@prague/container-definitions";
 import {

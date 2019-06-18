@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ReadOper } from "@ms/excel-online-calc/lib/lang/value";
 import { CompiledFormula, FailureReason } from "@ms/excel-online-calc/lib/runtime";
 

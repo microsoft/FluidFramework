@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const api = require("@prague/client-api");
 const socketStorage = require("@prague/socket-storage");
 const MergeTree = require("@prague/merge-tree");

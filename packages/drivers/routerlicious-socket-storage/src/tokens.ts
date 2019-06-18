@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITokenClaims, ITokenProvider, ITokenService } from "@prague/container-definitions";
 import * as jwtDecode from "jwt-decode";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentServiceFactory, IDocumentTaskInfo } from "@prague/routerlicious/dist/agent";
 import { IDocumentService, IQueueMessage } from "@prague/routerlicious/dist/api-core";
 import * as core from "@prague/routerlicious/dist/core";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import {
     IComponent,

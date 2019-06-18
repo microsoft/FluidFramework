@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { List, ListMakeHead } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTree";
 

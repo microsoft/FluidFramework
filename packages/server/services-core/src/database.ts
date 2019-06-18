@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocument } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { INode } from "./orderer";

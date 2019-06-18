@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { debug, debugFrame, debugPopup } from "./debug";
 import { MessageEnum } from "./portHolder";
 import { PragueMapWrapperFactory } from "./pragueMapWrapper";

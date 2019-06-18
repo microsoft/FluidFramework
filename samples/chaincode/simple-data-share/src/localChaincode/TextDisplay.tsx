@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component } from "@prague/app-component";
 import { Counter } from "@prague/map";
 import * as React from "react";

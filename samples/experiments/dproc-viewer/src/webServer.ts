@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { HttpServer } from "@prague/services";
 import { IWebServer, IWebServerFactory } from "@prague/services-core";
 import * as http from "http";

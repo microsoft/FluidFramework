@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Block, BoxState } from "@prague/app-ui";
 import { Document } from "@prague/client-api";
 import { IComponent, IComponentHTMLViewable } from "@prague/container-definitions";

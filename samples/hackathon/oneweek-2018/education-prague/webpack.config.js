@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const path = require('path');
 const dev = require('./webpack.dev.js');
 const prod = require('./webpack.prod.js');

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // For local development
 //const routerlicious = "http://localhost:3000";
 //const historian = "http://localhost:3001";

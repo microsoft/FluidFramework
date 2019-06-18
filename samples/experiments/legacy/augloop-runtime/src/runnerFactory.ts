@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITaskMessageReceiver } from "@prague/routerlicious/dist/core";
 import { createMessageReceiver } from "@prague/routerlicious/dist/services";
 import * as utils from "@prague/routerlicious/dist/utils";

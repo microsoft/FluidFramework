@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IMap } from "@prague/map";
 import { IChaincode, IGenericBlob, IPlatform, IRuntime, MessageType } from "@prague/runtime-definitions";
 import { gitHashFile } from "@prague/utils";

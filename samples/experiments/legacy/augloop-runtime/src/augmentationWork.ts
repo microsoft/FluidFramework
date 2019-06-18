@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as agent from "@prague/routerlicious/dist/agent";
 import { core } from "@prague/routerlicious/dist/client-api";
 import { CollaborativeStringExtension, SharedString } from "@prague/routerlicious/dist/shared-string";

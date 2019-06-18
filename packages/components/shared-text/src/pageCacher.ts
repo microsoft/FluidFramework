@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Named function for the headless loader.
 interface IWindow extends Window {
     cachePage(pageHTML: string): void;

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as pragueMap from "@prague/map";
 import { debug, debugFrame, debugPort } from "./debug";
 import { globalConfig } from "./globalConfig";

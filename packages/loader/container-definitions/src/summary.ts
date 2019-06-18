@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export type SummaryObject = ISummaryCommit | ISummaryTree | ISummaryBlob | ISummaryHandle;
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as async from "async";
 import * as moniker from "moniker";
 import * as git from "nodegit";

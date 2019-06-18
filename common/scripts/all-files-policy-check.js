@@ -49,7 +49,7 @@ const author = 'Microsoft';
 // promise wrappers over existing file IO callback methods
 async function readFile(file) {
     return new Promise((resolve, reject) => {
-        fs.readFile(file, (err, data) => {
+        fs.readFile(file, 'utf8', (err, data) => {
             if (err) throw err;
             resolve(data);
         });
@@ -103,7 +103,8 @@ const handlers = [
             const prevContent = await readFile(file);
 
             // prepend copyright header to existing content
-            const newContent = '/*!' + newline + ' * ' + copyrightText.replace(newline, newline + ' * ') + newline + ' */' + newline + newline + prevContent;
+            const separator = prevContent.startsWith('\r') || prevContent.startsWith('\n') ? newline : newline + newline;
+            const newContent = '/*!' + newline + ' * ' + copyrightText.replace(newline, newline + ' * ') + newline + ' */' + separator + prevContent;
 
             await writeFile(file, newContent);
 

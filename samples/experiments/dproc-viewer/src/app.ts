@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import Axios from "axios";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";

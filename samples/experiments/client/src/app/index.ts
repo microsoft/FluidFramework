@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as prague from "@prague/routerlicious";
 import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import defaultMenu = require("electron-default-menu");

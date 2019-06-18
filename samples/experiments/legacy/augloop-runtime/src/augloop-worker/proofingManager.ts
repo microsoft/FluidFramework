@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { SharedString } from "@prague/routerlicious/dist/shared-string";
 import { AugLoopRuntime, IAugResult } from "../augloop-runtime";
 import { ISlice } from "./definitions";

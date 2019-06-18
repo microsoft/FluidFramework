@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var kafkaNode = require('kafka-node');
 
 const endpoint = "172.17.0.10:2181";// "zookeeper:2181";

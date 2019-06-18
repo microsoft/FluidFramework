@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { create as createDocumentRouter, DeliLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";
 import { IDocument, IPartitionLambdaFactory } from "@prague/services-core";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var SPACE_WIDTH = 16 * 2.5;
 var SPACE_HEIGHT = 9 * 2.5;
 

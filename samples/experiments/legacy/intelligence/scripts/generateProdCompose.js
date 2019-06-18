@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Simple helper script to generate a production compose file that includes a versioned docker image
 const fs = require("fs");
 

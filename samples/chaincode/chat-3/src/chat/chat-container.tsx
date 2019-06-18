@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IQuorum, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import { Chat } from "@stardust-ui/react";
 import * as React from "react";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as builder from "botbuilder";
 import { IBotChannelStorageData, IBotChannelStorage } from "../storage/BotChannelStorage";
 import * as DialogUtils from "./DialogUtils";

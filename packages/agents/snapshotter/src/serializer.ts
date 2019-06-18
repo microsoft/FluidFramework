@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
 import * as assert from "assert";

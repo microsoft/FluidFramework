@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IODSPTokens } from "@prague/odsp-utils";
 import * as fs from "fs";
 import * as os from "os";

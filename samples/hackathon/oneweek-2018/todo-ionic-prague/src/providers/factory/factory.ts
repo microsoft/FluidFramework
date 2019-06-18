@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Storage } from '@ionic/storage';
 import { Injectable } from '@angular/core';
 import { getRandomName } from "./names";

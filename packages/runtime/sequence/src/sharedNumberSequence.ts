@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { SharedNumberSequenceExtension } from "./extension";
 import { SharedSequence } from "./sharedSequence";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component, Document as DatastoreDocument } from "@prague/app-component";
 import { IChaincode } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";

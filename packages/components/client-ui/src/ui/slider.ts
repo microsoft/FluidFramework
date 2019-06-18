@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BoxState, Inline } from "@prague/app-ui";
 import { FlowViewContext } from ".";
 import { IllFormedFormula, NotImplemented, ResultKind, Workbook } from "../../ext/calc";

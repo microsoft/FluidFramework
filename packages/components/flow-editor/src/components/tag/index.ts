@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 

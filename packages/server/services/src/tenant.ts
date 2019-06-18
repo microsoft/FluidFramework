@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { GitManager, Historian } from "@prague/services-client";
 import * as core from "@prague/services-core";
 import Axios from "axios";

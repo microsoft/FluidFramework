@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import { AsyncQueue, queue } from "async";
 import * as _ from "lodash";

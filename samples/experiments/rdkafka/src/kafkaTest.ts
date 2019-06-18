@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as queue from "async/queue";
 import * as commander from "commander";
 import * as kafkaNode from "kafka-node";

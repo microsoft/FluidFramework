@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // This config exists in order to test local-test-server in a browser context, vs Node.js.
 
 const path = require('path');

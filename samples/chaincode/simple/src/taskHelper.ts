@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Browser, IClient, IClientJoin, IHelpMessage, IRuntime, MessageType } from "@prague/runtime-definitions";
 
 export function runTaskAnalyzer(runtime: IRuntime) {

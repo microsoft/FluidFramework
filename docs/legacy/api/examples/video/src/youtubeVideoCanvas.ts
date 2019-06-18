@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api, types } from "../node_modules/@prague/routerlicious/dist/client-api";
 import * as ui from "../node_modules/@prague/routerlicious/dist/ui";
 import { getProposedPlaybackTime, PlayerState, YouTubeWrapper } from "./youtubeHelper";

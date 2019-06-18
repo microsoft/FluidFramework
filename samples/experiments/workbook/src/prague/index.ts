@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IMap, IMapView, CollaborativeMap } from "../../../../routerlicious/packages/map";
 import { MergeTree, Segment, TextSegment, UniversalSequenceNumber } from "../../../../routerlicious/packages/merge-tree";
 import { SharedString } from "../../../../routerlicious/packages/shared-string";

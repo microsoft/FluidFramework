@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
 
 export class BlobManager implements IBlobManager {

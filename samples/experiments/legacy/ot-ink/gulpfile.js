@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var clean = require("gulp-clean");
 var gulp = require("gulp");
 var path = require('path');

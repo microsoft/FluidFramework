@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as api from "@prague/container-definitions";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";

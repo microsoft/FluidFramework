@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var gulp = require("gulp");
 var browserify = require("browserify");
 var source = require("vinyl-source-stream");

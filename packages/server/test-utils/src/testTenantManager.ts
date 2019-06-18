@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { GitManager } from "@prague/services-client";
 import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@prague/services-core";
 import { TestHistorian } from "./testHistorian";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { safelyParseJSON } from "@prague/utils";
 import { EventEmitter } from "events";
 import * as nconf from "nconf";

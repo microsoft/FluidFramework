@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ClientSeq, compareNumbers, clientSeqComparer, IncrementalMapState, ISegment, MergeTree, IncrementalExecOp } from "../mergeTree";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { api as prague} from "@prague/routerlicious";
 import * as mergeTree from "@prague/routerlicious/dist/merge-tree";
 import * as Properties from "@prague/routerlicious/dist/merge-tree/properties";

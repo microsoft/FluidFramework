@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { NoteList } from "../models";
 
 function renderNotes(notes: NoteList, openNote: (id: string) => void) {

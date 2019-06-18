@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IAlfredTenant, MongoManager } from "@prague/services-core";
 import { Router } from "express";

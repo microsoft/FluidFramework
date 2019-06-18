@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // This script displays an intro message for the setup script
 /* eslint-disable no-console */
 console.log('===========================');

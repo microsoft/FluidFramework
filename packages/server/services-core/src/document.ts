@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IProposal } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
 import * as fs from "fs";
 import { FileDocumentService } from "./fileDocumentService";

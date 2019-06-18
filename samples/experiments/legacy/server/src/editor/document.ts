@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as $ from "jquery";
 import * as Quill from "quill";
 import * as sharedb from "sharedb/lib/client";

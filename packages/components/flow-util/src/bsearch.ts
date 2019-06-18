@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export function bsearch<T>(array: Readonly<ArrayLike<T>>, value: T, start = 0, end = array.length) {
     while (start < end) {
         // tslint:disable-next-line:no-bitwise - Bitwise ops ~2x faster than 'mid = start + Math.floor((end - start) / 2)'.

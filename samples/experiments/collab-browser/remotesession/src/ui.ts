@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPlatform } from "../../../../routerlicious/packages/runtime-definitions";
 import { RemoteSession } from "./remotesession";
 

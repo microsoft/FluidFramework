@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as map from "@prague/map";
 import { UnboxedOper, Workbook } from "../../ext/calc";
 

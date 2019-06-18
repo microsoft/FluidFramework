@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {Editor, EditorPlugin, PluginEvent, PluginEventType, InsertOption, ContentPosition } from "roosterjs";
 import { SharedString } from "@prague/sequence";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";

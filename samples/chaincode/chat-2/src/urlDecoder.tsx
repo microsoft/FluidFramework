@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IOutieProps } from "./component-loader";
 
 export function findComponent(message: string): IOutieProps | undefined {

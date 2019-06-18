@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPartitionLambdaFactory, IPlugin } from "@prague/services-core";
 import { Provider } from "nconf";
 import { DocumentLambdaFactory } from "./lambdaFactory";

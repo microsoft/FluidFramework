@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component } from "./component";
 import { debug } from "./debug";
 import { Rectangle } from "./geometry";

@@ -1,3 +1,4 @@
+// tslint:disable:file-header
 // Docker random name generator - taken from
 // https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Because of a typescript compiling issue of VS 2015 Update 1 (https://github.com/Microsoft/TypeScript/issues/6215),
 // we are using the generated JS file directly here. The original ts file can be found in git history.
 var Localization;

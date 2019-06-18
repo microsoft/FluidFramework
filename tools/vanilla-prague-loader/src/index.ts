@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { loadSharepointPragueComponent } from "@ms/office-prague-container";
 import { Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";

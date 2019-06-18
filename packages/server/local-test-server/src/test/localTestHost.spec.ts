@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component } from "@prague/app-component";
 import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";

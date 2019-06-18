@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // Docker random name generator - taken from
 // https://github.com/moby/moby/blob/master/pkg/namesgenerator/names-generator.go
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as scribe from "@prague/tools-core";
 import * as request from "request";

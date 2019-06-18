@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Response } from "express";
 import { ICache, ITenantService, RestGitService } from "../services";
 

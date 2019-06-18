@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { createConsumer } from "@prague/services";
 import { IConsumer, IPartitionLambdaFactory } from "@prague/services-core";
 import { IResources, IResourcesFactory } from "@prague/services-utils";

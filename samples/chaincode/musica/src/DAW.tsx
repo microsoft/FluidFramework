@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // See https://github.com/danigb/soundfont-player
 // for more documentation on prop options.
 import * as React from 'react';

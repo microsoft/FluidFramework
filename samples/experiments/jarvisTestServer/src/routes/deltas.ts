@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
 import * as utils from "@prague/services-utils";
 import { Router } from "express";

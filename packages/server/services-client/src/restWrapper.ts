@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { AxiosError, AxiosInstance, AxiosRequestConfig, default as Axios } from "axios";
 import * as querystring from "querystring";
 import { debug } from "./debug";

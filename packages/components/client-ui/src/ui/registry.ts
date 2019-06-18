@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Box, BoxState } from "@prague/app-ui";
 import { Marker, ReferenceType } from "@prague/merge-tree";
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IMap, MapExtension } from "@prague/map";
 import { IRuntime } from "@prague/runtime-definitions";
 

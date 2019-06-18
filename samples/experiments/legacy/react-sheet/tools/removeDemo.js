@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // This script removes demo app files
 import rimraf from 'rimraf';
 import fs from 'fs';

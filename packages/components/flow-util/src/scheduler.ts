@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 type TaskCallback = () => void;
 type TaskQueue = (callback: TaskCallback) => void;
 

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { debugDOM, debugFrame } from "./debug";
 import { globalConfig } from "./globalConfig";
 import { IMapViewWrapper } from "./mapWrapper";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component } from "@prague/app-component";
 import { Workbook } from "@prague/client-ui/ext/calc2";
 import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";

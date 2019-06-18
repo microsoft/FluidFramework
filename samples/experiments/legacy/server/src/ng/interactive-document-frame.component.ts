@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { DomSanitizer, SafeUrl } from "@angular/platform-browser";
 import { IResource, IView, IViewModel, IViews } from "../interfaces";

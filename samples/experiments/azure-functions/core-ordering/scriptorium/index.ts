@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { AzureFunction, Context as AzContext } from "@azure/functions";
 import { ScriptoriumLambdaFactory } from "@prague/lambdas";
 import * as services from "@prague/services";

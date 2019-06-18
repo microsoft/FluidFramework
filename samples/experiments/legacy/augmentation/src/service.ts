@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { exec } from "child_process";
 import * as fs from "fs";
 import * as helper from "./helper";

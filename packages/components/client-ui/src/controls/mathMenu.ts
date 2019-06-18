@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:object-literal-sort-keys align
 import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";

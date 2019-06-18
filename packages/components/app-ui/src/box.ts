@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export enum BoxKind {
     // Block elements force a paragraph break and take all remaining horizontal space.
     Block           = 0,

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";

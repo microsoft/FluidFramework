@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { urlToInclusion } from "../../../../routerlicious/packages/client-ui/src/blob";
 import { IMap, IMapView, MapExtension } from "../../../../routerlicious/packages/map";
 import { IChaincode, IPlatform, IRuntime } from "../../../../routerlicious/packages/runtime-definitions";

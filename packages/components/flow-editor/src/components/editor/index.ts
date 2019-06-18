@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { CaretEventType, Direction, getDeltaX, getDeltaY, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
 import { IViewState, View } from "..";
 import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";

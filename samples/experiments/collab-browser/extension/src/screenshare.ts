@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { TabRef } from "./tabRef";
 import { RemoteSession } from "../../remotesession";
 import { Store } from "../../../../routerlicious/packages/store";

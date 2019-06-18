@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as builder from "botbuilder";
 import { MultiTriggerActionDialog } from "../../../utils/MultiTriggerActionDialog";
 import { DialogIds } from "../../../utils/DialogIds";

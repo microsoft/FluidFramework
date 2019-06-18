@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IMap, IMapView, IValueChanged } from "@prague/map";
 import * as $ from "jquery";
 import * as ko from "knockout";

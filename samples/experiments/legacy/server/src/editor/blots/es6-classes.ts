@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // TODO - Quill assumes es6 and a webpack environment. I"m assuming TypeScript + Browserify. I"m not sure
 // yet how to extend an es6 class, defined as a variable (the Quill.import above), inside of TypeScript. So
 // cheating a bit for now and just using the babel output.

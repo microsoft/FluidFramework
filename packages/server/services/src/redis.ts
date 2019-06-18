@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ICache } from "@prague/services-core";
 import { RedisClient } from "redis";
 import * as util from "util";

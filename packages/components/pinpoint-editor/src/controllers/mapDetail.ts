@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as angular from "angular";
 import * as $ from "jquery";
 import { MapDetailsService } from "../services";

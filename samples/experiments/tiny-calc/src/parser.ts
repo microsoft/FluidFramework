@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 type ParseResult = number | null;
 type ParseFn = () => ParseResult;
 export interface IRef { start: number; end: number; $: RegExpExecArray; }

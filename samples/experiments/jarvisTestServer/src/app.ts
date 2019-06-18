@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { /*IDocumentStorage, IProducer,*/ ITenantManager } from "@prague/services-core";
 //import * as utils from "@prague/services-utils";
 import * as bodyParser from "body-parser";

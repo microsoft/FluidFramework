@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:max-classes-per-file
 import * as core from "@prague/routerlicious/dist/core";
 import * as services from "@prague/routerlicious/dist/services";

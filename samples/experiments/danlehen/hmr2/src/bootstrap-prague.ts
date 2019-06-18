@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as prague from "../../../../routerlicious/dist";
 import api = prague.api.api;
 import SharedString = prague.api.SharedString.SharedString;

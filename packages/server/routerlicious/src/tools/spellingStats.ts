@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as MergeTree from "@prague/merge-tree";
 import * as fs from "fs";
 import * as path from "path";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as request from "request-promise-native";
 import { IOrderer, ITenantStorage } from "./definitions";
 

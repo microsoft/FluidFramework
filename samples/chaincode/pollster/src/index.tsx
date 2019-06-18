@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Component, Document } from "@prague/app-component";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { Counter, ISharedMap } from "@prague/map";

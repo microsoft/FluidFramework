@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 var Generator = require("yeoman-generator");
 var { Project } = require("ts-morph");
 var chalk = require("chalk");

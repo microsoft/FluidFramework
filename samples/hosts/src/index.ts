@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IUser } from "@prague/container-definitions";
 import { Loader } from "@prague/container-loader";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";

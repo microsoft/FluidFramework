@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as pragueLoader from "@prague/loader";
 import { IChaincodeFactory, ICodeLoader, IRuntime } from "@prague/runtime-definitions";
 import * as socketStorage from "@prague/socket-storage";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
 import {
     KafkaMessageFactory,

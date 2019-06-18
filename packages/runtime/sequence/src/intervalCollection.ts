@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:whitespace align
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@prague/map";

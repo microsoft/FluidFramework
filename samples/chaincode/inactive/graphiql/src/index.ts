@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IChaincode } from "@prague/runtime-definitions";
 import { Document, DataStore } from "@prague/datastore";
 import * as React from 'react';

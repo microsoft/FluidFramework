@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Document } from "@prague/app-component";
 import { Counter, CounterValueType, ISharedMap, registerDefaultValueType } from "@prague/map";
 import { Provider, themes } from "@stardust-ui/react";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // tslint:disable:no-import-side-effect
 // tslint:disable:no-bitwise
 import * as assert from "assert";

@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 export function shuffle(array: any[]): any[] {
     for (let i = 0; i < array.length; i++) {
         const index = Math.floor(Math.random() * (array.length - i));
