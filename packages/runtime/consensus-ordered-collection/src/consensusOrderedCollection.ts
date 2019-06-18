@@ -130,7 +130,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
      * Wait for a value to be available and remove it from the consensus collection
      */
     public async waitAndRemove(): Promise<T> {
-        // tslint:disable:no-constant-condition
         while (true) {
             if (this.data.size() === 0) {
                 // wait for new entry before trying to remove again

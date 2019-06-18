@@ -3,7 +3,6 @@
     "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "no-console": false,
-        "no-constant-condition": false,
         "no-floating-promises": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,

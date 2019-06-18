@@ -90,6 +90,10 @@
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
         "type-literal-delimiter": false,
+        "no-constant-condition": [
+            true,
+            { "checkLoops": false } // allows while(true), etc.
+        ],
         // Deprecated Rules. These rules are deprecated. Disabling them so that they don't get applied.
         "no-function-constructor-with-string-args": false,
         "no-unnecessary-bind": false

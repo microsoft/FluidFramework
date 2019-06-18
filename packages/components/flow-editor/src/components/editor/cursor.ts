@@ -164,7 +164,6 @@ export class Cursor {
         let position = Math.max(Math.min(start, length), 0);
         let kind: CaretStopKind;
 
-        // tslint:disable:no-constant-condition
         do {
             kind = this.getCaretStop(position);
             if (kind !== CaretStopKind.none) {

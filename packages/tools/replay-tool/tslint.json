@@ -4,7 +4,6 @@
         "function-name": false,
         "trailing-comma": false,
         "no-console": false,
-        "no-constant-condition": false,
         "no-floating-promises": false,
         "no-null-keyword": false,
         "promise-function-async": false

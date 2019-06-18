@@ -279,7 +279,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             to,
         });
 
-        // tslint:disable-next-line:no-constant-condition
         while (true) {
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);

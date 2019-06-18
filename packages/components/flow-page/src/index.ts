@@ -40,7 +40,6 @@ export class FlowHost extends Component {
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         try {
-            // tslint:disable-next-line:no-constant-condition
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) {

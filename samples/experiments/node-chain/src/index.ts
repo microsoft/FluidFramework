@@ -69,7 +69,6 @@ async function run(
     console.log("");
 
     const input = readline.createInterface(process.stdin, process.stdout);
-    // tslint:disable-next-line:no-constant-condition
     while (true) {
         const value = await readlineAsync(input, "Value: ");
 

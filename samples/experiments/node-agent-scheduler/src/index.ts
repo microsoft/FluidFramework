@@ -168,7 +168,6 @@ async function attach(loader: Loader, docUrl: string, platform: NodePlatform) {
         console.log("");
 
         const input = readline.createInterface(process.stdin, process.stdout);
-        // tslint:disable-next-line:no-constant-condition
         while (true) {
             const message = await readlineAsync(input, "Message: ");
             const parsed = message.split(":");
