@@ -37,7 +37,7 @@ const assertIntervalsHelper = (
             }
         }
 
-        assert(found, `Unexpected interval [${start}..${end})`);
+        assert(found, `Unexpected interval [${start}..${end}) (expected ${JSON.stringify(expected)})`);
     }
 };
 
@@ -142,6 +142,30 @@ describe("SharedInterval", () => {
             sharedString.replaceText(1, 2, `x`);
             assertIntervals([{ start: 0, end: 1 }]);
         });
+
+        // Uncomment below test to reproduce issue #2479:
+        // https://github.com/microsoft/Prague/issues/2479
+        //
+        // it("repeated replacement", async () => {
+        //     sharedString.insertText("012", 0);
+        //     intervals.add(0, 2, IntervalType.Simple);
+        //     assertIntervals([{ start: 0, end: 2 }]);
+
+        //     for (let j = 0; j < 10; j++) {
+        //         for (let i = 0; i < 10; i++) {
+        //             sharedString.replaceText(0, 1, `x`);
+        //             assertIntervals([{ start: 0, end: 2 }]);
+
+        //             sharedString.replaceText(1, 2, `x`);
+        //             assertIntervals([{ start: 0, end: 2 }]);
+
+        //             sharedString.replaceText(2, 3, `x`);
+        //             assertIntervals([{ start: 0, end: 2 }]);
+        //         }
+
+        //         await TestHost.sync(host);
+        //     }
+        // });
     });
 
     describe("multiple clients", () => {
