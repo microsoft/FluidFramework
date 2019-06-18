@@ -201,7 +201,7 @@ data:
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 },
                 "translation": {
-                    "key": "bd099a1e38724333b253fcff7523f76a"
+                    "key": "{{ .Values.paparazzi.translationKey }}"
                 }
             },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",

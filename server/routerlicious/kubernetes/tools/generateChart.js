@@ -78,6 +78,7 @@ foreman:
 paparazzi:
   name: paparazzi
   replicas: 8
+  translationKey: ""
 
 serviceGraph:
   name: servicegraph
