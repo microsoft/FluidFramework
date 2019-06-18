@@ -104,7 +104,7 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param condition - If false, assert is logged.
      * @param message - Actual message to log; ideally should be unique message to identify call site
      */
-    debugAssert(condition: boolean, message: string): void;
+    debugAssert(condition: boolean, message?: string): void;
 
     /**
      * Report ignorable errors in code logic or data integrity.
@@ -112,5 +112,5 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param condition - If false, assert is logged.
      * @param message - Actual message to log; ideally should be unique message to identify call site
      */
-    shipAssert(condition: boolean, message: string): void;
+    shipAssert(condition: boolean, message?: string): void;
 }

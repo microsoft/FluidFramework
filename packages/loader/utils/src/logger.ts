@@ -60,6 +60,20 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return error2;
     }
 
+    protected static getStack(): string | undefined {
+        // Some browsers will populate stack right away, others require throwing Error
+        let stack = new Error().stack;
+        if (!stack) {
+            try {
+                throw new Error();
+            } catch (e) {
+                // tslint:disable-next-line:no-unsafe-any
+                stack = e.stack;
+            }
+        }
+        return stack;
+    }
+
     protected constructor(
         private readonly namespace?: string,
         private readonly properties?: object) {
@@ -133,7 +147,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param condition - the condition to assert on
      * @param exception - the message to log if the condition fails
      */
-    public debugAssert(condition: boolean, message: string): void {
+    public debugAssert(condition: boolean, message?: string): void {
         this.shipAssert(condition, message);
     }
 
@@ -143,9 +157,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param condition - the condition to assert on
      * @param exception - the message to log if the condition fails
      */
-    public shipAssert(condition: boolean, message: string): void {
+    public shipAssert(condition: boolean, message?: string): void {
         if (!condition) {
-            this.sendErrorEvent({ eventName: "Assert", message });
+            this.sendErrorEvent({ eventName: "Assert", message, stack: TelemetryLogger.getStack() });
         }
     }
 
@@ -326,12 +340,18 @@ export class PerformanceEvent {
 
     private event?: ITelemetryInformationalEvent;
     private readonly startTime = performanceNow();
+    private startMark?: string;
 
     protected constructor(
             private readonly logger: ITelemetryLogger,
             event: ITelemetryInformationalEvent) {
         this.event = {...event, tick: this.startTime};
         this.reportEvent("start");
+
+        if (typeof window === "object" && window != null && window.performance) {
+            this.startMark = `${event.eventName}-start`;
+            window.performance.mark(this.startMark);
+        }
     }
 
     public reportProgress(props?: object): void {
@@ -340,6 +360,14 @@ export class PerformanceEvent {
 
     public end(props?: object): void {
         this.reportEvent("end", props);
+
+        if (this.startMark) {
+            const endMark = `${this.event!.eventName}-end`;
+            window.performance.mark(endMark);
+            window.performance.measure(`${this.event!.eventName}`, this.startMark, endMark);
+            this.startMark = undefined;
+        }
+
         this.event = undefined;
     }
 
