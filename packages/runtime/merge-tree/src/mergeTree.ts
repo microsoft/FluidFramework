@@ -4,10 +4,10 @@ import * as Collections from "./collections";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import * as assert from "assert";
-import { IRelativePosition, TrackingGroupCollection } from "./index";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta } from "./mergeTreeDeltaCallback";
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
+import { TrackingGroupCollection } from "./mergeTreeTracking";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -2773,7 +2773,7 @@ export class MergeTree {
      * @param refseq - The reference sequence number at which to compute the position.
      * @param clientId - The client id with which to compute the position.
      */
-    posFromRelativePos(relativePos: IRelativePosition, refseq = UniversalSequenceNumber,
+    posFromRelativePos(relativePos: ops.IRelativePosition, refseq = UniversalSequenceNumber,
         clientId = this.collabWindow.clientId) {
         let pos = -1;
         let marker: Marker;
