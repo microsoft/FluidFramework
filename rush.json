@@ -47,12 +47,20 @@
       "projectFolder": "packages/components/chart-view/"
     },
     {
+      "packageName": "@chaincode/clicker",
+      "projectFolder": "packages/components/clicker/"
+    },
+    {
       "packageName": "@prague/client-ui",
       "projectFolder": "packages/components/client-ui/"
     },
     {
       "packageName": "@chaincode/progress-bars",
       "projectFolder": "packages/components/progress-bars/"
+    },
+    {
+      "packageName": "@chaincode/video-players",
+      "projectFolder": "packages/components/video-players/"
     },
     {
       "packageName": "@chaincode/flow-document",
