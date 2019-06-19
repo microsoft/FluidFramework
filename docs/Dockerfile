@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 # Download DocFX
 WORKDIR /docfx
-RUN wget https://github.com/dotnet/docfx/releases/download/v2.42.4/docfx.zip -nv
+RUN wget https://github.com/dotnet/docfx/releases/download/v2.42.3/docfx.zip -nv
 RUN unzip docfx.zip
 WORKDIR /
 
