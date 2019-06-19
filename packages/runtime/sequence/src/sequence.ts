@@ -342,6 +342,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.submitLocalMessage(message);
     }
 
+    protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
+        // insert first, so local references can slide to the inserted seg
+        // if any
+
+        const insert = this.client.insertSegmentLocal(end, segment);
+        if (insert) {
+            const remove = this.client.removeRangeLocal(start, end);
+            this.submitSequenceMessage(MergeTree.createGroupOp(insert, remove));
+        }
+    }
+
     protected async loadContent(
         minimumSequenceNumber: number,
         headerOrigin: string,

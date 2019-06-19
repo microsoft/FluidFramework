@@ -39,7 +39,7 @@ export class PaddingSegment extends BaseSegment {
     }
     public readonly type = PaddingSegment.typeString;
 
-    constructor(public size: number, seq?: number, clientId?: number) {
+    constructor(size: number, seq?: number, clientId?: number) {
         super(seq, clientId);
         this.cachedLength = size;
     }
@@ -280,20 +280,16 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
             segment.addProperties(props);
         }
 
-        // Note: The remove/insert needs to be made atomic.
-        // (See https://github.com/Microsoft/Prague/issues/1840)
-
-        this.removeRange(start, end);
-        const insertOp = this.client.insertSegmentLocal(start, segment);
-        if (insertOp) {
-            this.submitSequenceMessage(insertOp);
-        }
+        this.replaceRange(start, end, segment);
     }
 
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
         const { segment, offset } =
-            this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
+            this.client.mergeTree.getContainingSegment(
+                pos,
+                this.client.mergeTree.collabWindow.currentSeq,
+                this.client.getClientId());
         if (RunSegment.is(segment)) {
             return segment.items[offset];
         } else if (PaddingSegment.is(segment)) {
@@ -383,7 +379,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     private getSegment(row: number, col: number) {
         const pos = rowColToPosition(row, col);
-        return this.client.mergeTree.getContainingSegment(pos, UniversalSequenceNumber, this.client.getClientId());
+        return this.client.mergeTree.getContainingSegment(
+            pos,
+            this.client.mergeTree.collabWindow.currentSeq,
+            this.client.getClientId());
     }
 }
 

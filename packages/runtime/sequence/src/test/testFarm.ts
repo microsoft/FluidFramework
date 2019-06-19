@@ -543,7 +543,7 @@ export function TestPack(verbose = true) {
                 let clientId = server.getClientId();
                 let clockStart = clock();
                 for (let i = 0; i < refReadsPerRound; i++) {
-                    references[i].offset + server.mergeTree.getOffset(references[i].segment, refseq, clientId);
+                    references[i].toPosition(server.mergeTree, refseq, clientId);
                     refReads++;
                 }
                 refReadTime += elapsedMicroseconds(clockStart);

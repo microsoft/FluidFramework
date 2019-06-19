@@ -59,6 +59,8 @@ export interface IHierBlock extends IMergeBlock {
 }
 
 export class LocalReference implements ReferencePosition {
+    public static readonly DetachedPosition: number = -1;
+
     properties: Properties.PropertySet;
     pairedRef?: LocalReference;
 
@@ -86,7 +88,9 @@ export class LocalReference implements ReferencePosition {
         if (this.segment === b.segment) {
             return this.offset - b.offset;
         } else {
-            if (this.segment.ordinal < b.segment.ordinal) {
+            if (this.segment === undefined
+                || ( b.segment !== undefined &&
+                    this.segment.ordinal < b.segment.ordinal)) {
                 return -1;
             } else {
                 return 1;
@@ -98,7 +102,7 @@ export class LocalReference implements ReferencePosition {
         if (this.segment) {
             return this.offset + mergeTree.getOffset(this.segment, refSeq, clientId);
         } else {
-            return -1;
+            return LocalReference.DetachedPosition;
         }
     }
 
@@ -3406,7 +3410,9 @@ export class MergeTree {
                     removalInfo.removedSeq = seq;
                     removedSegments.push({segment});
                     if (segment.localRefs && (brid === this.localBranchId)) {
-                        savedLocalRefs.push(segment.localRefs);
+                        if (segment.localRefs.length > 0) {
+                            savedLocalRefs.push(segment.localRefs);
+                        }
                         segment.localRefs = undefined;
                     }
                 }
@@ -3439,19 +3445,17 @@ export class MergeTree {
         // MergeTree.traceTraversal = true;
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         if (savedLocalRefs.length > 0) {
-            let afterSeg: ISegment;
+            const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
+            const afterSeg = afterSegOff.segment;
             for (let segSavedRefs of savedLocalRefs) {
                 for (let localRef of segSavedRefs) {
-                    if (localRef.refType && (localRef.refType & ops.ReferenceType.SlideOnRemove)) {
-                        if (!afterSeg) {
-                            let afterSegOff = this.getContainingSegment(start, refSeq, clientId);
-                            afterSeg = afterSegOff.segment;
-                        }
-                        if (afterSeg) {
-                            localRef.segment = afterSeg;
-                            localRef.offset = 0;
-                            afterSeg.addLocalRef(localRef);
-                        }
+                    if (afterSeg && localRef.refType && (localRef.refType & ops.ReferenceType.SlideOnRemove)) {
+                        localRef.segment = afterSeg;
+                        localRef.offset = 0;
+                        afterSeg.addLocalRef(localRef);
+                    } else {
+                        localRef.segment = undefined;
+                        localRef.offset = 0;
                     }
                 }
             }

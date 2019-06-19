@@ -4,7 +4,7 @@
  */
 
 import { registerDefaultValueType } from "@prague/map";
-import { IntervalType } from "@prague/merge-tree";
+import { IntervalType, LocalReference } from "@prague/merge-tree";
 import {
     SharedIntervalCollectionValueType,
     SharedIntervalCollectionView,
@@ -33,7 +33,7 @@ const assertIntervalsHelper = (
         const end = sharedString.localRefToPos(actualInterval.end);
         let found = false;
 
-        console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
+        // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
 
         for (const expectedInterval of expected) {
             if (expectedInterval.start === start && expectedInterval.end === end) {
@@ -72,7 +72,7 @@ describe("SharedInterval", () => {
             // (See: https://github.com/Microsoft/Prague/issues/1761)
             sharedString.insertText(".", 3);
 
-            intervals.add(0, 3, IntervalType.Simple);
+            intervals.add(0, 3, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 3 }]);
 
             sharedString.replaceText(0, 3, `xxx`);
@@ -82,16 +82,16 @@ describe("SharedInterval", () => {
         it("remove all yields empty range", async () => {
             // Temporarily, appending a padding character to the initial string to work around #1761:
             // (See: https://github.com/Microsoft/Prague/issues/1761)
-            sharedString.insertText(".", 3);
-            intervals.add(0, 3, IntervalType.Simple);
-            assertIntervals([{ start: 0, end: 3 }]);
+            const len = sharedString.getLength();
+            intervals.add(0, len - 1, IntervalType.SlideOnRemove);
+            assertIntervals([{ start: 0, end: len - 1 }]);
 
-            sharedString.removeRange(0, 3);
-            assertIntervals([{ start: 0, end: 0 }]);
+            sharedString.removeRange(0, len);
+            assertIntervals([{ start: LocalReference.DetachedPosition, end: LocalReference.DetachedPosition }]);
         });
 
         it("replace before is excluded", async () => {
-            intervals.add(1, 2, IntervalType.Simple);
+            intervals.add(1, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 1, end: 2 }]);
 
             sharedString.replaceText(0, 1, `x`);
@@ -99,7 +99,7 @@ describe("SharedInterval", () => {
         });
 
         it("insert at first position is excluded", async () => {
-            intervals.add(0, 2, IntervalType.Simple);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
             sharedString.insertText(".", 0);
@@ -108,7 +108,7 @@ describe("SharedInterval", () => {
 
         it("replace first is included", async () => {
             sharedString.insertText("012", 0);
-            intervals.add(0, 2, IntervalType.Simple);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
             sharedString.replaceText(0, 1, `x`);
@@ -117,7 +117,7 @@ describe("SharedInterval", () => {
 
         it("replace last is included", async () => {
             sharedString.insertText("012", 0);
-            intervals.add(0, 2, IntervalType.Simple);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
             sharedString.replaceText(1, 2, `x`);
@@ -125,7 +125,7 @@ describe("SharedInterval", () => {
         });
 
         it("insert at last position is included", async () => {
-            intervals.add(0, 2, IntervalType.Simple);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
             sharedString.insertText(".", 2);
@@ -133,7 +133,7 @@ describe("SharedInterval", () => {
         });
 
         it("insert after last position is excluded", async () => {
-            intervals.add(0, 2, IntervalType.Simple);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
             sharedString.insertText(".", 3);
@@ -141,7 +141,7 @@ describe("SharedInterval", () => {
         });
 
         it("replace after", async () => {
-            intervals.add(0, 1, IntervalType.Simple);
+            intervals.add(0, 1, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 1 }]);
 
             sharedString.replaceText(1, 2, `x`);
@@ -151,26 +151,26 @@ describe("SharedInterval", () => {
         // Uncomment below test to reproduce issue #2479:
         // https://github.com/microsoft/Prague/issues/2479
         //
-        // it("repeated replacement", async () => {
-        //     sharedString.insertText("012", 0);
-        //     intervals.add(0, 2, IntervalType.Simple);
-        //     assertIntervals([{ start: 0, end: 2 }]);
+        it("repeated replacement", async () => {
+            sharedString.insertText("012", 0);
+            intervals.add(0, 2, IntervalType.SlideOnRemove);
+            assertIntervals([{ start: 0, end: 2 }]);
 
-        //     for (let j = 0; j < 10; j++) {
-        //         for (let i = 0; i < 10; i++) {
-        //             sharedString.replaceText(0, 1, `x`);
-        //             assertIntervals([{ start: 0, end: 2 }]);
+            for (let j = 0; j < 10; j++) {
+                for (let i = 0; i < 10; i++) {
+                    sharedString.replaceText(0, 1, `x`);
+                    assertIntervals([{ start: 0, end: 2 }]);
 
-        //             sharedString.replaceText(1, 2, `x`);
-        //             assertIntervals([{ start: 0, end: 2 }]);
+                    sharedString.replaceText(1, 2, `x`);
+                    assertIntervals([{ start: 0, end: 2 }]);
 
-        //             sharedString.replaceText(2, 3, `x`);
-        //             assertIntervals([{ start: 0, end: 2 }]);
-        //         }
+                    sharedString.replaceText(2, 3, `x`);
+                    assertIntervals([{ start: 0, end: 2 }]);
+                }
 
-        //         await TestHost.sync(host);
-        //     }
-        // });
+                await TestHost.sync(host);
+            }
+        });
     });
 
     describe("multiple clients", () => {
@@ -179,7 +179,7 @@ describe("SharedInterval", () => {
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringExtension.Type);
             sharedString1.insertText("0123456789", 0);
             const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
-            intervals1.add(1, 7, IntervalType.Simple);
+            intervals1.add(1, 7, IntervalType.SlideOnRemove);
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             const host2 = host1.clone();

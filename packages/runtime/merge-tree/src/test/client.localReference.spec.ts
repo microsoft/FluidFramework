@@ -42,7 +42,7 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         // this only works because zamboni hasn't run yet
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 2);
+        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), -1);
 
         // this will force zamoni to run
         for (let i = 0; i < 5; i++) {
@@ -54,8 +54,8 @@ describe("MergeTree.Client", () => {
             client1.applyMsg(insert);
             client2.applyMsg(insert);
         }
-        assert.equal(c1LocalRef.segment.parent, undefined);
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 0);
+        assert.equal(c1LocalRef.segment, undefined);
+        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), -1);
     });
 
     it("Remove segment of sliding local reference", () => {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:whitespace align
+// tslint:disable:whitespace align no-bitwise
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -204,13 +204,13 @@ function createPositionReference(client: MergeTree.Client, pos: number,
     const segoff = client.mergeTree.getContainingSegment(pos,
         refSeq, client.getClientId());
     if (segoff && segoff.segment) {
-        const baseSegment = segoff.segment as MergeTree.BaseSegment;
-        const lref = new MergeTree.LocalReference(baseSegment, segoff.offset, refType);
+        const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
         if (refType !== MergeTree.ReferenceType.Transient) {
             client.mergeTree.addLocalReference(lref);
         }
         return lref;
     }
+    return new MergeTree.LocalReference(undefined);
 }
 
 function createSharedStringInterval(
@@ -228,6 +228,13 @@ function createSharedStringInterval(
         beginRefType = MergeTree.ReferenceType.Transient;
         endRefType = MergeTree.ReferenceType.Transient;
     }
+
+    // TODO: Should SlideOnRemove be the default behavior?
+    if (intervalType & MergeTree.IntervalType.SlideOnRemove) {
+        beginRefType |= MergeTree.ReferenceType.SlideOnRemove;
+        endRefType |= MergeTree.ReferenceType.SlideOnRemove;
+    }
+
     const startLref = createPositionReference(client, start, beginRefType);
     const endLref = createPositionReference(client, end, endRefType);
     if (startLref && endLref) {
@@ -297,8 +304,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
     public findOverlappingIntervals(startPosition: number, endPosition: number) {
         if (!this.intervalTree.intervals.isEmpty()) {
-            const transientInterval = this.helpers.create(
-                "transient", startPosition, endPosition, this.client, MergeTree.IntervalType.Transient);
+            const transientInterval =
+                this.helpers.create(
+                "transient",
+                startPosition,
+                endPosition,
+                this.client,
+                MergeTree.IntervalType.Transient);
+
             const overlappingIntervalNodes = this.intervalTree.match(transientInterval);
             return overlappingIntervalNodes.map((node) => node.key);
         } else {
