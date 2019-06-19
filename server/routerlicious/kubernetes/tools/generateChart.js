@@ -46,6 +46,11 @@ alfred:
   tenants: []
   key: VBQyoGpEYrTn3XQPtXW3K8fFDd
 
+login:
+  microsoft:
+    clientId: ""
+    secret: ""
+
 gateway:
   name: gateway
   replicas: 4
