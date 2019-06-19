@@ -6,7 +6,6 @@ import {
     IntervalType,
     LocalReference,
     PropertySet,
-    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import {
     positionToRowCol,
@@ -126,7 +125,7 @@ export class TableDocument extends Component implements ITable {
     public getRowProperties(row: number): PropertySet {
         const client = this.maybeRows.client;
         const mergeTree = client.mergeTree;
-        const { segment } = mergeTree.getContainingSegment(row, UniversalSequenceNumber, client.getClientId());
+        const { segment } = mergeTree.getContainingSegment(row, mergeTree.collabWindow.currentSeq, client.getClientId());
         return segment.properties;
     }
 
@@ -137,7 +136,7 @@ export class TableDocument extends Component implements ITable {
     public getColProperties(col: number): PropertySet {
         const client = this.maybeCols.client;
         const mergeTree = client.mergeTree;
-        const { segment } = mergeTree.getContainingSegment(col, UniversalSequenceNumber, client.getClientId());
+        const { segment } = mergeTree.getContainingSegment(col, mergeTree.collabWindow.currentSeq, client.getClientId());
         return segment.properties;
     }
 
@@ -147,7 +146,7 @@ export class TableDocument extends Component implements ITable {
         const start = rowColToPosition(minRow, minCol);
         const end = rowColToPosition(maxRow, maxCol);
         const intervals = this.matrix.getSharedIntervalCollection(label);
-        intervals.add(start, end, IntervalType.Simple);
+        intervals.add(start, end, IntervalType.SlideOnRemove);
     }
 
     public insertRows(startRow: number, numRows: number) {
@@ -225,7 +224,7 @@ export class TableDocument extends Component implements ITable {
     private readonly localRefToRowCol = (localRef: LocalReference) => {
         const client = this.maybeMatrix.client;
         const mergeTree = client.mergeTree;
-        const position = localRef.toPosition(mergeTree, UniversalSequenceNumber, client.getClientId());
+        const position = localRef.toPosition(mergeTree, mergeTree.collabWindow.currentSeq, client.getClientId());
         return positionToRowCol(position);
     }
 }
