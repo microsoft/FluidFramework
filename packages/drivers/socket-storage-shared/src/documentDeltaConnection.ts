@@ -14,7 +14,7 @@ import {
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import * as messages from "./messages";
+import { IConnect, IConnected } from "./messages";
 
 const protocolVersion = "^0.1.0";
 
@@ -52,7 +52,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 transports: ["websocket"],
             });
 
-        const connectMessage: messages.IConnect = {
+        const connectMessage: IConnect = {
             client,
             id,
             tenantId,
@@ -60,7 +60,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             versions: [protocolVersion],
         };
 
-        const connection = await new Promise<messages.IConnected>((resolve, reject) => {
+        const connection = await new Promise<IConnected>((resolve, reject) => {
             // Listen for ops sent before we receive a response to connect_document
             const queuedMessages: ISequencedDocumentMessage[] = [];
             const queuedContents: IContentMessage[] = [];
@@ -95,7 +95,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 reject("Socket connection timed out");
             });
 
-            socket.on("connect_document_success", (response: messages.IConnected) => {
+            socket.on("connect_document_success", (response: IConnected) => {
                 socket.removeListener("op", earlyOpHandler);
                 socket.removeListener("op-content", earlyContentHandler);
                 socket.removeListener("signal", earlySignalHandler);
@@ -230,7 +230,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
     constructor(
         private readonly socket: SocketIOClient.Socket,
         public documentId: string,
-        public details: messages.IConnected) {
+        public details: IConnected) {
         super();
 
         this.submitManager = new BatchManager<IDocumentMessage | any>(
