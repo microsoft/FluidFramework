@@ -4,10 +4,11 @@
  */
 
 import { FlowDocument } from "@chaincode/flow-document";
+import { ServicePlatform } from "@prague/component-runtime";
 import { IComponent } from "@prague/container-definitions";
 import { Caret, Char, Direction, Template } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
-import { ComponentDisplayType, IComponentRenderHTML } from "@prague/runtime-definitions";
+import { ComponentDisplayType, IComponent as ILegacyComponent, IComponentRenderHTML } from "@prague/runtime-definitions";
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
@@ -70,8 +71,13 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
         }
 
         const slot = template.get(root, "slot");
-        props.doc.getComponent(props.marker, [[ "div", Promise.resolve(slot) ]]).then((component) => {
-            if (!slot.firstElementChild) {
+
+        props.doc.getComponent(props.marker).then((component: IComponent | ILegacyComponent) => {
+            // TODO included for back compat - can remove once we migrate to 0.5
+            if ("attach" in component) {
+                const legacyComponent = component as ILegacyComponent;
+                legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
+            } else {
                 const viewable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");
                 if (viewable) {
                     viewable.render(slot as HTMLElement, ComponentDisplayType.Inline);

@@ -10,9 +10,11 @@ import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import { TableView } from "@chaincode/table-view";
 import { Component } from "@prague/app-component";
 import {
+    IComponent,
     IContainerContext,
     IRuntime,
 } from "@prague/container-definitions";
+import { IComponentCollection } from "@prague/runtime-definitions";
 import { Scheduler } from "../../flow-util/dist";
 import { HostView } from "./host";
 import { importDoc } from "./template";
@@ -24,6 +26,7 @@ export class FlowHost extends Component {
         await Promise.all([
             this.runtime.createAndAttachComponent(this.docId, FlowDocument.type),
             this.runtime.createAndAttachComponent("math", "@chaincode/math"),
+            this.runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
         ]);
 
         const url = new URL(window.location.href);
@@ -38,25 +41,29 @@ export class FlowHost extends Component {
 
     protected async opened() {
         const docP = this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true);
-        const mathP = this.openPlatform<{ create: () => { url: string }}>("math");
+        const mathP = this.openCollection("math");
         const div = await this.platform.queryInterface<Element>("div");
+        const videosP = this.openCollection("video-players");
 
         const scheduler = new Scheduler();
         const viewport = new HostView();
-        viewport.attach(div, { scheduler, doc: await docP, math: await mathP, context: this.context });
+        viewport.attach(
+            div,
+            { scheduler, doc: await docP, math: await mathP, context: this.context, videos: await videosP });
     }
 
     private get docId() { return `${this.id}-doc`; }
 
-    private async openPlatform<T>(id: string): Promise<T> {
+    private async openCollection(id: string): Promise<IComponentCollection> {
         const runtime = await this.context.getComponentRuntime(id, true);
-        const component = await runtime.request({ url: "/" });
+        const request = await runtime.request({ url: "/" });
 
-        if (component.status !== 200 || component.mimeType !== "prague/component") {
+        if (request.status !== 200 || request.mimeType !== "prague/component") {
             return Promise.reject("Not found");
         }
 
-        return component.value as T;
+        const component = request.value as IComponent;
+        return component.query<IComponentCollection>("IComponentCollection");
     }
 }
 
@@ -80,5 +87,17 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             [TableSliceType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableSlice))],
             ["@chaincode/chart-view", Promise.resolve(Component.createComponentFactory(ChartView))],
             ["@chaincode/table-view", Promise.resolve(Component.createComponentFactory(TableView))],
+            ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts")],
+            ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players")],
+            // pinpoint editor's SASS loading of resources causes trouble
+            // If I can change webpack to do this then things are ok
+            // {
+            //     test: /\.css$/,
+            //     use: [
+            //         "style-loader", // creates style nodes from JS strings
+            //         "css-loader", // translates CSS into CommonJS
+            //     ]
+            // },
+            // ["@chaincode/pinpoint-editor", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/pinpoint-editor")],
         ]));
 }

@@ -4,8 +4,9 @@
  */
 
 import { FlowDocument } from "@chaincode/flow-document";
+import { ISharedComponent } from "@prague/container-definitions";
 import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
-import { IComponentContext } from "@prague/runtime-definitions";
+import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
@@ -16,7 +17,8 @@ interface IHostConfig {
     context: IComponentContext;
     scheduler: Scheduler;
     doc: FlowDocument;
-    math: { create: () => { url: string }};
+    math: IComponentCollection;
+    videos: IComponentCollection;
 }
 
 const template = new Template(
@@ -55,7 +57,7 @@ export class HostView extends View<IHostConfig> {
             const position = viewport.editor.cursorPosition;
             const id = randomId();
             init.context.createAndAttachComponent(id, type);
-            init.doc.insertComponent(position, id);
+            init.doc.insertComponent(position, `/${id}`);
         };
 
         const insertTags = (tags: string[]) => {
@@ -65,7 +67,13 @@ export class HostView extends View<IHostConfig> {
 
         const insertMath = () => {
             const position = viewport.editor.cursorPosition;
-            const instance = init.math.create();
+            const instance = init.math.create() as ISharedComponent;
+            init.doc.insertComponent(position, `/${instance.url}`);
+        };
+
+        const insertMorton = () => {
+            const position = viewport.editor.cursorPosition;
+            const instance = init.videos.create() as ISharedComponent;
             init.doc.insertComponent(position, `/${instance.url}`);
         };
 
@@ -79,6 +87,8 @@ export class HostView extends View<IHostConfig> {
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(style.bold) },
                 { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
                 { name: "insert math", enabled: () => true, exec: insertMath },
+                { name: "insert morton", enabled: () => true, exec: insertMorton },
+                { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts") },
                 { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
                 { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
             ],

@@ -109,7 +109,7 @@ export abstract class Component extends EventEmitter implements IComponent {
                 : chaincode;
 
             // Pull the part of the URL after the component ID
-            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+            const pathForComponent = trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash);
 
             debug(`awaiting component ${componentId}`);
             const component = await runtime.getComponentRuntime(componentId, true);

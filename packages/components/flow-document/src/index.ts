@@ -146,18 +146,15 @@ export class FlowDocument extends Component {
         ]);
     }
 
-    public async getComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>): Promise<IComponent | ILegacyComponent> {
+    public async getComponent(marker: Marker) {
         const url = marker.properties.url as string;
-        if (url.indexOf("/") === 0) {
-            const response = await this.context.hostRuntime.request({ url });
-            if (response.status !== 200 || response.mimeType !== "prague/component") {
-                return Promise.reject("Not found");
-            }
 
-            return response.value as IComponent;
-        } else {
-            return this.runtime.openComponent(url, true, services);
+        const response = await this.context.hostRuntime.request({ url });
+        if (response.status !== 200 || response.mimeType !== "prague/component") {
+            return Promise.reject("Not found");
         }
+
+        return response.value as (IComponent | ILegacyComponent);
     }
 
     public getSegmentAndOffset(position: number) {
