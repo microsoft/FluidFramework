@@ -1,6 +1,6 @@
 {
-  "name": "@prague/vanilla-loader",
-  "version": "0.0.22",
+  "name": "@prague/r11s-vanilla-loader",
+  "version": "0.0.32",
   "main": "dist/index.js",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -8,32 +8,32 @@
     "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/"
   },
   "dependencies": {
-    "@ms/office-prague-container": "0.3.25-demo.12",
-    "@prague/container-definitions": "^0.3.0",
-    "@prague/container-loader": "^0.3.0",
-    "@prague/loader-web": "^0.3.0",
-    "@prague/odsp-socket-storage": "^0.3.0",
-    "@prague/routerlicious-host": "^0.3.0",
-    "@prague/routerlicious-socket-storage": "^0.3.0",
-    "@prague/odsp-utils": "^0.3.0",
+    "@prague/container-definitions": "^0.4.0",
+    "@prague/container-loader": "^0.4.0",
+    "@prague/loader-web": "^0.4.0",
+    "@prague/odsp-socket-storage": "^0.4.0",
+    "@prague/routerlicious-host": "^0.4.0",
+    "@prague/routerlicious-socket-storage": "^0.4.0",
+    "@prague/runtime-definitions": "^0.4.0",
+    "@prague/odsp-utils": "^0.4.0",
     "jsonwebtoken": "^8.5.1",
     "url-parse": "^1.4.4"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.4.0",
     "@types/node": "11.11.4",
     "@types/url-parse": "^1.4.3",
     "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2",
-    "@prague/build-common": "^0.3.0",
-    "tslint": "^5.11.0",
-    "tslint-microsoft-contrib": "^6.0.0"
+    "webpack-merge": "^4.1.2"
   },
   "scripts": {
-    "build": "concurrently npm:tsc npm:tslint",
+    "build": "concurrently npm:tsc npm:tslint npm:pack:dev",
     "tsc": "tsc",
     "pack:dev": "webpack",
     "tslint": "tslint --project tsconfig.json --format verbose"

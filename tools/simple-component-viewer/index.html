@@ -3,9 +3,11 @@
 <div style='padding: 3px; display: inline-block;'><a>Link:</a><input style='min-width: 800px;' id='link'> </input></div>
 <div style='padding: 3px; display: inline-block;'><a>Token (SPO only):</a><input style='min-width: 800px;' id='token'> </input></div>
 <button id='go' onclick='go()'>go</button>
+<button id='go' onclick='go(true)'>goIFrame</button>
+
 <div id='container'></div>
 <script>
-function go() {
+function go(useIframe) {
     storeThings();
     const iframe = document.createElement('iframe');
     const container = document.getElementById('container');
@@ -53,7 +55,8 @@ function go() {
             loadPrague.default(
                     "${document.getElementById('link').value}",
                     "${document.getElementById('token').value}",
-                    document.getElementById('prague-component'));`;
+                    document.getElementById('prague-component'),
+                    ${useIframe});`;
         framedoc.body.appendChild(runScript);
     }
 

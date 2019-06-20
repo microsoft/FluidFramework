@@ -59,17 +59,13 @@ export class UrlResolver implements IUrlResolver {
         "microsoft-my.sharepoint-df.com": token,
         "microsoft-my.sharepoint.com": token,
       };
-      // tslint:disable-next-line: max-line-length
-      const resolvedP = spoJoinSession(this.tenant, this.container, tokens, microsoftLogin);
-      return resolvedP;
+
+      return spoJoinSession(this.tenant, this.container, tokens, microsoftLogin);
 
     } else {
       const storageUrl = `https://${url.host.replace("www", "historian")}/repos/${this.tenant}`;
       const ordererUrl = `https://${url.host.replace("www", "alfred")}`;
       const deltaStorageUrl = `${ordererUrl}/deltas/${this.tenant}/${this.container}`;
-      // TODO: SABRONER This is the url through the container? Seems a little weird
-      // Should this have query params?
-      // deltaStorageUrl = `prague://${base}`;
 
       return {
         endpoints: {

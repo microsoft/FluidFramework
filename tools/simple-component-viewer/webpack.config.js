@@ -30,6 +30,11 @@ module.exports = {
         modules: ["node_modules"],
         extensions: [".js", ".ts", ".tsx"]
     },
+    node: {
+        fs: 'empty',
+        tls: 'empty',
+        net: 'empty'
+    },
     devtool: "source-map",
     watch: true,
     stats: 'minimal',

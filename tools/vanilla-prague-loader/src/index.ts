@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+  // tslint:disable: max-line-length no-unsafe-any
 
-import { loadSharepointPragueComponent } from "@ms/office-prague-container";
 import { Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { HostPlatform } from "./hostPlatform";
 import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { UrlResolver } from "./url-resolvers/urlResolver";
-import { initializeChaincode, registerAttach } from "./utils";
+import { Host, initializeChaincode, registerAttach } from "./utils";
+
+// tslint:disable-next-line: no-var-requires no-require-imports
+const packageJson = require("../package.json");
 
 /**
  * A single line, basic function for loading Prague Components.
@@ -34,9 +36,8 @@ export function LoadPragueComponent(
   if (isRouterliciousUrl(url)) {
     console.log("Routerlicious");
     componentP = LoadPragueRouterliciousComponent(url, div, getToken);
-  } else if (isSpoUrl(url)) {
-    console.log("SPO");
-    componentP = loadSharepointPragueComponent(div, url, getToken, undefined, appId);
+  } else {
+    throw new Error("Non-Compatible URL.");
   }
   return componentP;
 }
@@ -70,15 +71,69 @@ export async function LoadPragueRouterliciousComponent(
   );
 
   const container = await loader.resolve({ url });
-  const platform = new HostPlatform(div);
+  const platform = new Host(div);
+
   registerAttach(loader, container, url, platform);
 
   // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
   // package.
   if (!container.existing) {
     await initializeChaincode(container, urlResolver.chaincode)
-      .catch((error) => console.error("chaincode error", error));
+      .catch((error) => {
+        console.error("chaincode error", error);
+      });
   }
+}
+
+/**
+ * Create an IFrame for loading Prague Components.
+ *
+ * @param url Url of the Prague component to be loaded
+ * @param getToken A function that either returns an SPO token, or a Routerlicious tenant token
+ * @param div The div to load the component into
+ * @param appId The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ */
+export async function loadIFramedPragueComponent(
+  url: string,
+  getToken: () => Promise<string>,
+  div: HTMLDivElement,
+  appId: string): Promise<any> {
+
+  const iframe = document.createElement("iframe");
+  iframe.id = "containerid";
+
+  // TODO use flow-utils resize observer to see the size of the prague component
+  // TODO resize the iframe
+  // TODO pass in the url
+  iframe.srcdoc = `
+  <html>
+
+  <body>
+      <div id="componentDiv"></div>
+      <script src="https://pragueauspkn-3873244262.azureedge.net/@prague/r11s-vanilla-loader@${packageJson.version}/dist/main.bundle.js"
+          async> </script>
+      <script>
+          function start() {
+              console.log(window);
+              window.vanilla.LoadPragueComponent("${url}", () => "${await getToken()}", document.getElementById("componentDiv"), "${appId}")
+          }
+
+          window.addEventListener("message", (message) => {
+              console.log(message);
+              start();
+          })
+      </script>
+  </body>
+
+  </html>
+  `;
+
+  div.appendChild(iframe);
+  iframe.onload = () => {
+    iframe.contentWindow.postMessage("hello", "*");
+  };
+
+  return;
 }
 
 const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";

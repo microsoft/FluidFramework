@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server",
+    "build": "webpack",
     "auth": "npx --package vsts-npm-auth@latest vsts-npm-auth -config .npmrc"
   },
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
-    "@prague/vanilla-loader": "^0.0.14"
+    "@prague/r11s-vanilla-loader": "0.0.30"
   },
   "devDependencies": {
     "typescript": "~3.4.5",

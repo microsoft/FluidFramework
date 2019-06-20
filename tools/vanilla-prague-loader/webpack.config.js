@@ -25,7 +25,7 @@ module.exports = env => {
         output: {
             filename: "[name].bundle.js",
             path: path.resolve(__dirname, "dist"),
-            library: "[name]",
+            library: "vanilla",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939            
             devtoolNamespace: "prague/vanilla-loader",
@@ -35,11 +35,9 @@ module.exports = env => {
             publicPath: '/dist'
         },
         node: {
-            dgram: 'empty',
             fs: 'empty',
-            net: 'empty',
             tls: 'empty',
-            child_process: 'empty',
+            net: 'empty'
         },
     }, isProduction
             ? require("./webpack.prod")
