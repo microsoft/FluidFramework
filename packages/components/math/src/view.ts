@@ -81,8 +81,8 @@ export class MathView extends View<IMathInit, IMathProps> {
     }
 
     private verticalCaretEnter(e: ICaretEvent) {
-        const { left, width } = e.detail.caretBounds;
-        const offset = Dom.findNodeOffset(this.cell.firstChild, left + width / 2, -Infinity, +Infinity);
+        const { left } = e.detail.caretBounds;
+        const offset = Dom.findNodeOffset(this.cell.firstChild, left, -Infinity, +Infinity);
         this.input.setSelectionRange(offset, offset, "forward");
         e.preventDefault();
         e.stopPropagation();

@@ -17,11 +17,20 @@ export class SimpleTemplateView extends FlowViewComponent<ISimpleTemplateProps, 
         return { root: this.template.clone() };
     }
 
-    public get cursorTarget() { return this.template.get(this.root, "cursorTarget").firstChild; }
-
     public updating(props: Readonly<ISimpleTemplateProps>, state: Readonly<ISimpleTemplateViewState>): ISimpleTemplateViewState {
         return state;
     }
 
     public unmounting() { /* do nothing */ }
+
+    public caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number {
+        return 0;
+    }
+
+    public segmentOffsetToNodeAndOffset(offset: number): { node: Node; nodeOffset: number; } {
+        return {
+            node: this.template.get(this.root, "cursorTarget").firstChild,
+            nodeOffset: 0,
+        };
+    }
 }

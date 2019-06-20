@@ -12,12 +12,10 @@ import { ISegment, Marker } from "@prague/merge-tree";
 import { InclusionView } from "../inclusion";
 import { LineBreakView } from "../linebreak";
 import { ParagraphView } from "../paragraph";
-import { TagView } from "../tag";
+import { TagLayout } from "../tag/layout";
 import { TextLayout } from "../text";
 import { LayoutContext } from "./layoutcontext";
 import { LayoutSink } from "./layoutsink";
-
-const inclusionRootSym = Symbol("Flow.Editor.Marker.InclusionRoot");
 
 export class DocumentLayout extends LayoutSink<undefined> {
     public static readonly instance = new DocumentLayout();
@@ -36,27 +34,23 @@ export class DocumentLayout extends LayoutSink<undefined> {
                 return true;
 
             case DocSegmentKind.paragraph:
-                context.emitNode(span, ParagraphView.factory, {});
+                context.emitView(span, ParagraphView.factory, {});
                 return true;
 
             case DocSegmentKind.lineBreak:
-                context.emitNode(span, LineBreakView.factory, {});
+                context.emitView(span, LineBreakView.factory, {});
                 return true;
 
             case DocSegmentKind.beginTag:
-                const { tag, classList, style } = segment.properties;
-                context.pushNode(
-                    new SegmentSpan(position, segment, startOffset, endOffset),
-                    TagView.factory,
-                    { tag, classList, style });
+                context.pushLayout(TagLayout, position, segment, startOffset, endOffset);
                 return true;
 
             case DocSegmentKind.inclusion:
-                this.emitInclusion(context, span, segment as Marker);
+                context.emitView(span, InclusionView.factory, { marker: segment as Marker, doc: context.doc });
                 return true;
 
             case DocSegmentKind.endRange:
-                context.popNode();
+                context.popView();
                 return true;
 
             default:
@@ -65,18 +59,4 @@ export class DocumentLayout extends LayoutSink<undefined> {
     }
 
     public onPop() { /* do nothing */ }
-
-    // Ensures that a foreign inclusion's view is mounted and up to date.
-    private emitInclusion(context: LayoutContext, span: SegmentSpan, marker: Marker) {
-        let child = marker[inclusionRootSym];
-        if (!child) {
-            // DANGER: Note that Inclusion.caretEnter(..) compensates for the extra <span> required
-            //         for the "div" style mounting.
-            child = document.createElement("span");
-            context.doc.getComponent(marker, [["div", Promise.resolve(child)]]);
-            marker[inclusionRootSym] = child;
-        }
-
-        context.emitNode(span, InclusionView.factory, { child });
-    }
 }

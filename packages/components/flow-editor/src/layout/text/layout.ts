@@ -5,9 +5,9 @@
 
 import { getCssClassList, SegmentSpan } from "@chaincode/flow-document";
 import { ISegment, TextSegment } from "@prague/merge-tree";
-import { TextView } from ".";
 import { LayoutContext } from "../document/layoutcontext";
 import { LayoutSink } from "../document/layoutsink";
+import { TextView } from "../text";
 
 interface ITextLayoutState {
     span: SegmentSpan;
@@ -34,7 +34,7 @@ class TextLayoutSink extends LayoutSink<ITextLayoutState> {
 
     public onPop({ span, classList }: ITextLayoutState, context: LayoutContext) {
         const text = span.segments.join("").substr(span.startOffset, span.endPosition - span.startPosition);
-        context.emitNode(span, TextView.factory, { text, classList });
+        context.emitView(span, TextView.factory, { text, classList });
     }
 }
 

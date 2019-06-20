@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Caret, Char, Direction, Dom, Template } from "@prague/flow-util";
+import { FlowDocument } from "@chaincode/flow-document";
+import { IComponent } from "@prague/container-definitions";
+import { Caret, Char, Direction, Template } from "@prague/flow-util";
+import { Marker } from "@prague/merge-tree";
+import { ComponentDisplayType, IComponentRenderHTML } from "@prague/runtime-definitions";
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
@@ -17,7 +21,10 @@ const template = new Template({
     ],
 });
 
-export interface IInclusionProps { child: Element; }
+export interface IInclusionProps {
+    doc: FlowDocument;
+    marker: Marker;
+}
 
 // tslint:disable-next-line:no-empty-interface
 export interface IInclusionViewState extends IViewState { }
@@ -48,6 +55,13 @@ export function shouldIgnoreEvent(e: Event): true | undefined {
 export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusionViewState> {
     public static readonly factory = () => new InclusionView();
 
+    public get isFocused() {
+        return this.inclusionRoot.contains(document.activeElement);
+    }
+
+    public caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number { return 0; }
+    public segmentOffsetToNodeAndOffset() { return { node: this.inclusionRoot, nodeOffset: 0 }; }
+
     public mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
         const root = template.clone();
 
@@ -55,14 +69,20 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
             root.addEventListener(type, markInclusionEvent);
         }
 
+        const slot = template.get(root, "slot");
+        props.doc.getComponent(props.marker, [[ "div", Promise.resolve(slot) ]]).then((component) => {
+            if (!slot.firstElementChild) {
+                const viewable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");
+                if (viewable) {
+                    viewable.render(slot as HTMLElement, ComponentDisplayType.Inline);
+                }
+            }
+        });
+
         return this.updating(props, { root });
     }
 
-    public get cursorTarget() { return template.get(this.state.root, "cursorTarget"); }
-
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
-        const { child } = props;
-        Dom.ensureFirstChild(template.get(state.root, "slot"), child);
         return state;
     }
 
@@ -72,18 +92,11 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
         }
     }
 
-    public get isFocused() {
-        return this.inclusionRoot.contains(document.activeElement);
-    }
-
     public caretEnter(direction: Direction, caretBounds: ClientRect) {
         return Caret.caretEnter(this.inclusionRoot, direction, caretBounds);
     }
 
     private get inclusionRoot() {
-        // DANGER: The extra '.firstElementChild' is to compensate for needing an extra element to
-        //         pass into the component's attach() method as the 'div' service.  Will need to update
-        //         if/when we change 'syncInclusion()'.
-        return template.get(this.state.root, "slot").firstElementChild.firstElementChild;
+        return template.get(this.state.root, "slot").firstElementChild;
     }
 }

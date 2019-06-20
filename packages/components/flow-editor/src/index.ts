@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export { Editor, IEditorProps } from "./components/editor";
+export { Editor, IEditorProps } from "./layout/editor";
 export { PagePosition } from "./pagination";
 
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
 import { Scheduler } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
-import { Editor } from "./components/editor";
+import { Editor } from "./layout/editor";
 
 export class FlowEditor extends Component {
     // tslint:disable-next-line:no-require-imports

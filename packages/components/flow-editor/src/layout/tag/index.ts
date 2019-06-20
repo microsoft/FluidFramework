@@ -8,7 +8,7 @@ import * as styles from "./index.css";
 
 // tslint:disable:no-empty-interface
 export interface ITagProps { tag: string; classList?: string; style?: string; }
-export interface ITagViewState extends IViewState { className?: string; style?: string; }
+export interface ITagViewState extends IViewState { }
 // tslint:enable:no-empty-interface
 
 const tagNameAttr = "data-tag-name";
@@ -19,10 +19,11 @@ export class TagView extends FlowViewComponent<ITagProps, ITagViewState> {
     public mounting(props: ITagProps): ITagViewState {
         const root = document.createElement(props.tag);
         root.setAttribute(tagNameAttr, props.tag);
+
         return { root };
     }
 
-    public get cursorTarget() { return this.root; }
+    public get slot() { return this.state.root; }
 
     public updating(props: Readonly<ITagProps>, state: Readonly<ITagViewState>): ITagViewState {
         const root = state.root;
@@ -30,18 +31,18 @@ export class TagView extends FlowViewComponent<ITagProps, ITagViewState> {
         console.assert(root.tagName === props.tag);
         console.assert(root.getAttribute(tagNameAttr) === props.tag);
 
-        const { classList, style } = props;
-
-        // The tag's 'className' is the 'styles.tag' style followed by any CSS style classes
-        // listed in 'props.classList'.
-        const className = classList
-            ? `${styles.tag} ${props.classList}`
-            : styles.tag;
-
-        this.syncCss(root as HTMLElement, className, style);
+        this.syncCss(root as HTMLElement, props, styles.tag);
 
         return state;
     }
 
     public unmounting() { /* do nothing */ }
+
+    public caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number {
+        return 0;
+    }
+
+    public segmentOffsetToNodeAndOffset(offset: number): { node: Node; nodeOffset: number; } {
+        return { node: this.slot, nodeOffset: offset };
+    }
 }

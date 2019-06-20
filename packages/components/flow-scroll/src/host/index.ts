@@ -5,7 +5,7 @@
 
 import { FlowDocument } from "@chaincode/flow-document";
 import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
-import { IComponent, IComponentContext } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
@@ -16,7 +16,7 @@ interface IHostConfig {
     context: IComponentContext;
     scheduler: Scheduler;
     doc: FlowDocument;
-    math: { create: () => IComponent };
+    math: { create: () => { url: string }};
 }
 
 const template = new Template(
@@ -66,7 +66,7 @@ export class HostView extends View<IHostConfig> {
         const insertMath = () => {
             const position = viewport.editor.cursorPosition;
             const instance = init.math.create();
-            init.doc.insertComponent(position, `/${instance.id}`);
+            init.doc.insertComponent(position, `/${instance.url}`);
         };
 
         const toggleSelection = (className: string) => {

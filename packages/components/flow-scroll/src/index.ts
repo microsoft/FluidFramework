@@ -13,7 +13,6 @@ import {
     IContainerContext,
     IRuntime,
 } from "@prague/container-definitions";
-import { IComponent } from "@prague/runtime-definitions";
 import { Scheduler } from "../../flow-util/dist";
 import { HostView } from "./host";
 import { importDoc } from "./template";
@@ -39,7 +38,7 @@ export class FlowHost extends Component {
 
     protected async opened() {
         const docP = this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true);
-        const mathP = this.openPlatform<{ create: () => IComponent }>("math");
+        const mathP = this.openPlatform<{ create: () => { url: string }}>("math");
         const div = await this.platform.queryInterface<Element>("div");
 
         const scheduler = new Scheduler();

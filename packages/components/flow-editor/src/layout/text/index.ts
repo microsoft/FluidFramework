@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Template } from "@prague/flow-util";
+import { Dom, Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
 import * as style from "./index.css";
 
@@ -21,17 +21,16 @@ export interface ITextProps {
 export interface ITextViewState extends IViewState { }
 
 export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
+    // Note: As long as textContent is not empty, the <span> must have a firstChild.
+    public get cursorTarget() { return this.state.root.firstChild; }
     public static readonly factory = () => new TextView();
 
     public mounting(props: Readonly<ITextProps>): ITextViewState {
         return this.updating(props, { root: template.clone() });
     }
 
-    // Note: As long as textContent is not empty, the <span> must have a firstChild.
-    public get cursorTarget() { return this.state.root.firstChild; }
-
     public updating(props: Readonly<ITextProps>, state: Readonly<ITextViewState>): ITextViewState {
-        const { text, classList } = props;
+        const { text } = props;
         console.assert(text, "Should not emit a TextView for empty text.");
 
         // Ensure the text content of the <p> tag is up to date (note that 'text' must be non-empty,
@@ -41,17 +40,20 @@ export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
             root.textContent = text;
         }
 
-        // The <p> tag's 'className' is the 'style.text' style followed by any CSS style classes
-        // listed in 'props.classList'.
-        const className = classList
-            ? `${style.text} ${props.classList}`
-            : style.text;
-
         // Ensure the <p> tag's 'className' and 'style' properties are up to date.
-        this.syncCss(root as HTMLElement, className, props.style);
+        this.syncCss(root as HTMLElement, props, style.text);
 
         return state;
     }
 
     public unmounting(state: Readonly<ITextViewState>) { /* do nothing */ }
+
+    public caretBoundsToSegmentOffset(x: number, top: number, bottom: number) {
+        return Dom.findNodeOffset(this.cursorTarget, x, top, bottom);
+    }
+
+    public segmentOffsetToNodeAndOffset(offset: number) {
+        const node = this.state.root.firstChild;
+        return { node, nodeOffset: Math.max(Math.min(offset, node.textContent.length), 0) };
+    }
 }

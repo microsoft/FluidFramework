@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { CaretEventType, Direction, getDeltaX, getDeltaY, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
+import { CaretEventType, Direction, getDeltaX, getDeltaY, ICaretBounds, ICaretEvent, KeyCode, Scheduler } from "@prague/flow-util";
+import { SequenceDeltaEvent } from "@prague/sequence";
 import { IViewState, View } from "..";
-import { SequenceDeltaEvent } from "../../../../../runtime/sequence/dist";
 import { debug } from "../../debug";
 import { IPaginationProvider, PagePosition } from "../../pagination";
 import { DocumentView, IDocumentProps } from "../document";
@@ -86,10 +86,21 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         root.addEventListener(CaretEventType.leave, this.onCaretLeave);
 
         props.doc.on("sequenceDelta", (e: SequenceDeltaEvent) => {
-            const { start, end } = this.state.docView.range;
-            if (start < e.end && e.start < end) {
+            // TODO: Filter invalidations to rendered range.  The challenge with this is that the document's
+            //       length has already changed (e.g., deleting the last position in a document results in an
+            //       op that effects a range no longer inside the document.)
+            //
+            // Some potential fixes:
+            //
+            //   1. DocumentView caches the positions it previous rendered, rather than return the positions
+            //      of LocalReferences, and then manually updates these on each op.
+            //
+            //   2. Use the data in the op to adjust 'docView.range' to account for it's state prior to the edit.
+            //
+            // const { start, end } = this.state.docView.range;
+            // if (start < e.end && e.start < end) {
                 this.invalidate();
-            }
+            // }
         });
 
         return this.updating(props, {
@@ -142,15 +153,23 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         this.state.docView.update(this.props);
     }
 
-    private delete(e: Event, deltaStart: number, deltaEnd: number) {
+    private delete(e: Event, direction: Direction) {
+        this.cursor.setDirection(direction);
         const { start, end } = this.cursor.selection;
+
         if (start === end) {
             // If no range is currently selected, delete the preceding character (if any).
-            this.doc.remove(start + deltaStart, end + deltaEnd);
+            const dx = getDeltaX(direction);
+            if (dx < 0) {
+                this.doc.remove(start - 1, end);
+            } else {
+                this.doc.remove(start, end + 1);
+            }
         } else {
             // Otherwise, delete the selected range.
             this.doc.remove(Math.min(start, end), Math.max(start, end));
         }
+
         e.preventDefault();
         e.stopPropagation();
     }
@@ -165,14 +184,17 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
     }
 
     private horizontalArrow(e: Event, direction: Direction, extendSelection: boolean) {
-        this.cursor.setDirection(direction);
-        this.cursor.moveBy(getDeltaX(direction), extendSelection);
-
         e.preventDefault();
         e.stopPropagation();
+
+        this.cursor.setDirection(direction);
+        this.cursor.moveBy(getDeltaX(direction), extendSelection);
     }
 
-    private verticalArrow(e: Event, direction: Direction, caretBounds: ClientRect, extendSelection: boolean) {
+    private verticalArrow(e: Event, direction: Direction, caretBounds: ICaretBounds, extendSelection: boolean) {
+        e.preventDefault();
+        e.stopPropagation();
+
         this.cursor.setDirection(direction);
 
         const initial = this.cursorPosition;
@@ -186,7 +208,7 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             end = Math.min(this.doc.findParagraph(range.end).end, length);
         } else {
             start = Math.max(this.doc.findParagraph(range.start - 1).start, 0);
-            end = Math.max(initial - 1, 0);
+            end = Math.max(initial, 0);
         }
 
         const searchFn = direction === Direction.down
@@ -199,9 +221,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
             const position = this.doc.getPosition(segment) + offset;
             this.cursor.moveTo(position, extendSelection);
         }
-
-        e.preventDefault();
-        e.stopPropagation();
     }
 
     private readonly onKeyDown = (ev: KeyboardEvent) => {
@@ -209,11 +228,11 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
         switch (keyCode) {
             // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
             case KeyCode.backspace: {
-                this.delete(ev, /* deltaStart: */ -1, /* deltaEnd: */ 0);
+                this.delete(ev, Direction.left);
                 break;
             }
             case KeyCode.delete: {
-                this.delete(ev, /* deltaStart: */ 0, /* deltaEnd: */ 1);
+                this.delete(ev, Direction.right);
                 break;
             }
             case KeyCode.arrowLeft: {
@@ -288,7 +307,6 @@ export class Editor extends View<IEditorProps, IEditorViewState> implements IPag
                 this.doc.getPosition(segment) + offset,
                 this.doc.length - 1);
             this.cursor.moveTo(position, false);
-            this.invalidate();
             ev.stopPropagation();
         }
     }

@@ -5,11 +5,14 @@
 
 import { Direction } from ".";
 import { getTabDirection } from "./direction";
+import { IRect } from "./rect";
+
+export type ICaretBounds = Pick<IRect, "left" | "top" | "bottom">;
 
 export interface ICaretEvent extends CustomEvent {
     detail: {
         direction: Direction;
-        caretBounds: ClientRect;
+        caretBounds: ICaretBounds;
     };
 }
 
@@ -20,7 +23,7 @@ export const enum CaretEventType {
 
 // tslint:disable-next-line:no-namespace
 export namespace Caret {
-    function dispatchCaretEvent(type: CaretEventType, target: Element, direction: Direction, caretBounds: ClientRect) {
+    function dispatchCaretEvent(type: CaretEventType, target: Element, direction: Direction, caretBounds: ICaretBounds) {
         return !(target.dispatchEvent(
             new CustomEvent(
                 type, { detail: { direction, caretBounds }, bubbles: true, cancelable: true, composed: true },
@@ -28,7 +31,7 @@ export namespace Caret {
         ));
     }
 
-    export function caretEnter(target: Element, direction: Direction, caretBounds: ClientRect) {
+    export function caretEnter(target: Element, direction: Direction, caretBounds: ICaretBounds) {
         const focusable = target.querySelectorAll(":enabled, [tabindex]");
         const focusTarget = (getTabDirection(direction) > 0
             ? focusable[0]
@@ -41,7 +44,7 @@ export namespace Caret {
         return dispatchCaretEvent(CaretEventType.enter, target, direction, caretBounds);
     }
 
-    export function caretLeave(target: Element, direction: Direction, caretBounds: ClientRect) {
+    export function caretLeave(target: Element, direction: Direction, caretBounds: ICaretBounds) {
         return dispatchCaretEvent(CaretEventType.leave, target, direction, caretBounds);
     }
 }

@@ -10,10 +10,40 @@ import { debug, domRangeToString, windowSelectionToString } from "../../debug";
 import { DocumentView } from "../document";
 
 const enum CaretStopKind {
-    none,
+    none = 0,       // Note: Must be zero to support coercion with 'CaretStopKind? || CaretStopKind.none'.
     normal,
     endOfPrevious,
 }
+
+const caretStops = {
+    [DocSegmentKind.beginTag]: {
+        [DocSegmentKind.beginTag]: CaretStopKind.none,
+        [DocSegmentKind.endRange]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.inclusion]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.lineBreak]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.paragraph]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.text]: CaretStopKind.endOfPrevious,
+    },
+    [DocSegmentKind.endRange]: {
+        [DocSegmentKind.beginTag]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.endRange]: CaretStopKind.none,
+        [DocSegmentKind.inclusion]: CaretStopKind.endOfPrevious,
+        [DocSegmentKind.lineBreak]: CaretStopKind.none,
+        [DocSegmentKind.paragraph]: CaretStopKind.normal,
+        [DocSegmentKind.text]: CaretStopKind.endOfPrevious,
+    },
+    [DocSegmentKind.inclusion]: CaretStopKind.normal,
+    [DocSegmentKind.lineBreak]: CaretStopKind.normal,
+    [DocSegmentKind.paragraph]: {
+        [DocSegmentKind.beginTag]: CaretStopKind.normal,
+        [DocSegmentKind.endRange]: CaretStopKind.normal,
+        [DocSegmentKind.inclusion]: CaretStopKind.normal,
+        [DocSegmentKind.lineBreak]: CaretStopKind.normal,
+        [DocSegmentKind.paragraph]: CaretStopKind.normal,
+        [DocSegmentKind.text]: CaretStopKind.endOfPrevious,
+    },
+    [DocSegmentKind.text]: CaretStopKind.normal,
+};
 
 export class Cursor {
     public get bounds() {
@@ -62,8 +92,8 @@ export class Cursor {
 
                 const selection = window.getSelection();
                 const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
-                startOffset = this.clampOffset(startNode, startOffset, anchorOffset);
-                endOffset = this.clampOffset(endNode, endOffset, focusOffset);
+                startOffset = this.clampOffset(startNode, startOffset);
+                endOffset = this.clampOffset(endNode, endOffset);
                 if (endOffset !== focusOffset || endNode !== focusNode || startOffset !== anchorOffset || startNode !== anchorNode) {
                     debug(`    set: (${domRangeToString(startNode, startOffset, endNode, endOffset)})`);
                     debug(`    was: (${windowSelectionToString()})`);
@@ -103,7 +133,6 @@ export class Cursor {
         this.startRef = this.updateRef(doc, this.startRef, start);
         debug(`    end:`);
         this.endRef = this.updateRef(doc, this.endRef, end);
-        this.sync();
     }
 
     public setDirection(direction: Direction) {
@@ -123,35 +152,25 @@ export class Cursor {
     }
 
     private getSegmentKindAt(position: number) {
-        return position < this.doc.length
+        // tslint:disable-next-line:binary-expression-operand-order
+        return 0 <= position && position < this.doc.length
             ? getDocSegmentKind(this.doc.getSegmentAndOffset(position).segment)
             : undefined;
     }
 
     private getCaretStop(position: number) {
         const endKind = this.getSegmentKindAt(position);
-        switch (endKind) {
-            case DocSegmentKind.text:
-            case DocSegmentKind.inclusion:
-            case DocSegmentKind.paragraph:
-            case DocSegmentKind.lineBreak:
-                return CaretStopKind.normal;
-            default:
-                if (position > 0) {
-                    switch (this.getSegmentKindAt(position - 1)) {
-                        case DocSegmentKind.text:
-                            return CaretStopKind.endOfPrevious;
-                        case DocSegmentKind.beginTag:
-                            if (endKind === DocSegmentKind.endRange) {
-                                return CaretStopKind.endOfPrevious;
-                            }
-                            break;
-                        default:
-                    }
-                }
-        }
+        const startKind = this.getSegmentKindAt(position - 1);
 
-        return CaretStopKind.none;
+        // tslint:disable:strict-boolean-expressions
+        let stopKind = caretStops[endKind] || CaretStopKind.none;
+        if (typeof stopKind !== "number") {
+            stopKind = stopKind[startKind] || CaretStopKind.none;
+        }
+        // tslint:enable:strict-boolean-expressions
+
+        debug(`      getCaretStop(${startKind}|${endKind}@${position}) -> ${stopKind}`);
+        return stopKind;
     }
 
     private slideCursor(start: number, direction: Direction) {
@@ -180,34 +199,42 @@ export class Cursor {
         } while (true);
 
         if (position !== start) {
-            debug(`      slideCursor: ${start} -> ${position}`);
+            debug(`      slideCursor: ${start} -> ${position}:${kind}`);
         }
 
         return { position, kind };
     }
 
     private updateRef(doc: FlowDocument, ref: LocalReference, position: number) {
+        if (isNaN(position)) {
+            debug(`      ${position} (ignored)`);
+            return ref;
+        }
+
         position = this.slideCursor(position, Direction.right).position;
         const oldPosition = doc.localRefToPosition(ref);
-        if (position === oldPosition) {
+        if (!(position !== oldPosition)) {
             debug(`      ${position} (unchanged)`);
             return ref;
         }
 
         debug(`      ${position} (was: ${oldPosition})`);
+
+        // Schedule 'sync()' update the window selection to match the update refs.
+        this.sync();
+
         doc.removeLocalRef(ref);
         return doc.addLocalRef(position);
     }
 
-    private clampOffset(container: Node, offset: number | undefined, defaultOffset: number) {
-        const length = container.textContent.length;
-        return Math.max(
-            0,
-            Math.min(
-                offset === undefined
-                    ? defaultOffset
-                    : offset,
-                length));
+    private clampOffset(node: Node, offset: number) {
+        const length = node.nodeType === Node.TEXT_NODE
+            ? node.textContent
+                ? node.textContent.length
+                : 0
+            : node.childNodes.length;
+
+        return Math.max(0, Math.min(offset, length));
     }
 
     private readonly onSelectionChange = () => {

@@ -4,11 +4,11 @@
  */
 
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "@chaincode/flow-document";
-import { bsearch2, Dom } from "@prague/flow-util";
+import { bsearch2, Dom, Rect } from "@prague/flow-util";
 import {
     TextSegment,
 } from "@prague/merge-tree";
-import { IFlowViewComponent, View } from "../";
+import { IFlowViewComponent, View } from "..";
 import { debug, nodeAndOffsetToString } from "../../debug";
 import { PagePosition } from "../../pagination";
 import { InclusionView } from "../inclusion";
@@ -44,7 +44,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         const { doc, start, end } = this.state;
         return {
             start: this.getPagePosition(doc, start, 0),
-            end: this.getPagePosition(doc, end, +Infinity),
+            end: this.getPagePosition(doc, end, this.doc.length),
         };
     }
 
@@ -114,15 +114,18 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             return this.emittedRange.end;
         }
 
-        const { segment, offset } = this.nodeOffsetToSegmentOffset(node, nodeOffset);
-        const max = getDocSegmentKind(segment) === DocSegmentKind.text
-            ? segment.cachedLength
-            : segment.cachedLength - 1;
-        const position = this.state.doc.getPosition(segment) + Math.min(offset, max);
+        const maybeSegmentAndOffset = this.nodeOffsetToSegmentOffset(node, nodeOffset);
+        if (maybeSegmentAndOffset) {
+            const { segment, offset } = maybeSegmentAndOffset;
+            const position = this.state.doc.getPosition(segment) + Math.min(offset, segment.cachedLength);
 
-        debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> ${position}`);
+            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> ${position}`);
 
-        return position;
+            return position;
+        } else {
+            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> NaN`);
+            return NaN;
+        }
     }
 
     public positionToNodeOffset(position: number) {
@@ -132,26 +135,11 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         if (!viewInfo) {
             const { start } = this.emittedRange;
             return position < start
-                ? { node: this.leadingSpan.firstChild }
-                : { node: this.trailingSpan.firstChild };
+                ? { node: this.leadingSpan.firstChild, nodeOffset: 0 }
+                : { node: this.trailingSpan.firstChild, nodeOffset: 0 };
         }
 
-        const node = viewInfo.view.cursorTarget;
-        const { segment } = this.doc.getSegmentAndOffset(position);
-
-        switch (getDocSegmentKind(segment)) {
-            case DocSegmentKind.text:
-                return {
-                    node,
-                    nodeOffset: Math.min(
-                        position - viewInfo.span.startPosition,
-                        node.textContent.length,
-                    ),
-                };
-            default: {
-                return { node };
-            }
-        }
+        return viewInfo.view.segmentOffsetToNodeAndOffset(position - viewInfo.span.startPosition);
     }
 
     protected mounting(props: IDocumentProps) {
@@ -166,80 +154,80 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     }
 
     protected updating(props: Readonly<IDocumentProps>, state: DocumentViewState) {
-        let findPageBreak = (ctx: LayoutContext) => false;
+        const findPageBreak = (ctx: LayoutContext) => false;
 
-        if (props.paginationBudget !== undefined) {
-            const pageLimit = state.root.getBoundingClientRect().top + props.paginationBudget;
+        // if (props.paginationBudget !== undefined) {
+        //     const pageLimit = state.root.getBoundingClientRect().top + props.paginationBudget;
 
-            let remainingChars = 5000;
+        //     let remainingChars = 5000;
 
-            findPageBreak = (ctx: LayoutContext) => {
-                {
-                    const viewInfo = ctx.lastEmitted;
-                    const seg = viewInfo.span.firstSegment;
+        //     findPageBreak = (ctx: LayoutContext) => {
+        //         {
+        //             const viewInfo = ctx.lastEmitted;
+        //             const seg = viewInfo.span.firstSegment;
 
-                    switch (getDocSegmentKind(seg)) {
-                        case DocSegmentKind.inclusion:
-                            remainingChars = 0;
-                            break;
+        //             switch (getDocSegmentKind(seg)) {
+        //                 case DocSegmentKind.inclusion:
+        //                     remainingChars = 0;
+        //                     break;
 
-                        default:
-                            remainingChars -= viewInfo.span.endPosition - viewInfo.span.startPosition;
-                    }
+        //                 default:
+        //                     remainingChars -= viewInfo.span.endPosition - viewInfo.span.startPosition;
+        //             }
 
-                    if (remainingChars > 0) {
-                        return false;
-                    }
+        //             if (remainingChars > 0) {
+        //                 return false;
+        //             }
 
-                    // If the paginator says we've exceeded the amount to render, break here.
-                    //
-                    // Note: There may be yet-to-removed views below the last view inserted, therefore we should
-                    //       compare this view's bottom with the page limit rather than us the root's height.
-                    const viewBottom = viewInfo.view.root.getBoundingClientRect().bottom;
-                    if (viewBottom <= pageLimit) {
-                        return false;
-                    }
+        //             // If the paginator says we've exceeded the amount to render, break here.
+        //             //
+        //             // Note: There may be yet-to-removed views below the last view inserted, therefore we should
+        //             //       compare this view's bottom with the page limit rather than us the root's height.
+        //             const viewBottom = viewInfo.view.root.getBoundingClientRect().bottom;
+        //             if (viewBottom <= pageLimit) {
+        //                 return false;
+        //             }
 
-                    debug(`HALT(position:${viewInfo.span.endPosition}): ${viewBottom} > ${pageLimit}`);
-                }
+        //             debug(`HALT(position:${viewInfo.span.endPosition}): ${viewBottom} > ${pageLimit}`);
+        //         }
 
-                remainingChars = 5000;
-                let lastViewInfo: IViewInfo<unknown, IFlowViewComponent<unknown>>;
+        //         remainingChars = 5000;
+        //         let lastViewInfo: IViewInfo<unknown, IFlowViewComponent<unknown>>;
 
-                for (lastViewInfo of ctx.emitted) {
-                    const viewBounds = lastViewInfo.view.root.getBoundingClientRect();
-                    if (viewBounds.bottom > pageLimit) {
-                        break;
-                    }
-                }
+        //         for (lastViewInfo of ctx.emitted) {
+        //             const viewBounds = lastViewInfo.view.root.getBoundingClientRect();
+        //             if (viewBounds.bottom > pageLimit) {
+        //                 break;
+        //             }
+        //         }
 
-                const cursorTarget = lastViewInfo.view.cursorTarget;
-                const measurementRange = document.createRange();
-                measurementRange.setStart(cursorTarget, 0);
+        //         const cursorTarget = lastViewInfo.view.cursorTarget;
+        //         const measurementRange = document.createRange();
+        //         measurementRange.setStart(cursorTarget, 0);
 
-                const breakPoint = bsearch2((index) => {
-                    measurementRange.setEnd(cursorTarget, index);
-                    const rangeBottom = measurementRange.getBoundingClientRect().bottom;
-                    const exceeds = rangeBottom <= pageLimit;
-                    debug(`  [0..${index}): ${rangeBottom} ${exceeds ? ">=" : "<"} ${pageLimit} '${cursorTarget.textContent.slice(0, index)}'`);
-                    return exceeds;
-                }, 0, cursorTarget.textContent.length) + lastViewInfo.span.startPosition - 1;
+        //         const breakPoint = bsearch2((index) => {
+        //             measurementRange.setEnd(cursorTarget, index);
+        //             const rangeBottom = measurementRange.getBoundingClientRect().bottom;
+        //             const exceeds = rangeBottom <= pageLimit;
+        //             debug(`  [0..${index}): ${rangeBottom} ${exceeds ? ">=" : "<"} ${pageLimit} '${cursorTarget.textContent.slice(0, index)}'`);
+        //             return exceeds;
+        //         }, 0, cursorTarget.textContent.length) + lastViewInfo.span.startPosition - 1;
 
-                this.setPaginationStop(props, state, breakPoint);
+        //         this.setPaginationStop(props, state, breakPoint);
 
-                debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
+        //         debug("breakpoint: %d -> %d", lastViewInfo.span.endPosition, breakPoint);
 
-                return true;
-            };
-        }
+        //         return true;
+        //     };
+        // }
 
         const start = this.getPagePosition(props.doc, props.start, 0);
 
         // 1st layout pass trims beginning of DOM and finds page break, but does not trim
         // the end of the DOM.
-        this.sync(props, state, start, +Infinity, [], findPageBreak);
+        this.sync(props, state, start, props.doc.length, [], findPageBreak);
 
-        const stop = this.getPagePosition(props.doc, state.end, +Infinity);
+        const stop = this.getPagePosition(props.doc, state.end, props.doc.length);
 
         // 2nd layout pass trims end of DOM to page break and reports tracked positions.
         this.sync(props, state, start, stop, props.trackedPositions, () => false);
@@ -263,10 +251,11 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
 
     private positionToViewInfo(position: number) {
         const emitted = this.state.emitted;
-        const viewInfo = emitted[bsearch2(
-            (index) => emitted[index].span.endPosition <= position,
+        const viewIndex = bsearch2((index) =>
+            (index < (emitted.length - 1)) && position >= emitted[index + 1].span.startPosition,
             0,
-            emitted.length)];
+            emitted.length);
+        const viewInfo = emitted[viewIndex];
 
         if (!viewInfo) {
             debug(`positionToViewInfo(${position}) -> undefined`);
@@ -284,25 +273,25 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             : doc.localRefToPosition(position[0]);
     }
 
-    private setPaginationStop(props: IDocumentProps, state: DocumentViewState, position: number) {
-        const { doc, onPaginationStop } = props;
+    // private setPaginationStop(props: IDocumentProps, state: DocumentViewState, position: number) {
+    //     const { doc, onPaginationStop } = props;
 
-        if (state.end === undefined) {
-            state.end = [ doc.addLocalRef(position) ];
-        } else {
-            const oldRef = state.end[0];
-            if (position === doc.localRefToPosition(oldRef)) {
-                return;
-            }
+    //     if (state.end === undefined) {
+    //         state.end = [ doc.addLocalRef(position) ];
+    //     } else {
+    //         const oldRef = state.end[0];
+    //         if (position === doc.localRefToPosition(oldRef)) {
+    //             return;
+    //         }
 
-            doc.removeLocalRef(oldRef);
-            state.end = [ doc.addLocalRef(position) ];
-        }
+    //         doc.removeLocalRef(oldRef);
+    //         state.end = [ doc.addLocalRef(position) ];
+    //     }
 
-        if (onPaginationStop) {
-            onPaginationStop(state.end);
-        }
-    }
+    //     if (onPaginationStop) {
+    //         onPaginationStop(state.end);
+    //     }
+    // }
 
     // Runs state machine, starting with the paragraph at 'start'.
     private sync(props: Readonly<IDocumentProps>, state: DocumentViewState, start: number, end: number, trackedPositions: ITrackedPosition[], halt: (context: LayoutContext) => boolean) {
@@ -377,7 +366,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     private findVertical(start: number, end: number, x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
         debug(`findVertical(${start}..${end}, ${x}, ${top}-${bottom})`);
 
-        let bestRect = { top: +Infinity, bottom: -Infinity, left: +Infinity, right: -Infinity };
+        let bestRect = Rect.empty;
         let bestDx = +Infinity;
         let bestViewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
 
@@ -422,13 +411,15 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         debug(`Best candidate: ${bestViewInfo.view.root.id}: ${bestViewInfo.view.root.textContent}`);
         debug(`    rect: ${JSON.stringify(bestRect)}`);
 
-        return getDocSegmentKind(bestViewInfo.span.firstSegment) === DocSegmentKind.text
-            ? this.nodeOffsetToSegmentOffset(
-                bestViewInfo.view.cursorTarget,
-                Dom.findNodeOffset(
-                    bestViewInfo.view.cursorTarget,
-                    Math.min(Math.max(x, bestRect.left), bestRect.right),
-                    bestRect.top, bestRect.bottom))
-            : { segment: bestViewInfo.span.firstSegment, offset: 0 };
+        const segmentAndOffset = bestViewInfo.span.spanOffsetToSegmentOffset(
+            bestViewInfo.view.caretBoundsToSegmentOffset(
+                Math.min(Math.max(x, bestRect.left), bestRect.right),
+                bestRect.top,
+                bestRect.bottom),
+        );
+
+        debug(`{ segment: ${segmentAndOffset.segment}, segmentOffset: ${segmentAndOffset.offset} }`);
+
+        return segmentAndOffset;
     }
 }

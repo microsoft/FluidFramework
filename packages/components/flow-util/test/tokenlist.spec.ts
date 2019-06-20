@@ -64,6 +64,26 @@ describe("TokenList", () => {
             const actual = TokenList.set("a b", "a");
             assert.deepStrictEqual(actual, "a b");
         });
+
+        it("undefined 'a' -> 'a'", () => {
+            const actual = TokenList.set(undefined, "a");
+            assert.deepStrictEqual(actual, "a");
+        });
+
+        it("'a' undefined -> 'a'", () => {
+            const actual = TokenList.set(undefined, "a");
+            assert.deepStrictEqual(actual, "a");
+        });
+
+        it("undefined undefined -> undefined", () => {
+            const actual = TokenList.set(undefined, undefined);
+            assert.deepStrictEqual(actual, undefined);
+        });
+
+        it("'' '' -> ''", () => {
+            const actual = TokenList.set("", "");
+            assert.deepStrictEqual(actual, "");
+        });
     });
 
     describe("unset", () => {

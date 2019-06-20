@@ -57,8 +57,11 @@ export class Scheduler {
             }
 
             queue(() => {
-                callback();
+                // Reset 'scheduled' before invoking callback to prevent a coalesced task from
+                // becoming permenantly unschedulable if 'callback()' throws.
                 scheduled = false;
+
+                callback();
             });
 
             scheduled = true;
@@ -66,8 +69,15 @@ export class Scheduler {
     }
 
     private dispatch(tasks: TaskCallback[]) {
-        for (const task of tasks) {
-            task();
+        // Outer loop to resume dispatch if any of the tasks throw an error.
+        for (let i = 0; i < tasks.length;) {
+            const length = tasks.length;
+            try {
+                // Inner loop avoids overhead of try/catch per task.
+                do { tasks[i++](); } while (i < length);
+            } catch (error) {
+                console.error(error);
+            }
         }
         tasks.length = 0;
     }
@@ -92,8 +102,8 @@ export class Scheduler {
     }
 
     private readonly processIdleTasks = () => {
+        // If we've dispatched tasks recently, reschedule the idle queue.
         const start = Date.now();
-
         const due = this.idleDueMS(start);
         if (start < due) {
             this.scheduleIdleTasks(due);

@@ -116,11 +116,11 @@ export class LayoutContext {
     /**
      * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.
      */
-    public notifyTrackedPositionListeners(node: Node, span: SegmentSpan) {
+    public notifyTrackedPositionListeners(view: IFlowViewComponent<unknown>, span: SegmentSpan) {
         const { startPosition, endPosition } = span;
 
         // Notify listeners if any of the consumed segments intersected a tracked position.
-        this.queueNotifications(node, startPosition, endPosition);
+        this.queueNotifications(view, startPosition, endPosition);
     }
 
     // Invoked at completion of the layout pass to unmount all IViews that are no longer in the rendered window.
@@ -154,20 +154,20 @@ export class LayoutContext {
 
     public elementToViewInfo(element: Element) { return this.state.elementToViewInfo.get(element); }
 
-    public pushNode<TProps, TView extends IFlowViewComponent<TProps>>(
+    public pushView<TProps, TView extends IFlowViewComponent<TProps>>(
         span: SegmentSpan,
         factory: () => TView,
         props: TProps,
     ) {
-        const viewInfo = this.emitNode(span, factory, props);
-        this.parentAndPrevious.push({ parent: viewInfo.view.root, previous: undefined });
+        const viewInfo = this.emitView(span, factory, props);
+        this.parentAndPrevious.push({ parent: viewInfo.view.slot, previous: undefined });
     }
 
     /**
      * Ensure that the IView for the given set of Segments has been created and that it's root DOM node
      * is at the correct position within the current parent.
      */
-    public emitNode<TProps, TView extends IFlowViewComponent<TProps>>(
+    public emitView<TProps, TView extends IFlowViewComponent<TProps>>(
         span: SegmentSpan,
         factory: () => TView,
         props: TProps,
@@ -211,12 +211,12 @@ export class LayoutContext {
         this.previous = viewRoot;
         this.emitted.push(viewInfo);
 
-        this.notifyTrackedPositionListeners(viewInfo.view.cursorTarget, span);
+        this.notifyTrackedPositionListeners(viewInfo.view, span);
 
         return viewInfo as IViewInfo<TProps, TView>;
     }
 
-    public popNode() {
+    public popView() {
         this.parentAndPrevious.pop();
     }
 
@@ -274,7 +274,7 @@ export class LayoutContext {
     /**
      * Invoked for each DOM node we emit.  Position is the starting position rendered by the current IView.
      */
-    private queueNotifications(node: Node, position: number, end: number) {
+    private queueNotifications(view: IFlowViewComponent<unknown>, position: number, end: number) {
         const trackedPositions = this.pendingTrackedPositions;
         let topTracked: ITrackedPosition;
 
@@ -282,10 +282,10 @@ export class LayoutContext {
         // tslint:disable-next-line:no-conditional-assignment
         while ((topTracked = this.nextTrackedPosition) && topTracked.position < end) {
             const callback = topTracked.callback;
-            const nodeOffset = topTracked.position - position;
+            const { node, nodeOffset } = view.segmentOffsetToNodeAndOffset(topTracked.position - position);
 
             debug("Tracked position @%d -> '%s':%d", topTracked.position, node.textContent, nodeOffset);
-            console.assert(nodeOffset < node.textContent.length);
+            console.assert(nodeOffset <= node.textContent.length);
 
             if (topTracked.sync) {
                 callback(node, nodeOffset);

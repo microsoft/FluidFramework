@@ -43,9 +43,18 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
     protected abstract updating(props: Readonly<TProps>, state: TState): TState;
     protected abstract unmounting(state: TState): void;
 
-    protected syncCss(element: HTMLElement, classList: string | undefined, style: string | undefined) {
-        if (!areStringsEquivalent(classList, element.className)) {
-            element.className = classList;
+    protected syncCss(element: HTMLElement, props: { style?: string, classList?: string }, className?: string) {
+        const { style, classList } = props;
+
+        // Note: Similar to TokenList.set(), but elides the search to see if 'className' is already in 'classList'.
+        const classes = !classList
+            ? className                             // If classList is undefined/empty, use 'className'
+            : !className
+                ? classList                         // If className is undefined/empty, use 'classList'
+                : `${className} ${classList}`;      // Otherwise prepend 'className' to 'classList'
+
+        if (!areStringsEquivalent(classes, element.className)) {
+            element.className = classes;
         }
         if (!areStringsEquivalent(style, element.style.cssText)) {
             element.style.cssText = style;
@@ -54,11 +63,15 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
 }
 
 export interface IFlowViewComponent<TProps> extends IView<TProps> {
-    readonly cursorTarget: Node;
+    readonly slot: Element;
+    caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number;
+    segmentOffsetToNodeAndOffset(offset: number): { node: Node, nodeOffset: number };
 }
 
 export abstract class FlowViewComponent<TProps, TState extends IViewState>
     extends View<TProps, TState>
     implements IFlowViewComponent<TProps> {
-    public abstract get cursorTarget(): Node;
+    public abstract caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number;
+    public abstract segmentOffsetToNodeAndOffset(offset: number): { node: Node, nodeOffset: number };
+    public get slot() { return this.root; }
 }

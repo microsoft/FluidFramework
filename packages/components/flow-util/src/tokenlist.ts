@@ -23,11 +23,13 @@ export function findToken(tokenList: string, token: string) {
 // tslint:disable-next-line:no-namespace
 export namespace TokenList {
     export function set(tokenList: string, token: string) {
-        return tokenList && tokenList.length > 0
-            ? findToken(tokenList, token) !== undefined
-                ? tokenList                     // If the token already exists, return the original list
-                : `${tokenList} ${token}`       // ...otherwise append it.
-            : token;                            // If the current list is empty, return the token.
+        return !tokenList
+            ? token                                 // If the list is undefined/empty, return the token
+            : !token
+                ? tokenList                         // If the token is undefined/empty, return the list
+                : findToken(tokenList, token) !== undefined
+                    ? tokenList                     // If the token is already in the list, return the list as-is
+                    : `${tokenList} ${token}`;      // ...otherwise append the token to the list.
     }
 
     export function unset(tokenList: string, token: string) {

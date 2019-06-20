@@ -4,7 +4,7 @@
  */
 
 import { Component } from "@prague/app-component";
-import { ServicePlatform } from "@prague/component-runtime";
+import { IComponent } from "@prague/container-definitions";
 import { randomId, TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {
@@ -26,7 +26,7 @@ import {
     TextSegment,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IComponent } from "@prague/runtime-definitions";
+import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -146,7 +146,7 @@ export class FlowDocument extends Component {
         ]);
     }
 
-    public async getComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>) {
+    public async getComponent(marker: Marker, services: ReadonlyArray<[string, Promise<any>]>): Promise<IComponent | ILegacyComponent> {
         const url = marker.properties.url as string;
         if (url.indexOf("/") === 0) {
             const response = await this.context.hostRuntime.request({ url });
@@ -154,10 +154,9 @@ export class FlowDocument extends Component {
                 return Promise.reject("Not found");
             }
 
-            const component = response.value as IComponent;
-            await component.attach(new ServicePlatform(services));
+            return response.value as IComponent;
         } else {
-            await this.runtime.openComponent(url, true, services);
+            return this.runtime.openComponent(url, true, services);
         }
     }
 
