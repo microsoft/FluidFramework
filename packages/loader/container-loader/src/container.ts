@@ -856,6 +856,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
+            this.logger.sendErrorEvent({eventName: "SubmitMessageWithNoConnection"});
             return -1;
         }
 
@@ -863,6 +864,10 @@ export class Container extends EventEmitter implements IContainer {
         const maxOpSize = this._deltaManager!.maxMessageSize;
 
         let clientSequenceNumber: number;
+
+        // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
+        // there will be a lot of escape characters that can make it up to 2x bigger!
+        // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
         if (serializedContent.length <= maxOpSize) {
             clientSequenceNumber = this._deltaManager!.submit(type, serializedContent);
         } else {
@@ -879,7 +884,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
         const contentLength = content.length;
-        const chunkN = Math.floor(contentLength / maxOpSize) + ((contentLength % maxOpSize === 0) ? 0 : 1);
+        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
         let offset = 0;
         let clientSequenceNumber: number = 0;
         for (let i = 1; i <= chunkN; i = i + 1) {

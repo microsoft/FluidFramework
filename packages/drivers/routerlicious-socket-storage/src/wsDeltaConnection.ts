@@ -109,14 +109,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
                 token,
                 versions: [protocolVersion],
             };
-            this.socket.send(
-                JSON.stringify(["connect", connectMessage]),
-                (error) => {
-                    if (error) {
-                        this.emit("error", error);
-                    }
-                },
-            );
+            this.sendMessage(JSON.stringify(["connect", connectMessage]));
         };
 
         this.socket.onmessage = (ev) => {
@@ -141,14 +134,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         });
 
         this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
-            this.socket.send(
-                JSON.stringify([submitType, this.details!.clientId, work]),
-                (error) => {
-                    if (error) {
-                        this.emit("error", error);
-                    }
-                },
-            );
+            this.sendMessage(JSON.stringify([submitType, this.details!.clientId, work]));
         });
     }
 
@@ -178,7 +164,6 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
                 }
             });
         });
-
     }
 
     public disconnect() {
@@ -189,5 +174,20 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         const args = JSON.parse(data as string) as any[];
         // tslint:disable-next-line:no-unsafe-any
         this.emit(args[0], ...args.slice(1));
+    }
+
+    private sendMessage(message: string) {
+        // NOTE: We use which is isomorphic-ws, and it maps either to WebSocket (in browser) or ws (in Node.js)
+        // Later has callback (2nd argument to send), but the former does not!
+        // If you are enabling WebSockets (this code path is not used right now), and this causes trouble,
+        // please refactor code appropriately to make it work, and not lose error notifications in either case!
+        this.socket.send(
+            message,
+            (error) => {
+                if (error) {
+                    this.emit("error", error);
+                }
+            },
+        );
     }
 }

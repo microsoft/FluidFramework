@@ -39,9 +39,6 @@ const DefaultChunkSize = 16 * 1024;
 // This can be anything other than null
 const ImmediateNoOpResponse = "";
 
-// TODO - These two should come from connect protocol. For now, splitting will never occur since
-// it's bigger than DefaultChunkSize
-const DefaultMaxContentSize = 32 * 1024;
 const DefaultContentBufferSize = 10;
 
 /**
@@ -111,11 +108,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     public get maxMessageSize(): number {
         assert(this.connection);
         return this.connection!.details.maxMessageSize || DefaultChunkSize;
-    }
-
-    // TODO - This should be instantiated as a part of connection protocol.
-    public get maxContentSize(): number {
-        return DefaultMaxContentSize;
     }
 
     constructor(
@@ -361,8 +353,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.removeAllListeners();
     }
 
-    private shouldSplit(contents: string): boolean {
-        return (!!contents) && (contents.length > this.maxContentSize);
+    private shouldSplit(contents: string | null | undefined): boolean {
+        // Disabling message splitting - there is no compelling reason to use it.
+        // Container.submitMessage should chunk messages properly.
+        // Content can still be 2x size of maxMessageSize due to character escaping.
+        const splitSize = this.maxMessageSize * 2;
+        this.logger.debugAssert(!contents || contents.length <= splitSize, "Splitting should not happen");
+        return false;
     }
 
     // Specific system level message attributes are need to be looked at by the server.
