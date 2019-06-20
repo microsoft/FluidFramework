@@ -78,8 +78,15 @@ export class Cell extends SharedObject implements ICell {
     public static getFactory() {
         return new CellExtension();
     }
-
+    /**
+     * The data held by this cell.
+     */
     private data: any;
+
+    /**
+     * Tracks the most recent clientSequenceNumber of any pending op, or -1 if there is no pending op.
+     */
+    private pendingClientSequenceNumber: number;
 
     /**
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
@@ -87,6 +94,7 @@ export class Cell extends SharedObject implements ICell {
      */
     constructor(id: string, runtime: IComponentRuntime) {
         super(id, runtime, CellExtension.Type);
+        this.pendingClientSequenceNumber = -1;
     }
 
     /**
@@ -125,7 +133,7 @@ export class Cell extends SharedObject implements ICell {
         };
 
         this.setCore(value);
-        this.submitLocalMessage(op);
+        this.submitCellMessage(op);
     }
 
     // Deletes the value from the cell.
@@ -135,7 +143,7 @@ export class Cell extends SharedObject implements ICell {
         };
 
         this.deleteCore();
-        this.submitLocalMessage(op);
+        this.submitCellMessage(op);
     }
 
     /**
@@ -222,6 +230,15 @@ export class Cell extends SharedObject implements ICell {
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        if (this.pendingClientSequenceNumber !== -1) {
+            // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
+            if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {
+                // This is the ACK, so clear pending
+                this.pendingClientSequenceNumber = -1;
+            }
+            return;
+        }
+
         if (message.type === MessageType.Operation && !local) {
             const op: ICellOperation = message.contents;
 
@@ -248,5 +265,10 @@ export class Cell extends SharedObject implements ICell {
     private deleteCore() {
         this.data = undefined;
         this.emit("delete");
+    }
+
+    private submitCellMessage(op: ICellOperation): void {
+        // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
+        this.pendingClientSequenceNumber = this.submitLocalMessage(op);
     }
 }
