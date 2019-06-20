@@ -12,7 +12,7 @@ import * as util from "util";
  */
 export class FileDocumentStorageService implements api.IDocumentStorageService  {
 
-    private versionName: string;
+    private versionName?: string;
     constructor(private readonly path: string) {}
 
     public get repositoryUrl(): string {
@@ -28,7 +28,7 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             return null;
         }
         const fileName = `${this.path}/${version.id}.json`;
-        let snapshotTree: api.ISnapshotTree = null;
+        let snapshotTree: api.ISnapshotTree | null = null;
         if (fs.existsSync(fileName)) {
             const data = fs.readFileSync(fileName);
             snapshotTree = JSON.parse(data.toString("utf-8"));
@@ -43,24 +43,20 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
      * @param count - Number of versions to be returned.
      */
     public async getVersions(sha: string, count: number): Promise<api.IVersion[]> {
-        const versions: api.IVersion[] = [];
-        let version: api.IVersion;
         if (fs.existsSync(`${this.path}/${sha}`)) {
-            version = {
+            this.versionName = sha;
+            return [{
                 id: `${sha}/tree`,
                 treeId: `${sha}/tree`,
-            };
-            this.versionName = sha;
+            }];
         } else if (fs.existsSync(`${this.path}/${this.versionName}/${sha}.json`)) {
-            version = {
+            return [{
                 id: `${this.versionName}/${sha}`,
                 treeId: `${this.versionName}/${sha}`,
-            };
+            }];
         } else {
             return [];
         }
-        versions.push(version);
-        return versions;
     }
 
     /**
@@ -85,13 +81,15 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
 
     public async getContent(version: api.IVersion, path: string): Promise<string> {
         const fileName = `${this.path}/${version.id}.json`;
-        let snapshotTree: api.ISnapshotTree = null;
+
         if (fs.existsSync(fileName)) {
             const data = fs.readFileSync(fileName);
-            snapshotTree = JSON.parse(data.toString("utf-8"));
+            const snapshotTree: api.ISnapshotTree = JSON.parse(data.toString("utf-8"));
+            const content = await this.read(snapshotTree.blobs[path]);
+            return content;
+        } else {
+            return Promise.reject("File not found for given version and path.");
         }
-        const content = await this.read(snapshotTree.blobs[path]);
-        return content;
     }
 
     public async write(
@@ -99,14 +97,14 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
         parents: string[],
         message: string,
         ref: string,
-    ): Promise<api.IVersion | null> {
+    ): Promise<api.IVersion> {
             const messages = message.split(";");
-            let outDirName: string;
-            let lastOp: string;
+            let outDirName: string = "output";
+            let lastOp: string = "";
             messages.forEach((singleMessage) => {
                 const key = singleMessage.split(":");
                 if (key.length > 0 && key[0] === "OutputDirectoryName") {
-                    outDirName =  key[1] ? key[1] : "output";
+                    outDirName = key[1] ? key[1] : "output";
                 } else if (key.length > 0 && key[0] === "OP") {
                     lastOp = key[1];
                 }
@@ -115,6 +113,7 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             const writeFile = util.promisify(fs.writeFile);
             const mkdir = util.promisify(fs.mkdir);
             let componentName = "container";
+            // tslint:disable-next-line: strict-boolean-expressions
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {

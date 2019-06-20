@@ -39,7 +39,7 @@ export class FileDocumentService implements api.IDocumentService {
         return ReplayFileDeltaConnection.create(this.fileDeltaStorageService);
     }
 
-    public async branch(): Promise<string | null> {
+    public async branch(): Promise<string> {
         return Promise.reject("Not implemented");
     }
 

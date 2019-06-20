@@ -26,7 +26,7 @@ export class FileDeltaStorageService implements api.IDocumentDeltaStorageService
             this.isGetCalledFirstTime = false;
             return this.getCore(false, from, to);
         } else {
-            return this.getCore(true, from, to - 1);
+            return this.getCore(true, from, to === undefined ? undefined : to - 1);
         }
     }
 
@@ -48,16 +48,13 @@ export class FileDeltaStorageService implements api.IDocumentDeltaStorageService
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
-        const requestedMessages: api.ISequencedDocumentMessage[] = [];
-        if (from === undefined || to === undefined || isFromWebSocket === false) {
-            return requestedMessages;
-        }
-        const readFrom = from ? Math.min(from, this.messages.length - 1) : 0;
-        const readTo = to ? Math.min(to, this.messages.length) : this.messages.length;
-        this.messages.slice(readFrom, readTo).forEach((element) => {
-            requestedMessages.push(element);
-        });
+        const readFrom = from === undefined ? 0 : Math.max(from, 0); // inclusive
+        const readTo = to === undefined ? this.messages.length : Math.min(to, this.messages.length); // exclusive
 
-        return requestedMessages;
+        if (isFromWebSocket === false || readFrom >= this.messages.length || readTo <= 0) {
+            return [];
+        }
+
+        return this.messages.slice(readFrom, readTo);
     }
 }
