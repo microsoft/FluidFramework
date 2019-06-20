@@ -33,7 +33,8 @@ describe("Routerlicious", () => {
                     mongoManager,
                     "nodes",
                     "documents",
-                    "deltas");
+                    "deltas",
+                    "scribeDeltas");
                 const storage = new services.DocumentStorage(databaseManager, testTenantManager, producer);
                 const alfred = app.create(
                     defaultConfig,

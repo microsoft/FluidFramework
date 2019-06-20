@@ -1,0 +1,59 @@
+{
+  "name": "@component/blob-manager",
+  "version": "0.5.0",
+  "description": "Blob management component",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "author": "Microsoft",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "dependencies": {
+    "@kurtb/pinpoint": "^0.1.2",
+    "@prague/client-api": "^0.5.0",
+    "@prague/map": "^0.5.0",
+    "@prague/component-runtime": "^0.5.0",
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "@prague/utils": "^0.5.0",
+    "@types/angular": "^1.6.50",
+    "@types/angular-route": "^1.7.0",
+    "@types/debug": "^0.0.31",
+    "@types/google-maps": "^3.2.0",
+    "@types/jquery": "^3.3.6",
+    "@types/leaflet": "^1.2.11",
+    "@types/node": "^10.12.12",
+    "angular": "^1.7.4",
+    "angular-route": "^1.7.4",
+    "bootstrap": "^3.3.7",
+    "debug": "^4.1.1",
+    "file-loader": "^2.0.0",
+    "google-maps": "^3.3.0",
+    "jquery": "^3.3.1",
+    "leaflet": "^1.3.4"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.5.0",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  }
+}

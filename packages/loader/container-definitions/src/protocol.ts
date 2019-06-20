@@ -19,6 +19,15 @@ export enum MessageType {
     // Message used to reject a pending proposal
     Reject = "reject",
 
+    // Summary op
+    Summarize = "summarize",
+
+    // Summary op written
+    SummaryAck = "summaryAck",
+
+    // Summary op write failure
+    SummaryNack = "summaryNack",
+
     // Blob uploaded
     BlobUploaded = "blobUploaded",
 
@@ -175,4 +184,21 @@ export interface ISignalMessage {
     clientId: string;
 
     content: any;
+}
+
+export interface ISummaryContent {
+    // handle reference to the summary data
+    handle: string;
+
+    // Messge included as part of the summary
+    message: string;
+
+    // Handles to parent summaries of the proposed new summary
+    parents: string[];
+
+    // Handle to the current latest summary stored by the service
+    head: string;
+
+    // TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
+    // This could be encoded in the summary itself as well but then would require the client to download it to check
 }

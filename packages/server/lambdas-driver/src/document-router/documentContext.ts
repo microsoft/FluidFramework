@@ -46,7 +46,7 @@ export class DocumentContext extends EventEmitter implements IContext {
      * Updates the head offset for the context.
      */
     public setHead(head: number) {
-        assert(head > this.head);
+        assert(head > this.head, `${head} > ${this.head}`);
 
         // When moving back to a state where head and tail differ we again subtract one from the head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
@@ -59,7 +59,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
     public checkpoint(offset: number) {
         // Assert offset is between the current tail and head
-        assert(offset > this.tail && offset <= this.head);
+        assert(offset > this.tail && offset <= this.head, `${offset} > ${this.tail} && ${offset} <= ${this.head}`);
 
         if (this.closed) {
             return;

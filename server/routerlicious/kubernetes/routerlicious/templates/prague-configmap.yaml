@@ -30,7 +30,8 @@ data:
                 "partitions": "partitions",
                 "tenants": "tenants",
                 "nodes": "nodes",
-                "reservations": "reservations"
+                "reservations": "reservations",
+                "scribeDeltas": "scribeDeltas"
             }
         },
         "kafka": {
@@ -102,6 +103,9 @@ data:
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000
+        },
+        "scribe": {
+            "kafkaClientId": "{{ template "scribe.fullname" . }}"
         },
         "system": {
             "topics": {

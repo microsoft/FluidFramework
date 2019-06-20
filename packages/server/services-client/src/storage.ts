@@ -68,6 +68,7 @@ export interface IGitManager {
     getRawUrl(sha: string): string;
     getContent(commit: string, path: string): Promise<git.IBlob>;
     createBlob(content: string, encoding: string): Promise<git.ICreateBlobResponse>;
+    createGitTree(params: git.ICreateTreeParams): Promise<git.ITree>;
     createTree(files: api.ITree): Promise<git.ITree>;
     createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit>;
     getRef(ref: string): Promise<git.IRef>;

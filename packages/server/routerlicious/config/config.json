@@ -18,7 +18,8 @@
             "partitions": "partitions",
             "tenants": "tenants",
             "nodes": "nodes",
-            "reservations": "reservations"
+            "reservations": "reservations",
+            "scribeDeltas": "scribeDeltas"
         }
     },
     "kafka": {
@@ -80,6 +81,9 @@
         "groupId": "deli",
         "checkpointBatchSize": 10,
         "checkpointTimeIntervalMsec": 1000
+    },
+    "scribe": {
+        "kafkaClientId": "scribe"
     },
     "system": {
         "topics": {

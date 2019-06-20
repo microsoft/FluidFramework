@@ -4,11 +4,17 @@
  */
 
 import {
-    IProposal,
+    FileMode,
+    IDocumentAttributes,
+    IDocumentMessage,
     ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
+    ISummaryContent,
+    ITreeEntry,
     MessageType,
+    TreeEntry,
 } from "@prague/container-definitions";
+import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
+import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
 import { IGitManager } from "@prague/services-client";
 import {
     extractBoxcar,
@@ -16,9 +22,11 @@ import {
     IContext,
     IDocument,
     IKafkaMessage,
+    IProducer,
+    IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
-    ITrackedProposal,
+    RawOperationType,
     SequencedOperationType,
 } from "@prague/services-core";
 import * as Deque from "double-ended-queue";
@@ -26,36 +34,37 @@ import * as _ from "lodash";
 import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";
 
-interface IGitPackfileHandle {
-    refs: Array<{ref: string; sha: string }>;
-}
-
 export class ScribeLambda extends SequencedLambda {
-    private pendingSummaries: Deque<ITrackedProposal>;
+    // value of the last processed Kafka offset
     private lastOffset: number;
+
+    // pending checkpoint information
+    private pendingCheckpoint: IScribe;
+    private pendingP: Promise<void>;
+    private pendingCheckpointMessages = new Deque<ISequencedOperationMessage>();
+
+    // messages not yet included within protocolHandler
+    private pendingMessages = new Deque<ISequencedDocumentMessage>();
+
+    // current sequence/msn of the last processed offset
+    private sequenceNumber: number;
+    private minSequenceNumber: number;
 
     constructor(
         context: IContext,
-        private collection: ICollection<IDocument>,
+        private documentCollection: ICollection<IDocument>,
+        private messageCollection: ICollection<ISequencedOperationMessage>,
         private document: IDocument,
         private storage: IGitManager,
+        private producer: IProducer,
+        private protocolHandler: ProtocolOpHandler,
+        private protocolHead: number,
+        messages: ISequencedOperationMessage[],
     ) {
         super(context);
 
-        // initialize document.scribe if it doesn't exist
-        if (!document.scribe) {
-            document.scribe = {
-                logOffset: -1,
-                proposals: [],
-            };
-        }
-
         this.lastOffset = document.scribe.logOffset;
-
-        // sort items so that they are in sequenceNumber order
-        const proposals = document.scribe.proposals;
-        proposals.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-        this.pendingSummaries = new Deque<ITrackedProposal>(proposals);
+        this.pendingMessages.push(...messages.map((message) => message.operation));
     }
 
     public async handlerCore(message: IKafkaMessage): Promise<void> {
@@ -65,153 +74,327 @@ export class ScribeLambda extends SequencedLambda {
             return;
         }
 
-        const boxcar = extractBoxcar(message);
+        try {
+            const boxcar = extractBoxcar(message);
 
-        // The dirty bit will track whether we need to persist our tracked state to MongoDB
-        let dirty = false;
+            for (const baseMessage of boxcar.contents) {
+                if (baseMessage.type === SequencedOperationType) {
+                    const value = baseMessage as ISequencedOperationMessage;
 
-        for (const baseMessage of boxcar.contents) {
-            if (baseMessage.type === SequencedOperationType) {
-                const value = baseMessage as ISequencedOperationMessage;
-                const target = `${value.tenantId}/${value.documentId}`;
+                    // Add the message to the list of pending for this document and those that we need
+                    // to include in the checkpoint
+                    this.pendingMessages.push(value.operation);
+                    this.pendingCheckpointMessages.push(value);
 
-                // Track proposals
-                if (this.isSystemMessage(value.operation)) {
-                    const systemMessage = value.operation as ISequencedDocumentSystemMessage;
+                    // Update the current sequence and min sequence numbers
+                    const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
+                    this.sequenceNumber = value.operation.sequenceNumber;
+                    this.minSequenceNumber = value.operation.minimumSequenceNumber;
 
-                    // I believe I just need to track - via Mongo or whatever - a summary op proposal as well
-                    // as when the MSN for that document goes above the SN for the proposal
-
-                    // When the MSN goes above the proposal then I do the ref swap
-
-                    switch (value.operation.type) {
-                        case MessageType.Propose:
-                            const proposal = JSON.parse(systemMessage.contents) as IProposal;
-
-                            if (proposal.key === "summary") {
-                                // When this happens I need to start tracking it for the document and store in Mongo.
-                                // When the MSN goes above the proposal # then I consider it valid and lock it in.
-                                // At this point I go and do the write to historian.
-
-                                // Will need to be able to lookup, for a tenant, the storage location, and then
-                                // perform the ref updates.
-
-                                const trackedProposal: ITrackedProposal = {
-                                    proposal,
-                                    rejections: 0,
-                                    sequenceNumber: systemMessage.sequenceNumber,
-                                };
-                                this.pendingSummaries.push(trackedProposal);
-                                dirty = true;
-                            }
-
-                            break;
-
-                        case MessageType.Reject:
-                            const rejection = JSON.parse(systemMessage.contents) as number;
-
-                            for (let i = 0; i < this.pendingSummaries.length; i++) {
-                                const item = this.pendingSummaries.get(i);
-                                if (item.sequenceNumber === rejection) {
-                                    item.rejections++;
-                                    dirty = true;
-
-                                    break;
-                                }
-
-                                if (item.sequenceNumber > rejection) {
-                                    break;
-                                }
-                            }
-
-                            break;
-
-                        case MessageType.ClientJoin:
-                            // const join = JSON.parse(systemMessage.data) as IClientJoin;
-                            // break;
-                        case MessageType.ClientLeave:
-                            // const clientId = JSON.parse(systemMessage.data) as string;
-                            // break;
-                        default:
-                            // non-core message type - ignored
+                    if (msnChanged) {
+                        // When the MSN changes we can process up to it to save space
+                        // winston.info(`MSN changed to ${this.minSequenceNumber}@${this.sequenceNumber}`);
+                        this.processFromPending(this.minSequenceNumber);
                     }
-                }
 
-                while (this.pendingSummaries.length > 0 &&
-                    this.pendingSummaries.peekFront().sequenceNumber <= value.operation.minimumSequenceNumber) {
-                    const popped = this.pendingSummaries.pop();
-                    if (popped.rejections === 0) {
-                        winston.info(`${target} summary op accepted @ ${popped.sequenceNumber}`);
-                        await this.summarize(popped);
+                    if (value.operation.type === MessageType.Summarize) {
+                        const content = value.operation.contents as ISummaryContent;
+
+                        // Process up to the summary op value to get the protocol state at the summary op
+                        this.processFromPending(value.operation.referenceSequenceNumber);
+                        await this.summarize(
+                            content,
+                            this.protocolHandler.minimumSequenceNumber,
+                            this.protocolHandler.sequenceNumber,
+                            this.protocolHandler.quorum.snapshot(),
+                            value.operation.sequenceNumber);
                     }
-                    dirty = true;
                 }
             }
+        } catch (e) {
+            winston.error(`${this.document.tenantId}/${this.document.documentId}`, e);
         }
 
-        if (dirty) {
-            const update: IScribe = {
-                logOffset: message.offset,
-                proposals: this.pendingSummaries.toArray(),
-            };
-
-            await this.collection.update(
-                {
-                    documentId: this.document.documentId,
-                    tenantId: this.document.tenantId,
-                },
-                {
-                    scribe: update,
-                },
-                null);
-        }
-
-        this.context.checkpoint(message.offset);
+        this.checkpoint(message.offset);
     }
 
     public close() {
         return;
     }
 
-    private isSystemMessage(message: ISequencedDocumentMessage): boolean {
-        switch (message.type) {
-            case MessageType.ClientJoin:
-            case MessageType.ClientLeave:
-            case MessageType.Propose:
-            case MessageType.Reject:
-                return true;
+    private processFromPending(target: number) {
+        while (this.pendingMessages.length > 0 && this.pendingMessages.peekFront().sequenceNumber <= target) {
+            const message = this.pendingMessages.shift();
+            // winston.info(`Handle message ${JSON.stringify(message)}`);
 
-            default:
-                return false;
+            if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
+                message.contents = JSON.parse(message.contents);
+            }
+
+            this.protocolHandler.processMessage(message, false);
         }
     }
 
-    private async summarize(proposal: ITrackedProposal): Promise<void> {
-        winston.info(`Proposal! ${JSON.stringify(proposal)}`);
+    private checkpoint(logOffset: number) {
+        const protocolState = this.protocolHandler.getProtocolState();
 
-        // Things to do...
-        // ... signal the ref change somehow
+        const checkpoint: IScribe = {
+            logOffset,
+            minimumSequenceNumber: this.minSequenceNumber,
+            protocolState,
+            sequenceNumber: this.sequenceNumber,
+        };
 
-        // TODO this operation needs to run idempotently. Need to check to see if we have already updated the ref
-        // and that the write invariants hold
+        this.checkpointCore(checkpoint);
+    }
 
-        const summary = proposal.proposal.value as IGitPackfileHandle;
-        for (const ref of summary.refs) {
-            try {
-                const existingRef = await this.storage.getRef(ref.ref);
-                if (existingRef) {
-                    await this.storage.upsertRef(ref.ref, ref.sha);
-                } else {
-                    await this.storage.createRef(ref.ref, ref.sha);
-                }
-            } catch (ex) {
-                // Remove the catch once fully stable
-                winston.error(ex);
-            }
+    private checkpointCore(checkpoint: IScribe) {
+        if (this.pendingP) {
+            this.pendingCheckpoint = checkpoint;
+            return;
         }
 
-        winston.info(`Summarized! ${JSON.stringify(proposal)}`);
+        this.pendingP = this.writeCheckpoint(checkpoint);
+        this.pendingP.then(
+            () => {
+                this.pendingP = undefined;
+                this.context.checkpoint(checkpoint.logOffset);
 
-        // Signal to redis the existance of the summary op or insert an op into the stream?
+                if (this.pendingCheckpoint) {
+                    const pending = this.pendingCheckpoint;
+                    this.pendingCheckpoint = undefined;
+                    this.checkpointCore(pending);
+                }
+            },
+            (error) => {
+                this.context.error(error, true);
+            });
+    }
+
+    /**
+     * Writes the checkpoint information to MongoDB
+     */
+    private async writeCheckpoint(checkpoint: IScribe) {
+        // The order of the three operations below is important.
+        // We start by writing out all pending messages to the database. This may be more messages that we would
+        // have seen at the current checkpoint we are trying to write (because we continue process messages while
+        // waiting to write a checkpoint) but is more efficient and simplifies the code path.
+        //
+        // We then write the update to the document collection. This marks a log offset inside of MongoDB at which
+        // point if Kafka restartes we will not do work prior to this logOffset. At this point the snapshot
+        // history has been written, all ops needed are written, and so we can store the final mark.
+        //
+        // And last we delete all mesages in the list prior to the protocol sequence number. From now on these
+        // will no longer be referenced.
+        const inserts = this.pendingCheckpointMessages.toArray();
+        this.pendingCheckpointMessages.clear();
+        await this.messageCollection
+            .insertMany(inserts, false)
+            .catch((error) => {
+                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                // All other errors result in a rejected promise.
+                if (error.code !== 11000) {
+                    // Needs to be a full rejection here
+                    return Promise.reject(error);
+                }
+            });
+
+        // Write out the full state first that we require
+        await this.documentCollection.update(
+            {
+                documentId: this.document.documentId,
+                tenantId: this.document.tenantId,
+            },
+            {
+                scribe: checkpoint,
+            },
+            null);
+
+        // And then delete messagse we no longer will reference
+        await this.messageCollection
+            .deleteMany({
+                "documentId": this.document.documentId,
+                "operation.sequenceNumber": { $lte : checkpoint.protocolState.sequenceNumber },
+                "tenantId": this.document.tenantId,
+            });
+    }
+
+    /**
+     * Helper function that performs the final summary. After first doing some basic validation against the
+     * parameters of the summary then goes and writes it by appending the protocol data to the tree specified
+     * by the summary.
+     */
+    private async summarize(
+        content: ISummaryContent,
+        minimumSequenceNumber: number,
+        sequenceNumber: number,
+        quorumSnapshot: IQuorumSnapshot,
+        summarySequenceNumber: number,
+    ): Promise<void> {
+        winston.info(`START Summary! ${JSON.stringify(content)}`);
+
+        // If the sequence number for the protocol head is greater than current sequence number then we
+        // have already captured this summary and are processing this message due to a replay of the stream.
+        // As such we can skip it.
+        if (this.protocolHead >= sequenceNumber) {
+            return;
+        }
+
+        // The summary must reference the existing summary to be valid. This guards against accidental sends of
+        // two summaries at the same time. In this case the first one wins.
+        const existingRef = await this.storage.getRef(this.document.documentId);
+        if (existingRef.object.sha !== content.handle) {
+            await this.sendSummaryNack(summarySequenceNumber);
+            return;
+        }
+
+        // We also validate that the parent summary is valid
+        try {
+            await Promise.all(content.parents.map((parentSummary) => this.storage.getCommit(parentSummary)));
+        } catch (e) {
+            await this.sendSummaryNack(summarySequenceNumber);
+            return;
+        }
+
+        // At this point the summary op and its data are all valid and we can perform the write to history
+        const documentAttributes: IDocumentAttributes = {
+            branch: this.document.documentId,
+            minimumSequenceNumber,
+            sequenceNumber,
+        };
+
+        const entries: ITreeEntry[] = [
+            {
+                mode: FileMode.File,
+                path: "quorumMembers",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(quorumSnapshot.members),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "quorumProposals",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(quorumSnapshot.proposals),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "quorumValues",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(quorumSnapshot.values),
+                    encoding: "utf-8",
+                },
+            },
+            {
+                mode: FileMode.File,
+                path: "attributes",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify(documentAttributes),
+                    encoding: "utf-8",
+                },
+            },
+        ];
+
+        const [protocolTree, appSummaryTree] = await Promise.all([
+            this.storage.createTree({ entries, id: null }),
+            this.storage.getTree(content.handle, false),
+        ]);
+
+        // winston.info("SUMMARY IS");
+        // winston.info(JSON.stringify(entries, null, 2));
+
+        // winston.info("TREE");
+        // winston.info(JSON.stringify(appSummaryTree, null, 2));
+
+        // Combine the app summary with .protocol
+        const newTreeEntries = appSummaryTree.tree.map((value) => {
+            const createTreeEntry: ICreateTreeEntry = {
+                mode: value.mode,
+                path: value.path,
+                sha: value.sha,
+                type: value.type,
+            };
+            return createTreeEntry;
+        });
+        newTreeEntries.push({
+            mode: FileMode.Directory,
+            path: ".protocol",
+            sha: protocolTree.sha,
+            type: "tree",
+        });
+
+        const gitTree = await this.storage.createGitTree({ tree: newTreeEntries });
+        const commitParams: ICreateCommitParams = {
+            author: {
+                date: new Date().toISOString(),
+                email: "praguertdev@microsoft.com",
+                name: "Routerlicious Service",
+            },
+            message: content.message,
+            parents: content.parents,
+            tree: gitTree.sha,
+        };
+
+        const commit = await this.storage.createCommit(commitParams);
+
+        if (existingRef) {
+            await this.storage.upsertRef(this.document.documentId, commit.sha);
+        } else {
+            await this.storage.createRef(this.document.documentId, commit.sha);
+        }
+
+        await this.sendSummaryAck(commit.sha, sequenceNumber, summarySequenceNumber);
+        winston.info(`END Summary! ${JSON.stringify(content)}`);
+    }
+
+    private async sendSummaryAck(handle: string, sequenceNumber: number, summarySequenceNumber: number) {
+        const operation: IDocumentMessage = {
+            clientSequenceNumber: -1,
+            contents: {
+                handle,
+                sequenceNumber,
+                summarySequenceNumber,
+            },
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.SummaryNack,
+        };
+
+        await this.sendToDeli(operation);
+    }
+
+    private async sendSummaryNack(summarySequenceNumber: number) {
+        const operation: IDocumentMessage = {
+            clientSequenceNumber: -1,
+            contents: summarySequenceNumber,
+            referenceSequenceNumber: -1,
+            traces: [],
+            type: MessageType.SummaryNack,
+        };
+
+        await this.sendToDeli(operation);
+    }
+
+    private sendToDeli(operation: IDocumentMessage): Promise<any> {
+        const message: IRawOperationMessage = {
+            clientId: null,
+            documentId: this.document.documentId,
+            operation,
+            tenantId: this.document.tenantId,
+            timestamp: Date.now(),
+            type: RawOperationType,
+        };
+
+        return this.producer.send(
+            message,
+            this.document.tenantId,
+            this.document.documentId);
     }
 }

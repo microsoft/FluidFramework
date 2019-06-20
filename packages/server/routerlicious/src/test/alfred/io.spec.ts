@@ -55,6 +55,7 @@ describe("Routerlicious", () => {
                         mongoManager,
                         collectionNames,
                         collectionNames,
+                        collectionNames,
                         collectionNames);
                     const testStorage = new services.DocumentStorage(
                         databaseManager,

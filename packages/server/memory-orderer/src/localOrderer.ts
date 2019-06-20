@@ -6,10 +6,12 @@
 import {
     IClient,
     IClientJoin,
+    IDocumentAttributes,
     IDocumentMessage,
     IDocumentSystemMessage,
     MessageType,
 } from "@prague/container-definitions";
+import { ProtocolOpHandler } from "@prague/container-loader";
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
@@ -35,6 +37,8 @@ import {
     IProducer,
     IPublisher,
     IRawOperationMessage,
+    IScribe,
+    ISequencedOperationMessage,
     ITaskMessageSender,
     ITenantManager,
     ITopic,
@@ -52,6 +56,13 @@ export interface ISubscriber {
     readonly webSocket?: IWebSocket;
     send(topic: string, ...args: any[]): void;
 }
+
+const DefaultScribe: IScribe = {
+    logOffset: -1,
+    minimumSequenceNumber: -1,
+    protocolState: undefined,
+    sequenceNumber: -1,
+};
 
 class WebSocketSubscriber implements ISubscriber {
     public get id(): string {
@@ -258,6 +269,18 @@ class LocalOrdererConnection implements IOrdererConnection {
     }
 }
 
+async function fetchLatestSummaryState(gitManager: IGitManager, documentId: string): Promise<number> {
+    const existingRef = await gitManager.getRef(documentId);
+    if (!existingRef) {
+        return -1;
+    }
+
+    const content = await gitManager.getContent(existingRef.object.sha, ".protocol/attributes");
+    const attributes = JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDocumentAttributes;
+
+    return attributes.sequenceNumber;
+}
+
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
@@ -280,11 +303,20 @@ export class LocalOrderer implements IOrderer {
         deliContext: IContext = new LocalContext(),
         clientTimeout: number = ClientSequenceTimeout) {
 
-        const [details, documentCollection, deltasCollection] = await Promise.all([
+        const [details, documentCollection, deltasCollection, scribeDeltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
             databaseManager.getDocumentCollection(),
             databaseManager.getDeltaCollection(tenantId, documentId),
+            databaseManager.getScribeDeltaCollection(tenantId, documentId),
         ]);
+
+        const [protocolHead, messages] = gitManager
+            ?
+                await Promise.all([
+                    fetchLatestSummaryState(gitManager, documentId),
+                    scribeDeltasCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1}),
+                ])
+            : [0, []];
 
         return new LocalOrderer(
             details,
@@ -292,6 +324,7 @@ export class LocalOrderer implements IOrderer {
             documentId,
             documentCollection,
             deltasCollection,
+            scribeDeltasCollection,
             taskMessageSender,
             tenantManager,
             gitManager,
@@ -303,7 +336,9 @@ export class LocalOrderer implements IOrderer {
             foremanContext,
             scribeContext,
             deliContext,
-            clientTimeout);
+            clientTimeout,
+            protocolHead,
+            messages);
     }
 
     private socketPublisher: LocalSocketPublisher;
@@ -325,6 +360,7 @@ export class LocalOrderer implements IOrderer {
         private documentId: string,
         documentCollection: ICollection<IDocument>,
         deltasCollection: ICollection<any>,
+        scribeMessagesCollection: ICollection<ISequencedOperationMessage>,
         private taskMessageSender: ITaskMessageSender,
         private tenantManager: ITenantManager,
         gitManager: IGitManager | undefined,
@@ -337,6 +373,8 @@ export class LocalOrderer implements IOrderer {
         private scribeContext: IContext,
         private deliContext: IContext,
         clientTimeout: number,
+        protocolHead: number,
+        scribeMessages: ISequencedOperationMessage[],
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
@@ -361,11 +399,30 @@ export class LocalOrderer implements IOrderer {
 
         if (gitManager) {
             // Scribe lambda
+            const scribe = details.value.scribe ? details.value.scribe : DefaultScribe;
+            const lastState = scribe.protocolState
+                ? scribe.protocolState
+                : { members: [], proposals: [], values: []};
+            const protocolHandler = new ProtocolOpHandler(
+                documentId,
+                scribe.minimumSequenceNumber,
+                scribe.sequenceNumber,
+                lastState.members,
+                lastState.proposals,
+                lastState.values,
+                () => -1,
+                () => { return; });
+
             this.scribeLambda = new ScribeLambda(
                 this.scribeContext,
                 documentCollection,
+                scribeMessagesCollection,
                 details.value,
-                gitManager);
+                gitManager,
+                this.alfredToDeliKafka,
+                protocolHandler,
+                protocolHead,
+                scribeMessages);
         }
 
         // Deli lambda

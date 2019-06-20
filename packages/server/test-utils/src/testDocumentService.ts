@@ -11,8 +11,8 @@ import {
     IDocumentService,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryCommit,
-    ISummaryPackfileHandle,
+    ISummaryHandle,
+    ISummaryTree,
     ITokenProvider,
     ITree,
     IVersion,
@@ -50,11 +50,11 @@ class TestDocumentStorageService implements IDocumentStorageService {
         return version;
     }
 
-    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         return Promise.reject("NOT IMPLEMENTED!");
     }
 
-    public downloadSummary(handle: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
 

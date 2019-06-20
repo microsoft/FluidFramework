@@ -25,6 +25,11 @@ export interface IDatabaseManager {
      * Retrieves the delta collection
      */
     getDeltaCollection(tenantId: string, documentId: string): Promise<ICollection<ISequencedOperationMessage>>;
+
+    /**
+     * Scribe deltas collection
+     */
+    getScribeDeltaCollection(tenantId: string, documentId: string): Promise<ICollection<ISequencedOperationMessage>>;
 }
 
 export interface ICollection<T> {

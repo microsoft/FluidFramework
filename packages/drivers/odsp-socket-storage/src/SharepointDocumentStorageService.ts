@@ -12,11 +12,12 @@ import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageMan
  */
 export class SharepointDocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: SharepointDocumentStorageManager) { }
-    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         throw new Error("Method not implemented.");
     }
 
-    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         throw new Error("Method not implemented.");
     }
 

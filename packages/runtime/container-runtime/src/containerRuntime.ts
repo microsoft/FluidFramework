@@ -243,41 +243,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         const componentEntries = new Map<string, ITree>();
         this.componentContexts.forEach((component, key) => componentEntries.set(key, component.snapshot()));
 
-        // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.storage.getVersions(this.id, 1);
-        const tree = lastVersion.length > 0
-            ? await this.storage.getSnapshotTree(lastVersion[0])
-            : ({ blobs: {}, commits: {}, trees: {} } as ISnapshotTree);
-
         for (const [componentId, componentSnapshot] of componentEntries) {
-            // If sha exists then previous commit is still valid
             if (componentSnapshot.id) {
                 result.tree[componentId] = {
-                    handle: tree.commits[componentId],
-                    handleType: SummaryType.Commit,
+                    handle: componentSnapshot.id,
+                    handleType: SummaryType.Tree,
                     type: SummaryType.Handle,
                 };
             } else {
-                const parents = componentId in tree.commits ? [tree.commits[componentId]] : [];
-                const summaryTree = this.convertToSummaryTree(componentSnapshot);
-
-                const author = {
-                    date: new Date().toISOString(),
-                    email: "kurtb@microsoft.com",
-                    name: "Kurt Berglund",
-                };
-
-                const message =
-                    `${componentId}@` +
-                    `${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
-                result.tree[componentId] = {
-                    author,
-                    committer: author,
-                    message,
-                    parents,
-                    tree: summaryTree,
-                    type: SummaryType.Commit,
-                };
+                const tree = this.convertToSummaryTree(componentSnapshot);
+                result.tree[componentId] = tree;
             }
         }
 

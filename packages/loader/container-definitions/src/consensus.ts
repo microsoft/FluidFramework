@@ -59,3 +59,11 @@ export interface IQuorum extends EventEmitter {
 
     getMember(clientId: string): ISequencedClient | undefined;
 }
+
+export interface IProtocolState {
+    sequenceNumber: number;
+    minimumSequenceNumber: number;
+    members: Array<[string, ISequencedClient]>;
+    proposals: Array<[number, ISequencedProposal, string[]]>;
+    values: Array<[string, ICommittedProposal]>;
+}

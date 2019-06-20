@@ -83,6 +83,7 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
         const reservationsCollectionName = "reservations";
+        const scribeDeltasCollectionName = "scribeDeltas";
         const testData: { [key: string]: any[] } = {};
 
         const webSocketServer = new TestWebSocketServer();
@@ -94,7 +95,8 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
             mongoManager,
             nodesCollectionName,
             documentsCollectionName,
-            deltasCollectionName);
+            deltasCollectionName,
+            scribeDeltasCollectionName);
 
         const testStorage = new TestDocumentStorage(
             databaseManager,

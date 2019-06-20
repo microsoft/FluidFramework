@@ -34,11 +34,11 @@ export class TestDocumentStorageService implements api.IDocumentStorageService  
         return null;
     }
 
-    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Not implemented");
     }
 
-    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IProposal } from "@prague/container-definitions";
+import { IProposal, IProtocolState } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
@@ -54,9 +54,18 @@ export interface ITrackedProposal {
 }
 
 export interface IScribe {
+    // Kafka checkpoint that maps to the below stored data
     logOffset: number;
 
-    proposals: ITrackedProposal[];
+    // min sequence number at logOffset
+    minimumSequenceNumber: number;
+
+    // sequence number at logOffset
+    sequenceNumber: number;
+
+    // Stored protocol state within the window. This is either the state at the MSN or the state at the
+    // sequence number of the head summary.
+    protocolState: IProtocolState;
 }
 
 export interface IDocument {

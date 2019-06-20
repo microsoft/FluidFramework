@@ -34,11 +34,11 @@ export class NullBlobStorageService implements api.IDocumentStorageService  {
         return Promise.reject("Null blob storage can not write commit");
     }
 
-    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Invalid operation");
     }
 
-    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
         return Promise.reject("Invalid operation");
     }
 

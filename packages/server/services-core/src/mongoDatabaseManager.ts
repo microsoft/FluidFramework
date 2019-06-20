@@ -13,12 +13,12 @@ import { INode } from "./orderer";
  * MongoDB implementation of IDatabaseManager
  */
 export class MongoDatabaseManager implements IDatabaseManager {
-
     constructor(
         private mongoManager: MongoManager,
         private nodeCollectionName: string,
         private documentsCollectionName: string,
-        private deltasCollectionName: string) {
+        private deltasCollectionName: string,
+        private scribeDeltasCollectionName: string) {
     }
 
     public async getNodeCollection(): Promise<ICollection<INode>> {
@@ -33,6 +33,13 @@ export class MongoDatabaseManager implements IDatabaseManager {
         tenantId: string,
         documentId: string): Promise<ICollection<ISequencedOperationMessage>> {
         return this.getCollection<ISequencedOperationMessage>(this.deltasCollectionName);
+    }
+
+    public async getScribeDeltaCollection(
+        tenantId: string,
+        documentId: string,
+    ): Promise<ICollection<ISequencedOperationMessage>> {
+        return this.getCollection<ISequencedOperationMessage>(this.scribeDeltasCollectionName);
     }
 
     private async getCollection<T>(name: string) {

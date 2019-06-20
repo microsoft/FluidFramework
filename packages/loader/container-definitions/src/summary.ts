@@ -28,14 +28,6 @@ export const enum SummaryType {
     Handle = 3,
 }
 
-/**
- * Driver authors may derive from this type to store data required as part of committing the summary op. The derived
- * type must be JSON.stringify/parse'able.
- */
-// tslint:disable-next-line:no-empty-interface
-export interface ISummaryPackfileHandle {
-}
-
 export interface ISummaryHandle {
     type: SummaryType.Handle;
 

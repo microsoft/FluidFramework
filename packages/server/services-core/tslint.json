@@ -12,6 +12,7 @@
         "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
+        "prefer-array-literal": false,
         "prefer-readonly": false,
         "promise-function-async": false
     }

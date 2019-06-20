@@ -3,7 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
+import { ComponentRuntime } from "@prague/component-runtime";
+import { IBlobManager, IDocumentStorageService, IGenericBlob, IRequest } from "@prague/container-definitions";
+import { MapExtension } from "@prague/map";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+
+// const blobMetaData = this.blobManager!.getBlobMetadata();
+// entries[".blobs"] = {
+//     content: JSON.stringify(blobMetaData),
+//     type: SummaryType.Blob,
+// };
+
+// const blobMetaData = this.blobManager!.getBlobMetadata();
+// entries.push({
+//     mode: FileMode.File,
+//     path: ".blobs",
+//     type: TreeEntry[TreeEntry.Blob],
+//     value: {
+//         contents: JSON.stringify(blobMetaData),
+//         encoding: "utf-8",
+//     },
+// });
+
+// private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
+//     const blobs: IGenericBlob[] = tree
+//         ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"]!)
+//         : [];
+
+//     const blobManager = new BlobManager(storage);
+//     // tslint:disable-next-line:no-floating-promises
+//     blobManager.loadBlobMetadata(blobs);
+
+//     return blobManager;
+// }
+
+// case MessageType.BlobUploaded:
+//     // tslint:disable-next-line:no-floating-promises
+//     this.blobManager!.addBlob(message.contents);
+//     this.emit(MessageType.BlobUploaded, message.contents);
+//     break;
 
 export class BlobManager implements IBlobManager {
     private readonly blobs: Map<string, IGenericBlob>;
@@ -39,7 +77,7 @@ export class BlobManager implements IBlobManager {
         if (blobContent === undefined) {
             return undefined;
         }
-        blob!.content = Buffer.from(blobContent, "base64");
+        blob.content = Buffer.from(blobContent, "base64");
         return blob;
     }
 
@@ -72,4 +110,24 @@ export class BlobManager implements IBlobManager {
         // TODO: Issue-2170 Implement updateBlob and removeBlob
         this.blobs.delete(blobId);
     }
+}
+
+/**
+ * Instantiates a new chaincode component
+ */
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    const modules = new Map<string, any>();
+
+    // Create channel extensions
+    const mapExtension = new MapExtension();
+    modules.set(MapExtension.Type, mapExtension);
+
+    // TODO custom blob specific runtime
+    const runtime = await ComponentRuntime.load(context, modules);
+
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+    });
+
+    return runtime;
 }

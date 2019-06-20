@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
-import { ISummaryAuthor } from "./summary";
 
 /**
  * Code loading interface
@@ -78,11 +77,7 @@ export interface IContainer extends EventEmitter {
      * Generates a new summary op which is proposed to the quorum. Inbound op processing is paused during summary
      * generation in order to hold the reference sequence number.
      */
-    generateSummary(
-        author: ISummaryAuthor,
-        committer: ISummaryAuthor,
-        message: string,
-        parents: string[]): Promise<void>;
+    generateSummary(message: string, parents: string[]): Promise<void>;
 }
 
 export interface ILoader {

@@ -7,8 +7,8 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryCommit,
-    ISummaryPackfileHandle,
+    ISummaryHandle,
+    ISummaryTree,
     ITree,
     IVersion,
 } from "@prague/container-definitions";
@@ -46,11 +46,11 @@ export class ComponentStorageService implements IDocumentStorageService {
         return this.storageService.write(root, parents, message, ref);
     }
 
-    public uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
+    public uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
         return this.storageService.uploadSummary(commit);
     }
 
-    public downloadSummary(commit: ISummaryPackfileHandle): Promise<ISummaryCommit> {
+    public downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
         return this.storageService.downloadSummary(commit);
     }
 

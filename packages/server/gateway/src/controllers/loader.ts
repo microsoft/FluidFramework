@@ -177,9 +177,7 @@ export async function testSummary() {
         return;
     }
 
-    const author = { name: "Kurt", email: "kurtb@microsoft.com", date: new Date().toISOString() };
-
-    lastLoaded.generateSummary(author, author, `test summary ${Date.now()}`, []);
+    lastLoaded.generateSummary(`test summary ${Date.now()}`);
 }
 
 async function start(

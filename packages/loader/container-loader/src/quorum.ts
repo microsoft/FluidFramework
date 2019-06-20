@@ -16,6 +16,11 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
+// tslint:disable:no-var-requires
+// tslint:disable-next-line:no-submodule-imports
+const cloneDeep = require("lodash/cloneDeep");
+// tslint:enable:no-var-requires
+
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.
 class PendingProposal implements IPendingProposal, ISequencedProposal {
@@ -45,7 +50,7 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
     }
 
     public addRejection(clientId: string) {
-        assert(!this.rejections.has(clientId));
+        assert(!this.rejections.has(clientId), `!this.rejections.has(${clientId})`);
         this.rejections.add(clientId);
     }
 }
@@ -77,7 +82,8 @@ export class Quorum extends EventEmitter implements IQuorum {
         proposals: Array<[number, ISequencedProposal, string[]]>,
         values: Array<[string, ICommittedProposal]>,
         private readonly sendProposal: (key: string, value: any) => number,
-        private readonly sendReject: (sequenceNumber: number) => void) {
+        private readonly sendReject: (sequenceNumber: number) => void,
+    ) {
         super();
 
         this.members = new Map(members);
@@ -107,11 +113,14 @@ export class Quorum extends EventEmitter implements IQuorum {
                     Array.from(proposal.rejections)] as [number, ISequencedProposal, string[]];
             });
 
-        return {
+        const snapshot = {
             members: [...this.members],
             proposals: serializedProposals,
             values: [...this.values],
         };
+
+        // tslint:disable-next-line:no-unsafe-any
+        return cloneDeep(snapshot) as IQuorumSnapshot;
     }
 
     /**
@@ -135,7 +144,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
-        assert(!this.members.has(clientId));
+        assert(!this.members.has(clientId), `!this.members.has(${clientId})`);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
     }
@@ -191,8 +200,10 @@ export class Quorum extends EventEmitter implements IQuorum {
         local: boolean,
         clientSequenceNumber: number) {
 
-        assert(!this.proposals.has(sequenceNumber));
-        assert(!local || this.localProposals.has(clientSequenceNumber));
+        assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
+        assert(
+            !local || this.localProposals.has(clientSequenceNumber),
+            `!${local} || this.localProposals.has(${clientSequenceNumber})`);
 
         const proposal = new PendingProposal(
             this.sendReject,
@@ -217,7 +228,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
-        assert(this.proposals.has(sequenceNumber));
+        assert(this.proposals.has(sequenceNumber), `this.proposals.has(${sequenceNumber})`);
 
         const proposal = this.proposals.get(sequenceNumber);
         if (proposal !== undefined) {
@@ -260,7 +271,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
-            assert(value >= this.minimumSequenceNumber);
+            assert(value >= this.minimumSequenceNumber, `${value} >= ${this.minimumSequenceNumber}`);
         }
         if (this.minimumSequenceNumber === value) {
             return;

@@ -101,7 +101,9 @@ export class TestDocumentStorage implements IDocumentStorage {
                 parent: null,
                 scribe: {
                     logOffset: -1,
-                    proposals: [],
+                    minimumSequenceNumber: -1,
+                    protocolState: undefined,
+                    sequenceNumber: -1,
                 },
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,

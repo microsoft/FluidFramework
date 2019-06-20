@@ -12,7 +12,7 @@ import {
     ISequencedDocumentMessage,
     ISignalMessage,
 } from "./protocol";
-import { ISummaryCommit, ISummaryPackfileHandle } from "./summary";
+import { ISummaryHandle, ISummaryTree } from "./summary";
 import { ITokenProvider } from "./tokens";
 
 export interface IDocumentAttributes {
@@ -32,9 +32,9 @@ export interface IDocumentAttributes {
     minimumSequenceNumber: number;
 
     /**
-     * List of clients when the snapshot was taken
+     * Partial ops not yet fully received at the time of the snapshot
      */
-    partialOps: Array<[string, string[]]> | null;
+    partialOps?: Array<[string, string[]]> | null;
 }
 
 export enum FileMode {
@@ -184,13 +184,13 @@ export interface IDocumentStorageService {
      * Generates and uploads a packfile that represents the given commit. A driver generated handle to the packfile
      * is returned as a result of this call.
      */
-    uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle>;
+    uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle>;
 
     /**
      * Retrieves the commit that matches the packfile handle. If the packfile has already been committed and the
      * server has deleted it this call may result in a broken promise.
      */
-    downloadSummary(handle: ISummaryPackfileHandle): Promise<ISummaryCommit>;
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
 // Error tracking service.

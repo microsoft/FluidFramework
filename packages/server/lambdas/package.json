@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@prague/container-definitions": "^0.5.0",
+    "@prague/container-loader": "^0.5.0",
     "@prague/gitresources": "^0.5.0",
     "@prague/runtime-definitions": "^0.5.0",
     "@prague/services": "^0.5.0",

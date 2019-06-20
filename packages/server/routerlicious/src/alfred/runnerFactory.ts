@@ -135,6 +135,7 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             },
             true);
         const deltasCollectionName = config.get("mongo:collectionNames:deltas");
+        const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
         // foreman agent uploader does not run locally.
         // TODO: Make agent uploader run locally.
@@ -156,7 +157,8 @@ export class AlfredResourcesFactory implements utils.IResourcesFactory<AlfredRes
             mongoManager,
             nodeCollectionName,
             documentsCollectionName,
-            deltasCollectionName);
+            deltasCollectionName,
+            scribeCollectionName);
 
         const storage = new services.DocumentStorage(databaseManager, tenantManager, producer);
 

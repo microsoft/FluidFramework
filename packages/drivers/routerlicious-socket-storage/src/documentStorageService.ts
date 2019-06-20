@@ -8,8 +8,8 @@ import {
     ICreateBlobResponse,
     IDocumentStorageService,
     ISnapshotTree,
-    ISummaryCommit,
-    ISummaryPackfileHandle,
+    ISummaryHandle,
+    ISummaryTree,
     ITree,
     IVersion,
     SummaryObject,
@@ -18,11 +18,6 @@ import {
 import * as resources from "@prague/gitresources";
 import * as gitStorage from "@prague/services-client";
 import { buildHierarchy } from "@prague/utils";
-import { debug } from "./debug";
-
-interface IGitPackfileHandle extends ISummaryPackfileHandle {
-    refs: Array<{ref: string; sha: string }>;
-}
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -71,74 +66,16 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return commit.then((c) => ({id: c.sha, treeId: c.tree.sha}));
     }
 
-    public async uploadSummary(commit: ISummaryCommit): Promise<ISummaryPackfileHandle> {
-        debug(`AUTHOR: ${commit.author.email}`);
-        debug(`COMMITTER: ${commit.committer.email}`);
-        debug(`MESSAGE: ${commit.message}`);
-        debug(`PARENTS: ${JSON.stringify(commit.parents)}`);
-
-        const submodules = new Array<{ path: string; sha: string }>();
-        let handle: string;
-
-        // Handle case where summary contents itself is unchanged but a new commit is created for it
-        if (commit.tree.type !== SummaryType.Handle) {
-            // reference full tree since TypeScript compiler has trouble inferring from within map callback
-            const fullTree = commit.tree.tree;
-            const entries = await Promise.all(Object.keys(fullTree).map(async (key) => {
-                const entry = fullTree[key];
-                const pathHandle = await this.writeSummaryObject(entry, submodules, `/${key}`);
-                const treeEntry: resources.ICreateTreeEntry = {
-                    mode: this.getGitMode(entry),
-                    path: key,
-                    sha: pathHandle,
-                    type: this.getGitType(entry),
-                };
-                return treeEntry;
-            }));
-
-            let gitModules = "";
-            const repoUrl = "https://github.com/kurtb/praguedocs.git"; // this.storageService.repositoryUrl
-            for (const submodule of submodules) {
-                gitModules += `[submodule "${submodule.path}"]\n\tpath = ${submodule.path}\n\turl = ${repoUrl}\n\n`;
-            }
-            const moduleBlob = await this.manager.createBlob(gitModules, "utf-8");
-
-            entries.push({
-                mode: FileMode.File,
-                path: ".gitmodules",
-                sha: moduleBlob.sha,
-                type: "blob",
-            });
-
-            const treeHandle = await this.manager.createGitTree({ tree: entries });
-            handle = treeHandle.sha;
-        } else {
-            handle = commit.tree.handle;
-        }
-
-        const newCommit = await this.manager.createCommit({
-            author: commit.author,
-            message: commit.message,
-            parents: commit.parents,
-            tree: handle,
-        });
-
-        // Root ref update
-        submodules.push({ path: "", sha: newCommit.sha });
-        const result: IGitPackfileHandle = {
-            refs: submodules.map((submodule) => {
-                const branch = submodule.path
-                    ? `components/${this.id}${submodule.path}`
-                    : this.id;
-                return { ref: branch, sha: submodule.sha };
-            }),
+    public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
+        const handle = await this.writeSummaryObject(commit, [], "");
+        return {
+            handle,
+            handleType: SummaryType.Tree,
+            type: SummaryType.Handle,
         };
-
-        return result;
     }
 
-    public downloadSummary(): Promise<ISummaryCommit> {
-        // Recurse on tree - bottom up
+    public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
         return Promise.reject("NOT IMPLEMENTED!");
     }
 

@@ -140,12 +140,12 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             return commit;
     }
 
-    public uploadSummary(commit: api.ISummaryCommit): Promise<api.ISummaryPackfileHandle> {
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         return Promise.reject("Not implemented.");
     }
 
-    public downloadSummary(handle: api.ISummaryPackfileHandle): Promise<api.ISummaryCommit> {
-        return Promise.reject("Method not implemented.");
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+        return Promise.reject("Not implemented.");
     }
 
     public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {

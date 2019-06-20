@@ -9,7 +9,6 @@ import {
     IChaincodeFactory,
     IChunkedOp,
     IClient,
-    IClientJoin,
     ICodeLoader,
     ICommittedProposal,
     IConnectionDetails,
@@ -21,7 +20,6 @@ import {
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
-    IProposal,
     IQuorum,
     IRequest,
     IResponse,
@@ -31,8 +29,7 @@ import {
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryAuthor,
-    ISummaryCommit,
+    ISummaryContent,
     ISummaryTree,
     ITelemetryBaseLogger,
     ITelemetryLogger,
@@ -59,6 +56,7 @@ import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { NullChaincode } from "./nullRuntime";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
+import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum } from "./quorum";
 
 interface IConnectResult {
@@ -103,9 +101,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private pendingClientId: string | undefined;
     private loaded = false;
-    private quorum: Quorum | undefined;
     private blobManager: BlobManager | undefined;
-    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
 
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
@@ -125,8 +121,10 @@ export class Container extends EventEmitter implements IContainer {
     // Local copy of incomplete received chunks.
     private readonly chunkMap = new Map<string, string[]>();
 
-    // Local copy of sent but unacknowledged chunks.
+     // Local copy of sent but unacknowledged chunks.
     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
+
+    private protocolHandler: ProtocolOpHandler | undefined;
 
     public get id(): string {
         return this._id;
@@ -205,8 +203,8 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Retrieves the quorum associated with the document
      */
-    public getQuorum(): IQuorum | undefined {
-        return this.quorum;
+    public getQuorum(): IQuorum {
+        return this.protocolHandler!.quorum;
     }
 
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
@@ -250,12 +248,7 @@ export class Container extends EventEmitter implements IContainer {
     // * EXPERIMENTAL - checked in to bring up the feature but please still use snapshots
     // If the app is in control - especially around proposal values - does generateSummary even exist in this
     // place? Or does the app hand a summary out with rules on how to apply it? Probably this actually
-    public async generateSummary(
-        author: ISummaryAuthor,
-        committer: ISummaryAuthor,
-        message: string,
-        parents: string[],
-    ): Promise<void> {
+    public async generateSummary(message: string): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
             debug(`Skipping summary due to being branch of ${this.parentBranch}`);
@@ -274,25 +267,22 @@ export class Container extends EventEmitter implements IContainer {
 
         try {
             if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemPause();
+                await this.deltaManager.inbound.systemPause();
             }
 
-            const summary = await this.summarizeCore(author, committer, message, parents);
+            // TODO in the future we can have stored the latest summary by listening to the summary ack message
+            // after loading from the beginning of the snapshot
+            const parents = (await this.storageService!.getVersions(null, 1)).map((version) => version.id);
+            const summary = await this.summarizeCore(message, parents);
 
-            // TODO I think I want to define the summary op proposal in more detail
-            // contain the sequenceNumber
-            // etag for previous commit - avoid replay going wrong
-            // "force" summary - meaning it will destroy history - overwrite. Previous commit should match etag
-            // unless this bit is explicitly set
-            // "reload" - clients expected to reload off the contents of the summary (not implemented)
-            this.quorum!.propose("summary", summary);
+            this.submitMessage(MessageType.Summarize, summary);
         } catch (ex) {
             debug("Summary error", ex);
             throw ex;
         } finally {
             // Restart the delta manager
             if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.systemResume();
+                await this.deltaManager.inbound.systemResume();
             }
         }
     }
@@ -305,16 +295,15 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         // Only snapshot once a code quorum has been established
-        if (!this.quorum!.has("code2")) {
+        if (!this.protocolHandler!.quorum.has("code2")) {
             this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
             return;
         }
 
         // Stop inbound message processing while we complete the snapshot
-        // TODO I should verify that when paused, if we are in the middle of a prepare, we will not process the message
         try {
             if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.pause();
+                await this.deltaManager.inbound.systemPause();
             }
 
             await this.snapshotCore(tagMessage);
@@ -325,53 +314,13 @@ export class Container extends EventEmitter implements IContainer {
 
         } finally {
             if (this.deltaManager !== undefined) {
-                this.deltaManager.inbound.resume();
+                await this.deltaManager.inbound.systemResume();
             }
         }
     }
 
-    private async summarizeCore(
-        author: ISummaryAuthor,
-        committer: ISummaryAuthor,
-        message: string,
-        parents: string[],
-    ): Promise<any> {
+    private async summarizeCore(message: string, parents: string[]): Promise<ISummaryContent> {
         const entries: { [path: string]: SummaryObject } = {};
-
-        const blobMetaData = this.blobManager!.getBlobMetadata();
-        entries[".blobs"] = {
-            content: JSON.stringify(blobMetaData),
-            type: SummaryType.Blob,
-        };
-
-        const quorumSnapshot = this.quorum!.snapshot();
-
-        entries.quorumMembers = {
-            content: JSON.stringify(quorumSnapshot.members),
-            type: SummaryType.Blob,
-        };
-
-        entries.quorumProposals = {
-            content: JSON.stringify(quorumSnapshot.proposals),
-            type: SummaryType.Blob,
-        };
-
-        entries.quorumValues = {
-            content: JSON.stringify(quorumSnapshot.values),
-            type: SummaryType.Blob,
-        };
-
-        // Save attributes for the document
-        const documentAttributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            partialOps: [...this.chunkMap],
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
-        };
-        entries[".attributes"] = {
-            content: JSON.stringify(documentAttributes),
-            type: SummaryType.Blob,
-        };
 
         const componentEntries = await this.context!.summarize();
 
@@ -381,18 +330,13 @@ export class Container extends EventEmitter implements IContainer {
             type: SummaryType.Tree,
         };
 
-        // Delta storage is up to the runtime to store
-
-        const summaryCommit: ISummaryCommit = {
-            author,
-            committer,
+        const handle = await this.storageService!.uploadSummary(root);
+        return {
+            handle: handle.handle,
+            head: parents[0],
             message,
             parents,
-            tree: root,
-            type: SummaryType.Commit,
         };
-
-        return this.storageService!.uploadSummary(summaryCommit);
     }
 
     private async snapshotCore(tagMessage: string) {
@@ -433,7 +377,7 @@ export class Container extends EventEmitter implements IContainer {
             },
         });
 
-        const quorumSnapshot = this.quorum!.snapshot();
+        const quorumSnapshot = this.protocolHandler!.quorum.snapshot();
         entries.push({
             mode: FileMode.File,
             path: "quorumMembers",
@@ -535,11 +479,14 @@ export class Container extends EventEmitter implements IContainer {
         const connectResult: IConnectResult = this.createDeltaManager(attributesP, connect);
 
         // ...load in the existing quorum
-        const quorumP = Promise.all([attributesP, storageP, treeP]).then(
-            ([attributes, storage, tree]) => this.loadQuorum(attributes, storage!, tree!));
+        const protocolHandlerP = Promise.all([attributesP, storageP, treeP]).then(
+            ([attributes, storage, tree]) => {
+                // Initialize the protocol handler
+                return this.initializeProtocolState(attributes, storage!, tree!);
+            });
 
         // ...instantiate the chaincode defined on the document
-        const chaincodeP = quorumP.then((quorum) => this.loadCodeFromQuorum(quorum));
+        const chaincodeP = protocolHandlerP.then((protocolHandler) => this.loadCodeFromQuorum(protocolHandler.quorum));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage!, tree!));
@@ -551,8 +498,8 @@ export class Container extends EventEmitter implements IContainer {
                 treeP,
                 versionP,
                 attributesP,
-                quorumP,
                 blobManagerP,
+                protocolHandlerP,
                 chaincodeP,
                 connectResult.handlerAttachedP,
             ])
@@ -561,11 +508,11 @@ export class Container extends EventEmitter implements IContainer {
                 tree,
                 version,
                 attributes,
-                quorum,
                 blobManager,
+                protocolHandler,
                 chaincode]) => {
 
-                this.quorum = quorum;
+                this.protocolHandler = protocolHandler;
                 this.storageService = storageService;
                 this.blobManager = blobManager;
                 this.pkg = chaincode.pkg;
@@ -594,7 +541,7 @@ export class Container extends EventEmitter implements IContainer {
                     attributes,
                     this.blobManager,
                     this._deltaManager,
-                    this.quorum,
+                    this.protocolHandler!.quorum,
                     this.loader,
                     storageService,
                     (err) => this.emit("error", err),
@@ -621,11 +568,11 @@ export class Container extends EventEmitter implements IContainer {
             });
     }
 
-    private async loadQuorum(
+    private async initializeProtocolState(
         attributes: IDocumentAttributes,
         storage: IDocumentStorageService,
-        tree: ISnapshotTree): Promise<Quorum> {
-
+        tree: ISnapshotTree,
+    ): Promise<ProtocolOpHandler> {
         let members: Array<[string, ISequencedClient]>;
         let proposals: Array<[number, ISequencedProposal, string[]]>;
         let values: Array<[string, any]>;
@@ -646,15 +593,28 @@ export class Container extends EventEmitter implements IContainer {
             values = [];
         }
 
-        const quorum = new Quorum(
-            attributes.minimumSequenceNumber,
+        const protocol = new ProtocolOpHandler(
+            attributes.branch,
+            attributes.minimumSequenceNumber!,
+            attributes.sequenceNumber!,
             members,
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
 
-        quorum.on(
+        // Track membership changes and update connection state accordingly
+        protocol.quorum.on("addMember", (clientId, details) => {
+            // This is the only one that requires the pending client ID
+            if (clientId === this.pendingClientId) {
+                this.setConnectionState(
+                    ConnectionState.Connected,
+                    `joined @ ${details.sequenceNumber}`,
+                    this.pendingClientId);
+            }
+        });
+
+        protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
@@ -676,7 +636,7 @@ export class Container extends EventEmitter implements IContainer {
                 }
             });
 
-        return quorum;
+        return protocol;
     }
 
     private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
@@ -727,7 +687,7 @@ export class Container extends EventEmitter implements IContainer {
             attributes,
             this.blobManager,
             this._deltaManager,
-            this.quorum,
+            this.protocolHandler!.quorum,
             this.loader,
             this.storageService,
             (err) => this.emit("error", err),
@@ -938,32 +898,26 @@ export class Container extends EventEmitter implements IContainer {
     private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
         const local = this._clientId === message.clientId;
 
-        switch (message.type) {
-            case MessageType.ClientJoin:
-            case MessageType.ClientLeave:
-            case MessageType.Propose:
-            case MessageType.Reject:
-            case MessageType.BlobUploaded:
-            case MessageType.NoOp:
-                break;
-
-            case MessageType.ChunkedOp:
-                const chunkComplete = this.prepareRemoteChunkedMessage(message);
-                if (!chunkComplete) {
-                    return Promise.resolve();
-                } else {
-                    if (local) {
-                        const clientSeqNumber = message.clientSequenceNumber;
-                        if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                            this.unackedChunkedMessages.delete(clientSeqNumber);
-                        }
-                    }
-                    return this.prepareRemoteMessage(message);
-                }
-
-            default:
-                return this.context!.prepare(message, local);
+        if (isSystemMessage(message)) {
+            return;
         }
+
+        if (message.type === MessageType.ChunkedOp) {
+            const chunkComplete = this.prepareRemoteChunkedMessage(message);
+            if (!chunkComplete) {
+                return Promise.resolve();
+            } else {
+                if (local) {
+                    const clientSeqNumber = message.clientSequenceNumber;
+                    if (this.unackedChunkedMessages.has(clientSeqNumber)) {
+                        this.unackedChunkedMessages.delete(clientSeqNumber);
+                    }
+                }
+                return this.prepareRemoteMessage(message);
+            }
+        }
+
+        return this.context!.prepare(message, local);
     }
 
     private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
@@ -996,64 +950,16 @@ export class Container extends EventEmitter implements IContainer {
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
         const local = this._clientId === message.clientId;
 
-        // Add the message to the list of pending messages so we can transform them during a snapshot
-        // Reset the list of messages we have received since the min sequence number changed
-        this.messagesSinceMSNChange.push(message);
-        let index = 0;
-
-        for (; index < this.messagesSinceMSNChange.length; index++) {
-            if (this.messagesSinceMSNChange[index].sequenceNumber > message.minimumSequenceNumber) {
-                break;
-            }
-        }
-        if (index !== 0) {
-            this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
+        // Forward non system messages to the loaded runtime for processing
+        if (!isSystemMessage(message)) {
+            this.context!.process(message, local, context);
         }
 
-        const eventArgs: any[] = [message];
         switch (message.type) {
-            case MessageType.ClientJoin:
-                const systemJoinMessage = message as ISequencedDocumentSystemMessage;
-                const join = JSON.parse(systemJoinMessage.data) as IClientJoin;
-                // TODO this needs to be fixed
-                const member: ISequencedClient = {
-                    client: join.detail,
-                    sequenceNumber: systemJoinMessage.sequenceNumber,
-                };
-                this.quorum!.addMember(join.clientId, member);
-
-                // This is the only one that requires the pending client ID
-                if (join.clientId === this.pendingClientId) {
-                    this.setConnectionState(
-                        ConnectionState.Connected,
-                        `joined @ ${message.minimumSequenceNumber}`,
-                        this.pendingClientId);
-                }
-
-                this.emit("clientJoin", join);
-                break;
-
             case MessageType.ClientLeave:
                 const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
                 const clientId = JSON.parse(systemLeaveMessage.data) as string;
                 this.clearPartialChunks(clientId);
-                this.quorum!.removeMember(clientId);
-                this.emit("clientLeave", clientId);
-                break;
-
-            case MessageType.Propose:
-                const proposal = message.contents as IProposal;
-                this.quorum!.addProposal(
-                    proposal.key,
-                    proposal.value,
-                    message.sequenceNumber,
-                    local,
-                    message.clientSequenceNumber);
-                break;
-
-            case MessageType.Reject:
-                const sequenceNumber = message.contents as number;
-                this.quorum!.rejectProposal(message.clientId, sequenceNumber);
                 break;
 
             case MessageType.BlobUploaded:
@@ -1062,36 +968,22 @@ export class Container extends EventEmitter implements IContainer {
                 this.emit(MessageType.BlobUploaded, message.contents);
                 break;
 
-            case MessageType.ChunkedOp:
-            case MessageType.NoOp:
-                break;
-
             default:
-                this.context!.process(message, local, context);
         }
 
-        // Notify the quorum of the MSN from the message. We rely on it to handle duplicate values but may
-        // want to move that logic to this class.
-        this.quorum!.updateMinimumSequenceNumber(message);
+        // Allow the protocol handler to process the message
+        this.protocolHandler!.processMessage(message, local);
 
-        this.emit("op", ...eventArgs);
+        this.emit("op", message);
     }
 
     private async postProcessRemoteMessage(message: ISequencedDocumentMessage, context: any) {
-        const local = this._clientId === message.clientId;
-
-        switch (message.type) {
-            case MessageType.ClientJoin:
-            case MessageType.ClientLeave:
-            case MessageType.Propose:
-            case MessageType.Reject:
-            case MessageType.BlobUploaded:
-            case MessageType.ChunkedOp:
-            case MessageType.NoOp:
-                break;
-            default:
-                await this.context!.postProcess(message, local, context);
+        if (isSystemMessage(message)) {
+            return;
         }
+
+        const local = this._clientId === message.clientId;
+        await this.context!.postProcess(message, local, context);
     }
 
     private submitSignal(message: any) {

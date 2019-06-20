@@ -167,7 +167,9 @@ export class DocumentStorage implements IDocumentStorage {
                 },
                 scribe: {
                     logOffset: -1,
-                    proposals: [],
+                    minimumSequenceNumber: -1,
+                    protocolState: undefined,
+                    sequenceNumber: -1,
                 },
                 sequenceNumber,
                 tenantId,
@@ -212,7 +214,9 @@ export class DocumentStorage implements IDocumentStorage {
                 parent: null,
                 scribe: {
                     logOffset: -1,
-                    proposals: [],
+                    minimumSequenceNumber: -1,
+                    protocolState: undefined,
+                    sequenceNumber: -1,
                 },
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
