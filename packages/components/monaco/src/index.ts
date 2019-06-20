@@ -16,7 +16,9 @@ import * as sequence from "@prague/sequence";
 import { MonacoRunner } from "./chaincode";
 
 /**
- * Instantiates a new chaincode component
+ * Instantiates a new ComponentRuntime and loads a new MonacoRunner in it.  Returns
+ * the runtime.
+ * @param context The ComponentContext to associate with the ComponentRuntime
  */
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const modules = new Map<string, any>();
