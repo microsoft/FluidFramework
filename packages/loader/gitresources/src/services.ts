@@ -7,6 +7,7 @@ import { IBlob, ITree } from "./resources";
 
 /**
  * Document header returned from the server
+ * This is not a GIT specific interface but specific to Historian
  */
 export interface IHeader {
     // Tree representing all blobs in the snapshot

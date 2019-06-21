@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Details about the author of the commit
+ */
 export interface IAuthor {
     name: string;
     email: string;
@@ -10,6 +13,9 @@ export interface IAuthor {
     date: string;
 }
 
+/**
+ * Details about the committer of the commit
+ */
 export interface ICommitter {
     name: string;
     email: string;
@@ -17,11 +23,17 @@ export interface ICommitter {
     date: string;
 }
 
+/**
+ * Details of the commit
+ */
 export interface ICommitHash {
     sha: string;
     url: string;
 }
 
+/**
+ * Required params to create commit
+ */
 export interface ICreateCommitParams {
     message: string;
     tree: string;
@@ -30,6 +42,9 @@ export interface ICreateCommitParams {
     author: IAuthor;
 }
 
+/**
+ * Commit content
+ */
 export interface ICommit {
     sha: string;
     url: string;
@@ -41,6 +56,8 @@ export interface ICommit {
 }
 
 /**
+ * Details of a commit
+ *
  * GitHub differentiates the commit resource returned from its git and repos routes. The repos
  * route returns more site specific information (like links to the developer's account) while the git
  * route is what is actually stored in the Git repo
@@ -61,6 +78,9 @@ export interface ICommitDetails {
     parents: ICommitHash[];
 }
 
+/**
+ * Blob content
+ */
 export interface IBlob {
     content: string;
     encoding: string;
@@ -69,6 +89,9 @@ export interface IBlob {
     size: number;
 }
 
+/**
+ * Required params to create blob
+ */
 export interface ICreateBlobParams {
     // The encoded content
     content: string;
@@ -77,11 +100,17 @@ export interface ICreateBlobParams {
     encoding: string;
 }
 
+/**
+ * Response to create blob request
+ */
 export interface ICreateBlobResponse {
     sha: string;
     url: string;
 }
 
+/**
+ * Ref content
+ */
 export interface IRef {
     ref: string;
     url: string;
@@ -92,21 +121,33 @@ export interface IRef {
     };
 }
 
+/**
+ * Required params to create ref
+ */
 export interface ICreateRefParams {
     ref: string;
     sha: string;
 }
 
+/**
+ * Required params to patch ref
+ */
 export interface IPatchRefParams {
     sha: string;
     force: boolean;
 }
 
+/**
+ * Required params to create repo
+ * @param name - name of the repository
+ */
 export interface ICreateRepoParams {
-    // name of the repository
     name: string;
 }
 
+/**
+ * Required details to create tree entry
+ */
 export interface ICreateTreeEntry {
     path: string;
     mode: string;
@@ -114,11 +155,17 @@ export interface ICreateTreeEntry {
     sha: string;
 }
 
+/**
+ * Required params to create tree
+ */
 export interface ICreateTreeParams {
     base_tree?: string;
     tree: ICreateTreeEntry[];
 }
 
+/**
+ * Tree Entry Content
+ */
 export interface ITreeEntry {
     path: string;
     mode: string;
@@ -128,11 +175,18 @@ export interface ITreeEntry {
     url: string;
 }
 
+/**
+ * Tree content
+ */
 export interface ITree {
     sha: string;
     url: string;
     tree: ITreeEntry[];
 }
+
+/**
+ * Tagger content
+ */
 export interface ITagger {
     name: string;
     email: string;
@@ -140,6 +194,9 @@ export interface ITagger {
     date: string;
 }
 
+/**
+ * Required params to create tag
+ */
 export interface ICreateTagParams {
     tag: string;
     message: string;
@@ -148,6 +205,9 @@ export interface ICreateTagParams {
     tagger: ITagger;
 }
 
+/**
+ * Tag content
+ */
 export interface ITag {
     tag: string;
     sha: string;
