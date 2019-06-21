@@ -106,11 +106,16 @@ const accumAsLeafAction = {
 };
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
-//       workaround creates a LocalReference with a sentinal segment that is never inserted
-//       into the MergeTree.  We then special case this segment in localRefToPosition.
+//       workaround creates a LocalReference with an 'undefined' segment that is never
+//       inserted into the MergeTree.  We then special case this segment in localRefToPosition,
+//       addLocalRef, removeLocalRef, etc.
+//
+//       Note, we use 'undefined' for our sentinel value to also workaround the case where
+//       the user deletes the entire sequence.  (The SlideOnRemove references end up pointing
+//       to undefined segments.)
 //
 //       See: https://github.com/microsoft/Prague/issues/2408
-const endOfTextSegment = {} as unknown as BaseSegment;
+const endOfTextSegment = undefined as unknown as BaseSegment;
 
 export class FlowDocument extends Component {
     public get ready() {
@@ -274,7 +279,7 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, url: string) {
+    public insertComponent(position: number, url: string, style?: string, classList?: string[]) {
         const ops = [];
         const id = randomId();
 
@@ -283,7 +288,7 @@ export class FlowDocument extends Component {
         ops.push(createInsertSegmentOp(position, endMarker));
 
         const inclusionMarker = new Marker(ReferenceType.Tile);
-        inclusionMarker.properties = { url, ...FlowDocument.inclusionProperties };
+        inclusionMarker.properties = { url, style, classList: classList && classList.join(" "), ...FlowDocument.inclusionProperties };
         ops.push(createInsertSegmentOp(position, inclusionMarker));
 
         const beginMarker = new Marker(ReferenceType.NestBegin);

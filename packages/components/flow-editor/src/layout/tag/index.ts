@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SegmentSpan } from "@chaincode/flow-document";
 import { FlowViewComponent, IViewState } from "..";
 import * as styles from "./index.css";
 
@@ -40,6 +41,10 @@ export class TagView extends FlowViewComponent<ITagProps, ITagViewState> {
 
     public caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number {
         return 0;
+    }
+
+    public nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan) {
+        return { segment: span.firstSegment, offset: 0 };
     }
 
     public segmentOffsetToNodeAndOffset(offset: number): { node: Node; nodeOffset: number; } {

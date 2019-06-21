@@ -8,7 +8,7 @@ export { PagePosition } from "./pagination";
 
 import { FlowDocument } from "@chaincode/flow-document";
 import { Component } from "@prague/app-component";
-import { Scheduler } from "@prague/flow-util";
+import { randomId, Scheduler } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import { Editor } from "./layout/editor";
 
@@ -32,7 +32,7 @@ export class FlowEditor extends Component {
 
     protected async create() {
         // tslint:disable-next-line:insecure-random
-        const docId = Math.random().toString(36).substr(2, 4);
+        const docId = randomId();
         this.runtime.createAndAttachComponent(docId, FlowDocument.type);
         this.root.set("docId", docId);
     }

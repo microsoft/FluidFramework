@@ -10,7 +10,7 @@ import { IComponentCollection, IComponentContext } from "@prague/runtime-definit
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
-import * as style from "./index.css";
+import * as styles from "./index.css";
 
 // tslint:disable-next-line:no-empty-interface
 interface IHostConfig {
@@ -22,9 +22,9 @@ interface IHostConfig {
 }
 
 const template = new Template(
-    { tag: "div", props: { className: style.host }, children: [
-        { tag: "div", ref: "viewport", props: { type: "text", className: style.viewport }},
-        { tag: "div", ref: "search", props: { type: "text", className: style.search }},
+    { tag: "div", props: { className: styles.host }, children: [
+        { tag: "div", ref: "viewport", props: { type: "text", className: styles.viewport }},
+        { tag: "div", ref: "search", props: { type: "text", className: styles.search }},
     ]});
 
 export class HostView extends View<IHostConfig> {
@@ -53,28 +53,22 @@ export class HostView extends View<IHostConfig> {
             return start < end;
         };
 
-        const insertComponent = (type: string) => {
+        const insertComponent = (type: string, style?: string, classList?: string[]) => {
             const position = viewport.editor.cursorPosition;
-            const id = randomId();
-            init.context.createAndAttachComponent(id, type);
-            init.doc.insertComponent(position, `/${id}`);
+            const url = randomId();
+            init.context.createAndAttachComponent(url, type);
+            init.doc.insertComponent(position, `/${url}`, style, classList);
+        };
+
+        const insertComponentFromCollection = (factory: IComponentCollection, style?: string, classList?: string[]) => {
+            const position = viewport.editor.cursorPosition;
+            const instance = factory.create() as ISharedComponent;
+            init.doc.insertComponent(position, `/${instance.url}`, style, classList);
         };
 
         const insertTags = (tags: string[]) => {
             const selection = viewport.editor.selection;
             init.doc.insertTags(tags, selection.start, selection.end);
-        };
-
-        const insertMath = () => {
-            const position = viewport.editor.cursorPosition;
-            const instance = init.math.create() as ISharedComponent;
-            init.doc.insertComponent(position, `/${instance.url}`);
-        };
-
-        const insertMorton = () => {
-            const position = viewport.editor.cursorPosition;
-            const instance = init.videos.create() as ISharedComponent;
-            init.doc.insertComponent(position, `/${instance.url}`);
         };
 
         const toggleSelection = (className: string) => {
@@ -84,11 +78,11 @@ export class HostView extends View<IHostConfig> {
 
         searchMenu.attach(template.get(root, "search"), {
             commands: [
-                { name: "bold", enabled: hasSelection, exec: () => toggleSelection(style.bold) },
+                { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
                 { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
-                { name: "insert math", enabled: () => true, exec: insertMath },
-                { name: "insert morton", enabled: () => true, exec: insertMorton },
-                { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts") },
+                { name: "insert math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
+                { name: "insert morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", "display:block;width:61%;resize:both;overflow:hidden") },
                 { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
                 { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
             ],

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { SegmentSpan } from "@chaincode/flow-document";
 import { areStringsEquivalent } from "@prague/flow-util";
+import { ISegment } from "@prague/merge-tree";
 
 export interface IViewState {
     readonly root: Element;
@@ -65,6 +67,7 @@ export abstract class View<TProps, TState extends IViewState> implements IView<T
 export interface IFlowViewComponent<TProps> extends IView<TProps> {
     readonly slot: Element;
     caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number;
+    nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan): { segment: ISegment, offset: number };
     segmentOffsetToNodeAndOffset(offset: number): { node: Node, nodeOffset: number };
 }
 
@@ -72,6 +75,7 @@ export abstract class FlowViewComponent<TProps, TState extends IViewState>
     extends View<TProps, TState>
     implements IFlowViewComponent<TProps> {
     public abstract caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number;
+    public abstract nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan): { segment: ISegment, offset: number };
     public abstract segmentOffsetToNodeAndOffset(offset: number): { node: Node, nodeOffset: number };
     public get slot() { return this.root; }
 }

@@ -39,6 +39,10 @@
       "projectFolder": "packages/components/app-ui/"
     },
     {
+      "packageName": "@component/blob-manager",
+      "projectFolder": "packages/components/blob-manager/"
+    },
+    {
       "packageName": "@chaincode/charts",
       "projectFolder": "packages/components/charts/"
     },

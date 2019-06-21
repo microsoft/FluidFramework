@@ -119,11 +119,11 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
             const { segment, offset } = maybeSegmentAndOffset;
             const position = this.state.doc.getPosition(segment) + Math.min(offset, segment.cachedLength);
 
-            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> ${position}`);
+            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)}) -> ${position}`);
 
             return position;
         } else {
-            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)} -> NaN`);
+            debug(`nodeOffsetToPosition(${nodeAndOffsetToString(node, nodeOffset)}) -> NaN`);
             return NaN;
         }
     }
@@ -241,15 +241,25 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
     private nodeOffsetToSegmentOffset(node: Node | null, nodeOffset: number) {
         const state = this.state;
         let viewInfo: IViewInfo<any, IFlowViewComponent<any>> | undefined;
+
+        let root = node as Element;
         // tslint:disable-next-line:no-conditional-assignment
-        while (node && !(viewInfo = state.elementToViewInfo.get(node as Element))) {
-            node = node.parentElement;
+        while (root && !(viewInfo = state.elementToViewInfo.get(root))) {
+            root = root.parentElement;
         }
 
-        return viewInfo && viewInfo.span.spanOffsetToSegmentOffset(nodeOffset);
+        return viewInfo && viewInfo.view.nodeAndOffsetToSegmentAndOffset(node, nodeOffset, viewInfo.span);
     }
 
     private positionToViewInfo(position: number) {
+        // If the position is outside the range of the document, return undefined.
+        if (0 > position || position >= this.doc.length) {
+            debug(`positionToViewInfo(${position}) -> undefined (outside document range)`);
+            return undefined;
+        }
+
+        // This binary search associates everything preceding the next startPosition with the prior
+        // view in an attempt to handle segments that emit nothing (e.g., endRange).
         const emitted = this.state.emitted;
         const viewIndex = bsearch2((index) =>
             (index < (emitted.length - 1)) && position >= emitted[index + 1].span.startPosition,
@@ -302,10 +312,10 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
         //
         // Rather than defend against this edge case throughout the code, we simply early exit if the
         // DOM tree is detached.
-        if (!state.root.isConnected) {
-            debug("sync(): Root node is disconnected.");
-            return;
-        }
+        // if (!state.root.isConnected) {
+        //     debug("sync(): Root node is disconnected.");
+        //     return;
+        // }
 
         // Remove any viewInfos whose document position is before the current start.
         this.unmountBeforePosition(state, start);
@@ -364,7 +374,7 @@ export class DocumentView extends View<IDocumentProps, DocumentViewState> {
      * described by x/top/bottom.
      */
     private findVertical(start: number, end: number, x: number, top: number, bottom: number, predicate: FindVerticalPredicate) {
-        debug(`findVertical(${start}..${end}, ${x}, ${top}-${bottom})`);
+        debug(`findVertical(cp: ${start}..${end}, x: ${x}, y: ${top}-${bottom})`);
 
         let bestRect = Rect.empty;
         let bestDx = +Infinity;

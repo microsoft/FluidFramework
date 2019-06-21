@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { SegmentSpan } from "@chaincode/flow-document";
 import { Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
 
 // tslint:disable:no-empty-interface
-export interface ISimpleTemplateProps { }
-export interface ISimpleTemplateViewState extends IViewState {}
+export interface IMarkerProps { }
+export interface IMarkerViewState extends IViewState {}
 
-export class SimpleTemplateView extends FlowViewComponent<ISimpleTemplateProps, ISimpleTemplateViewState> {
+export class MarkerView extends FlowViewComponent<IMarkerProps, IMarkerViewState> {
     constructor(private readonly template: Template) { super(); }
 
-    public mounting(): ISimpleTemplateViewState {
+    public mounting(): IMarkerViewState {
         return { root: this.template.clone() };
     }
 
-    public updating(props: Readonly<ISimpleTemplateProps>, state: Readonly<ISimpleTemplateViewState>): ISimpleTemplateViewState {
+    public updating(props: Readonly<IMarkerProps>, state: Readonly<IMarkerViewState>): IMarkerViewState {
         return state;
     }
 
@@ -25,6 +26,10 @@ export class SimpleTemplateView extends FlowViewComponent<ISimpleTemplateProps, 
 
     public caretBoundsToSegmentOffset(x: number, top: number, bottom: number): number {
         return 0;
+    }
+
+    public nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan) {
+        return { segment: span.firstSegment, offset: 0 };
     }
 
     public segmentOffsetToNodeAndOffset(offset: number): { node: Node; nodeOffset: number; } {

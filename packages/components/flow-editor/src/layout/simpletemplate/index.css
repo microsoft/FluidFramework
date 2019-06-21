@@ -1,9 +1,0 @@
-.paragraph { 
-    white-space: nowrap; 
-}
-
-.afterParagraph::before { 
-    content: "¶";
-    color: #ccc;
-    padding: 0px 2px 0px 3px;
-}

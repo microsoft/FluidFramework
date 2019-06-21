@@ -4,7 +4,7 @@
  */
 
 import { Char, Template } from "@prague/flow-util";
-import { SimpleTemplateView } from "../simpletemplate";
+import { MarkerView } from "../marker";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -18,6 +18,6 @@ const template = new Template({
     }],
 });
 
-export class LineBreakView extends SimpleTemplateView {
+export class LineBreakView extends MarkerView {
     public static readonly factory = () => new LineBreakView(template);
 }

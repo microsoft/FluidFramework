@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { SegmentSpan } from "@chaincode/flow-document";
 import { Dom, Template } from "@prague/flow-util";
 import { FlowViewComponent, IViewState } from "..";
 import * as style from "./index.css";
@@ -50,6 +51,12 @@ export class TextView extends FlowViewComponent<ITextProps, ITextViewState> {
 
     public caretBoundsToSegmentOffset(x: number, top: number, bottom: number) {
         return Dom.findNodeOffset(this.cursorTarget, x, top, bottom);
+    }
+
+    public nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan) {
+        console.assert(this.root.contains(node));
+
+        return span.spanOffsetToSegmentOffset(nodeOffset);
     }
 
     public segmentOffsetToNodeAndOffset(offset: number) {

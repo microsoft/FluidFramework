@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "@chaincode/flow-document";
+import { FlowDocument, SegmentSpan } from "@chaincode/flow-document";
 import { ServicePlatform } from "@prague/component-runtime";
 import { IComponent } from "@prague/container-definitions";
-import { Caret, Char, Direction, Template } from "@prague/flow-util";
+import { Caret, Direction, Template } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import { ComponentDisplayType, IComponent as ILegacyComponent, IComponentRenderHTML } from "@prague/runtime-definitions";
 import { FlowViewComponent, IViewState } from "..";
@@ -14,11 +14,8 @@ import * as styles from "./index.css";
 
 const template = new Template({
     tag: "span",
-    props: { className: styles.inclusion },
     children: [
-        { tag: "span", ref: "cursorTarget", props: { textContent: Char.zeroWidthSpace }},
-        { tag: "span", ref: "slot", props: { contentEditable: false }},
-        { tag: "span", props: { textContent: Char.zeroWidthSpace }},
+        { tag: "span", ref: "slot", props: { contentEditable: false, className: styles.inclusion }},
     ],
 });
 
@@ -64,13 +61,16 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
     public segmentOffsetToNodeAndOffset() { return { node: this.inclusionRoot, nodeOffset: 0 }; }
 
     public mounting(props: Readonly<IInclusionProps>): IInclusionViewState {
-        const root = template.clone();
+        const root = template.clone() as HTMLElement;
 
         for (const type of events) {
             root.addEventListener(type, markInclusionEvent);
         }
 
-        const slot = template.get(root, "slot");
+        const slot = template.get(root, "slot") as HTMLElement;
+
+        // Ensure CSS styles are applied prior to attaching the component's view to the DOM.
+        this.syncCssForMarker(root, slot, props.marker);
 
         props.doc.getComponent(props.marker).then((component: IComponent | ILegacyComponent) => {
             // TODO included for back compat - can remove once we migrate to 0.5
@@ -89,6 +89,9 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
     }
 
     public updating(props: Readonly<IInclusionProps>, state: Readonly<IInclusionViewState>): IInclusionViewState {
+        const root = state.root as HTMLElement;
+        const slot = template.get(root, "slot") as HTMLElement;
+        this.syncCssForMarker(root, slot, props.marker);
         return state;
     }
 
@@ -103,6 +106,24 @@ export class InclusionView extends FlowViewComponent<IInclusionProps, IInclusion
     }
 
     private get inclusionRoot() {
-        return template.get(this.state.root, "slot").firstElementChild;
+        return template.get(this.root, "slot").firstElementChild;
+    }
+
+    public nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number, span: SegmentSpan) {
+        return { segment: span.firstSegment, offset: 0 };
+    }
+
+    private syncCssForMarker(root: HTMLElement, slot: HTMLElement, marker: Marker) {
+        this.syncCss(root, marker.properties);
+
+        const style = root.style;
+        if (style.getPropertyValue("--aspect-ratio")) {
+            // Copy 'width' to the '--width' custom property so we can use it in calculation.
+            style.setProperty("--width", style.width);
+
+            // Add the appropriate styles to constrain the container/child to the aspect ratio.
+            root.classList.add(styles.aspectContainer);
+            slot.classList.add(styles.aspectSlot);
+        }
     }
 }

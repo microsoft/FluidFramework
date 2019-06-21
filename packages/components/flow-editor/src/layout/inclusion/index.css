@@ -1,3 +1,17 @@
-.inclusion { 
+.aspectContainer {
+    position: relative;
+    height: 0;
+    padding-bottom: calc(var(--width) * 1/var(--aspect-ratio));
+}
+
+.aspectSlot {
+    position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.inclusion, .aspectSlot { 
     pointer-events: all
 }
