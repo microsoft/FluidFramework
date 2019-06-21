@@ -188,16 +188,19 @@ export class ScribeLambda extends SequencedLambda {
         // will no longer be referenced.
         const inserts = this.pendingCheckpointMessages.toArray();
         this.pendingCheckpointMessages.clear();
-        await this.messageCollection
-            .insertMany(inserts, false)
-            .catch((error) => {
-                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a rejected promise.
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return Promise.reject(error);
-                }
-            });
+
+        if (inserts.length > 0) {
+            await this.messageCollection
+                .insertMany(inserts, false)
+                .catch((error) => {
+                    // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
+                    // All other errors result in a rejected promise.
+                    if (error.code !== 11000) {
+                        // Needs to be a full rejection here
+                        return Promise.reject(error);
+                    }
+                });
+        }
 
         // Write out the full state first that we require
         await this.documentCollection.update(
