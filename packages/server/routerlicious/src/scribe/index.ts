@@ -33,13 +33,6 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     ]);
 
     await Promise.all([
-        collection.createIndex(
-            {
-                documentId: 1,
-                sequenceNumber: 1,
-                tenantId: 1,
-            },
-            true),
         scribeDeltas.createIndex(
             {
                 "documentId": 1,

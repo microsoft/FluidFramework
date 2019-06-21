@@ -10,6 +10,7 @@ import {
     ICollection,
     IContext,
     IDocument,
+    IKafkaMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
     IProducer,
@@ -28,6 +29,18 @@ const DefaultScribe: IScribe = {
     protocolState: undefined,
     sequenceNumber: -1,
 };
+
+class NoOpLambda implements IPartitionLambda {
+    constructor(private context: IContext) {
+    }
+
+    public handler(message: IKafkaMessage): void {
+        this.context.checkpoint(message.offset);
+    }
+
+    public close(): void {
+    }
+}
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
@@ -55,6 +68,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.documentCollection.findOne({ documentId, tenantId }),
             this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1}),
         ]);
+
+        // If the document doesn't exist then we trivially accept every message
+        if (!document) {
+            winston.info(`Creating NoOpLambda due to missing ${tenantId}/${documentId}`);
+            return new NoOpLambda(context);
+        }
 
         const scribe = document.scribe ? document.scribe : DefaultScribe;
         const lastState = scribe.protocolState
