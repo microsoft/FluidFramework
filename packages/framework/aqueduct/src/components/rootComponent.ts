@@ -10,7 +10,7 @@ import {
 } from "@prague/container-definitions";
 import {
     ISharedMap,
-    MapExtension,
+    SharedMap,
 } from "@prague/map";
 import {
     IComponentContext,
@@ -73,7 +73,7 @@ export abstract class RootComponent extends SharedComponent implements IComponen
 
     protected async created(): Promise<void> {
         // If it's the first time we are creating the component then create a root map
-        this.root = this.runtime.createChannel(this.rootMapId, MapExtension.Type) as ISharedMap;
+        this.root = SharedMap.create(this.runtime, this.rootMapId);
 
         // Calling attach pushes the channel to the websocket. Before this it's only local.
         this.root.attach();

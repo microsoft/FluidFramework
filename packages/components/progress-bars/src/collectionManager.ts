@@ -11,8 +11,8 @@ import {
 import {
     CounterValueType,
     DistributedSetValueType,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import {
     IComponentContext,
@@ -81,7 +81,9 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new CounterValueType());
 
     const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(MapExtension.Type, new MapExtension());
+    const mapExtension = SharedMap.getFactory();
+
+    dataTypes.set(mapExtension.type, mapExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
     const progressCollectionP = CollectionManager.load(runtime, context);

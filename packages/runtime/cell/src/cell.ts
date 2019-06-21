@@ -27,17 +27,7 @@ interface ICellOperation {
     value?: ICellValue;
 }
 
-/**
- * Cell snapshot definition
- */
-export interface ICellSnapshot {
-    minimumSequenceNumber: number;
-    offset: number;
-    sequenceNumber: number;
-    snapshot: any;
-}
-
-export enum CellValueType {
+enum CellValueType {
     // The value is another shared object
     Shared,
 
@@ -45,7 +35,7 @@ export enum CellValueType {
     Plain,
 }
 
-export interface ICellValue {
+interface ICellValue {
     // The type of the value
     type: string;
 

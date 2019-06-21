@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CellExtension } from "@prague/cell";
+import { Cell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
@@ -14,22 +14,20 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    MapExtension,
     registerDefaultValueType,
+    SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
-    SharedNumberSequenceExtension,
-    SharedObjectSequenceExtension,
+    SharedObjectSequence,
     SharedString,
-    SharedStringExtension,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { SpellChecker } from "@prague/spellchecker";
-import { IStream, StreamExtension } from "@prague/stream";
+import { IStream, Stream } from "@prague/stream";
 import { Translator } from "@prague/translator";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
@@ -254,14 +252,14 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new SharedIntervalCollectionValueType());
 
     // Create channel extensions
-    const mapExtension = new MapExtension();
-    const sharedStringExtension = new SharedStringExtension();
-    const streamExtension = new StreamExtension();
-    const cellExtension = new CellExtension();
-    const objectSequenceExtension = new SharedObjectSequenceExtension();
-    const numberSequenceExtension = new SharedNumberSequenceExtension();
+    const mapExtension = SharedMap.getFactory();
+    const sharedStringExtension = SharedString.getFactory();
+    const streamExtension = Stream.getFactory();
+    const cellExtension = Cell.getFactory();
+    const objectSequenceExtension = SharedObjectSequence.getFactory();
+    const numberSequenceExtension = SharedNumberSequence.getFactory();
 
-    modules.set(MapExtension.Type, mapExtension);
+    modules.set(mapExtension.type, mapExtension);
     modules.set(sharedStringExtension.type, sharedStringExtension);
     modules.set(streamExtension.type, streamExtension);
     modules.set(cellExtension.type, cellExtension);

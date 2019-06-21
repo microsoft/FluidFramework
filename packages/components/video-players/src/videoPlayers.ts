@@ -13,7 +13,7 @@ import {
     IResponse,
     ISharedComponent,
 } from "@prague/container-definitions";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import {
     ComponentDisplayType,
     IComponentCollection,
@@ -257,7 +257,7 @@ export class VideoPlayerCollection extends EventEmitter implements
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root = SharedMap.create(this.runtime, "root");
             this.root.attach();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
@@ -292,7 +292,8 @@ export class VideoPlayerCollection extends EventEmitter implements
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(MapExtension.Type, new MapExtension());
+    const mapExtension = SharedMap.getFactory();
+    dataTypes.set(mapExtension.type, mapExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
     const progressCollectionP = VideoPlayerCollection.load(runtime, context);
