@@ -50,6 +50,9 @@ login:
   microsoft:
     clientId: ""
     secret: ""
+  accounts:
+    username: ""
+    password: ""
 
 gateway:
   name: gateway
@@ -88,7 +91,6 @@ foreman:
 paparazzi:
   name: paparazzi
   replicas: 8
-  translationKey: ""
 
 serviceGraph:
   name: servicegraph
@@ -129,9 +131,23 @@ kafka:
 minio:
   externalUrl: https://minio.wu2.prague.office-int.com
   endpoint: agents-storage-minio-svc
+  accessKey: ""
+  secretKey: ""
 
 ingress:
   class: nginx-prod
+
+error:
+  endpoint: ""
+
+worker:
+  intelligence:
+    textAnalytics:
+      key: ""
+    translation:
+      key: ""
+  clusterNpm: ""
+  npm: ""
 `;
 
 const writeFileAsync = util.promisify(fs.writeFile);

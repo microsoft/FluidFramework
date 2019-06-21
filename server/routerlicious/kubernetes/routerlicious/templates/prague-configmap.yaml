@@ -89,8 +89,8 @@ data:
             },
             "accounts": [
                 {
-                    "username": "test",
-                    "password": "mRTvhfDTE3FYbVc"
+                    "username": "{{ .Values.login.accounts.username }}",
+                    "password": "{{ .Values.login.accounts.password }}"
                 }
             ]
         },
@@ -186,34 +186,27 @@ data:
         },
         "error": {
             "track": true,
-            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+            "endpoint" : "{{ .Values.error.endpoint }}"
         },
         "worker": {
             "intelligence": {
                 "resume": {
-                    "deviceId": "routerlicious",
-                    "host": "pkarimov-paidIOT.azure-devices.net",
-                    "sharedAccessKeyName": "iothubowner",
-                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                    "url": "{{ .Values.alfred.externalUrl }}/intelligence/resume"
                 },
                 "textAnalytics": {
-                    "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                    "key": "{{ .Values.worker.intelligence.textAnalytics.key }}"
                 },
                 "nativeTextAnalytics": {
-                    "enable": false,
-                    "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 },
                 "translation": {
-                    "key": "{{ .Values.paparazzi.translationKey }}"
+                    "key": "{{ .Values.worker.intelligence.translation.key }}"
                 }
             },
             "alfredUrl": "http://{{ template "alfred.fullname" . }}",
             "serverUrl": "{{ .Values.alfred.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
-            "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
-            "npm": "https://pragueauspkn-3873244262.azureedge.net",
+            "clusterNpm": "{{ .Values.worker.clusterNpm }}",
+            "npm": "{{ .Values.worker.npm }}",
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
@@ -272,8 +265,8 @@ data:
         "minio": {
             "endpoint": "{{ .Values.minio.endpoint }}",
             "port": 9000,
-            "accessKey": "prague",
-            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+            "accessKey": "{{ .Values.minio.accessKey }}",
+            "secretKey": "{{ .Values.minio.secretKey }}",
             "bucket": "agents"
         }
     }
