@@ -89,6 +89,8 @@ export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
   return Component.instantiateRuntime(context, chaincodeName, new Map([
-    [chaincodeName, Promise.resolve(Component.createComponentFactory(Clicker))]
+    [chaincodeName, Promise.resolve(componentFactory)]
   ]));
 }
+
+export const componentFactory = Component.createComponentFactory(Clicker);

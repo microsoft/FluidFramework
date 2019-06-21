@@ -31,10 +31,10 @@ export class Clicker extends Document {
 
     ReactDOM.render(
       <div>
-        {/* 
+        {/*
           <p>{title}</p>
           <input type={"text"} onChange={e => this.root.set("title", e.target.value)} />
-          <br /> 
+          <br />
         */}
         <span>{counter.value}</span>
         <button onClick={() => counter.increment(1)}>+</button>
@@ -65,6 +65,8 @@ export async function instantiateRuntime(
   context: IContainerContext
 ): Promise<IRuntime> {
   return Component.instantiateRuntime(context, chaincodeName, new Map([
-    [chaincodeName, Promise.resolve(Component.createComponentFactory(Clicker))]
+    [chaincodeName, Promise.resolve(componentFactory)]
   ]));
 }
+
+export const componentFactory = Component.createComponentFactory(Clicker);
