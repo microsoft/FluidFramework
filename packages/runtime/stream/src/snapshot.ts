@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ActionType, getActionType, IDelta, IInkLayer, IOperation } from "./interfaces";
+import {
+    ActionType,
+    getActionType,
+    IDelta,
+    IInkLayer,
+    IOperation,
+    IStylusDownAction,
+    IStylusMoveAction,
+    IStylusUpAction,
+} from "./interfaces";
 
 /**
  * Ink snapshot interface.
@@ -97,7 +106,7 @@ export class Snapshot implements ISnapshot {
      */
     private processStylusUpAction(operation: IOperation) {
         // TODO - longer term on ink up - or possibly earlier - we can attempt to smooth the provided ink
-        this.addOperationToLayer(operation.stylusUp.id, operation);
+        this.addOperationToLayer((operation.stylusUp as IStylusUpAction).id, operation);
     }
 
     /**
@@ -106,20 +115,21 @@ export class Snapshot implements ISnapshot {
      * @param operation - The stylus down operation
      */
     private processStylusDownAction(operation: IOperation) {
+        const action = operation.stylusDown as IStylusDownAction;
         const layer = {
-            id: operation.stylusDown.id,
+            id: action.id,
             operations: [],
         };
 
         // Push if we are inserting at the end - otherwise splice to insert at the specified location
-        if (operation.stylusDown.layer === 0) {
+        if (action.layer === 0) {
             this.layers.push(layer);
         } else {
-            this.layers.splice(this.layers.length - operation.stylusDown.layer, 0, layer);
+            this.layers.splice(this.layers.length - action.layer, 0, layer);
         }
 
         // Create a reference to the specified layer
-        let layerIndex = this.layers.length - 1 - operation.stylusDown.layer;
+        let layerIndex = this.layers.length - 1 - action.layer;
         this.layerIndex[layer.id] = layerIndex;
 
         // And move any after it down by one
@@ -129,7 +139,7 @@ export class Snapshot implements ISnapshot {
         }
 
         // And save the stylus down
-        this.addOperationToLayer(operation.stylusDown.id, operation);
+        this.addOperationToLayer(action.id, operation);
     }
 
     /**
@@ -138,7 +148,7 @@ export class Snapshot implements ISnapshot {
      * @param operation - The stylus move operation
      */
     private processStylusMoveAction(operation: IOperation) {
-        this.addOperationToLayer(operation.stylusMove.id, operation);
+        this.addOperationToLayer((operation.stylusMove as IStylusMoveAction).id, operation);
     }
 
     /**

@@ -197,7 +197,9 @@ export function getActionType(operation: IOperation): ActionType {
  * @param operation - The operation to get the stylus action from
  */
 export function getStylusAction(operation: IOperation): IStylusAction {
-    if (operation.stylusDown) {
+    if (operation.clear) {
+        throw new Error("Non-stylus event");
+    } else if (operation.stylusDown) {
         return operation.stylusDown;
     } else if (operation.stylusUp) {
         return operation.stylusUp;
@@ -214,17 +216,7 @@ export function getStylusAction(operation: IOperation): IStylusAction {
  * @param operation - The operation to get the stylus ID from
  */
 export function getStylusId(operation: IOperation): string {
-    const type = getActionType(operation);
-    switch (type) {
-        case ActionType.StylusDown:
-            return operation.stylusDown.id;
-        case ActionType.StylusUp:
-            return operation.stylusUp.id;
-        case ActionType.StylusMove:
-            return operation.stylusMove.id;
-        default:
-            throw new Error("Non-stylus event");
-    }
+    return getStylusAction(operation).id;
 }
 
 /**

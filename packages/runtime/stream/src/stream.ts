@@ -56,7 +56,7 @@ export class Stream extends SharedMap implements IStream {
     /**
      * The current ink snapshot.
      */
-    private inkSnapshot: Snapshot;
+    private inkSnapshot: Snapshot = Snapshot.clone(emptySnapshot);
 
     /**
      * Create a new Stream.
