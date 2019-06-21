@@ -70,11 +70,16 @@ export class RestWrapper {
 
         const response = await this.axios.request<T>(options)
             .catch(async (error: AxiosError) => {
-                // tslint:disable-next-line:max-line-length
-                debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
+                if (error && error.config) {
+                    // tslint:disable-next-line:max-line-length
+                    debug(`[${error.config.method}] request to [${error.config.url}] failed with [${error.code}] [${error.message}]`);
+                } else {
+                    debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+                }
+
                 return error.response && error.response.status !== statusCode
-                ? Promise.reject(error.response.status)
-                : Promise.reject(error);
+                    ? Promise.reject(error.response.status)
+                    : Promise.reject(error);
             });
         return response.data;
     }
