@@ -78,6 +78,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private connecting: Deferred<IConnectionDetails> | undefined | null;
     private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
+    private clientSequenceNumberObserved = 0;
     private closed = false;
 
     private handler: IDeltaHandlerStrategy | undefined;
@@ -243,6 +244,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         const message = this.createOutboundMessage(type, coreMessage);
         this.readonly = false;
 
+        this.emit("submitOp", message);
         this.stopSequenceNumberUpdate();
         this._outbound.push(message);
 
@@ -393,6 +395,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this._outbound.systemResume();
 
                 this.clientSequenceNumber = 0;
+                this.clientSequenceNumberObserved = 0;
 
                 // If first connection resolve the promise with the details
                 if (this.connecting) {
@@ -587,6 +590,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         }
         const startTime = Date.now();
+
+        if (this.connection && this.connection.details.clientId === message.clientId) {
+            const clientSequenceNumber = message.clientSequenceNumber;
+            this.logger.debugAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
+            this.logger.debugAssert(clientSequenceNumber <= this.clientSequenceNumber);
+            this.clientSequenceNumberObserved = clientSequenceNumber;
+            if (clientSequenceNumber === this.clientSequenceNumber) {
+                this.emit("allSentOpsAckd");
+            }
+        }
 
         // TODO Remove after SPO picks up the latest build.
         if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {

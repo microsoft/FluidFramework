@@ -145,6 +145,12 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;
+
+    /**
+     * Called by distributed data structures in disconnected state to notify about pending local changes.
+     * All pending changes are automatically flushed by shared objects on connection.
+     */
+    notifyPendingMessages(): void;
 }
 
 /**
@@ -283,6 +289,18 @@ export interface IHostRuntime extends IRuntime {
     getPackage(name: string): Promise<IComponentFactory>;
 
     error(err: any): void;
+
+    /**
+     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
+     * pending local changes. All pending changes are automatically flushed by shared objects on connection.
+     */
+    notifyPendingMessages(): void;
+
+    /**
+     * Returns true of document is dirty, i.e. there are some pending local changes that
+     * either were not sent out to delta stream or were not yet acknowledged.
+     */
+    isDocumentDirty(): boolean;
 }
 
 /**

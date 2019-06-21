@@ -166,6 +166,10 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
         return null;
     }
 
+    public notifyPendingMessages(): void {
+        return;
+    }
+
     // new handler things - maybe not needed
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         return null;

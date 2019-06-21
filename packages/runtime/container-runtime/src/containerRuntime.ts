@@ -39,7 +39,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
+import { buildHierarchy, Deferred, flatten, isSystemType, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ComponentContext } from "./componentContext";
@@ -175,6 +175,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
     private lastMinSequenceNumber: number;
+    private dirtyDocument = false;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -184,6 +185,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
+
+        this.deltaManager.on("allSentOpsAckd", () => {
+            assert(this.connected);
+            this.updateDocumentDirtyState(false);
+        });
+
+        this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
+            assert(this.connected);
+            if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
+                this.updateDocumentDirtyState(true);
+            }
+        });
     }
 
     public async loadComponent(
@@ -335,6 +348,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
+        assert(this.connectionState === value);
+
         // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
             for (const [, message] of this.pendingAttach) {
@@ -478,6 +493,32 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
+    }
+
+    /**
+     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
+     * local changes. All pending changes are automatically flushed by shared objects on connection.
+     */
+    public notifyPendingMessages(): void {
+        assert(!this.connected);
+        this.updateDocumentDirtyState(true);
+    }
+
+    /**
+     * Returns true of document is dirty, i.e. there are some pending local changes that
+     * either were not sent out to delta stream or were not yet acknowledged.
+     */
+    public isDocumentDirty(): boolean {
+        return this.dirtyDocument;
+    }
+
+    private updateDocumentDirtyState(dirty: boolean) {
+        if (this.dirtyDocument === dirty) {
+            return;
+        }
+
+        this.dirtyDocument = dirty;
+        this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
     private convertToSummaryTree(snapshot: ITree): SummaryTree {

@@ -35,7 +35,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return !this.processing && this.q.length === 0;
     }
 
-    constructor(private readonly worker: (value: T | undefined, callback: (error) => void) => void) {
+    constructor(private readonly worker: (value: T, callback: (error) => void) => void) {
         super();
     }
 
@@ -108,7 +108,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         this.processing = true;
         const next = this.q.shift();
         this.emit("pre-op", next);
-        this.worker(next, (error) => {
+        this.worker(next!, (error) => {
             this.processing = false;
 
             // Signal any pending messages

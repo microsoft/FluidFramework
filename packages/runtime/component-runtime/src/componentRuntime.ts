@@ -441,6 +441,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.componentContext.submitSignal(type, content);
     }
 
+    public notifyPendingMessages(): void {
+        assert(!this.connected);
+        this.componentContext.hostRuntime.notifyPendingMessages();
+    }
+
     private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
         return this.componentContext.submitMessage(type, content);

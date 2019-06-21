@@ -274,6 +274,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
             clientSequenceNumber = this.services!.deltaConnection.submit(content);
         } else {
             debug(`${this.id} Not fully connected - adding to pending list`, content);
+            this.runtime.notifyPendingMessages();
             // Store the message for when it is ACKed and then submit to the server if connected
         }
 
