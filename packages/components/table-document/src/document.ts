@@ -4,6 +4,7 @@
  */
 
 import { Component } from "@prague/app-component";
+// tslint:disable-next-line:no-submodule-imports
 import { Workbook } from "@prague/client-ui/ext/calc2";
 import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
 import {

@@ -18,6 +18,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 import * as moniker from "moniker";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import {

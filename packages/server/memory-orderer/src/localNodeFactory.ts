@@ -10,7 +10,7 @@ import {
     ITenantManager,
     IWebSocketServer,
 } from "@prague/services-core";
-
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";

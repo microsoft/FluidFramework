@@ -9,7 +9,9 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as Sequence from "@prague/sequence";
+// tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";
+// tslint:disable-next-line:no-submodule-imports
 import clone = require("lodash/clone");
 import Counter = api.RateCounter;
 

@@ -7,7 +7,6 @@
         "max-line-length": false,
         "no-console": false,
         "no-null-keyword": false,
-        "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
         "prefer-array-literal": false,

@@ -18,7 +18,6 @@
         "no-parameter-reassignment": false,
         "no-require-imports": false,
         "no-single-line-block-comment": false,
-        "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-typeof-undefined": false,
         "no-unnecessary-class": false,

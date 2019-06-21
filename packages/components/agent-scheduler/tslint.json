@@ -8,7 +8,6 @@
         "no-console": false,
         "no-floating-promises": false,
         "no-non-null-assertion": false,
-        "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,

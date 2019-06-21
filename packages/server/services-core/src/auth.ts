@@ -6,6 +6,7 @@
 import { ITokenClaims, IUser } from "@prague/container-definitions";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { getRandomName } from "./dockerNames";
 

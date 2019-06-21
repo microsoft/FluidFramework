@@ -13,7 +13,6 @@
         "no-object-literal-type-assertion": false,
         "no-parameter-reassignment": false,
         "no-require-imports": false,
-        "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unnecessary-callback-wrapper": false,
         "no-unnecessary-type-assertion": false,

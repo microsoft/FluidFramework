@@ -21,6 +21,7 @@ import {
 } from "@prague/runtime-definitions";
 import * as angular from "angular";
 import * as angularRoute from "angular-route";
+// tslint:disable-next-line:no-submodule-imports
 import "bootstrap/dist/css/bootstrap.min.css";
 import { EventEmitter } from "events";
 import * as $ from "jquery";

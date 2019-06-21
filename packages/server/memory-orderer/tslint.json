@@ -8,7 +8,6 @@
         "no-floating-promises": false,
         "no-null-keyword": false,
         "no-require-imports": false,
-        "no-submodule-imports": false,
         "no-suspicious-comment": false,
         "no-unnecessary-callback-wrapper": false,
         "no-unnecessary-type-assertion": false,

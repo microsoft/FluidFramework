@@ -9,6 +9,7 @@ import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { parse } from "url";
+// tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { isSpoTenant, spoJoinSession } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";

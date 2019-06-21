@@ -18,7 +18,7 @@ export class OwnedMap extends Document {
 
   /**
    *  The component has been loaded. Render the component into the provided div
-   **/
+   */
   public async opened() {
     const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
     if (maybeDiv) {
@@ -61,8 +61,8 @@ export class OwnedMap extends Document {
 
     if (this.ownedMap) {
       amOwner = this.ownedMap.isOwner(this.runtime.clientId);
-      change = (e) => this.ownedMap.set("title", e.target.value);
-      title = this.ownedMap.get("title");
+      change = (e: Event) => this.ownedMap.set("title", (e.target as HTMLInputElement).value);
+      title = this.ownedMap.get("title") as string;
 
       if (amOwner) {
         console.log("I am owner");
@@ -74,16 +74,16 @@ export class OwnedMap extends Document {
 
     ReactDOM.render(
       <div>
-          {this.ownedMap ?
+        {this.ownedMap ?
           <div>
             <p>Owned Map exists</p>
             {amOwner ? <p> I am owner </p> : <p>Non Owner</p>}
           </div>
           : <p>No Owned Map</p>}
-          <p>{title}</p>
-          <input type={"text"} onChange={change} />
-          <br />
-          <br />
+        <p>{title}</p>
+        <input type={"text"} onChange={change} />
+        <br />
+        <br />
 
         <span>{this.counter.value}</span>
         <button onClick={() => this.counter.increment(1)}>+</button>
@@ -100,7 +100,7 @@ export async function instantiateRuntime(
     context,
     "@chaincode/counter",
     new Map(
-    [
-      ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(OwnedMap))],
-    ]));
+      [
+        ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(OwnedMap))],
+      ]));
 }

@@ -101,6 +101,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
         return this.owner === member.client.user.id;
     }
 
+    // tslint:disable-next-line: no-suspicious-comment
     // TODO: Add this as a base component of snapshotter
     // protected ownerSnapshot() {
     //     return {
