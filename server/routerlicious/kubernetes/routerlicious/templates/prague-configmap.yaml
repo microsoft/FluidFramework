@@ -144,7 +144,7 @@ data:
             },
             "scribe": {
                 "group": "{{ template "scribe.fullname" . }}",
-                "topic": "deltas"
+                "topic": "{{ .Values.kafka.topics.deltas }}"
             },
             "foreman": {
                 "group": "{{ template "foreman.fullname" . }}",
