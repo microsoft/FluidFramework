@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { CellExtension, ICell } from "..";
 
@@ -13,7 +14,7 @@ describe("Routerlicious", () => {
 
             beforeEach(async () => {
                 const extension = new CellExtension();
-                testCell = extension.create(null, "cell");
+                testCell = extension.create(new MockRuntime(), "cell");
             });
 
             it("Can create a cell", () => {

@@ -22,9 +22,15 @@ import { ICell } from "./interfaces";
 /**
  * Description of a cell delta operation
  */
-interface ICellOperation {
-    type: string;
-    value?: ICellValue;
+type ICellOperation = ISetCellOperation | IDeleteCellOperation;
+
+interface ISetCellOperation {
+    type: "setCell";
+    value: ICellValue;
+}
+
+interface IDeleteCellOperation {
+    type: "deleteCell";
 }
 
 enum CellValueType {
@@ -117,7 +123,7 @@ export class Cell extends SharedObject implements ICell {
             };
         }
 
-        const op: ICellOperation = {
+        const op: ISetCellOperation = {
             type: "setCell",
             value: operationValue,
         };
@@ -128,7 +134,7 @@ export class Cell extends SharedObject implements ICell {
 
     // Deletes the value from the cell.
     public async delete(): Promise<void> {
-        const op: ICellOperation = {
+        const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
 
