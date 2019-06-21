@@ -63,7 +63,8 @@ export class ScribeLambda extends SequencedLambda {
     ) {
         super(context);
 
-        this.lastOffset = document.scribe.logOffset;
+        // For back compat with pre-scribe documents we need to check for the scribe metadata
+        this.lastOffset = document.scribe ? document.scribe.logOffset : 0;
         this.pendingMessages.push(...messages.map((message) => message.operation));
     }
 
