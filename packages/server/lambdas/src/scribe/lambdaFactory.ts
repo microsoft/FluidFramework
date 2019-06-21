@@ -109,7 +109,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     }
 
     private async fetchLatestSummaryState(gitManager: GitManager, documentId: string): Promise<number> {
-        const existingRef = await gitManager.getRef(documentId);
+        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {
             return -1;
         }

@@ -242,7 +242,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // The summary must reference the existing summary to be valid. This guards against accidental sends of
         // two summaries at the same time. In this case the first one wins.
-        const existingRef = await this.storage.getRef(this.document.documentId);
+        const existingRef = await this.storage.getRef(encodeURIComponent(this.document.documentId));
         if (existingRef.object.sha !== content.handle) {
             await this.sendSummaryNack(summarySequenceNumber);
             return;

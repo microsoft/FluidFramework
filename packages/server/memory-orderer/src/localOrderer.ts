@@ -270,7 +270,7 @@ class LocalOrdererConnection implements IOrdererConnection {
 }
 
 async function fetchLatestSummaryState(gitManager: IGitManager, documentId: string): Promise<number> {
-    const existingRef = await gitManager.getRef(documentId);
+    const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
     if (!existingRef) {
         return -1;
     }
