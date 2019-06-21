@@ -1,6 +1,0 @@
-<div>
-    {{ message }}
-</div>
-<div>
-    {{ error }}
-</div>

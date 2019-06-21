@@ -1,6 +1,0 @@
-{{<page_layout}}
-    {{$page_content}}     
-        <h1 class="text-center">Login to ProNet</h1>
-        {{<login_control}}{{/login_control}}
-    {{/page_content}}            
-{{/page_layout}}  

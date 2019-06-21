@@ -1,4 +1,0 @@
-nltk
-textblob
-flask
-flask-cors

@@ -1,1 +1,0 @@
-Wraps the spellchecker container with a REST API.
