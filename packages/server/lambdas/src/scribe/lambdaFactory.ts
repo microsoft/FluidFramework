@@ -10,7 +10,6 @@ import {
     ICollection,
     IContext,
     IDocument,
-    IKafkaMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
     IProducer,
@@ -21,6 +20,7 @@ import {
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { NoOpLambda } from "../utils";
 import { ScribeLambda } from "./lambda";
 
 const DefaultScribe: IScribe = {
@@ -29,18 +29,6 @@ const DefaultScribe: IScribe = {
     protocolState: undefined,
     sequenceNumber: -1,
 };
-
-class NoOpLambda implements IPartitionLambda {
-    constructor(private context: IContext) {
-    }
-
-    public handler(message: IKafkaMessage): void {
-        this.context.checkpoint(message.offset);
-    }
-
-    public close(): void {
-    }
-}
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(

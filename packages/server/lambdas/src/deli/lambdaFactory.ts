@@ -14,6 +14,7 @@ import {
 } from "@prague/services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
+import { NoOpLambda } from "../utils";
 import { DeliLambda } from "./lambda";
 
 // We expire clients after 5 minutes of no activity
@@ -40,27 +41,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
         // Lookup the last sequence number stored
         // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-        let dbObject = await this.collection.findOne({ documentId, tenantId });
+        const dbObject = await this.collection.findOne({ documentId, tenantId });
         if (!dbObject) {
             // Temporary guard against failure until we figure out what causing this to trigger.
-            dbObject = {
-                branchMap: null,
-                clients: null,
-                createTime: Date.now(),
-                documentId,
-                forks: [],
-                logOffset: null,
-                parent: null,
-                scribe: {
-                    logOffset: -1,
-                    minimumSequenceNumber: -1,
-                    protocolState: undefined,
-                    sequenceNumber: -1,
-                },
-                sequenceNumber: 0,
-                tenantId,
-            };
-            // return Promise.reject(`${tenantId}/${documentId} does not exist - cannot sequence`);
+            return new NoOpLambda(context);
         }
 
         return new DeliLambda(
