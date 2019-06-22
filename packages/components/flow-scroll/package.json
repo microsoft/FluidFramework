@@ -39,6 +39,7 @@
     "@chaincode/chart-view": "^0.5.0",
     "@chaincode/flow-document": "^0.5.0",
     "@chaincode/flow-editor": "^0.5.0",
+    "@chaincode/image-collection": "^0.5.0",
     "@chaincode/math": "^0.5.0",
     "@chaincode/pinpoint-editor": "^0.5.0",
     "@chaincode/progress-bars": "^0.5.0",

@@ -19,6 +19,7 @@ interface IHostConfig {
     doc: FlowDocument;
     math: IComponentCollection;
     videos: IComponentCollection;
+    images: IComponentCollection;
 }
 
 const template = new Template(
@@ -82,6 +83,7 @@ export class HostView extends View<IHostConfig> {
                 { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
                 { name: "insert math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
                 { name: "insert morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { name: "insert image", enabled: () => true, exec: () => insertComponentFromCollection(init.images, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", "display:block;width:61%;resize:both;overflow:hidden") },
                 { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
                 { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },

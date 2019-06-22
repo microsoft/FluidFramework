@@ -601,9 +601,15 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertVideoPlayer();
+            f.insertNewCollectionComponent(f.videoPlayers);
         },
         key: "insert morton",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertNewCollectionComponent(f.images);
+        },
+        key: "insert image",
     },
     {
         exec: (c, p, f) => {
@@ -3300,6 +3306,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public keypressHandler: (e: KeyboardEvent) => void;
     public keydownHandler: (e: KeyboardEvent) => void;
 
+    public videoPlayers: IComponentCollection;
+    public images: IComponentCollection;
+
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
     public services = new Map<string, any>();
@@ -3316,7 +3325,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     private progressBars: ProgressCollection;
     private math: IMathCollection;
-    private videoPlayers: IComponentCollection;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
     // sequenceDelta event.)  Used by 'updatePgInfo()' to determine if table information
@@ -5162,9 +5170,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         mathMarker.instance.enter(ComponentCursorDirection.Left);
     }
 
-    public insertVideoPlayer(inline = false) {
+    public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
-        const instance = this.videoPlayers.create() as ISharedComponent;
+        const instance = collection.create() as ISharedComponent;
 
         const props = {
             crefTest: {
@@ -5244,21 +5252,17 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private async openCollections() {
-        const [mathPlatform, progressBarsPlatform] = await Promise.all([
-            this.openPlatform("math"),
-            this.openPlatform("progress-bars"),
-            this.openPlatform("video-players"),
-        ]);
-
-        const [progressBars, math, videoPlayers] = await Promise.all([
+        const [progressBars, math, videoPlayers, images] = await Promise.all([
             this.openPlatform<ProgressCollection>("progress-bars"),
             this.openPlatform<IMathCollection>("math"),
             this.openCollection("video-players"),
+            this.openCollection("images"),
         ]);
 
         this.progressBars = progressBars;
         this.math = math;
         this.videoPlayers = videoPlayers;
+        this.images = images;
     }
 
     private async openCollection(id: string): Promise<IComponentCollection> {

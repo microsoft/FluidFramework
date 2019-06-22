@@ -36,6 +36,7 @@ COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/chart-view/package*.json packages/components/chart-view/
 COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/progress-bars/package*.json packages/components/progress-bars/
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-document/package*.json packages/components/flow-document/

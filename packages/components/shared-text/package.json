@@ -36,6 +36,7 @@
     "@chaincode/charts": "^0.5.0",
     "@chaincode/math": "^0.5.0",
     "@chaincode/monaco": "^0.5.0",
+    "@chaincode/image-collection": "^0.5.0",
     "@chaincode/pinpoint-editor": "^0.5.0",
     "@chaincode/progress-bars": "^0.5.0",
     "@chaincode/video-players": "^0.5.0",

@@ -27,6 +27,7 @@ export class FlowHost extends Component {
             this.runtime.createAndAttachComponent(this.docId, FlowDocument.type),
             this.runtime.createAndAttachComponent("math", "@chaincode/math"),
             this.runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
+            this.runtime.createAndAttachComponent("images", "@chaincode/image-collection"),
         ]);
 
         const url = new URL(window.location.href);
@@ -44,12 +45,20 @@ export class FlowHost extends Component {
         const mathP = this.openCollection("math");
         const div = await this.platform.queryInterface<Element>("div");
         const videosP = this.openCollection("video-players");
+        const imagesP = this.openCollection("images");
 
         const scheduler = new Scheduler();
         const viewport = new HostView();
         viewport.attach(
             div,
-            { scheduler, doc: await docP, math: await mathP, context: this.context, videos: await videosP });
+            {
+                scheduler,
+                doc: await docP,
+                math: await mathP,
+                context: this.context,
+                videos: await videosP,
+                images: await imagesP,
+            });
     }
 
     private get docId() { return `${this.id}-doc`; }
@@ -89,6 +98,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             ["@chaincode/table-view", Promise.resolve(Component.createComponentFactory(TableView))],
             ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts")],
             ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players")],
+            ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection")],
             // pinpoint editor's SASS loading of resources causes trouble
             // If I can change webpack to do this then things are ok
             // {
