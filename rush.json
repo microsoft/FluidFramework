@@ -59,24 +59,16 @@
       "projectFolder": "packages/components/client-ui/"
     },
     {
+      "packageName": "@chaincode/image-collection",
+      "projectFolder": "packages/components/image-collection/"
+    },
+    {
       "packageName": "@chaincode/progress-bars",
       "projectFolder": "packages/components/progress-bars/"
     },
     {
       "packageName": "@chaincode/video-players",
       "projectFolder": "packages/components/video-players/"
-    },
-    {
-      "packageName": "@chaincode/flow-document",
-      "projectFolder": "packages/components/flow-document/"
-    },
-    {
-      "packageName": "@chaincode/flow-editor",
-      "projectFolder": "packages/components/flow-editor/"
-    },
-    {
-      "packageName": "@chaincode/flow-page",
-      "projectFolder": "packages/components/flow-page/"
     },
     {
       "packageName": "@chaincode/flow-scroll",
@@ -121,6 +113,10 @@
     {
       "packageName": "@chaincode/table-view",
       "projectFolder": "packages/components/table-view/"
+    },
+    {
+      "packageName": "@chaincode/webflow",
+      "projectFolder": "packages/components/webflow/"
     },
     {
       "packageName": "@prague/odsp-socket-storage",

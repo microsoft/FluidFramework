@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Editor, FlowDocument } from "@chaincode/webflow";
 import { Scheduler, Template, View } from "@prague/flow-util";
+import { FlowDocument } from "../../document";
+import { Editor, PagePosition } from "../../editor";
 import * as styles from "./index.css";
 
 const template = new Template({
@@ -15,12 +16,14 @@ const template = new Template({
     ],
 });
 
-// tslint:disable-next-line:no-empty-interface
-interface IPageProps {}
+interface IPageProps {
+    pageStart: PagePosition;
+}
 
 interface IPageInit extends IPageProps {
     doc: FlowDocument;
     scheduler: Scheduler;
+    onPaginationStop: (position: PagePosition) => void;
 }
 
 export class Page extends View<IPageInit, IPageProps> {

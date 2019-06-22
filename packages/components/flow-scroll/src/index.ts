@@ -4,10 +4,9 @@
  */
 
 import { ChartView } from "@chaincode/chart-view";
-import { FlowDocument } from "@chaincode/flow-document";
-import { FlowEditor } from "@chaincode/flow-editor";
 import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import { TableView } from "@chaincode/table-view";
+import { FlowDocument } from "@chaincode/webflow";
 import { Component } from "@prague/app-component";
 import {
     IComponent,
@@ -86,7 +85,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
         new Map([
             [FlowHost.type, Promise.resolve(Component.createComponentFactory(FlowHost))],
             [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
-            [FlowEditor.type, Promise.resolve(Component.createComponentFactory(FlowEditor))],
 
             // Demo components
             ["@chaincode/math", import("@chaincode/math")],

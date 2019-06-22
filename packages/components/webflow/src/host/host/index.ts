@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FlowDocument } from "@chaincode/webflow";
-import { ISharedComponent } from "@prague/container-definitions";
-import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
-import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
+import { ICommand, KeyCode, Scheduler, Template, View } from "@prague/flow-util";
+import { IComponentContext } from "@prague/runtime-definitions";
+import { FlowDocument } from "../../document";
 import { debug } from "../debug";
 import { SearchMenuView } from "../searchmenu";
 import { Viewport } from "../viewport";
@@ -17,9 +16,6 @@ interface IHostConfig {
     context: IComponentContext;
     scheduler: Scheduler;
     doc: FlowDocument;
-    math: IComponentCollection;
-    videos: IComponentCollection;
-    images: IComponentCollection;
 }
 
 const template = new Template(
@@ -54,19 +50,6 @@ export class HostView extends View<IHostConfig> {
             return start < end;
         };
 
-        const insertComponent = (type: string, style?: string, classList?: string[]) => {
-            const position = viewport.editor.cursorPosition;
-            const url = randomId();
-            init.context.createAndAttachComponent(url, type);
-            init.doc.insertComponent(position, `/${url}`, style, classList);
-        };
-
-        const insertComponentFromCollection = (factory: IComponentCollection, style?: string, classList?: string[]) => {
-            const position = viewport.editor.cursorPosition;
-            const instance = factory.create() as ISharedComponent;
-            init.doc.insertComponent(position, `/${instance.url}`, style, classList);
-        };
-
         const insertTags = (tags: string[]) => {
             const selection = viewport.editor.selection;
             init.doc.insertTags(tags, selection.start, selection.end);
@@ -81,12 +64,6 @@ export class HostView extends View<IHostConfig> {
             commands: [
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
                 { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
-                { name: "insert math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
-                { name: "insert morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { name: "insert image", enabled: () => true, exec: () => insertComponentFromCollection(init.images, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", "display:block;width:61%;resize:both;overflow:hidden") },
-                { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
-                { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
             ],
             onComplete: this.onComplete,
          });

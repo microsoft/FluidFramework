@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Editor, FlowDocument } from "@chaincode/webflow";
 import { Scheduler, Template, View } from "@prague/flow-util";
+import { FlowDocument } from "../../document";
+import { Editor } from "../../editor";
 import { Page } from "../page";
 import * as styles from "./index.css";
 
@@ -48,6 +49,8 @@ export class Viewport extends View<IViewportInit> {
         page.attach(pageRoot, {
             doc,
             scheduler,
+            pageStart: undefined,
+            onPaginationStop: undefined,
         });
 
         this.state = { doc, editor: page.editor, scheduler, slot, elementToPage: new WeakMap() };

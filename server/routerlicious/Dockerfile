@@ -39,9 +39,6 @@ COPY packages/components/client-ui/package*.json packages/components/client-ui/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/progress-bars/package*.json packages/components/progress-bars/
 COPY packages/components/video-players/package*.json packages/components/video-players/
-COPY packages/components/flow-document/package*.json packages/components/flow-document/
-COPY packages/components/flow-editor/package*.json packages/components/flow-editor/
-COPY packages/components/flow-page/package*.json packages/components/flow-page/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/
 COPY packages/components/key-value/package*.json packages/components/key-value/
@@ -53,6 +50,7 @@ COPY packages/components/shared-text/package*.json packages/components/shared-te
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/
+COPY packages/components/webflow/package*.json packages/components/webflow/
 COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/
 COPY packages/drivers/replay-socket-storage/package*.json packages/drivers/replay-socket-storage/
 COPY packages/drivers/file-socket-storage/package*.json packages/drivers/file-socket-storage/
