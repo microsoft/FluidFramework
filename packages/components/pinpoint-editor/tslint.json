@@ -5,7 +5,6 @@
         "completed-docs": false,
         "function-name": false,
         "informative-docs": false,
-        "max-func-body-length": false,
         "no-console": false,
         "no-duplicate-imports": false,
         "no-dynamic-delete": false,

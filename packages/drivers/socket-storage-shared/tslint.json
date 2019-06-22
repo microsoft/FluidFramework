@@ -1,6 +1,5 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
-        "no-reserved-keywords": false
     }
 }

@@ -1,18 +1,13 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
-    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "completed-docs": false,
-        "function-name": false,
         "max-line-length": false,
-        "no-console": false,
-        "no-floating-promises": false,
         "no-parameter-reassignment": false,
         "no-require-imports": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "prefer-object-spread": false,
-        "promise-function-async": false
+        "prefer-object-spread": false
     }
 }

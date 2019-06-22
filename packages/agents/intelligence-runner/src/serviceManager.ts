@@ -33,7 +33,7 @@ export class IntelligentServicesManager {
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
                     async () => {
-                        const output = this.documentInsights.get(this.sharedString.id) as ISharedMap;
+                        const output = this.documentInsights.get<ISharedMap>(this.sharedString.id);
 
                         // Run the shared services
                         const text = this.sharedString.getText();

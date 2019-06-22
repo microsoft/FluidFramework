@@ -1,9 +1,8 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
-    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "await-promise": false,
-          "completed-docs": false,
+        "completed-docs": false,
         "informative-docs": false,
         "max-func-body-length": false,
         "no-console": false,

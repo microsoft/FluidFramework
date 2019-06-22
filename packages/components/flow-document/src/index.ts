@@ -418,7 +418,7 @@ export class FlowDocument extends Component {
     }
 
     protected async opened() {
-        this.maybeSharedString = await this.root.wait("text") as SharedString;
+        this.maybeSharedString = await this.root.wait<SharedString>("text");
         this.maybeSharedString.on("sequenceDelta", (...args) => { this.emit("sequenceDelta", ...args); });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();

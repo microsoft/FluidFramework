@@ -5,7 +5,6 @@
         "no-console": false,
         "no-non-null-assertion": false,
         "no-null-keyword": false,
-        "no-reserved-keywords": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "prefer-array-literal": false,

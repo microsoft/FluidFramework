@@ -6,7 +6,6 @@
         "function-name": false,
         "informative-docs": false,
         "max-classes-per-file": false,
-        "max-func-body-length": false,
         "no-bitwise": false,
         "no-console": false,
         "no-duplicate-imports": false,

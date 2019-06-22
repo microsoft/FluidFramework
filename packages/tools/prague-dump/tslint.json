@@ -1,6 +1,5 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
-    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "no-console": false,
         "no-floating-promises": false,

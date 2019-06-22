@@ -6,20 +6,20 @@
 import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-  IContainerContext,
-  IRuntime,
-  IComponentHTMLViewable,
-  IRequest,
-  IHTMLView,
   IComponent,
+  IComponentHTMLViewable,
+  IContainerContext,
+  IHTMLView,
+  IRequest,
+  IRuntime,
 } from "@prague/container-definitions";
 import {
-  DistributedSetValueType,
-  MapExtension,
-  registerDefaultValueType,
-  ISharedMap,
-  CounterValueType,
   Counter,
+  CounterValueType,
+  DistributedSetValueType,
+  ISharedMap,
+  registerDefaultValueType,
+  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -30,14 +30,15 @@ import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+// tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
-export const ClickerName = pkg.name;
+export const ClickerName = pkg.name as string;
 
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
 export class Clicker extends RootComponent implements IComponentHTMLViewable {
-  private static SupportedInterfaces = ["IComponentHTMLViewable", "IComponentRouter"];
+  private static readonly supportedInterfaces = ["IComponentHTMLViewable", "IComponentRouter"];
 
   /**
    * Do setup work here
@@ -54,7 +55,7 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
    * Using a static allows us to have async calls in class creation that you can't have in a constructor
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
-    const clicker = new Clicker(runtime, context, Clicker.SupportedInterfaces);
+    const clicker = new Clicker(runtime, context, Clicker.supportedInterfaces);
     await clicker.initialize();
 
     return clicker;
@@ -72,7 +73,7 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
     const div = document.createElement("div");
     ReactDOM.render(
       <CounterReactView map={this.root} counter={counter} />,
-      div
+      div,
     );
 
     return div;
@@ -84,8 +85,8 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
 // ----- REACT STUFF -----
 
 interface p {
-  map: ISharedMap,
-  counter: Counter,
+  map: ISharedMap;
+  counter: Counter;
 }
 
 interface s {
@@ -97,8 +98,8 @@ class CounterReactView extends React.Component<p, s> {
     super(props);
 
     this.state = {
-      value: this.props.counter.value
-    }
+      value: this.props.counter.value,
+    };
   }
 
   componentDidMount() {
@@ -114,7 +115,7 @@ class CounterReactView extends React.Component<p, s> {
   render() {
     return (
       <div>
-        <span>{this.state.value}</span><button onClick={() => { this.props.counter.increment(1) }}>+</button>
+        <span>{this.state.value}</span><button onClick={() => { this.props.counter.increment(1); }}>+</button>
       </div>
     );
   }
@@ -132,7 +133,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
   registerDefaultValueType(new CounterValueType());
 
   const dataTypes = new Map<string, ISharedObjectExtension>();
-  dataTypes.set(MapExtension.Type, new MapExtension());
+  const mapExtension = SharedMap.getFactory();
+  dataTypes.set(mapExtension.type, mapExtension);
 
   // Create a new runtime for our component
   const runtime = await ComponentRuntime.load(context, dataTypes);
@@ -157,10 +159,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
  * This will get called by the Container as part of setup
  * We provide all the components we will care about as a registry.
  */
-export async function instantiateRuntime(
-  context: IContainerContext
-): Promise<IRuntime> {
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
   return StockContainerRuntimeFactory.instantiateRuntime(context, ClickerName, new Map([
-    [ClickerName, Promise.resolve({ instantiateComponent })]
+    [ClickerName, Promise.resolve({ instantiateComponent })],
   ]));
 }

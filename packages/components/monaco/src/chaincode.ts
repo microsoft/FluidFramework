@@ -232,6 +232,7 @@ export class MonacoRunner extends EventEmitter implements
      * Sets up the Monaco editor for use and attaches its HTML element to the mapHost element.
      * Also sets up eventing to send/receive ops as the text is changed.
      */
+    // tslint:disable-next-line: max-func-body-length
     private async initializeEditorDiv(): Promise<void> {
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");

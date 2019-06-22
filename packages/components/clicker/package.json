@@ -31,6 +31,7 @@
   "dependencies": {
     "@prague/app-component": "^0.5.0",
     "@prague/aqueduct": "^0.5.0",
+    "@prague/build-common": "^0.5.0",
     "@prague/component-runtime": "^0.5.0",
     "@prague/container-definitions": "^0.5.0",
     "@prague/map": "^0.5.0",

@@ -1,6 +1,5 @@
 {
     "extends": ["@prague/build-common/tslint.json"],
-    "rulesDirectory": ["node_modules/tslint-microsoft-contrib"],
     "rules": {
         "completed-docs": false,
         "no-null-keyword": false

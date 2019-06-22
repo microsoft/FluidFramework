@@ -68,6 +68,7 @@ export class SegmentSpan {
      * as well as the offset from the segment start.
      */
     public spanOffsetToSegmentOffset(spanOffset: number) {
+        let currentSpanOffset = spanOffset;
         let segment: ISegment;
         let offset = NaN;
 
@@ -77,12 +78,12 @@ export class SegmentSpan {
             segment = candidate;
             const len = endOffset - startOffset;
 
-            offset = startOffset + spanOffset;
-            if (spanOffset < len) {
+            offset = startOffset + currentSpanOffset;
+            if (currentSpanOffset < len) {
                 return false;
             }
 
-            spanOffset -= len;
+            currentSpanOffset -= len;
             return true;
         });
 
