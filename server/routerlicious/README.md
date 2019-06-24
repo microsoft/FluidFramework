@@ -35,9 +35,11 @@ Deployment Status
 
 |Environment|Status|
 |-----------|------|
-|[WestUS2 Production](https://alfred.wu2.prague.office-int.com/)|[![WestUS2 Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/5)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=5&_a=environment-summary)|
-|[WestUS2 PPE](https://alfred.wu2-ppe.prague.office-int.com/)|[![WestUS2 PPE](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/8)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=8&_a=environment-summary)|
-|[EastUS Production](https://alfred.eu.prague.office-int.com/)|[![EastUS Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/11)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=11&_a=environment-summary)|
+|[WestUS2 Production](https://www.wu2.prague.office-int.com/)|[![WestUS2 Production](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/5)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=5&_a=environment-summary)|
+|[WestUS2 PPE](https://www.wu2-ppe.prague.office-int.com/)|[![WestUS2 PPE](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/8)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=8&_a=environment-summary)|
+|[WestUS2-2](https://www.wu2-2.prague.office-int.com/)|[![WestUS2-2](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/40)]()|
+|[EastUS2](https://www.eu2.prague.office-int.com/)|[![EastUS2](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/36)](https://offnet.visualstudio.com/officenet/_release?definitionId=4&definitionEnvironmentId=11&_a=environment-summary)|
+|[WestEU](https://www.we.prague.office-int.com/)|[![WestEU](https://offnet.vsrm.visualstudio.com/_apis/public/Release/badge/0a22f611-6a4a-4416-a1bb-53ed7284aa21/4/43)]()|
 
 
 ## Building and Running
