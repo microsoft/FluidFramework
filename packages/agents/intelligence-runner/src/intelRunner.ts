@@ -14,10 +14,10 @@ const textAnalyticsConfig = {
 
 const resumeAnalyticsConfig = {
     deviceId: "routerlicious",
-    host: "pkarimov-paidIOT.azure-devices.net",
-    sharedAccessKey: "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-    sharedAccessKeyName: "iothubowner",
-    url: "https://alfred.wu2-ppe.prague.office-int.com/intelligence/resume",
+    host: "",
+    sharedAccessKey: "",
+    sharedAccessKeyName: "",
+    url: "",
 };
 
 export class IntelRunner {

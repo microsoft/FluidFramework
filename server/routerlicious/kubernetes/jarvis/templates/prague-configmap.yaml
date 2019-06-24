@@ -143,18 +143,11 @@ data:
         "worker": {
             "intelligence": {
                 "resume": {
-                    "deviceId": "routerlicious",
-                    "host": "pkarimov-paidIOT.azure-devices.net",
-                    "sharedAccessKeyName": "iothubowner",
-                    "sharedAccessKey": "8mvOmNnUklwnuzY+U96V51w+qCq262ZUpSkdw8nTZ18=",
-                    "url": "{{ .Values.jarvis.externalUrl }}/intelligence/resume"
                 },
                 "textAnalytics": {
                     "key": ""
                 },
                 "nativeTextAnalytics": {
-                    "enable": false,
-                    "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 },
                 "translation": {
                     "key": ""
