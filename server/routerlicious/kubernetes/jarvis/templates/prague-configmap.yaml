@@ -73,13 +73,13 @@ data:
         "login": {
             "enabled": true,
             "microsoft": {
-                "clientId": "3d642166-9884-4463-8248-78961b8c1300",
-                "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+                "clientId": "",
+                "secret": ""
             },
             "accounts": [
                 {
-                    "username": "test",
-                    "password": "mRTvhfDTE3FYbVc"
+                    "username": "",
+                    "password": ""
                 }
             ]
         },
@@ -138,7 +138,7 @@ data:
         },
         "error": {
             "track": true,
-            "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+            "endpoint" : ""
         },
         "worker": {
             "intelligence": {
@@ -150,21 +150,21 @@ data:
                     "url": "{{ .Values.jarvis.externalUrl }}/intelligence/resume"
                 },
                 "textAnalytics": {
-                    "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                    "key": ""
                 },
                 "nativeTextAnalytics": {
                     "enable": false,
                     "url": "http://praguepy.westus2.cloudapp.azure.com/"
                 },
                 "translation": {
-                    "key": "bd099a1e38724333b253fcff7523f76a"
+                    "key": ""
                 }
             },
             "alfredUrl": "http://{{ template "jarvis.fullname" . }}",
             "serverUrl": "{{ .Values.jarvis.externalUrl }}",
             "blobStorageUrl": "{{ .Values.historian.externalUrl }}",
             "repository": "prague",
-            "npm": "https://pragueauspkn-3873244262.azureedge.net",
+            "npm": "",
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
@@ -186,8 +186,8 @@ data:
                     "repository": "praguedocs",
                     "direct": "https://api.github.com",
                     "credentials": {
-                        "user": "praguegit",
-                        "password": "8d043006d0a2704d4dd9972f848f1982026672a1"
+                        "user": "",
+                        "password": ""
                     }
                 }
             },
@@ -220,8 +220,8 @@ data:
         "minio": {
             "endpoint": "{{ .Values.minio.endpoint }}",
             "port": 9000,
-            "accessKey": "prague",
-            "secretKey": "mhioAkNXTwdX4dXWgKgXVtHo",
+            "accessKey": "",
+            "secretKey": "",
             "bucket": "agents"
         }
     }
