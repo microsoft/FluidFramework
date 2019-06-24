@@ -7,6 +7,15 @@ const path = require("path");
 const merge = require("webpack-merge");
 const pkg = require("./package.json");
 
+// These packages expect WebPack to generate CSS modules
+const useCssModules = [ 
+    path.resolve(__dirname, "./src"),
+    path.resolve(__dirname, "../table-view"),
+    path.resolve(__dirname, "../chart-view"),
+    path.resolve(__dirname, "../webflow"),
+    path.resolve(__dirname, "../flow-util"),
+];
+
 module.exports = env => {
     const isProduction = env === "production";
     const styleLocalIdentName = isProduction
@@ -45,13 +54,22 @@ module.exports = env => {
                 },
                 {
                     test: /\.css$/,
+                    exclude: useCssModules,
+                    use: [
+                        "style-loader", // creates style nodes from JS strings
+                        "css-loader", // translates CSS into CommonJS
+                    ]
+                },
+                {
+                    test: /\.css$/,
+                    include: useCssModules,
                     use: [
                         "style-loader", {
                             loader: "css-loader",
                             options: {
                                 modules: true,
                                 localIdentName: styleLocalIdentName
-                            }
+                            },
                         }
                     ]
                 },
