@@ -67,7 +67,7 @@ class Chaincode implements IComponentFactory {
 
         this.runFn(component, context).catch(
             (error) => {
-                debug(error);
+                context.error(error);
             });
 
         return component;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type TelemetryEventCategory = "telemetryEvent" | "error" | "performance";
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 export type TelemetryPerfType = "start" | "end" | "cancel" | "progress";
 export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
 
@@ -29,9 +29,9 @@ export interface ITelemetryBaseLogger {
 
 /**
  * Informational (non-error) telemetry event
- * Maps to category = "telemetryEvent"
+ * Maps to category = "generic"
  */
-export interface ITelemetryInformationalEvent {
+export interface ITelemetryGenericEvent {
     eventName: string;
     [index: string]: TelemetryEventPropertyType;
 }
@@ -74,13 +74,13 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * Send information telemetry event
      * @param event - Event to send
      */
-    sendTelemetryEvent(event: ITelemetryInformationalEvent): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent): void;
 
     /**
      * Send error telemetry event
      * @param event - Event to send
      */
-    sendErrorEvent(event: ITelemetryErrorEvent): void;
+    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
 
     /**
      * Send error telemetry event

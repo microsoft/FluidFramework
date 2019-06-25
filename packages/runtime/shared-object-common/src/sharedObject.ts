@@ -417,7 +417,6 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
             }
         }
 
-        // TODO: should this be an assert?
-        debug(`Duplicate ack received ${message.clientSequenceNumber}`);
+        this.logger.sendErrorEvent({eventName: "DuplicateAckReceived"});
     }
 }

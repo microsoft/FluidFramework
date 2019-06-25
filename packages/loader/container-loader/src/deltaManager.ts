@@ -64,9 +64,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     // There are three numbers we track
     // * lastQueuedSequenceNumber is the last queued sequence number
-    // * largestSequenceNumber is the largest seen sequence number
-    private lastQueuedSequenceNumber: number | undefined;
-    private largestSequenceNumber: number | undefined;
+    private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
 
     // tslint:disable:variable-name
@@ -85,6 +83,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private deltaStorageP: Promise<IDocumentDeltaStorageService> | undefined;
 
     private readonly contentCache = new ContentCache(DefaultContentBufferSize);
+
+    private duplicateMsgCount = 0;
 
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage | undefined> {
         return this._inbound;
@@ -189,8 +189,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.baseSequenceNumber = sequenceNumber;
         this.minSequenceNumber = sequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
-        this.largestSequenceNumber = sequenceNumber;
+
+        // we will use same check in other places to make sure all the seq number above are set properly.
+        assert(!this.handler);
         this.handler = handler;
+        assert(this.handler);
 
         // We are ready to process inbound messages
         if (resume) {
@@ -570,13 +573,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
+        assert(this.handler);
         for (const message of messages) {
-            if (this.largestSequenceNumber !== undefined) {
-                this.largestSequenceNumber = Math.max(this.largestSequenceNumber, message.sequenceNumber);
-            }
             // Check that the messages are arriving in the expected order
-            if (this.lastQueuedSequenceNumber !== undefined  &&
-                message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+            if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
                 this.handleOutOfOrderMessage(message);
             } else {
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
@@ -586,9 +586,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processMessage(message: ISequencedDocumentMessage): Promise<void> {
-        if (this.baseSequenceNumber !== undefined) {
-            assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
-        }
+        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = Date.now();
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
@@ -646,19 +644,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
      * Handles an out of order message retrieved from the server
      */
     private handleOutOfOrderMessage(message: ISequencedDocumentMessage) {
-        if (this.lastQueuedSequenceNumber !== undefined && message.sequenceNumber <= this.lastQueuedSequenceNumber) {
+        if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
             this.logger.sendTelemetryEvent({
                 eventName: "DuplicateMessage",
                 lastQueued: this.lastQueuedSequenceNumber!,
                 sequenceNumber: message.sequenceNumber,
+                totalDuplicateMessages: ++this.duplicateMsgCount,
             });
             return;
         }
 
         this.pending.push(message);
-        if (this.lastQueuedSequenceNumber === undefined) {
-            return;
-        }
         this.fetchMissingDeltas("HandleOutOfOrderMessage", this.lastQueuedSequenceNumber, message.sequenceNumber);
     }
 

@@ -13,12 +13,8 @@ export class BlobManager implements IBlobManager {
     }
 
     public async loadBlobMetadata(blobs: IGenericBlob[]) {
-        try {
-            for (const blob of blobs) {
-                this.blobs.set(blob.id, blob);
-            }
-        } catch (error) {
-            console.log("Error in Blob Snapshot Load");
+        for (const blob of blobs) {
+            this.blobs.set(blob.id, blob);
         }
     }
 

@@ -622,6 +622,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.initializeIntervalCollections();
 
         if (error) {
+            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
             this.loadedDeferred.reject(error);
         } else {
             this.isLoaded = true;

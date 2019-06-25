@@ -245,7 +245,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public error(err: any): void {
-        return;
+        this.hostRuntime.error(err);
     }
 
     // exp: runtime calls this after loading is done to actually start the chaincode.

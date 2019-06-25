@@ -245,7 +245,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                         // change) for a performance gain. Socket.IO internally needs to track the callback
                         // given the remote server will be 'invoking' it.
                         if (error) {
-                            debug("Emit error", error);
+                            this.emit("error", error);
                         }
                     });
             });

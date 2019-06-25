@@ -256,7 +256,7 @@ export async function load(
     if (!container.existing) {
         initializeChaincode(container, `@prague/client-api@${apiVersion}`)
             .catch((error) => {
-                debug("chaincode error", error);
+                container.emit("error", error);
             });
     }
 

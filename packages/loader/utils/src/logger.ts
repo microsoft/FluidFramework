@@ -7,7 +7,7 @@ import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
     ITelemetryErrorEvent,
-    ITelemetryInformationalEvent,
+    ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
     TelemetryPerfType,
@@ -43,26 +43,34 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         return tick.toFixed(0);
     }
 
-    protected static prepareErrorObject(error: any): any {
+    protected static prepareErrorObject(event: ITelemetryBaseEvent, error: any) {
         if (error === null || typeof error !== "object") {
             // tslint:disable-next-line:no-unsafe-any
-            return error;
+            event.error = error;
+        } else {
+            // Exceptions have these properties:
+            // - JSON.stringify() produces empty object output ("{}")
+            // - toString() prints error message, but without useful stack
+            // - there are non-enumerable properties on exception object that we can tap on
+            //   (but no guarantee they will be there in future or different environments)
+            // Solution:
+            //   Copy all non-enumerable own properties (i.e. we are not walking prototype chain)
+            const errorAsObject: object = error as object;
+            const error2: { stack?: string; } = {...errorAsObject};
+            Object.getOwnPropertyNames(errorAsObject).forEach((prop: string) => {
+                error2[prop] = errorAsObject[prop];
+            });
+
+            // Extract call stack from exception if available
+            event.stack = error2.stack;
+            error2.stack = undefined;
+
+            event.error = error2;
         }
-
-        // Exceptions have these properties:
-        // - JSON.stringify() produces empty object output ("{}")
-        // - toString() prints error message, but without useful stack
-        // - there are non-enumerable properties on exception object that we can tap on
-        //   (but no guarantee they will be there in future or different environments)
-        // Solution:
-        //   Copy all non-enumerable own properties (i.e. we are not walking prototype chain)
-        const errorAsObject: object = error as object;
-        const error2: object = {...errorAsObject};
-        Object.getOwnPropertyNames(errorAsObject).forEach((prop: string) => {
-            error2[prop] = errorAsObject[prop];
-        });
-
-        return error2;
+        // Collect stack if we were not able to extract it from error
+        if (event.stack === undefined) {
+            event.stack = TelemetryLogger.getStack();
+        }
     }
 
     protected static getStack(): string | undefined {
@@ -96,8 +104,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public sendTelemetryEvent(event: ITelemetryInformationalEvent) {
-        this.send({ ...event, category: "telemetryEvent" });
+    public sendTelemetryEvent(event: ITelemetryGenericEvent) {
+        this.send({ ...event, category: "generic" });
     }
 
     /**
@@ -105,8 +113,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public sendErrorEvent(event: ITelemetryErrorEvent) {
-        this.send({ ...event, category: "error" });
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        const newEvent: ITelemetryBaseEvent = { ...event, category: "error" };
+        TelemetryLogger.prepareErrorObject(newEvent, error);
+        this.send(newEvent);
     }
 
     /**
@@ -133,7 +143,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public logGenericError(eventName: string, error: any) {
         // tslint:disable-next-line:no-unsafe-any
-        this.sendErrorEvent({ eventName, error: TelemetryLogger.prepareErrorObject(error) });
+        this.sendErrorEvent({ eventName }, error);
     }
 
     /**
@@ -143,7 +153,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public logException(event: ITelemetryErrorEvent, exception: any): void {
         // tslint:disable-next-line:no-unsafe-any
-        this.sendErrorEvent({ ...event, isException: true, error: TelemetryLogger.prepareErrorObject(exception) });
+        this.sendErrorEvent({ ...event, isException: true }, exception);
     }
 
     /**
@@ -327,11 +337,19 @@ export class DebugLogger extends TelemetryLogger {
         }
 
         // Filter out event name and category from json payload
-        const payload = JSON.stringify(newEvent, (k, v) => {
+        let tick: string = "";
+        let payload = JSON.stringify(newEvent, (k, v) => {
+            if (k === "tick") {
+                tick = `tick=${v}`;
+                return undefined;
+            }
             return (k !== "eventName") ? v : undefined;
         });
 
-        logger(payload === "{}" ? name : `${name} ${payload}`);
+        if (payload === "{}") {
+            payload = "";
+        }
+        logger(`${name} ${payload} ${tick}`);
     }
 }
 
@@ -339,17 +357,17 @@ export class DebugLogger extends TelemetryLogger {
  * Helper class to log performance events
  */
 export class PerformanceEvent {
-    public static start(logger: ITelemetryLogger, event: ITelemetryInformationalEvent) {
+    public static start(logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
         return new PerformanceEvent(logger, event);
     }
 
-    private event?: ITelemetryInformationalEvent;
+    private event?: ITelemetryGenericEvent;
     private readonly startTime = performanceNow();
     private startMark?: string;
 
     protected constructor(
             private readonly logger: ITelemetryLogger,
-            event: ITelemetryInformationalEvent) {
+            event: ITelemetryGenericEvent) {
         this.event = {...event, tick: this.startTime};
         this.reportEvent("start");
 

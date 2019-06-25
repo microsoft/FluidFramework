@@ -232,7 +232,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     }
 
     public error(err: any): void {
-        return;
+        this.hostRuntime.error(err);
     }
 
     public async start(): Promise<IComponentRuntime> {
