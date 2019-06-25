@@ -8,7 +8,7 @@
         ],
         "exclude": [
           "_site/**",
-          "_template/**",
+          "templates/**",
           "legacy/**",
         ]
       }
@@ -36,7 +36,7 @@
     "fileMetadataFiles": [],
     "template": [
       "default",
-      "_template",
+      "templates/fluid",
     ],
     "postProcessors": [],
     "markdownEngineName": "dfm-latest",

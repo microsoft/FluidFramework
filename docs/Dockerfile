@@ -43,7 +43,12 @@ RUN npm run build:docs
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api
-RUN sed "1,3d" toc.yml > tmpfile; mv tmpfile toc.yml
+RUN sed "1,3d" dds/toc.yml > tmpfile; mv tmpfile dds/toc.yml
+RUN sed "1,3d" driver/toc.yml > tmpfile; mv tmpfile driver/toc.yml
+RUN sed "1,3d" framework/toc.yml > tmpfile; mv tmpfile framework/toc.yml
+RUN sed "1,3d" loader/toc.yml > tmpfile; mv tmpfile loader/toc.yml
+RUN sed "1,3d" misc/toc.yml > tmpfile; mv tmpfile misc/toc.yml
+RUN sed "1,3d" runtime/toc.yml > tmpfile; mv tmpfile runtime/toc.yml
 
 # Run DocFX
 WORKDIR /docfx

@@ -8,5 +8,5 @@
 /**/obj/
 _site/
 
-# everything under api is generated during a build
+# every directory under api is generated during a build
 api/*/**
