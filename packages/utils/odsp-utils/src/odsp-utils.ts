@@ -129,6 +129,6 @@ export async function getODSPPragueResolvedUrl(
         tokens: { storageToken: parsedBody.storageToken, socketToken: parsedBody.socketToken },
         type: "prague",
         url: `prague-odsp://${server}/` +
-            `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}`,
+            `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}?version=null`,
     };
 }

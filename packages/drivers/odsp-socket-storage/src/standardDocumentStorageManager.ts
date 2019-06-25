@@ -85,6 +85,9 @@ export class StandardDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getTree(version?: api.IVersion): Promise<resources.ITree | null> {
+        if (version === null) {
+            return null;
+        }
         // header-id is the id (or version) of the snapshot. To retrieve the latest version of the snapshot header, use the keyword "latest" as the header-id.
         const id = (version && version.id) ? version.id : "latest";
 
