@@ -5,7 +5,8 @@
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
-import { ISharedMap, IValueType } from "./interfaces";
+import { SharedDirectory } from "./directory";
+import { ISharedDirectory, ISharedMap, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
 
 // register default types
@@ -18,9 +19,9 @@ export function registerDefaultValueType(type: IValueType<any>) {
  * The extension that defines the map
  */
 export class MapExtension implements ISharedObjectExtension {
-    public static Type = "https://graph.microsoft.com/types/map";
+    public static readonly Type = "https://graph.microsoft.com/types/map";
 
-    public type: string = MapExtension.Type;
+    public readonly type: string = MapExtension.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
@@ -48,6 +49,44 @@ export class MapExtension implements ISharedObjectExtension {
     private registerValueTypes(map: SharedMap, valueTypes: Array<IValueType<any>>) {
         for (const type of valueTypes) {
             map.registerValueType(type);
+        }
+    }
+}
+
+/**
+ * The extension that defines the directory
+ */
+export class DirectoryExtension {
+    public static readonly Type = "https://graph.microsoft.com/types/directory";
+
+    public readonly type: string = DirectoryExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
+
+    public async load(
+        runtime: IComponentRuntime,
+        id: string,
+        minimumSequenceNumber: number,
+        services: ISharedObjectServices,
+        headerOrigin: string): Promise<ISharedDirectory> {
+
+        const directory = new SharedDirectory(id, runtime, DirectoryExtension.Type);
+        this.registerValueTypes(directory, defaultValueTypes);
+        await directory.load(minimumSequenceNumber, headerOrigin, services);
+
+        return directory;
+    }
+
+    public create(document: IComponentRuntime, id: string): ISharedDirectory {
+        const directory = new SharedDirectory(id, document, DirectoryExtension.Type);
+        this.registerValueTypes(directory, defaultValueTypes);
+        directory.initializeLocal();
+
+        return directory;
+    }
+
+    private registerValueTypes(directory: SharedDirectory, valueTypes: Array<IValueType<any>>) {
+        for (const type of valueTypes) {
+            directory.registerValueType(type);
         }
     }
 }

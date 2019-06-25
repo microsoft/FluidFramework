@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:align
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import { IMapOperation, IMapValue } from "./definitions";
-import { SharedDirectory } from "./directory";
 import { IValueChanged, IValueOpEmitter, SerializeFilter } from "./interfaces";
 import { SharedMap } from "./map";
 
@@ -107,7 +105,7 @@ export class MapView {
     }
 
     public has(key: string): boolean {
-    return this.data.has(key);
+        return this.data.has(key);
     }
 
     public attachAll() {
@@ -285,12 +283,4 @@ export class MapView {
             };
         }
     }
-}
-
-export class DirectoryView extends MapView {
-    constructor(directory: SharedDirectory, runtime: IComponentRuntime,
-        id: string) {
-        super(directory, runtime, id);
-    }
-
 }

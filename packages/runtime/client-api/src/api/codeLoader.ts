@@ -47,6 +47,7 @@ class Chaincode implements IComponentFactory {
         const consensusStackExtension = ConsensusStack.getFactory();
         const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
         const sparseMatrixExtension = sequence.SparseMatrix.getFactory();
+        const directoryExtension = map.SharedDirectory.getFactory();
 
         // Register channel extensions
         const modules = new Map<string, any>();
@@ -60,6 +61,7 @@ class Chaincode implements IComponentFactory {
         modules.set(consensusStackExtension.type, consensusStackExtension);
         modules.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
         modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
+        modules.set(directoryExtension.type, directoryExtension);
 
         const component = await ComponentRuntime.load(context, modules);
 
