@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+  "extends": "./api-extractor-common.json",
+  /**
+   * Configures how the doc model file (*.api.json) will be generated.
+   */
+  "docModel": {
+    "enabled": true,
+    "apiJsonFilePath": "<projectFolder>/../../_api-extractor-temp/doc-models/runtime/<unscopedPackageName>.api.json"
+  }
+}
