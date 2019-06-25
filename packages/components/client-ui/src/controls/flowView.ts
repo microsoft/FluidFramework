@@ -47,6 +47,10 @@ import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
 
+interface IPersistentElement extends HTMLDivElement {
+    component: IComponent;
+}
+
 interface IMathViewMarker extends MergeTree.Marker {
     instance?: IMathInstance;
 }
@@ -60,12 +64,9 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
     }
 }
 
-interface IRenderComponent extends IComponent, IComponentRenderHTML {
-}
-
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IRenderComponent>;
-    instance?: IRenderComponent;
+    instanceP?: Promise<IComponentRenderHTML>;
+    instance?: IComponentRenderHTML;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
@@ -2247,6 +2248,28 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
         return lineDiv;
     }
 
+    function makeBlockContentDiv(left: number, top: number, minWidth: string, minHeight: string) {
+        const blockDiv = document.createElement("div");
+        blockDiv.style.position = "absolute";
+        blockDiv.style.left = `${left}px`;
+        blockDiv.style.top = `${top}px`;
+        blockDiv.style.minWidth = minWidth;
+        blockDiv.style.minHeight = minHeight;
+        allowDOMEvents(blockDiv);
+        return blockDiv;
+    }
+
+    function makePersistentElement(left: number, top: number, minWidth: string, minHeight: string) {
+        const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
+        return blockDiv;
+    }
+
+    function makeBlockDiv(left: number, top: number, minWidth: string, minHeight: string) {
+        const blockDiv = makeBlockContentDiv(left, top, minWidth, minHeight);
+        layoutContext.viewport.div.appendChild(blockDiv);
+        return blockDiv;
+    }
+
     let currentPos = layoutContext.startPos;
     let curPGMarker: Paragraph.IParagraphMarker;
     let curPGMarkerPos: number;
@@ -2442,46 +2465,59 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             const refDoc = newBlock.properties.crefTest as IReferenceDoc;
             let ch: number;
             if (refDoc.type.name === "math") {
+                const minWidth = `${Math.round(0.75 * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
+                const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
                 if (!newBlock.instance) {
                     // for now, use math; later need to load route async
                     layoutContext.flowView.loadMath(newBlock as IMathViewMarker);
                 }
-                const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
-                if (layout) {
-                    if (layout.heightInLines) {
-                        ch = layout.heightInLines() * docContext.defaultLineDivHeight;
-                    }
-                } else {
-                    ch = Math.round(0.2 * layoutContext.viewport.maxHeight);
-                }
-                const lineDiv = makeLineDiv(
-                    new ui.Rectangle(
-                        0,
-                        layoutContext.viewport.getLineTop(),
-                        parseInt(layoutContext.viewport.div.style.width, 10),
-                        ch),
-                    layoutContext.docContext.fontstr);
-
-                newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+                const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), minWidth, minHeight);
+                blockDiv.style.width = minWidth;
+                newBlock.instance.render(blockDiv, ComponentDisplayType.Block);
+                ch = blockDiv.getBoundingClientRect().height;
             } else {
                 if (newBlock.instance) {
-                    const layout = newBlock.instance.query("IComponentLayout") as IComponentLayout;
-
-                    // TODO pinpoint layout only makes sense if the desired width/height is given since the title,
-                    // description, etc... text will flow based on the given width
-                    ch = layout && layout.heightInLines
-                        ? layout.heightInLines() * docContext.defaultLineDivHeight
-                        : 520;
-
-                    const lineDiv = makeLineDiv(
-                        new ui.Rectangle(
-                            0,
-                            layoutContext.viewport.getLineTop(),
-                            parseInt(layoutContext.viewport.div.style.width, 10),
-                            ch),
-                        layoutContext.docContext.fontstr);
-
-                    newBlock.instance.render(lineDiv, ComponentDisplayType.Block);
+                    let wpct = 0.75;
+                    const layout = newBlock.instance.query<any>("IComponentLayout") as IComponentLayout;
+                    if (layout && layout.requestedWidthPercentage) {
+                        wpct = layout.requestedWidthPercentage;
+                    }
+                    const width = `${Math.round(wpct * parseInt(layoutContext.viewport.div.style.width, 10))}px`;
+                    const minHeight = `${Math.round(0.33 * parseInt(layoutContext.viewport.div.style.height, 10))}px`;
+                    if (layout && layout.preferPersistentElement) {
+                        const persistentComponent = layoutContext.flowView.getPersistentComponent(newBlock.instance);
+                        let absBlockDiv: HTMLDivElement;
+                        if (!persistentComponent) {
+                            absBlockDiv = makePersistentElement(0, layoutContext.viewport.getLineTop(), width, minHeight);
+                            layoutContext.flowView.addPersistentComponent(absBlockDiv, newBlock.instance);
+                        } else {
+                            absBlockDiv = persistentComponent.elm;
+                        }
+                        const measureDiv = document.createElement("div");
+                        layoutContext.viewport.div.appendChild(measureDiv);
+                        const bounds = measureDiv.getBoundingClientRect();
+                        layoutContext.viewport.div.removeChild(measureDiv);
+                        absBlockDiv.style.left = "0px";
+                        absBlockDiv.style.top = `${Math.round(bounds.top)}px`;
+                        if ((!layout) || (!layout.variableHeight)) {
+                            absBlockDiv.style.height = minHeight;
+                        }
+                        absBlockDiv.style.width = width;
+                        absBlockDiv.style.display = "block";
+                        newBlock.instance.render(absBlockDiv, ComponentDisplayType.Block);
+                        // cache this in flow view
+                        ch = absBlockDiv.getBoundingClientRect().height;
+                    } else {
+                        const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), width, minHeight);
+                        blockDiv.style.width = width;
+                        if ((!layout) || (!layout.variableHeight)) {
+                            blockDiv.style.height = minHeight;
+                        }
+                        newBlock.instance.render(blockDiv, ComponentDisplayType.Block);
+                        // cache this in FlowView
+                        ch = blockDiv.getBoundingClientRect().height;
+                        console.log(`block height ${ch}`);
+                    }
                 } else {
                     // Delay load the instance if not available
                     if (!newBlock.instanceP) {
@@ -2496,7 +2532,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // TODO below is a temporary workaround. Should every QI interface also implement
                                 // IComponent. Then you can go from IComponentRenderHTML to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.query<any>("IComponentRenderHTML") as IRenderComponent;
+                                const viewable = component.query<any>("IComponentRenderHTML") as IComponentRenderHTML;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -3256,6 +3292,11 @@ export interface ISeqTestItem {
     v: number;
 }
 
+export class PersistentComponent {
+    constructor(public component: IComponent, public elm: HTMLDivElement) {
+    }
+}
+
 export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
     public static docStartPosition = 0;
     public timeToImpression: number;
@@ -3286,6 +3327,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public calendarIntervals: Sequence.SharedIntervalCollection<Sequence.Interval>;
     public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
+    public persistentComponents: Map<IComponent, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
     public presenceVector: ILocalPresenceInfo[] = [];
@@ -3418,6 +3460,36 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // Provide access to the containing shared object
         this.services.set("document", this.collabDocument);
         this.initializeMaps();
+    }
+
+    // remember an element to give to a component; element will be absolutely positioned during render, if needed
+    public addPersistentComponent(elm: HTMLDivElement, component: IComponent) {
+        if (!this.persistentComponents) {
+            this.persistentComponents = new Map<IComponent, PersistentComponent>();
+        }
+        (elm as IPersistentElement).component = component;
+        this.persistentComponents.set(component, new PersistentComponent(component, elm));
+    }
+
+    // add event notification to component of removal
+    public removePersistentComponent(pc: PersistentComponent) {
+        if (this.persistentComponents) {
+            this.persistentComponents.delete(pc.component);
+        }
+    }
+
+    public getPersistentComponent(component: IComponent) {
+        if (this.persistentComponents) {
+            return this.persistentComponents.get(component);
+        }
+    }
+
+    public hidePersistentComponents() {
+        if (this.persistentComponents) {
+            this.persistentComponents.forEach((pc) => {
+                pc.elm.style.display = "none";
+            });
+        }
     }
 
     public async initializeMaps() {

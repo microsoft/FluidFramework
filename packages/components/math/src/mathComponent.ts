@@ -91,11 +91,6 @@ export class MathInstance extends EventEmitter
         }
     }
 
-    // IComponentLayout
-    public heightInLines() {
-        return 5;
-    }
-
     public leave(direction: ComponentCursorDirection) {
         this.cursorActive = false;
     }
@@ -168,6 +163,14 @@ export class MathInstance extends EventEmitter
         mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
     }
 
+    public localRender() {
+        if (this.savedElm) {
+            console.log("rendering");
+            ClientUI.controls.clearSubtree(this.savedElm);
+            this.render(this.savedElm, this.options.displayType);
+        }
+    }
+
     public onKeydown(e: KeyboardEvent) {
         if (e.keyCode === ClientUI.controls.KeyCode.backspace) {
             const mathMarker = this.endMarker;
@@ -183,6 +186,12 @@ export class MathInstance extends EventEmitter
                 ClientUI.controls.clearSubtree(this.savedElm);
                 this.render(this.savedElm, this.options.displayType);
             }
+        } else if (e.keyCode === ClientUI.controls.KeyCode.rightArrow) {
+            this.fwd();
+            this.localRender();
+        } else if (e.keyCode === ClientUI.controls.KeyCode.leftArrow) {
+            this.rev();
+            this.localRender();
         }
     }
 
@@ -217,7 +226,30 @@ export class MathInstance extends EventEmitter
         }
     }
 
+    public setListeners() {
+        this.savedElm.tabIndex = 0;
+        this.savedElm.style.outline = "none";
+        this.savedElm.addEventListener("focus", (e) => {
+            this.enter(ComponentCursorDirection.Left);
+            this.localRender();
+        });
+        this.savedElm.addEventListener("blur", (e) => {
+            this.leave(ComponentCursorDirection.Right);
+            this.localRender();
+        });
+        this.savedElm.addEventListener("keydown", (e) => {
+            this.onKeydown(e);
+        });
+        this.savedElm.addEventListener("keypress", (e) => {
+            this.onKeypress(e);
+        });
+    }
+
     public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
+        if (this.savedElm !== elm) {
+            this.savedElm = elm;
+            this.setListeners();
+        }
         if (displayType === undefined) {
             displayType = this.options.displayType;
         }
@@ -452,11 +484,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
                     const startPos = this.getStartPos(instance);
                     instance.remoteEdit(pos - startPos, len, event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT);
                     console.log(`found math remote ${leafId} instance ${instance !== undefined}`);
-                    if (instance.savedElm) {
-                        console.log("rendering");
-                        ClientUI.controls.clearSubtree(instance.savedElm);
-                        instance.render(instance.savedElm, instance.options.displayType);
-                    }
+                    instance.localRender();
                 }
 
             }
@@ -471,6 +499,8 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     registerDefaultValueType(new CounterValueType());
     registerDefaultValueType(new Sequence.SharedStringIntervalCollectionValueType());
     registerDefaultValueType(new Sequence.SharedIntervalCollectionValueType());
+    // tslint:disable-next-line:no-require-imports no-submodule-imports
+    require("katex/dist/katex.min.css");
 
     const mapExtension = SharedMap.getFactory();
     const sharedStringExtension = Sequence.SharedString.getFactory();

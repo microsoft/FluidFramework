@@ -204,6 +204,7 @@ export function selectionListBoxCreate(
             let top: number;
             let bottom: number;
             let right: number;
+            listContainer.style.zIndex = "4";
             if ((shapeRect.x + shapeRect.width) > window.innerWidth) {
                 right = shapeRect.x;
             }

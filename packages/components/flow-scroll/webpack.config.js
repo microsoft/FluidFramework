@@ -40,12 +40,12 @@ module.exports = env => {
                 {
                     test: /\.tsx?$/,
                     loader: "ts-loader",
-                    options: { 
+                    options: {
                         configFile,
 
                         // ts-loader v4.4.2 resolves the 'declarationDir' for .d.ts files relative to 'outDir'.
                         // This is different than 'tsc', which resolves 'declarationDir' relative to the location
-                        // of the tsconfig. 
+                        // of the tsconfig.
                         compilerOptions: {
                             declarationDir: ".",
                             incremental: false
@@ -118,3 +118,4 @@ module.exports = env => {
         ? require("./webpack.prod")
         : require("./webpack.dev"));
 };
+

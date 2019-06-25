@@ -101,20 +101,8 @@ export class MonacoRunner extends EventEmitter implements
      * The chart probably has a preferred aspect ratio - but it can also fill any bounds
      */
     public aspectRatio?: number;
-
-    /**
-     * Not used
-     */
-    public minimumWidthBlock?: number;
-
-    /**
-     * Not used
-     */
-    public minimumHeightInline?: number;
-
-    /**
-     * Not used
-     */
+    public minimumWidth?: number;
+    public minimumHeight?: number;
     public readonly canInline = true;
 
     /**
@@ -172,21 +160,6 @@ export class MonacoRunner extends EventEmitter implements
         return MonacoRunner.supportedInterfaces;
     }
 
-    /**
-     * Get the component's height in pixels.
-     */
-    public heightInLines() {
-        // Component will want to describe its height in pixels
-        // Right now we're assuming it's 22px per line
-        // 30 is simply an arbitrary number and was chosen to differ from the pinpoint map's choice of 24
-        return 30;
-    }
-
-    /**
-     * Parents the view under the given element, creating and initializing it if needed.
-     * @param elm The element parent of the view
-     * @param displayType Not used
-     */
     public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");

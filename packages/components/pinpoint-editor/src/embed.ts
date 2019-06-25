@@ -15,8 +15,6 @@ export class PinpointEmbed {
     private zoomEnd: any;
 
     constructor(collabDoc: Document, private rootView: ISharedMap) {
-        this.div.style.width = "300px";
-
         this.dragEnd = (ev) => {
             const center = ev.target.getCenter();
             const current = JSON.parse(rootView.get("map")) as IPinpointOptions;
@@ -31,6 +29,8 @@ export class PinpointEmbed {
             current.zoom = zoom;
             rootView.set("map", JSON.stringify(current));
         };
+
+        this.div.style.width = "400px";
 
         const mapDetails = JSON.parse(rootView.get("map")) as IPinpointOptions;
         mapDetails.element = this.div;
@@ -50,6 +50,7 @@ export class PinpointEmbed {
     public render(mapHost: HTMLElement, displayType: ComponentDisplayType) {
         if (this.div.parentElement !== mapHost) {
             this.div.remove();
+            // this.div.style.width = mapHost.style.minWidth;
             mapHost.appendChild(this.div);
         }
 
@@ -60,6 +61,7 @@ export class PinpointEmbed {
         if (!this.div.parentElement) {
             return;
         }
+        this.div.style.width = "400px";
 
         const updatedDetails = JSON.parse(this.rootView.get("map"));
         this.pinpoint.remove();
@@ -67,7 +69,6 @@ export class PinpointEmbed {
         // height off the aspect ratio. The textual content around the map is not included in this.
         // Given a width and this textual content the height will be fixed. It will need to be recomputed if
         // either change.
-        this.div.style.width = "300px";
         updatedDetails.element = this.div;
         updatedDetails.dragend = this.dragEnd;
         updatedDetails.zoomend = this.zoomEnd;

@@ -334,8 +334,9 @@ export class PinpointRunner extends EventEmitter implements
 
     // Aspect ratio of the map may change - "wide", "square", "tall" are what pinpoint defines
     public aspectRatio?: number;
-    public minimumWidthBlock?: number;
-    public minimumHeightInline?: number;
+    public minimumWidth?: number;
+    public minimumHeight?: number;
+    public readonly variableHeight = true;
     public readonly canInline = true;
     public readonly preferInline = false;
 
@@ -355,12 +356,6 @@ export class PinpointRunner extends EventEmitter implements
 
     public list(): string[] {
         return PinpointRunner.supportedInterfaces;
-    }
-
-    public heightInLines() {
-        // Component will want to describe its height in pixels
-        // Right now we're assuming it's 22px per line
-        return 24;
     }
 
     public render(elm: HTMLElement, displayType: ComponentDisplayType): void {

@@ -22,7 +22,7 @@ export interface IComponent {
     // dispose(): void;
 }
 
-export interface IComponentLoadable {
+export interface IComponentLoadable extends IComponent {
     // absolute URL to the component within the document
     url: string;
 }

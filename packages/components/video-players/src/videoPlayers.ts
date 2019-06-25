@@ -94,10 +94,11 @@ export class VideoPlayer implements
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
-    public minimumWidthBlock?: number;
-    public minimumHeightInline?: number;
+    public minimumWidth?: number;
+    public minimumHeight?: number;
     public readonly canInline = true;
     public readonly preferInline = false;
+    public readonly preferPersistentElement = true;
 
     constructor(
         public videoId: string,

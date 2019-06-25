@@ -322,7 +322,7 @@ export interface IComponentFactory {
  * INewComponent is temporarily used for backward compatibility (but has the members of the new
  * IComponent interface).
  */
-export interface IComponentCollection {
+export interface IComponentCollection extends INewComponent {
     create<TOpt = object>(options?: TOpt): INewComponent;
     remove(instance: INewComponent): void;
     // need iteration
@@ -355,20 +355,22 @@ export enum ComponentDisplayType {
  * If elm has an empty client rect, then it is assumed that it will expand to hold the
  * rendered component.
  */
-export interface IComponentRenderHTML {
+export interface IComponentRenderHTML extends INewComponent {
     render(elm: HTMLElement, displayType?: ComponentDisplayType): void;
 }
 
 /**
  * Provide information about component preferences for layout.
  */
-export interface IComponentLayout {
+export interface IComponentLayout extends INewComponent {
     aspectRatio?: number;
-    minimumWidthBlock?: number;
-    minimumHeightInline?: number;
+    minimumWidth?: number;
+    minimumHeight?: number;
+    variableHeight?: boolean;
+    requestedWidthPercentage?: number;
     canInline?: boolean;
     preferInline?: boolean;
-    heightInLines?: () => number;
+    preferPersistentElement?: boolean;
 }
 
 /**
@@ -382,7 +384,7 @@ export enum ComponentCursorDirection {
     Airlift,
 }
 
-export interface IComponentCursor {
+export interface IComponentCursor extends INewComponent {
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
     // returns true if cursor leaves the component
@@ -391,7 +393,7 @@ export interface IComponentCursor {
 }
 
 // used when another component will forward keyboard events to this component
-export interface IComponentKeyHandlers {
+export interface IComponentKeyHandlers extends INewComponent {
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;
 }
