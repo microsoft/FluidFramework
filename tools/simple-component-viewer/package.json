@@ -11,7 +11,7 @@
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
-    "@prague/r11s-vanilla-loader": "0.0.30"
+    "@prague/r11s-vanilla-loader": "^0.0.35"
   },
   "devDependencies": {
     "typescript": "~3.4.5",

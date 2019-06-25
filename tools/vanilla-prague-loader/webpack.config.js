@@ -5,6 +5,7 @@
 
 const path = require("path");
 const merge = require("webpack-merge");
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = env => {
     const isProduction = env === "production";
@@ -34,11 +35,20 @@ module.exports = env => {
         devServer: {
             publicPath: '/dist'
         },
+        // TODO: Take out with Jatins work on Sharepoint loader (odsp request library casues problem)
         node: {
             fs: 'empty',
             tls: 'empty',
             net: 'empty'
         },
+        plugins: [
+            new HtmlWebpackPlugin({
+              inject: "head",
+              title: "Vanilla Loader IFrame",
+              template: 'src/iframe.html',
+              filename: 'iframe.html'
+            })
+          ]
     }, isProduction
             ? require("./webpack.prod")
             : require("./webpack.dev"));

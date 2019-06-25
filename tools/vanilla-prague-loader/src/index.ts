@@ -25,7 +25,7 @@ const packageJson = require("../package.json");
  * @param div The div to load the component into
  * @param appId The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
  */
-export function LoadPragueComponent(
+export function loadPragueComponent(
   url: string,
   getToken: () => Promise<string>,
   div: HTMLDivElement,
@@ -34,15 +34,16 @@ export function LoadPragueComponent(
 
   let componentP: Promise<any>;
   if (isRouterliciousUrl(url)) {
-    console.log("Routerlicious");
-    componentP = LoadPragueRouterliciousComponent(url, div, getToken);
+    componentP = loadPragueRouterliciousComponent(url, div, getToken);
+  } else if (isSpoUrl(url)) {
+    throw new Error("Office.com URLs are not yet supported.");
   } else {
-    throw new Error("Non-Compatible URL.");
+    throw new Error("Non-Compatible Url.");
   }
   return componentP;
 }
 
-export async function LoadPragueRouterliciousComponent(
+export async function loadPragueRouterliciousComponent(
   url: string,
   div: HTMLDivElement,
   getToken: () => Promise<string>,
@@ -92,45 +93,53 @@ export async function LoadPragueRouterliciousComponent(
  * @param getToken A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div The div to load the component into
  * @param appId The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ * @param loaderScriptUrl The loader script url you'd lke to use in place of the latest in auspackn
  */
 export async function loadIFramedPragueComponent(
   url: string,
   getToken: () => Promise<string>,
   div: HTMLDivElement,
-  appId: string): Promise<any> {
+  appId: string,
+  loaderScriptUrl?: string): Promise<any> {
+
+  // main.bundle.js refers to the output of webpacking this file.
+  const scriptUrl = loaderScriptUrl ? loaderScriptUrl : `https://pragueauspkn-3873244262.azureedge.net/@prague/r11s-vanilla-loader@${packageJson.version}/dist/main.bundle.js`;
 
   const iframe = document.createElement("iframe");
   iframe.id = "containerid";
 
-  // TODO use flow-utils resize observer to see the size of the prague component
-  // TODO resize the iframe
-  // TODO pass in the url
   iframe.srcdoc = `
+  <!DOCTYPE html>
   <html>
+
+  <head>
+  <script type="text/javascript" src=${scriptUrl}></script>
+  </head>
 
   <body>
       <div id="componentDiv"></div>
-      <script src="https://pragueauspkn-3873244262.azureedge.net/@prague/r11s-vanilla-loader@${packageJson.version}/dist/main.bundle.js"
-          async> </script>
       <script>
-          function start() {
-              console.log(window);
-              window.vanilla.LoadPragueComponent("${url}", () => "${await getToken()}", document.getElementById("componentDiv"), "${appId}")
-          }
+              console.log("Welcome to the IFrame");
+              function start(url, token, appId) {
+                  console.log(window.vanilla);
+                  window.vanilla.loadPragueComponent(url, () => token, document.getElementById("componentDiv"), appId)
+              }
 
-          window.addEventListener("message", (message) => {
-              console.log(message);
-              start();
-          })
-      </script>
+              window.addEventListener("message", (message) => {
+                  console.log(message);
+                  start(message.data.url, message.data.token, message.data.appId);
+              })
+          </script>
   </body>
-
-  </html>
-  `;
+  </html>  `;
 
   div.appendChild(iframe);
-  iframe.onload = () => {
-    iframe.contentWindow.postMessage("hello", "*");
+  iframe.onload = async () => {
+    iframe.contentWindow.postMessage({
+      appId,
+      token: await getToken(),
+      url,
+    }, "*");
   };
 
   return;

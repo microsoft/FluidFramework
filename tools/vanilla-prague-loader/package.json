@@ -1,6 +1,6 @@
 {
   "name": "@prague/r11s-vanilla-loader",
-  "version": "0.0.32",
+  "version": "0.0.35",
   "main": "dist/index.js",
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -24,6 +24,7 @@
     "@types/node": "11.11.4",
     "@types/url-parse": "^1.4.3",
     "concurrently": "^4.1.0",
+    "html-webpack-plugin": "^3.2.0",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
     "tslint-microsoft-contrib": "^6.0.0",
@@ -33,9 +34,9 @@
     "webpack-merge": "^4.1.2"
   },
   "scripts": {
-    "build": "concurrently npm:tsc npm:tslint npm:pack:dev",
+    "build": "concurrently npm:tsc npm:tslint npm:pack",
     "tsc": "tsc",
-    "pack:dev": "webpack",
+    "pack": "webpack",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "license": "MIT"
