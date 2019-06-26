@@ -3,63 +3,67 @@
  * Licensed under the MIT License.
  */
 
-import { Component, Document } from "@prague/app-component";
-import * as api from "@prague/client-api";
-import { controls, ui } from "@prague/client-ui";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import * as querystring from "querystring";
+import { ComponentRuntime } from "@prague/component-runtime";
+import { IContainerContext, IRequest, IRuntime } from "@prague/container-definitions";
+import { ContainerRuntime } from "@prague/container-runtime";
+import { SharedMap } from "@prague/map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { Canvas } from "./canvas";
+import { InkStreamExtension } from "./ink-stream";
 
-import "./style.less";
+/**
+ * Canvas component factory
+ */
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    const dataTypes = new Map<string, ISharedObjectExtension>();
+    const mapExtension = SharedMap.getFactory();
+    const inkExtension = new InkStreamExtension();
+    dataTypes.set(mapExtension.type, mapExtension);
+    dataTypes.set(inkExtension.type, inkExtension);
 
-export class canvas extends Document {
-  // Create the component's schema and perform other initialization tasks
-  // (only called when document is initially created).
-  protected async create() {
-    const params = querystring.parse(window.location.search.substr(1));
-    if (params.image) {
-      this.root.set("image", params.image);
-    }
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+    const canvasP = Canvas.load(runtime, context);
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        const progressCollection = await canvasP;
+        return progressCollection.request(request);
+    });
 
-    this.root.set("ink", this.createStream());
-  }
-
-  protected async render(host: HTMLDivElement) {
-    const browserHost = new ui.BrowserContainerHost();
-
-    await this.root.wait("ink");
-
-    let image: HTMLImageElement = null;
-    if (this.root.has("image")) {
-      image = new Image();
-      const readyP = new Promise((resolve) => {
-        image.onload = resolve;
-      });
-      image.src = this.root.get("image");
-      await readyP;
-    }
-
-    const canvas = new controls.FlexView(
-      host,
-      new api.Document(this.runtime, null, this.root),
-      this.root,
-      image);
-    browserHost.attach(canvas);
-  }
-
-  // The component has been loaded. Attempt to get a div from the host. TODO explain this better.
-  public async opened() {
-    // If the host provided a <div>, render the component into that Div
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      this.render(maybeDiv);
-    } else {
-      return;
-    }
-  }
+    return runtime;
 }
 
+/**
+ * Canvas document factory
+ */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, "@chaincode/canvas", new Map([
-    ["@chaincode/canvas", Promise.resolve(Component.createComponentFactory(canvas))],
-  ]));
+    const registry = new Map<string, Promise<IComponentFactory>>([
+        ["@chaincode/canvas", Promise.resolve({ instantiateComponent })],
+    ]);
+
+    const runtime = await ContainerRuntime.load(context, registry, { generateSummaries: true });
+
+    // Register path handler for inbound messages
+    runtime.registerRequestHandler(async (request: IRequest) => {
+        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+            ? request.url.substr(1)
+            : request.url;
+        const trailingSlash = requestUrl.indexOf("/");
+
+        const componentId = requestUrl
+            ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+            : "default";
+        const component = await runtime.getComponentRuntime(componentId, true);
+
+        const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+        return component.request({ url: pathForComponent });
+    });
+
+    // On first boot create the base component
+    if (!runtime.existing) {
+        runtime.createAndAttachComponent("default", "@chaincode/canvas").catch((error) => {
+            context.error(error);
+        });
+    }
+
+    return runtime;
 }
