@@ -261,7 +261,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public submitSignal(content: any) {
-        this.connection!.submitSignal(content);
+        if (this.connection) {
+            this.connection.submitSignal(content);
+        } else {
+            this.logger.sendErrorEvent({eventName: "submitSignalDisconnected"});
+        }
     }
 
     public async getDeltas(reason: string, fromInitial: number, to?: number): Promise<ISequencedDocumentMessage[]> {
@@ -392,9 +396,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private connectCore(reason: string, delay: number): void {
-        // Reconnection is only enabled for browser clients.
-        const reconnect = this.clientType === Browser && this.reconnect;
-
         DeltaConnection.connect(
             this.service,
             this.client!).then(
@@ -435,33 +436,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 });
 
                 connection.on("nack", (target: number) => {
-                    this._outbound.systemPause();
-                    this._outbound.clear();
-
-                    this.emit("disconnect", true);
-                    if (!reconnect) {
-                        this._inbound.systemPause();
-                        this._inbound.clear();
-                        this._inboundSignal.systemPause();
-                        this._inboundSignal.clear();
-                    } else {
-                        this.connectCore("Reconnecting on nack", InitialReconnectDelay);
-                    }
+                    this.reconnectOnError("Reconnecting on nack", connection);
                 });
 
                 connection.on("disconnect", (disconnectReason) => {
-                    this._outbound.systemPause();
-                    this._outbound.clear();
-
-                    this.emit("disconnect", false);
-                    if (!reconnect) {
-                        this._inbound.systemPause();
-                        this._inbound.clear();
-                        this._inboundSignal.systemPause();
-                        this._inboundSignal.clear();
-                    } else {
-                        this.connectCore("Reconnecting on disconnect", InitialReconnectDelay);
-                    }
+                    this.reconnectOnError(`Reconnecting on disconnect: ${disconnectReason}`, connection);
                 });
 
                 connection.on("pong", (latency) => {
@@ -469,7 +448,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 });
 
                 connection.on("error", (error) => {
-                    this.emit("error", error);
+                    // Observation based on early pre-production telemetry:
+                    // We are getting transport errors from WebSocket here, right before or after "disconnect".
+                    // This happens only in Firefox.
+                    this.logger.sendErrorEvent({eventName: "DeltaConnectionError"}, error);
+                    this.reconnectOnError("Reconnecting on error", connection);
                 });
 
                 this.processInitialMessages(
@@ -486,9 +469,38 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // tslint:disable-next-line:no-parameter-reassignment
                 reason = `Connection failed - trying again in ${delay}ms`;
                 debug(reason, error);
-                this.logger.logException({eventName: "DeltaConnectionFailure", delay}, error);
+                this.logger.logException({eventName: "DeltaConnectionFailureToConnect", delay}, error);
                 setTimeout(() => this.connectCore(reason, delay * 2), delay);
             });
+    }
+
+    private reconnectOnError(reason: string, connection: DeltaConnection) {
+        // we quite often get protocol errors before / after observing nack/disconnect
+        // we do not want to run through same sequence twice.
+        if (connection !== this.connection) {
+            this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnectIgnored", reason});
+            return;
+        }
+
+        // avoid any re-entrancy - clear object reference
+        this.connection = undefined;
+
+        this._outbound.systemPause();
+        this._outbound.clear();
+        this.emit("disconnect", reason);
+
+        connection.close();
+
+        // Reconnection is only enabled for browser clients.
+        if (this.clientType !== Browser || !this.reconnect) {
+            this._inbound.systemPause();
+            this._inbound.clear();
+            this._inboundSignal.systemPause();
+            this._inboundSignal.clear();
+        } else {
+            this.logger.sendTelemetryEvent({eventName: "DeltaConnectionReconnect", reason});
+            this.connectCore(reason, InitialReconnectDelay);
+        }
     }
 
     private processInitialMessages(

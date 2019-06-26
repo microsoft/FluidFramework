@@ -31,6 +31,7 @@ import {
     ITree,
     ITreeEntry,
     MessageType,
+    TelemetryEventRaisedOnContainer,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -185,7 +186,7 @@ export class Container extends EventEmitter implements IContainer {
 
         this.on("error", (error: any) => {
             // tslint:disable-next-line:no-unsafe-any
-            this.logger.logGenericError("onError", error);
+            this.logger.sendErrorEvent({eventName: "onError", [TelemetryEventRaisedOnContainer]: true}, error);
         });
     }
 
@@ -534,7 +535,8 @@ export class Container extends EventEmitter implements IContainer {
             proposals,
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber));
+            (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
+            this.subLogger);
 
         // Track membership changes and update connection state accordingly
         protocol.quorum.on("addMember", (clientId, details) => {
@@ -673,8 +675,8 @@ export class Container extends EventEmitter implements IContainer {
                     details.version);
             });
 
-            this._deltaManager.on("disconnect", (nack: boolean) => {
-                this.setConnectionState(ConnectionState.Disconnected, `nack === ${nack}`);
+            this._deltaManager.on("disconnect", (reason: string) => {
+                this.setConnectionState(ConnectionState.Disconnected, reason);
             });
 
             this._deltaManager.on("error", (error) => {
@@ -789,7 +791,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
-            this.logger.sendErrorEvent({eventName: "SubmitMessageWithNoConnection"});
+            this.logger.sendErrorEvent({eventName: "SubmitMessageWithNoConnection", type});
             return -1;
         }
 

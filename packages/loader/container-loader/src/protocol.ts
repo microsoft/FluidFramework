@@ -13,6 +13,7 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISummaryTree,
+    ITelemetryLogger,
     MessageType,
     SummaryType,
 } from "@prague/container-definitions";
@@ -55,8 +56,9 @@ export class ProtocolOpHandler {
         values: Array<[string, ICommittedProposal]>,
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void,
+        logger?: ITelemetryLogger,
     ) {
-        this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject);
+        this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean) {

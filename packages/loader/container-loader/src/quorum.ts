@@ -10,6 +10,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
+    ITelemetryLogger,
 } from "@prague/container-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -83,6 +84,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         values: Array<[string, ICommittedProposal]>,
         private readonly sendProposal: (key: string, value: any) => number,
         private readonly sendReject: (sequenceNumber: number) => void,
+        private readonly logger?: ITelemetryLogger,
     ) {
         super();
 
@@ -271,10 +273,16 @@ export class Quorum extends EventEmitter implements IQuorum {
     public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
-            assert(value >= this.minimumSequenceNumber, `${value} >= ${this.minimumSequenceNumber}`);
-        }
-        if (this.minimumSequenceNumber === value) {
-            return;
+            if (value < this.minimumSequenceNumber && this.logger) {
+                this.logger.sendErrorEvent({
+                    currentValue: this.minimumSequenceNumber,
+                    eventName: "QuorumMinSeqNumberError",
+                    newValue: value,
+                });
+            }
+            if (value <= this.minimumSequenceNumber) {
+                return;
+            }
         }
 
         this.minimumSequenceNumber = value;

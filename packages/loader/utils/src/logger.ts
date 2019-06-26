@@ -48,26 +48,26 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // tslint:disable-next-line:no-unsafe-any
             event.error = error;
         } else {
-            // Exceptions have these properties:
-            // - JSON.stringify() produces empty object output ("{}")
-            // - toString() prints error message, but without useful stack
-            // - there are non-enumerable properties on exception object that we can tap on
-            //   (but no guarantee they will be there in future or different environments)
-            // Solution:
-            //   Copy all non-enumerable own properties (i.e. we are not walking prototype chain)
+            // WARNING: Exceptions can contain PII!
+            // For example, XHR will throw object derived from Error that contains config information
+            // for failed request, including all the headers, and thus - user tokens!
             const errorAsObject: object = error as object;
-            const error2: { stack?: string; } = {...errorAsObject};
-            Object.getOwnPropertyNames(errorAsObject).forEach((prop: string) => {
-                error2[prop] = errorAsObject[prop];
-            });
+            const error2: { stack?: string; message?: string} = {...errorAsObject};
 
             // Extract call stack from exception if available
             event.stack = error2.stack;
             error2.stack = undefined;
 
+            // Same for message if there is one (see Error object).
+            event.error = error2.message;
+            error2.message = undefined;
+
+            // We likely would need to stop logging error in production builds to avoid potential of recording PII.
             event.error = error2;
         }
+
         // Collect stack if we were not able to extract it from error
+        event.stackFromError = (event.stack !== undefined);
         if (event.stack === undefined) {
             event.stack = TelemetryLogger.getStack();
         }

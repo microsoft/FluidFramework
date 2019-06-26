@@ -7,6 +7,11 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 export type TelemetryPerfType = "start" | "end" | "cancel" | "progress";
 export type TelemetryEventPropertyType = string | number | boolean | object | undefined;
 
+// Name of the error event property indicating if error was raised through Container.emit("error");
+// Presence of this property is a signal to the app not to raise this event to the user second time (if app chooses
+// to raise all telemetry errors to user in non-production builds in addition to raising all container events)
+export const TelemetryEventRaisedOnContainer = "criticalErrorRaisedOnContainer";
+
 /**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
