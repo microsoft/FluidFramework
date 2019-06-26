@@ -4,13 +4,51 @@
  */
 
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ParsedPath, posix as pathutil } from "path";
+import { defaultValueTypes } from "./defaultTypes";
 import { IMapOperation } from "./definitions";
-import { MapExtension } from "./extension";
-import { ISharedDirectory, IValueChanged } from "./interfaces";
+import { ISharedDirectory, IValueChanged, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
 import { ILocalViewElement, MapView } from "./view";
+
+/**
+ * The extension that defines the directory
+ */
+export class DirectoryExtension {
+    public static readonly Type = "https://graph.microsoft.com/types/directory";
+
+    public readonly type: string = DirectoryExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
+
+    public async load(
+        runtime: IComponentRuntime,
+        id: string,
+        minimumSequenceNumber: number,
+        services: ISharedObjectServices,
+        headerOrigin: string): Promise<ISharedDirectory> {
+
+        const directory = new SharedDirectory(id, runtime);
+        this.registerValueTypes(directory, defaultValueTypes);
+        await directory.load(minimumSequenceNumber, headerOrigin, services);
+
+        return directory;
+    }
+
+    public create(document: IComponentRuntime, id: string): ISharedDirectory {
+        const directory = new SharedDirectory(id, document);
+        this.registerValueTypes(directory, defaultValueTypes);
+        directory.initializeLocal();
+
+        return directory;
+    }
+
+    private registerValueTypes(directory: SharedDirectory, valueTypes: Array<IValueType<any>>) {
+        for (const type of valueTypes) {
+            directory.registerValueType(type);
+        }
+    }
+}
 
 /**
  * SharedDirectory functions very similarly to SharedMap (e.g. getPath/setPath can be used much like get/set),
@@ -44,9 +82,8 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        type = MapExtension.Type) {
-
-        super(id, runtime, type);
+    ) {
+        super(id, runtime, DirectoryExtension.Type);
         this.subdirectory = new ViewSubDirectory(this.view);
     }
 

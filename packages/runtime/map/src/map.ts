@@ -13,11 +13,12 @@ import {
 import {
     IComponentRuntime,
     IObjectStorageService,
+    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
+import { defaultValueTypes } from "./defaultTypes";
 import { IMapOperation } from "./definitions";
-import { MapExtension } from "./extension";
 import { ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
 import { MapView } from "./view";
 
@@ -48,6 +49,44 @@ export interface IMapMessageHandler {
     prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
     process(op: IMapOperation, context: any, local: boolean, message: ISequencedDocumentMessage): void;
     submit(op: IMapOperation);
+}
+
+/**
+ * The extension that defines the map
+ */
+export class MapExtension implements ISharedObjectExtension {
+    public static readonly Type = "https://graph.microsoft.com/types/map";
+
+    public readonly type: string = MapExtension.Type;
+    public readonly snapshotFormatVersion: string = "0.1";
+
+    public async load(
+        runtime: IComponentRuntime,
+        id: string,
+        minimumSequenceNumber: number,
+        services: ISharedObjectServices,
+        headerOrigin: string): Promise<ISharedMap> {
+
+        const map = new SharedMap(id, runtime);
+        this.registerValueTypes(map, defaultValueTypes);
+        await map.load(minimumSequenceNumber, headerOrigin, services);
+
+        return map;
+    }
+
+    public create(document: IComponentRuntime, id: string): ISharedMap {
+        const map = new SharedMap(id, document);
+        this.registerValueTypes(map, defaultValueTypes);
+        map.initializeLocal();
+
+        return map;
+    }
+
+    private registerValueTypes(map: SharedMap, valueTypes: Array<IValueType<any>>) {
+        for (const type of valueTypes) {
+            map.registerValueType(type);
+        }
+    }
 }
 
 /**
