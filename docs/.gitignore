@@ -9,4 +9,4 @@
 _site/
 
 # every directory under api is generated during a build
-api/*/**
+api/**
