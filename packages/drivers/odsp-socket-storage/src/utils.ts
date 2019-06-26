@@ -10,6 +10,10 @@ export function exponentialBackoff(backoffTimeMs: number): BackoffFunction {
     return (n: number) => Math.pow(2, n) * backoffTimeMs;
 }
 
+export function linearBackoff(backoffTimeMs: number): BackoffFunction {
+    return (n: number) => n * backoffTimeMs;
+}
+
 /** Determines how long to wait before retrying
  * retriesAttempted n where the last retry done was the n-th retry, initial request not included.
  * first retry is 0, second is 1 etc.

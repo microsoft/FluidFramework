@@ -11,23 +11,6 @@ import { debug } from "./debug";
 import { TokenProvider } from "./token";
 
 /**
- * Storage service limited to only being able to fetch documents for a specific document
- */
-export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageService {
-    constructor(
-        private readonly tenantId: string,
-        private readonly id: string,
-        private readonly tokenProvider: api.ITokenProvider,
-        private readonly storageService: api.IDeltaStorageService) {
-    }
-
-    /* tslint:disable:promise-function-async */
-    public get(from?: number, to?: number): Promise<api.ISequencedDocumentMessage[]> {
-        return this.storageService.get(this.tenantId, this.id, this.tokenProvider, from, to);
-    }
-}
-
-/**
  * Provides access to delta storage
  */
 export class DeltaStorageService implements api.IDeltaStorageService {

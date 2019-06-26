@@ -5,7 +5,7 @@
 
 import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import { IDocumentStorageManager } from "./standardDocumentStorageManager";
+import { IDocumentStorageManager } from "./SharepointDocumentStorageManager";
 
 /**
  * Dummy implementation for a storage manager.

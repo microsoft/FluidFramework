@@ -5,7 +5,7 @@
 
 import * as api from "@prague/container-definitions";
 import { buildHierarchy } from "@prague/utils";
-import { IDocumentStorageManager } from "./standardDocumentStorageManager";
+import { IDocumentStorageManager } from "./SharepointDocumentStorageManager";
 
 /**
  * Document access to underlying storage for legacy odsp driver..

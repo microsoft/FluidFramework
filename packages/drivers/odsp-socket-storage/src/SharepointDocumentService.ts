@@ -5,11 +5,11 @@
 
 import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
+import * as io from "socket.io-client";
 import { ISocketStorageDiscovery } from "./contracts";
-import { DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentService } from "./documentService";
 import { IGetter } from "./Getter";
-import { SharepointDeltaStorageService } from "./SharepointDeltaStorageService";
+import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./SharepointDeltaStorageService";
 import { ISharepointSnapshot } from "./SharepointDocumentServiceFactory";
 import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageManager";
 import { SharepointDocumentStorageService } from "./SharepointDocumentStorageService";
@@ -21,19 +21,21 @@ import { TokenProvider } from "./token";
  */
 export class SharepointDocumentService implements api.IDocumentService {
     private attemptedDeltaStreamConnection: boolean;
-    private readonly joinSessionP: SinglePromise<ISocketStorageDiscovery>;
+    private readonly joinSessionP: SinglePromise<ISocketStorageDiscovery> | undefined;
     private tokenProvider: TokenProvider;
 
     constructor(
         private readonly appId: string,
-        private readonly snapshot: Promise<ISharepointSnapshot | undefined>,
-        private readonly storageGetter: IGetter,
-        private readonly deltasGetter: IGetter,
+        private readonly storageGetter: IGetter | undefined,
+        private readonly deltasGetter: IGetter | undefined,
         private socketStorageDiscovery: ISocketStorageDiscovery,
-        joinSession: () => Promise<ISocketStorageDiscovery>,
+        private readonly snapshot?: Promise<ISharepointSnapshot | undefined>,
+        joinSession?: () => Promise<ISocketStorageDiscovery>,
     ) {
         this.attemptedDeltaStreamConnection = false;
-        this.joinSessionP = new SinglePromise(joinSession);
+        if (joinSession) {
+            this.joinSessionP = new SinglePromise(joinSession);
+        }
         this.tokenProvider = new TokenProvider(socketStorageDiscovery.storageToken, socketStorageDiscovery.socketToken);
     }
 
@@ -122,16 +124,13 @@ export class SharepointDocumentService implements api.IDocumentService {
 
         this.attemptedDeltaStreamConnection = true;
 
-        const documentService = new DocumentService(
-            this.socketStorageDiscovery.snapshotStorageUrl,
-            this.socketStorageDiscovery.deltaStorageUrl,
-            this.socketStorageDiscovery.deltaStreamSocketUrl,
-            this.tokenProvider,
+        return DocumentDeltaConnection.create(
             this.socketStorageDiscovery.tenantId,
             this.socketStorageDiscovery.id,
-        );
-
-        return documentService.connectToDeltaStream(client);
+            this.tokenProvider.socketToken,
+            io,
+            client,
+            this.socketStorageDiscovery.deltaStreamSocketUrl);
     }
 
     public async branch(): Promise<string> {
@@ -143,11 +142,13 @@ export class SharepointDocumentService implements api.IDocumentService {
     }
 
     private async refreshKnowledge(): Promise<void> {
-        this.socketStorageDiscovery = await this.joinSessionP.response;
-        this.tokenProvider = new TokenProvider(
-            this.socketStorageDiscovery.storageToken,
-            this.socketStorageDiscovery.socketToken,
-        );
+        if (this.joinSessionP) {
+            this.socketStorageDiscovery = await this.joinSessionP.response;
+            this.tokenProvider = new TokenProvider(
+                this.socketStorageDiscovery.storageToken,
+                this.socketStorageDiscovery.socketToken,
+            );
+        }
     }
 }
 

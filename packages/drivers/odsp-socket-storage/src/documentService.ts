@@ -6,9 +6,10 @@
 import * as api from "@prague/container-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as io from "socket.io-client";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
+import { DeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { NoopDocumentStorageManager } from "./noopDocumentStorageManager";
+import { DocumentDeltaStorageService } from "./SharepointDeltaStorageService";
 import { StandardDocumentStorageManager } from "./standardDocumentStorageManager";
 import { TokenProvider } from "./token";
 
