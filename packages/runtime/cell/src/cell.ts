@@ -17,7 +17,7 @@ import {
 import { SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
-import { ICell } from "./interfaces";
+import { ISharedCell } from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -54,7 +54,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a cell shared object
  */
-export class Cell extends SharedObject implements ICell {
+export class SharedCell extends SharedObject implements ISharedCell {
     /**
      * Create a new shared cell
      *
@@ -63,7 +63,7 @@ export class Cell extends SharedObject implements ICell {
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), CellExtension.Type) as Cell;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), CellExtension.Type) as SharedCell;
     }
 
     /**

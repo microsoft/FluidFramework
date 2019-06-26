@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICell } from "@prague/cell";
+import { ISharedCell } from "@prague/cell";
 import * as ui from "../ui";
 
 export class Chart extends ui.Component {
     private chart: any;
     private lastSize: ui.ISize = { width: -1, height: -1 };
 
-    constructor(element: HTMLDivElement, private cell: ICell) {
+    constructor(element: HTMLDivElement, private cell: ISharedCell) {
         super(element);
         // tslint:disable-next-line:no-string-literal
         const Microsoft = typeof window !== "undefined" ? window["Microsoft"] : undefined;

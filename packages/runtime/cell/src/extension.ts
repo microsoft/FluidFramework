@@ -5,8 +5,8 @@
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
-import { Cell } from "./cell";
-import { ICell } from "./interfaces";
+import { SharedCell } from "./cell";
+import { ISharedCell } from "./interfaces";
 
 /**
  * The extension that defines the map
@@ -22,15 +22,15 @@ export class CellExtension implements ISharedObjectExtension {
         id: string,
         minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ICell> {
+        headerOrigin: string): Promise<ISharedCell> {
 
-        const cell = new Cell(id, document);
+        const cell = new SharedCell(id, document);
         await cell.load(minimumSequenceNumber, headerOrigin, services);
         return cell;
     }
 
-    public create(document: IComponentRuntime, id: string): ICell {
-        const cell = new Cell(id, document);
+    public create(document: IComponentRuntime, id: string): ISharedCell {
+        const cell = new SharedCell(id, document);
         cell.initializeLocal();
         return cell;
     }

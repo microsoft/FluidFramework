@@ -147,8 +147,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new shared cell.
      */
-    public createCell(): cell.ICell {
-        return cell.Cell.create(this.runtime);
+    public createCell(): cell.ISharedCell {
+        return cell.SharedCell.create(this.runtime);
     }
 
     /**

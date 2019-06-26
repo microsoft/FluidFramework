@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICell } from "@prague/cell";
+import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
@@ -21,8 +21,8 @@ const saveLineFrequency = 5;
 
 const ChartSamples = 10;
 
-let histogramData: ICell;
-let performanceData: ICell;
+let histogramData: ISharedCell;
+let performanceData: ISharedCell;
 let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();

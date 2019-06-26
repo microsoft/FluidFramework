@@ -8,7 +8,7 @@ import { ISharedObject } from "@prague/shared-object-common";
 /**
  * Shared cell interface
  */
-export interface ICell extends ISharedObject {
+export interface ISharedCell extends ISharedObject {
     /**
      * Retrieves the cell value.
      */

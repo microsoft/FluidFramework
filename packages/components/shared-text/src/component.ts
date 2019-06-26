@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Cell } from "@prague/cell";
+import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
@@ -255,7 +255,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     const mapExtension = SharedMap.getFactory();
     const sharedStringExtension = SharedString.getFactory();
     const streamExtension = Stream.getFactory();
-    const cellExtension = Cell.getFactory();
+    const cellExtension = SharedCell.getFactory();
     const objectSequenceExtension = SharedObjectSequence.getFactory();
     const numberSequenceExtension = SharedNumberSequence.getFactory();
 

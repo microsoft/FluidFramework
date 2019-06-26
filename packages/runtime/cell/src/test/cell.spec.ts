@@ -5,12 +5,13 @@
 
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
-import { CellExtension, ICell } from "..";
+import { ISharedCell } from "..";
+import { CellExtension } from "../extension";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         describe("cell", () => {
-            let testCell: ICell;
+            let testCell: ISharedCell;
 
             beforeEach(async () => {
                 const extension = new CellExtension();

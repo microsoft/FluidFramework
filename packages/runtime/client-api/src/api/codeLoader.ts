@@ -40,7 +40,7 @@ class Chaincode implements IComponentFactory {
         const mapExtension = map.SharedMap.getFactory();
         const sharedStringExtension = sequence.SharedString.getFactory();
         const streamExtension = stream.Stream.getFactory();
-        const cellExtension = cell.Cell.getFactory();
+        const cellExtension = cell.SharedCell.getFactory();
         const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
         const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
         const consensusQueueExtension = ConsensusQueue.getFactory();

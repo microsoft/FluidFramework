@@ -29,7 +29,7 @@ export abstract class ExtendedDocument extends Component {
         const mapExtension = SharedMap.getFactory();
         const sharedStringExtension = sequence.SharedString.getFactory();
         const streamExtension = stream.Stream.getFactory();
-        const cellExtension = cell.Cell.getFactory();
+        const cellExtension = cell.SharedCell.getFactory();
         const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
         const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
 
@@ -69,8 +69,8 @@ export abstract class ExtendedDocument extends Component {
     /**
      * Creates a new shared cell.
      */
-    public createCell(id?: string): cell.ICell {
-        return cell.Cell.create(this.runtime, id);
+    public createCell(id?: string): cell.ISharedCell {
+        return cell.SharedCell.create(this.runtime, id);
     }
 
     /**

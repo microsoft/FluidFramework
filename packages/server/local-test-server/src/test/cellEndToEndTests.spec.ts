@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICell } from "@prague/cell";
+import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
 import { ISharedMap } from "@prague/map";
 import * as assert from "assert";
@@ -29,9 +29,9 @@ describe("Cell", () => {
     let root1: ISharedMap;
     let root2: ISharedMap;
     let root3: ISharedMap;
-    let root1Cell: ICell;
-    let root2Cell: ICell;
-    let root3Cell: ICell;
+    let root1Cell: ISharedCell;
+    let root2Cell: ISharedCell;
+    let root3Cell: ISharedCell;
 
     beforeEach(async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.create();
@@ -69,7 +69,7 @@ describe("Cell", () => {
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
     });
 
-    async function verifyCellValue(cell: ICell, expectedValue, index: number): Promise<void> {
+    async function verifyCellValue(cell: ISharedCell, expectedValue, index: number): Promise<void> {
         const userValue = await cell.get();
         assert.equal(userValue, expectedValue,
             `Incorrect value ${userValue} instead of ${expectedValue} in document ${index}`);
