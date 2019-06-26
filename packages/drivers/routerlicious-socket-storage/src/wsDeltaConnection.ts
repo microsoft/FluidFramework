@@ -79,6 +79,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         return this.details!.maxMessageSize;
     }
 
+    public get version(): string {
+        return this.details!.version;
+    }
+
     public get initialMessages(): ISequencedDocumentMessage[] | undefined {
         return this.details!.initialMessages;
     }

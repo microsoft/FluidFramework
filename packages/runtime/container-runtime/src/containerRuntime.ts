@@ -9,6 +9,7 @@ import {
     FileMode,
     IBlob,
     IBlobManager,
+    IChunkedOp,
     IContainerContext,
     IDeltaManager,
     IDocumentMessage,
@@ -46,10 +47,30 @@ import { ComponentContext } from "./componentContext";
 import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
+import { Summarizer } from "./summarizer";
+import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 
 export interface IComponentRegistry {
     get(name: string): Promise<IComponentFactory>;
+}
+
+interface IBufferedChunk {
+    type: MessageType;
+
+    content: string;
+}
+
+// Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
+const IdleDetectionTime = 5000;
+const MaxTimeWithoutSnapshot = IdleDetectionTime * 12;
+// Snapshot if 1000 ops received since last snapshot.
+const MaxOpCountWithoutSnapshot = 1000;
+
+export interface IContainerRuntimeOptions {
+    // Experimental flag that will generate summaries if connected to a service that supports them.
+    // Will eventually become the default and snapshots will be deprecated
+    generateSummaries: boolean;
 }
 
 // Context will define the component level mappings
@@ -57,20 +78,30 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public static async load(
         context: IContainerContext,
         registry: IComponentRegistry,
+        runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const runtime = new ContainerRuntime(context, registry);
+        const runtime = new ContainerRuntime(context, registry, runtimeOptions);
 
         const components = new Map<string, ISnapshotTree>();
-        const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
-            const moduleId = context.baseSnapshot.commits[key];
-            const commit = (await context.storage.getVersions(moduleId, 1))[0];
-            const moduleTree = await context.storage.getSnapshotTree(commit);
-            return { id: key, tree: moduleTree };
-        });
+        if (context.baseSnapshot.trees[".protocol"]) {
+            Object.keys(context.baseSnapshot.trees).forEach((value) => {
+                if (value !== ".protocol") {
+                    const tree = context.baseSnapshot.trees[value];
+                    components.set(value, tree);
+                }
+            });
+        } else {
+            const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
+                const moduleId = context.baseSnapshot.commits[key];
+                const commit = (await context.storage.getVersions(moduleId, 1))[0];
+                const moduleTree = await context.storage.getSnapshotTree(commit);
+                return { id: key, tree: moduleTree };
+            });
 
-        const snapshotTree = await Promise.all(snapshotTreesP);
-        for (const value of snapshotTree) {
-            components.set(value.id, value.tree);
+            const snapshotTree = await Promise.all(snapshotTreesP);
+            for (const value of snapshotTree) {
+                components.set(value.id, value.tree);
+            }
         }
 
         const componentsP = new Array<Promise<void>>();
@@ -79,7 +110,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             componentsP.push(componentP);
         }
 
-        await Promise.all(componentsP);
+        async function getChunks() {
+            const chunkId = context.baseSnapshot.blobs[".chunks"];
+            if (!chunkId) {
+                return;
+            }
+
+            const chunks = await readAndParse<Array<[string, string[]]>>(context.storage, chunkId);
+            for (const chunk of chunks) {
+                runtime.chunkMap.set(chunk[0], chunk[1]);
+            }
+        }
+        const chunksP = getChunks();
+
+        await Promise.all([...componentsP, chunksP]);
 
         return runtime;
     }
@@ -134,7 +178,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public get submitFn(): (type: MessageType, contents: any) => number {
-        return this.context.submitFn;
+        return this.submit;
     }
 
     public get submitSignalFn(): (contents: any) => void {
@@ -154,6 +198,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public readonly logger: ITelemetryLogger;
+    public readonly summaryManager: SummaryManager;
+
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
 
@@ -176,10 +222,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private requestHandler: (request: IRequest) => Promise<IResponse>;
     private lastMinSequenceNumber: number;
     private dirtyDocument = false;
+    private readonly summarizer: Summarizer;
+
+    // Local copy of incomplete received chunks.
+    private readonly chunkMap = new Map<string, string[]>();
+
+     // Local copy of sent but unacknowledged chunks.
+    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
+        private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();
         this.logger = context.logger;
@@ -197,6 +251,29 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 this.updateDocumentDirtyState(true);
             }
         });
+
+        this.context.quorum.on("removeMember", (clientId: string) => {
+            this.clearPartialChunks(clientId);
+        });
+
+        // We always create the summarizer in the case that we are asked to generate summaries. But this may
+        // want to be on demand instead.
+        this.summarizer = new Summarizer(
+            "/_summarizer",
+            this,
+            IdleDetectionTime,
+            MaxTimeWithoutSnapshot,
+            MaxOpCountWithoutSnapshot,
+            () => this.generateSummary());
+
+        // Create the SummaryManager and mark the initial state
+        this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries);
+        if (this.context.connectionState === ConnectionState.Connected) {
+            // TODO can remove in 0.6 - legacy drivers may be missing version
+            if (this.context.deltaManager.version  && this.context.deltaManager.version.indexOf("^0.2") === 0) {
+                this.summaryManager.setConnected(this.context.clientId);
+            }
+        }
     }
 
     public async loadComponent(
@@ -236,11 +313,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public async request(request: IRequest): Promise<IResponse> {
+        // system routes
+        if (request.url === this.summarizer.url) {
+            return { status: 200, mimeType: "prague/component", value: this.summarizer };
+        }
+
+        // If no app specified handler has been specified then this is a 404
         if (!this.requestHandler) {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-        } else {
-            return this.requestHandler(request);
         }
+
+        // Otherwise we defer to the app to handle the requset
+        return this.requestHandler(request);
     }
 
     /**
@@ -267,6 +351,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 const tree = this.convertToSummaryTree(componentSnapshot);
                 result.tree[componentId] = tree;
             }
+        }
+
+        if (this.chunkMap.size > 0) {
+            result.tree[".chunks"] = {
+                content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
         }
 
         return result;
@@ -322,6 +413,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             gitModules += `[submodule "${componentVersion.id}"]\n\tpath = ${componentVersion.id}\n\turl = ${repoUrl}\n\n`;
         }
 
+        if (this.chunkMap.size > 0) {
+            root.entries.push({
+                mode: FileMode.File,
+                path: ".chunks",
+                type: TreeEntry[TreeEntry.Blob],
+                value: {
+                    contents: JSON.stringify([...this.chunkMap]),
+                    encoding: "utf-8",
+                },
+            });
+        }
+
         // Write the module lookup details
         root.entries.push({
             mode: FileMode.File,
@@ -345,16 +448,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.closed = true;
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
+    public changeConnectionState(value: ConnectionState, clientId: string, version: string) {
         this.verifyNotClosed();
 
         assert(this.connectionState === value);
 
-        // Resend all pending attach messages prior to notifying clients
         if (value === ConnectionState.Connected) {
+            // Resend all pending attach messages prior to notifying clients
             for (const [, message] of this.pendingAttach) {
                 this.submit(MessageType.Attach, message);
             }
+
+            // Also send any unacked chunk messages
+            this.sendUnackedChunks();
         }
 
         for (const [, componentContext] of this.componentContexts) {
@@ -363,8 +469,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         if (value === ConnectionState.Connected) {
             this.emit("connected", this.clientId);
+
+            // TODO can remove in 0.6 - legacy drivers may be missing version
+            if (version && version.indexOf("^0.2") === 0) {
+                this.summaryManager.setConnected(clientId);
+            }
         } else {
             this.emit("disconnected");
+            this.summaryManager.setDisconnected();
         }
     }
 
@@ -375,6 +487,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
             case MessageType.Attach:
                 return this.prepareAttach(message, local);
+
+            case MessageType.ChunkedOp:
+                const chunkComplete = this.prepareRemoteChunkedMessage(message);
+                if (!chunkComplete) {
+                    return Promise.resolve();
+                } else {
+                    if (local) {
+                        const clientSeqNumber = message.clientSequenceNumber;
+                        if (this.unackedChunkedMessages.has(clientSeqNumber)) {
+                            this.unackedChunkedMessages.delete(clientSeqNumber);
+                        }
+                    }
+
+                    return this.prepare(message, local);
+                }
 
             default:
                 return Promise.resolve();
@@ -512,6 +639,93 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.dirtyDocument;
     }
 
+    private async generateSummary(): Promise<void> {
+        const message =
+            `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
+
+        // TODO: Issue-2171 Support for Branch Snapshots
+        if (this.parentBranch) {
+            debug(`Skipping summary due to being branch of ${this.parentBranch}`);
+            return;
+        }
+
+        if (!("uploadSummary" in this.context.storage)) {
+            debug(`Driver does not support summary ops`);
+            return;
+        }
+
+        try {
+            await this.deltaManager.inbound.systemPause();
+
+            // TODO in the future we can have stored the latest summary by listening to the summary ack message
+            // after loading from the beginning of the snapshot
+            const versions = await this.context.storage.getVersions(this.id, 1);
+            const parents = versions.map((version) => version.id);
+            const entries: { [path: string]: SummaryObject } = {};
+
+            const componentEntries = await this.summarize();
+
+            // And then combine
+            const root: ISummaryTree = {
+                tree: { ...entries, ...componentEntries.tree },
+                type: SummaryType.Tree,
+            };
+
+            const handle = await this.context.storage.uploadSummary(root);
+            const summary = {
+                handle: handle.handle,
+                head: parents[0],
+                message,
+                parents,
+            };
+
+            this.submit(MessageType.Summarize, summary);
+        } catch (ex) {
+            debug("Summary error", ex);
+            throw ex;
+        } finally {
+            // Restart the delta manager
+            await this.deltaManager.inbound.systemResume();
+        }
+    }
+
+    private sendUnackedChunks() {
+        for (const message of this.unackedChunkedMessages) {
+            debug(`Resending unacked chunks!`);
+            this.submitChunkedMessage(
+                message[1].type,
+                message[1].content,
+                this.context.deltaManager.maxMessageSize);
+        }
+    }
+
+    private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
+        const clientId = message.clientId;
+        const chunkedContent = message.contents as IChunkedOp;
+        this.addChunk(clientId, chunkedContent.contents);
+        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
+            const serializedContent = this.chunkMap.get(clientId).join("");
+            message.contents = JSON.parse(serializedContent);
+            message.type = chunkedContent.originalType;
+            this.clearPartialChunks(clientId);
+            return true;
+        }
+        return false;
+    }
+
+    private addChunk(clientId: string, chunkedContent: string) {
+        if (!this.chunkMap.has(clientId)) {
+            this.chunkMap.set(clientId, []);
+        }
+        this.chunkMap.get(clientId).push(chunkedContent);
+    }
+
+    private clearPartialChunks(clientId: string) {
+        if (this.chunkMap.has(clientId)) {
+            this.chunkMap.delete(clientId);
+        }
+    }
+
     private updateDocumentDirtyState(dirty: boolean) {
         if (this.dirtyDocument === dirty) {
             return;
@@ -569,9 +783,47 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.emit("minSequenceNumberChanged", this.deltaManager.minimumSequenceNumber);
     }
 
-    private submit(type: MessageType, content: any) {
+    private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
-        this.submitFn(type, content);
+
+        const serializedContent = JSON.stringify(content);
+        const maxOpSize = this.context.deltaManager.maxMessageSize;
+
+        let clientSequenceNumber: number;
+
+        // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
+        // there will be a lot of escape characters that can make it up to 2x bigger!
+        // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
+        if (serializedContent.length <= maxOpSize) {
+            clientSequenceNumber = this.context.submitFn(type, content);
+        } else {
+            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
+            this.unackedChunkedMessages.set(clientSequenceNumber,
+                {
+                    content: serializedContent,
+                    type,
+                });
+        }
+
+        return clientSequenceNumber;
+    }
+
+    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
+        const contentLength = content.length;
+        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
+        let offset = 0;
+        let clientSequenceNumber: number = 0;
+        for (let i = 1; i <= chunkN; i = i + 1) {
+            const chunkedOp: IChunkedOp = {
+                chunkId: i,
+                contents: content.substr(offset, maxOpSize),
+                originalType: type,
+                totalChunks: chunkN,
+            };
+            offset += maxOpSize;
+            clientSequenceNumber = this.context.submitFn(MessageType.ChunkedOp, chunkedOp);
+        }
+        return clientSequenceNumber;
     }
 
     private verifyNotClosed() {

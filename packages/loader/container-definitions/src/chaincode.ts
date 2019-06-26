@@ -107,7 +107,7 @@ export interface IRuntime {
     /**
      * Notifies the runtime of a change in the connection state
      */
-    changeConnectionState(value: ConnectionState, clientId: string);
+    changeConnectionState(value: ConnectionState, clientId: string, version?: string);
 
     /**
      * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime

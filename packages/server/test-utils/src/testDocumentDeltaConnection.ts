@@ -20,6 +20,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public clientId: string,
         public existing: boolean,
         public parentBranch: string,
+        public version: string,
         public initialMessages: ISequencedDocumentMessage[] | undefined,
         public initialContents: IContentMessage[] | undefined,
         public initialSignals: ISignalMessage[] | undefined) {

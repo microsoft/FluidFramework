@@ -172,13 +172,6 @@ class Host implements IComponent {
 }
 
 export let lastLoaded: Container;
-export async function testSummary() {
-    if (!lastLoaded) {
-        return;
-    }
-
-    lastLoaded.generateSummary(`test summary ${Date.now()}`);
-}
 
 async function start(
     url: string,

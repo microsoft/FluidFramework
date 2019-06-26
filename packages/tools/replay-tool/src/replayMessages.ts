@@ -108,7 +108,8 @@ async function load(
         async (r, c) => {
             runDeferred.resolve({ runtime: r, context: c });
             return null;
-        });
+        },
+        { generateSummaries: false });
 
     // Load the Prague document
     const loader = new Loader(host, serviceFactory, codeLoader, options);

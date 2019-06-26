@@ -119,7 +119,6 @@ export class Replayer {
 }
 
 export class ReplayFileDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
-
     /**
      * Mimic the delta connection to replay ops on it.
      *
@@ -182,6 +181,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get parentBranch(): string | null {
         return this.details.parentBranch;
+    }
+
+    public get version(): string {
+        return this.details.version;
     }
 
     public get initialContents(): IContentMessage[] | undefined {

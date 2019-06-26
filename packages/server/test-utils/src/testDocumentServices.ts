@@ -35,6 +35,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     public encrypted: boolean;
     public privateKey: string;
     public publicKey: string;
+    public version = "^0.1.0";
 
     constructor() {
         super();

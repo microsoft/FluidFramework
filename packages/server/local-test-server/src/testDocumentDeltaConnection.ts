@@ -17,7 +17,7 @@ import { TestWebSocketServer } from "@prague/test-utils";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 
-const testProtoclVersion = "^0.1.0";
+const testProtocolVersion = "^0.1.0";
 
 export class TestDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
     public static async create(
@@ -33,7 +33,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
             id,
             tenantId,
             token,  // token is going to indicate tenant level information, etc...
-            versions: [testProtoclVersion],
+            versions: [testProtocolVersion],
         };
 
         const connection = await new Promise<IConnected>((resolve, reject) => {
@@ -147,6 +147,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get version(): string {
+        return testProtocolVersion;
     }
 
     constructor(

@@ -30,11 +30,6 @@ export interface IDocumentAttributes {
      * Minimum sequence number when the snapshot was taken
      */
     minimumSequenceNumber: number;
-
-    /**
-     * Partial ops not yet fully received at the time of the snapshot
-     */
-    partialOps?: Array<[string, string[]]> | null;
 }
 
 export enum FileMode {
@@ -221,6 +216,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
      */
     maxMessageSize: number;
+
+    /**
+     * Protocol version being used with the service
+     */
+    version: string;
 
     /**
      * Messages sent during the connection

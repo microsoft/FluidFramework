@@ -14,7 +14,7 @@ import {
     IRequest,
     IRuntime,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
+import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
 import * as map from "@prague/map";
 import {
     IComponentContext,
@@ -85,14 +85,17 @@ class BackCompatLoader implements IComponentRegistry {
 }
 
 export class ChaincodeFactory implements IChaincodeFactory {
-    constructor(private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
+    constructor(
+        private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
+        private readonly runtimeOptions: IContainerRuntimeOptions,
+    ) {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode(this.runFn);
         const registry = new BackCompatLoader(chaincode);
 
-        const runtime = await ContainerRuntime.load(context, registry);
+        const runtime = await ContainerRuntime.load(context, registry, this.runtimeOptions);
 
         // Register path handler for inbound messages
         runtime.registerRequestHandler(async (request: IRequest) => {
@@ -122,7 +125,9 @@ export class ChaincodeFactory implements IChaincodeFactory {
             });
         }
 
-        runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
+        if (!this.runtimeOptions.generateSummaries) {
+            runtime.registerTasks(["snapshot", "spell", "intel", "translation"]);
+        }
 
         return runtime;
     }
@@ -131,8 +136,11 @@ export class ChaincodeFactory implements IChaincodeFactory {
 export class CodeLoader implements ICodeLoader {
     private readonly factory: IChaincodeFactory;
 
-    constructor(readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
-        this.factory = new ChaincodeFactory(runFn);
+    constructor(
+        readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
+        runtimeOptions: IContainerRuntimeOptions,
+    ) {
+        this.factory = new ChaincodeFactory(runFn, runtimeOptions);
     }
 
     public async load<T>(source: string): Promise<T> {

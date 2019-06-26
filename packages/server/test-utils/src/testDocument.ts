@@ -78,6 +78,8 @@ export class TestDeltaManager
 
     public clientType = "Browser";
 
+    public version = "^0.1.0";
+
     public enableReadonlyMode() {
         return;
     }

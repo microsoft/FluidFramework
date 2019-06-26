@@ -46,6 +46,7 @@ export async function load(
     options: Object,
     from: number,
     to: number,
+    generateSummaries: boolean,
 ) {
     API.registerChaincodeRepo(config.npm);
 
@@ -53,7 +54,8 @@ export async function load(
     loadDocument(
         resolved, jwt, seedData,
         pageInk, disableCache, config,
-        template, options, from, to)
+        template, options, from, to,
+        generateSummaries)
         .catch((error) => {
             console.error(error);
         });
@@ -70,6 +72,7 @@ async function loadDocument(
     options: Object,
     from: number,
     to: number,
+    generateSummaries: boolean,
 ) {
     const host = new ui.BrowserContainerHost();
 
@@ -110,7 +113,9 @@ async function loadDocument(
     const collabDoc = await API.load(
         resolved.url,
         apiHost,
-        { blockUpdateMarkers: true, client: config.client });
+        { blockUpdateMarkers: true, client: config.client },
+        API.getDefaultDocumentServiceFactory(),
+        { generateSummaries });
 
     const parsedUrl = url.parse(resolved.url);
     const [, tenantId, documentId] = parsedUrl.path.split("/");

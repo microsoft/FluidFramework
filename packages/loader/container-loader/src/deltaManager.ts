@@ -111,10 +111,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connection!.details.maxMessageSize || DefaultChunkSize;
     }
 
+    public get version(): string {
+        assert(this.connection);
+        return this.connection!.details.version;
+    }
+
     constructor(
         private readonly service: IDocumentService,
         private readonly client: IClient | null,
-        private readonly logger: ITelemetryLogger) {
+        private readonly logger: ITelemetryLogger,
+        private readonly reconnect: boolean) {
         super();
 
         /* tslint:disable:strict-boolean-expressions */
@@ -387,7 +393,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private connectCore(reason: string, delay: number): void {
         // Reconnection is only enabled for browser clients.
-        const reconnect = this.clientType === Browser;
+        const reconnect = this.clientType === Browser && this.reconnect;
 
         DeltaConnection.connect(
             this.service,

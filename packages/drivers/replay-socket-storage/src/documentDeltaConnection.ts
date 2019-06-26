@@ -231,6 +231,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.parentBranch;
     }
 
+    public get version(): string {
+        return this.details.version;
+    }
+
     public get initialContents(): IContentMessage[] | undefined {
         return this.details.initialContents;
     }

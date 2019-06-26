@@ -99,7 +99,7 @@ export class ScribeLambda extends SequencedLambda {
                     }
 
                     if (value.operation.type === MessageType.Summarize) {
-                        const content = value.operation.contents as ISummaryContent;
+                        const content = JSON.parse(value.operation.contents) as ISummaryContent;
 
                         // Process up to the summary op value to get the protocol state at the summary op
                         this.processFromPending(value.operation.referenceSequenceNumber);
@@ -247,7 +247,13 @@ export class ScribeLambda extends SequencedLambda {
         // The summary must reference the existing summary to be valid. This guards against accidental sends of
         // two summaries at the same time. In this case the first one wins.
         const existingRef = await this.storage.getRef(encodeURIComponent(this.document.documentId));
-        if (existingRef.object.sha !== content.handle) {
+
+        if (content.head) {
+            if (!existingRef || existingRef.object.sha !== content.head) {
+                await this.sendSummaryNack(summarySequenceNumber);
+                return;
+            }
+        } else if (existingRef) {
             await this.sendSummaryNack(summarySequenceNumber);
             return;
         }
@@ -368,7 +374,7 @@ export class ScribeLambda extends SequencedLambda {
             },
             referenceSequenceNumber: -1,
             traces: [],
-            type: MessageType.SummaryNack,
+            type: MessageType.SummaryAck,
         };
 
         await this.sendToDeli(operation);

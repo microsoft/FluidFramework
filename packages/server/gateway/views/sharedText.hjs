@@ -21,6 +21,7 @@
             var to = {{ to }};
             var resolved = {{{ resolved }}};
             var jwt = "{{ jwt }}";
+            var generateSummaries = {{{ generateSummaries }}};
                    
             console.log(`Starting load at - ${performance.now()}`);
             controller.sharedText.load(
@@ -33,7 +34,8 @@
                 "{{ template }}",
                 options,
                 from,
-                to);
+                to,
+                generateSummaries);
         </script>          
         </script>
     {{/scripts}}

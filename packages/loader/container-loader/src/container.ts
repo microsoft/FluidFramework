@@ -7,7 +7,6 @@ import {
     ConnectionState,
     FileMode,
     IChaincodeFactory,
-    IChunkedOp,
     IClient,
     ICodeLoader,
     ICommittedProposal,
@@ -19,25 +18,19 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IGenericBlob,
-    ILoader,
     IQuorum,
     IRequest,
     IResponse,
     ISequencedClient,
     ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryContent,
-    ISummaryTree,
     ITelemetryBaseLogger,
     ITelemetryLogger,
     ITree,
     ITreeEntry,
     MessageType,
-    SummaryObject,
-    SummaryType,
     TreeEntry,
 } from "@prague/container-definitions";
 import {
@@ -54,6 +47,7 @@ import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
+import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
@@ -65,12 +59,6 @@ interface IConnectResult {
     handlerAttachedP: Promise<void>;
 }
 
-interface IBufferedChunk {
-    type: MessageType;
-
-    content: string;
-}
-
 export class Container extends EventEmitter implements IContainer {
     public static async load(
         id: string,
@@ -79,7 +67,9 @@ export class Container extends EventEmitter implements IContainer {
         codeLoader: ICodeLoader,
         options: any,
         connection: string,
-        loader: ILoader,
+        loader: Loader,
+        request: IRequest,
+        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
         const container = new Container(
@@ -88,6 +78,8 @@ export class Container extends EventEmitter implements IContainer {
             service,
             codeLoader,
             loader,
+            request,
+            canReconnect,
             logger);
         await container.load(version, connection);
 
@@ -107,6 +99,7 @@ export class Container extends EventEmitter implements IContainer {
     private storageService: IDocumentStorageService | undefined | null;
 
     // tslint:disable:variable-name
+    private _version: string | undefined;
     private _clientId: string | undefined;
     private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
     private _existing: boolean | undefined;
@@ -117,12 +110,6 @@ export class Container extends EventEmitter implements IContainer {
 
     private context: ContainerContext | undefined;
     private pkg: string | null = null;
-
-    // Local copy of incomplete received chunks.
-    private readonly chunkMap = new Map<string, string[]>();
-
-     // Local copy of sent but unacknowledged chunks.
-    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     private protocolHandler: ProtocolOpHandler | undefined;
 
@@ -177,7 +164,9 @@ export class Container extends EventEmitter implements IContainer {
         public readonly options: any,
         private readonly service: IDocumentService,
         private readonly codeLoader: ICodeLoader,
-        private readonly loader: ILoader,
+        private readonly loader: Loader,
+        private readonly originalRequest: IRequest,
+        private readonly canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -246,48 +235,6 @@ export class Container extends EventEmitter implements IContainer {
         return this.context!.request(path);
     }
 
-    // * EXPERIMENTAL - checked in to bring up the feature but please still use snapshots
-    // If the app is in control - especially around proposal values - does generateSummary even exist in this
-    // place? Or does the app hand a summary out with rules on how to apply it? Probably this actually
-    public async generateSummary(message: string): Promise<void> {
-        // TODO: Issue-2171 Support for Branch Snapshots
-        if (this.parentBranch) {
-            debug(`Skipping summary due to being branch of ${this.parentBranch}`);
-            return;
-        }
-
-        if (!this.context!.canSummarize) {
-            debug(`Runtime does not support summary ops`);
-            return;
-        }
-
-        if (!("uploadSummary" in this.storageService!)) {
-            debug(`Driver does not support summary ops`);
-            return;
-        }
-
-        try {
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemPause();
-            }
-
-            // TODO in the future we can have stored the latest summary by listening to the summary ack message
-            // after loading from the beginning of the snapshot
-            const parents = (await this.storageService!.getVersions(null, 1)).map((version) => version.id);
-            const summary = await this.summarizeCore(message, parents);
-
-            this.submitMessage(MessageType.Summarize, summary);
-        } catch (ex) {
-            debug("Summary error", ex);
-            throw ex;
-        } finally {
-            // Restart the delta manager
-            if (this.deltaManager !== undefined) {
-                await this.deltaManager.inbound.systemResume();
-            }
-        }
-    }
-
     public async snapshot(tagMessage: string): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
         if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
@@ -318,26 +265,6 @@ export class Container extends EventEmitter implements IContainer {
                 await this.deltaManager.inbound.systemResume();
             }
         }
-    }
-
-    private async summarizeCore(message: string, parents: string[]): Promise<ISummaryContent> {
-        const entries: { [path: string]: SummaryObject } = {};
-
-        const componentEntries = await this.context!.summarize();
-
-        // And then combine
-        const root: ISummaryTree = {
-            tree: { ...entries, ...componentEntries.tree },
-            type: SummaryType.Tree,
-        };
-
-        const handle = await this.storageService!.uploadSummary(root);
-        return {
-            handle: handle.handle,
-            head: parents[0],
-            message,
-            parents,
-        };
     }
 
     private async snapshotCore(tagMessage: string) {
@@ -411,7 +338,6 @@ export class Container extends EventEmitter implements IContainer {
         const documentAttributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            partialOps: [...this.chunkMap],
             sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
         entries.push({
@@ -462,18 +388,19 @@ export class Container extends EventEmitter implements IContainer {
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
-                return tree !== null
-                    ? readAndParse<IDocumentAttributes>(storage!, tree!.blobs[".attributes"]!)
-                    : {
+                if (tree === null) {
+                    return {
                         branch: this.id,
-                        clients: [],
                         minimumSequenceNumber: 0,
-                        package: "",
-                        partialOps: [],
-                        proposals: [],
                         sequenceNumber: 0,
-                        values: [],
                     };
+                }
+
+                const attributesHash = ".protocol" in tree.trees
+                    ? tree.trees[".protocol"].blobs.attributes
+                    : tree.blobs[".attributes"];
+
+                return readAndParse<IDocumentAttributes>(storage!, attributesHash);
             });
 
         // ...begin the connection process to the delta stream
@@ -533,6 +460,9 @@ export class Container extends EventEmitter implements IContainer {
                     perfEvent.reportProgress({stage: "AfterSocketConnect"});
                 }
 
+                // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+                // are set. Global requests will still go to this loader
+                const loader = new RelativeLoader(this.loader, this.originalRequest);
                 this.context = await ContainerContext.load(
                     this,
                     this.codeLoader,
@@ -543,14 +473,15 @@ export class Container extends EventEmitter implements IContainer {
                     this.blobManager,
                     this._deltaManager,
                     this.protocolHandler!.quorum,
-                    this.loader,
+                    loader,
                     storageService,
                     (err) => this.emit("error", err),
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.submitSignal(message),
                     (message) => this.snapshot(message),
                     () => this.close());
-                this.context!.changeConnectionState(this.connectionState, this.clientId!);
+                this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
+                loader.resolveContainer(this);
 
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -579,10 +510,11 @@ export class Container extends EventEmitter implements IContainer {
         let values: Array<[string, any]>;
 
         if (tree) {
+            const baseTree = ".protocol" in tree.trees ? tree.trees[".protocol"] : tree;
             const snapshot = await Promise.all([
-                readAndParse<Array<[string, ISequencedClient]>>(storage, tree.blobs.quorumMembers!),
-                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, tree.blobs.quorumProposals!),
-                readAndParse<Array<[string, ICommittedProposal]>>(storage, tree.blobs.quorumValues!),
+                readAndParse<Array<[string, ISequencedClient]>>(storage, baseTree.blobs.quorumMembers!),
+                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, baseTree.blobs.quorumProposals!),
+                readAndParse<Array<[string, ICommittedProposal]>>(storage, baseTree.blobs.quorumValues!),
             ]);
 
             members = snapshot[0];
@@ -611,7 +543,8 @@ export class Container extends EventEmitter implements IContainer {
                 this.setConnectionState(
                     ConnectionState.Connected,
                     `joined @ ${details.sequenceNumber}`,
-                    this.pendingClientId);
+                    this.pendingClientId,
+                    this._deltaManager!.version);
             }
         });
 
@@ -641,8 +574,9 @@ export class Container extends EventEmitter implements IContainer {
     }
 
     private async loadBlobManager(storage: IDocumentStorageService, tree: ISnapshotTree): Promise<BlobManager> {
-        const blobs: IGenericBlob[] = tree
-            ? await readAndParse<IGenericBlob[]>(storage, tree.blobs[".blobs"]!)
+        const blobHash = tree && tree.blobs[".blobs"];
+        const blobs: IGenericBlob[] = blobHash
+            ? await readAndParse<IGenericBlob[]>(storage, blobHash)
             : [];
 
         const blobManager = new BlobManager(storage);
@@ -675,10 +609,10 @@ export class Container extends EventEmitter implements IContainer {
         const attributes: IDocumentAttributes = {
             branch: this.id,
             minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            partialOps: null,
             sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
 
+        const loader = new RelativeLoader(this.loader, this.originalRequest);
         const newContext = await ContainerContext.load(
             this,
             this.codeLoader,
@@ -689,7 +623,7 @@ export class Container extends EventEmitter implements IContainer {
             this.blobManager,
             this._deltaManager,
             this.protocolHandler!.quorum,
-            this.loader,
+            loader,
             this.storageService,
             (err) => this.emit("error", err),
             (type, contents) => this.submitMessage(type, contents),
@@ -697,6 +631,7 @@ export class Container extends EventEmitter implements IContainer {
             (message) => this.snapshot(message),
             () => this.close());
         this.context = newContext;
+        loader.resolveContainer(this);
 
         this.pkg = pkg;
         this.emit("contextChanged", this.pkg);
@@ -724,14 +659,18 @@ export class Container extends EventEmitter implements IContainer {
             this.service,
             clientDetails,
             ChildLogger.create(this.logger, "DeltaManager"),
+            this.canReconnect,
         );
 
         if (connect) {
             // Open a connection - the DeltaManager will automatically reconnect
             const detailsP = this._deltaManager.connect("Document loading");
             this._deltaManager.on("connect", (details: IConnectionDetails) => {
-                this.setConnectionState(ConnectionState.Connecting, "websocket established", details.clientId);
-                this.sendUnackedChunks();
+                this.setConnectionState(
+                    ConnectionState.Connecting,
+                    "websocket established",
+                    details.clientId,
+                    details.version);
             });
 
             this._deltaManager.on("disconnect", (nack: boolean) => {
@@ -800,10 +739,12 @@ export class Container extends EventEmitter implements IContainer {
     }
 
     private setConnectionState(value: ConnectionState.Disconnected, reason: string);
-    private setConnectionState(value: ConnectionState.Connecting | ConnectionState.Connected,
-                               reason: string,
-                               clientId: string);
-    private setConnectionState(value: ConnectionState, reason: string, context?: string) {
+    private setConnectionState(
+        value: ConnectionState.Connecting | ConnectionState.Connected,
+        reason: string,
+        clientId: string,
+        version: string);
+    private setConnectionState(value: ConnectionState, reason: string, context?: string, version?: string) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             return;
@@ -817,6 +758,7 @@ export class Container extends EventEmitter implements IContainer {
         });
 
         this._connectionState = value;
+        this._version = version;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)
@@ -836,22 +778,12 @@ export class Container extends EventEmitter implements IContainer {
             return;
         }
 
-        this.context!.changeConnectionState(value, this.clientId!);
+        this.context!.changeConnectionState(value, this.clientId!, this._version!);
 
         if (this.connectionState === ConnectionState.Connected) {
-            this.emit("connected", this.pendingClientId);
+            this.emit("connected", this.pendingClientId, version);
         } else {
             this.emit("disconnected");
-        }
-    }
-
-    private sendUnackedChunks() {
-        for (const message of this.unackedChunkedMessages) {
-            debug(`Resending unacked chunks!`);
-            this.submitChunkedMessage(
-                message[1].type,
-                message[1].content,
-                this._deltaManager!.maxMessageSize);
         }
     }
 
@@ -861,43 +793,10 @@ export class Container extends EventEmitter implements IContainer {
             return -1;
         }
 
+        // TODO it may be better not to stringify in this case and have the storage layer do this
         const serializedContent = JSON.stringify(contents);
-        const maxOpSize = this._deltaManager!.maxMessageSize;
+        const clientSequenceNumber = this._deltaManager!.submit(type, serializedContent);
 
-        let clientSequenceNumber: number;
-
-        // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
-        // there will be a lot of escape characters that can make it up to 2x bigger!
-        // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
-        if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this._deltaManager!.submit(type, serializedContent);
-        } else {
-            clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
-            this.unackedChunkedMessages.set(clientSequenceNumber,
-                {
-                    content: serializedContent,
-                    type,
-                });
-        }
-
-        return clientSequenceNumber;
-    }
-
-    private submitChunkedMessage(type: MessageType, content: string, maxOpSize: number): number {
-        const contentLength = content.length;
-        const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
-        let offset = 0;
-        let clientSequenceNumber: number = 0;
-        for (let i = 1; i <= chunkN; i = i + 1) {
-            const chunkedOp: IChunkedOp = {
-                chunkId: i,
-                contents: content.substr(offset, maxOpSize),
-                originalType: type,
-                totalChunks: chunkN,
-            };
-            offset += maxOpSize;
-            clientSequenceNumber = this._deltaManager!.submit(MessageType.ChunkedOp, JSON.stringify(chunkedOp));
-        }
         return clientSequenceNumber;
     }
 
@@ -908,49 +807,7 @@ export class Container extends EventEmitter implements IContainer {
             return;
         }
 
-        if (message.type === MessageType.ChunkedOp) {
-            const chunkComplete = this.prepareRemoteChunkedMessage(message);
-            if (!chunkComplete) {
-                return Promise.resolve();
-            } else {
-                if (local) {
-                    const clientSeqNumber = message.clientSequenceNumber;
-                    if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                        this.unackedChunkedMessages.delete(clientSeqNumber);
-                    }
-                }
-                return this.prepareRemoteMessage(message);
-            }
-        }
-
         return this.context!.prepare(message, local);
-    }
-
-    private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
-        const clientId = message.clientId;
-        const chunkedContent = message.contents as IChunkedOp;
-        this.addChunk(clientId, chunkedContent.contents);
-        if (chunkedContent.chunkId === chunkedContent.totalChunks) {
-            const serializedContent = this.chunkMap.get(clientId)!.join("");
-            message.contents = JSON.parse(serializedContent);
-            message.type = chunkedContent.originalType;
-            this.clearPartialChunks(clientId);
-            return true;
-        }
-        return false;
-    }
-
-    private addChunk(clientId: string, chunkedContent: string) {
-        if (!this.chunkMap.has(clientId)) {
-            this.chunkMap.set(clientId, []);
-        }
-        this.chunkMap.get(clientId)!.push(chunkedContent);
-    }
-
-    private clearPartialChunks(clientId: string) {
-        if (this.chunkMap.has(clientId)) {
-            this.chunkMap.delete(clientId);
-        }
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
@@ -962,12 +819,6 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         switch (message.type) {
-            case MessageType.ClientLeave:
-                const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
-                const clientId = JSON.parse(systemLeaveMessage.data) as string;
-                this.clearPartialChunks(clientId);
-                break;
-
             case MessageType.BlobUploaded:
                 // tslint:disable-next-line:no-floating-promises
                 this.blobManager!.addBlob(message.contents as IGenericBlob);

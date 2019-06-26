@@ -100,6 +100,7 @@ export class TestDocumentService implements IDocumentService {
             "test-client",
             false,
             "",
+            "^0.1.0",
             undefined,
             undefined,
             undefined);

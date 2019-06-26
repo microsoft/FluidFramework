@@ -15,6 +15,7 @@ import {
     ISequencedDocumentMessage,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
+import { IContainerRuntimeOptions } from "@prague/container-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
@@ -237,7 +238,9 @@ export async function load(
     url: string,
     host: IHost,
     options: any = {},
-    serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory): Promise<Document> {
+    serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
+): Promise<Document> {
 
     // const classicPlatform = new PlatformFactory();
     const runDeferred = new Deferred<{ runtime: ComponentRuntime; context: IComponentContext }>();
@@ -246,7 +249,8 @@ export async function load(
             debug("Code loaded and resolved");
             runDeferred.resolve({ runtime: r, context: c });
             return null;
-        });
+        },
+        runtimeOptions);
 
     // Load the Prague document
     // For legacy purposes we currently fill in a default domain

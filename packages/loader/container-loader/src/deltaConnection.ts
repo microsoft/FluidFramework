@@ -53,6 +53,7 @@ export class DeltaConnection extends EventEmitter {
             initialSignals: connection.initialSignals,
             maxMessageSize: connection.maxMessageSize,
             parentBranch: connection.parentBranch,
+            version: connection.version,
         };
 
         // listen for new messages

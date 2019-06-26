@@ -10,6 +10,7 @@ export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
     parentBranch: string | null;
+    version: string;
     initialMessages?: ISequencedDocumentMessage[];
     initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
@@ -60,6 +61,9 @@ export interface IDeltaManager<T, U> extends EventEmitter {
 
     // Type of client
     clientType: string;
+
+    // Protocol version being used to communicate with the service
+    version: string;
 
     // Max message size allowed to the delta manager
     maxMessageSize: number;

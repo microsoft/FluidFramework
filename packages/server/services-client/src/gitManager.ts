@@ -51,13 +51,13 @@ export class GitManager implements IGitManager {
         let sha = shaOrRef;
 
         // See if the sha is really a ref and convert
-        if (this.refCache.has(sha)) {
+        if (this.refCache.has(shaOrRef)) {
             // tslint:disable-next-line:no-unsafe-any - tslint bug?
-            debug(`Commit cache hit on ${sha}`);
-            sha = this.refCache.get(sha);
+            debug(`Commit cache hit on ${shaOrRef}`);
+            sha = this.refCache.get(shaOrRef);
 
             // Delete refcache after first use
-            this.refCache.delete(sha);
+            this.refCache.delete(shaOrRef);
 
             // If null is stored for the ref then there are no commits - return an empty array
             if (!sha) {

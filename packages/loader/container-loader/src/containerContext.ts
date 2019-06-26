@@ -157,8 +157,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.runtime!.summarize();
     }
 
-    public changeConnectionState(value: ConnectionState, clientId: string) {
-        this.runtime!.changeConnectionState(value, clientId);
+    public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
+        this.runtime!.changeConnectionState(value, clientId, version);
         if (value === ConnectionState.Connected) {
             this.emit("connected", this.clientId);
         } else {

@@ -11,9 +11,12 @@ import {
     ILoader,
     IPragueResolvedUrl,
     IRequest,
+    IResolvedUrl,
     IResponse,
+    ISequencedDocumentMessage,
     ITelemetryBaseLogger,
 } from "@prague/container-definitions";
+import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now") as () => number;
@@ -28,11 +31,78 @@ interface IParsedUrl {
     version: string;
 }
 
+// Protocol version supported by the loader
+// const protocolVersions = ["^0.2.0", "^0.1.0"];
+
+export class RelativeLoader extends EventEmitter implements ILoader {
+    public static supportedInterfaces = ["ILoader"];
+
+    // Because the loader is passed to the container during construction we need to resolve the target container
+    // after construction.
+    private readonly containerDeferred = new Deferred<Container>();
+
+    /**
+     * baseRequest is the original request that triggered the load. This URL is used in case credentials need
+     * to be fetched again.
+     */
+    constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
+        super();
+    }
+
+    public query(id: string): any {
+        return Loader.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return Loader.supportedInterfaces;
+    }
+
+    public async resolve(request: IRequest): Promise<Container> {
+        if (request.url.indexOf("/") === 0) {
+            // If no headers are set that require a reload make use of the same object
+            const container = await this.containerDeferred.promise;
+            return container;
+        }
+
+        return this.loader.resolve(request);
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        if (request.url.indexOf("/") === 0) {
+            const container = this.canUseCache(request)
+                ? await this.containerDeferred.promise
+                : await this.loader.resolve({ url: this.baseRequest.url, headers: request.headers });
+            return container.request(request);
+        }
+
+        return this.loader.request(request);
+    }
+
+    public resolveContainer(container: Container) {
+        this.containerDeferred.resolve(container);
+    }
+
+    private canUseCache(request: IRequest): boolean {
+        if (!request.headers) {
+            return true;
+        }
+
+        const noCache =
+            request.headers["fluid-cache"] === false ||
+            request.headers["fluid-reconnect"] === false;
+
+        return !noCache;
+    }
+}
+
 /**
  * Manages Prague resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
+    public static supportedInterfaces = ["ILoader"];
+
     private readonly containers = new Map<string, Promise<Container>>();
+    private readonly resolveCache = new Map<string, IPragueResolvedUrl>();
 
     constructor(
         private readonly containerHost: IHost,
@@ -56,7 +126,15 @@ export class Loader extends EventEmitter implements ILoader {
         }
     }
 
-    public async resolve(request: IRequest): Promise<Container | undefined> {
+    public query(id: string): any {
+        return Loader.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return Loader.supportedInterfaces;
+    }
+
+    public async resolve(request: IRequest): Promise<Container> {
         debug(`Container resolve: ${now()} `);
 
         const resolved = await this.resolveCore(request);
@@ -91,20 +169,32 @@ export class Loader extends EventEmitter implements ILoader {
             : null;
     }
 
-    private async resolveCore(request: IRequest):
-        Promise<{ container: Container | undefined, parsed: IParsedUrl | null }> {
+    private async resolveCore(
+        request: IRequest,
+    ): Promise<{ container: Container, parsed: IParsedUrl }> {
         // Resolve the given request to a URL
-        const resolved = await this.containerHost.resolver.resolve(request);
-        if (resolved.type !== "prague") {
-            return Promise.reject("Only Prague components currently supported");
+        // Check for an already resolved URL otherwise make a new request
+        if (!this.resolveCache.has(request.url)) {
+            const toCache = await this.containerHost.resolver.resolve(request);
+            if (toCache.type !== "prague") {
+                return Promise.reject("Only Prague components currently supported");
+            }
+            this.resolveCache.set(request.url, toCache);
         }
+        const resolved = this.resolveCache.get(request.url)!;
 
+        // Parse URL into components
         const resolvedAsPrague = resolved as IPragueResolvedUrl;
         const parsed = this.parseUrl(resolvedAsPrague.url);
+        if (!parsed) {
+            return Promise.reject(`Invalid URL ${resolvedAsPrague.url}`);
+        }
 
         let canCache = true;
+        let canReconnect = true;
         let connection = !parsed!.version ? "open" : "close";
         let version = parsed!.version;
+        let fromSequenceNumber = -1;
 
         if (request.headers) {
             if (request.headers.connect) {
@@ -114,13 +204,25 @@ export class Loader extends EventEmitter implements ILoader {
                 connection = request.headers.connect as string;
             }
 
+            if (request.headers["fluid-cache"] === false) {
+                canCache = false;
+            }
+
+            if (request.headers["fluid-reconnect"] === false) {
+                canReconnect = false;
+            }
+
+            if (request.headers["fluid-sequence-number"]) {
+                fromSequenceNumber = request.headers["fluid-sequence-number"] as number;
+            }
+
             version = version || request.headers.version as string;
         }
 
         debug(`${canCache} ${connection} ${version}`);
         const documentService = await this.documentServiceFactory.createDocumentService(resolved);
 
-        let container: Container | undefined;
+        let container: Container;
         if (canCache) {
             const versionedId = version ? `${parsed!.id}@${version}` : parsed!.id;
             if (!this.containers.has(versionedId)) {
@@ -130,11 +232,15 @@ export class Loader extends EventEmitter implements ILoader {
                         version,
                         connection,
                         documentService,
+                        request,
+                        resolved,
+                        canReconnect,
                         this.logger);
                 this.containers.set(versionedId, containerP);
             }
 
-            container = await this.containers.get(versionedId);
+            // container must exist since explicitly set above
+            container = (await this.containers.get(versionedId) as Container);
         } else {
             container =
                 await this.loadContainer(
@@ -142,20 +248,39 @@ export class Loader extends EventEmitter implements ILoader {
                     version,
                     connection,
                     documentService,
+                    request,
+                    resolved,
+                    canReconnect,
                     this.logger);
+        }
+
+        if (container.deltaManager!.referenceSequenceNumber <= fromSequenceNumber) {
+            await new Promise((resolve, reject) => {
+                function opHandler(message: ISequencedDocumentMessage) {
+                    if (message.sequenceNumber > fromSequenceNumber) {
+                        resolve();
+                        container.removeListener("op", opHandler);
+                    }
+                }
+
+                container.on("op", opHandler);
+            });
         }
 
         return { container, parsed };
     }
 
-    private async loadContainer(
+    private loadContainer(
         id: string,
         version: string,
         connection: string,
         documentService: IDocumentService,
+        request: IRequest,
+        resolved: IResolvedUrl,
+        canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ): Promise<Container> {
-        const container = await Container.load(
+        const container = Container.load(
             id,
             version,
             documentService,
@@ -163,6 +288,8 @@ export class Loader extends EventEmitter implements ILoader {
             this.options,
             connection,
             this,
+            request,
+            canReconnect,
             logger);
 
         return container;

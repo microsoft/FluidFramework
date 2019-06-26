@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
@@ -70,18 +71,20 @@ export interface IContainer extends EventEmitter {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
 
     getQuorum(): IQuorum | undefined;
-
-    /**
-     * EXPERIMENTAL - checked in to bring up the feature but please still use snapshots
-     *
-     * Generates a new summary op which is proposed to the quorum. Inbound op processing is paused during summary
-     * generation in order to hold the reference sequence number.
-     */
-    generateSummary(message: string, parents: string[]): Promise<void>;
 }
 
-export interface ILoader {
+export interface ILoader extends IComponent {
+    /**
+     * Loads the resource specified by the URL + headers contained in the request object.
+     */
     request(request: IRequest): Promise<IResponse>;
-    // add unload
-    resolve(request: IRequest): Promise<IContainer | undefined>;
+
+    /**
+     * Resolves the resource specified by the URL + headers contained in the request object
+     * to the underlying container that will resolve the request.
+     *
+     * An analogy for this is resolve is a DNS resolve of a Prague container. Request then executes
+     * a request against the server found from the resolve step.
+     */
+    resolve(request: IRequest): Promise<IContainer>;
 }

@@ -29,7 +29,6 @@ export function create(
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any,
 ): Router {
-
     const router: Router = Router();
 
     /**
@@ -144,6 +143,7 @@ export function create(
                     config: workerConfig,
                     disableCache,
                     from: Number.NaN,
+                    generateSummaries: false,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",
                     partials: defaultPartials,
@@ -178,6 +178,7 @@ export function create(
         const start = Date.now();
 
         const disableCache = "disableCache" in request.query;
+        const generateSummaries = "generateSummaries" in request.query;
 
         const tenantId = request.params.tenantId || appTenants[0].id;
 
@@ -220,6 +221,7 @@ export function create(
                     config: workerConfig,
                     disableCache,
                     from,
+                    generateSummaries,
                     jwt: jwtToken,
                     options: JSON.stringify(options),
                     pageInk: request.query.pageInk === "true",

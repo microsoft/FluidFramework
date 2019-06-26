@@ -49,7 +49,19 @@ function sanitizeMessage(message: any): IDocumentMessage {
     }
 }
 
-const protocolVersion = "^0.1.0";
+const protocolVersions = ["^0.2.0", "^0.1.0"];
+
+function selectProtocolVersion(connectVersions: string[]): string {
+    let version: string = null;
+    for (const connectVersion of connectVersions) {
+        for (const protocolVersion of protocolVersions) {
+            if (semver.intersects(protocolVersion, connectVersion)) {
+                version = protocolVersion;
+                return version;
+            }
+        }
+    }
+}
 
 export function register(
     webSocketServer: core.IWebSocketServer,
@@ -96,18 +108,11 @@ export function register(
 
             // Iterate over the version ranges provided by the client and select the best one that works
             const connectVersions = message.versions ? message.versions : ["^0.1.0"];
-            let version: string = null;
-            for (const connectVersion of connectVersions) {
-                if (semver.intersects(protocolVersion, connectVersion)) {
-                    version = protocolVersion;
-                    break;
-                }
-            }
-
+            const version = selectProtocolVersion(connectVersions);
             if (!version) {
                 return Promise.reject(
                     `Unsupported client protocol.` +
-                    `Server: ${protocolVersion}. ` +
+                    `Server: ${protocolVersions}. ` +
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
@@ -122,7 +127,7 @@ export function register(
                     existing: connection.existing,
                     maxMessageSize: connection.maxMessageSize,
                     parentBranch: connection.parentBranch,
-                    supportedVersions: [protocolVersion],
+                    supportedVersions: protocolVersions,
                     version,
                 };
 
@@ -134,7 +139,7 @@ export function register(
                     existing: true, // Readonly client can only open an existing document.
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     parentBranch: null, // Does not matter for now.
-                    supportedVersions: [protocolVersion],
+                    supportedVersions: protocolVersions,
                     version,
                 };
 
