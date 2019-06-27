@@ -4,9 +4,6 @@
   "main": "dist/index.js",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "publishConfig": {
-    "registry": "https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/"
-  },
   "dependencies": {
     "@prague/container-definitions": "^0.4.0",
     "@prague/container-loader": "^0.4.0",
