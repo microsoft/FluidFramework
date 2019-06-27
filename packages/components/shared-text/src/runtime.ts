@@ -74,7 +74,12 @@ class MyRegistry implements IComponentRegistry {
  * Instantiates a new chaincode host
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const runtime = await ContainerRuntime.load(context, new MyRegistry(context));
+    const generateSummaries = true;
+
+    const runtime = await ContainerRuntime.load(
+        context,
+        new MyRegistry(context),
+        { generateSummaries });
 
     // Register path handler for inbound messages
     runtime.registerRequestHandler(async (request: IRequest) => {
@@ -103,15 +108,16 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     });
 
     // Registering for tasks to run in headless runner.
-    runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
-
-    waitForFullConnection(runtime).then(() => {
-        // Call snapshot directly from runtime.
-        if (runtime.clientType === "snapshot") {
-            console.log(`@chaincode/shared-text running ${runtime.clientType}`);
-            Snapshotter.run(runtime);
-        }
-    });
+    if (!generateSummaries) {
+        runtime.registerTasks(["snapshot", "spell", "translation", "cache"], "1.0");
+        waitForFullConnection(runtime).then(() => {
+            // Call snapshot directly from runtime.
+            if (runtime.clientType === "snapshot") {
+                console.log(`@chaincode/shared-text running ${runtime.clientType}`);
+                Snapshotter.run(runtime);
+            }
+        });
+    }
 
     // On first boot create the base component
     if (!runtime.existing) {

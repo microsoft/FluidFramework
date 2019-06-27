@@ -11,7 +11,7 @@ import {
     IResponse,
     IRuntime,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
+import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
 import { ISharedMap, MapExtension, SharedMap } from "@prague/map";
 import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
@@ -86,9 +86,10 @@ export abstract class Component extends EventEmitter implements IComponent {
         context: IContainerContext,
         chaincode: string,
         registry: IComponentRegistry,
+        runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ): Promise<IRuntime> {
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry);
+        const runtime = await ContainerRuntime.load(context, registry, runtimeOptions);
         debug("runtime loaded.");
 
         // Register path handler for inbound messages

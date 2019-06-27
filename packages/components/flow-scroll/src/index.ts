@@ -107,5 +107,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
             //     ]
             // },
             // ["@chaincode/pinpoint-editor", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/pinpoint-editor")],
-        ]));
+        ]),
+        { generateSummaries: true });
 }
