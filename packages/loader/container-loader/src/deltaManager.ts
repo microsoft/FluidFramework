@@ -269,12 +269,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public async getDeltas(reason: string, fromInitial: number, to?: number): Promise<ISequencedDocumentMessage[]> {
-        if (this.closed) {
-            // Might need to change to non-error event
-            this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
-            return [];
-        }
-
         let retry: number = 0;
         let from: number = fromInitial;
         const allDeltas: ISequencedDocumentMessage[] = [];
@@ -286,7 +280,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             to,
         });
 
-        while (true) {
+        while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
 
@@ -342,6 +336,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 setTimeout(() => { resolve(); }, delay);
             });
         }
+
+        // Might need to change to non-error event
+        this.logger.sendErrorEvent({eventName: "GetDeltasClosedConnection" });
+
+        return [];
     }
 
     public enableReadonlyMode(): void {
@@ -684,6 +683,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         if (this.fetching) {
             this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasAlreadyFetching", from: from!, reason});
             return;
+        }
+
+        if (this.closed) {
+            this.logger.sendTelemetryEvent({eventName: "fetchMissingDeltasClosedConnection" });
+            return [];
         }
 
         this.fetching = true;
