@@ -10,6 +10,7 @@ import {
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { Translator } from "@prague/translator";
+import { Provider } from "nconf";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";
 
@@ -20,7 +21,7 @@ export class TranslationWork extends BaseWork implements IWork {
         docId: string,
         tenantId: string,
         host: IHost,
-        config: any,
+        config: Provider,
         private serviceFactory: IDocumentServiceFactory) {
         super(alfred, docId, tenantId, host, config);
     }
@@ -46,7 +47,7 @@ export class TranslationWork extends BaseWork implements IWork {
             translator.run(
                 sharedString,
                 insightsMap,
-                this.config.intelligence.translation.key);
+                this.config.get("intelligence:translation:key"));
         }
 
     }

@@ -29,6 +29,12 @@ export class Translator implements IComponent, IComponentRouter, ITranslator {
         insightsMap: ISharedMap,
         apiKey: string) {
         const translator = new SharedStringTranslator(insightsMap, sharedString, apiKey);
+        if (apiKey.length === 0) {
+            const cfgFile = "packages/server/routerlicious/config/config.json";
+            console.log("No translation key provided. " +
+                `Please put translation key into ${cfgFile} file to enable translation.`);
+            return;
+        }
         translator.start().catch((err) => {
             console.log(err);
         });

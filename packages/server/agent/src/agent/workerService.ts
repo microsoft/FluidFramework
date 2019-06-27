@@ -5,6 +5,7 @@
 
 import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import { EventEmitter } from "events";
+import { Provider } from "nconf";
 import { IDocumentTaskInfo, IWorkManager } from "./definitions";
 import { WorkManager } from "./workManager";
 
@@ -14,7 +15,7 @@ export class WorkerService extends EventEmitter {
 
     constructor(
         private serviceFactory: IDocumentServiceFactory,
-        private config: any,
+        private config: Provider,
         private serverUrl: string,
         private agentModuleLoader: (id: string) => Promise<any>,
         private codeLoader?: ICodeLoader) {

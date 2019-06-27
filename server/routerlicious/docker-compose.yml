@@ -86,6 +86,7 @@ services:
             - DEBUG=prague:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - NODE_ENV=development
+            - intelligence__translation__key
         restart: always
     riddler:
         build:

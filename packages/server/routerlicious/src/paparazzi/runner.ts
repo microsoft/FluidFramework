@@ -19,6 +19,7 @@ import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
+import { Provider } from "nconf";
 import * as request from "request";
 import * as unzip from "unzip-stream";
 import * as url from "url";
@@ -79,13 +80,13 @@ export class PaparazziRunner implements utils.IRunner {
     private permission: Set<string>;
 
     constructor(
-        private workerConfig: any,
+        private workerConfig: Provider,
         private messageReceiver: core.ITaskMessageReceiver,
         private agentUploader: core.IAgentUploader,
         private jwtKey: string,
     ) {
-        this.permission = new Set(workerConfig.permission as string[]);
-        const alfredUrl = workerConfig.alfredUrl;
+        this.permission = new Set(workerConfig.get("permission") as string[]);
+        const alfredUrl = workerConfig.get("alfredUrl");
 
         const serviceFactory = new WorkerDocumentServiceFactory();
 
@@ -175,24 +176,24 @@ export class PaparazziRunner implements utils.IRunner {
                 },
                 this.jwtKey);
 
-            const documentUrl = `prague://${url.parse(this.workerConfig.alfredUrl).host}` +
+            const documentUrl = `prague://${url.parse(this.workerConfig.get("alfredUrl")).host}` +
                 `/${encodeURIComponent(requestMsg.tenantId)}` +
                 `/${encodeURIComponent(requestMsg.documentId)}`;
 
             const deltaStorageUrl =
-                this.workerConfig.alfredUrl +
+                this.workerConfig.get("alfredUrl") +
                 "/deltas" +
                 `/${encodeURIComponent(requestMsg.tenantId)}/${encodeURIComponent(requestMsg.documentId)}`;
 
             const storageUrl =
-                this.workerConfig.blobStorageUrl +
+                this.workerConfig.get("blobStorageUrl") +
                 "/repos" +
                 `/${encodeURIComponent(requestMsg.tenantId)}`;
 
             const resolved: IPragueResolvedUrl = {
                 endpoints: {
                     deltaStorageUrl,
-                    ordererUrl: this.workerConfig.alfredUrl,
+                    ordererUrl: this.workerConfig.get("alfredUrl"),
                     storageUrl,
                 },
                 tokens: { jwt: requestMsg.token },
@@ -201,13 +202,13 @@ export class PaparazziRunner implements utils.IRunner {
             };
 
             const resolver = new ContainerUrlResolver(
-                this.workerConfig.alfredUrl,
+                this.workerConfig.get("alfredUrl"),
                 hostToken,
                 new Map([[documentUrl, resolved]]));
 
             winston.info(`Starting ${JSON.stringify(filteredTask)}: ${requestMsg.tenantId}/${requestMsg.documentId}`);
             this.workerService.startTasks(
-                this.workerConfig.alfredUrl,
+                this.workerConfig.get("alfredUrl"),
                 requestMsg.tenantId,
                 requestMsg.documentId,
                 filteredTask,

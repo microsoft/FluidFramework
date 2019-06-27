@@ -11,7 +11,7 @@ import { PaparazziRunner } from "./runner";
 
 export class PaparazziResources implements utils.IResources {
     constructor(
-        public workerConfig: any,
+        public workerConfig: Provider,
         public messageReceiver: core.ITaskMessageReceiver,
         public agentUploader: core.IAgentUploader,
         public jwtKey: string) {
@@ -24,7 +24,7 @@ export class PaparazziResources implements utils.IResources {
 
 export class PaparazziResourcesFactory implements utils.IResourcesFactory<PaparazziResources> {
     public async create(config: Provider): Promise<PaparazziResources> {
-        const workerConfig = config.get("worker");
+        const workerConfig = new Provider().env("__").add("worker", { type: "literal", store: config.get("worker") });
         const queueName = config.get("paparazzi:queue");
         const jwtKey = config.get("alfred:key");
 

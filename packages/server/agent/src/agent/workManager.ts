@@ -6,6 +6,7 @@
 import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { EventEmitter } from "events";
+import { Provider } from "nconf";
 import { AgentLoader, IAgent } from "./agentLoader";
 import * as chaincode from "./chaincodes";
 import { debug } from "./debug";
@@ -26,7 +27,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
     private agentsLoaded: boolean = false;
 
     constructor(private serviceFactory: IDocumentServiceFactory,
-                private config: any,
+                private config: Provider,
                 private serverUrl: string,
                 private agentModuleLoader: (id: string) => Promise<any>,
                 private codeLoader: ICodeLoader) {
@@ -237,7 +238,7 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
     private async loadUploadedAgents() {
         if (!this.agentsLoaded) {
-            this.agentLoader = new AgentLoader(this.agentModuleLoader, this.config.alfredUrl);
+            this.agentLoader = new AgentLoader(this.agentModuleLoader, this.config.get("alfredUrl"));
             await this.agentLoader.loadUploadedAgents();
             this.agentsLoaded = true;
         }
