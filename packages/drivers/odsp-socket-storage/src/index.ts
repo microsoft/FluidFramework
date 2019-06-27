@@ -4,17 +4,11 @@
  */
 
 export * from "./Getter";
-export * from "./SharepointDocumentServiceFactory";
-export * from "./SharepointDeltaStorageService";
-export * from "./SharepointDocumentService";
-export * from "./SharepointDocumentStorageManager";
-export * from "./SharepointDeltaStorageService";
-export * from "./deltaStorageService";
+export * from "./OdspDocumentServiceFactory";
+export * from "./OdspDeltaStorageService";
+export * from "./OdspDocumentService";
+export * from "./OdspDocumentStorageManager";
+export * from "./OdspDeltaStorageService";
 export * from "./contracts";
-export * from "./documentService";
-export * from "./documentStorageService";
 export * from "./token";
-export * from "./documentServiceFactory";
-export * from "./urlResolver";
-export * from "./SharePointUrlResolver";
-export * from "./standardDocumentStorageManager";
+export * from "./OdspUrlResolver";

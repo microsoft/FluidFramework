@@ -87,7 +87,7 @@ async function loadDocument(
         config.historianApi,
         seedData,
         config.credentials);
-    const odspDocumentServiceFactory = new OdspDocumentServiceFactory();
+    const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Shared Text");
     let documentServiceFactory: IDocumentServiceFactory = new MultiDocumentServiceFactory(
         {
             "prague-odsp:": odspDocumentServiceFactory,

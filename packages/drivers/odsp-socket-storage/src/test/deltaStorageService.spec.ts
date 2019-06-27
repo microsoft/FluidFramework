@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { AxiosInstance, AxiosResponse } from "axios";
-import { DeltaStorageService } from "../deltaStorageService";
+import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
 import { TokenProvider } from "../token";
 
 describe("DeltaStorageService", () => {
@@ -19,16 +19,16 @@ describe("DeltaStorageService", () => {
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url", () => {
-        const deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
-        const actualDeltaUrl = deltaStorageService.buildUrl(2, 8);
+        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""));
+        const actualDeltaUrl = deltaStorageService.buildAxiosUrl(2, 8);
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
     it("Should build the correct sharepoint delta url with auth", () => {
-        const deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, undefined);
-        const actualDeltaUrl = deltaStorageService.buildUrl(2, 8, new TokenProvider("?access_token=123", ""));
+        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve("?access_token=123"));
+        const actualDeltaUrl = deltaStorageService.buildAxiosUrl(2, 8, new TokenProvider("?access_token=123", ""));
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207&access_token=123`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
@@ -70,7 +70,7 @@ describe("DeltaStorageService", () => {
             ],
         };
 
-        let deltaStorageService: DeltaStorageService;
+        let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -86,7 +86,7 @@ describe("DeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""), axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -132,7 +132,7 @@ describe("DeltaStorageService", () => {
             ],
         };
 
-        let deltaStorageService: DeltaStorageService;
+        let deltaStorageService: OdspDeltaStorageService;
         before(() => {
             const axiosMock: Partial<AxiosInstance> = {
                 get: (url, config?) => new Promise<AxiosResponse>(
@@ -148,7 +148,7 @@ describe("DeltaStorageService", () => {
                         resolve(respone);
                     }),
             };
-            deltaStorageService = new DeltaStorageService(testDeltaStorageUrl, axiosMock as AxiosInstance);
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""), axiosMock as AxiosInstance);
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

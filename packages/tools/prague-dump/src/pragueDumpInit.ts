@@ -140,20 +140,8 @@ async function initializeODSPCore(server: string, drive: string, item: string) {
 
     const resolvedUrl = await joinODSPSession(server, drive, item);
 
-    const tokenProvider = new odsp.TokenProvider(resolvedUrl.tokens.storageToken, resolvedUrl.tokens.socketToken);
-
-    const url = new URL(resolvedUrl.url);
-    const split = url.pathname.split("/");
-    const tenantId = split[1];
-    const documentId = split[2];
-    paramDocumentService =
-        new odsp.DocumentService(
-            resolvedUrl.endpoints.storageUrl,
-            resolvedUrl.endpoints.deltaStorageUrl,
-            resolvedUrl.endpoints.ordererUrl,
-            tokenProvider,
-            tenantId,
-            documentId);
+    const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory("prague-dumper");
+    paramDocumentService = await odspDocumentServiceFactory.createDocumentService(resolvedUrl);
 }
 
 async function initializeOfficeODSP(searchParams: URLSearchParams) {

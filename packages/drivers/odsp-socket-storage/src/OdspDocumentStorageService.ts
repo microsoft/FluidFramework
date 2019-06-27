@@ -5,13 +5,13 @@
 
 import * as api from "@prague/container-definitions";
 import { buildHierarchy } from "@prague/utils";
-import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageManager";
+import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 
 /**
  * Document access to underlying storage for sharepoint driver.
  */
-export class SharepointDocumentStorageService implements api.IDocumentStorageService {
-    constructor(private readonly storageManager: SharepointDocumentStorageManager) { }
+export class OdspDocumentStorageService implements api.IDocumentStorageService {
+    constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
         throw new Error("Method not implemented.");

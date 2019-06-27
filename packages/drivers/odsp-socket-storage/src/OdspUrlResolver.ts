@@ -6,7 +6,7 @@
 import { IPragueResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 
-export class SharepointUrlResolver implements IUrlResolver {
+export class OdspUrlResolver implements IUrlResolver {
     constructor(private readonly storageDiscoveryPromise: Promise<ISocketStorageDiscovery>) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -14,7 +14,7 @@ export class SharepointUrlResolver implements IUrlResolver {
         console.log(`resolving url=${JSON.stringify(request)}`);
         const pragueSocketStorageDiscovery = await this.storageDiscoveryPromise;
         const documentUrl =
-            `prague://${new URL(pragueSocketStorageDiscovery.deltaStorageUrl).host}` +
+            `prague-odsp://${new URL(pragueSocketStorageDiscovery.deltaStorageUrl).host}` +
             `/${encodeURIComponent(pragueSocketStorageDiscovery.tenantId)}` +
             `/${encodeURIComponent(pragueSocketStorageDiscovery.id)}`;
 

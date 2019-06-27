@@ -37,10 +37,9 @@ export class DocumentDeltaStorageService implements api.IDocumentDeltaStorageSer
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
-export class SharepointDeltaStorageService implements api.IDeltaStorageService {
+export class OdspDeltaStorageService implements api.IDeltaStorageService {
     private firstGetRequest = true;
     private readonly queryString: string;
-    private readonly axiosInstance: AxiosInstance = Axios;
 
     constructor(
         queryParams: { [key: string]: string },
@@ -48,13 +47,14 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
         private readonly getter: IGetter | undefined,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getToken: (refresh: boolean) => Promise<string>,
+        private readonly axiosInstance: AxiosInstance = Axios,
     ) {
         this.queryString = getQueryString(queryParams);
     }
 
     public async get(
-        tenantId: string,
-        id: string,
+        tenantId: string | null,
+        id: string | null,
         tokenProvider: api.ITokenProvider,
         from?: number,
         to?: number,
@@ -98,15 +98,7 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
         }
     }
 
-    private getOps(operations: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[]) {
-        if (operations.length > 0 && "op" in operations[0]) {
-            return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
-        }
-
-        return operations as api.ISequencedDocumentMessage[];
-    }
-
-    private buildGetterUrl(token: string, from: number | undefined, to: number | undefined) {
+    public buildGetterUrl(token: string, from: number | undefined, to: number | undefined) {
         const fromInclusive = from === undefined ? undefined : from + 1;
         const toInclusive = to === undefined ? undefined : to - 1;
 
@@ -116,7 +108,7 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
         return `${this.deltaFeedUrl}${fullQueryString}`;
     }
 
-    private buildAxiosUrl(from?: number, to?: number, tokenProvider?: TokenProvider) {
+    public buildAxiosUrl(from?: number, to?: number, tokenProvider?: TokenProvider) {
         const fromInclusive = from === undefined ? undefined : from + 1;
         const toInclusive = to === undefined ? undefined : to - 1;
 
@@ -128,5 +120,13 @@ export class SharepointDeltaStorageService implements api.IDeltaStorageService {
         const query = querystring.stringify(queryParams);
 
         return `${this.deltaFeedUrl}?${query}`;
+    }
+
+    private getOps(operations: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[]) {
+        if (operations.length > 0 && "op" in operations[0]) {
+            return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+        }
+
+        return operations as api.ISequencedDocumentMessage[];
     }
 }

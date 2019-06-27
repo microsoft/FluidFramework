@@ -8,9 +8,9 @@ import * as resources from "@prague/gitresources";
 import { parse } from "url";
 import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
 import { HttpGetter, IGetter } from "./Getter";
-import { SharepointDocumentService } from "./SharepointDocumentService";
+import { OdspDocumentService } from "./OdspDocumentService";
 
-export interface ISharepointSnapshot {
+export interface IOdspSnapshot {
     id: string;
     sha: string;
     trees: resources.ITree[];
@@ -22,7 +22,7 @@ export interface ISharepointSnapshot {
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class SharepointDocumentServiceFactory implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
     private storageGetter: IGetter | undefined;
     private deltasGetter: IGetter | undefined;
 
@@ -36,7 +36,7 @@ export class SharepointDocumentServiceFactory implements IDocumentServiceFactory
      */
     constructor(
         private readonly appId: string,
-        private readonly snapshot?: Promise<ISharepointSnapshot | undefined>,
+        private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
         private readonly socketStorageDiscoveryP?: Promise<ISocketStorageDiscovery>,
         private readonly joinSession?: () => Promise<ISocketStorageDiscovery>,
         storageGetter?: IGetter,
@@ -51,7 +51,7 @@ export class SharepointDocumentServiceFactory implements IDocumentServiceFactory
         if (this.socketStorageDiscoveryP) {
             return this.socketStorageDiscoveryP.then(
                 (socketStorageDiscovery) =>
-                    new SharepointDocumentService(
+                    new OdspDocumentService(
                         this.appId,
                         this.storageGetter,
                         this.deltasGetter,
@@ -104,7 +104,7 @@ export class SharepointDocumentServiceFactory implements IDocumentServiceFactory
             storageToken,
             tenantId,
         };
-        return Promise.resolve(new SharepointDocumentService(
+        return Promise.resolve(new OdspDocumentService(
             this.appId,
             this.storageGetter,
             this.deltasGetter,

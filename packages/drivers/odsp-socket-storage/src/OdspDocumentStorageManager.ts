@@ -72,7 +72,7 @@ export interface IDocumentStorageManager {
  * 1. If a snapshotUrl is not provided or if latestSha is an empty string, all functions are disabled and an empty list is returned from getVersions
  * 2. A latestSha, trees and blobs can be supplied which will then be used as cache for getVersions, getTree and getBlob
  */
-export class SharepointDocumentStorageManager implements IDocumentStorageManager {
+export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private static readonly errorMessage = "Method not supported because no snapshotUrl was provided";
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
@@ -109,7 +109,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
         return this.standardDocumentStorageManagerCallWithRetry(() => {
             // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
@@ -135,7 +135,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
         // TODO remove this
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
 
         return this.standardDocumentStorageManagerCallWithRetry(() => {
@@ -145,7 +145,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
     public getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
         return this.standardDocumentStorageManagerCallWithRetry(() => {
             return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.id, path });
@@ -154,7 +154,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
     public getRawUrl(blobid: string): string {
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
         return `${this.snapshotUrl}/blobs/${blobid}`;
     }
@@ -195,7 +195,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
         // TODO remove this
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
 
         return this.standardDocumentStorageManagerCallWithRetry(async () => {
@@ -217,7 +217,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
             return [{ id: cachedTree.sha, treeId: undefined! }];
         }
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
         return this.standardDocumentStorageManagerCallWithRetry(async () => {
             if (blobid && blobid !== this.documentId) {
@@ -248,7 +248,7 @@ export class SharepointDocumentStorageManager implements IDocumentStorageManager
 
     public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
         if (!this.snapshotUrl) {
-            throw new Error(SharepointDocumentStorageManager.errorMessage);
+            throw new Error(OdspDocumentStorageManager.errorMessage);
         }
         return this.standardDocumentStorageManagerCallWithRetry(() => {
             // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]

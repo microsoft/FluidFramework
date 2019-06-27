@@ -1,4 +1,5 @@
 # 0.5 Breaking Changes
+Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
 
 # 0.4 Breaking Changes (June 17, 2019)
 
@@ -8,6 +9,8 @@ will be removed in the next release.
 They have been replaced with the IComponent inside of @prague/container-definitions.
 
 All static methods have been changed from PascalCase to camelCase.
+
+Deleted sharepoint-socket-storage package from drivers. Moved all files from sharepoint-socket-storage to odsp-socket-storage.
 
 # 0.3 Breaking Changes (June 3, 2019)
 

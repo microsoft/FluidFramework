@@ -193,7 +193,7 @@ async function start(
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
     const r11sDocumentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-    const odspDocumentServiceFactory = new OdspDocumentServiceFactory();
+    const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
     const documentServiceFactory = new MultiDocumentServiceFactory(
         {
             "prague-odsp:": odspDocumentServiceFactory,

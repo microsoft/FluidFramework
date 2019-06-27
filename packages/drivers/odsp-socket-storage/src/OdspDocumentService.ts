@@ -9,17 +9,17 @@ import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as io from "socket.io-client";
 import { ISocketStorageDiscovery } from "./contracts";
 import { IGetter } from "./Getter";
-import { DocumentDeltaStorageService, SharepointDeltaStorageService } from "./SharepointDeltaStorageService";
-import { ISharepointSnapshot } from "./SharepointDocumentServiceFactory";
-import { SharepointDocumentStorageManager } from "./SharepointDocumentStorageManager";
-import { SharepointDocumentStorageService } from "./SharepointDocumentStorageService";
+import { DocumentDeltaStorageService, OdspDeltaStorageService } from "./OdspDeltaStorageService";
+import { IOdspSnapshot } from "./OdspDocumentServiceFactory";
+import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
+import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { TokenProvider } from "./token";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class SharepointDocumentService implements api.IDocumentService {
+export class OdspDocumentService implements api.IDocumentService {
     private attemptedDeltaStreamConnection: boolean;
     private readonly joinSessionP: SinglePromise<ISocketStorageDiscovery> | undefined;
     private tokenProvider: TokenProvider;
@@ -29,7 +29,7 @@ export class SharepointDocumentService implements api.IDocumentService {
         private readonly storageGetter: IGetter | undefined,
         private readonly deltasGetter: IGetter | undefined,
         private socketStorageDiscovery: ISocketStorageDiscovery,
-        private readonly snapshot?: Promise<ISharepointSnapshot | undefined>,
+        private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
         joinSession?: () => Promise<ISocketStorageDiscovery>,
     ) {
         this.attemptedDeltaStreamConnection = false;
@@ -55,8 +55,8 @@ export class SharepointDocumentService implements api.IDocumentService {
             blobs = snapshot.blobs;
         }
 
-        return new SharepointDocumentStorageService(
-            new SharepointDocumentStorageManager(
+        return new OdspDocumentStorageService(
+            new OdspDocumentStorageManager(
                 { app_id: this.appId },
                 this.socketStorageDiscovery.id,
                 this.socketStorageDiscovery.snapshotStorageUrl,
@@ -88,7 +88,7 @@ export class SharepointDocumentService implements api.IDocumentService {
             this.socketStorageDiscovery.tenantId,
             this.socketStorageDiscovery.id,
             this.tokenProvider,
-            new SharepointDeltaStorageService(
+            new OdspDeltaStorageService(
                 { app_id: this.appId },
                 this.socketStorageDiscovery.deltaStorageUrl,
                 this.deltasGetter,
