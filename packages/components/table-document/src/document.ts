@@ -5,7 +5,6 @@
 
 import { Component } from "@prague/app-component";
 // tslint:disable-next-line:no-submodule-imports
-import { Workbook } from "@prague/client-ui/ext/calc2";
 import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
 import {
     ICombiningOp,
@@ -28,6 +27,7 @@ import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";
 import { debug } from "./debug";
+import { createSheetlet, ISheetlet } from "./sheetlet";
 import { TableSlice } from "./slice";
 import { ITable } from "./table";
 
@@ -36,31 +36,6 @@ export const storeCellTextSym = Symbol("TableDocument.storeCellText");
 export const loadCellSym = Symbol("TableDocument.loadCell");
 export const storeCellSym = Symbol("TableDocument.storeCell");
 export const cellSym = Symbol("TableDocument.cell");
-
-class WorkbookAdapter extends Workbook {
-    constructor(private readonly doc: TableDocument) {
-        super();
-    }
-
-    protected get numRows() { return this.doc.numRows; }
-    protected get numCols() { return this.doc.numCols; }
-
-    protected loadCellText(row: number, col: number): UnboxedOper {
-        return this.doc[loadCellTextSym](row, col);
-    }
-
-    protected storeCellText(row: number, col: number, value: UnboxedOper) {
-        this.doc[storeCellTextSym](row, col, value);
-    }
-
-    protected loadCellData(row: number, col: number): object | undefined {
-        return this.doc[loadCellSym](row, col);
-    }
-
-    protected storeCellData(row: number, col: number, cell: object | undefined) {
-        this.doc[storeCellSym](row, col, cell);
-    }
-}
 
 export class TableDocument extends Component implements ITable {
     public  get numCols()    { return this.maybeCols!.client.getLength(); }
@@ -72,7 +47,7 @@ export class TableDocument extends Component implements ITable {
     private maybeRows?: SharedNumberSequence;
     private maybeCols?: SharedNumberSequence;
     private maybeMatrix?: SparseMatrix;
-    private maybeWorkbook?: WorkbookAdapter;
+    private maybeWorkbook?: ISheetlet;
 
     constructor() {
         super([
@@ -96,7 +71,7 @@ export class TableDocument extends Component implements ITable {
 
     public evaluateFormula(formula: string) {
         try {
-            return this.workbook.evaluateFormulaText(formula, 0, 0);
+            return this.workbook.evaluateFormula(formula);
         } catch (e) {
             return `${e}`;
         }
@@ -196,7 +171,7 @@ export class TableDocument extends Component implements ITable {
             if (!local) {
                 for (let row = 0; row < this.numRows; row++) {
                     for (let col = 0; col < this.numCols; col++) {
-                        this.workbook.setCellText(row, col, this.getCellValue(row, col), /* isExternal: */ true);
+                        this.workbook.refreshFromModel(row, col);
                     }
                 }
             }
@@ -207,7 +182,18 @@ export class TableDocument extends Component implements ITable {
         this.maybeCols.on("op", (...args: any[]) => this.emit("op", ...args));
         this.maybeRows.on("op", (...args: any[]) => this.emit("op", ...args));
 
-        this.maybeWorkbook = new WorkbookAdapter(this);
+        this.maybeWorkbook = createSheetlet({
+            rows: () => this.numRows,
+            columns: () => this.numCols,
+            loadCellText: (row, col) => this[loadCellTextSym](row, col),
+            storeCellText: (row, col, value) => {
+                this[storeCellTextSym](row, col, value);
+            },
+            loadCellData: (row, col) => this[loadCellSym](row, col),
+            storeCellData: (row, col, value) => {
+                this[storeCellSym](row, col, value);
+            },
+        });
     }
 
     private [loadCellTextSym](row: number, col: number): UnboxedOper {

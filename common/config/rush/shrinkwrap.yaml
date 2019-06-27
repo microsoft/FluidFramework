@@ -4,7 +4,7 @@ dependencies:
   '@kurtb/pinpoint': 0.1.2
   '@ms/charts': packages.wu2.prague.office-int.com/@ms/charts/0.1.14
   '@ms/charts-extensions': packages.wu2.prague.office-int.com/@ms/charts-extensions/0.1.14
-  '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2
+  '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0
   '@rush-temp/agent': 'file:projects/agent.tgz'
   '@rush-temp/agent-scheduler': 'file:projects/agent-scheduler.tgz'
   '@rush-temp/app-component': 'file:projects/app-component.tgz'
@@ -77,7 +77,7 @@ dependencies:
   '@rush-temp/utils': 'file:projects/utils.tgz'
   '@rush-temp/video-players': 'file:projects/video-players.tgz'
   '@rush-temp/webflow': 'file:projects/webflow.tgz'
-  '@tiny-calc/nano': packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.0
+  '@tiny-calc/nano': packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.8199
   '@types/amqplib': 0.5.12
   '@types/angular': 1.6.54
   '@types/angular-route': 1.7.0
@@ -94,16 +94,16 @@ dependencies:
   '@types/double-ended-queue': 2.1.0
   '@types/express-session': 1.15.13
   '@types/google-maps': 3.2.1
-  '@types/graphql': 14.2.1
-  '@types/jquery': 3.3.29
-  '@types/jsdom': 12.2.3
+  '@types/graphql': 14.2.2
+  '@types/jquery': 3.3.30
+  '@types/jsdom': 12.2.4
   '@types/json-stringify-safe': 5.0.0
   '@types/jsonwebtoken': 8.3.2
   '@types/jwt-decode': 2.2.1
   '@types/katex': 0.10.1
   '@types/keypress.js': 2.1.0
   '@types/leaflet': 1.4.4
-  '@types/lodash': 4.14.134
+  '@types/lodash': 4.14.135
   '@types/logform': 1.2.0
   '@types/minio': 7.0.2
   '@types/mocha': 5.2.7
@@ -136,7 +136,7 @@ dependencies:
   '@types/supertest': 2.0.7
   '@types/url-parse': 1.4.3
   '@types/uuid': 3.4.4
-  '@types/webpack': 4.4.33
+  '@types/webpack': 4.4.34
   '@types/ws': 6.0.1
   '@types/xmldoc': 1.1.4
   amqplib: 0.5.3
@@ -155,14 +155,14 @@ dependencies:
   chalk: 2.4.2
   commander: 2.20.0
   compression: 1.7.4
-  concurrently: 4.1.0
+  concurrently: 4.1.1
   connect-ensure-login: 0.1.1
   connect-redis: 3.4.1
   cookie-parser: 1.4.4
   copyfiles: 2.1.0
   cors: 2.8.5
   css-loader: 1.0.1
-  d3: 5.9.2
+  d3: 5.9.4
   debug: 4.1.1
   diff: 3.5.0
   double-ended-queue: 2.1.0-0
@@ -174,7 +174,7 @@ dependencies:
   gitgraph.js: 1.15.2
   google-maps: 3.3.0
   graphiql: 0.13.2
-  graphql: 14.3.1
+  graphql: 14.4.0
   graphql-subscriptions: 1.1.0
   hjs: 0.0.6
   html-loader: 0.5.5
@@ -229,7 +229,7 @@ dependencies:
   request-promise-native: 1.0.7
   rimraf: 2.6.3
   sass-loader: 7.1.0
-  semver: 6.1.1
+  semver: 6.1.2
   serve-favicon: 2.5.0
   sha.js: 2.4.11
   shape-detector: 0.2.1
@@ -260,7 +260,7 @@ dependencies:
   webcola: 3.4.0
   webpack: 4.35.0
   webpack-bundle-analyzer: 2.13.1
-  webpack-cli: 3.3.4
+  webpack-cli: 3.3.5
   webpack-dev-server: 3.7.2
   webpack-merge: 4.2.1
   webpack-serve: 2.0.3
@@ -401,20 +401,29 @@ packages:
     dev: false
     resolution:
       integrity: sha512-HOJ20Kc93DkDVvjwHyHawPwPkX44sIrbXazAUDiUXaY2R9JwQGo2PhFfnQtdrsIe4igjG2fPgMra7NYw7qhy0A==
-  /@hapi/joi/15.0.3:
+  /@hapi/hoek/8.0.1:
+    dev: false
+    resolution:
+      integrity: sha512-cctMYH5RLbElaUpZn3IJaUj9QNQD8iXDnl7xNY6KB1aFD2ciJrwpo3kvZowIT75uA+silJFDnSR2kGakALUymg==
+  /@hapi/joi/15.1.0:
     dependencies:
       '@hapi/address': 2.0.0
       '@hapi/hoek': 6.2.4
-      '@hapi/topo': 3.1.0
+      '@hapi/marker': 1.0.0
+      '@hapi/topo': 3.1.2
     dev: false
     resolution:
-      integrity: sha512-z6CesJ2YBwgVCi+ci8SI8zixoj8bGFn/vZb9MBPbSyoxsS2PnWYjHcyTM17VLK6tx64YVK38SDIh10hJypB+ig==
-  /@hapi/topo/3.1.0:
+      integrity: sha512-n6kaRQO8S+kepUTbXL9O/UOL788Odqs38/VOfoCrATDtTvyfiO3fgjlSRaNkHabpTLgM7qru9ifqXlXbXk8SeQ==
+  /@hapi/marker/1.0.0:
+    dev: false
+    resolution:
+      integrity: sha512-JOfdekTXnJexfE8PyhZFyHvHjt81rBFSAbTIRAhF2vv/2Y1JzoKsGqxH/GpZJoF7aEfYok8JVcAHmSz1gkBieA==
+  /@hapi/topo/3.1.2:
     dependencies:
-      '@hapi/hoek': 6.2.4
+      '@hapi/hoek': 8.0.1
     dev: false
     resolution:
-      integrity: sha512-gZDI/eXOIk8kP2PkUKjWu9RW8GGVd2Hkgjxyr/S7Z+JF+0mr7bAlbw+DkTRxnD580o8Kqxlnba9wvqp5aOHBww==
+      integrity: sha512-r+aumOqJ5QbD6aLPJWqVjMAPsx5pZKz+F5yPqXZ/WWG9JTtHbQqlzrJoknJ0iJxLj9vlXtmpSdjlkszseeG8OA==
   /@kurtb/pinpoint/0.1.2:
     dependencies:
       '@types/leaflet': 1.4.4
@@ -426,7 +435,7 @@ packages:
   /@shellscape/koa-send/4.1.3:
     dependencies:
       debug: 2.6.9
-      http-errors: 1.7.2
+      http-errors: 1.7.3
       mz: 2.7.0
       resolve-path: 1.4.0
     dev: false
@@ -793,24 +802,24 @@ packages:
     dev: false
     resolution:
       integrity: sha512-ft36SAiK2eJIC+dovC8iJNbfREYAq7toDizRttCLV7tX427s72LXwSW9aWjbS+pLRbMhjV29WBR8iGvtytRuNg==
-  /@types/graphql/14.2.1:
+  /@types/graphql/14.2.2:
     dev: false
     resolution:
-      integrity: sha512-81YjgyCz+kYDXkPuk1j4+jCgFjM4DubzrI88tvpWOQp5eILa0A/KvtGAbXONPhD6vRa3neiFb/ES1IDQ82n5Rw==
-  /@types/jquery/3.3.29:
+      integrity: sha512-okXbUmdZFMO3AYBEJCcpJFPFDkKmIiZZBqWD5TmPtAv+GHfjD2qLZEI0PvZ8IWMU4ozoK2HV2lDxWjw4LbVlnw==
+  /@types/jquery/3.3.30:
     dependencies:
       '@types/sizzle': 2.3.2
     dev: false
     resolution:
-      integrity: sha512-FhJvBninYD36v3k6c+bVk1DSZwh7B5Dpb/Pyk3HKVsiohn0nhbefZZ+3JXbWQhFyt0MxSl2jRDdGQPHeOHFXrQ==
-  /@types/jsdom/12.2.3:
+      integrity: sha512-chB+QbLulamShZAFcTJtl8opZwHFBpDOP6nRLrPGkhC6N1aKWrDXg2Nc71tEg6ny6E8SQpRwbWSi9GdstH5VJA==
+  /@types/jsdom/12.2.4:
     dependencies:
       '@types/node': 10.14.10
       '@types/tough-cookie': 2.3.5
       parse5: 4.0.0
     dev: false
     resolution:
-      integrity: sha512-CxYWGFsBs0VZ/lU9zxfWk7zYfOlQQuSs5yzk34KW/vQQJGE8OGOYxJnqj9kGHE1SBZGVJvhXs1TafIpZL8RvXw==
+      integrity: sha512-q+De3S/Ri6U9uPx89YA1XuC+QIBgndIfvBaaJG0pRT8Oqa75k4Mr7G9CRZjIvlbLGIukO/31DFGFJYlQBmXf/A==
   /@types/json-stringify-safe/5.0.0:
     dev: false
     resolution:
@@ -856,6 +865,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-2/O0khFUCFeDlbi7sZ7ZFRCcT812fAeOLm7Ev4KbwASkZ575TDrDcY7YyaoHdTOzKcNbfiwLYZqPmoC4wadrsw==
+  /@types/lodash/4.14.135:
+    dev: false
+    resolution:
+      integrity: sha512-Ed+tSZ9qM1oYpi5kzdsBuOzcAIn1wDW+e8TFJ50IMJMlSopGdJgKAbhHzN6h1E1OfjlGOr2JepzEWtg9NIfoNg==
   /@types/logform/1.2.0:
     dev: false
     resolution:
@@ -1110,7 +1123,7 @@ packages:
     dev: false
     resolution:
       integrity: sha512-tPIgT0GUmdJQNSHxp0X2jnpQfBSTfGxUMc/2CXBU2mnyTFVYVa2ojpoQ74w0U2yn2vw3jnC640+77lkFFpdVDw==
-  /@types/webpack/4.4.33:
+  /@types/webpack/4.4.34:
     dependencies:
       '@types/anymatch': 1.3.1
       '@types/node': 10.14.10
@@ -1119,7 +1132,7 @@ packages:
       source-map: 0.6.1
     dev: false
     resolution:
-      integrity: sha512-MU5Lokm30QHF9Wn0+yq/hnToPlEBRQVa72mgn1/W8OpJu63aRDKy0aEdMI+pCk8F6zwQJfSFaVzx1JN1MLXx8A==
+      integrity: sha512-GnEBgjHsfO1M7DIQ0dAupSofcmDItE3Zsu3reK8SQpl/6N0rtUQxUmQzVFAS5ou/FGjsYKjXAWfItLZ0kNFTfQ==
   /@types/ws/6.0.1:
     dependencies:
       '@types/events': 3.0.0
@@ -1540,6 +1553,12 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-7QMXwyIGT3lGbAKWa922Bas32Zg=
+  /ansi-regex/4.1.0:
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-1apePfXM1UOSqw0o9IiFAovVz9M5S1Dg+4TrDwfMewQ6p/rmMueb7tWZjQ1rx4Loy1ArBggoqGpfqqdI4rondg==
   /ansi-styles/2.2.1:
     dev: false
     engines:
@@ -1917,7 +1936,7 @@ packages:
       component-emitter: 1.3.0
       define-property: 1.0.0
       isobject: 3.0.1
-      mixin-deep: 1.3.1
+      mixin-deep: 1.3.2
       pascalcase: 0.1.1
     dev: false
     engines:
@@ -2188,7 +2207,7 @@ packages:
       browserify-rsa: 4.0.1
       create-hash: 1.2.0
       create-hmac: 1.1.7
-      elliptic: 6.4.1
+      elliptic: 6.5.0
       inherits: 2.0.4
       parse-asn1: 5.1.4
     dev: false
@@ -2295,7 +2314,7 @@ packages:
       bluebird: 3.5.5
       chownr: 1.1.1
       glob: 7.1.4
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       lru-cache: 4.1.5
       mississippi: 2.0.0
       mkdirp: 0.5.1
@@ -2333,7 +2352,7 @@ packages:
       chownr: 1.1.1
       figgy-pudding: 3.5.1
       glob: 7.1.4
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       lru-cache: 5.1.1
       mississippi: 3.0.0
       mkdirp: 0.5.1
@@ -2353,9 +2372,9 @@ packages:
       get-value: 2.0.6
       has-value: 1.0.0
       isobject: 3.0.1
-      set-value: 2.0.0
+      set-value: 2.0.1
       to-object-path: 0.3.0
-      union-value: 1.0.0
+      union-value: 1.0.1
       unset-value: 1.0.0
     dev: false
     engines:
@@ -2654,6 +2673,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-4FG+RSG9DL7uEwRUZXZn3SS34DiDPfzP0VOiEwtUWlE+AR2EIg+hSyvrIgUUfhdgR/UkAeW2QHgeP+hWrXs7jQ==
+  /cliui/5.0.0:
+    dependencies:
+      string-width: 3.1.0
+      strip-ansi: 5.2.0
+      wrap-ansi: 5.1.0
+    dev: false
+    resolution:
+      integrity: sha512-PYeGSEmmHM6zvoef2w8TPzlrnNpXIjTipYK780YswmIP9vjxmd6Y2a3CB2Ks6/AU8NHjZugXvo8w3oWM2qnwXA==
   /clone-deep/2.0.2:
     dependencies:
       for-own: 1.0.0
@@ -2696,12 +2723,12 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-ZipSnPXFKDMThfvfTKTAt1dQmuGctVNann8hTZg6017+vwOcGpIqCuQIZLRDw/Y3zZfCyydRARHgbSydSCXpow==
-  /codemirror-graphql/0.8.3/codemirror@5.48.0+graphql@14.3.1:
+  /codemirror-graphql/0.8.3/codemirror@5.48.0+graphql@14.4.0:
     dependencies:
       codemirror: 5.48.0
-      graphql: 14.3.1
-      graphql-language-service-interface: /graphql-language-service-interface/1.3.2/graphql@14.3.1
-      graphql-language-service-parser: /graphql-language-service-parser/1.2.2/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-language-service-interface: /graphql-language-service-interface/1.3.2/graphql@14.4.0
+      graphql-language-service-parser: /graphql-language-service-parser/1.2.2/graphql@14.4.0
     dev: false
     id: registry.npmjs.org/codemirror-graphql/0.8.3
     peerDependencies:
@@ -2817,7 +2844,7 @@ packages:
       commander: 2.20.0
       detective: 4.7.1
       glob: 5.0.15
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       iconv-lite: 0.4.24
       mkdirp: 0.5.1
       private: 0.1.8
@@ -2882,7 +2909,7 @@ packages:
       '0': node >= 0.8
     resolution:
       integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==
-  /concurrently/4.1.0:
+  /concurrently/4.1.1:
     dependencies:
       chalk: 2.4.2
       date-fns: 1.30.1
@@ -2898,11 +2925,11 @@ packages:
       node: '>=6.0.0'
     hasBin: true
     resolution:
-      integrity: sha512-pwzXCE7qtOB346LyO9eFWpkFJVO3JQZ/qU/feGeaAHiX1M3Rw3zgXKc5cZ8vSH5DGygkjzLFDzA/pwoQDkRNGg==
+      integrity: sha512-48+FE5RJ0qc8azwKv4keVQWlni1hZeSjcWr8shBelOBtBHcKj1aJFM9lHRiSc1x7lq416pkvsqfBMhSRja+Lhw==
   /configstore/3.1.2:
     dependencies:
       dot-prop: 4.2.0
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       make-dir: 1.3.0
       unique-string: 1.0.0
       write-file-atomic: 2.4.3
@@ -3064,7 +3091,7 @@ packages:
   /create-ecdh/4.0.3:
     dependencies:
       bn.js: 4.11.8
-      elliptic: 6.4.1
+      elliptic: 6.5.0
     dev: false
     resolution:
       integrity: sha512-GbEHQPMOswGpKXM9kCWVrremUcBmjteUaQ01T9rkKCPDXfUHX0IoP9LpHYo2NPFampa4e+/pFDc3jQdxrxQLaw==
@@ -3333,10 +3360,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-ii0/r5f4sjKNTfh84Di+DpztYwqKhEyUlKoPrzUFfeSkWxjW49xU2QzO9qrPrNkpdI0XJkfzvmTu8V2Zylln6A==
-  /d3-color/1.2.3:
+  /d3-color/1.2.5:
     dev: false
     resolution:
-      integrity: sha512-x37qq3ChOTLd26hnps36lexMRhNXEtVxZ4B25rL0DVdDsGQIJGB18S7y9XDwlDD6MD/ZBzITCf4JjGMM10TZkw==
+      integrity: sha512-u4CaFaqQKRofuhr9uo/xLdaGvvzdsMX7MgP42XgQJHLBRWnn0C0T+48rvj80cN9KXAauHEMEfe7ehacIoxmP/g==
   /d3-contour/1.3.2:
     dependencies:
       d3-array: 1.2.4
@@ -3398,7 +3425,7 @@ packages:
       integrity: sha512-L+GHMSZNwTpiq4rt9GEsNcpLa4M96lXMR8M/nMG9p5hBE0jy6C+3hWtyZMenPQdwla249iJy7Nx0uKt3n+u9+w==
   /d3-interpolate/1.3.2:
     dependencies:
-      d3-color: 1.2.3
+      d3-color: 1.2.5
     dev: false
     resolution:
       integrity: sha512-NlNKGopqaz9qM1PXh9gBF1KSCVh+jSFErrSlD/4hybwoNX/gt1d8CDbDW+3i+5UOHhjC6s6nMvRxcuoMVNgL2w==
@@ -3420,7 +3447,7 @@ packages:
       integrity: sha512-6AK5BNpIFqP+cx/sreKzNjWbwZQCSUatxq+pPRmFIQaWuoD+NrbVWw7YWpHiXpCQ/NanKdtGDuB+VQcZDaEmYQ==
   /d3-scale-chromatic/1.3.3:
     dependencies:
-      d3-color: 1.2.3
+      d3-color: 1.2.5
       d3-interpolate: 1.3.2
     dev: false
     resolution:
@@ -3462,7 +3489,7 @@ packages:
       integrity: sha512-rT34J5HnQUHhcLvhSB9GjCkN0Ddd5Y8nCwDBG2u6wQEeYxT/Lf51fTFFkldeib/sE/J0clIe0pnCfs6g/lRbyg==
   /d3-transition/1.2.0:
     dependencies:
-      d3-color: 1.2.3
+      d3-color: 1.2.5
       d3-dispatch: 1.0.5
       d3-ease: 1.0.5
       d3-interpolate: 1.3.2
@@ -3489,14 +3516,14 @@ packages:
     dev: false
     resolution:
       integrity: sha1-vEZ0gAQ3iyGjYMn8fPUjF5B2L7g=
-  /d3/5.9.2:
+  /d3/5.9.4:
     dependencies:
       d3-array: 1.2.4
       d3-axis: 1.0.12
       d3-brush: 1.0.6
       d3-chord: 1.0.6
       d3-collection: 1.0.7
-      d3-color: 1.2.3
+      d3-color: 1.2.5
       d3-contour: 1.3.2
       d3-dispatch: 1.0.5
       d3-drag: 1.2.3
@@ -3524,7 +3551,7 @@ packages:
       d3-zoom: 1.7.3
     dev: false
     resolution:
-      integrity: sha512-ydrPot6Lm3nTWH+gJ/Cxf3FcwuvesYQ5uk+j/kXEH/xbuYWYWTMAHTJQkyeuG8Y5WM5RSEYB41EctUrXQQytRQ==
+      integrity: sha512-iMLfEVd2Cg3YEfOdUvQ9gJtZs4YJG0T5Nvz+A3j4sIyBwscncVheaRtwg/g6g69qwS/gl0gqlIt7CUeO/BVNbQ==
   /dashdash/1.14.1:
     dependencies:
       assert-plus: 1.0.0
@@ -3884,7 +3911,7 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha512-PcW2a0tyTuPHz3tWyYqtK6r1fZ3gp+3Sop8Ph+ZYN81Ob5rwmbHEzaqs10N3BEsaGTkh/ooniXK+WwszGlc2+Q==
-  /elliptic/6.4.1:
+  /elliptic/6.5.0:
     dependencies:
       bn.js: 4.11.8
       brorand: 1.1.0
@@ -3895,7 +3922,11 @@ packages:
       minimalistic-crypto-utils: 1.0.1
     dev: false
     resolution:
-      integrity: sha512-BsXLz5sqX8OHcsh7CqBMztyXARmGQ3LWPtGjJi6DiJHq5C/qvi9P3OqgswKSDftbu8+IoI/QDTAm2fFnQ9SZSQ==
+      integrity: sha512-eFOJTMyCYb7xtE/caJ6JJu+bhi67WCYNbkGSknu20pmM8Ke/bqOfdnZWxyoGN26JgfxTbXrsCkEw4KheCT/KGg==
+  /emoji-regex/7.0.3:
+    dev: false
+    resolution:
+      integrity: sha512-CwBLREIQ7LvYFB0WyRvwhq5N5qPhc6PMjD6bYggFlI5YyDgl+0vxq5VHbMOFqLg7hfWzmu8T5Z1QofhmTIhItA==
   /emojis-list/2.1.0:
     dev: false
     engines:
@@ -3959,7 +3990,7 @@ packages:
       integrity: sha512-AsaA9KG7cWPXWHp5FvHdDWY3AMWeZ8x+2pUVLcn71qE5AtAzgGbxuclOytygskw8XGmiQafTmnI9Bix3uihu2w==
   /enhanced-resolve/4.1.0:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       memory-fs: 0.4.1
       tapable: 1.1.3
     dev: false
@@ -4543,6 +4574,17 @@ packages:
       node: '>= 0.10'
     resolution:
       integrity: sha1-kyaxSIwi0aYIhlCoaQGy2akKLLw=
+  /findup-sync/3.0.0:
+    dependencies:
+      detect-file: 1.0.0
+      is-glob: 4.0.1
+      micromatch: 3.1.10
+      resolve-dir: 1.0.1
+    dev: false
+    engines:
+      node: '>= 0.10'
+    resolution:
+      integrity: sha512-YbffarhcicEhOrm4CtrwdKBdCuz576RLdhJDsIfvNtxUuhdRet1qZcsMjqbePtAseKdAnDyM/IyXbu7PRPRLYg==
   /flush-write-stream/1.1.1:
     dependencies:
       inherits: 2.0.4
@@ -4700,7 +4742,7 @@ packages:
       integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==
   /fs-write-stream-atomic/1.0.10:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       iferr: 0.1.5
       imurmurhash: 0.1.4
       readable-stream: 2.3.6
@@ -4725,7 +4767,7 @@ packages:
       integrity: sha512-oeyj2H3EjjonWcFjD5NvZNE9Rqe4UW+nQBU2HNeKw0koVLEFIhtyETyAakeAM3de7Z/SW5kcA+fZUait9EApnw==
   /fstream/1.0.12:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       inherits: 2.0.4
       mkdirp: 0.5.1
       rimraf: 2.6.3
@@ -4778,6 +4820,12 @@ packages:
     dev: false
     resolution:
       integrity: sha512-3t6rVToeoZfYSGd8YoLFR2DJkiQrIiUrGcjvFX2mDw3bn6k2OtwHN0TNCLbBO+w8qTvimhDkv+LSscbJY1vE6w==
+  /get-caller-file/2.0.5:
+    dev: false
+    engines:
+      node: 6.* || 8.* || >= 10.*
+    resolution:
+      integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
   /get-func-name/2.0.0:
     dev: false
     resolution:
@@ -4910,6 +4958,14 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha512-sKzpEkf11GpOFuw0Zzjzmt4B4UZwjOcG757PPvrfhxcLFbq0wpsgpOqxpxtxFiCG4DtG93M6XRVbF2oGdev7bg==
+  /global-modules/2.0.0:
+    dependencies:
+      global-prefix: 3.0.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-NGbfmJBp9x8IxyJSd1P+otYK8vonoJactOogrVfFRIAEY1ukil8RSKDz2Yo7wh1oihl51l/r6W4epkeKJHqL8A==
   /global-prefix/1.0.2:
     dependencies:
       expand-tilde: 2.0.2
@@ -4922,6 +4978,16 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-2/dDxsFJklk8ZVVoy2btMsASLr4=
+  /global-prefix/3.0.0:
+    dependencies:
+      ini: 1.3.5
+      kind-of: 6.0.2
+      which: 1.3.1
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-awConJSVCHVGND6x3tmMaKcQvwXLhjdkmomy2W+Goaui8YPgYgXJZewhg3fWC+DlfqqQuWg8AwqjGTD2nAPVWg==
   /global/4.3.2:
     dependencies:
       min-document: 2.19.0
@@ -4989,6 +5055,10 @@ packages:
       node: '>=0.4.0'
     resolution:
       integrity: sha1-7widKIDwM7ARgjzlyPrnmNp3Xb0=
+  /graceful-fs/4.2.0:
+    dev: false
+    resolution:
+      integrity: sha512-jpSvDPV4Cq/bgtpndIWbI5hmYxhQGHPC4d4cqBPb4DLniCfhJokdXhwhaDuLBGLQdvvRum/UiX6ECVIPvDXqdg==
   /graphiql/0.13.2:
     dependencies:
       codemirror: 5.48.0
@@ -5003,12 +5073,12 @@ packages:
       react-dom: ^15.6.0 || ^16.0.0
     resolution:
       integrity: sha512-4N2HmQQpUfApS1cxrTtoZ15tnR3EW88oUiqmza6GgNQYZZfDdBGphdQlBYsKcjAB/SnIOJort+RA1dB6kf4M7Q==
-  /graphiql/0.13.2/a26aae4b847bc40f95ebc2bdaaefa346:
+  /graphiql/0.13.2/7c91639e88dd9314fef698754cc471f1:
     dependencies:
       codemirror: 5.48.0
-      codemirror-graphql: /codemirror-graphql/0.8.3/codemirror@5.48.0+graphql@14.3.1
+      codemirror-graphql: /codemirror-graphql/0.8.3/codemirror@5.48.0+graphql@14.4.0
       copy-to-clipboard: 3.2.0
-      graphql: 14.3.1
+      graphql: 14.4.0
       markdown-it: 8.4.2
       prop-types: 15.7.2
       react: 16.8.6
@@ -5036,10 +5106,10 @@ packages:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-eb4FzlODifHE/Q+91QptAmkGw39wL5ToinJ2556UUsGt2drPc4tzifL+HSnHSaxiIbH8EUhc/Fa6+neinF04qA==
-  /graphql-config/2.0.1/graphql@14.3.1:
+  /graphql-config/2.0.1/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
-      graphql-import: /graphql-import/0.4.5/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-import: /graphql-import/0.4.5/graphql@14.4.0
       graphql-request: 1.8.2
       js-yaml: 3.13.1
       lodash: 4.17.11
@@ -5062,9 +5132,9 @@ packages:
       graphql: ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-G/+I08Qp6/QGTb9qapknCm3yPHV0ZL7wbaalWFpxsfR8ZhZoTBe//LsbsCKlbALQpcMegchpJhpTSKiJjhaVqQ==
-  /graphql-import/0.4.5/graphql@14.3.1:
+  /graphql-import/0.4.5/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
+      graphql: 14.4.0
       lodash: 4.17.11
     dev: false
     engines:
@@ -5085,13 +5155,13 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-sOxFV5sBSnYtKIFHtlmAHHVdhok7CRbvCPLcuHvL4Q1RSgKRsPpeHUDKU+yCbmlonOKn/RWEKaYWrUY0Sgv70A==
-  /graphql-language-service-interface/1.3.2/graphql@14.3.1:
+  /graphql-language-service-interface/1.3.2/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
-      graphql-config: /graphql-config/2.0.1/graphql@14.3.1
-      graphql-language-service-parser: /graphql-language-service-parser/1.2.2/graphql@14.3.1
-      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.3.1
-      graphql-language-service-utils: /graphql-language-service-utils/1.2.2/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-config: /graphql-config/2.0.1/graphql@14.4.0
+      graphql-language-service-parser: /graphql-language-service-parser/1.2.2/graphql@14.4.0
+      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.4.0
+      graphql-language-service-utils: /graphql-language-service-utils/1.2.2/graphql@14.4.0
     dev: false
     id: registry.npmjs.org/graphql-language-service-interface/1.3.2
     peerDependencies:
@@ -5107,11 +5177,11 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-38zMqJibNKeQe3GheyJtBENoXMp+qc29smiiRQtHLZcwnQfsYtu6reJZKxxwzU7XOVh3SedNH15Gf3LjWJVkiQ==
-  /graphql-language-service-parser/1.2.2/graphql@14.3.1:
+  /graphql-language-service-parser/1.2.2/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
-      graphql-config: /graphql-config/2.0.1/graphql@14.3.1
-      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-config: /graphql-config/2.0.1/graphql@14.4.0
+      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.4.0
     dev: false
     id: registry.npmjs.org/graphql-language-service-parser/1.2.2
     peerDependencies:
@@ -5126,10 +5196,10 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-WEAYYCP4jSzbz/Mw0Klc7HHMgtUHLgtaPMV6zyMMmvefCg/yBUkv7wREXKmqF1k1u9+f5ZX3dki0BMaXiwmJug==
-  /graphql-language-service-types/1.2.2/graphql@14.3.1:
+  /graphql-language-service-types/1.2.2/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
-      graphql-config: /graphql-config/2.0.1/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-config: /graphql-config/2.0.1/graphql@14.4.0
     dev: false
     id: registry.npmjs.org/graphql-language-service-types/1.2.2
     peerDependencies:
@@ -5145,11 +5215,11 @@ packages:
       graphql: ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0
     resolution:
       integrity: sha512-98hzn1Dg3sSAiB+TuvNwWAoBrzuHs8NylkTK26TFyBjozM5wBZttp+T08OvOt+9hCFYRa43yRPrWcrs78KH9Hw==
-  /graphql-language-service-utils/1.2.2/graphql@14.3.1:
+  /graphql-language-service-utils/1.2.2/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
-      graphql-config: /graphql-config/2.0.1/graphql@14.3.1
-      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.3.1
+      graphql: 14.4.0
+      graphql-config: /graphql-config/2.0.1/graphql@14.4.0
+      graphql-language-service-types: /graphql-language-service-types/1.2.2/graphql@14.4.0
     dev: false
     id: registry.npmjs.org/graphql-language-service-utils/1.2.2
     peerDependencies:
@@ -5170,9 +5240,9 @@ packages:
       graphql: ^0.10.5 || ^0.11.3 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-6WzlBFC0lWmXJbIVE8OgFgXIP4RJi3OQgTPa0DVMsDXdpRDjTsM1K9wfl5HSYX7R87QAGlvcv2Y4BIZa/ItonA==
-  /graphql-subscriptions/1.1.0/graphql@14.3.1:
+  /graphql-subscriptions/1.1.0/graphql@14.4.0:
     dependencies:
-      graphql: 14.3.1
+      graphql: 14.4.0
       iterall: 1.2.2
     dev: false
     id: registry.npmjs.org/graphql-subscriptions/1.1.0
@@ -5180,14 +5250,14 @@ packages:
       graphql: ^0.10.5 || ^0.11.3 || ^0.12.0 || ^0.13.0 || ^14.0.0
     resolution:
       integrity: sha512-6WzlBFC0lWmXJbIVE8OgFgXIP4RJi3OQgTPa0DVMsDXdpRDjTsM1K9wfl5HSYX7R87QAGlvcv2Y4BIZa/ItonA==
-  /graphql/14.3.1:
+  /graphql/14.4.0:
     dependencies:
       iterall: 1.2.2
     dev: false
     engines:
       node: '>= 6.x'
     resolution:
-      integrity: sha512-FZm7kAa3FqKdXy8YSSpAoTtyDFMIYSpCDOr+3EqlI1bxmtHu+Vv/I2vrSeT1sBOEnEniX3uo4wFhFdS/8XN6gA==
+      integrity: sha512-E55z1oK6e4cGxCqlSsRWytYDPcIUxky3XkbuQUf6TIjCmn6C7CuBJpmkMF1066q95yPAGOZVPTVT7jABKbRFSA==
   /growl/1.10.5:
     dev: false
     engines:
@@ -5435,7 +5505,7 @@ packages:
   /http-assert/1.4.1:
     dependencies:
       deep-equal: 1.0.1
-      http-errors: 1.7.2
+      http-errors: 1.7.3
     dev: false
     engines:
       node: '>= 0.8'
@@ -5468,6 +5538,18 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha512-uUQBt3H/cSIVfch6i1EuPNy/YsRSOUBXTVfZ+yR7Zjez3qjBz6i9+i4zjNaoqcoFVI4lQJ5plg63TvGfRSDCRg==
+  /http-errors/1.7.3:
+    dependencies:
+      depd: 1.1.2
+      inherits: 2.0.4
+      setprototypeof: 1.1.1
+      statuses: 1.5.0
+      toidentifier: 1.0.0
+    dev: false
+    engines:
+      node: '>= 0.6'
+    resolution:
+      integrity: sha512-ZTTX0MWrsQ2ZAhA1cejAwDLycFsd7I7nVtnkT3Ol0aqodaKW+0CTZDQ1uBv5whptCnc8e8HeRRJxRs0kmm/Qfw==
   /http-parser-js/0.4.10:
     dev: false
     resolution:
@@ -6078,7 +6160,7 @@ packages:
       '@babel/traverse': 7.4.5
       '@babel/types': 7.4.4
       istanbul-lib-coverage: 2.0.5
-      semver: 6.1.1
+      semver: 6.1.2
     dev: false
     engines:
       node: '>=6'
@@ -6162,7 +6244,7 @@ packages:
       pn: 1.1.0
       request: 2.88.0
       request-promise-native: /request-promise-native/1.0.7/request@2.88.0
-      saxes: 3.1.10
+      saxes: 3.1.11
       symbol-tree: 3.2.4
       tough-cookie: 2.5.0
       w3c-hr-time: 1.0.1
@@ -6423,7 +6505,7 @@ packages:
       integrity: sha1-JzwH7c3Ljfaiwat9We52SRRR7BQ=
   /koa-webpack/5.2.3:
     dependencies:
-      '@hapi/joi': 15.0.3
+      '@hapi/joi': 15.1.0
       app-root-path: 2.2.1
       chalk: 2.4.2
       loud-rejection: 2.1.0
@@ -6439,7 +6521,7 @@ packages:
       integrity: sha512-EbjGpCDE4K0GeKsQY+rb/bOfgel4QsBGwsI+pt3g0m1SQDDnXqpwFlWEz2V2Wm7rEDWnlK0MQ7o0vWHYmOCmmA==
   /koa-webpack/5.2.3/webpack@4.35.0:
     dependencies:
-      '@hapi/joi': 15.0.3
+      '@hapi/joi': 15.1.0
       app-root-path: 2.2.1
       chalk: 2.4.2
       loud-rejection: 2.1.0
@@ -6470,7 +6552,7 @@ packages:
       escape-html: 1.0.3
       fresh: 0.5.2
       http-assert: 1.4.1
-      http-errors: 1.7.2
+      http-errors: 1.7.3
       is-generator-function: 1.0.7
       koa-compose: 4.1.0
       koa-convert: 1.2.0
@@ -6533,7 +6615,7 @@ packages:
     hasBin: true
     optionalDependencies:
       errno: 0.1.7
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       image-size: 0.5.5
       mime: 1.6.0
       mkdirp: 0.5.1
@@ -6565,7 +6647,7 @@ packages:
       integrity: sha512-4REs8/062kV2DSHxNfq5183zrqXMl7WP0WzABH9IeJI+NLm429FgE1PDecltYfnOoFDFlZGh2T8PfZn0r+GTRg==
   /load-json-file/1.1.0:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       parse-json: 2.2.0
       pify: 2.3.0
       pinkie-promise: 2.0.1
@@ -6577,7 +6659,7 @@ packages:
       integrity: sha1-lWkFcI1YtLq0wiYbBPWfMcmTdMA=
   /load-json-file/2.0.0:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       parse-json: 2.2.0
       pify: 2.3.0
       strip-bom: 3.0.0
@@ -6588,7 +6670,7 @@ packages:
       integrity: sha1-eUfkIUmvgNaWy/eXvKq8/h/inKg=
   /load-json-file/4.0.0:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       parse-json: 4.0.0
       pify: 3.0.0
       strip-bom: 3.0.0
@@ -7154,16 +7236,15 @@ packages:
       node: '>=4.0.0'
     resolution:
       integrity: sha512-x471SsVjUtBRtcvd4BzKE9kFC+/2TeWgKCgw0bZcw1b9l2X3QX5vCWgF+KaZaYm87Ss//rHnWryupDrgLvmSkA==
-  /mixin-deep/1.3.1:
+  /mixin-deep/1.3.2:
     dependencies:
       for-in: 1.0.2
       is-extendable: 1.0.1
-    deprecated: 'Critical bug fixed in v2.0.1, please upgrade to the latest version.'
     dev: false
     engines:
       node: '>=0.10.0'
     resolution:
-      integrity: sha512-8ZItLHeEgaqEvd5lYBXfm4EZSFCX29Jb9K+lAHhDKzReKBQKj3R+7NOF6tjqYi9t4oI8VUfaWITJQm86wnXGNQ==
+      integrity: sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==
   /mixin-object/2.0.1:
     dependencies:
       for-in: 0.1.8
@@ -7235,7 +7316,7 @@ packages:
       integrity: sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
   /monaco-editor-webpack-plugin/1.7.0:
     dependencies:
-      '@types/webpack': 4.4.33
+      '@types/webpack': 4.4.34
     dev: false
     peerDependencies:
       monaco-editor: ^0.15.1
@@ -7244,7 +7325,7 @@ packages:
       integrity: sha512-oItymcnlL14Sjd7EF7q+CMhucfwR/2BxsqrXIBrWL6LQplFfAfV+grLEQRmVHeGSBZ/Gk9ptzfueXnWcoEcFuA==
   /monaco-editor-webpack-plugin/1.7.0/fd668ba1ed143003b8ea6162b1ff4245:
     dependencies:
-      '@types/webpack': 4.4.33
+      '@types/webpack': 4.4.34
       monaco-editor: 0.15.6
       webpack: 4.35.0
     dev: false
@@ -7340,13 +7421,13 @@ packages:
       adal-node: 0.1.28
       async: 2.6.0
       moment: 2.24.0
-      ms-rest: 2.5.0
+      ms-rest: 2.5.1
       request: 2.88.0
       uuid: 3.3.2
     dev: false
     resolution:
       integrity: sha512-J6386a9krZ4VtU7CRt+Ypgo9RGf8+d3gjMBkH7zbkM4zzkhbbMOYiPRaZ+bHZcfihkKLlktTgA6rjshTjF329A==
-  /ms-rest/2.5.0:
+  /ms-rest/2.5.1:
     dependencies:
       duplexer: 0.1.1
       is-buffer: 1.1.6
@@ -7358,7 +7439,7 @@ packages:
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-QUTg9CsmWpofDO0MR37z8B28/T9ObpQ+FM23GGDMKXw8KYDJ3cEBdK6dJTDDrtSoZG3U+S/vdmSEwJ7FNj6Kog==
+      integrity: sha512-bRRHn/asERilNDXrm4/paFRAljnIh+L6Qo6zQkBUZRXaDiHYDRq4AFCNX4Bau0db+eXlcnjnHyu3A9EjQc4s6Q==
   /ms/2.0.0:
     dev: false
     resolution:
@@ -7527,7 +7608,7 @@ packages:
     dependencies:
       fstream: 1.0.12
       glob: 7.1.4
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       mkdirp: 0.5.1
       nopt: 3.0.6
       npmlog: 4.1.2
@@ -8299,7 +8380,7 @@ packages:
       integrity: sha1-32BBeABfUi8V60SQ5yR6G/qmf4w=
   /path-type/1.1.0:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       pify: 2.3.0
       pinkie-promise: 2.0.1
     dev: false
@@ -8517,13 +8598,6 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-1PRWKwzjaW5BrFLQ4ALlemNdxtw=
-  /prettier/1.18.2:
-    dev: false
-    engines:
-      node: '>=4'
-    hasBin: true
-    resolution:
-      integrity: sha512-OeHeMc0JhFE9idD4ZdtNibzY0+TPHSpSSb9h8FqtP+YnoZZ1sl8Vc9b1sasjfymH3SonAF4QcA2+mzHPhMvIiw==
   /private/0.1.8:
     dev: false
     engines:
@@ -8952,7 +9026,7 @@ packages:
       integrity: sha512-jItXPLmrSR8jmTRmRWJXCnGJsfy85mB3Wd/uINMXA65yrnFo0cPClFIUWzo2najVNSl+mx7/4W8ttlLWJe99pQ==
   /readdirp/2.2.1:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       micromatch: 3.1.10
       readable-stream: 2.3.6
     dev: false
@@ -9204,6 +9278,10 @@ packages:
     dev: false
     resolution:
       integrity: sha1-l/cXtp1IeE9fUmpsWqj/3aBVpNE=
+  /require-main-filename/2.0.0:
+    dev: false
+    resolution:
+      integrity: sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
   /require_optional/1.0.1:
     dependencies:
       resolve-from: 2.0.0
@@ -9402,14 +9480,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
-  /saxes/3.1.10:
+  /saxes/3.1.11:
     dependencies:
-      xmlchars: 1.3.1
+      xmlchars: 2.1.1
     dev: false
     engines:
       node: '>=8'
     resolution:
-      integrity: sha512-G/mVZCCGhJqgS+I7wT5gBHyTNXLe2SQcu2qmhwl1OKcSHyJEXKQY2CLT+qWIxV+m6uiGMLfSOJGLQQHhklIeEQ==
+      integrity: sha512-Ydydq3zC+WYDJK1+gRxRapLIED9PWeSuuS41wqyoRmzvhhh9nc+QQrVMKJYzJFULazeGhzSV0QleN2wD3boh2g==
   /scheduler/0.13.6:
     dependencies:
       loose-envify: 1.4.0
@@ -9475,11 +9553,11 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-Ya52jSX2u7QKghxeoFGpLwCtGlt7j0oY9DYb5apt9nPlJ42ID+ulTXESnt/qAQcoSERyZ5sl3LDIOw0nAn/5DA==
-  /semver/6.1.1:
+  /semver/6.1.2:
     dev: false
     hasBin: true
     resolution:
-      integrity: sha512-rWYq2e5iYW+fFe/oPPtYJxYgjBm8sC4rmoGdUOgBB7VnwKt6HrL793l2voH1UlsyYZpJ4g0wfjnTEO1s1NP2eQ==
+      integrity: sha512-z4PqiCpomGtWj8633oeAdXm1Kn1W++3T8epkZYnwiVgIYIJ0QHszhInYSJTYxebByQH7KVCEAn8R9duzZW2PhQ==
   /send/0.17.1:
     dependencies:
       debug: 2.6.9
@@ -9489,7 +9567,7 @@ packages:
       escape-html: 1.0.3
       etag: 1.8.1
       fresh: 0.5.2
-      http-errors: 1.7.2
+      http-errors: 1.7.3
       mime: 1.6.0
       ms: 2.1.1
       on-finished: 2.3.0
@@ -9552,30 +9630,17 @@ packages:
     dev: false
     resolution:
       integrity: sha1-BF+XgtARrppoA93TgrJDkrPYkPc=
-  /set-value/0.4.3:
-    dependencies:
-      extend-shallow: 2.0.1
-      is-extendable: 0.1.1
-      is-plain-object: 2.0.4
-      to-object-path: 0.3.0
-    deprecated: 'Critical bug fixed in v3.0.1, please upgrade to the latest version.'
-    dev: false
-    engines:
-      node: '>=0.10.0'
-    resolution:
-      integrity: sha1-fbCPnT0i3H945Trzw79GZuzfzPE=
-  /set-value/2.0.0:
+  /set-value/2.0.1:
     dependencies:
       extend-shallow: 2.0.1
       is-extendable: 0.1.1
       is-plain-object: 2.0.4
       split-string: 3.1.0
-    deprecated: 'Critical bug fixed in v3.0.1, please upgrade to the latest version.'
     dev: false
     engines:
       node: '>=0.10.0'
     resolution:
-      integrity: sha512-hw0yxk9GT/Hr5yJEYnHNKYXkIA8mVJgd9ditYZCe16ZczcaELYYcfvaXesNACk2O8O0nTiPQcQhGUQj8JLzeeg==
+      integrity: sha512-JxHc1weCN68wRY0fhCoXpyK55m/XPHafOmK4UWD7m2CI14GMcFypt4w/0+NV5f/ZMby2F6S2wwA7fgynh9gWSw==
   /setimmediate/1.0.5:
     dev: false
     resolution:
@@ -10038,6 +10103,16 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-nOqH59deCq9SRHlxq1Aw85Jnt4w6KvLKqWVik6oA9ZklXLNIOlqg4F2yrT1MVaTjAqvVwdfeZ7w7aCvJD7ugkw==
+  /string-width/3.1.0:
+    dependencies:
+      emoji-regex: 7.0.3
+      is-fullwidth-code-point: 2.0.0
+      strip-ansi: 5.2.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-vafcv6KjVZKSgz06oM/H6GDBrAtz8vdhQakGjFIvNrHA6y3HCF1CInLy+QLq8dTJPQ1b+KDUqDFctkdRW44e1w==
   /string.prototype.trim/1.1.2:
     dependencies:
       define-properties: 1.1.3
@@ -10080,6 +10155,14 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-qEeQIusaw2iocTibY1JixQXuNo8=
+  /strip-ansi/5.2.0:
+    dependencies:
+      ansi-regex: 4.1.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-DuRs1gKbBqsMKIZlrffwlug8MHkcnpjs5VPmL1PAh+mA30U0DTotfDZ0d2UUsXpPmPmMMJ6W773MaA3J+lbiWA==
   /strip-bom/2.0.0:
     dependencies:
       is-utf8: 0.2.1
@@ -10961,17 +11044,17 @@ packages:
     dev: false
     resolution:
       integrity: sha512-5/4etnCkd9c8gwgowi5/om/mYO5ajCaOgdzj/oW+0eQV9WxKBDZw5+ycmKmeaTXjInS/W0BzpGLo2xR2aBwZdg==
-  /union-value/1.0.0:
+  /union-value/1.0.1:
     dependencies:
       arr-union: 3.1.0
       get-value: 2.0.6
       is-extendable: 0.1.1
-      set-value: 0.4.3
+      set-value: 2.0.1
     dev: false
     engines:
       node: '>=0.10.0'
     resolution:
-      integrity: sha1-XHHDTLW61dzr4+oM0IIHulqhrqQ=
+      integrity: sha512-tJfXmxMeWYnczCVs7XAEvIV7ieppALdyepWMkHkwciRpZraG/xwT+s2JN8+pr1+8jCRf80FFzvr+MpQeeoF4Xg==
   /unique-filename/1.1.1:
     dependencies:
       unique-slug: 2.0.2
@@ -11201,7 +11284,7 @@ packages:
   /watchpack/1.6.0:
     dependencies:
       chokidar: 2.1.6
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       neo-async: 2.6.1
     dev: false
     resolution:
@@ -11302,20 +11385,19 @@ packages:
     requiresBuild: true
     resolution:
       integrity: sha512-FLkobnaJJ+03j5eplxlI0TUxhGCOdfewspIGuvDVtpOlrAuKMFC57K42Ukxqs1tn8947/PM6tP95gQc0DCzRYA==
-  /webpack-cli/3.3.4:
+  /webpack-cli/3.3.5:
     dependencies:
       chalk: 2.4.2
       cross-spawn: 6.0.5
       enhanced-resolve: 4.1.0
-      findup-sync: 2.0.0
-      global-modules: 1.0.0
+      findup-sync: 3.0.0
+      global-modules: 2.0.0
       import-local: 2.0.0
       interpret: 1.2.0
       loader-utils: 1.2.3
-      prettier: 1.18.2
-      supports-color: 5.5.0
+      supports-color: 6.1.0
       v8-compile-cache: 2.0.3
-      yargs: 12.0.5
+      yargs: 13.2.4
     dev: false
     engines:
       node: '>=6.11.5'
@@ -11324,32 +11406,31 @@ packages:
       webpack: 4.x.x
     requiresBuild: true
     resolution:
-      integrity: sha512-ubJGQEKMtBSpT+LiL5hXvn2GIOWiRWItR1DGUqJRhwRBeGhpRXjvF5f0erqdRJLErkfqS5/Ldkkedh4AL5Q1ZQ==
-  /webpack-cli/3.3.4/webpack@4.35.0:
+      integrity: sha512-w0j/s42c5UhchwTmV/45MLQnTVwRoaUTu9fM5LuyOd/8lFoCNCELDogFoecx5NzRUndO0yD/gF2b02XKMnmAWQ==
+  /webpack-cli/3.3.5/webpack@4.35.0:
     dependencies:
       chalk: 2.4.2
       cross-spawn: 6.0.5
       enhanced-resolve: 4.1.0
-      findup-sync: 2.0.0
-      global-modules: 1.0.0
+      findup-sync: 3.0.0
+      global-modules: 2.0.0
       import-local: 2.0.0
       interpret: 1.2.0
       loader-utils: 1.2.3
-      prettier: 1.18.2
-      supports-color: 5.5.0
+      supports-color: 6.1.0
       v8-compile-cache: 2.0.3
       webpack: 4.35.0
-      yargs: 12.0.5
+      yargs: 13.2.4
     dev: false
     engines:
       node: '>=6.11.5'
     hasBin: true
-    id: registry.npmjs.org/webpack-cli/3.3.4
+    id: registry.npmjs.org/webpack-cli/3.3.5
     peerDependencies:
       webpack: 4.x.x
     requiresBuild: true
     resolution:
-      integrity: sha512-ubJGQEKMtBSpT+LiL5hXvn2GIOWiRWItR1DGUqJRhwRBeGhpRXjvF5f0erqdRJLErkfqS5/Ldkkedh4AL5Q1ZQ==
+      integrity: sha512-w0j/s42c5UhchwTmV/45MLQnTVwRoaUTu9fM5LuyOd/8lFoCNCELDogFoecx5NzRUndO0yD/gF2b02XKMnmAWQ==
   /webpack-dev-middleware/3.7.0:
     dependencies:
       memory-fs: 0.4.1
@@ -11400,7 +11481,7 @@ packages:
       portfinder: 1.0.20
       schema-utils: 1.0.0
       selfsigned: 1.10.4
-      semver: 6.1.1
+      semver: 6.1.2
       serve-index: 1.9.1
       sockjs: 0.3.19
       sockjs-client: 1.3.0
@@ -11441,7 +11522,7 @@ packages:
       portfinder: 1.0.20
       schema-utils: 1.0.0
       selfsigned: 1.10.4
-      semver: 6.1.1
+      semver: 6.1.2
       serve-index: 1.9.1
       sockjs: 0.3.19
       sockjs-client: 1.3.0
@@ -11862,13 +11943,23 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-2Pw9KE3QV5T+hJc8rs3Rz4JP3YU=
+  /wrap-ansi/5.1.0:
+    dependencies:
+      ansi-styles: 3.2.1
+      string-width: 3.1.0
+      strip-ansi: 5.2.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-QC1/iN/2/RPVJ5jYK8BGttj5z83LmSKmvbvrXPNCLZSEb32KKVDJDl/MOt2N01qU2H/FkzEa9PKto1BqDjtd7Q==
   /wrappy/1.0.2:
     dev: false
     resolution:
       integrity: sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=
   /write-file-atomic/2.4.3:
     dependencies:
-      graceful-fs: 4.1.15
+      graceful-fs: 4.2.0
       imurmurhash: 0.1.4
       signal-exit: 3.0.2
     dev: false
@@ -11956,10 +12047,10 @@ packages:
       node: '>=4.0'
     resolution:
       integrity: sha1-Ey7mPS7FVlxVfiD0wi35rKaGsQ0=
-  /xmlchars/1.3.1:
+  /xmlchars/2.1.1:
     dev: false
     resolution:
-      integrity: sha512-tGkGJkN8XqCod7OT+EvGYK5Z4SfDQGD30zAa58OcnAa0RRWgzUEK72tkXhsX1FZd+rgnhRxFtmO+ihkp8LHSkw==
+      integrity: sha512-7hew1RPJ1iIuje/Y01bGD/mXokXxegAgVS+e+E0wSi2ILHQkYAH1+JXARwTjZSM4Z4Z+c73aKspEcqj+zPPL/w==
   /xmldoc/1.1.2:
     dependencies:
       sax: 1.2.4
@@ -12027,6 +12118,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-C6kB/WJDiaxONLJQnF8ccx9SEeoTTLek8RVbaOIsrAUS8VrBEXfmeSnCZxygc+XC2sNMBIwOOnfcxiynjHsVSQ==
+  /yargs-parser/13.1.1:
+    dependencies:
+      camelcase: 5.3.1
+      decamelize: 1.2.0
+    dev: false
+    resolution:
+      integrity: sha512-oVAVsHz6uFrg3XQheFII8ESO2ssAf9luWuAd6Wexsu4F3OtIW0o8IribPXYrD4WC24LWtPrJlGy87y5udK+dxQ==
   /yargs-parser/5.0.0:
     dependencies:
       camelcase: 3.0.0
@@ -12079,6 +12177,22 @@ packages:
     dev: false
     resolution:
       integrity: sha512-Lhz8TLaYnxq/2ObqHDql8dX8CJi97oHxrjUcYtzKbbykPtVW9WB+poxI+NM2UIzsMgNCZTIf0AQwsjK5yMAqZw==
+  /yargs/13.2.4:
+    dependencies:
+      cliui: 5.0.0
+      find-up: 3.0.0
+      get-caller-file: 2.0.5
+      os-locale: 3.1.0
+      require-directory: 2.1.1
+      require-main-filename: 2.0.0
+      set-blocking: 2.0.0
+      string-width: 3.1.0
+      which-module: 2.0.0
+      y18n: 4.0.0
+      yargs-parser: 13.1.1
+    dev: false
+    resolution:
+      integrity: sha512-HG/DWAJa1PAnHT9JAhNa8AbAv3FPaiLzioSjCcmuXXhP8MlpHO5vwls4g4j6n30Z74GVQj8Xa62dWVx1QCGklg==
   /yargs/3.32.0:
     dependencies:
       camelcase: 2.1.1
@@ -12148,7 +12262,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: /mocha-junit-reporter/1.23.0/mocha@5.2.0
@@ -12160,12 +12274,12 @@ packages:
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
       typescript: 3.4.5
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/agent-scheduler'
     resolution:
-      integrity: sha512-nioM6W4qyeAWRwQn5ZpgmFAS8Q64mzOtFacIUrMnzqgWXGTTQ4+l59u8vpE0DBVXIxfIqsX8KpqPAvJ6RlYjCw==
+      integrity: sha512-GhUwaDTk29WCml7hXIoeN/h3XfDvrfFtPJyiAN2hsLmOHfXGE3/S45IL8sb/ud0tY+i+XweSiaznY95cgp4bSw==
       tarball: 'file:projects/agent-scheduler.tgz'
     version: 0.0.0
   'file:projects/agent.tgz':
@@ -12178,7 +12292,7 @@ packages:
       azure-iot-device: 1.9.9
       azure-iot-device-mqtt: 1.9.9
       azure-iothub: 1.9.9
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
@@ -12192,7 +12306,7 @@ packages:
     dev: false
     name: '@rush-temp/agent'
     resolution:
-      integrity: sha512-q9vjBYAfpU/rL/bOAthEGxJ9gIHmgFB9i3isVYx5mmYHjRyceUJ4QNqACBLy+2oC8voWYW28xLlP0ComDLi0Dw==
+      integrity: sha512-bSNCpjQILZjsNXUWKm6/bwk7DbKo1fz0weT8TASlCPSWxHU+SzOMR0FSCseUfdFgsl1LTTgKt6PeF1rMuZjhHw==
       tarball: 'file:projects/agent.tgz'
     version: 0.0.0
   'file:projects/app-component.tgz':
@@ -12200,7 +12314,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
       '@types/uuid': 3.4.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -12210,7 +12324,7 @@ packages:
     dev: false
     name: '@rush-temp/app-component'
     resolution:
-      integrity: sha512-AJhDDb++qggeujslc+tJvJu4rbAqcI09M9zqgdCMgcSzHClW6ZPcRxtBToBHdXxaT6NTUfEWZwCeC8agCQDytA==
+      integrity: sha512-loIgJlrX5IctI/yLxm5lvezj5vZEZ+9a2Gvq4xYdU84BDbtAd+QBoyTPNkIvpGvvWbtE/u6mTxRzR0gRe3Klzw==
       tarball: 'file:projects/app-component.tgz'
     version: 0.0.0
   'file:projects/app-datastore.tgz':
@@ -12220,7 +12334,7 @@ packages:
       '@types/mocha': 5.2.7
       '@types/nock': 9.3.1
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       jsonwebtoken: 8.5.1
       mocha: 5.2.0
@@ -12234,12 +12348,12 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-n0v9IyfVtz0/hlpLN/nS5fbnekqln/67jKJKh8lhnqvRnMxUuaZGltPRgX5mgXFZHOgbVKYuSe5skNjEwBNo9w==
+      integrity: sha512-9ACZtTJ9y+sNmFAiqTc+hHwA27x49qekpsnukVKKUo6wryB2ticLTyKpbiFHze9Hm6pw/U3cq2C1XC8HRkxPoQ==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
     dependencies:
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -12247,12 +12361,12 @@ packages:
     dev: false
     name: '@rush-temp/app-ui'
     resolution:
-      integrity: sha512-P3T+7u9UGM3zxkliYcpBUfL3SGmygcS6BnTci1asrR8qWjYUAfmyCDCAoIyhyvOIbgOcXXCPkaBoRQNahNdALA==
+      integrity: sha512-kbpkURT/fXKNQPQmhAYH9eOPTGwu8pT76yA1NIU3F8UDstlnEfWShFsl7mG6/AHpwNt3SU4QdPqariyZxgTYKA==
       tarball: 'file:projects/app-ui.tgz'
     version: 0.0.0
   'file:projects/aqueduct.tgz':
     dependencies:
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -12260,7 +12374,7 @@ packages:
     dev: false
     name: '@rush-temp/aqueduct'
     resolution:
-      integrity: sha512-hIGwEMK+yFHqzll63uzXizS9zFA6s9z5T8wkbWaIVVKntWtN4GXwcaH1lmww9UiVW2FjcePBK/6vLrRMfvzhcg==
+      integrity: sha512-gY5W9ync0yJN+2R2DSyCjxXxTATigcXijTyTA8vUdPli5ElYXZP+IJxvlz5lMbhRNsds/xVAxy0syOs04i4YDQ==
       tarball: 'file:projects/aqueduct.tgz'
     version: 0.0.0
   'file:projects/blob-manager.tgz':
@@ -12270,13 +12384,13 @@ packages:
       '@types/angular-route': 1.7.0
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
-      '@types/jquery': 3.3.29
+      '@types/jquery': 3.3.30
       '@types/leaflet': 1.4.4
       '@types/node': 10.14.10
       angular: 1.7.8
       angular-route: 1.7.8
       bootstrap: 3.4.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       file-loader: 2.0.0
       google-maps: 3.3.0
@@ -12288,7 +12402,7 @@ packages:
     dev: false
     name: '@rush-temp/blob-manager'
     resolution:
-      integrity: sha512-H+JTktONWN+I3ZQ5PN9qVX5WoCJV6CiKr5UlP9bslvrBuo3TMDKVc5B/ZE/wW1bYAud10ATaSUZkjOgJbSx+6Q==
+      integrity: sha512-B0UFS3HIpbRXFjLSdoMnlN6s6qenGm+fnpzVApKqM8JJHvOPcPO8ZKZv4/wCgBANVv4u4km0TFqGFBtWWFyumA==
       tarball: 'file:projects/blob-manager.tgz'
     version: 0.0.0
   'file:projects/build-common.tgz':
@@ -12297,16 +12411,16 @@ packages:
     dev: false
     name: '@rush-temp/build-common'
     resolution:
-      integrity: sha512-QOD46B+Jbjl2IviNnVfrQqNmvZuT8cHebpWiYYJlUaEznTJzdoaPqtzXPW0ishMJc0j9gviujXJUaaTEHbMyBg==
+      integrity: sha512-j12rVXqshI5gnQc+2q5QyuaI5jo+OvAdl1257nYAHQPCM4HMsQzilatVSlMncg11+gRarghTcBoLhT34myciYQ==
       tarball: 'file:projects/build-common.tgz'
     version: 0.0.0
   'file:projects/cell.tgz':
     dependencies:
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
@@ -12319,14 +12433,14 @@ packages:
     dev: false
     name: '@rush-temp/cell'
     resolution:
-      integrity: sha512-F8E2U4zoLvVjp1zqMNSeIi1w1BhMcs5LZERqTdJRB/xDyPweVPbJPb06fiU/ByLFX54ERK8b0l/fUGaa9PtQOg==
+      integrity: sha512-yN+pDnZuZh0ZrfqtjQLm9qYG/hPqGHnEz7b9NBETt1QlznD4WM6S9AOSvG4SjnWcNTs4ajxfNjHp9nQ3V3OoDg==
       tarball: 'file:projects/cell.tgz'
     version: 0.0.0
   'file:projects/chart-view.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       copyfiles: 2.1.0
       css-loader: /css-loader/1.0.1/webpack@4.32.2
       debug: 4.1.1
@@ -12344,7 +12458,7 @@ packages:
     dev: false
     name: '@rush-temp/chart-view'
     resolution:
-      integrity: sha512-asCGGx3POReXJ/S2plNdXfX1Kv/Y1GRLOYCIC0R3PIP4ulczmuoUDWsOA62Z2IcIhLG6plM+L13UwMiYsooDhw==
+      integrity: sha512-0EDKnk7gtscZWExA4mXNAZ+xtgFbrTm21c9lZBKDPO2Dmq4UJVy/YhWR582lvx6wmmwfe44qB1vQPuDaalGf0g==
       tarball: 'file:projects/chart-view.tgz'
     version: 0.0.0
   'file:projects/charts.tgz':
@@ -12355,7 +12469,7 @@ packages:
       '@types/url-parse': 1.4.3
       axios: 0.18.1
       bootstrap: 3.4.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       css-loader: /css-loader/1.0.1/webpack@4.35.0
       file-loader: /file-loader/2.0.0/webpack@4.35.0
       html-loader: 0.5.5
@@ -12370,21 +12484,21 @@ packages:
       url-loader: /url-loader/1.1.2/webpack@4.35.0
       url-parse: 1.4.7
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-visualizer-plugin: 0.1.11
     dev: false
     name: '@rush-temp/charts'
     resolution:
-      integrity: sha512-uoEZjLIvDxQkZvI7Gt+jtbX+Cq2WCtTo2bGjC0J4kIX//AkshSY6vMfiOPgLvY+H+CVOD6ObAploWIcwP5tuUw==
+      integrity: sha512-Dq1ZhHzziiJxnj17U3vUwQTpK08M6bNEqLHHYAJ80I3csX7Wt8Zqe3uTKwNx1QSFxa7GFe6D2gjJRxHsyUwyLA==
       tarball: 'file:projects/charts.tgz'
     version: 0.0.0
   'file:projects/clicker.tgz':
     dependencies:
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/node': 10.14.10
       '@types/react': 16.8.22
       '@types/react-dom': 16.8.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       react: 16.8.6
       react-dom: /react-dom/16.8.6/react@16.8.6
       rimraf: 2.6.3
@@ -12393,12 +12507,12 @@ packages:
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
       typescript: 3.4.5
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/clicker'
     resolution:
-      integrity: sha512-aE0HdbiL5lkOj4OgbLX1Qhr9pAABnvgE7Tpo7R8Kjgequm87DrCJHk3RwO8XimcVsDZcUHVgOvNAHvg/vSDETw==
+      integrity: sha512-SrSLd2KXQOvErXESZGuPYCFK+qBuozod7xzzNH/g4cnnQmeuxSvxKgq4lfuin+Y4p8JLeOv4Q4dGmFYaRV86Gw==
       tarball: 'file:projects/clicker.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -12413,7 +12527,7 @@ packages:
       '@types/uuid': 3.4.4
       async: 2.6.2
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       jwt-decode: 2.2.0
       lodash: 4.17.11
@@ -12433,21 +12547,21 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-yl7DngSJEQ8PRVDUj3s/xnhj0ieXF42KcMaKUATYiTXZvWmV/q4mPbR+Ss53czRmyKT5xkgcTVxUCC6As5UJJw==
+      integrity: sha512-BQ1egaYH8aHTma0yTmNOa7oZo8kmDpiTJPDGPykg35CBX7CAKR0VqlbDNEaCvj1eCMa1zlGgKfXTMBKNbbMe1g==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
     dependencies:
       '@types/d3': 5.7.2
       '@types/debug': 0.0.31
-      '@types/jquery': 3.3.29
-      '@types/jsdom': 12.2.3
+      '@types/jquery': 3.3.30
+      '@types/jsdom': 12.2.4
       '@types/katex': 0.10.1
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       '@types/node-geocoder': 3.19.1
-      concurrently: 4.1.0
-      d3: 5.9.2
+      concurrently: 4.1.1
+      d3: 5.9.4
       debug: 4.1.1
       geocoder: 0.2.3
       jquery: 3.4.1
@@ -12469,19 +12583,19 @@ packages:
     dev: false
     name: '@rush-temp/client-ui'
     resolution:
-      integrity: sha512-1ll7oLC2RFFZeemSy1MO6SXrcl8uAhTUQWzco1PbXy6Z05Wjahu7oRxkUeQjyHunqHJRD21gemilRgewsFA1ig==
+      integrity: sha512-EN7K294HS8ATYZunTrZWWnnMUvMdCrxc1PAt7QFF7oEfLNMMXuHAZtNBGA0ENK88rE0/2jm4QpHwl8ab3PYGtw==
       tarball: 'file:projects/client-ui.tgz'
     version: 0.0.0
   'file:projects/component-runtime.tgz':
     dependencies:
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       '@types/scriptjs': 0.0.2
       async: 2.6.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
@@ -12495,16 +12609,16 @@ packages:
     dev: false
     name: '@rush-temp/component-runtime'
     resolution:
-      integrity: sha512-85N8ziluWEDrHJgXtIc1BExOw0U0TEkx59j2CTjKUnbKst/hJlCE3tw6qGcaXGH0hYD+MmjjMiqk9fuQBPg3eg==
+      integrity: sha512-sJyMEFmGjcCmwWE6eZZ3iE24LCcZPT9THYCNYnP3SUkaqS7f+CF+gFAylYbupYvmVpxF2uvr1IFVLyAwHRdxaA==
       tarball: 'file:projects/component-runtime.tgz'
     version: 0.0.0
   'file:projects/consensus-ordered-collection.tgz':
     dependencies:
-      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7605
+      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7630
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: /mocha-junit-reporter/1.23.0/mocha@5.2.0
@@ -12516,7 +12630,7 @@ packages:
     dev: false
     name: '@rush-temp/consensus-ordered-collection'
     resolution:
-      integrity: sha512-uDRHosS3BnIvREEibezzBrmb9cq+QTHUs6uj7ZWbpvVWThmD/dSdhv+fT7hS+ov6/xNegq0a/qFDjqav6wKHhg==
+      integrity: sha512-HGYlbrIvPCcwS/81+LuS26dodxb6TS+2KQCURpbrpeSx32LiHQlEPBfWkrwtpq3Ar1Onf3B1KdKVrS9LKqQSFg==
       tarball: 'file:projects/consensus-ordered-collection.tgz'
     version: 0.0.0
   'file:projects/consensus-register-collection.tgz':
@@ -12524,7 +12638,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: /mocha-junit-reporter/1.23.0/mocha@5.2.0
@@ -12536,14 +12650,14 @@ packages:
     dev: false
     name: '@rush-temp/consensus-register-collection'
     resolution:
-      integrity: sha512-egbXGfAVL0wcrpCv/BGx+tDUohpWbRHM5muP+hL50M2GdVckUFoB/00HvfST7TKmduI77THn8jzcyj+tjW0YlA==
+      integrity: sha512-SJX1w01Dk7z0+ouY8Cq3HZeEiJ2DMks5zQ3lyoK+eDxGX7nmtOBi2VFOq3HNRVLb6dR4RbuSpRtjMf68mV9Xbg==
       tarball: 'file:projects/consensus-register-collection.tgz'
     version: 0.0.0
   'file:projects/container-definitions.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -12552,17 +12666,17 @@ packages:
     dev: false
     name: '@rush-temp/container-definitions'
     resolution:
-      integrity: sha512-/95AG9600fVk6iR7v+sML7I8dE/4qNytpkd3WARoXNcR2wYwcffXr4Ff7rf17JF+KfNnV98fd1LcrKOYMvUmJQ==
+      integrity: sha512-DVo5EAS92obZvliqZwV7A85egxTXK94LYr/4UmFylb+EL0Nej/0qVCo4tUTEEbr24W6puFfxZNrCuRXlI1jC/w==
       tarball: 'file:projects/container-definitions.tgz'
     version: 0.0.0
   'file:projects/container-loader.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.0
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
       lodash: 4.17.11
@@ -12574,19 +12688,19 @@ packages:
     dev: false
     name: '@rush-temp/container-loader'
     resolution:
-      integrity: sha512-kCJgnrKbgOEFfxmDeE52pFvycmrkcuT0Hkkkx0dzcuaaVX7aQxDP0w+flAUppIR2AmWJVu6cd6687/OA4D627g==
+      integrity: sha512-DM4J/Ajy8dTRkiGW3IXm2JplgKcYSXY6/druXa+8RTl8cndB5KYm3wwKrdejX5OvvB6xzq7y+jTElEd/NbHPAw==
       tarball: 'file:projects/container-loader.tgz'
     version: 0.0.0
   'file:projects/container-runtime.tgz':
     dependencies:
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       '@types/scriptjs': 0.0.2
       async: 2.6.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
@@ -12600,14 +12714,14 @@ packages:
     dev: false
     name: '@rush-temp/container-runtime'
     resolution:
-      integrity: sha512-hmx9vrZlisNYz0d7FL85BDgSXpP9UpCYoKWRGQbdKbweY0yF+BygE/U2C0ZKBchAzHGgn3PVNA3Fzht1UWYzmQ==
+      integrity: sha512-5Kh0M2O7ymFa43LkMsWIpE9XZr+7lJfoyEkhjD631JScCeGay3QzjhgKxIFzZfjEaZ/UAsTztjtIZmMeGQ0CsQ==
       tarball: 'file:projects/container-runtime.tgz'
     version: 0.0.0
   'file:projects/file-socket-storage.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -12616,17 +12730,16 @@ packages:
     dev: false
     name: '@rush-temp/file-socket-storage'
     resolution:
-      integrity: sha512-0ux3LwwUuPb3tMQs38CVs3DWO+IzPaaj3BR98bqht12l4b0znLph45AToumeGW2dCq+MX8PZFw5P9amuI1uUSg==
+      integrity: sha512-zls9EMaoPI2oE0P1CBoQ3hJqwwNEghHSnFztmmEb954OUvbfnpZ+ZwRxyKgyIkaUp6WUPU7t7qITzamsHmr2fw==
       tarball: 'file:projects/file-socket-storage.tgz'
     version: 0.0.0
   'file:projects/flow-scroll.tgz':
     dependencies:
-      '@chaincode/image-collection': packages.wu2.prague.office-int.com/@chaincode/image-collection/0.5.8071
       '@prague/component': packages.wu2.prague.office-int.com/@prague/component/0.3.6771
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@prague/runtime': packages.wu2.prague.office-int.com/@prague/runtime/0.3.6771
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       css-loader: /css-loader/1.0.1/webpack@4.35.0
       debug: 4.1.1
       html-loader: 0.5.5
@@ -12642,12 +12755,12 @@ packages:
       typings-for-css-modules-loader: /typings-for-css-modules-loader/1.7.0/css-loader@1.0.1
       url-loader: /url-loader/1.1.2/webpack@4.35.0
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/flow-scroll'
     resolution:
-      integrity: sha512-8g6EaDWMiPuXupE+S486ulYF3SHL1VOHeroGqCELWRjBDWArId0HcICCwMZ/7UhV0UeGYBIP6MEC82RpYbDUBQ==
+      integrity: sha512-jZWB0ay19KOZdVMy0Hxa1TVT9YUkNlJmcST/583E2AGgONSX9Bxo4v8iXHLOE9eqwNqdwW/+txGdij1ZIUcrhA==
       tarball: 'file:projects/flow-scroll.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -12656,7 +12769,7 @@ packages:
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       benchmark: 2.1.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       copyfiles: 2.1.0
       jsdom: 12.2.0
       jsdom-global: /jsdom-global/3.0.2/jsdom@12.2.0
@@ -12672,12 +12785,12 @@ packages:
     dev: false
     name: '@rush-temp/flow-util'
     resolution:
-      integrity: sha512-Qosr3lmvM8U7n6j4rr6Vt0w1YiCWCYAZuZnzuXpkorCgzKJzNPX9TapJ1O2iOmEpBwDduH8pQjioYh/YzQY6xQ==
+      integrity: sha512-q1yYVVr+jFe4RwR4fXNUytBQbUyK60l6FR9MyKERlfLkkX6VXUZ8CiIXwyxCZgcSNobiULMg2Ks4d/jFsshDzA==
       tarball: 'file:projects/flow-util.tgz'
     version: 0.0.0
   'file:projects/framework-definitions.tgz':
     dependencies:
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -12685,7 +12798,7 @@ packages:
     dev: false
     name: '@rush-temp/framework-definitions'
     resolution:
-      integrity: sha512-ORkF18SjeT8ZTpXq5noeyYgHRp80kqNn2dbBcv7AjpF/AmgFI0+QwUqWgTHS+aiKXnu4qhQPJFmxQImgIhm2aw==
+      integrity: sha512-p7GoIMQU9DYJSoxBbyVWiCx5edBK0qLuTx0s4LM9hI6/vfw+WTGHNpP5SFR+ZuypZR7ZNPTJACcI/8ExPaRAog==
       tarball: 'file:projects/framework-definitions.tgz'
     version: 0.0.0
   'file:projects/gateway.tgz':
@@ -12701,11 +12814,11 @@ packages:
       '@types/d3': 5.7.2
       '@types/debug': 0.0.31
       '@types/express-session': 1.15.13
-      '@types/jquery': 3.3.29
-      '@types/jsdom': 12.2.3
+      '@types/jquery': 3.3.30
+      '@types/jsdom': 12.2.4
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/mongodb': 3.1.28
       '@types/morgan': 1.7.35
@@ -12726,7 +12839,7 @@ packages:
       '@types/socket.io-redis': 1.0.25
       '@types/split': 0.3.28
       '@types/uuid': 3.4.4
-      '@types/webpack': 4.4.33
+      '@types/webpack': 4.4.34
       '@types/ws': 6.0.1
       async: 2.6.2
       axios: 0.18.1
@@ -12734,13 +12847,13 @@ packages:
       bytes: 3.1.0
       cache-loader: /cache-loader/1.2.5/webpack@4.35.0
       compression: 1.7.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       connect-ensure-login: 0.1.1
       connect-redis: 3.4.1
       cookie-parser: 1.4.4
       cors: 2.8.5
       css-loader: /css-loader/1.0.1/webpack@4.35.0
-      d3: 5.9.2
+      d3: 5.9.4
       debug: 4.1.1
       express: 4.17.1
       express-session: 1.16.2
@@ -12790,7 +12903,7 @@ packages:
       uuid: 3.3.2
       webpack: 4.35.0
       webpack-bundle-analyzer: 2.13.1
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
       winston: 3.2.1
       ws: 6.2.1
@@ -12798,12 +12911,12 @@ packages:
     dev: false
     name: '@rush-temp/gateway'
     resolution:
-      integrity: sha512-v5e+RTbRJkBNEy4k3UorUe1YpowQLzZM2BFLnUPRhGOJ91kbN2rp9ls7Vr2BNJiRdmaJYL3JDXKUfpoR9g/5gA==
+      integrity: sha512-2Kd7O/t5/cReF5axK6wKG2F61U+ZtDWXdD7RPusw72+ZgHH4TCafJtv/IBqbl89Q3oHpqzWpMlwKI2IVY6aCvw==
       tarball: 'file:projects/gateway.tgz'
     version: 0.0.0
   'file:projects/gitresources.tgz':
     dependencies:
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -12811,7 +12924,7 @@ packages:
     dev: false
     name: '@rush-temp/gitresources'
     resolution:
-      integrity: sha512-S1nbIaGaRlPe+sY6XaotNVlhSmcTeCMGttX2kw8dyJrNLdVjb4u6fBNfF8gbmJ9SgtYfvELxhxABCDZhqch1Gg==
+      integrity: sha512-LcGHMN4Nj/MsBr2KNoSKmFHPcjJO0vR4f0+pyw0kT1GlRmaRRArjf+kdjzWMAR+SUHROfHmlW2qqQIkEafjHIA==
       tarball: 'file:projects/gitresources.tgz'
     version: 0.0.0
   'file:projects/image-collection.tgz':
@@ -12825,7 +12938,7 @@ packages:
     dev: false
     name: '@rush-temp/image-collection'
     resolution:
-      integrity: sha512-8Adr52QfFtZSqC3DsPYGrwYFqRkUGVehHFMu+NEB5iMstL1bc/CDLAkjr8JEGDAo+Q9nU07HgZjkzyxzQ8h4cg==
+      integrity: sha512-/74K83CNNq9lUFWNoKflIYKRjLg+gbQiRoA54wL07Vj77clK+ynpyK9X2EmNsE5vwFklslqkH6E3HN2DM/Qtdw==
       tarball: 'file:projects/image-collection.tgz'
     version: 0.0.0
   'file:projects/intelligence-runner.tgz':
@@ -12833,7 +12946,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
       '@types/request': 2.48.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
@@ -12843,14 +12956,14 @@ packages:
     dev: false
     name: '@rush-temp/intelligence-runner'
     resolution:
-      integrity: sha512-MTj+SsiBy9+IAVX7Wdqm7uRTfI70kG86bimSuAtdxVTlDH41I+G5EfwuwX3D3TGc73RFkVIA2INCdn8k2hhrHQ==
+      integrity: sha512-Ut19nTRxFyNruR9Hbf/tkIIIMuVDhEUeqg+UWJs+lm0p1qIZodYkMc37WZUjHxi/VDQTwDByhIn4n55QkFz9iQ==
       tarball: 'file:projects/intelligence-runner.tgz'
     version: 0.0.0
   'file:projects/kafka-orderer.tgz':
     dependencies:
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       lodash: 4.17.11
       moniker: 0.1.2
       rimraf: 2.6.3
@@ -12860,7 +12973,7 @@ packages:
     dev: false
     name: '@rush-temp/kafka-orderer'
     resolution:
-      integrity: sha512-7VF8sKa2KamVq2oaxYpzKTHuUsakPqLgoJdvt02oZPDJLQX1/FBgUeIjwstCOrI+Nx5OBQnmvYwhvRR0UFWJuA==
+      integrity: sha512-SReIHQoxOaEEncfuFnkcRNwy5MuzUusjzD7hKyk/gZxSa/aOaa620TvfTvnL6yHjIYBIplvLHFpwSs5Pr6vMdg==
       tarball: 'file:projects/kafka-orderer.tgz'
     version: 0.0.0
   'file:projects/key-value.tgz':
@@ -12875,23 +12988,23 @@ packages:
       typescript: 3.4.5
       uuid: 3.3.2
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/key-value'
     resolution:
-      integrity: sha512-gyHAB7p0FdO/F/EAP4rL4YzNTkszSRsjLY05TjbJf78CAhfW6ffCcyMjrrdBsEfgXvN0KoQ7R7eDIW22GmWCcw==
+      integrity: sha512-gtgrDzbLSY7mEJpLEvCd3hRgw+Nn1XrUWONFtZ/10krLM5wLhyQWRvt0RiyZ4XlinDVQdzVvPqxgV/txPxFPmA==
       tarball: 'file:projects/key-value.tgz'
     version: 0.0.0
   'file:projects/lambdas-driver.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.10
       async: 2.6.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
       moniker: 0.1.2
@@ -12904,18 +13017,18 @@ packages:
     dev: false
     name: '@rush-temp/lambdas-driver'
     resolution:
-      integrity: sha512-C+JipWE0gUDSNQNPqmIywv5D1/0E3mGCRoLlGXf8SEf8UY3hboVFD017PkrV8Zdu9YyqMns0am1WbCn3rwJ3tw==
+      integrity: sha512-16AYM1m06eq5sX7gaga34vXwQWgs1t+ow2cWpTzPonXC/aiZlr+AOiaMl4QDpbSgacpJ1XJtaEWMKzFQvTLA2Q==
       tarball: 'file:projects/lambdas-driver.tgz'
     version: 0.0.0
   'file:projects/lambdas.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.10
       async: 2.6.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       double-ended-queue: 2.1.0-0
       lodash: 4.17.11
       mocha: 5.2.0
@@ -12929,14 +13042,14 @@ packages:
     dev: false
     name: '@rush-temp/lambdas'
     resolution:
-      integrity: sha512-uLyq07/tlAZvan50am5OWrkevK2Um3nidvfFrxL5zPwSOctZlnH1BboKhPL3hggv752RyXfJm9M9Ut/iKjuzGw==
+      integrity: sha512-Ft5dghbFdLyblxvoGL+LPpR8jmNsYgBUGLk2iIzMxZzWhViziy6iaNDRBhDAPp/rBWcUH8A/Zaru3GGvCmv/wA==
       tarball: 'file:projects/lambdas.tgz'
     version: 0.0.0
   'file:projects/loader-web.tgz':
     dependencies:
       '@types/node': 10.14.10
       chalk: 2.4.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       source-map-loader: 0.2.4
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -12945,7 +13058,7 @@ packages:
     dev: false
     name: '@rush-temp/loader-web'
     resolution:
-      integrity: sha512-7HOFfmjb/3+EyMFoGJSye2d7v2yMVeVDKRZQSApXY6fwryMtdjHQ43ehI1xnqpw5rMujafTEx/VgP5bS8USNCQ==
+      integrity: sha512-kUwZ0qd0uCeu1Jwi+mZyYX+Q2xwkKDliQuF9/bARsY2e14F0lOgUbt3OXkA/hQjj2MHtf3bodi4Pk3Jvobd75Q==
       tarball: 'file:projects/loader-web.tgz'
     version: 0.0.0
   'file:projects/local-test-server.tgz':
@@ -12956,7 +13069,7 @@ packages:
       '@types/node': 10.14.10
       '@types/semver': 6.0.1
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       jsonwebtoken: 8.5.1
       mocha: 5.2.0
       mocha-junit-reporter: /mocha-junit-reporter/1.23.0/mocha@5.2.0
@@ -12965,17 +13078,17 @@ packages:
       nyc: 13.3.0
       random-name: 0.1.2
       rimraf: 2.6.3
-      semver: 6.1.1
+      semver: 6.1.2
       ts-loader: 4.5.0
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
       typescript: 3.4.5
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-EI7jqpXgsSNotTBWjDQz1NNFciRQRuzluKc9M+XVlFfkjX0n+rBWAQrN3bzu2AbQyURbvK9sLhMA5wg58o9H7g==
+      integrity: sha512-gtCp0jFRZFJ1VZN85kwHAZBTGgncUlbvTKGW9SEGzDiAUNKzciRlV1htNfMeFe/o/XYUVj3lw8tuK87GYNJ8ww==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -12983,7 +13096,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
@@ -12996,13 +13109,13 @@ packages:
     dev: false
     name: '@rush-temp/map'
     resolution:
-      integrity: sha512-jBRTzFI84EujKntqCXj9bOVsuTonQmjtsn+dk5RajAxVzQGC5vxxS2dJy9I61rmbHNrOvlQdBaoivHlCbOtk0w==
+      integrity: sha512-RnPAkeop/5zoewXfEJcXLiW448MkGGNBTQx9etcYAUrjGAHXZIkjTmONLe+/9TpjHsSUOYt0igtqxCwrfZFCRQ==
       tarball: 'file:projects/map.tgz'
     version: 0.0.0
   'file:projects/math.tgz':
     dependencies:
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       copyfiles: 2.1.0
       debug: 4.1.1
       katex: 0.10.2
@@ -13013,17 +13126,17 @@ packages:
     dev: false
     name: '@rush-temp/math'
     resolution:
-      integrity: sha512-qJ2ZaG5JWhUUemFLeHdud10XIZsKPXNmC/kPEnuToQHwYcQS7FURRWt6LV6PaPJDruMF9BpubIYpkcae6uOyyg==
+      integrity: sha512-3Rj/KwhFR5+QD7di6IPNES8DLxAEHsJMPrn4gHZnXe60RbOgzggbUbfM7b5sptFcrKTfoFryVwYqjZxonHoO1A==
       tarball: 'file:projects/math.tgz'
     version: 0.0.0
   'file:projects/memory-orderer.tgz':
     dependencies:
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/node': 10.14.10
       '@types/uuid': 3.4.4
       '@types/ws': 6.0.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       moniker: 0.1.2
@@ -13037,18 +13150,18 @@ packages:
     dev: false
     name: '@rush-temp/memory-orderer'
     resolution:
-      integrity: sha512-RflqOsT80TyfxO97Igeq/Mf44MYTbgf5jL+by7R/cWWrI3A9cfe3iCb0baC/BM3SeTQ7HbonGGkyMMdxb5tWUA==
+      integrity: sha512-z1FssZr1Xxd/UxsH5OX7rpW/Eotf+NfhVRXN2sPGcDs67sI4AcqEcXGUxuVWCgg87qyzplPEsqCrRKJy5gGWQA==
       tarball: 'file:projects/memory-orderer.tgz'
     version: 0.0.0
   'file:projects/merge-tree.tgz':
     dependencies:
-      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7605
+      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7630
       '@types/debug': 0.0.31
       '@types/diff': 3.5.3
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       '@types/random-js': 1.0.31
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       diff: 3.5.0
       mocha: 5.2.0
@@ -13062,12 +13175,12 @@ packages:
     dev: false
     name: '@rush-temp/merge-tree'
     resolution:
-      integrity: sha512-SQAA72hUHL/l9zdR83P9EHKp7sM0jTU3qlPm8Pm2uDAOIYqZg1MqnWW4NIr/xGIOk+OOcC7lWNo1BevX4rNmAg==
+      integrity: sha512-OxEzmdq7ovvuha0WtT3acBc6oPdMLsXsnHORI0S4uNgngoapyGtiIdZ8rsBS0f5FVZCrsv8jHZKGX8VjUBZOzQ==
       tarball: 'file:projects/merge-tree.tgz'
     version: 0.0.0
   'file:projects/monaco.tgz':
     dependencies:
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
       '@types/node': 10.14.10
@@ -13089,12 +13202,12 @@ packages:
       url-loader: /url-loader/1.1.2/webpack@4.35.0
       uuid: 3.3.2
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-dev-server: /webpack-dev-server/3.7.2/webpack@4.35.0
     dev: false
     name: '@rush-temp/monaco'
     resolution:
-      integrity: sha512-n+rl+2zLD93wEUeTx8hrJg7E99QhkKaekQCvq30m9q9ZsllTnI1zQgnzvisqBmwR5K2om3A7nSB3uRY6A89dBw==
+      integrity: sha512-2b/a1HcRt/kKXvDumuieM0ZWDP6Xt2uEzpuoY8ugsRjFkn7G2Svz5vapDNkGhnL29SWoWzWExqUktOEANX3aXA==
       tarball: 'file:projects/monaco.tgz'
     version: 0.0.0
   'file:projects/odsp-socket-storage.tgz':
@@ -13102,7 +13215,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: /mocha-junit-reporter/1.23.0/mocha@5.2.0
@@ -13115,13 +13228,13 @@ packages:
     dev: false
     name: '@rush-temp/odsp-socket-storage'
     resolution:
-      integrity: sha512-9+yavYPaA9yNPsPcbSV3r74d2T0y34bbNygp0fuTCTXAFxuTsVI7rsMX2hqjpHS8ESJ6sEAU/JqpAywRNWwG0Q==
+      integrity: sha512-LBsjsl5jl2UxqqieZ02aDNbJC7ily6unZhkHJBxRs1nuVzFc/q7qc1pTrtuU1cWmN49DuzuJGZ1SryUpXAof8Q==
       tarball: 'file:projects/odsp-socket-storage.tgz'
     version: 0.0.0
   'file:projects/odsp-utils.tgz':
     dependencies:
       '@types/request': 2.48.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13130,12 +13243,12 @@ packages:
     dev: false
     name: '@rush-temp/odsp-utils'
     resolution:
-      integrity: sha512-Js5SXyrIDYGv+Cxegq6bZ46bTKODfaPQQhR9FIaP3hzP6zzCHJK8GaHuKQBvYBCvdlbPopjn2zyM7G7q3l/a/A==
+      integrity: sha512-ZRO8dq3i/aCX3e/v463p5RSeY6rA+dtCjHt/roBoyyZHLSIbp9Rdc9bVxKMIIr9SuD4TXO45xLZX81VGjkwnoA==
       tarball: 'file:projects/odsp-utils.tgz'
     version: 0.0.0
   'file:projects/owned-map.tgz':
     dependencies:
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/node': 10.14.10
       '@types/react-dom': 16.8.4
       debug: 4.1.1
@@ -13148,29 +13261,29 @@ packages:
       typescript: 3.4.5
       uuid: 3.3.2
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-merge: 4.2.1
     dev: false
     name: '@rush-temp/owned-map'
     resolution:
-      integrity: sha512-MQWwNVzYWPRBoMnjwMS/QVcg3Hgwj/WuswQ7jtn6N3zc4dr4mN3byyh1u1ZZNN62yydiRiJHLtcQdCqiw6wXbQ==
+      integrity: sha512-GAT/vttT+w8aJDuIBOZ953JHTkgEMtDgcGv2xrUGZSYwPqgGSi3Iu//2fHyQf2UTrM8sdXN7dgxMjZQPB4G0gQ==
       tarball: 'file:projects/owned-map.tgz'
     version: 0.0.0
   'file:projects/pinpoint-editor.tgz':
     dependencies:
       '@kurtb/pinpoint': 0.1.2
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/angular': 1.6.54
       '@types/angular-route': 1.7.0
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
-      '@types/jquery': 3.3.29
+      '@types/jquery': 3.3.30
       '@types/leaflet': 1.4.4
       '@types/node': 10.14.10
       angular: 1.7.8
       angular-route: 1.7.8
       bootstrap: 3.4.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       css-loader: /css-loader/1.0.1/webpack@4.35.0
       debug: 4.1.1
       file-loader: /file-loader/2.0.0/webpack@4.35.0
@@ -13188,12 +13301,12 @@ packages:
       typescript: 3.4.5
       url-loader: /url-loader/1.1.2/webpack@4.35.0
       webpack: 4.35.0
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-serve: /webpack-serve/2.0.3/webpack@4.35.0
     dev: false
     name: '@rush-temp/pinpoint-editor'
     resolution:
-      integrity: sha512-ySiVcf/pjLr6cO1iVwOa+Hu+yDepOPEFsPW30oCtzwVfeLSkOAJaIHjQvsIodZbBq1Y6Oxw2GMqathitia+QVg==
+      integrity: sha512-iANsWfd/mI4grIXYEsAMzBEfJw4J4jGjIEDbxt/V3/698AzpYhjRwl75hgc/fMoJBTKjTIEqmG7npSSKK5DGlg==
       tarball: 'file:projects/pinpoint-editor.tgz'
     version: 0.0.0
   'file:projects/prague-dump.tgz':
@@ -13201,7 +13314,7 @@ packages:
       '@prague/odsp-utils': packages.wu2.prague.office-int.com/@prague/odsp-utils/0.3.6609/tslint@5.18.0+typescript@3.4.5
       '@types/node': 10.14.10
       '@types/request': 2.48.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13210,7 +13323,7 @@ packages:
     dev: false
     name: '@rush-temp/prague-dump'
     resolution:
-      integrity: sha512-CT1LZXmI9jzBFUD54bS/HQff3Bfh7dwZO0XD4GcJP8lULcGvNnhCxxGt5fZD9JZwwIoWp5SDgoWWGk0fNl3+Nw==
+      integrity: sha512-6EewrjDjurUUzOjfHuLhK9shSdZLOpi9NQcTaGjZu27/gNz94XvP3n6y7w7Il4OBQidL2YiMDsu7HtKCASBcYQ==
       tarball: 'file:projects/prague-dump.tgz'
     version: 0.0.0
   'file:projects/progress-bars.tgz':
@@ -13224,7 +13337,7 @@ packages:
     dev: false
     name: '@rush-temp/progress-bars'
     resolution:
-      integrity: sha512-TFNZ9/U/a1gFymrSvQPF73ih+fXyWdChkVFPVmKNXA8DwM2zCKAuDBGsCiex/eQlF4fWL52H/9AO6qLsKcxBlw==
+      integrity: sha512-o3la/woNyEoYW6JquGhOX4gm31Okw11GTxGEG9xwZF8dRKYM7Zb1RJdq+piOQ7puonDXkWemCh+McdwQo3+6tA==
       tarball: 'file:projects/progress-bars.tgz'
     version: 0.0.0
   'file:projects/replay-socket-storage.tgz':
@@ -13235,7 +13348,7 @@ packages:
       '@types/nock': 9.3.1
       '@types/node': 10.14.10
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       keypress: 0.2.1
       mocha: 5.2.0
@@ -13247,14 +13360,14 @@ packages:
     dev: false
     name: '@rush-temp/replay-socket-storage'
     resolution:
-      integrity: sha512-d1wR+z/3J1NWtlk4QwqiJzHIauozQY6Bmyw5LQCqNc9e+HMEIEwZey1d1oborr2LQXAEwq0OVAk8gHlCdDDuYQ==
+      integrity: sha512-NQi+V4PaeJU8Vy0yIq5O7dE0/q/G8eOXGGS0DLy0wTuHozueeZPpKNzRkhfBDAh4z83t9A3qy91fB0yWKQQ+0g==
       tarball: 'file:projects/replay-socket-storage.tgz'
     version: 0.0.0
   'file:projects/replay-tool.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13263,7 +13376,7 @@ packages:
     dev: false
     name: '@rush-temp/replay-tool'
     resolution:
-      integrity: sha512-RSvRkODBzyXJA7gzEnm6gYk1VVccFrVbAUwDGWXo3KG+dGsexIuidpKBOiTDC9pBFe1QjYx0dI0net/BxKnL5Q==
+      integrity: sha512-zzRB32jCYIh7tiNMcw2jLrMNFPE1YL8PxynUDe3Iy+o8lztujxXPQmUyo6Dah+c9aRgA8EGicVBMiqnK2q4rHw==
       tarball: 'file:projects/replay-tool.tgz'
     version: 0.0.0
   'file:projects/routerlicious-host.tgz':
@@ -13271,7 +13384,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       mocha: 5.2.0
       rimraf: 2.6.3
@@ -13281,7 +13394,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious-host'
     resolution:
-      integrity: sha512-KbRykoc3wxbG4mm4f/9OquqXsEMUECLGAAjpJGeiBg9EYLODnDCSUtNYwCWlGU+2JmhFMMF37gin/FZYfN93Dg==
+      integrity: sha512-9Os2O2asIhQ699yR4jTc/ZvXH+K0vNforToei2tFeYCQdpuWQv+MNs9R66KLjSrQ6gZrKZaxbkaWAaUaBmWiVg==
       tarball: 'file:projects/routerlicious-host.tgz'
     version: 0.0.0
   'file:projects/routerlicious-socket-storage.tgz':
@@ -13293,7 +13406,7 @@ packages:
       '@types/socket.io-client': 1.4.32
       '@types/ws': 6.0.1
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       isomorphic-ws: /isomorphic-ws/4.0.1/ws@6.2.1
       jwt-decode: 2.2.0
@@ -13308,7 +13421,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious-socket-storage'
     resolution:
-      integrity: sha512-fMZ7H8ZGB9UeDkWCIpm+mSK1/I07625jF/szv88VxLphbRpzOBokYVzmH1bSTLV21GzhA4Q8ZbZfPD7lwGc7fA==
+      integrity: sha512-atS5USLC0lj55vecwInD5mZEjpGoH9TAcOUgHbwOJ6hRVYdfKN6LCWgNTrKWiwQhONbIioMV9CLoPGOStNkGgw==
       tarball: 'file:projects/routerlicious-socket-storage.tgz'
     version: 0.0.0
   'file:projects/routerlicious.tgz':
@@ -13324,11 +13437,11 @@ packages:
       '@types/debug': 0.0.31
       '@types/diff': 3.5.3
       '@types/express-session': 1.15.13
-      '@types/jquery': 3.3.29
-      '@types/jsdom': 12.2.3
+      '@types/jquery': 3.3.30
+      '@types/jsdom': 12.2.4
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/mocha': 5.2.7
       '@types/mongodb': 3.1.28
       '@types/morgan': 1.7.35
@@ -13363,13 +13476,13 @@ packages:
       cache-loader: /cache-loader/1.2.5/webpack@4.35.0
       commander: 2.20.0
       compression: 1.7.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       connect-ensure-login: 0.1.1
       connect-redis: 3.4.1
       cookie-parser: 1.4.4
       cors: 2.8.5
       css-loader: /css-loader/1.0.1/webpack@4.35.0
-      d3: 5.9.2
+      d3: 5.9.4
       debug: 4.1.1
       diff: 3.5.0
       express: 4.17.1
@@ -13408,7 +13521,7 @@ packages:
       request-promise-native: /request-promise-native/1.0.7/request@2.88.0
       rimraf: 2.6.3
       sass-loader: /sass-loader/7.1.0/webpack@4.35.0
-      semver: 6.1.1
+      semver: 6.1.2
       serve-favicon: 2.5.0
       socket.io: 2.2.0
       socket.io-client: 2.2.0
@@ -13435,13 +13548,13 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-0NF+MUO7BTlHc3D8beQoPo2BKGUgUq5gw1bpDl5HvwkRunDssyTzwMkVy+nHxgMfL0K9KbkHcsaP5NHlNtdWuQ==
+      integrity: sha512-E7M+inY3rtOgEu8b79SAQYBeHLDY0+fabEgoGLnAQ1WVZ3wJwugyJs8kZA5r/5n65uXH2C0wHKWAv9Hr8qZUTA==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
     dependencies:
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -13449,14 +13562,14 @@ packages:
     dev: false
     name: '@rush-temp/runtime-definitions'
     resolution:
-      integrity: sha512-moRfs6NywOJ8Qbc700TUYHCfTgF8PriKkOAufnhKQk9ps1Z+A6JjMFNSRExJHYtMLDuVk5cuSMX4BLT+Z6+JQQ==
+      integrity: sha512-3fvjWuxdqHokbcI5pLE7zxmY8joYWwON8UjLPTuo6Y1pqdb4oaNG4II0bTbZUr2pS+pBYKHek5nz68tbYCCaQg==
       tarball: 'file:projects/runtime-definitions.tgz'
     version: 0.0.0
   'file:projects/runtime-test-utils.tgz':
     dependencies:
       '@types/node': 10.14.10
       '@types/uuid': 3.4.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.2.0/tslint@5.18.0+typescript@3.4.5
@@ -13465,18 +13578,18 @@ packages:
     dev: false
     name: '@rush-temp/runtime-test-utils'
     resolution:
-      integrity: sha512-ESYIChl2BomAbi7Aa9G33b6IH9bIzBLQzafDBoICOKhGFleYBJ2HkMaQNT+nWvs5lRM+9P5sJbHAQLCUXjnOcg==
+      integrity: sha512-SKCQlTxDIVtKOUrZXcg7yZKEl2+NaVCZFDksrHnqohyvhOaQ6pOW8ji5dYqqlHC7BHz/9iudfr/nXy3d5iKvzg==
       tarball: 'file:projects/runtime-test-utils.tgz'
     version: 0.0.0
   'file:projects/sequence.tgz':
     dependencies:
-      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7605
+      '@prague/runtime-test-utils': packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7630
       '@types/diff': 3.5.3
       '@types/mocha': 5.2.7
       '@types/random-js': 1.0.31
       '@types/uuid': 3.4.4
       '@types/xmldoc': 1.1.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       diff: 3.5.0
       lodash: 4.17.11
       mocha: 5.2.0
@@ -13492,7 +13605,7 @@ packages:
     dev: false
     name: '@rush-temp/sequence'
     resolution:
-      integrity: sha512-Hvuc1K2WKFvEt2HMrr1YA02jEpEgWitN0p66K8RA+LJfJl0hjEiC7xhl2/xlHn6AZizdb+C6U7oeV/Nwih1AxQ==
+      integrity: sha512-WSyHc3WutXSfBDpHswFg3RXBtBYjYILuqITsSznNlXN/nsZEUGz8PZdML5f/JIJPy9F+MkkunyvJddrvvSewyg==
       tarball: 'file:projects/sequence.tgz'
     version: 0.0.0
   'file:projects/services-client.tgz':
@@ -13501,7 +13614,7 @@ packages:
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13510,7 +13623,7 @@ packages:
     dev: false
     name: '@rush-temp/services-client'
     resolution:
-      integrity: sha512-pX6qtrvFIBjhAR7KyR8Pne0rfMLZOmkfpK7SizBeNna8uJJF4yoWcQ21uF0NgbfqsTfBRGnRTDx5JaY3z6pNEg==
+      integrity: sha512-H5dL9YiT9iCaPVlEIywhJMWXKtvN5TXdGoFeE8WVS69EwrHhVJdVeuW9mRuZ5WgudgiS4gTikklhdFv3Fs80Zg==
       tarball: 'file:projects/services-client.tgz'
     version: 0.0.0
   'file:projects/services-core.tgz':
@@ -13518,7 +13631,7 @@ packages:
       '@types/jsonwebtoken': 8.3.2
       '@types/nconf': 0.0.37
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       jsonwebtoken: 8.5.1
       rimraf: 2.6.3
@@ -13529,7 +13642,7 @@ packages:
     dev: false
     name: '@rush-temp/services-core'
     resolution:
-      integrity: sha512-vRtjB6Rgw6uWa2Z+WF3Y5oy+Z4M/wgLbRl7PO0+N5PStNvjJoXPyK6C7/ry06ejGmEYQlmr4OaLf9wOOLbUJsA==
+      integrity: sha512-1NllbCdlZ8kcBp+NQRIUo1i4Oy3IbBURtRX7stOSaCFwepi7bOv/qYGWQlfjlNyQizhJL0CzdVlQlJwKqFZtSw==
       tarball: 'file:projects/services-core.tgz'
     version: 0.0.0
   'file:projects/services-utils.tgz':
@@ -13542,7 +13655,7 @@ packages:
       '@types/randomstring': 1.1.6
       '@types/raven': 2.5.3
       bytes: 3.1.0
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       kafka-node: 3.0.1
       moniker: 0.1.2
@@ -13557,7 +13670,7 @@ packages:
     dev: false
     name: '@rush-temp/services-utils'
     resolution:
-      integrity: sha512-Tb5QLKX56a87vfcP5uGjglkAywngC6q3/GkIp/3W+oQhMzHY6G0l0XjN4LgZhfCMRV594B6wvt6yZBTFSJmIxw==
+      integrity: sha512-cZ5SbqvN9GoYdefSPc/tJDvw14m7alIilxedX0xap/6KJK0JxJwNBMjaYgsdFSpDM+dqAySkp4cVsgzfBr5hNQ==
       tarball: 'file:projects/services-utils.tgz'
     version: 0.0.0
   'file:projects/services.tgz':
@@ -13566,7 +13679,7 @@ packages:
       '@azure/event-processor-host': 1.0.6
       '@types/amqplib': 0.5.12
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/minio': 7.0.2
       '@types/mongodb': 3.1.28
       '@types/node': 10.14.10
@@ -13577,7 +13690,7 @@ packages:
       '@types/ws': 6.0.1
       amqplib: 0.5.3
       axios: 0.18.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       kafka-node: 3.0.1
       lodash: 4.17.11
@@ -13598,7 +13711,7 @@ packages:
     dev: false
     name: '@rush-temp/services'
     resolution:
-      integrity: sha512-/NDbl1NcNdY75fZvkwIg2BszTPox2TjV7DFOv7t0qyZLbuIsNZLuyIAAdDylf6rlYdVHyLU2loCr9110d88bJw==
+      integrity: sha512-ILZwuFUA/Ct33Y3OX1N5WlskqKb4dYcctxuvgE30fTBkR1rnhFRl5T+N6H6Fv1PyHYnL5nPjWAGiBQosYFiXUQ==
       tarball: 'file:projects/services.tgz'
     version: 0.0.0
   'file:projects/shared-object-common.tgz':
@@ -13606,7 +13719,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.0
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
       rimraf: 2.6.3
@@ -13617,29 +13730,29 @@ packages:
     dev: false
     name: '@rush-temp/shared-object-common'
     resolution:
-      integrity: sha512-gqUU3eZ/1DeeZ3192eR37y8gfho/3+CBb+9puw6ahviYbrcgIlMOFqJeqUVKe6248nNDzSqoEM5emQvcCofWqw==
+      integrity: sha512-BwiOVJ9EZivW5USbH6y7aE+Cxj8SfM4OElqzU111gOGyFJf5AxlAejaMzPr+hHl85EkH/cQ8wL5TyHC4P0vWJA==
       tarball: 'file:projects/shared-object-common.tgz'
     version: 0.0.0
   'file:projects/shared-text.tgz':
     dependencies:
       '@chaincode/charts': packages.wu2.prague.office-int.com/@chaincode/charts/0.3.7140/tslint@5.18.0+typescript@3.4.5
-      '@chaincode/image-collection': packages.wu2.prague.office-int.com/@chaincode/image-collection/0.5.8071
       '@chaincode/monaco': packages.wu2.prague.office-int.com/@chaincode/monaco/0.3.7140
       '@chaincode/pinpoint-editor': packages.wu2.prague.office-int.com/@chaincode/pinpoint-editor/0.3.7140/webpack@4.35.0
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@chaincode/video-players': packages.wu2.prague.office-int.com/@chaincode/video-players/0.5.7897
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/debug': 0.0.31
-      '@types/graphql': 14.2.1
+      '@types/graphql': 14.2.2
       '@types/node': 10.14.10
       '@types/react': 16.8.22
       axios: 0.18.1
       bootstrap: 3.4.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       css-loader: /css-loader/1.0.1/webpack@4.35.0
       debug: 4.1.1
       file-loader: /file-loader/2.0.0/webpack@4.35.0
-      graphiql: /graphiql/0.13.2/a26aae4b847bc40f95ebc2bdaaefa346
-      graphql: 14.3.1
-      graphql-subscriptions: /graphql-subscriptions/1.1.0/graphql@14.3.1
+      graphiql: /graphiql/0.13.2/7c91639e88dd9314fef698754cc471f1
+      graphql: 14.4.0
+      graphql-subscriptions: /graphql-subscriptions/1.1.0/graphql@14.4.0
       html-loader: 0.5.5
       katex: 0.10.2
       loader-utils: 1.2.3
@@ -13662,19 +13775,19 @@ packages:
       uuid: 3.3.2
       webpack: 4.35.0
       webpack-bundle-analyzer: 2.13.1
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-visualizer-plugin: 0.1.11
     dev: false
     name: '@rush-temp/shared-text'
     resolution:
-      integrity: sha512-IiUDBgYBgDeiCzApNRWowkTylxtvM+sq/avnsDkTX5lhCjE+c4vlGzKwkwXDwmVAcP8lkICY5cpnQVZfylbrTw==
+      integrity: sha512-KLImzwksOazEM0w4YjxbJhw75VFlgznu9u8HtoIs3QFXBVRur1QXBD+ZtwZKl2fjIYjKV41P1+A7hj7/LKBCtQ==
       tarball: 'file:projects/shared-text.tgz'
     version: 0.0.0
   'file:projects/snapshotter.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13683,7 +13796,7 @@ packages:
     dev: false
     name: '@rush-temp/snapshotter'
     resolution:
-      integrity: sha512-hnY9axjbvZxOnOlw1+n7pcsP36bzIBqZhDqMckj1C9yiL4ZUUItEI6Ne68hPjNK5Mkoj3bbiOQ80Y/Egs/TwDA==
+      integrity: sha512-moeOqqLunVZrLR84WAuzDk4FDGZTMbyZwibNVOUfM31nmi5tei4ZPN524s4D0zGJg2bueJVFJ6FcH68VGMvsyw==
       tarball: 'file:projects/snapshotter.tgz'
     version: 0.0.0
   'file:projects/socket-storage-shared.tgz':
@@ -13691,7 +13804,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
       '@types/socket.io-client': 1.4.32
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       socket.io-client: 2.2.0
@@ -13701,7 +13814,7 @@ packages:
     dev: false
     name: '@rush-temp/socket-storage-shared'
     resolution:
-      integrity: sha512-l8MjphTCeZgQrGZRgL5K5/JMvYFcFbGqnjo76/1sIipToNNDDqanQUk4lAJui2NRIHYjOuUFojbRY89NJJmMiA==
+      integrity: sha512-jmpWAOFxfNOIWZKWkVuH3L/ZaCRE9bGGC6IbV+M3nfgRiKCs98ICRtb6Yq6RTYT6axeyQh7J0WOSY20S4MNWZg==
       tarball: 'file:projects/socket-storage-shared.tgz'
     version: 0.0.0
   'file:projects/spellchecker.tgz':
@@ -13709,7 +13822,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
       '@types/request': 2.48.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
@@ -13719,14 +13832,14 @@ packages:
     dev: false
     name: '@rush-temp/spellchecker'
     resolution:
-      integrity: sha512-Sk7Bj5v8si8DkuBhq9brXCLKsu/yIW3Rij9+SwXbqngWeh6ovqiBvF6Of14QHcrUSle+G7mBJhQsdB5yIavM7w==
+      integrity: sha512-nWyzxWfUkvZklkgkzQk00nj3dxWRjP+2T7C7gXYnb5sRgRmuB+DxOSTYDjGz7C7HHY0IS4cH+sVdhifNUI/w4A==
       tarball: 'file:projects/spellchecker.tgz'
     version: 0.0.0
   'file:projects/stream.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.4
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       tslint: /tslint/5.18.0/typescript@3.4.5
@@ -13736,15 +13849,15 @@ packages:
     dev: false
     name: '@rush-temp/stream'
     resolution:
-      integrity: sha512-B+GeolUb+4VN4vn5YsUyb5SpgX23801XSKSWhFpsVG7TAFpIMJmJ2l9bXUUPTtDfCSw9TzCC3HsAmE11v9V5+g==
+      integrity: sha512-/yObyq/tZEqnpynPCBVxRnIEHJ9Sf8FqViDXYXS7Oj7hicmmwpocHL4ZgSi0wTrMzN0X7lqTZ+kQEX3UM4Zenw==
       tarball: 'file:projects/stream.tgz'
     version: 0.0.0
   'file:projects/table-document.tgz':
     dependencies:
-      '@tiny-calc/nano': packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.0
+      '@tiny-calc/nano': packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.8199
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       rimraf: 2.6.3
       source-map-loader: 0.2.4
@@ -13758,7 +13871,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-gNmsJOyycxAzF1kJ52nhuKGDv9JHV9lwuH6PUmvURAGoW2Llo/I0WiHeMvxbvkEIAZ3DknZ3dX5NH+JHcvf3dQ==
+      integrity: sha512-RA9gfzMfB255vRlmmwX5lO8Lfg2wY7sI87x+Ghx1sJTfEMz9QDUP+M6RiESDWpOzu0Sm7F0ZRpBp0ZvJDznH4A==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-test.tgz':
@@ -13777,13 +13890,13 @@ packages:
     dev: false
     name: '@rush-temp/table-test'
     resolution:
-      integrity: sha512-m18Q57BStxms7+LWpoq0croiPVsBtIgqekDkfqTz6guRD0R8HjKhAg5IoWEYzMdxdo7r3nLm8V+B4Ysv0Pakyg==
+      integrity: sha512-Zx0cyzEPcNyGYBXMXkcpnrzuh71bUfVsGSQwvkuGSCIGt0A5zkqHaULp+MAUOdrKLpb3muNuPOOJPspvI8tn0A==
       tarball: 'file:projects/table-test.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
     dependencies:
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       copyfiles: 2.1.0
       css-loader: /css-loader/1.0.1/webpack@4.31.0
       rimraf: 2.6.3
@@ -13800,16 +13913,16 @@ packages:
     dev: false
     name: '@rush-temp/table-view'
     resolution:
-      integrity: sha512-Fj7G+IswdOJMA5GS/a15eGyfv3pxQTIfVr8L8UTew7b2xI0XoG17jDcYvUDTQ1Y7/TF3GKm+bjxjfpAEQBslNQ==
+      integrity: sha512-Y8LJfuGOqTeIC4oXqpqMXonA2IY5eQrIghduGGNxjlTTrIjo1yRlhurXENXl2Pr5G7V0b1SZFnaheR6L2GObHg==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
   'file:projects/test-utils.tgz':
     dependencies:
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/nconf': 0.0.37
       '@types/node': 10.14.10
       '@types/string-hash': 1.1.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       lodash: 4.17.11
       moniker: 0.1.2
       nconf: 0.10.0
@@ -13821,18 +13934,18 @@ packages:
     dev: false
     name: '@rush-temp/test-utils'
     resolution:
-      integrity: sha512-cFNaOBXWUajdcm4VW8HrPhuPo4yQC7Xapn7uGRHeFgn0a6cQoNqVwVqEet2Ed+g9z1Mh/V6mfF1sXqY5ChAclw==
+      integrity: sha512-xd4S2zA1QPf5hlpNoH41S650Vj0DUFjuCGDiy/5mzYTUadce53WdhH4t4diRe0kBpmz4kMDo+zRc1iLwtR+upQ==
       tarball: 'file:projects/test-utils.tgz'
     version: 0.0.0
   'file:projects/tools-core.tgz':
     dependencies:
       '@types/debug': 0.0.31
       '@types/jsonwebtoken': 8.3.2
-      '@types/lodash': 4.14.134
+      '@types/lodash': 4.14.135
       '@types/node': 10.14.10
       '@types/randomstring': 1.1.6
       async: 2.6.2
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       jsonwebtoken: 8.5.1
       lodash: 4.17.11
@@ -13844,7 +13957,7 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-a7jVb0Zsn19HlL3eHKIjavwgI0ftdmiIO0zcP9eD5qgZ99SKKk4TYnapwheaNjF3Cy9HO10hD/yd9PVyT/s4KQ==
+      integrity: sha512-HGwWd3euCQdwfEK/p57cU08y9Tav5KkBfsB4h7OzAbi6vPVCB58ZeNjfFiJFm15ri/Jtcc87iWZV6kBSNQm8Cw==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/translator.tgz':
@@ -13852,7 +13965,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/node': 10.14.10
       '@types/request': 2.48.1
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       request: 2.88.0
       rimraf: 2.6.3
@@ -13862,7 +13975,7 @@ packages:
     dev: false
     name: '@rush-temp/translator'
     resolution:
-      integrity: sha512-b6cRn4Thw1WntDhB7YdbPJaHF7plvrCjVqwuA2UeOnTQ/R3/+fcmBR7gOVqrJfjga/ndVFXTQKW3PC0HVwMBBw==
+      integrity: sha512-jUwobhxNArk3jVIPctlY1ZfYQBVnhFMO8x2RwUjb+JMOYqSbnUta8GyHvhUuVnUCMxZTLp/q0J6I2KJ4IwhtPA==
       tarball: 'file:projects/translator.tgz'
     version: 0.0.0
   'file:projects/utils.tgz':
@@ -13870,7 +13983,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       debug: 4.1.1
       lodash: 4.17.11
       mocha: 5.2.0
@@ -13885,7 +13998,7 @@ packages:
     dev: false
     name: '@rush-temp/utils'
     resolution:
-      integrity: sha512-TLH4HLr0uf6nym24s+JAmtRyBgphhho/PKf8haZsqUNxOf7BeFSEPqiEZ5SPDiruaNKxBgkjyGPiU9tQ/b44bA==
+      integrity: sha512-TV19FItqW6eHGGIk4m6pIPiOq7UCcTGKG0ARtFCVgsGqo18dHoI2DBqEVFmNr7XQcXDR88QilEnRZeIaQCTHMQ==
       tarball: 'file:projects/utils.tgz'
     version: 0.0.0
   'file:projects/video-players.tgz':
@@ -13899,16 +14012,16 @@ packages:
     dev: false
     name: '@rush-temp/video-players'
     resolution:
-      integrity: sha512-qdATmOM1SjxG3KWzMCiX1vZNZhe25iRv7iS20JeQPMeKIbtujgKVmNVWJQwEAv8o7upgbgyXSdu+Wpb7XnB9Kw==
+      integrity: sha512-+rsXa5fxBTSL3qvzarMEzkQxDuL03yjTK6EodJlryhbNhualv8dnlnUzmRqUbi5zDkh6zSFAhkVLYqTp9WneIA==
       tarball: 'file:projects/video-players.tgz'
     version: 0.0.0
   'file:projects/webflow.tgz':
     dependencies:
-      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0
+      '@prague/prague-dev-server': packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.10
-      concurrently: 4.1.0
+      concurrently: 4.1.1
       copyfiles: 2.1.0
       css-loader: /css-loader/1.0.1/webpack@4.35.0
       debug: 4.1.1
@@ -13931,12 +14044,12 @@ packages:
       url-loader: /url-loader/1.1.2/webpack@4.35.0
       webpack: 4.35.0
       webpack-bundle-analyzer: 2.13.1
-      webpack-cli: /webpack-cli/3.3.4/webpack@4.35.0
+      webpack-cli: /webpack-cli/3.3.5/webpack@4.35.0
       webpack-visualizer-plugin: 0.1.11
     dev: false
     name: '@rush-temp/webflow'
     resolution:
-      integrity: sha512-ZHHBOy+t60pnxO3om1zBIhyKsXz3SSDWvoUEs/xTkCnBK0L3iEdpf7DD7zLyMMF6+6gDru+OA4q5hnS5Ed1RoQ==
+      integrity: sha512-mpDksYRDklb5xqIHinO8uM9glYRTZ9xlkVhV2wNU4Hy3MXp3V+Uz8kav3GiB7psXN384nONTRCgpLvRL2uP4qQ==
       tarball: 'file:projects/webflow.tgz'
     version: 0.0.0
   packages.wu2.prague.office-int.com/@chaincode/charts/0.3.7140/tslint@5.18.0+typescript@3.4.5:
@@ -13960,24 +14073,6 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@chaincode%2fcharts/-/charts-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@chaincode/image-collection/0.5.8071:
-    dependencies:
-      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.5.8071
-      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.8071
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/framework-definitions': packages.wu2.prague.office-int.com/@prague/framework-definitions/0.5.8071
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
-      '@types/node': 10.14.10
-      bootstrap: 3.4.1
-    dev: false
-    name: '@chaincode/image-collection'
-    resolution:
-      integrity: sha512-seBv+lEmdfRN9jILJ3KNZS85Nsw7o2/87RozBXEgEXO7FkcNT6SC5rPbrL9FS4IkTbCbdPPU3FT7uiex5SpWEw==
-      registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@chaincode%2fimage-collection/-/image-collection-0.5.8071.tgz'
-    version: 0.5.8071
   packages.wu2.prague.office-int.com/@chaincode/monaco/0.3.7140:
     dependencies:
       '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.3.7140
@@ -14022,6 +14117,24 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@chaincode%2fpinpoint-editor/-/pinpoint-editor-0.3.7140.tgz'
     version: 0.3.7140
+  packages.wu2.prague.office-int.com/@chaincode/video-players/0.5.7897:
+    dependencies:
+      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.5.7897
+      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.7897
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/framework-definitions': packages.wu2.prague.office-int.com/@prague/framework-definitions/0.5.7897
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
+      '@types/node': 10.14.9
+      bootstrap: 3.4.1
+    dev: false
+    name: '@chaincode/video-players'
+    resolution:
+      integrity: sha512-UgaEGpJvd1nPYiLYu55aP2h01x0nT7IFPywzH6UAz0WKV94z53TGh/OGsfKmgDTAmigagpw809TPCH3YJX3rIg==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@chaincode%2fvideo-players/-/video-players-0.5.7897.tgz'
+    version: 0.5.7897
   packages.wu2.prague.office-int.com/@ms/charts-core/0.1.14:
     dev: false
     name: '@ms/charts-core'
@@ -14072,8 +14185,8 @@ packages:
     version: 0.3.7140
   packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7278:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7356
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7405
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7405
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.0
       '@types/node': 10.14.8
@@ -14106,46 +14219,46 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fapp-component/-/app-component-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/app-component/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/app-component/0.5.7897:
     dependencies:
-      '@prague/cell': packages.wu2.prague.office-int.com/@prague/cell/0.4.7927
-      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.4.7927
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/container-runtime': packages.wu2.prague.office-int.com/@prague/container-runtime/0.4.7927
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/sequence': packages.wu2.prague.office-int.com/@prague/sequence/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
-      '@prague/stream': packages.wu2.prague.office-int.com/@prague/stream/0.4.7927
+      '@prague/cell': packages.wu2.prague.office-int.com/@prague/cell/0.5.7897
+      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.7897
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/container-runtime': packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.7897
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/sequence': packages.wu2.prague.office-int.com/@prague/sequence/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
+      '@prague/stream': packages.wu2.prague.office-int.com/@prague/stream/0.5.7897
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     name: '@prague/app-component'
     resolution:
-      integrity: sha512-uJ4sAO9XceI0hy84XV8gMLHZbXxPLGWMi1aZs0Qir0GsXHgJ2rH31QVkrOeYvQfxghfluSXC2u/6KSw69hJosQ==
+      integrity: sha512-+41/4G4dTYN7ejhz+ylPxF6EtF7mCi/6ebOg1li/AiZCA7oe/i/dOWeJvFmR6IQ1mQ6HkGYrpcZt6AFlD8/RuA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fapp-component/-/app-component-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/app-component/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fapp-component/-/app-component-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/app-component/0.5.8191:
     dependencies:
-      '@prague/cell': packages.wu2.prague.office-int.com/@prague/cell/0.5.8071
-      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.8071
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/container-runtime': packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.8071
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/sequence': packages.wu2.prague.office-int.com/@prague/sequence/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
-      '@prague/stream': packages.wu2.prague.office-int.com/@prague/stream/0.5.8071
+      '@prague/cell': packages.wu2.prague.office-int.com/@prague/cell/0.5.8191
+      '@prague/component-runtime': packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.8191
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/container-runtime': packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.8191
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/sequence': packages.wu2.prague.office-int.com/@prague/sequence/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
+      '@prague/stream': packages.wu2.prague.office-int.com/@prague/stream/0.5.8191
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     name: '@prague/app-component'
     resolution:
-      integrity: sha512-fIWjYEqGcF3KQzPPH/H7zbA4IUj1pV4oUphnmgnhBNg8lDZOzusoGmXMunxmTpd51K1MlkKgXCCeS+vP6OatbA==
+      integrity: sha512-HnpNUa+JsA8nmk8u6ffPXBeRiJbyKMGsU7K7Bl/7erKdKadjacX3XmUFTEPLsNycVbKZ2147GyxBZhM6NmI/4g==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fapp-component/-/app-component-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fapp-component/-/app-component-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/build-common/0.3.6609/tslint@5.18.0+typescript@3.4.5:
     dependencies:
       tslint-microsoft-contrib: /tslint-microsoft-contrib/6.1.1/tslint@5.18.0+typescript@3.4.5
@@ -14182,34 +14295,34 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcell/-/cell-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/cell/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/cell/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
       debug: 4.1.1
       lodash: 4.17.11
     dev: false
     name: '@prague/cell'
     resolution:
-      integrity: sha512-iI0VOfWKY8KNQil2uVpQCK3DGvt1fXiqY2a0QaLvuUShkYCyKwfG6NTilVtkWYude8TSJP1FZvS9prTofXwlgA==
+      integrity: sha512-G9j+i2EzPr6WUHIjXKiGJOTu26upvZVQKpVyIPL1XdYpt25fh1CxXT9xygkdBR6uH1JNf6ZUYD4iOih037HU8A==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcell/-/cell-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/cell/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcell/-/cell-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/cell/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
       debug: 4.1.1
       lodash: 4.17.11
     dev: false
     name: '@prague/cell'
     resolution:
-      integrity: sha512-SZApqFHp+34D+GXyBhUC7NwU9GpJp4u0JuLvYVYoAY2fJx9Kf8BYPZqWCUB2zyTh6DtcLyJVhPAuX7dnKlMSYA==
+      integrity: sha512-NFmC2EeGlYUSopm7n91/WwckwvXsVCkD47to6Zg2sNyu1MhHC8jIWXf7O4Ph86FWnkSq0IYS7iUVH3qA2NrE2g==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcell/-/cell-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcell/-/cell-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/client-api/0.3.7140:
     dependencies:
       '@prague/api-definitions': packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7140
@@ -14267,13 +14380,13 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcomponent-runtime/-/component-runtime-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/component-runtime/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
       async: 2.6.2
       debug: 4.1.1
       lodash: 4.17.11
@@ -14281,17 +14394,17 @@ packages:
     dev: false
     name: '@prague/component-runtime'
     resolution:
-      integrity: sha512-2KBQvA44/hbVD6Z8drW6QfWZ/rxPLGSldhj5Gsf4K+CbivsfbIE4uIkAcHaAxC+DBnuNDhv0d2Ny1T+Jbh1vJA==
+      integrity: sha512-1PI1WvmJjKZQs09ZnXvGunXGaWrMhjABDI/td60KzgHHbXI6r9GuprO6xwXr8g92+vSZ9TUXz4As2f6zg4xRRw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcomponent-runtime/-/component-runtime-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcomponent-runtime/-/component-runtime-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/component-runtime/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       async: 2.6.2
       debug: 4.1.1
       lodash: 4.17.11
@@ -14299,17 +14412,17 @@ packages:
     dev: false
     name: '@prague/component-runtime'
     resolution:
-      integrity: sha512-OnXZjg2/3Ck53wqh64Fe44B8hQ67bM+JmxmtrWeUocVPzlWi+s2vu9W4h39JMzV35IJmbFwUQVOn/LmHkm16bg==
+      integrity: sha512-65WXky3ycL3AhGZM7W8MKLpv20/SJLDIJ8RRxJcFUYQbJoUhS3X4hl76QD1UW7YXW4/J/W2IJq/oTecTlXibpg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcomponent-runtime/-/component-runtime-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcomponent-runtime/-/component-runtime-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/component/0.3.6771:
     dependencies:
       '@prague/api-definitions': packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7278
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7356
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7356
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7356
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7372
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7372
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7372
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7372
       async: 2.6.2
       debug: 3.2.6
       lodash: 4.17.11
@@ -14369,46 +14482,56 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356:
+  packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7372:
     dependencies:
       debug: 4.1.1
     dev: false
     name: '@prague/container-definitions'
     resolution:
-      integrity: sha512-TPK+ExlOCr/x1HkMVUF6K3yxDeIG7XhFSt/xfoM9wphtrKCQuQAfcw6JEO14GxxA4uQdvGDVw5q+F7GJXH3SBg==
+      integrity: sha512-t2kD+t/5JgADOgTmw7d/f704Xj92I5+NNWKIJyd93NGbnX/UFu64k+ou67ZDXnkLlaRP0XExenjZ1BqWO6h0Sg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.3.7356.tgz'
-    version: 0.3.7356
-  packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7605:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.3.7372.tgz'
+    version: 0.3.7372
+  packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7405:
     dependencies:
       debug: 4.1.1
     dev: false
     name: '@prague/container-definitions'
     resolution:
-      integrity: sha512-yfFRQXWeSpJ2grRot/8yauhNfHeumQWHHZy6QQ2vZrqBnxjRJpHZwOzXbcSTJtTPOuSY+wP0ALEHBTQsCpCH+g==
+      integrity: sha512-h3dRypxiEIQIYEcZ8x6GnUrWbR+yYI/R8le3Bt07Wdz5BlHCeMDTL33+04qkZ5SkRuHI0asfjRPqYF2Qfd98mQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.4.7605.tgz'
-    version: 0.4.7605
-  packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.3.7405.tgz'
+    version: 0.3.7405
+  packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7630:
     dependencies:
       debug: 4.1.1
     dev: false
     name: '@prague/container-definitions'
     resolution:
-      integrity: sha512-Hw/QLpyFApDzRKl78M0gwCDljoZTKq59NU5KEs97IkEDkcZ7STio9SdJT+qiXWPT700w/9gmhgDalf4qBga3LA==
+      integrity: sha512-0FJbvs09VoLZCzZOaqtVTSyzB3zkDidh0Yvm7qKROR9X4GdFE4xWWr9Pv2kC7vE8CMvOTfUFiZLlovjhfxlCYg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.4.7630.tgz'
+    version: 0.4.7630
+  packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897:
     dependencies:
       debug: 4.1.1
     dev: false
     name: '@prague/container-definitions'
     resolution:
-      integrity: sha512-MV9a+leTDP7EGvFoVbNp6alaeS8r7cFOPLwQ0vNGZPsQ39Q9brKsGi9Pj7tvQT805zdglyqBYJbxpiJkzsD86A==
+      integrity: sha512-HgnEmReJMURO7LwMvD8Q+nacIQMNsGsri7OQWvpFkF5J5A9/CZyvDsCqhr28VanLHUMTEpZb7+6u65eig0lUZw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191:
+    dependencies:
+      debug: 4.1.1
+    dev: false
+    name: '@prague/container-definitions'
+    resolution:
+      integrity: sha512-xBrU02ajkE7lj2tkj8EAcu9tDOdDtJcjqfNkrUnwgYo0nqKDpJCbFnFGGsDJMYZGbfUKD93DJ0It1Tp1YrVKxQ==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-definitions/-/container-definitions-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/container-loader/0.3.7140:
     dependencies:
       '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7140
@@ -14425,10 +14548,10 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-loader/-/container-loader-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/container-loader/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/container-loader/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/double-ended-queue': 2.1.0
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
@@ -14437,10 +14560,10 @@ packages:
     dev: false
     name: '@prague/container-loader'
     resolution:
-      integrity: sha512-xasIVS+wzX7KbhQJ9MnvUanqe1xWZVcBfWKaV+GyGYQt9l/gVLRsN9eYPjFa9jZwU0ljF7fi5v7S2w3bqQy9Kg==
+      integrity: sha512-EC1Z189Qy9+YUyRDOjM0Jv0faJt3wOtARSbjdLIvnzqJ44vLH1PLiRVa7Vhz4sSL4KGebUUoolaWh0cS6OfUvg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-loader/-/container-loader-0.4.7927.tgz'
-    version: 0.4.7927
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-loader/-/container-loader-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/container-runtime/0.3.7140:
     dependencies:
       '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7140
@@ -14463,14 +14586,35 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-runtime/-/container-runtime-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/container-runtime/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.134
+      '@types/node': 10.14.9
+      '@types/scriptjs': 0.0.2
+      async: 2.6.2
+      debug: 4.1.1
+      lodash: 4.17.11
+      performance-now: 2.1.0
+    dev: false
+    name: '@prague/container-runtime'
+    resolution:
+      integrity: sha512-jZ7Xaxm2MVJ9kNw6hjQth7hU9xfMauTGyXtOJNGxr6Y3QwFHSpBxqw2MGMTbnE3nACnPR6GRhSRc/dgRHEEMtQ==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-runtime/-/container-runtime-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.8191:
+    dependencies:
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
+      '@types/async': 2.4.2
+      '@types/debug': 0.0.31
+      '@types/lodash': 4.14.135
       '@types/node': 10.14.10
       '@types/scriptjs': 0.0.2
       async: 2.6.2
@@ -14480,39 +14624,18 @@ packages:
     dev: false
     name: '@prague/container-runtime'
     resolution:
-      integrity: sha512-0Lf0e4y6r1nKpVJ/wS17dGPKUjX/04EBrUr+G/IdjxGyMuMgmRW9DTwRzz+A7iY7HZA6uqsOb6z3Qocw/FJnJw==
+      integrity: sha512-AvOdK8BWa7d4TzW2MZ/pH5MydmMmnb/z3uJL1e1qHkuTzNAiOsDoh5wuKOD9tsUp9KFMyRBK3rZS2ybwUWoupQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-runtime/-/container-runtime-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/container-runtime/0.5.8071:
-    dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
-      '@types/async': 2.4.2
-      '@types/debug': 0.0.31
-      '@types/lodash': 4.14.134
-      '@types/node': 10.14.10
-      '@types/scriptjs': 0.0.2
-      async: 2.6.2
-      debug: 4.1.1
-      lodash: 4.17.11
-      performance-now: 2.1.0
-    dev: false
-    name: '@prague/container-runtime'
-    resolution:
-      integrity: sha512-JEhIWWZQ/hm4AE+KRvY8AY+Aa/cY7pjQikjGQ7bKfUN2NbObdQIvhNWAQH6gleKM82rCXYKCMek++HLJ1EjNlw==
-      registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-runtime/-/container-runtime-0.5.8071.tgz'
-    version: 0.5.8071
-  packages.wu2.prague.office-int.com/@prague/framework-definitions/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fcontainer-runtime/-/container-runtime-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/framework-definitions/0.5.7897:
     dev: false
     name: '@prague/framework-definitions'
     resolution:
-      integrity: sha512-O01bC46vdiS2huRiHGCbakM/+lk9F8QH3XrRqdIpKNud3U380mgwN7zh8LSAzgkAGnVSaVkTqED7zfkvnLGCCw==
+      integrity: sha512-0CNRjhul9MzbVdgcxKs8G++cSGVryeoII59mZhWCxakTov/oZ6H06c98JJrRMgLLMIpLn7tSvcCGXLM5R6qA1Q==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fframework-definitions/-/framework-definitions-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fframework-definitions/-/framework-definitions-0.5.7897.tgz'
+    version: 0.5.7897
   packages.wu2.prague.office-int.com/@prague/gitresources/0.3.6609:
     dev: false
     name: '@prague/gitresources'
@@ -14529,38 +14652,46 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7356:
+  packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7372:
     dev: false
     name: '@prague/gitresources'
     resolution:
-      integrity: sha512-EBIQhjqX2SHPxPveZ1TnAJlyq8MzHKqm45TSoPH/8EMi04vzaG38qTQC5zipM6HO9cG52hTeKFW3gU1pF2C3hQ==
+      integrity: sha512-OGnX5SGt7xTFwzNXWx3JG1dlJBrvyEM6H80MSq3ziDxcPysCnk7MmJuf3lWk2ScTrUAR7QKnx8OEeQTA+kdRew==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.3.7356.tgz'
-    version: 0.3.7356
-  packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7605:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.3.7372.tgz'
+    version: 0.3.7372
+  packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7405:
     dev: false
     name: '@prague/gitresources'
     resolution:
-      integrity: sha512-gn8JSQVxup2AXv3kSOfEMb7GEGI2iqKKrwTC5A00m8PsK8fGuGzWDVSKkC6S52AiMFFq7vqDhI1uNpZXqDfkTg==
+      integrity: sha512-dmtY1S2yaDWIssJ6RftgCqYJhCZx19QK+MyU3MJOI2JE/ntU5+gI7hOtz+TEAq37DSycXZ1xKfAUurSxx2irsQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.4.7605.tgz'
-    version: 0.4.7605
-  packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.3.7405.tgz'
+    version: 0.3.7405
+  packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7630:
     dev: false
     name: '@prague/gitresources'
     resolution:
-      integrity: sha512-p5I9Ybyq8zC1lnLdTXJUZ4s734RTnkykNubNi/APPyaki6upNutYfw8ipi4MvxO7I0qefrthhBZLy3wHox6cjw==
+      integrity: sha512-YxCV6gLSN1dz/Uql87M22ucgHZT/7Bp+qj/uCfqVNDOsI6B/fXAJ1IBdBCvESF8vixz7T8P2zfIMI1lVmtrMIQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.4.7630.tgz'
+    version: 0.4.7630
+  packages.wu2.prague.office-int.com/@prague/gitresources/0.5.7897:
     dev: false
     name: '@prague/gitresources'
     resolution:
-      integrity: sha512-7Db8o0zF0DpK0Y3iD6Th4LdnoTpInrqMYGL9wvzANI76TNGibjbfV1SoHDx/0CakRMjUaZjzNt/TQOrwLIergw==
+      integrity: sha512-CQyeF7kg5fv0fB3ojfgfQ92azeWRJTwdmDEo7fpFAu0nTs+ElLWryPzXx1LFrblWVzHOPKeFkjmmiV5OGrhVrg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191:
+    dev: false
+    name: '@prague/gitresources'
+    resolution:
+      integrity: sha512-zY5cofPgtaI17+3P56yzk/8e4jj1oNDK5DtL0XPx9MFfcE/HTTTTgzj8Is6OMaL0WRSW2Kh01Xp+GU1wQ1D/EQ==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fgitresources/-/gitresources-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/map/0.3.7140:
     dependencies:
       '@prague/api-definitions': packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7140
@@ -14575,34 +14706,34 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmap/-/map-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/map/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/map/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
       debug: 4.1.1
       lodash: 4.17.11
     dev: false
     name: '@prague/map'
     resolution:
-      integrity: sha512-VEjzsc/XzvmmyuZqqZD/2BT4++gS5BZF1LpWLRk3PEjuLu57oL8RbffHDteJ/e5o8pJPG0qN5awATUq5DUNzJQ==
+      integrity: sha512-2D47lW4JV3rkaVNvvyY31iJn9StKUsHMGA0T2eG4O4z3BlPyoBGC/osaXVYcvMzyM2iqsG8X0THVEmitddLHJg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmap/-/map-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/map/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmap/-/map-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/map/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
       debug: 4.1.1
       lodash: 4.17.11
     dev: false
     name: '@prague/map'
     resolution:
-      integrity: sha512-uXCLXU6qGtvPkysEAVyE27wvtvAszi3U3lNPmk88PrjueWHBDtDsFGeV9Uwb/1aBB1nlgiYo9aLW8zrkngiFUQ==
+      integrity: sha512-rLefif+D34IWThJ8QFcJRYlxCUgJuMYhKAQmDW2GeLs/rtmWCrwxT1PuxOMDmOwKpKHuiZnSfaGXJ4FQBmgE4A==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmap/-/map-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmap/-/map-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/merge-tree/0.3.7140:
     dependencies:
       '@prague/api-definitions': packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7140
@@ -14616,34 +14747,34 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmerge-tree/-/merge-tree-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/merge-tree/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
       debug: 4.1.1
     dev: false
     name: '@prague/merge-tree'
     resolution:
-      integrity: sha512-f2pjU/uipLWGZP/kHYXAjle6fjfa+08xPqaxmQt50SoZeYT1RXqnzp7cdlCS26wDBOyYhPhHFFE02rn2+gWWDA==
+      integrity: sha512-v9neQfGae7ujRFE8nm61aTqgP85R6kzByUIogAPvoBV2xNhtZvmp6cLhvkgIbniiGlD3A0EsZ0XSM/D+tbhUog==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmerge-tree/-/merge-tree-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmerge-tree/-/merge-tree-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       debug: 4.1.1
     dev: false
     name: '@prague/merge-tree'
     resolution:
-      integrity: sha512-sxpQxgTPS28mmiTnF9lW4o6Zr6aGFNDmqQq8InpEtjiSFgxq9M7pWj1UD4Ixe7GqZsht3A7am4RBcpy0AJtQkg==
+      integrity: sha512-ThXEY0avHo2Lr6jdMuqTx/wbIZMAtn/dFMfPef0Pi8X7TiIZYh5XLhDY20ccpsRnsD+sE2E3Lv5wG/hlaVL7cA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmerge-tree/-/merge-tree-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fmerge-tree/-/merge-tree-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/odsp-utils/0.3.6609/tslint@5.18.0+typescript@3.4.5:
     dependencies:
       '@prague/build-common': packages.wu2.prague.office-int.com/@prague/build-common/0.3.6609/tslint@5.18.0+typescript@3.4.5
@@ -14656,16 +14787,16 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fodsp-utils/-/odsp-utils-0.3.6609.tgz'
     version: 0.3.6609
-  packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2:
+  packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0:
     dependencies:
-      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.4.7927
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/container-loader': packages.wu2.prague.office-int.com/@prague/container-loader/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.4.7927
-      '@prague/routerlicious-host': packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.4.7927
-      '@prague/routerlicious-socket-storage': packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
+      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.5.8191
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/container-loader': packages.wu2.prague.office-int.com/@prague/container-loader/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8191
+      '@prague/routerlicious-host': packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.5.8191
+      '@prague/routerlicious-socket-storage': packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
       ansi-html: 0.0.7
       axios: 0.18.1
       bonjour: 3.5.0
@@ -14688,7 +14819,7 @@ packages:
       portfinder: 1.0.20
       schema-utils: 1.0.0
       selfsigned: 1.10.4
-      semver: 6.1.1
+      semver: 6.1.2
       serve-index: 1.9.1
       sockjs: 0.3.19
       sockjs-client: 1.3.0
@@ -14707,20 +14838,20 @@ packages:
     peerDependencies:
       webpack: ^4.0.0
     resolution:
-      integrity: sha512-fKTJjWZsvnq6Y/nHKSumZZMfaxV4RxNuQzQHAZWNrqUsbzLB20G1nISvMryWtk5500d+y0wMjYz4mYOdt7qVMw==
+      integrity: sha512-tWySSKg+KzKgDFyXv/elGOPRmf3BQMHmDEE0DSh52k8f3lhL4NtN2yd9ge4kdk1GO2LK0WLq5vzNCbo2wS9tGQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fprague-dev-server/-/prague-dev-server-3.4.2.tgz'
-    version: 3.4.2
-  packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2/webpack@4.35.0:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fprague-dev-server/-/prague-dev-server-3.5.0.tgz'
+    version: 3.5.0
+  packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0/webpack@4.35.0:
     dependencies:
-      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.4.7927
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/container-loader': packages.wu2.prague.office-int.com/@prague/container-loader/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.4.7927
-      '@prague/routerlicious-host': packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.4.7927
-      '@prague/routerlicious-socket-storage': packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
+      '@prague/app-component': packages.wu2.prague.office-int.com/@prague/app-component/0.5.8191
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/container-loader': packages.wu2.prague.office-int.com/@prague/container-loader/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8191
+      '@prague/routerlicious-host': packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.5.8191
+      '@prague/routerlicious-socket-storage': packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
       ansi-html: 0.0.7
       axios: 0.18.1
       bonjour: 3.5.0
@@ -14743,7 +14874,7 @@ packages:
       portfinder: 1.0.20
       schema-utils: 1.0.0
       selfsigned: 1.10.4
-      semver: 6.1.1
+      semver: 6.1.2
       serve-index: 1.9.1
       sockjs: 0.3.19
       sockjs-client: 1.3.0
@@ -14759,37 +14890,37 @@ packages:
     engines:
       node: '>= 6.11.5'
     hasBin: true
-    id: packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.4.2
+    id: packages.wu2.prague.office-int.com/@prague/prague-dev-server/3.5.0
     name: '@prague/prague-dev-server'
     peerDependencies:
       webpack: ^4.0.0
     resolution:
-      integrity: sha512-fKTJjWZsvnq6Y/nHKSumZZMfaxV4RxNuQzQHAZWNrqUsbzLB20G1nISvMryWtk5500d+y0wMjYz4mYOdt7qVMw==
+      integrity: sha512-tWySSKg+KzKgDFyXv/elGOPRmf3BQMHmDEE0DSh52k8f3lhL4NtN2yd9ge4kdk1GO2LK0WLq5vzNCbo2wS9tGQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fprague-dev-server/-/prague-dev-server-3.4.2.tgz'
-    version: 3.4.2
-  packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fprague-dev-server/-/prague-dev-server-3.5.0.tgz'
+    version: 3.5.0
+  packages.wu2.prague.office-int.com/@prague/routerlicious-host/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/debug': 0.0.31
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     name: '@prague/routerlicious-host'
     resolution:
-      integrity: sha512-dcTYO2ga3CC10p+AOvyJtXUygbP0O2vwScYaTgPXgGUa6AQ3xPE8hLzCbnz7YJR3LmtoWRa+veURJnIj0uI5Jw==
+      integrity: sha512-1xsALvfBMPEuFqhsbGbhxESfeaivP1nI81SWcQzi3O+RgRi4Adkcqezw9EVBQZdpzaUZSMIdH2q9QU+n/PAxrw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2frouterlicious-host/-/routerlicious-host-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2frouterlicious-host/-/routerlicious-host-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/routerlicious-socket-storage/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/services-client': packages.wu2.prague.office-int.com/@prague/services-client/0.4.7927
-      '@prague/socket-storage-shared': packages.wu2.prague.office-int.com/@prague/socket-storage-shared/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/services-client': packages.wu2.prague.office-int.com/@prague/services-client/0.5.8191
+      '@prague/socket-storage-shared': packages.wu2.prague.office-int.com/@prague/socket-storage-shared/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       axios: 0.18.1
       debug: 4.1.1
       isomorphic-ws: /isomorphic-ws/4.0.1/ws@6.2.1
@@ -14799,10 +14930,10 @@ packages:
     dev: false
     name: '@prague/routerlicious-socket-storage'
     resolution:
-      integrity: sha512-5qYdAQWW6mQ0r4jfL8+y3w3x0mu3c7yEQsemajo58Mek4h0XpJyku+G/SDc0WjeuoKkpCeZQd1a0eZYiabOn7Q==
+      integrity: sha512-QWLP0klyWE90nW/n18f9gysW3EvDBs/lxv8KaGumAw04SdboqQevoDDDe1RluGr0kCv3Sg40tO6+xQ3AfUnxtA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2frouterlicious-socket-storage/-/routerlicious-socket-storage-0.4.7927.tgz'
-    version: 0.4.7927
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2frouterlicious-socket-storage/-/routerlicious-socket-storage-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7140:
     dependencies:
       '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7140
@@ -14815,79 +14946,92 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7356:
+  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7372:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7356
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7356
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7372
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7372
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7372
       '@types/node': 10.14.8
     dev: false
     name: '@prague/runtime-definitions'
     resolution:
-      integrity: sha512-/M7WtyPyONDr7W60LGuFi/tVXmnwwcvpmjETkNPft+CcPSDWnRUyGGjTRlSFeAbZOKkgh0/PB85sbBPJLyFKKQ==
+      integrity: sha512-8Du5BGXLJGNtFgGD3GMv40SFhXgmPvBVzqTCk0o3pVeoZIVY2Tbx4xrH1WaZzF81z3Gyjdie8wak3egdRmfhYA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.3.7356.tgz'
-    version: 0.3.7356
-  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7605:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.3.7372.tgz'
+    version: 0.3.7372
+  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7405:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7605
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7605
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7605
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7405
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7405
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7405
+      '@types/node': 10.14.8
+    dev: false
+    name: '@prague/runtime-definitions'
+    resolution:
+      integrity: sha512-yVpwWpfYFX0l9u51ZL8aSnFIPJKcpM6kSiVrsVPr5lTkeuV2uBRfpCurTVkbHkMwkKXUuJvVEFJBuD6uZ2Olfg==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.3.7405.tgz'
+    version: 0.3.7405
+  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7630:
+    dependencies:
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7630
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7630
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7630
       '@types/node': 10.14.9
     dev: false
     name: '@prague/runtime-definitions'
     resolution:
-      integrity: sha512-LuzbyZ+NQmJsb2FRfxCDga5azP9rcZUF5P4eJwFWDaJYk3neoR2Up5l3Km0T4hFfh6fA4AwLNCvjNxxvbuOq4A==
+      integrity: sha512-utWf5dspZ/pjK0LgwjRsGf4TD6FybYft1crpuc0+nNXCDU3b5aJlrzgqiIm6krQku4brgGfCuZEqMxSpUkTubw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.4.7605.tgz'
-    version: 0.4.7605
-  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.4.7630.tgz'
+    version: 0.4.7630
+  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
+      '@types/node': 10.14.9
+    dev: false
+    name: '@prague/runtime-definitions'
+    resolution:
+      integrity: sha512-Um9pZ5FeA0Wk4+q3WDh38bYYpqX1f1/e7CJPmhy57Z/9BRJ13pe5k1LeTeYa16w7+Yj4XwcimNWim8C9+Vipaw==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191:
+    dependencies:
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/node': 10.14.10
     dev: false
     name: '@prague/runtime-definitions'
     resolution:
-      integrity: sha512-rCK9zCGJ2zcUMqrPs6lzwyMYR8hEdQoV/bTNH488IOSvEbAZa1kvozNCPGX4CrApsG9xq20Bpba2kW/7RoU4cQ==
+      integrity: sha512-q2KA4exm4f9tKeJUAAFlQ9ntzhSJbn+H9rzsEku8Bzmmc4T7hIPHLnAiT/uPTrvpQiQfVBoWN6Dvmi+/ZgGaWg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7630:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
-      '@types/node': 10.14.10
-    dev: false
-    name: '@prague/runtime-definitions'
-    resolution:
-      integrity: sha512-Dfli7KVHTGAja5hK6LyVtNcSeWXaAgHc/u7S2K4drY5dHGlXGjX4F6S65KyRs7DO0YxSndAhTmwTi9jttUW4sA==
-      registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-definitions/-/runtime-definitions-0.5.8071.tgz'
-    version: 0.5.8071
-  packages.wu2.prague.office-int.com/@prague/runtime-test-utils/0.4.7605:
-    dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7605
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7605
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7605
-      '@prague/services-client': packages.wu2.prague.office-int.com/@prague/services-client/0.4.7605
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7605
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7630
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7630
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7630
+      '@prague/services-client': packages.wu2.prague.office-int.com/@prague/services-client/0.4.7630
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7630
       uuid: 3.3.2
     dev: false
     name: '@prague/runtime-test-utils'
     resolution:
-      integrity: sha512-jIZL6b9vLUto38n+vARrK+pu74VoTefbLt6XJTb6hXHhMqzdceeLFKz4k2M59LxzSyIu6fr1ic82XsVam/JfgQ==
+      integrity: sha512-kNo/CFskRR4gjjb8wJXqv55Yth2btXjXjifBIyHqUMJ0NxK4+8pJ5jtxuUNDb6cLh539wTbFDa7i/UHTZnm2KA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-test-utils/-/runtime-test-utils-0.4.7605.tgz'
-    version: 0.4.7605
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fruntime-test-utils/-/runtime-test-utils-0.4.7630.tgz'
+    version: 0.4.7630
   packages.wu2.prague.office-int.com/@prague/runtime/0.3.6771:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7356
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7356
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7356
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7372
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7372
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.3.7372
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.3.7372
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.133
@@ -14922,77 +15066,94 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsequence/-/sequence-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/sequence/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/sequence/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.4.7927
-      '@prague/merge-tree': packages.wu2.prague.office-int.com/@prague/merge-tree/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.7897
+      '@prague/merge-tree': packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
       '@types/uuid': 3.4.4
       lodash: 4.17.11
       uuid: 3.3.2
     dev: false
     name: '@prague/sequence'
     resolution:
-      integrity: sha512-ZFJIyIO6F78mGdvMNPUHAul5EgtYbeILcrjxoKh4Pi7IcQppHCY7qo8Eh7mQmy6YKkpeJoY8SZtqA1aWHRJ+vg==
+      integrity: sha512-qdd5by9G6lkrijKfymP67YbD1QHVh88gftP+iS0G5o85dDzenxeqniIknuF9dN2BKd9xL6zWaz0JSd+y/me4mw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsequence/-/sequence-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/sequence/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsequence/-/sequence-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/sequence/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8071
-      '@prague/merge-tree': packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8191
+      '@prague/merge-tree': packages.wu2.prague.office-int.com/@prague/merge-tree/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/uuid': 3.4.4
       lodash: 4.17.11
       uuid: 3.3.2
     dev: false
     name: '@prague/sequence'
     resolution:
-      integrity: sha512-lczv3l8CNHNptp9ToEN0SxnBvgCeXhtnbG1ltohR+7m30xfrFTlBRXHpDvvK8WfvutuR5V7LtTLtXBTHeTwzaw==
+      integrity: sha512-IO+TqI93bqyResX+1y5xqBqkCwrarlUVfpMBs+huWOJQmsotQ4PShBJ3tcoOOW309xTA4kh5YnNU5O2bwhsMEA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsequence/-/sequence-0.5.8071.tgz'
-    version: 0.5.8071
-  packages.wu2.prague.office-int.com/@prague/services-client/0.4.7605:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsequence/-/sequence-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/services-client/0.4.7630:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7605
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7605
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7605
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7630
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7630
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7630
       '@types/node': 10.14.9
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     name: '@prague/services-client'
     resolution:
-      integrity: sha512-KYDKdx4SRu0Lp+17gU/9KZs7LZWL3rTiglogap5JuD5kNpWgMJ33rjeTcg0uizjMlEMHG1SeUsP8mdbsI/XHzA==
+      integrity: sha512-FgtabP1LfRzSSOzD1KtaOGsoxD530QvZWewsP/QexPsBdWje4RGQQJrdFTcILKXrPPv70YifyjWzhkbcHxpgBw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fservices-client/-/services-client-0.4.7605.tgz'
-    version: 0.4.7605
-  packages.wu2.prague.office-int.com/@prague/services-client/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fservices-client/-/services-client-0.4.7630.tgz'
+    version: 0.4.7630
+  packages.wu2.prague.office-int.com/@prague/services-client/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/node': 10.14.10
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     name: '@prague/services-client'
     resolution:
-      integrity: sha512-PzAm3ivdgY5VuKJBxUJh0UZXI7Q16JOBF8zkO79VahXa7jvv1a7d1rpfMW09XPUrK2aVyz/xSQPbAzRDnJ9PCA==
+      integrity: sha512-ehVdKd+MAYI9ryY4hpipAh7Pv5rLJ4867sjuwgy3Dow/l9W7nR+OlxBqBpWsEDmdVJGueZhpqQUMs7Uc120xXw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fservices-client/-/services-client-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fservices-client/-/services-client-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.7897
+      '@types/debug': 0.0.31
+      '@types/double-ended-queue': 2.1.0
+      '@types/node': 10.14.9
+      debug: 4.1.1
+      double-ended-queue: 2.1.0-0
+    dev: false
+    name: '@prague/shared-object-common'
+    resolution:
+      integrity: sha512-xUUuT0grGDHWBGURIgkY1QAXRN+U8KKbQ3zr4qnmvXekX6AJE3WsREJN8EBcRGIkW3mhnozYphdAjEHQmz3odw==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fshared-object-common/-/shared-object-common-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191:
+    dependencies:
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.0
       '@types/node': 10.14.10
@@ -15001,40 +15162,23 @@ packages:
     dev: false
     name: '@prague/shared-object-common'
     resolution:
-      integrity: sha512-sj6PKkopjPD3igMXKVXb3+HNPRwTGpb5uBz9sKcUbVamKd/V5l/yUVPEgYeZv0CMKB3smR1HiiL+LWAbLfZIMQ==
+      integrity: sha512-n2Z9uvaXAL8ozLSXkbkuGbYliQ5p6QSl/5/j5jBnE9PQbWqIdYiIdixOzPUuCSmqim9HkPsAnwYntGyKKOKg/Q==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fshared-object-common/-/shared-object-common-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fshared-object-common/-/shared-object-common-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@prague/socket-storage-shared/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8071
-      '@types/debug': 0.0.31
-      '@types/double-ended-queue': 2.1.0
-      '@types/node': 10.14.10
-      debug: 4.1.1
-      double-ended-queue: 2.1.0-0
-    dev: false
-    name: '@prague/shared-object-common'
-    resolution:
-      integrity: sha512-TwhnPt/0C9aMGrfvn3vhw1ca9SOb944xcvLw1E8YTBOXqjIyGgb+qGGApnJWXfbMJIhQu/DZNsTdqGfzW6yaRA==
-      registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fshared-object-common/-/shared-object-common-0.5.8071.tgz'
-    version: 0.5.8071
-  packages.wu2.prague.office-int.com/@prague/socket-storage-shared/0.4.7927:
-    dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/utils': packages.wu2.prague.office-int.com/@prague/utils/0.5.8191
       debug: 4.1.1
       socket.io-client: 2.2.0
     dev: false
     name: '@prague/socket-storage-shared'
     resolution:
-      integrity: sha512-cFIdLYT6BfPhBj6UNXTunqN/U1U28EyBW8LmzWpMUgzU0udfGTajdM+wqSvtDlSHYeoRl+OW2tsaWMQ/rviZMw==
+      integrity: sha512-2VgMrT5kq8tWioOxvViKtZLK7A8JFRBaYE6MAOgIFA1WRBW2lJCPpvv4nexsZhKq1CNqd5GgHR0gJap2JHJwEg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsocket-storage-shared/-/socket-storage-shared-0.4.7927.tgz'
-    version: 0.4.7927
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fsocket-storage-shared/-/socket-storage-shared-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/stream/0.3.7140:
     dependencies:
       '@prague/api-definitions': packages.wu2.prague.office-int.com/@prague/api-definitions/0.3.7140
@@ -15052,12 +15196,12 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fstream/-/stream-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/stream/0.4.7927:
+  packages.wu2.prague.office-int.com/@prague/stream/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.4.7927
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.4.7927
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.7897
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.7897
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.7897
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.4
       debug: 4.1.1
@@ -15065,16 +15209,16 @@ packages:
     dev: false
     name: '@prague/stream'
     resolution:
-      integrity: sha512-xBAiAVRUdfBJr6C+vX6LpM3AAOFqjg52haqNojFZR49yJAX6vVVxu+Fjhw5IJqDCBxw6FRHv6LfKRIw8+8xEIA==
+      integrity: sha512-VgEttvIgcYMeAuEmP2SlGd3Uh0u1qHKefvHD0UlhYWj3xExbEvXOvTU/Gpe75fLO1S/AiEd4cYUR0TKtQ/6Q0Q==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fstream/-/stream-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/stream/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fstream/-/stream-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/stream/0.5.8191:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8071
-      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8071
-      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/map': packages.wu2.prague.office-int.com/@prague/map/0.5.8191
+      '@prague/runtime-definitions': packages.wu2.prague.office-int.com/@prague/runtime-definitions/0.5.8191
+      '@prague/shared-object-common': packages.wu2.prague.office-int.com/@prague/shared-object-common/0.5.8191
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.4
       debug: 4.1.1
@@ -15082,10 +15226,10 @@ packages:
     dev: false
     name: '@prague/stream'
     resolution:
-      integrity: sha512-zM+cXLAL+ZYwq9MNc0/hxtgRARMhTjIK93sYcJQDmpyyKW0JLv0XzsK8xG7fLc7sgxUB2+SpYLVkA+KflyP9HA==
+      integrity: sha512-yQ/GeoYQwGpHdkjyIqsSI+AxcDXVPpbLiRIwgX6LCem/mAYWiFuadFGSdq4SNLG+PyTvgblFhARqp1GC9ULfZA==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fstream/-/stream-0.5.8071.tgz'
-    version: 0.5.8071
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2fstream/-/stream-0.5.8191.tgz'
+    version: 0.5.8191
   packages.wu2.prague.office-int.com/@prague/utils/0.3.7140:
     dependencies:
       '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7140
@@ -15099,10 +15243,10 @@ packages:
       registry: 'https://packages.wu2.prague.office-int.com/'
       tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.3.7140.tgz'
     version: 0.3.7140
-  packages.wu2.prague.office-int.com/@prague/utils/0.3.7356:
+  packages.wu2.prague.office-int.com/@prague/utils/0.3.7372:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7356
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7356
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7372
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7372
       debug: 4.1.1
       lodash: 4.17.11
       performance-now: 2.1.0
@@ -15110,14 +15254,14 @@ packages:
     dev: false
     name: '@prague/utils'
     resolution:
-      integrity: sha512-HpolNlzKH7I99kCSWJNXcEekvcaLwfhCXbXkLa77nH+DC7fGMZZ2fQ+MaF2JKenhVtINTBQ0X/MAwFiYasGphA==
+      integrity: sha512-gWHOQDnqPtmBZGj+Ea+429DuIF+ffIXaT/fBUIuP7oAgDF3f1AyWm+uY2XNaG/Phg6Z/+6Lru6myFePDJIZtLg==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.3.7356.tgz'
-    version: 0.3.7356
-  packages.wu2.prague.office-int.com/@prague/utils/0.4.7605:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.3.7372.tgz'
+    version: 0.3.7372
+  packages.wu2.prague.office-int.com/@prague/utils/0.3.7405:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7605
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7605
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.3.7405
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.3.7405
       debug: 4.1.1
       lodash: 4.17.11
       performance-now: 2.1.0
@@ -15125,14 +15269,14 @@ packages:
     dev: false
     name: '@prague/utils'
     resolution:
-      integrity: sha512-xoWJsRPYZKGOkg5Cwp3l5Rplq0+10OSbCVD4oLEtTIsQUhwaYSrk1DgxJmMTMQaobyvZD37w/bJcSjgf/AnFZw==
+      integrity: sha512-b7hJ3SWt1OrP81yWsRQ5rIJFarb8FDlTD5neOgSL9+lGHYR0vEoN7wHW1DhUCq5eWARU3eFq7Dr2AwkUpsC2AQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.4.7605.tgz'
-    version: 0.4.7605
-  packages.wu2.prague.office-int.com/@prague/utils/0.4.7927:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.3.7405.tgz'
+    version: 0.3.7405
+  packages.wu2.prague.office-int.com/@prague/utils/0.4.7630:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7927
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7927
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.4.7630
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.4.7630
       debug: 4.1.1
       lodash: 4.17.11
       performance-now: 2.1.0
@@ -15140,14 +15284,14 @@ packages:
     dev: false
     name: '@prague/utils'
     resolution:
-      integrity: sha512-tpMocgDuQljGhQqBiKZrr+whjUNARWHEDq21vNsSnv9ySlHv6Hngo4nzezSl0NaBRanI6CmSzeW1FnSukBMCsA==
+      integrity: sha512-r17PL8THNP+yE7d02gUeBFQf9kSAwajTOky4kjbKO2ZshJ7KxN2ggQGP++KD79vLiI5kVbvzA4oiciJoYc7wyw==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.4.7927.tgz'
-    version: 0.4.7927
-  packages.wu2.prague.office-int.com/@prague/utils/0.5.8071:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.4.7630.tgz'
+    version: 0.4.7630
+  packages.wu2.prague.office-int.com/@prague/utils/0.5.7897:
     dependencies:
-      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8071
-      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8071
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.7897
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.7897
       debug: 4.1.1
       lodash: 4.17.11
       performance-now: 2.1.0
@@ -15155,18 +15299,33 @@ packages:
     dev: false
     name: '@prague/utils'
     resolution:
-      integrity: sha512-39L3GLQkGW0pG8NTR8NdSh0pHFGjyNHdNwSn34nEsfIZP1bNyaXnwkOPgfQrK5jnOlL848VryTgZIuYli/EcYQ==
+      integrity: sha512-uf7kAs7DenQP9727y9g8vJDtkqivUs37H5WcL992nllBCp6aiSTbeYKEqe9gpqbMjqXLDx9ii6b57imRPHQkCQ==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.5.8071.tgz'
-    version: 0.5.8071
-  packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.0:
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.5.7897.tgz'
+    version: 0.5.7897
+  packages.wu2.prague.office-int.com/@prague/utils/0.5.8191:
+    dependencies:
+      '@prague/container-definitions': packages.wu2.prague.office-int.com/@prague/container-definitions/0.5.8191
+      '@prague/gitresources': packages.wu2.prague.office-int.com/@prague/gitresources/0.5.8191
+      debug: 4.1.1
+      lodash: 4.17.11
+      performance-now: 2.1.0
+      sha.js: 2.4.11
+    dev: false
+    name: '@prague/utils'
+    resolution:
+      integrity: sha512-C9gdfTz3V2PQuL5seV/L00gQ9u7whIgyxDrElGxyHdZyUzYC9pQt0lAYKhXyvOoFLJcP5EzxjRBq+Gu+DBAuAg==
+      registry: 'https://packages.wu2.prague.office-int.com/'
+      tarball: 'https://packages.wu2.prague.office-int.com/@prague%2futils/-/utils-0.5.8191.tgz'
+    version: 0.5.8191
+  packages.wu2.prague.office-int.com/@tiny-calc/nano/0.0.8199:
     dev: false
     name: '@tiny-calc/nano'
     resolution:
-      integrity: sha512-Re1V7od8QhXs13VYXRBK1V/UZ84tVJMMIkHDa/6QA34FMHSfXjP7X9+pKbxScs0Cxo/+LCfw99BuPL8ddmHmWw==
+      integrity: sha512-tvYuNWLliLPJNsOhqzrebjiL4MnWKOwZwMx6WmYfyt8TKrUkoR8h6uUejaqDnH6N3j/Bre0l3Vp8MrPgGwoDow==
       registry: 'https://packages.wu2.prague.office-int.com/'
-      tarball: 'https://packages.wu2.prague.office-int.com/@tiny-calc%2fnano/-/nano-0.0.0.tgz'
-    version: 0.0.0
+      tarball: 'https://packages.wu2.prague.office-int.com/@tiny-calc%2fnano/-/nano-0.0.8199.tgz'
+    version: 0.0.8199
 registry: 'https://registry.npmjs.org/'
 shrinkwrapMinorVersion: 9
 shrinkwrapVersion: 3
@@ -15249,7 +15408,7 @@ specifiers:
   '@rush-temp/utils': 'file:./projects/utils.tgz'
   '@rush-temp/video-players': 'file:./projects/video-players.tgz'
   '@rush-temp/webflow': 'file:./projects/webflow.tgz'
-  '@tiny-calc/nano': ^0.0.0
+  '@tiny-calc/nano': ^0.0.8199
   '@types/amqplib': ^0.5.9
   '@types/angular': ^1.6.50
   '@types/angular-route': ^1.7.0

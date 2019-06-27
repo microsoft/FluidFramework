@@ -39,7 +39,7 @@
     "@prague/runtime-definitions": "^0.5.0",
     "@prague/sequence": "^0.5.0",
     "@prague/shared-object-common": "^0.5.0",
-    "@tiny-calc/nano": "^0.0.0"
+    "@tiny-calc/nano": "^0.0.8199"
   },
   "devDependencies": {
     "@prague/build-common": "^0.5.0",
