@@ -56,10 +56,9 @@ data:
             "restJsonSize": "50mb",
             "key": "{{ .Values.alfred.key }}",
             "tenants": [
-                {{- $tenants := .Values.alfred.tenants -}}
-                {{- $lastIndex := sub (len $tenants) 1}}
-                {{- range $index, $tenants }}
-                {{ toJson . }}{{- if ne $index $lastIndex -}}, {{ end }}
+                {{- $lastIndex := sub (len .Values.alfred.tenants) 1}}
+                {{- range $i, $tenant := .Values.alfred.tenants }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
             ]
         },
@@ -196,10 +195,9 @@ data:
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
-            {{- $tenants := .Values.riddler.tenants -}}
-            {{- $lastIndex := sub (len $tenants) 1}}
-            {{- range $index, $tenants }}
-            {{ toJson . }}{{- if ne $index $lastIndex -}}, {{ end }}
+            {{- $lastIndex := sub (len .Values.riddler.tenants) 1}}
+            {{- range $i, $tenant := .Values.riddler.tenants }}
+            {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
             {{- end }}
         ],
         "metric": {
