@@ -13,6 +13,12 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly to: number,
         private readonly documentServiceFactory: IDocumentServiceFactory) {}
 
+    /**
+     * Creates a replay document service which uses the document service of provided
+     * documentServiceFactory for connecting to delta stream endpoint.
+     * @param resolvedUrl - URL to be used for connecting to endpoints.
+     * @returns returns the requested document service
+     */
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         return Promise.resolve(createReplayDocumentService(
             this.from,

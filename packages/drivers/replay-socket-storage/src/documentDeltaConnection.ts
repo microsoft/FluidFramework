@@ -37,6 +37,9 @@ class Replayer {
         private readonly unitIsTime: boolean | undefined) {
     }
 
+    /**
+     * This gets the specified ops from the delta storage endpoint and replays them in the replayer.
+     */
     public async start() {
         const useFetchToBatch = !(this.unitIsTime !== true && this.replayTo >= 0);
         let fetchCurrent = 0;
@@ -178,6 +181,13 @@ class Replayer {
 }
 
 export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
+    /**
+     * Creates a new delta connection and mimics the delta connection to replay ops on it.
+     * @param replayFrom - First op to be played on socket.
+     * @param replayTo - Last op number to be played on socket.
+     * @param documentService - The document service to be used to get underlying endpoints.
+     * @param unitIsTime - True is user want to play ops that are within a replay resolution window.
+     */
     public static async create(
         documentStorageService: IDocumentDeltaStorageService,
         replayFrom: number,

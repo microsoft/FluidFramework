@@ -1,0 +1,10 @@
+.text { 
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    display: inline;
+}
+
+/* Outline span boundaries for debugging */
+.text { 
+    outline: 1px solid rgba(0, 0, 0, 0.05);
+}

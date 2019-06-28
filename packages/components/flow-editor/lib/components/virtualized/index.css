@@ -1,0 +1,5 @@
+.virtualized { 
+    /* Cursor overlay needs to find a containing block prior to scroll. */
+    position: relative;
+    width: 100%;
+}

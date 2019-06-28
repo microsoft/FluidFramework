@@ -20,14 +20,28 @@ export class ReplayDocumentService implements api.IDocumentService {
                 private readonly unitIsTime: boolean | undefined) {
     }
 
+    /**
+     * Connects to a storage endpoint for snapshot service and blobs.
+     * @returns returns the dummy document storage service for replay driver.
+     */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new ReplayDocumentStorageService();
     }
 
+    /**
+     * Connects to a delta storage endpoint for getting ops between a range.
+     * @returns returns the dummy document delta storage service for replay driver.
+     */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         return new ReplayDeltaStorageService();
     }
 
+    /**
+     * Connects to a delta storage endpoint of provided documentService to get ops and then replaying
+     * them so as to mimic a delta stream endpoint.
+     * @param client - Client that connects to socket.
+     * @returns returns the delta stream service which replay ops from --from to --to arguments.
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         const documentDeltaStorageService: api.IDocumentDeltaStorageService =
             await this.documentService.connectToDeltaStorage();
