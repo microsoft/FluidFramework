@@ -3,6 +3,26 @@
 {{>partials/uref/class.header}}
 {{#children}}
 <h3 id="{{id}}">{{>partials/classSubtitle}}</h3>
+<table class="table table-bordered table-striped table-condensed">
+  <thead>
+    <tr>
+      <th>{{__global.name}}</th>
+      <th>{{__global.description}}</th>
+    </tr>
+  </thead>
+  <tbody>
+{{#children}}
+  <tr>
+    <td><xref uid="{{uid}}">{{name.0.value}}</xref></td>
+    <td class="table-description">{{{summary}}}</td>
+  </tr>
+{{/children}}
+  </tbody>
+</table>
+{{/children}}
+
+{{#children}}
+<h3 id="{{id}}_details">{{>partials/classSubtitle}} Details</h3>
 {{#children}}
 {{^_disableContribution}}
 {{#docurl}}
