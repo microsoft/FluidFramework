@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { AxiosInstance, AxiosResponse } from "axios";
+import { HttpGetter } from "../Getter";
 import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
 import { TokenProvider } from "../token";
 
@@ -18,17 +18,9 @@ describe("DeltaStorageService", () => {
     // tslint:disable-next-line:mocha-no-side-effect-code
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
-    it("Should build the correct sharepoint delta url", () => {
-        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""));
-        const actualDeltaUrl = deltaStorageService.buildAxiosUrl(2, 8);
-        // tslint:disable-next-line:max-line-length
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
-        assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
-    });
-
     it("Should build the correct sharepoint delta url with auth", () => {
-        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve("?access_token=123"));
-        const actualDeltaUrl = deltaStorageService.buildAxiosUrl(2, 8, new TokenProvider("?access_token=123", ""));
+        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, new HttpGetter(), undefined, (refresh) => Promise.resolve("?access_token=123"));
+        const actualDeltaUrl = deltaStorageService.buildGetterUrl("123", 2, 8);
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207&access_token=123`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
@@ -72,21 +64,13 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const axiosMock: Partial<AxiosInstance> = {
-                get: (url, config?) => new Promise<AxiosResponse>(
+            const httpGetterMock: HttpGetter = {
+                get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
-                        const respone: AxiosResponse = {
-                            config: config ? config : {},
-                            data: expectedDeltaFeedResponse,
-                            headers: { "Access-Control-Allow-Origin": "*" },
-                            request: "GET",
-                            status: 200,
-                            statusText: "OK",
-                        };
-                        resolve(respone);
+                        resolve(expectedDeltaFeedResponse);
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""), axiosMock as AxiosInstance);
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, httpGetterMock, undefined, (refresh) => Promise.resolve(""));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -134,21 +118,13 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const axiosMock: Partial<AxiosInstance> = {
-                get: (url, config?) => new Promise<AxiosResponse>(
+            const httpGetterMock: HttpGetter = {
+                get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
-                        const respone: AxiosResponse = {
-                            config: config ? config : {},
-                            data: expectedDeltaFeedResponse,
-                            headers: { "Access-Control-Allow-Origin": "*" },
-                            request: "GET",
-                            status: 200,
-                            statusText: "OK",
-                        };
-                        resolve(respone);
+                        resolve(expectedDeltaFeedResponse);
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, undefined, undefined, (refresh) => Promise.resolve(""), axiosMock as AxiosInstance);
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, httpGetterMock, undefined, (refresh) => Promise.resolve(""));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

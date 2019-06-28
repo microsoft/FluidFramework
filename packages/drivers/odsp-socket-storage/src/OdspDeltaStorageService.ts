@@ -4,18 +4,10 @@
  */
 
 import * as api from "@prague/container-definitions";
-import Axios, { AxiosInstance } from "axios";
-import * as querystring from "querystring";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
-import { debug } from "./debug";
 import { getQueryString } from "./getQueryString";
 import { IGetter } from "./Getter";
-import { TokenProvider } from "./token";
 import { getWithRetryForTokenRefresh } from "./utils";
-
-interface IDeltasResponse {
-    value: api.ISequencedDocumentMessage[];
-}
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document
@@ -44,10 +36,9 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
     constructor(
         queryParams: { [key: string]: string },
         private readonly deltaFeedUrl: string,
-        private readonly getter: IGetter | undefined,
+        private readonly getter: IGetter,
         private ops: ISequencedDeltaOpMessage[] | undefined,
         private readonly getToken: (refresh: boolean) => Promise<string>,
-        private readonly axiosInstance: AxiosInstance = Axios,
     ) {
         this.queryString = getQueryString(queryParams);
     }
@@ -76,26 +67,17 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
         }
 
         let token: string;
-        if (this.getter) {
-            return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                token = await this.getToken(refresh);
-                const url = this.buildGetterUrl(token, from, to);
-                return this.getter!.get<IDeltasResponse>(url, url, {}).then((response) => {
-                    return this.getOps(response.value);
-                });
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            token = await this.getToken(refresh);
+            const url = this.buildGetterUrl(token, from, to);
+            return this.getter.get<IDeltaStorageGetResponse>(url, url, {}).then((response) => {
+                const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = response.value;
+                if (operations.length > 0 && "op" in operations[0]) {
+                    return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+                }
+                return operations as api.ISequencedDocumentMessage[];
             });
-        } else {
-            token = await this.getToken(false);
-            const myTokenProvider = new TokenProvider(token, "");
-            const url = this.buildAxiosUrl(from, to, myTokenProvider);
-            const headers = myTokenProvider.getStorageHeaders();
-            const result = await this.axiosInstance.get<IDeltaStorageGetResponse>(url, { headers });
-            if (result.status !== 200) {
-                debug(`Invalid opStream response status "${result.status} ".`);
-                throw new Error(`Invalid opStream response status "${result.status}".`);
-            }
-            return this.getOps(result.data.value);
-        }
+        });
     }
 
     public buildGetterUrl(token: string, from: number | undefined, to: number | undefined) {
@@ -106,27 +88,5 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
         const fullQueryString =
             `${(this.queryString ? `${this.queryString}&` : "?")}filter=${filter}&access_token=${token}`;
         return `${this.deltaFeedUrl}${fullQueryString}`;
-    }
-
-    public buildAxiosUrl(from?: number, to?: number, tokenProvider?: TokenProvider) {
-        const fromInclusive = from === undefined ? undefined : from + 1;
-        const toInclusive = to === undefined ? undefined : to - 1;
-
-        const queryParams = {
-            filter: `sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`,
-            ...(tokenProvider ? tokenProvider.getStorageQueryParams() : {}),
-        };
-
-        const query = querystring.stringify(queryParams);
-
-        return `${this.deltaFeedUrl}?${query}`;
-    }
-
-    private getOps(operations: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[]) {
-        if (operations.length > 0 && "op" in operations[0]) {
-            return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
-        }
-
-        return operations as api.ISequencedDocumentMessage[];
     }
 }

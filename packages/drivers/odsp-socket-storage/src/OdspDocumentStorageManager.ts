@@ -5,12 +5,11 @@
 
 import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
-import { RestWrapper } from "@prague/services-client";
 import { IDocumentStorageGetVersionsResponse } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { IGetter } from "./Getter";
 import { TokenProvider } from "./token";
-import { BackoffFunction, delay, exponentialBackoff, getWithRetryForTokenRefresh } from "./utils";
+import { getWithRetryForTokenRefresh } from "./utils";
 
 /**
  * Interface for creating/getting/writing blobs to the underlying storage.
@@ -77,9 +76,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly blobCache: Map<string, resources.IBlob> = new Map();
     private readonly treesCache: Map<string, resources.ITree> = new Map();
     private readonly queryString: string;
-    private readonly maxRetries = 4;
-    private readonly backoffFn: BackoffFunction;
-    private restWrapper: RestWrapper;
 
     constructor(
         queryParams: { [key: string]: string },
@@ -88,15 +84,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly latestSha: string | undefined,
         trees: resources.ITree[] | undefined,
         blobs: resources.IBlob[] | undefined,
-        private readonly getter: IGetter | undefined,
+        private readonly getter: IGetter,
         initialTokenProvider: api.ITokenProvider,
         private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
     ) {
-        const standardTokenProvider = initialTokenProvider as TokenProvider;
-        this.restWrapper = new RestWrapper(
-            snapshotUrl,
-            standardTokenProvider.getStorageHeaders(),
-            standardTokenProvider.getStorageQueryParams());
         if (trees) {
             this.initTreesCache(trees);
         }
@@ -104,15 +95,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.initBlobsCache(blobs);
         }
         this.queryString = getQueryString(queryParams);
-        this.backoffFn = exponentialBackoff(500);
     }
 
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-        return this.standardDocumentStorageManagerCallWithRetry(() => {
-            // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
+        this.checkSnapshotUrl();
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
             return Promise.reject(new Error("StandardDocumentStorageManager.createBlob() not implemented"));
         });
     }
@@ -123,39 +110,28 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return blob;
         }
 
-        if (this.getter) {
-            return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                // TODO use querystring not header for token
-                const tokenProvider = await this.getTokenProvider(refresh);
-                return this.getter!.get<resources.IBlob>(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, blobid, {
-                    Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
-                });
+        this.checkSnapshotUrl();
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            // TODO use querystring not header for token
+            const tokenProvider = await this.getTokenProvider(refresh);
+            return this.getter.get<resources.IBlob>(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, blobid, {
+                Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
             });
-        }
-
-        // TODO remove this
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-
-        return this.standardDocumentStorageManagerCallWithRetry(() => {
-            return this.restWrapper.get<resources.IBlob>(`/blobs/${blobid}`);
         });
     }
 
     public getContent(version: api.IVersion, path: string): Promise<resources.IBlob> {
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-        return this.standardDocumentStorageManagerCallWithRetry(() => {
-            return this.restWrapper.get<resources.IBlob>("/contents", { ref: version.id, path });
+        this.checkSnapshotUrl();
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
+            const tokenProvider = await this.getTokenProvider(refresh);
+            return this.getter.get<resources.IBlob>(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, version.id, {
+                Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
+            });
         });
     }
 
     public getRawUrl(blobid: string): string {
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
+        this.checkSnapshotUrl();
         return `${this.snapshotUrl}/blobs/${blobid}`;
     }
 
@@ -175,36 +151,21 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return cachedTree;
         }
 
-        if (this.getter && id) {
-            return getWithRetryForTokenRefresh(async (refresh: boolean) =>
-                this.getTokenProvider(refresh).then((tokenProvider) =>
-                    this.getter!
-                        // TODO use querystring not header for token
-                        .get<resources.ITree>(`${this.snapshotUrl}/trees/${id}${this.queryString}`, id, {
-                            Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
-                        })
-                        .then((response) => {
-                            // FIX SPO
-                            return response && response.tree !== undefined && response.tree !== null
-                                ? response
-                                : ((undefined as any) as resources.ITree);
-                        }),
-                ),
-            );
-        }
-
-        // TODO remove this
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-
-        return this.standardDocumentStorageManagerCallWithRetry(async () => {
-            try {
-                return await this.restWrapper.get<resources.ITree>(`/trees/${id}`);
-            } catch (error) {
-                return error === 400 || error === 404 ? null : Promise.reject(error);
-            }
-        });
+        return getWithRetryForTokenRefresh(async (refresh: boolean) =>
+            this.getTokenProvider(refresh).then((tokenProvider) =>
+                this.getter
+                    // TODO use querystring not header for token
+                    .get<resources.ITree>(`${this.snapshotUrl}/trees/${id}${this.queryString}`, id, {
+                        Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
+                    })
+                    .then((response) => {
+                        // FIX SPO
+                        return response && response.tree !== undefined && response.tree !== null
+                            ? response
+                            : ((undefined as any) as resources.ITree);
+                    }),
+            ),
+        );
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
@@ -216,10 +177,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (cachedTree && count === 1) {
             return [{ id: cachedTree.sha, treeId: undefined! }];
         }
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-        return this.standardDocumentStorageManagerCallWithRetry(async () => {
+        return getWithRetryForTokenRefresh(async (refresh) => {
             if (blobid && blobid !== this.documentId) {
                 // each commit calls getVersions but odsp doesn't have a history for each version
                 // return the blobid as is
@@ -230,9 +188,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     },
                 ];
             }
+            const tokenProvider = await this.getTokenProvider(refresh);
             // fetch the latest snapshot versions for the document
-            const versionsResponse = await this.restWrapper
-                .get<IDocumentStorageGetVersionsResponse>("/versions", { count })
+            const versionsResponse = await this.getter
+                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions${count}`, blobid, {
+                    Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
+                })
                 .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
             if (versionsResponse && Array.isArray(versionsResponse.value)) {
                 return versionsResponse.value.map((version) => {
@@ -247,10 +208,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
-        if (!this.snapshotUrl) {
-            throw new Error(OdspDocumentStorageManager.errorMessage);
-        }
-        return this.standardDocumentStorageManagerCallWithRetry(() => {
+        this.checkSnapshotUrl();
+        return getWithRetryForTokenRefresh(async (refresh: boolean) => {
             // TODO: Implement, Issue #2269 [https://github.com/microsoft/Prague/issues/2269]
             return Promise.reject("Not implemented");
         });
@@ -274,31 +233,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         blobs.forEach((blob) => this.blobCache.set(blob.sha, blob));
     }
 
-    /**
-     * Allows retries for calls that go through the DocumentStorageManager
-     * TODO remove this code
-     */
-    private standardDocumentStorageManagerCallWithRetry<T>(fn: () => Promise<T>, retryCount = 0): Promise<T> {
-        return fn().catch(async (error) => {
-            if (retryCount > this.maxRetries) {
-                // To keep behavior the same we will just pass rejections back up
-                // tslint:disable-next-line: no-floating-promises
-                Promise.reject(error);
-            }
-
-            if (error === 401 || error === 403) {
-                const tokenProvider = await this.getTokenProvider(true);
-                const standardTokenProvider = tokenProvider as TokenProvider;
-                this.restWrapper = new RestWrapper(
-                    this.snapshotUrl,
-                    standardTokenProvider.getStorageHeaders(),
-                    standardTokenProvider.getStorageQueryParams(),
-                );
-            }
-
-            return delay(this.backoffFn(retryCount)).then(() =>
-                this.standardDocumentStorageManagerCallWithRetry(fn, retryCount + 1),
-            );
-        });
+    private checkSnapshotUrl() {
+        if (!this.snapshotUrl) {
+            throw new Error(OdspDocumentStorageManager.errorMessage);
+        }
     }
 }

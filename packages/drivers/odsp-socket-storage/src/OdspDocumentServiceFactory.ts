@@ -23,8 +23,8 @@ export interface IOdspSnapshot {
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    private storageGetter: IGetter | undefined;
-    private deltasGetter: IGetter | undefined;
+    private readonly storageGetter: IGetter;
+    private readonly deltasGetter: IGetter;
 
     /**
      * @param appId - app id used for telemetry for network requests
@@ -91,9 +91,6 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         if (!documentId || !tenantId) {
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [url:${pragueResolvedUrl.url}]`);
         }
-
-        this.storageGetter = undefined;
-        this.deltasGetter = undefined;
 
         const socketStorageDiscoveryFromURL: ISocketStorageDiscovery = {
             deltaStorageUrl,

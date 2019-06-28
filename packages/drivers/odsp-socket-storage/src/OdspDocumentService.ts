@@ -26,8 +26,8 @@ export class OdspDocumentService implements api.IDocumentService {
 
     constructor(
         private readonly appId: string,
-        private readonly storageGetter: IGetter | undefined,
-        private readonly deltasGetter: IGetter | undefined,
+        private readonly storageGetter: IGetter,
+        private readonly deltasGetter: IGetter,
         private socketStorageDiscovery: ISocketStorageDiscovery,
         private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
         joinSession?: () => Promise<ISocketStorageDiscovery>,
