@@ -2,14 +2,8 @@
     "extends": ["@prague/build-common/tslint.json"],
     "rules": {
         "completed-docs": false,
-        "function-name": false,
-        "max-line-length": false,
-        "no-console": false,
-        "no-floating-promises": false,
-        "no-non-null-assertion": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
-        "no-unsafe-any": false,
         "object-literal-sort-keys": false,
         "prefer-array-literal": false
     }

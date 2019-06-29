@@ -21,7 +21,7 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
 
   private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent"];
 
-  private initializeP: Promise<void>;
+  private initializeP: Promise<void> | undefined;
 
   protected constructor(
     protected runtime: IComponentRuntime,

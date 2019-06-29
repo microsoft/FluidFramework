@@ -24,7 +24,7 @@ import { SharedComponent } from "./sharedComponent";
  * It also enables sharing with basic router functionality
  */
 export abstract class RootComponent extends SharedComponent implements IComponentRouter {
-    protected root: ISharedMap;
+    protected root: ISharedMap | undefined;
 
     private readonly rootMapId = "root";
 

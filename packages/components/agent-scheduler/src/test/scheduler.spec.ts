@@ -176,13 +176,14 @@ describe("AgentScheduler", () => {
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader]);
             await TestHost.sync(host2);
             assert.deepStrictEqual(scheduler2.pickedTasks(), ["task1", "task2", "task4", "task5", "task6"]);
-            scheduler1.pick(createEmptyTask("task1"), createEmptyTask("task2"), createEmptyTask("task5"), createEmptyTask("task6"));
+            scheduler1.pick(createEmptyTask("task1"), createEmptyTask("task2"),
+                createEmptyTask("task5"), createEmptyTask("task6"));
             scheduler2.release("task2", "task1", "task4", "task5", "task6");
             await TestHost.sync(host1, host2);
             assert.deepStrictEqual(scheduler1.pickedTasks(), [leader, "task1", "task2", "task4", "task5", "task6"]);
         });
 
-        it("Releasing leadership should automaticlly elect a new leader", async () => {
+        it("Releasing leadership should automatically elect a new leader", async () => {
             scheduler1.release(leader);
             await TestHost.sync(host1, host2);
             assert.deepStrictEqual(scheduler1.pickedTasks(), []);

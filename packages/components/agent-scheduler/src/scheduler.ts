@@ -28,26 +28,38 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     public static supportedInterfaces = ["IAgentScheduler"];
 
     public static async load(runtime: IComponentRuntime) {
-        const collection = new AgentScheduler(runtime);
+        let root: ISharedMap;
+        let scheduler: IConsensusRegisterCollection;
+        if (!runtime.existing) {
+            root = SharedMap.create(runtime, "root");
+            root.attach();
+            scheduler = ConsensusRegisterCollection.create(runtime);
+            scheduler.attach();
+            root.set("scheduler", scheduler);
+        } else {
+            root = await runtime.getChannel("root") as ISharedMap;
+            scheduler = await root.wait<ConsensusRegisterCollection>("scheduler");
+        }
+        const collection = new AgentScheduler(runtime, scheduler);
         await collection.initialize();
 
         return collection;
     }
-
-    private root: ISharedMap;
-    private scheduler: IConsensusRegisterCollection;
 
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _leader = false;
 
     // List of all tasks client is capable of running. This is a strict superset of tasks
     // running in the client.
-    private readonly localTaskMap = new Map<string, () => void>();
+    private readonly localTaskMap = new Map<string, (() => void) | undefined>();
 
     // Set of registered tasks client not capable of running.
     private readonly registeredTasks = new Set<string>();
 
-    constructor(private readonly runtime: IComponentRuntime) {
+    constructor(
+        private readonly runtime: IComponentRuntime,
+        private readonly scheduler: IConsensusRegisterCollection) {
+
         super();
     }
 
@@ -130,7 +142,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 
     public pickedTasks(): string[] {
-        const allPickedTasks = [];
+        const allPickedTasks: string[] = [];
         for (const taskId of this.scheduler.keys()) {
             if (this.getTaskClientId(taskId) === this.runtime.clientId) {
                 allPickedTasks.push(taskId);
@@ -157,7 +169,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     private async registerCore(taskIds: string[]): Promise<void> {
         if (taskIds.length > 0) {
-            const registersP = [];
+            const registersP: Array<Promise<void>> = [];
             for (const taskId of taskIds) {
                 debug(`Registering ${taskId}`);
                 // tslint:disable no-null-keyword
@@ -183,7 +195,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     private async pickCore(tasks: ITask[]): Promise<void> {
         if (tasks.length > 0) {
-            const picksP = [];
+            const picksP: Array<Promise<void>> = [];
             for (const task of tasks) {
                 debug(`Requesting ${task.id}`);
                 picksP.push(this.writeCore(task.id, this.runtime.clientId));
@@ -216,7 +228,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     private async releaseCore(taskIds: string[]) {
         if (taskIds.length > 0) {
-            const releasesP = [];
+            const releasesP: Array<Promise<void>> = [];
             for (const id of taskIds) {
                 debug(`Releasing ${id}`);
                 // Remove from local map so that it can be picked later.
@@ -235,7 +247,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     private async clearTasks(taskIds: string[]) {
         if (this.runtime.connected && taskIds.length > 0) {
-            const clearP = [];
+            const clearP: Array<Promise<void>> = [];
             for (const id of taskIds) {
                 debug(`Clearing ${id}`);
                 clearP.push(this.writeCore(id, null));
@@ -245,7 +257,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 
     private getTaskClientId(id: string): string | null | undefined {
-        return this.scheduler.read(id);
+        return this.scheduler.read(id) as string | null | undefined;
     }
 
     private async writeCore(key: string, value: string | null): Promise<void> {
@@ -253,17 +265,6 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 
     private async initialize() {
-        if (!this.runtime.existing) {
-            this.root = SharedMap.create(this.runtime, "root");
-            this.root.attach();
-            this.scheduler = ConsensusRegisterCollection.create(this.runtime, "scheduler");
-            this.scheduler.attach();
-            this.root.set("scheduler", this.scheduler);
-        } else {
-            this.root = await this.runtime.getChannel("root") as ISharedMap;
-            this.scheduler = await this.root.wait<ConsensusRegisterCollection>("scheduler");
-        }
-
         if (!this.runtime.connected) {
             // tslint:disable-next-line
             await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
@@ -272,9 +273,10 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
         const quorum = this.runtime.getQuorum();
-        const clearCandidates = [];
+        const clearCandidates: string[] = [];
         for (const taskId of this.scheduler.keys()) {
-            if (!quorum.getMembers().has(this.getTaskClientId(taskId))) {
+            // tslint:disable-next-line: no-non-null-assertion
+            if (!quorum.getMembers().has(this.getTaskClientId(taskId)!)) {
                 clearCandidates.push(taskId);
             }
         }
