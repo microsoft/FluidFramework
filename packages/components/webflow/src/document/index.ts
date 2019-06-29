@@ -402,6 +402,10 @@ export class FlowDocument extends Component {
             end);
     }
 
+    public getText(start?: number, end?: number): string {
+        return this.sharedString.getText(start, end);
+    }
+
     protected async create() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
