@@ -67,14 +67,25 @@ const MaxTimeWithoutSnapshot = IdleDetectionTime * 12;
 // Snapshot if 1000 ops received since last snapshot.
 const MaxOpCountWithoutSnapshot = 1000;
 
+/**
+ * Options for container runtime.
+ */
 export interface IContainerRuntimeOptions {
     // Experimental flag that will generate summaries if connected to a service that supports them.
     // Will eventually become the default and snapshots will be deprecated
     generateSummaries: boolean;
 }
 
-// Context will define the component level mappings
+/**
+ * Represents the runtime of the container. Contains helper functions/state of the container.
+ * It will define the component level mappings.
+ */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
+    /**
+     * Load the components from a snapshot and returns the runtime.
+     * @param context - Conext of the contianer.
+     * @param registry - Mapping to the components.
+     */
     public static async load(
         context: IContainerContext,
         registry: IComponentRegistry,
@@ -276,6 +287,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
+    /**
+     * Loads a component from a snapshot.
+     * @param id - Id for the component.
+     * @param snapshotTree - The snapshot tree from where we get the component to load.
+     * @param extraBlobs - Extra blobs if any to be read for creating the snapshoot.
+     */
     public async loadComponent(
         id: string,
         snapshotTree: ISnapshotTree,
@@ -304,14 +321,26 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         deferred.resolve(component);
     }
 
+    /**
+     * Notifies this object to register the handler for the requests made to the container.
+     * @param handler - Handler to handle the requests.
+     */
     public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
         this.requestHandler = handler;
     }
 
+    /**
+     * Returns the component factory for a particular package.
+     * @param name - Name of the package.
+     */
     public getPackage(name: string): Promise<IComponentFactory> {
         return this.registry.get(name);
     }
 
+    /**
+     * Notifies this object about the request made to the container.
+     * @param request - Request made to the handler.
+     */
     public async request(request: IRequest): Promise<IResponse> {
         // system routes
         if (request.url === this.summarizer.url) {
@@ -363,6 +392,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return result;
     }
 
+    /**
+     * Notifies this object to take the snapshot of the container.
+     * @param tagMessage - Message to supply to storage service for writing the snapshot.
+     */
     public async snapshot(tagMessage: string): Promise<ITree> {
         // Pull in the prior version and snapshot tree to store against
         const lastVersion = await this.storage.getVersions(this.id, 1);
@@ -608,6 +641,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.context.error(error);
     }
 
+    /**
+     * Notifies this object to register tasks to be performed.
+     * @param tasks - List of tasks.
+     * @param version - Version of the fluid package.
+     */
     public registerTasks(tasks: string[], version?: string) {
         this.verifyNotClosed();
         this.tasks = tasks;

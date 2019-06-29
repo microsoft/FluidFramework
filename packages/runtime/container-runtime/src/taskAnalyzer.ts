@@ -11,14 +11,17 @@ export interface IHelpTasks {
     browser: string[];
 }
 
-// For a given list of connected clients and tasks to run, this function calculates need for local & remote help.
-
-// Right now only one client (aka leader) is allowed to run tasks and ask for local and remote.
-// To become completely distributed, each client should take into account other client permissions
-// and calculate help list. Then each client will pick up work independently and only leader will
-// ask for help.
-
-// TODO: Make this run on all clients once services are hardened better.
+/**
+ * For a given list of connected clients and tasks to run, this function calculates need for local & remote help.
+ * Right now only one client (aka leader) is allowed to run tasks and ask for local and remote.
+ * To become completely distributed, each client should take into account other client permissions
+ * and calculate help list. Then each client will pick up work independently and only leader will
+ * ask for help.
+ * TODO: Make this run on all clients once services are hardened better.
+ * @param runnerClientId - Client making this call.
+ * @param clients - List of all clients currently in the system.
+ * @param tasks - Tasks to be performed.
+ */
 export function analyzeTasks(
     runnerClientId: string,
     clients: Map<string, ISequencedClient>,

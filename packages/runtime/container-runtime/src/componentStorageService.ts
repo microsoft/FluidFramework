@@ -13,6 +13,9 @@ import {
     IVersion,
 } from "@prague/container-definitions";
 
+/**
+ * IDocumentStorageService adapter with pre-cached blobs.
+ */
 export class ComponentStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {
         return this.storageService.repositoryUrl;

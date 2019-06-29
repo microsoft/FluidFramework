@@ -9,6 +9,9 @@ import { debug } from "./debug";
 
 export const QuorumKey = "leader";
 
+/**
+ * Elects the leader among the clients.
+ */
 export class LeaderElector extends EventEmitter {
     private leader: string;
 
@@ -17,10 +20,16 @@ export class LeaderElector extends EventEmitter {
         this.attachQuorumListeners();
     }
 
+    /**
+     * Proposes new leader client for the quorum.
+     */
     public async proposeLeadership() {
         return this.quorum.propose(QuorumKey, this.clientId);
     }
 
+    /**
+     * Get the current leader of the quorum.
+     */
     public getLeader() {
         return this.leader;
     }

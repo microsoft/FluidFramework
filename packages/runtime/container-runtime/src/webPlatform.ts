@@ -34,6 +34,9 @@ class DefinitionGuide extends EventEmitter {
     }
 }
 
+/**
+ * Provides access to the underlying platform.
+ */
 export class WebPlatform extends EventEmitter implements IPlatform {
     private readonly definitions = new DefinitionGuide();
 
@@ -41,6 +44,10 @@ export class WebPlatform extends EventEmitter implements IPlatform {
         super();
     }
 
+    /**
+     * Queries the platform for an interface of the given ID.
+     * @param id - id of the interface for which the query is made.
+     */
     public async queryInterface<T>(id: string): Promise<any> {
         switch (id) {
             case "dom":

@@ -30,6 +30,9 @@ import {
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 
+/**
+ * Represents the context for the component. This context is passed to the component runtime.
+ */
 export class ComponentContext extends EventEmitter implements IComponentContext {
 
     public get documentId(): string {
@@ -133,6 +136,12 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         return this._hostRuntime.getComponentRuntime(id, wait);
     }
 
+    /**
+     * Notifies this object about changes in the connection state.
+     * @param value - New connection state.
+     * @param clientId - ID of the client. It's old ID when in disconnected state and
+     * it's new client ID when we are connecting or connected.
+     */
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
         this._componentRuntime.changeConnectionState(value, clientId);
@@ -187,6 +196,9 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         this._hostRuntime.closeFn();
     }
 
+    /**
+     * Notifies the object to take snapshot of a component.
+     */
     public snapshot(): ITree {
         const componentAttributes = { pkg: this.pkg };
 
@@ -241,6 +253,10 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
         return this._componentRuntime;
     }
 
+    /**
+     * Updates the leader.
+     * @param clientId - Client id of the new leader.
+     */
     public updateLeader(clientId: string) {
         this.emit("leader", clientId);
     }
