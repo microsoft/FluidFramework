@@ -19,22 +19,35 @@ exports.postTransform = function (model) {
     const protectedChildren = [];
     model.children.forEach(function (c) {
       if (c.inMethod && c.children) {
+        stripVoidReturn(c.children);
         splitProtectStatic(children, protectedChildren, c, "Method", "methods");
       } else if (c.inProperty && c.children) {
         splitProtectStatic(children, protectedChildren, c, "Property", "properties");
       } else {
         children.push(c);
       }
-    });    
+    });
     model.children = children.concat(protectedChildren)
   }
   return model;
 }
 
+function stripVoidReturn(children) {
+  // If the return type is void, remove it so that it doesn't show up
+  children.forEach(function (m) {
+    try {
+      if (m.syntax.return[0].value.type[0].uid === "void") {
+        m.syntax.return = undefined;
+      }
+    } catch (e) {
+    }
+  });
+}
+
 function initGroup(prefix, name, idPrefix, idName) {
   const group = {};
   const inName = "in" + prefix + name;
-  const id = idPrefix? idPrefix + "_" + idName : idName
+  const id = idPrefix ? idPrefix + "_" + idName : idName
   group[inName] = true;
   group.typePropertyName = inName;
   group.id = id;
