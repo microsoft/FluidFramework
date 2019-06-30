@@ -23,7 +23,7 @@
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
-    "test": "mocha -r ignore-styles -r ts-node/register --recursive test/**/*.spec.ts --exit",
+    "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",

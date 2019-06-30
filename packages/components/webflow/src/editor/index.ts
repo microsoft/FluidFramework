@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { Editor, IEditorProps } from "./layout/editor";
-export { PagePosition } from "./pagination";
-
+export { Editor } from "./editor";
 import { Component } from "@prague/app-component";
-import { randomId, Scheduler } from "@prague/flow-util";
+import { randomId } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import { FlowDocument } from "../document";
-import { Editor } from "./layout/editor";
+import { Editor } from "./editor";
+export { Layout } from "./view/layout";
 
 export class FlowEditor extends Component {
     // tslint:disable-next-line:no-require-imports
@@ -24,9 +23,9 @@ export class FlowEditor extends Component {
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (maybeDiv) {
             const doc = await this.runtime.openComponent<FlowDocument>(await this.root.wait("docId"), true);
-            const editor = new Editor();
-            const root = editor.mount({ doc, scheduler: new Scheduler(), trackedPositions: [] });
-            maybeDiv.appendChild(root);
+
+            // tslint:disable-next-line:no-unused-expression
+            new Editor(doc, maybeDiv);
         }
     }
 

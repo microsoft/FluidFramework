@@ -1,23 +1,41 @@
+html, body {
+	height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
 .host, .viewport {
     position: absolute;
     left: 0;
     top: 0;
     right: 0;
-    bottom: 0;
 }
 
-.search {
-
+.host {
+    margin: 0.75in;   
 }
+
+.viewport {
+    outline: 1px dotted #ddd;
+    padding: 0.1in;
+}
+
+.viewport:focus-within {
+    background: white;
+    outline: 1px dotted #aaa;
+}
+
+.slot {
+    white-space: pre-wrap;
+}
+
+.slot:focus-within {
+    outline: none;
+}
+
+.search { }
 
 .bold {
     font-weight: bold;
-}
-
-.italic {
-    font-style: italic;
-}
-
-.underline {
-    text-decoration: underline;
 }

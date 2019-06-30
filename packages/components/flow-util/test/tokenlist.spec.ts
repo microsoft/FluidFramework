@@ -21,6 +21,16 @@ describe("TokenList", () => {
             assert.strictEqual(actual, undefined);
         });
 
+        it("resume after discarding prefix match", () => {
+            const actual = findToken("aa a", "a");
+            assert.deepStrictEqual(actual, { start: 3, end: 4 });
+        });
+
+        it("resume after discarding suffix match", () => {
+            const actual = findToken("ba a", "a");
+            assert.deepStrictEqual(actual, { start: 3, end: 4 });
+        });
+
         it("match single token", () => {
             const actual = findToken("a", "a");
             assert.deepStrictEqual(actual, { start: 0, end: 1 });
@@ -126,7 +136,7 @@ describe("TokenList", () => {
                 TokenList.computeToggle(tokenList, actualAdd, actualRemove);
 
                 assert.deepEqual(actualAdd, expectedAdd);
-                assert.deepEqual(actualRemove, new Set(expectedRemove));
+                assert.deepEqual([...actualRemove], expectedRemove);
             });
         }
 
@@ -138,5 +148,13 @@ describe("TokenList", () => {
         test("last in set", ["a", "b"], ["b"]);
         test("middle in set", ["a", "b", "c"], ["b"]);
         test("mixed", ["a", "b"], ["b", "c"]);
+
+        it("undefined: undefined ^ [a -b] -> +[a] -[b]", () => {
+            const toAdd = ["a"];
+            const toRemove = new Set(["b"]);
+            TokenList.computeToggle(undefined, toAdd, toRemove);
+            assert.deepStrictEqual(toAdd, ["a"]);
+            assert.deepStrictEqual([...toRemove.keys()], ["b"]);
+        });
     });
 });

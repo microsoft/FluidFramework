@@ -24,7 +24,6 @@ import {
     reservedRangeLabelsKey,
     reservedTileLabelsKey,
     TextSegment,
-    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
@@ -41,6 +40,9 @@ export const enum DocSegmentKind {
     beginTag = "<t>",
     inclusion = "<?>",
     endRange = "</>",
+
+    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    endOfText = "eot",
 }
 
 const tilesAndRanges = [ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTag, DocSegmentKind.inclusion ];
@@ -56,11 +58,18 @@ export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
 };
 
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
+    // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+    if (segment === endOfTextSegment) {
+        return DocSegmentKind.endOfText;
+    }
+
     if (TextSegment.is(segment)) {
         return DocSegmentKind.text;
     } else if (Marker.is(segment)) {
         const markerType = segment.refType;
         switch (markerType) {
+            case ReferenceType.SlideOnRemove:
+                return DocSegmentKind.paragraph;
             case ReferenceType.Tile:
             case ReferenceType.NestBegin:
                 const tileLabel = segment.getTileLabels()[0];
@@ -74,15 +83,11 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 assert(markerType === ReferenceType.NestEnd);
                 return DocSegmentKind.endRange;
         }
-    } else {
-        assert.fail(`Unknown Segment Type: '${segment.toJSONObject()}'`);
     }
 };
 
-export function getCssClassList(segment: ISegment): string {
-    const props = segment.properties;
-    const classes = props && props.classes;
-    return (classes !== undefined) ? classes : "";
+export function getCss(segment: ISegment): Readonly<{ style?: string, classList?: string }> {
+    return segment.properties || {};
 }
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
@@ -120,9 +125,10 @@ export class FlowDocument extends Component {
     private get sharedString() { return this.maybeSharedString; }
     private get mergeTree() { return this.maybeMergeTree; }
     private get clientId() { return this.maybeClientId; }
+    private get currentSeq() { return this.sharedString.client.getCurrentSeq(); }
 
     public get length() {
-        return this.mergeTree.getLength(UniversalSequenceNumber, this.clientId);
+        return this.mergeTree.getLength(this.currentSeq, this.clientId);
     }
 
     public static readonly type = "@chaincode/flow-document";
@@ -157,11 +163,17 @@ export class FlowDocument extends Component {
     }
 
     public getSegmentAndOffset(position: number) {
-        return this.mergeTree.getContainingSegment(position, UniversalSequenceNumber, this.clientId);
+        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        return position === this.length
+            ? { segment: endOfTextSegment, offset: 0 }
+            : this.mergeTree.getContainingSegment(position, this.currentSeq, this.clientId);
     }
 
     public getPosition(segment: ISegment) {
-        return this.mergeTree.getOffset(segment, UniversalSequenceNumber, this.clientId);
+        // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
+        return segment === endOfTextSegment
+            ? this.length
+            : this.mergeTree.getOffset(segment, this.currentSeq, this.clientId);
     }
 
     public addLocalRef(position: number) {
@@ -191,7 +203,7 @@ export class FlowDocument extends Component {
             return this.length;
         }
 
-        return localRef.toPosition(this.mergeTree, UniversalSequenceNumber, this.clientId);
+        return localRef.toPosition(this.mergeTree, this.currentSeq, this.clientId);
     }
 
     public insertText(position: number, text: string) {
@@ -274,46 +286,20 @@ export class FlowDocument extends Component {
     }
 
     public insertComponent(position: number, url: string, style?: string, classList?: string[]) {
-        const ops = [];
-        const id = randomId();
-
-        const endMarker = new Marker(ReferenceType.NestEnd);
-        endMarker.properties = { tag: "SPAN", ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
-        ops.push(createInsertSegmentOp(position, endMarker));
-
-        const inclusionMarker = new Marker(ReferenceType.Tile);
-        inclusionMarker.properties = { url, style, classList: classList && classList.join(" "), ...FlowDocument.inclusionProperties };
-        ops.push(createInsertSegmentOp(position, inclusionMarker));
-
-        const beginMarker = new Marker(ReferenceType.NestBegin);
-        beginMarker.properties = {  tag: "SPAN", ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
-        ops.push(createInsertSegmentOp(position, beginMarker));
-
-        // Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
-        //       change in positions.
-        this.sharedString.groupOperation({
-            ops,
-            type: MergeTreeDeltaType.GROUP,
-        });
+        this.sharedString.insertMarker(position, ReferenceType.Tile, { url, style, classList: classList && classList.join(" "), ...FlowDocument.inclusionProperties });
     }
 
     public insertTags(tags: string[], start: number, end: number) {
         const ops = [];
-        for (const tag of tags) {
-            const id = randomId();
+        const id = randomId();
 
-            const endMarker = new Marker(ReferenceType.NestEnd);
-            endMarker.properties = { tag, ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
-            ops.push(createInsertSegmentOp(end, endMarker));
+        const endMarker = new Marker(ReferenceType.NestEnd);
+        endMarker.properties = { ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
+        ops.push(createInsertSegmentOp(end, endMarker));
 
-            const beginMarker = new Marker(ReferenceType.NestBegin);
-            beginMarker.properties = { tag, ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
-            ops.push(createInsertSegmentOp(start, beginMarker));
-
-            // Increment start/end prior to inserting the next tag.
-            start++;
-            end++;
-        }
+        const beginMarker = new Marker(ReferenceType.NestBegin);
+        beginMarker.properties = { tags, ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
+        ops.push(createInsertSegmentOp(start, beginMarker));
 
         // Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
         //       change in positions.
@@ -395,7 +381,7 @@ export class FlowDocument extends Component {
         //       avoid allocation while simplifying the 'LeafAction' signature.)
         this.mergeTree.mapRange(
             /* actions: */ accumAsLeafAction,
-            UniversalSequenceNumber,
+            this.currentSeq,
             this.clientId,
             /* accum: */ callback,
             start,
@@ -412,6 +398,7 @@ export class FlowDocument extends Component {
         Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
 
         const text = SharedString.create(this.runtime, "text");
+        text.insertMarker(0, ReferenceType.SlideOnRemove, FlowDocument.paragraphProperties);
         this.root.set("text", text);
     }
 
@@ -432,7 +419,7 @@ export class FlowDocument extends Component {
         const updates: Array<{span: SegmentSpan, classList: string}> = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
-            const oldList = getCssClassList(segment);
+            const oldList = getCss(segment).classList;
             const newList = callback(oldList);
 
             if (newList !== oldList) {
@@ -446,7 +433,7 @@ export class FlowDocument extends Component {
         }, start, end);
 
         for (const { span, classList } of updates) {
-            this.annotate(span.startPosition, span.endPosition, { classes: classList });
+            this.annotate(span.startPosition, span.endPosition, { classList });
         }
     }
 }

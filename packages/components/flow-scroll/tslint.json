@@ -5,14 +5,14 @@
         "max-line-length": false,
         "no-console": false,
         "no-floating-promises": false,
-        "no-import-side-effect": false,
+        "no-non-null-assertion": false,
         "no-null-keyword": false,
-        "no-require-imports": false,
+        "no-parameter-reassignment": false,
         "no-suspicious-comment": false,
+        "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "object-literal-sort-keys": false,
-        "prefer-method-signature": false,
-        "react-this-binding-issue": false,
-        "import-name": false
+        "prefer-array-literal": false,
+        "prefer-method-signature": false
     }
 }

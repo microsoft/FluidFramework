@@ -6,7 +6,7 @@
 import { Component } from "@prague/app-component";
 import { Scheduler } from "@prague/flow-util";
 import { FlowDocument } from "../document";
-import { HostView } from "./host";
+import { WebflowHost as WebflowHost } from "./host";
 import { importDoc } from "./template";
 
 export class WebFlow extends Component {
@@ -32,8 +32,8 @@ export class WebFlow extends Component {
         const div = await this.platform.queryInterface<Element>("div");
 
         const scheduler = new Scheduler();
-        const viewport = new HostView();
-        viewport.attach(
+        const host = new WebflowHost();
+        host.attach(
             div,
             { scheduler, doc: await docP, context: this.context });
     }

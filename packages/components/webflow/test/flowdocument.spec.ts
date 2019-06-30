@@ -42,10 +42,15 @@ describe("FlowDocument", () => {
                     s.push((segment as TextSegment).text);
                     break;
                 case DocSegmentKind.beginTag:
-                    s.push(`<${segment.properties.tag}>`);
+                    for (const tag of segment.properties.tags) {
+                        s.push(`<${tag}>`);
+                    }
                     break;
                 case DocSegmentKind.endRange:
-                    s.push(`</${segment.properties.tag}>`);
+                    segment = doc.getStart(segment as Marker);
+                    for (const tag of segment.properties.tags.reverse()) {
+                        s.push(`</${tag}>`);
+                    }
                     break;
                 default:
                     s.push(kind);
@@ -95,7 +100,7 @@ describe("FlowDocument", () => {
                     doc.insertTags(["a", "b"], 2, 4);
                     expect("01<a><b>23</b></a>4");
 
-                    doc.remove(1, 5);
+                    doc.remove(1, 4);
                     expect("034");
                 });
             });

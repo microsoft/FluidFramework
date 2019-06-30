@@ -7,9 +7,60 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "WebFlow Tests",
+            "cwd": "${workspaceFolder}/packages/components/webflow",
+            "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-r",
+                "ts-node/register",
+                // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
+                //       'index.ts' files if there is an 'index.css' in the same directory.
+                "-r",
+                "ignore-styles",
+                "--no-timeouts",
+                // "test/**/*.spec.ts",
+                "test/**/layout.spec.ts",
+                "--exit"
+            ],
+            "env": {
+                // "DEBUG": "flow:*",
+                "TS_NODE_PROJECT": "tsconfig.json",
+            },
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ],
+            "runtimeExecutable": "/Users/danlehen/.nvm/versions/node/v8.15.0/bin/node"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Flow-Util Tests",
+            "cwd": "${workspaceFolder}/packages/components/flow-util",
+            "program": "${workspaceFolder}/packages/components/flow-util/node_modules/ts-mocha/bin/ts-mocha",
+            "args": [
+                // Note: 'ignore-styles' must be after 'ts-node', otherwise 'ignore-styles' will intercept
+                //       'index.ts' files if there is an 'index.css' in the same directory.
+                "-r",
+                "ignore-styles",
+                "--no-timeouts",
+                "test/**/*.spec.ts",
+                //"test/**/layout.spec.ts",
+                "--exit"
+            ],
+            "env": {
+                // "DEBUG": "flow:*",
+                "TS_NODE_PROJECT": "tsconfig.json",
+            },
+            "console": "integratedTerminal",
+            "runtimeExecutable": "/Users/danlehen/.nvm/versions/node/v8.15.0/bin/node"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Table Tests",
             "cwd": "${workspaceFolder}/packages/components/table-test",
-            "program": "${workspaceFolder}/common/tools/node_modules/mocha/bin/_mocha",
+            "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
                 "${workspaceFolder}/common/tools/node_modules/ts-node/register",

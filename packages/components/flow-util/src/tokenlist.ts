@@ -6,30 +6,32 @@
 import { CharCode } from "./charcode";
 
 export function findToken(tokenList: string, token: string) {
-    const start = tokenList.indexOf(token);
+    // tslint:disable-next-line:no-conditional-assignment
+    for (let start = 0; start >= 0; start = tokenList.indexOf(" ", start + 1)) {
+        start = tokenList.indexOf(token, start);
+        if (start < 0) {
+            return undefined;
+        }
 
-    if (start !== 0 && tokenList.charCodeAt(start - 1) !== CharCode.space) {
-        return undefined;
+        if (start === 0 || tokenList.charCodeAt(start - 1) === CharCode.space) {
+            const end = start + token.length;
+            if (end === tokenList.length || end < tokenList.length && tokenList.charCodeAt(end) === CharCode.space) {
+                return { start, end };
+            }
+        }
     }
 
-    const end = start + token.length;
-    if (end !== tokenList.length && tokenList.charCodeAt(end) !== CharCode.space) {
-        return undefined;
-    }
-
-    return { start, end };
+    return undefined;
 }
 
 // tslint:disable-next-line:no-namespace
 export namespace TokenList {
     export function set(tokenList: string, token: string) {
-        return !tokenList
-            ? token                                 // If the list is undefined/empty, return the token
-            : !token
-                ? tokenList                         // If the token is undefined/empty, return the list
-                : findToken(tokenList, token) !== undefined
-                    ? tokenList                     // If the token is already in the list, return the list as-is
-                    : `${tokenList} ${token}`;      // ...otherwise append the token to the list.
+        return !tokenList                       // If the list is empty
+            ? token                             // ...the token becomes the new list.
+            : !token || findToken(tokenList, token)
+                ? tokenList                     // If the token is empty or already in the list, return the list as-is
+                : `${tokenList} ${token}`;      // ...otherwise append the token to the list.
     }
 
     export function unset(tokenList: string, token: string) {
@@ -46,6 +48,10 @@ export namespace TokenList {
     }
 
     export function computeToggle(tokenList: string, toAdd: string[], toRemove: Set<string>) {
+        if (!tokenList) {       // If the token list is empty, the 'toAdd' and 'toRemove'
+            return;             // lists remain unchanged.
+        }
+
         for (let i = toAdd.length - 1; i >= 0; i--) {
             const token = toAdd[i];
             if (findToken(tokenList, token)) {

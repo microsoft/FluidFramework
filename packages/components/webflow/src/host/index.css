@@ -3,124 +3,73 @@ html, body {
     width: 100%;
     padding: 0px;
     margin: 0px;
-    font-family: arial, helvetica, sans-serif;
-    text-align: justify;
-    text-justify: inter-word;
-
-    /* Must set 'overflow:hidden' on body to prevent cartoon physics action when using two
-       finger scrolling in viewport on MacOS/Chrome 71. */
-    overflow: hidden;
 }
 
-*, *:before, *:after {
-    box-sizing: border-box;
+.host, .viewport {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
 }
 
-.fill, .app {
-    display: flex;
-    height: 100%;
-    width: 100%;
+.host {
+    margin: 0.75in;   
 }
 
-.app {
-    flex-direction: column;
-    flex: 1 auto;
+.viewport {
+    outline: 1px dotted #eee;
+    padding: 0.1in;
 }
 
-.toolbarPane {}
-
-.editorPane {
-    position: relative;
-    overflow-y: auto;
+.viewport:focus-within {
+    background: white;
+    outline: 1px dotted #ccc;
 }
 
-.before, .after {
+.slot {
+    white-space: pre-wrap;
+}
+
+.slot:last-child::after {
+    content: "ᅜ";
+    color: #ccc;
+    padding: 0px 2px 0px 3px;
+}
+
+.slot:focus-within {
+    outline: none;
+}
+
+.search {
+
+}
+
+.bold {
+    font-weight: bold;
+}
+
+p::before, ol::before, li::before {
+    border: 1px solid #d97;
+    background: #d97;
+}
+
+p::after, ol::after, li::after { 
+    border: 1px solid #796;
+    background: #796;
+}
+
+p::before, p::after, ol::before, ol::after, li::before, li::after {
     color: white;
-    padding: 0px 4px 0px 4px;
+    font-size: 0.4em;
+    vertical-align: middle;
+    border-radius: 1em;
 }
 
-.before {
-    background: #400;
-}
-
-.after {
-    background: #00F;
-    padding: 0px 4px 0px 4px;
-}
-
-.includeLeft, .includeRight {
-    margin: 8px;
-}
-
-.includeLeft {
-    float: left;
-}
-
-.includeRight {
-    float: right;
-}
-
-.wedgeLeft {
-    width: 400px;
-    height: 800px;
-    background: #e3f5f1;
-    float: left;
-    margin-right: 5px;
-    animation: wedgeLeftAnim 10s infinite;
-}
-
-@keyframes wedgeLeftAnim {
-    0% {
-        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
-    50% {
-        shape-outside: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
-        clip-path: polygon(0 0, 100% 50%, 100% 50%, 0 100%);
-      }
-    100% {
-        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
-}
-
-.wedgeRight {
-    width: 400px;
-    height: 800px;
-    background: #e3f5f1;
-    float: right;
-    margin-right: 5px;
-    animation: wedgeRightAnim 10s infinite;
-}
-  
-@keyframes wedgeRightAnim {
-    0% {
-        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
-    50% {
-        shape-outside: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
-        clip-path: polygon(0 50%, 100% 0, 100% 100%, 0 50%);
-      }
-    100% {
-        shape-outside: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-    }
-}
-
-.video {
-    float: left;
-    border: none;
-    width: 60%;
-    margin-right: 1em;
-}
-
-figcaption {
-    text-align: center
-}
-
-.normal {
-    padding: 3%;
-}
-
-.virtualized { }
+p::before { content: "<p>"; display: table }
+p::after { content: "</p>"; display: table }
+b::before { content: "<b>" }
+b::after { content: "</b>" }
+ol::before { content: "<ol>" }
+ol::after { content: "</ol>" }
+li::before { content: "<li>" }
+li::after { content: "</li>" }

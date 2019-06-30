@@ -7,8 +7,20 @@ import * as registerDebug from "debug";
 
 export const debug = registerDebug("flow:editor");
 
+export function nodeToString(node: Node | Element) {
+    if (node) {
+        if ("tagName" in node) {
+            return `<${node.tagName}>`;
+        } else {
+            return `'${node.textContent}'`;
+        }
+    } else {
+        return `${node}`;
+    }
+}
+
 export function nodeAndOffsetToString(node: Node, nodeOffset: number) {
-    return `'${node && node.textContent}':${nodeOffset}`;
+    return `${nodeToString(node)}:${nodeOffset}`;
 }
 
 export function domRangeToString(startNode: Node | null, startOffset: number, endNode: Node | null, endOffset: number) {

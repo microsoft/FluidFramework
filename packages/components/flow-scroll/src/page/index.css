@@ -1,7 +1,0 @@
-.page, .slot { 
-    min-height: 10in;
-}
-
-.slot { 
-    border: 1px dashed rgba(0,0,0,0.2);
-}
