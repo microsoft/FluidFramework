@@ -54,7 +54,7 @@ const snapshotFileName = "header";
 /**
  * Implementation of a consensus register collection
  */
-export class ConsensusRegisterCollection extends SharedObject implements IConsensusRegisterCollection {
+export class ConsensusRegisterCollection<T> extends SharedObject implements IConsensusRegisterCollection<T> {
     /**
      * Create a new consensus register collection
      *
@@ -62,9 +62,9 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      * @param id - optional name of the consensus register collection
      * @returns newly create consensus register collection (but not attached yet)
      */
-    public static create(runtime: IComponentRuntime, id?: string) {
+    public static create<T>(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedObject.getIdForCreate(id),
-            ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection;
+            ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection<T>;
     }
 
     /**
@@ -97,7 +97,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      * TODO: Right now we will only allow connected clients to write.
      * The correct answer for this should become more clear as we build more scenarios on top of this.
      */
-    public async write(key: string, value: any): Promise<void> {
+    public async write(key: string, value: T): Promise<void> {
         if (this.isLocal()) {
             return Promise.reject(`Local changes are not allowed`);
         }
@@ -135,7 +135,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
      * that submits a read message and returns when the message is acked. That way we are guaranteed
      * to read the most recent linearizable value for that register.
      */
-    public read(key: string, policy?: ReadPolicy): any | undefined {
+    public read(key: string, policy?: ReadPolicy): T | undefined {
         // Default policy is atomic.
         const readPolicy = (policy === undefined) ? ReadPolicy.Atomic : policy;
 
@@ -154,7 +154,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         }
     }
 
-    public readVersions(key: string): any[] | undefined {
+    public readVersions(key: string): T[] | undefined {
         const data = this.data.get(key);
         if (data) {
             return data.versions.map((element: ILocalRegister) => element.value.value);
@@ -262,7 +262,7 @@ export class ConsensusRegisterCollection extends SharedObject implements IConsen
         }
     }
 
-    private readAtomic(key: string): any | undefined {
+    private readAtomic(key: string): T | undefined {
         const data = this.data.get(key);
         if (data) {
             return data.atomic.value.value;

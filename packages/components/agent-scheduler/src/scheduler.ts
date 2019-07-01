@@ -29,7 +29,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     public static async load(runtime: IComponentRuntime) {
         let root: ISharedMap;
-        let scheduler: IConsensusRegisterCollection;
+        let scheduler: IConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
             root.attach();
@@ -38,7 +38,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
             root.set("scheduler", scheduler);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            scheduler = await root.wait<ConsensusRegisterCollection>("scheduler");
+            scheduler = await root.wait<ConsensusRegisterCollection<string | null>>("scheduler");
         }
         const collection = new AgentScheduler(runtime, scheduler);
         await collection.initialize();
@@ -58,7 +58,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
 
     constructor(
         private readonly runtime: IComponentRuntime,
-        private readonly scheduler: IConsensusRegisterCollection) {
+        private readonly scheduler: IConsensusRegisterCollection<string | null>) {
 
         super();
     }
@@ -257,7 +257,7 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 
     private getTaskClientId(id: string): string | null | undefined {
-        return this.scheduler.read(id) as string | null | undefined;
+        return this.scheduler.read(id);
     }
 
     private async writeCore(key: string, value: string | null): Promise<void> {

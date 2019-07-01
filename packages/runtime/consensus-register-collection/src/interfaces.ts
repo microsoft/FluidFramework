@@ -43,22 +43,22 @@ export interface IConsensusRegisterCollectionExtension extends ISharedObjectExte
  * LWW: The last write to a key always wins.
  *
  */
-export interface IConsensusRegisterCollection extends ISharedObject {
+export interface IConsensusRegisterCollection<T = any> extends ISharedObject {
     /**
      * Attempts to write a register with a value. Returns a promise to indicate the roundtrip completion.
      * For a non existent register, it will attempt to create a new register with the specified value.
      */
-    write(key: string, value: any): Promise<void>;
+    write(key: string, value: T): Promise<void>;
 
     /**
      * Retrieves the agreed upon value for the register based on policy. Returns undefined if not present.
      */
-    read(key: string, policy?: ReadPolicy): any | undefined;
+    read(key: string, policy?: ReadPolicy): T | undefined;
 
     /**
      * Retrives all concurrent versions. Undefined if not present.
      */
-    readVersions(key: string): any[] | undefined;
+    readVersions(key: string): T[] | undefined;
 
     /**
      * Returns the keys.
