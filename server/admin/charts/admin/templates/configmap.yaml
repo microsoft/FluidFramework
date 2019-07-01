@@ -71,7 +71,7 @@ data:
         },
         "express": {
             "session": {
-                "secret": {{ .Values.express.session.secret }}
+                "secret": "{{ .Values.express.session.secret }}"
             }
         }
     }
