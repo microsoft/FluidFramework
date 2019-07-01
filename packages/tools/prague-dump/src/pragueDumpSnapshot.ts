@@ -31,14 +31,14 @@ async function fetchSnapshotTreeBlobs(
         console.log(tree);
     }
 
-    let result = new Array<{ path: string, sha: string, blob: Promise<string | undefined> }>();
+    let result = new Array<{ path: string, blobId: string, blob: Promise<string | undefined> }>();
     const itemPrefix = prefix !== "" ? prefix : "!CONTAINER!/";
     for (const item of Object.keys(tree.blobs)) {
         const path = `${itemPrefix}${item}`;
-        const sha = tree.blobs[item];
-        if (sha !== null) {
-            const blob = storage.read(sha);
-            result.push({ path, sha, blob });
+        const blobId = tree.blobs[item];
+        if (blobId !== null) {
+            const blob = storage.read(blobId);
+            result.push({ path, blobId, blob });
         }
     }
     for (const component of Object.keys(tree.commits)) {
@@ -125,18 +125,18 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
     await Promise.all(blobs.map(async (blob) => {
         const data = await blob.blob;
         if (data === undefined) {
-            console.error(`ERROR: Unable to get data for blob ${blob.sha}`);
+            console.error(`ERROR: Unable to get data for blob ${blob.blobId}`);
             return;
         }
         // tslint:disable-next-line:non-literal-fs-path
-        await writeFile(`${outDir}/${blob.sha}`, data);
+        await writeFile(`${outDir}/${blob.blobId}`, data);
 
         const decoded = Buffer.from(data, "base64").toString();
         try {
             const object = JSON.parse(decoded);
-            await writeFile(`${outDir}/decoded/${blob.sha}.json`, JSON.stringify(object, undefined, 2));
+            await writeFile(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));
         } catch (e) {
-            await writeFile(`${outDir}/decoded/${blob.sha}.txt`, decoded);
+            await writeFile(`${outDir}/decoded/${blob.blobId}.txt`, decoded);
         }
     }));
 }

@@ -14,7 +14,6 @@ export let dumpSnapshotTrees = false;
 export let dumpSnapshotBlobs = false;
 export let dumpSnapshotVersions = false;
 export let dumpTotalStats = false;
-export let dumpSnapshotSha = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
@@ -30,7 +29,6 @@ const optionsArray =
         ["--dump:snapshotVersion", "dump a list of snapshot version"],
         ["--dump:snapshotTree", "dump the snapshot trees"],
         ["--dump:snapshotBlob", "dump the contents of snapshot blobs"],
-        ["--dump:snapshotSha", "dump a table of snapshot path and blob's sha"],
         ["--stat:message", "show a table of message type counts and size"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
         ["--stat:dataType", "show a table of data type"],
@@ -84,9 +82,6 @@ export function parseArguments() {
                 break;
             case "--dump:snapshotBlob":
                 dumpSnapshotBlobs = true;
-                break;
-            case "--dump:snapshotSha":
-                dumpSnapshotSha = true;
                 break;
             case "--help":
                 printUsage();
