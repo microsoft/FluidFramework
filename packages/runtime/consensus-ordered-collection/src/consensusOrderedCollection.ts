@@ -94,7 +94,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         /* tslint:disable:no-unsafe-any */
 
         // TODO: Not all shared object will be derived from SharedObject
-        if (value instanceof SharedObject) {
+        if (SharedObject.is(value)) {
             if (!this.isLocal()) {
                 // Ensure a referenced shared object is attached.
                 value.register();

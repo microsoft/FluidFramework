@@ -29,6 +29,21 @@ import { ValueType } from "./valueType";
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObject extends EventEmitter implements ISharedObject {
+
+    /**
+     *
+     * @param obj - The object to check if it is a SharedObject
+     * @returns Returns true if the object is a SharedObject
+     */
+    public static is(obj: any): obj is SharedObject {
+        if (obj !== undefined
+            && obj !== null
+            && obj.__sharedObject__ === true) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get an id for a sharedobject for creation
      *

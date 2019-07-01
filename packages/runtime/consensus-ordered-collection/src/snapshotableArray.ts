@@ -24,7 +24,7 @@ export class SnapshotableArray<T> extends Array {
         // Get a serializable form of data
         const content = new Array<IConsensusOrderedCollectionValue>();
         for (const item of this.data) {
-            if (item instanceof SharedObject) {
+            if (SharedObject.is(item)) {
                 content.push({
                     type: ConsensusValueType[ConsensusValueType.Shared],
                     value: item.id, // (this.data as ISharedObject).id,

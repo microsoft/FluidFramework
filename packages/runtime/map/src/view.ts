@@ -110,7 +110,7 @@ export class MapView {
 
     public attachAll() {
         for (const [, value] of this.data) {
-            if (value.localValue instanceof SharedObject) {
+            if (SharedObject.is(value.localValue)) {
                 value.localValue.register();
             }
         }
@@ -132,7 +132,7 @@ export class MapView {
             // tslint:disable-next-line:no-parameter-reassignment
             value = valueType.factory.load(new ValueOpEmitter(type, key, this.map), value);
         } else {
-            const valueType = value instanceof SharedObject
+            const valueType = SharedObject.is(value)
                 ? ValueType[ValueType.Shared]
                 : ValueType[ValueType.Plain];
             operationValue = this.spill({ localType: valueType, localValue: value });

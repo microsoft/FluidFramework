@@ -106,7 +106,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
     public async set(value: any): Promise<void> {
         let operationValue: ICellValue;
         /* tslint:disable:no-unsafe-any */
-        if (value instanceof SharedObject) {
+        if (SharedObject.is(value)) {
             // Convert any local shared objects to our internal storage format
             if (!this.isLocal()) {
                 value.register();
@@ -152,7 +152,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
     public snapshot(): ITree {
         // Get a serializable form of data
         let content: ICellValue;
-        if (this.data instanceof SharedObject) {
+        if (SharedObject.is(this.data)) {
             content = {
                 type: CellValueType[CellValueType.Shared],
                 value: this.data.id, // (this.data as ISharedObject).id,

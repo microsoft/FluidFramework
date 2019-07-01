@@ -38,7 +38,7 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
 
     let keyElement = container.find(`>.${key}`);
     const newElement = keyElement.length === 0;
-    const isCollab = value instanceof SharedObject;
+    const isCollab = SharedObject.is(value);
 
     if (newElement) {
         // tslint:disable-next-line:no-jquery-raw-elements
