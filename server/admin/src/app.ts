@@ -172,7 +172,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
     app.use(expressSession({
         resave: true,
         saveUninitialized: true,
-        secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi",
+        secret: config.get("express:session:secret"),
         store: sessionStore,
     }));
 

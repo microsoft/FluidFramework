@@ -56,5 +56,10 @@
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
         "documentId": "key-value-manager-0000",
         "package": "@chaincode/key-value@0.3.6901"
+    },
+    "express": {
+        "session": {
+            "secret": "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi"
+        }
     }
 }
