@@ -23,10 +23,12 @@ interface IHostConfig {
 
 const template = new Template(
     { tag: "div", props: { className: styles.host }, children: [
-        { tag: "div", ref: "viewport", props: { type: "text", className: styles.viewport }, children: [
-            { tag: "div", ref: "slot", props: { className: styles.slot } },
+        { tag: "div", ref: "viewport", props: { className: styles.viewport }, children: [
+            { tag: "div", props: { className: styles.padding }, children: [
+                { tag: "div", ref: "slot", props: { className: styles.slot } },
+            ]},
         ]},
-        { tag: "div", ref: "search", props: { type: "text", className: styles.search }},
+        { tag: "div", ref: "search", props: { className: styles.search }},
     ]});
 
 export class HostView extends View<IHostConfig> {

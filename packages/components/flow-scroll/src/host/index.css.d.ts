@@ -3,6 +3,7 @@ declare const styles: {
   readonly "viewport": string;
   readonly "search": string;
   readonly "bold": string;
+  readonly "padding": string;
   readonly "slot": string;
 };
 

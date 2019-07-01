@@ -3,6 +3,11 @@ html, body {
     width: 100%;
     padding: 0px;
     margin: 0px;
+    overflow: hidden;
+}
+
+.host {
+    overflow: hidden;
 }
 
 .host, .viewport {
@@ -10,18 +15,24 @@ html, body {
     left: 0;
     top: 0;
     right: 0;
-}
-
-.host {
-    margin: 0.75in;   
+    bottom: 0;
 }
 
 .viewport {
+    overflow: auto;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+}
+
+.padding {
     outline: 1px dotted #ddd;
+    margin: 0.75in;
     padding: 0.1in;
 }
 
-.viewport:focus-within {
+.padding:focus-within {
     background: white;
     outline: 1px dotted #aaa;
 }

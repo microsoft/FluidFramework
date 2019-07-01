@@ -291,14 +291,14 @@ export class FlowDocument extends Component {
     }
 
     public setFormat(position: number, tag: Tag) {
-        const { start, end } = this.findParagraph(position);
+        const { start } = this.findParagraph(position);
 
         // If inside an existing paragraph marker, update it with the new formatting tag.
         if (start < this.length) {
             const pgSeg = this.getSegmentAndOffset(start).segment;
             if (getDocSegmentKind(pgSeg) === DocSegmentKind.paragraph) {
                 pgSeg.properties.tag = tag;
-                this.annotate(start, end, { tag });
+                this.annotate(start, start + 1, { tag });
                 return;
             }
         }
