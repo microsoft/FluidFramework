@@ -18,13 +18,12 @@ describe("SharedString", () => {
     beforeEach(() => {
         const runtime = new MockRuntime();
         deltaConnectionFactory = new MockDeltaConnectionFactory();
-        const services: ISharedObjectServices = {
+        sharedString = new SharedString(runtime, documentId);
+        runtime.services = {
             deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
             objectStorage: new MockStorage(undefined),
         };
-        runtime.attachChannel = () => services;
-
-        sharedString = new SharedString(runtime, documentId);
+        runtime.attach();
     });
 
     describe(".sendNACKed", () => {
@@ -32,7 +31,7 @@ describe("SharedString", () => {
         const insertCount = 5;
         beforeEach(() => {
             sharedString.initializeLocal();
-            sharedString.attach();
+            sharedString.register();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             for (let i = 0; i < insertCount; i++) {
@@ -176,7 +175,6 @@ describe("SharedString", () => {
                 deltaConnection: deltaConnectionFactory.createDeltaConnection(runtime),
                 objectStorage: new MockStorage(tree),
             };
-            runtime.attachChannel = () => services;
 
             const sharedString2 = new SharedString(runtime, documentId);
             await sharedString2.load(0, null/*headerOrigin*/, services);

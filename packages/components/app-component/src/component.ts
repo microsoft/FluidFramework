@@ -123,7 +123,11 @@ export abstract class Component extends EventEmitter implements IComponent {
         // On first boot create the base component
         if (!runtime.existing) {
             debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createAndAttachComponent(chaincode, chaincode).catch((error) => {
+            runtime.createComponent(chaincode, chaincode)
+            .then((componentRuntime) => {
+                componentRuntime.attach();
+            })
+            .catch((error) => {
                 context.error(error);
             });
         }
@@ -177,7 +181,7 @@ export abstract class Component extends EventEmitter implements IComponent {
     }
 
     public async attach(platform: IPlatform): Promise<IPlatform> {
-        debug(`${this.dbgName}.attach()`);
+        debug(`${this.dbgName}.register()`);
         this._platform = platform;
 
         if (!this.ensureOpenedPromise) {
@@ -258,7 +262,7 @@ export abstract class Component extends EventEmitter implements IComponent {
             // root map and call 'create()' to give the component author a chance to initialize the
             // component's shared data structures.
             this._root = SharedMap.create(this. runtime, Component.rootMapId);
-            this._root.attach();
+            this._root.register();
             debug(`${this.dbgName}.create() - begin`);
             await this.create();
             debug(`${this.dbgName}.create() - end`);

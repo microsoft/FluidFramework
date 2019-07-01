@@ -4,7 +4,7 @@
  */
 
 import { ITree } from "@prague/container-definitions";
-import { IChannel } from "@prague/runtime-definitions";
+import { IChannel, ISharedObjectServices } from "@prague/runtime-definitions";
 
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
@@ -31,9 +31,9 @@ export interface ISharedObject extends IChannel {
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
-     * Attaches the given shared object to its containing document
+     * Registers the given shared object to its containing runtime
      */
-    attach(): this;
+    register(): void;
 
     /**
      * Returns whether the given shared object is local
@@ -41,7 +41,17 @@ export interface ISharedObject extends IChannel {
     isLocal(): boolean;
 
     /**
+     * True if the channel has been registered.
+     */
+    isRegistered(): boolean;
+
+    /**
      * Snapshots the object
      */
     snapshot(): ITree;
+
+    /**
+     * Enables the channel to send and receive ops
+     */
+    connect(services: ISharedObjectServices): void;
 }

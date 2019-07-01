@@ -266,12 +266,13 @@ export async function load(
 
     // Wait for loader to start us
     const { runtime, context } = await runDeferred.promise;
+    await runtime.waitAttached();
 
     // Initialize core data structures
     let root: ISharedMap;
     if (!runtime.existing) {
         root = SharedMap.create(runtime, rootMapId);
-        root.attach();
+        root.register();
 
         const insights = SharedMap.create(runtime, insightsMapId);
         root.set(insightsMapId, insights);

@@ -119,17 +119,18 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     constructor(
         // tslint:disable-next-line:variable-name
         private readonly _hostRuntime: IHostRuntime,
-        private readonly pkg: string,
+        public readonly pkg: string,
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
-        public readonly baseSnapshot: ISnapshotTree) {
+        public readonly baseSnapshot: ISnapshotTree,
+        public readonly attach: (componentRuntime: IComponentRuntime) => void) {
         super();
         this.baseId = baseSnapshot ? baseSnapshot.id : null;
     }
 
-    public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this._hostRuntime.createAndAttachComponent(id, pkg);
+    public createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+        return this.hostRuntime.createComponent(id, pkg);
     }
 
     public getComponentRuntime(id: string, wait: boolean): Promise<IComponentRuntime> {

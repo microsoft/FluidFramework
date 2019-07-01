@@ -66,16 +66,13 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
   /**
    * Will return a new Clicker view
    */
-  public async addView(host: IComponent, parent: HTMLDivElement): Promise<IHTMLView> {
+  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLView> {
     // Get our counter object that we set in initialize and pass it in to the view.
     const counter = this.root.get("clicks");
-
-    const div = document.createElement("div");
     ReactDOM.render(
       <CounterReactView map={this.root} counter={counter} />,
       div,
     );
-    parent.appendChild(div);
     return div;
   }
 

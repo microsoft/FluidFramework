@@ -54,7 +54,11 @@ export class StockContainerRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createAndAttachComponent(chaincode, chaincode).catch((error) => {
+            runtime.createComponent(chaincode, chaincode)
+            .then((componentRuntime) => {
+                componentRuntime.attach();
+            })
+            .catch((error) => {
                 context.error(error);
             });
         }

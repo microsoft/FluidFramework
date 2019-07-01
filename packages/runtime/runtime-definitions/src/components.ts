@@ -25,7 +25,7 @@ import {
     MessageType,
 } from "@prague/container-definitions";
 import { EventEmitter } from "events";
-import { IChannel, ISharedObjectServices } from "./channel";
+import { IChannel } from "./channel";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -88,6 +88,11 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     snapshotInternal(): ITreeEntry[];
 
     /**
+     * Called to attach the runtime to the container
+     */
+    attach(): void;
+
+    /**
      * Returns the channel with the given id
      */
     getChannel(id: string): Promise<IChannel>;
@@ -100,10 +105,10 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     createChannel(id: string, type: string): IChannel;
 
     /**
-     * Attaches the channel to the runtime - exposing it to remote clients
-     * @param channel - Channel to be attached to the runtime.
+     * Registers the channel with the component runtime. If the runtime
+     * is collaborative then we attach the channel to make it collaborative.
      */
-    attachChannel(channel: IChannel): ISharedObjectServices;
+    registerChannel(channel: IChannel): void;
 
     /**
      * Api for generating the snapshot of the component.
@@ -218,11 +223,11 @@ export interface IComponentContext extends EventEmitter {
     submitSignal(type: string, content: any): void;
 
     /**
-     * Creates a component and then attaches it to the container.
+     * Creates a new component.
      * @param id - ID of the chaincode package.
      * @param pkg - Package name of the component.
      */
-    createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
+    createComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.
@@ -236,6 +241,12 @@ export interface IComponentContext extends EventEmitter {
      * @param request - Request.
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Attaches the runtime to the conatiner
+     * @param componentRuntime - runtime to attach
+     */
+    attach(componentRuntime: IComponentRuntime): void;
 }
 
 /**
@@ -271,11 +282,11 @@ export interface IHostRuntime extends IRuntime {
     getComponentRuntime(id: string, wait?: boolean): Promise<IComponentRuntime>;
 
     /**
-     * Creates a component and then attaches it to the container.
-     * @param id - ID of the chaincode package.
-     * @param pkg - Package name of the component.
+     * Creates a new component without attaching.
+     * @param id - unique id of the component package.
+     * @param pkg - name of the component package
      */
-    createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime>;
+    createComponent(id: string, pkg: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the current quorum.

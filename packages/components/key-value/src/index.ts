@@ -73,7 +73,7 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
-            this.root.attach();
+            this.root.register();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
@@ -116,7 +116,11 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     });
 
     if (!runtime.existing) {
-        runtime.createAndAttachComponent(ComponentName, ComponentName).catch((error) => {
+        runtime.createComponent(ComponentName, ComponentName)
+        .then((componentRuntime) => {
+            componentRuntime.attach();
+        })
+        .catch((error) => {
             context.error(error);
         });
     }

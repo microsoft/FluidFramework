@@ -122,11 +122,16 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     // On first boot create the base component
     if (!runtime.existing) {
         await Promise.all([
-            runtime.createAndAttachComponent("progress-bars", "@chaincode/progress-bars"),
-            runtime.createAndAttachComponent("text", "@chaincode/shared-text"),
-            runtime.createAndAttachComponent("math", "@chaincode/math"),
-            runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
-            runtime.createAndAttachComponent("images", "@chaincode/image-collection"),
+            runtime.createComponent("progress-bars", "@chaincode/progress-bars")
+                .then((componentRuntime) => componentRuntime.attach()),
+            runtime.createComponent("text", "@chaincode/shared-text")
+                .then((componentRuntime) => componentRuntime.attach()),
+            runtime.createComponent("math", "@chaincode/math")
+                .then((componentRuntime) => componentRuntime.attach()),
+            runtime.createComponent("video-players", "@chaincode/video-players")
+                .then((componentRuntime) => componentRuntime.attach()),
+            runtime.createComponent("images", "@chaincode/image-collection")
+                .then((componentRuntime) => componentRuntime.attach()),
         ])
         .catch((error) => {
             context.error(error);

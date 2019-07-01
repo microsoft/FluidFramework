@@ -32,9 +32,9 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
         let scheduler: IConsensusRegisterCollection<string | null>;
         if (!runtime.existing) {
             root = SharedMap.create(runtime, "root");
-            root.attach();
+            root.register();
             scheduler = ConsensusRegisterCollection.create(runtime);
-            scheduler.attach();
+            scheduler.register();
             root.set("scheduler", scheduler);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;

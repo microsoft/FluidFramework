@@ -5155,7 +5155,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (sel) {
             const commentStory = this.collabDocument.createString();
             commentStory.insertText("a comment...", 0);
-            commentStory.attach();
+            commentStory.register();
             this.comments.add(
                 sel.start,
                 sel.end,
@@ -5174,7 +5174,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertInnerComponent(prefix: string, chaincode: string) {
         const id = `${prefix}${Date.now()}`;
 
-        this.collabDocument.context.createAndAttachComponent(id, chaincode);
+        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
 
         this.insertComponent("innerComponent", { id, chaincode });
     }
@@ -5182,7 +5182,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
-        this.collabDocument.context.createAndAttachComponent(id, chaincode);
+        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
 
         const props = {
             crefTest: {

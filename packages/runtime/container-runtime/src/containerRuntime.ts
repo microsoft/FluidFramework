@@ -317,7 +317,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             id,
             true,
             runtimeStorage,
-            snapshotTree);
+            snapshotTree,
+            (cr: IComponentRuntime) => this.attachComponent(cr));
         this.componentContexts.set(id, component);
 
         // Create a promise that will resolve to the started component
@@ -608,7 +609,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return componentContext.componentRuntime;
     }
 
-    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+    public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
         const runtimeStorage = new ComponentStorageService(this.storage, new Map());
@@ -618,27 +619,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             id,
             false,
             runtimeStorage,
-            null);
-
-        // Generate the attach message. This may include ownership
-        const message: IAttachMessage = {
-            id,
-            snapshot: null,
-            type: pkg,
-        };
-        this.pendingAttach.set(id, message);
-        this.submit(MessageType.Attach, message);
+            null,
+            (cr: IComponentRuntime) => this.attachComponent(cr));
 
         // Store off the component
         const deferred = new Deferred<ComponentContext>();
         this.componentContextsDeferred.set(id, deferred);
         this.componentContexts.set(id, componentContext);
 
-        // Start the component
-        const componentRuntime = await componentContext.start();
-        deferred.resolve(componentContext);
-
-        return componentRuntime;
+        return componentContext.start();
     }
 
     public getQuorum(): IQuorum {
@@ -683,6 +672,28 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      */
     public isDocumentDirty(): boolean {
         return this.dirtyDocument;
+    }
+
+    private attachComponent(componentRuntime: IComponentRuntime): void {
+        this.verifyNotClosed();
+
+        const componentContext = this.componentContexts.get(componentRuntime.id);
+
+        // Generate and send the Attach message. This may include ownership
+        const message: IAttachMessage = {
+            id: componentRuntime.id,
+            snapshot: {
+                entries: componentRuntime.snapshotInternal(),
+                id: null,
+            },
+            type: componentContext.pkg,
+        };
+        this.pendingAttach.set(componentRuntime.id, message);
+        this.submit(MessageType.Attach, message);
+
+        // Resolve the deferred so other local components can access it.
+        const deferred = this.componentContextsDeferred.get(componentRuntime.id);
+        deferred.resolve(componentContext);
     }
 
     private async generateSummary(): Promise<void> {
@@ -945,7 +956,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             attachMessage.id,
             true,
             runtimeStorage,
-            snapshotTree);
+            snapshotTree,
+            (cr: IComponentRuntime) => this.attachComponent(cr));
 
         return component;
     }

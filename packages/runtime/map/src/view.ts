@@ -111,7 +111,7 @@ export class MapView {
     public attachAll() {
         for (const [, value] of this.data) {
             if (value.localValue instanceof SharedObject) {
-                value.localValue.attach();
+                value.localValue.register();
             }
         }
     }
@@ -264,7 +264,7 @@ export class MapView {
             // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
             // (like attaching)
             if (!this.map.isLocal()) {
-                distributedObject.attach();
+                distributedObject.register();
             }
             return {
                 type: ValueType[ValueType.Shared],

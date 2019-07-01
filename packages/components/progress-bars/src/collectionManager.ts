@@ -64,9 +64,10 @@ export class CollectionManager extends EventEmitter {
 
     private async initialize() {
         if (!this.runtime.existing) {
-            await this.context.createAndAttachComponent(
+            const progressItemRuntime = await this.context.createComponent(
                 "progress",
                 `@component/collection-components/lib/progress`);
+            progressItemRuntime.attach();
         }
 
         const runtime = await this.context.getComponentRuntime("progress", true);

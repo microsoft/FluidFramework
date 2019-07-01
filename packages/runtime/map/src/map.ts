@@ -408,7 +408,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
     }
 
-    protected attachCore() {
+    protected registerCore() {
         this.view.attachAll();
 
         this.attachContent();

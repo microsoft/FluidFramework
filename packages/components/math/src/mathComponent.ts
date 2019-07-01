@@ -499,8 +499,8 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             this.combinedMathText = Sequence.SharedString.create(this.runtime, "mathText");
-            this.root.attach();
-            this.combinedMathText.attach();
+            this.root.register();
+            this.combinedMathText.register();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
             this.combinedMathText = await this.runtime.getChannel("mathText") as Sequence.SharedString;

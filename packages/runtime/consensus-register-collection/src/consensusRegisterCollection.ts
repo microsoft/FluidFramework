@@ -108,7 +108,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         let operationValue: IRegisterValue;
 
         if (value instanceof SharedObject) {
-            value.attach();
+            value.register();
             operationValue = {
                 type: RegisterValueType[RegisterValueType.Shared],
                 value: value.id,
@@ -224,7 +224,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         return;
     }
 
-    protected attachCore() {
+    protected registerCore() {
         return;
     }
 

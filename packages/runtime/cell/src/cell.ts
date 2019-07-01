@@ -109,7 +109,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
         if (value instanceof SharedObject) {
             // Convert any local shared objects to our internal storage format
             if (!this.isLocal()) {
-                value.attach();
+                value.register();
             }
 
             operationValue = {
@@ -205,7 +205,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
         this.data = undefined;
     }
 
-    protected attachCore() {
+    protected registerCore() {
         return;
     }
 

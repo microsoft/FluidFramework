@@ -18,7 +18,7 @@ export class Document {
 
         if (!runtime.existing) {
             root = runtime.createChannel(rootMapId, MapExtension.Type) as IMap;
-            root.attach();
+            root.register();
 
             const insights = runtime.createChannel(insightsMapId, MapExtension.Type);
             root.set(insightsMapId, insights);

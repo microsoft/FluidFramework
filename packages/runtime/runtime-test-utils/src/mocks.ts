@@ -123,6 +123,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("prague:MockRuntime");
+    public services: ISharedObjectServices;
 
     public get connectionState(): ConnectionState {
         return ConnectionState.Connected;
@@ -135,7 +136,13 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
         return null;
     }
 
-    public attachChannel: (channel: IChannel) => ISharedObjectServices = () => null;
+    public registerChannel(channel: IChannel): void {
+        channel.connect(this.services);
+    }
+
+    public attach(): void {
+        return;
+    }
 
     public getQuorum(): IQuorum {
         return null;

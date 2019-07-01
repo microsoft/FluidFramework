@@ -56,7 +56,7 @@ export class HostView extends View<IHostConfig> {
         const insertComponent = (type: string, style?: string, classList?: string[]) => {
             const position = editor.selection.end;
             const url = randomId();
-            init.context.createAndAttachComponent(url, type);
+            init.context.createComponent(url, type).then((componentRuntime) => componentRuntime.attach());
             init.doc.insertComponent(position, `/${url}`, style, classList);
         };
 

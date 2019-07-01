@@ -157,6 +157,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private isLocal: boolean;
+    private readonly deferredAttached = new Deferred<void>();
+    private readonly attachChannelQueue: Map<string, IChannel> = new Map();
 
     private constructor(
         private readonly componentContext: IComponentContext,
@@ -175,10 +178,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         public readonly logger: ITelemetryLogger) {
         super();
         this.attachListener();
+        this.isLocal = !existing;
+
+        // If it's existing we know it has been attached.
+        if (existing) {
+            this.deferredAttached.resolve();
+        }
     }
 
-    public createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        return this.componentContext.createAndAttachComponent(id, pkg);
+    public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+        const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
+        newComponentRuntime.attach();
+        return newComponentRuntime;
     }
 
     /**
@@ -260,30 +271,51 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return channel;
     }
 
-    public attachChannel(channel: IChannel): ISharedObjectServices {
-        this.verifyNotClosed();
+    /**
+     * Registers a channel with the runtime. If the runtime is attached we will attach the channel right away.
+     * If the runtime is not attached we will defer the attach until the runtime attaches.
+     * @param channel - channel to be registered.
+     * @param onAttach - callback to be called when the channel is attached.
+     */
+    public registerChannel(channel: IChannel): void {
+        // If our Component is not local attach the channel.
+        if (!this.isLocal) {
+            const services = this.attachChannel(channel);
+            channel.connect(services);
+            return;
+        }
 
-        // Get the object snapshot and include it in the initial attach
-        const snapshot = channel.snapshot();
+        // If our Component is local then add the channel to the queue
+        if (!this.attachChannelQueue.has(channel.id)) {
+            this.attachChannelQueue.set(channel.id, channel);
+        }
+    }
 
-        const message: IAttachMessage = {
-            id: channel.id,
-            snapshot,
-            type: channel.type,
-        };
-        this.pendingAttach.set(channel.id, message);
-        this.submit(MessageType.Attach, message);
+    /**
+     * Attaches this runtime to the container
+     * This includes the following:
+     * 1. Sending an Attach op that includes all existing state
+     * 2. Attaching registered channels
+     */
+    public attach() {
+        if (!this.isLocal) {
+            return;
+        }
 
-        // Store a reference to the object in our list of objects and then get the services
-        // used to attach it to the stream
-        const services = this.getObjectServices(channel.id, null, this.storageService);
+        // Attach the runtime to the container via this callback
+        this.componentContext.attach(this);
 
-        const entry = this.channels.get(channel.id);
-        assert.equal(entry.object, channel);
-        entry.connection = services.deltaConnection;
-        entry.storage = services.objectStorage;
+        // Flush the queue to set any pre-existing channels to local
+        this.attachChannelQueue.forEach((channel) => {
+            // When we are attaching the component we don't need to send attach for the registered services.
+            // This is because they will be captured as part of the Attach component snapshot
+            const services = this.getAndAttachChannelServices(channel);
+            channel.connect(services);
+        });
 
-        return services;
+        this.isLocal = false;
+        this.deferredAttached.resolve();
+        this.attachChannelQueue.clear();
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -394,9 +426,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
         // Craft the .attributes file for each shared object
         for (const [objectId, object] of this.channels) {
-            // If the object isn't local - and we have received the sequenced op creating the object (i.e. it has a
+            // If the object is registered - and we have received the sequenced op creating the object (i.e. it has a
             // base mapping) - then we go ahead and snapshot
-            if (!object.object.isLocal()) {
+            if (object.object.isRegistered()) {
                 const snapshot = object.object.snapshot();
 
                 // Add in the object attributes to the returned tree
@@ -444,6 +476,46 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public notifyPendingMessages(): void {
         assert(!this.connected);
         this.componentContext.hostRuntime.notifyPendingMessages();
+    }
+
+    /**
+     * Will return when the component is attached.
+     */
+    public async waitAttached(): Promise<void> {
+        return this.deferredAttached.promise;
+    }
+
+    /**
+     * Attach channel should only be called after the componentRuntime has been attached
+     */
+    private attachChannel(channel: IChannel): ISharedObjectServices {
+        this.verifyNotClosed();
+
+        // Get the object snapshot and include it in the initial attach
+        const snapshot = channel.snapshot();
+
+        const message: IAttachMessage = {
+            id: channel.id,
+            snapshot,
+            type: channel.type,
+        };
+        this.pendingAttach.set(channel.id, message);
+        this.submit(MessageType.Attach, message);
+
+        return this.getAndAttachChannelServices(channel);
+    }
+
+    private getAndAttachChannelServices(channel: IChannel): ISharedObjectServices {
+        // Store a reference to the object in our list of objects and then get the services
+        // used to attach it to the stream
+        const services = this.getObjectServices(channel.id, null, this.storageService);
+
+        const entry = this.channels.get(channel.id);
+        assert.equal(entry.object, channel);
+        entry.connection = services.deltaConnection;
+        entry.storage = services.objectStorage;
+
+        return services;
     }
 
     private submit(type: MessageType, content: any): number {

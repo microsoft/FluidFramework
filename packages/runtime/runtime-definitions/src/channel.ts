@@ -31,6 +31,16 @@ export interface IChannel {
      * It will be lost on browser tab closure if not attached.
      */
     isLocal(): boolean;
+
+    /**
+     * True if the channel has been registered.
+     */
+    isRegistered(): boolean;
+
+    /**
+     * Enables the channel to send and receive ops
+     */
+    connect(services: ISharedObjectServices): void;
 }
 
 /**

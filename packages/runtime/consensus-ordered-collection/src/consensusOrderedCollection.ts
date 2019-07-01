@@ -97,7 +97,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         if (value instanceof SharedObject) {
             if (!this.isLocal()) {
                 // Ensure a referenced shared object is attached.
-                value.attach();
+                value.register();
             }
 
             operationValue = {
@@ -164,7 +164,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return;
     }
 
-    protected attachCore() {
+    protected registerCore() {
         return;
     }
 

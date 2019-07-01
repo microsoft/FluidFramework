@@ -152,7 +152,7 @@ export class ImageCollection extends EventEmitter implements
     private async initialize() {
         if (!this.runtime.existing) {
             this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
-            this.root.attach();
+            this.root.register();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }

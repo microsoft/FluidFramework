@@ -18,7 +18,7 @@ export class Document {
 
         if (!runtime.existing) {
             root = SharedMap.create(runtime, rootMapId);
-            root.attach();
+            root.register();
 
             const insights = SharedMap.create(runtime, insightsMapId);
             root.set(insightsMapId, insights);

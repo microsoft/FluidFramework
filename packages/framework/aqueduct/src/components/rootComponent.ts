@@ -76,7 +76,7 @@ export abstract class RootComponent extends SharedComponent implements IComponen
         this.root = SharedMap.create(this.runtime, this.rootMapId);
 
         // Calling attach pushes the channel to the websocket. Before this it's only local.
-        this.root.attach();
+        this.root.register();
     }
 
     protected async existing(): Promise<void> {

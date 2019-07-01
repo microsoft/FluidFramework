@@ -25,7 +25,7 @@ export class Document {
 
         if (!runtime.existing) {
             root = SharedMap.create(runtime, rootMapId);
-            root.attach();
+            root.register();
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
         }

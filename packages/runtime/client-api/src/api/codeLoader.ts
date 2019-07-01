@@ -120,7 +120,11 @@ export class ChaincodeFactory implements IChaincodeFactory {
 
         // On first boot create the base component
         if (!runtime.existing) {
-            runtime.createAndAttachComponent("root", "@prague/client-api").catch((error) => {
+            runtime.createComponent("root", "@prague/client-api")
+            .then((componentRuntime) => {
+                componentRuntime.attach();
+            })
+            .catch((error) => {
                 context.error(error);
             });
         }

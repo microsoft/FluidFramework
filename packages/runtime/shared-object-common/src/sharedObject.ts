@@ -67,6 +67,11 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     private services: ISharedObjectServices | undefined;
 
     /**
+     * True if register() has been called.
+     */
+    private registered: boolean = false;
+
+    /**
      * Gets the connection state
      *
      * @returns the state of the connection
@@ -82,6 +87,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      */
     constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
+
         // runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
@@ -133,23 +139,29 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     }
 
     /**
-     * Attaches the given shared object to its containing document
+     * Registers the channel with the runtime. The channel will get attach when the runtime is.
      */
-    public attach(): this {
+    public register(): void {
         if (!this.isLocal()) {
-            return this;
+            return;
         }
+
+        this.registered = true;
 
         this.setOwner();
 
-        // Allow derived classes to perform custom processing prior to attaching this object
-        this.attachCore();
+        // Allow derived classes to perform custom processing prior to registering this object
+        this.registerCore();
 
-        // Notify the document of the attachment
-        this.services = this.runtime.attachChannel(this);
+        this.runtime.registerChannel(this);
+    }
+
+    /**
+     * Enables the channel to send and receive ops
+     */
+    public connect(services: ISharedObjectServices) {
+        this.services = services;
         this.attachDeltaHandler();
-
-        return this;
     }
 
     /**
@@ -159,6 +171,13 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      */
     public isLocal(): boolean {
         return !this.services;
+    }
+
+    /**
+     * Returns whether the given shared object is registered
+     */
+    public isRegistered(): boolean {
+        return (!this.isLocal() || this.registered);
     }
 
     /**
@@ -222,7 +241,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened
      */
-    protected abstract attachCore();
+    protected abstract registerCore();
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened.
