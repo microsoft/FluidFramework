@@ -5,7 +5,7 @@
 
 import { ServicePlatform } from "@prague/component-runtime";
 import { IComponent } from "@prague/container-definitions";
-import { ISegment, Marker, TextSegment } from "@prague/merge-tree";
+import { Marker } from "@prague/merge-tree";
 import { IComponent as ILegacyComponent, IComponentRenderHTML } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
@@ -23,38 +23,32 @@ export class DocumentFormatter extends Formatter<IFormatterState> {
     public begin(): never { throw new Error(); }
     public end(): never { throw new Error(); }
 
-    public visit(
-        state: IFormatterState,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public visit(state: IFormatterState, layout: Layout) {
+        const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.pushFormat(paragraphFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(paragraphFormatter);
                 return false;
             }
 
             case DocSegmentKind.paragraph: {
-                layout.pushFormat(paragraphFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(paragraphFormatter);
                 return true;
             }
 
             case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(inclusionFormatter);
                 return false;
             }
 
-            case DocSegmentKind.beginTag: {
-                layout.pushFormat(tagsFormatter, position, segment, startOffset, endOffset);
+            case DocSegmentKind.beginTags: {
+                layout.pushFormat(tagsFormatter);
                 return true;
             }
 
-            case DocSegmentKind.endRange: {
+            case DocSegmentKind.endTags: {
                 // If the DocumentFormatter encounters an 'endRange', presumably this is because the 'beginTag'
                 // has not yet been inserted.  Ignore it.
                 assert.strictEqual(layout.doc.getStart(segment as Marker), undefined);
@@ -62,7 +56,7 @@ export class DocumentFormatter extends Formatter<IFormatterState> {
             }
 
             default:
-                assert.fail(`Unhandled DocSegmentKind '${kind}' @${position}`);
+                assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
     }
 }
@@ -72,7 +66,8 @@ interface IInclusionState { root?: HTMLElement; }
 export class InclusionFormatter extends Formatter<IInclusionState> {
     public createState() { return {}; }
 
-    public begin(state: IInclusionState, layout: Layout, position: number, segment: ISegment, startOffset: number, endOffset: number) {
+    public begin(state: IInclusionState, layout: Layout) {
+        const segment = layout.segment;
         if (!state.root) {
             state.root = document.createElement(Tag.span);
             state.root.contentEditable = "false";
@@ -95,19 +90,12 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
 
         const root = state.root;
         syncCss(root, getCss(segment), styles.inclusion);
-        layout.pushNode(root, position, segment);
+        layout.pushNode(root);
     }
 
-    public visit(
-        state: IInclusionState,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
-        assert.strictEqual(getDocSegmentKind(segment), DocSegmentKind.inclusion);
-        layout.popFormat(position, segment, startOffset, endOffset);
+    public visit(state: IInclusionState, layout: Layout) {
+        assert.strictEqual(getDocSegmentKind(layout.segment), DocSegmentKind.inclusion);
+        layout.popFormat();
         return true;
     }
 
@@ -122,36 +110,31 @@ interface ITagsProps { tags?: Tag[]; }
 class TagsFormatter extends Formatter<ITagsState> {
     public createState(): ITagsState { return { popCount: 0, pTag: undefined }; }
 
-    public begin(state: ITagsState, layout: Layout, position: number, segment: ISegment, startOffset: number, endOffset: number) {
+    public begin(state: ITagsState, layout: Layout) {
+        const segment = layout.segment;
         const props: ITagsProps = (segment && segment.properties) || {};
         const tags = props.tags;
 
-        state.root = this.pushTag(layout, position, segment, tags[0], state.root) as HTMLElement;
+        state.root = this.pushTag(layout, tags[0], state.root) as HTMLElement;
         const root = state.root;
         syncCss(root, getCss(segment), undefined);
 
         for (let index = 1, existing: Element = root; index < tags.length; index++) {
             existing = existing && existing.firstElementChild;
-            this.pushTag(layout, position, segment, tags[index], existing);
+            this.pushTag(layout, tags[index], existing);
         }
 
         state.popCount = tags.length;
         state.pTag = tags[tags.length - 1];
     }
 
-    public visit(
-        state: Readonly<ITagsState>,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public visit(state: Readonly<ITagsState>, layout: Layout) {
+        const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.emitText(position, (segment as TextSegment));
+                layout.emitText();
                 return true;
             }
 
@@ -165,24 +148,24 @@ class TagsFormatter extends Formatter<ITagsState> {
                     : document.createElement(state.pTag);
 
                 syncCss(pg as HTMLElement, getCss(segment), undefined);
-                layout.pushNode(pg, position, segment);
+                layout.pushNode(pg);
                 return true;
             }
 
             case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(inclusionFormatter);
                 return false;
             }
 
-            case DocSegmentKind.endRange: {
-                layout.emitNode(document.createElement(Tag.br), position, segment);
-                layout.popFormat(position, segment, startOffset, endOffset);
+            case DocSegmentKind.endTags: {
+                layout.emitNode(document.createElement(Tag.br));
+                layout.popFormat();
                 return true;
             }
 
             default:
-                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, position, kind);
-                layout.popFormat(position, segment, startOffset, endOffset);
+                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+                layout.popFormat();
                 return false;
         }
     }
@@ -197,59 +180,49 @@ class TagsFormatter extends Formatter<ITagsState> {
 interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 
 class ParagraphFormatter extends Formatter<IParagraphState> {
-    constructor(private readonly tag: Tag) { super (); }
+    constructor(private readonly defaultTag: Tag) { super (); }
 
     public createState(): IParagraphState { return { }; }
 
-    public begin(state: IParagraphState, layout: Layout, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        state.root = this.pushTag(layout, position, segment, this.tag, state.root) as HTMLElement;
+    public begin(state: IParagraphState, layout: Layout) {
+        const segment = layout.segment;
+        // tslint:disable-next-line:strict-boolean-expressions
+        const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
+        state.root = this.pushTag(layout, tag, state.root) as HTMLElement;
         syncCss(state.root, getCss(segment), undefined);
     }
 
-    public visit(
-        state: Readonly<IParagraphState>,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public visit(state: Readonly<IParagraphState>, layout: Layout) {
+        const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.pushFormat(textFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(textFormatter);
                 return false;
             }
 
             case DocSegmentKind.paragraph: {
-                layout.popFormat(position, segment, startOffset, endOffset);
-                layout.pushFormat(this, position, segment, startOffset, endOffset);
+                layout.popFormat();
+                layout.pushFormat(this);
                 return true;
             }
 
             case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter, position, segment, startOffset, endOffset);
+                layout.pushFormat(inclusionFormatter);
                 return false;
             }
 
             default:
-                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, position, kind);
-                layout.popFormat(position, segment, startOffset, endOffset);
+                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+                layout.popFormat();
                 return false;
         }
     }
 
-    public end(
-        state: Readonly<IParagraphState>,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public end(state: Readonly<IParagraphState>, layout: Layout) {
         if (!layout.cursor.previous) {
-            layout.emitNode(document.createElement(Tag.br), position, segment);
+            layout.emitNode(document.createElement(Tag.br));
         }
         layout.popNode();
     }
@@ -260,47 +233,34 @@ interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssPro
 class TextFormatter extends Formatter<ITextState> {
     public createState(): ITextState { return { }; }
 
-    public begin(state: ITextState, layout: Layout, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        state.root = this.pushTag(layout, position, segment, Tag.span, state.root) as HTMLElement;
-        state.css = getCss(segment);
+    public begin(state: ITextState, layout: Layout) {
+        state.root = this.pushTag(layout, Tag.span, state.root) as HTMLElement;
+        state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
     }
 
-    public visit(
-        state: Readonly<ITextState>,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public visit(state: Readonly<ITextState>, layout: Layout) {
+        const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
         switch (kind) {
             case DocSegmentKind.text: {
                 if (!sameCss(segment, state.css)) {
-                    layout.popFormat(position, segment, startOffset, endOffset);
+                    layout.popFormat();
                     return false;
                 }
-                layout.emitText(position, (segment as TextSegment));
+                layout.emitText();
                 return true;
         }
 
             default:
-                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, position, kind);
-                layout.popFormat(position, segment, startOffset, endOffset);
+                debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
+                layout.popFormat();
                 return false;
         }
     }
 
-    public end(
-        state: Readonly<ITextState>,
-        layout: Layout,
-        position: number,
-        segment: ISegment,
-        startOffset: number,
-        endOffset: number,
-    ) {
+    public end(state: Readonly<ITextState>, layout: Layout) {
         layout.popNode();
     }
 }

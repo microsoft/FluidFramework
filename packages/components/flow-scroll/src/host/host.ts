@@ -64,9 +64,14 @@ export class HostView extends View<IHostConfig> {
             init.doc.insertComponent(position, `/${instance.url}`, style, classList);
         };
 
-        const insertTags = (tags: string[]) => {
+        const insertTags = (tags: Tag[]) => {
             const selection = editor.selection;
             init.doc.insertTags(tags, selection.start, selection.end);
+        };
+
+        const setFormat = (tag: Tag) => {
+            const selection = editor.selection;
+            init.doc.setFormat(selection.end, tag);
         };
 
         const toggleSelection = (className: string) => {
@@ -76,15 +81,18 @@ export class HostView extends View<IHostConfig> {
 
         searchMenu.attach(template.get(root, "search"), {
             commands: [
-                { name: "h1", enabled: () => true, exec: () => { insertTags([Tag.h1]); }},
-                { name: "h2", enabled: () => true, exec: () => { insertTags([Tag.h2]); }},
-                { name: "h3", enabled: () => true, exec: () => { insertTags([Tag.h3]); }},
-                { name: "h4", enabled: () => true, exec: () => { insertTags([Tag.h4]); }},
-                { name: "h5", enabled: () => true, exec: () => { insertTags([Tag.h5]); }},
-                { name: "h6", enabled: () => true, exec: () => { insertTags([Tag.h6]); }},
-                { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
-                { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
+                { name: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); }},
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
+                { name: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); }},
+                { name: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); }},
+                { name: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); }},
+                { name: "h4", enabled: () => true, exec: () => { setFormat(Tag.h4); }},
+                { name: "h5", enabled: () => true, exec: () => { setFormat(Tag.h5); }},
+                { name: "h6", enabled: () => true, exec: () => { setFormat(Tag.h6); }},
+                { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                { name: "p",  enabled: () => true, exec: () => { setFormat(Tag.p); }},
+                { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
+
                 { name: "math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
                 { name: "morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { name: "image", enabled: () => true, exec: () => insertComponentFromCollection(init.images, "display:inline-block;float:left;resize:both;overflow:hidden") },

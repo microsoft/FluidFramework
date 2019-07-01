@@ -12,6 +12,7 @@ import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../src/document
 
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
+import { Tag } from "../src/util/tag";
 
 describe("FlowDocument", () => {
     let host: TestHost;
@@ -41,12 +42,12 @@ describe("FlowDocument", () => {
                 case DocSegmentKind.text:
                     s.push((segment as TextSegment).text);
                     break;
-                case DocSegmentKind.beginTag:
+                case DocSegmentKind.beginTags:
                     for (const tag of segment.properties.tags) {
                         s.push(`<${tag}>`);
                     }
                     break;
-                case DocSegmentKind.endRange:
+                case DocSegmentKind.endTags:
                     segment = doc.getStart(segment as Marker);
                     for (const tag of segment.properties.tags.reverse()) {
                         s.push(`</${tag}>`);
@@ -72,16 +73,20 @@ describe("FlowDocument", () => {
         assert.strictEqual(doc.getEnd(startSeg as Marker), endSeg);
     }
 
+    function insertTags(tags: string[], start: number, end: number) {
+        doc.insertTags(tags as Tag[], start, end);
+    }
+
     describe("tags", () => {
         describe("insertTag", () => {
             it("insert tag into empty", () => {
-                doc.insertTags(["t"], 0, 0);
+                insertTags(["t"], 0, 0);
                 expect("<t></t>");
                 verifyEnds(0, 1);
             });
             it("insert tag around text", () => {
                 doc.insertText(0, "012");
-                doc.insertTags(["t"], 1, 2);
+                insertTags(["t"], 1, 2);
                 expect("0<t>1</t>2");
                 verifyEnds(1, 3);
             });
@@ -89,7 +94,7 @@ describe("FlowDocument", () => {
         describe("removeRange", () => {
             describe("removing start implicitly removes end", () => {
                 it("'[<t>]</t>' -> ''", () => {
-                    doc.insertTags(["t"], 0, 0);
+                    insertTags(["t"], 0, 0);
                     expect("<t></t>");
 
                     doc.remove(0, 1);
@@ -97,7 +102,7 @@ describe("FlowDocument", () => {
                 });
                 it("'0[1<a><b>2]3</b></a>4' -> '034'", () => {
                     doc.insertText(0, "01234");
-                    doc.insertTags(["a", "b"], 2, 4);
+                    insertTags(["a", "b"], 2, 4);
                     expect("01<a><b>23</b></a>4");
 
                     doc.remove(1, 4);
@@ -106,7 +111,7 @@ describe("FlowDocument", () => {
             });
             describe("preserving start implicitly preserves end", () => {
                 it("'<t>[</t>]' -> '<t></t>'", () => {
-                    doc.insertTags(["t"], 0, 0);
+                    insertTags(["t"], 0, 0);
                     expect("<t></t>");
 
                     doc.remove(1, 2);
@@ -114,7 +119,7 @@ describe("FlowDocument", () => {
                 });
                 it("'0<t>1[</t>]2' -> '0<t>1[</t>]2'", () => {
                     doc.insertText(0, "012");
-                    doc.insertTags(["t"], 1, 2);
+                    insertTags(["t"], 1, 2);
                     expect("0<t>1</t>2");
 
                     doc.remove(3, 4);
@@ -122,7 +127,7 @@ describe("FlowDocument", () => {
                 });
                 it("'0<t>[1</t>]' -> '0<t></t>'", () => {
                     doc.insertText(0, "01");
-                    doc.insertTags(["t"], 1, 2);
+                    insertTags(["t"], 1, 2);
                     expect("0<t>1</t>");
 
                     doc.remove(2, 4);

@@ -7,28 +7,29 @@ import { DocSegmentKind } from "../document";
 
 // Note: Tag values must be uppercase for comparison '===' with the 'tagName' property of Element.
 export const enum Tag {
-    br      = "BR",
-    h1      = "H1",
-    h2      = "H2",
-    h3      = "h4",
-    h4      = "H4",
-    h5      = "H5",
-    h6      = "H6",
-    li      = "LI",
-    ol      = "OL",
-    p       = "P",
-    span    = "SPAN",
-    ul      = "UL",
+    blockquote  = "BLOCKQUOTE",
+    br          = "BR",
+    h1          = "H1",
+    h2          = "H2",
+    h3          = "h4",
+    h4          = "H4",
+    h5          = "H5",
+    h6          = "H6",
+    li          = "LI",
+    ol          = "OL",
+    p           = "P",
+    span        = "SPAN",
+    ul          = "UL",
 }
 
 const segmentKindToIdPrefix = {
-    [DocSegmentKind.beginTag]: "b:",
-    [DocSegmentKind.endRange]: "e:",
+    [DocSegmentKind.beginTags]: "b:",
+    [DocSegmentKind.endTags]:   "e:",
 };
 
 const segmentKindToOppositeIdPrefix = {
-    [DocSegmentKind.beginTag]: "e:",
-    [DocSegmentKind.endRange]: "b:",
+    [DocSegmentKind.beginTags]: "e:",
+    [DocSegmentKind.endTags]:   "b:",
 };
 
 export function createTags(tags: Tag[]) {

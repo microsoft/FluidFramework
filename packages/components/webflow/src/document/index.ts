@@ -28,24 +28,25 @@ import {
 import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
+import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
 
 export { SegmentSpan };
 
 export const enum DocSegmentKind {
-    text = "text",
-    paragraph = "<p>",
-    lineBreak = "<br>",
-    beginTag = "<t>",
-    inclusion = "<?>",
-    endRange = "</>",
+    text        = "text",
+    paragraph   = "<p>",
+    lineBreak   = "<br>",
+    beginTags   = "<t>",
+    inclusion   = "<?>",
+    endTags     = "</>",
 
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
-    endOfText = "eot",
+    endOfText   = "eot",
 }
 
-const tilesAndRanges = [ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTag, DocSegmentKind.inclusion ];
+const tilesAndRanges = [ DocSegmentKind.paragraph, DocSegmentKind.lineBreak, DocSegmentKind.beginTags, DocSegmentKind.inclusion ];
 
 export const enum DocTile {
     paragraph = DocSegmentKind.paragraph,
@@ -81,7 +82,7 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
                 return kind;
             default:
                 assert(markerType === ReferenceType.NestEnd);
-                return DocSegmentKind.endRange;
+                return DocSegmentKind.endTags;
         }
     }
 };
@@ -133,12 +134,12 @@ export class FlowDocument extends Component {
 
     public static readonly type = "@chaincode/flow-document";
 
-    private static readonly paragraphProperties = { [reservedTileLabelsKey]: [DocSegmentKind.paragraph] };
-    private static readonly lineBreakProperties = { [reservedTileLabelsKey]: [DocSegmentKind.lineBreak] };
-    private static readonly inclusionProperties = { [reservedTileLabelsKey]: [DocSegmentKind.inclusion] };
+    private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph], tag: Tag.p });
+    private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak] });
+    private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion] });
 
-    private static readonly beginTagProperties  = { [reservedRangeLabelsKey]: [DocSegmentKind.beginTag] };
-    private static readonly endRangeProperties  = { };
+    private static readonly beginTagsProperties = Object.freeze({ [reservedRangeLabelsKey]: [DocSegmentKind.beginTags] });
+    private static readonly endTagsProperties   = Object.freeze({ });
 
     private maybeSharedString?: SharedString;
     private maybeMergeTree?: MergeTree;
@@ -222,7 +223,7 @@ export class FlowDocument extends Component {
 
         this.visitRange((position: number, segment: ISegment) => {
             switch (getDocSegmentKind(segment)) {
-                case DocSegmentKind.beginTag: {
+                case DocSegmentKind.beginTags: {
                     // Removing a start tag implicitly removes its matching end tag.
                     // Check if the end tag is already included in the range being removed.
                     const endTag = this.getEnd(segment as Marker);
@@ -238,7 +239,7 @@ export class FlowDocument extends Component {
                     }
                     break;
                 }
-                case DocSegmentKind.endRange: {
+                case DocSegmentKind.endTags: {
                     // The end tag should be preserved unless the start tag is also included in
                     // the removed range.  Check if range being removed includes the start tag.
                     const startTag = this.getStart(segment as Marker);
@@ -275,9 +276,9 @@ export class FlowDocument extends Component {
         });
     }
 
-    public insertParagraph(position: number) {
+    public insertParagraph(position: number, tag?: Tag) {
         debug(`insertParagraph(${position})`);
-        this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.paragraphProperties);
+        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.paragraphProperties, tag }));
     }
 
     public insertLineBreak(position: number) {
@@ -286,19 +287,36 @@ export class FlowDocument extends Component {
     }
 
     public insertComponent(position: number, url: string, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, { url, style, classList: classList && classList.join(" "), ...FlowDocument.inclusionProperties });
+        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.inclusionProperties, url, style, classList: classList && classList.join(" ") }));
     }
 
-    public insertTags(tags: string[], start: number, end: number) {
+    public setFormat(position: number, tag: Tag) {
+        const { start, end } = this.findParagraph(position);
+
+        // If inside an existing paragraph marker, update it with the new formatting tag.
+        if (start < this.length) {
+            const pgSeg = this.getSegmentAndOffset(start).segment;
+            if (getDocSegmentKind(pgSeg) === DocSegmentKind.paragraph) {
+                pgSeg.properties.tag = tag;
+                this.annotate(start, end, { tag });
+                return;
+            }
+        }
+
+        // Otherwise, insert a new paragraph marker.
+        this.insertParagraph(start, tag);
+    }
+
+    public insertTags(tags: Tag[], start: number, end: number) {
         const ops = [];
         const id = randomId();
 
         const endMarker = new Marker(ReferenceType.NestEnd);
-        endMarker.properties = { ...FlowDocument.endRangeProperties, [reservedMarkerIdKey]: `end-${id}` };
+        endMarker.properties = Object.freeze({ ...FlowDocument.endTagsProperties, [reservedMarkerIdKey]: `end-${id}` });
         ops.push(createInsertSegmentOp(end, endMarker));
 
         const beginMarker = new Marker(ReferenceType.NestBegin);
-        beginMarker.properties = { tags, ...FlowDocument.beginTagProperties, [reservedMarkerIdKey]: `begin-${id}` };
+        beginMarker.properties = Object.freeze({ ...FlowDocument.beginTagsProperties, tags, [reservedMarkerIdKey]: `begin-${id}` });
         ops.push(createInsertSegmentOp(start, beginMarker));
 
         // Note: Insert the endMarker prior to the beginMarker to avoid needing to compensate for the
@@ -398,7 +416,6 @@ export class FlowDocument extends Component {
         Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
 
         const text = SharedString.create(this.runtime, "text");
-        text.insertMarker(0, ReferenceType.SlideOnRemove, FlowDocument.paragraphProperties);
         this.root.set("text", text);
     }
 

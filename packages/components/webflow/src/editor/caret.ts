@@ -20,10 +20,12 @@ export class Caret {
         this.endRef = this.doc.addLocalRef(0);
 
         document.addEventListener("selectionchange", this.onSelectionChange);
-        layout.root.addEventListener(CaretEventType.leave, ((e: ICaretEvent) => {
+
+        const root = layout.root;
+        root.addEventListener("focus", () => { this.sync(); });
+        root.addEventListener(CaretEventType.leave, ((e: ICaretEvent) => {
             const detail = e.detail;
             debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
-            const root = this.layout.root;
             const node = e.target as Node;
             if (root.contains(node)) {
                 let el = node.parentElement;
@@ -46,6 +48,7 @@ export class Caret {
                                 position++;
                         }
 
+                        // Defer setting the selection to avoid stealing focus and receiving the pending key event.
                         requestAnimationFrame(() => {
                             (root as HTMLElement).focus();
                             this.setSelection(position, position);

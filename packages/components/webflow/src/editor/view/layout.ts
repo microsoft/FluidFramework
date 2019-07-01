@@ -33,6 +33,20 @@ export class Layout {
     private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
     private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
 
+    // tslint:disable:variable-name
+    private _position = NaN;
+    public get position() { return this._position; }
+
+    private _segment: ISegment;
+    public get segment() { return this._segment; }
+
+    private _startOffset = NaN;
+    public get startOffset() { return this._startOffset; }
+
+    private _endOffset = NaN;
+    public get endOffset() { return this._endOffset; }
+    // tslint:enable:variable-name
+
     private startInvalid = +Infinity;
     private endInvalid = -Infinity;
     private readonly scheduleSync: () => void;
@@ -57,6 +71,22 @@ export class Layout {
 
     public sync(start = 0, end = this.doc.length) {
         console.time("Layout.sync()");
+
+        // This works around two issues:
+        //   1) If the document shrinks to zero length, the below will early exit w/o
+        //      deleting any left over nodes.
+        //   2) The first thing a user types will cause a <p> tag to appear, resulting
+        //      in the cursor jumping according to margin/padding.
+        // ...unfortunately, if the user hits enter on the first line, this appears to
+        // have no effect.
+        if (this.doc.length === 0) {
+            const empty = "<p><br></p>";
+            if (this.root.innerHTML !== empty) {
+                // tslint:disable-next-line:no-inner-html
+                this.root.innerHTML = "<p><br></p>";
+            }
+            return;
+        }
 
         {
             const oldStart = start;
@@ -92,7 +122,11 @@ export class Layout {
                     const cursor = this.internalCursor;
                     cursor.parent = root.parentNode;
                     cursor.previous = root.previousSibling;
-                    this.pushFormat(formats[0].format, start, seg, 0, 0);
+                    this._position = start;
+                    this._segment = seg;
+                    this._startOffset = 0;
+                    this._endOffset = 0;
+                    this.pushFormat(formats[0].format);
                     break;
                 }
             }
@@ -102,16 +136,28 @@ export class Layout {
 
         try {
             this.doc.visitRange((position, segment, startOffset, endOffset) => {
+                this._position = position;
+                this._segment = segment;
+                this._startOffset = startOffset;
+                this._endOffset = endOffset;
+
                 let consumed: boolean;
                 do {
                     const { format, state } = this.format;
-                    consumed = format.visit(state, this, position, segment, startOffset, endOffset);
+                    consumed = format.visit(state, this);
                 } while (!consumed);
                 return true;
             }, start, end);
         } finally {
-            while (this.formatStack.length > 1) { this.popFormat(end, undefined, NaN, NaN); }
+            this._position = end;
+            this._segment = undefined;
+            this._startOffset = NaN;
+            this._endOffset = NaN;
+
+            while (this.formatStack.length > 1) { this.popFormat(); }
             this.cursorStack.length = 0;
+
+            this._position = NaN;
         }
 
         console.timeEnd("Layout.sync()");
@@ -130,19 +176,20 @@ export class Layout {
         return undefined;
     }
 
-    public pushFormat<T extends IFormatterState>(format: Formatter<T>, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        debug("  pushFormat(%o,pos=%d,%s,start=%d,end=%d)", format, position, segment && segment.toString(), startOffset, endOffset);
+    public pushFormat<T extends IFormatterState>(format: Formatter<T>) {
+        const segment = this.segment;
+        debug("  pushFormat(%o,pos=%d,%s,start=%d,end=%d)", format, this.position, segment && segment.toString(), this.startOffset, this.endOffset);
         const formatInfo = this.getEnsuredFormatInfo(format, segment);
 
         formatInfo.state = {...formatInfo.state};
-        format.begin(formatInfo.state as T, this, position, segment, startOffset, endOffset);
+        format.begin(formatInfo.state as T, this);
         assert(formatInfo.state.root);
         formatInfo.state = Object.freeze(formatInfo.state);
 
         this.formatStack.push(formatInfo);
     }
 
-    public popFormat(position: number, segment: ISegment, startOffset: number, endOffset: number) {
+    public popFormat() {
         const length = this.formatStack.length;
         debug("  popFormat(%o): %d", this.format.format, length - 1);
 
@@ -150,29 +197,30 @@ export class Layout {
         assert(length > 1);
 
         const { format, state } = this.formatStack.pop();
-        format.end(state, this, position, segment, startOffset, endOffset);
+        format.end(state, this);
     }
 
-    public pushNode(node: Node, position: number, segment: ISegment) {
-        debug("  pushNode(%o@%d)", nodeToString(node), position);
+    public pushNode(node: Node) {
+        debug("  pushNode(%s@%d)", nodeToString(node), this.position);
 
-        this.emitNode(node, position, segment);
+        this.emitNode(node);
         this.cursorStack.push({ parent: node, previous: null });
     }
 
-    public emitNode(node: Node, position: number, segment: ISegment) {
-        debug("  emitNode(%o@%d)", node, position);
+    public emitNode(node: Node) {
+        debug("  emitNode(%s@%d)", nodeToString(node), this.position);
 
         const top = this.internalCursor;
         const { parent, previous } = top;
-        this.ensureAfter(position, parent, node, previous);
+        this.ensureAfter(parent, node, previous);
         top.previous = node;
-        this.nodeToSegmentMap.set(node, segment);
+        this.nodeToSegmentMap.set(node, this.segment);
     }
 
     public popNode() {
         debug("  popNode(): %d", this.cursorStack.length - 1);
 
+        // Any remaining children of the node being popped are stale and should be removed.
         const cursor = this.cursor;
         let next = cursor.previous && cursor.previous.nextSibling;
         while (next) {
@@ -182,11 +230,18 @@ export class Layout {
         }
 
         this.cursorStack.pop();
+
+        // Even though we attempted to trim stale nodes when this node was originally emitted,
+        // we try again now, having advanced 'this.position' to the start of the last child in
+        // this subtree.
+        next = cursor.previous && cursor.previous.nextSibling;
+        if (next) {
+            this.trimAfter(this.cursor.previous && this.cursor.previous.nextSibling);
+        }
     }
 
-    public emitText(position: number, segment: TextSegment) {
-        // debug("  emitNode(%o@%d)", segment.text, position);
-
+    public emitText() {
+        const segment = this.segment as TextSegment;
         const text = segment.text;
         let node = this.segmentToTextMap.get(segment);
         if (node === undefined) {
@@ -196,7 +251,7 @@ export class Layout {
             node.textContent = text;
         }
 
-        this.emitNode(node, position, segment);
+        this.emitNode(node);
     }
 
     public nodeToSegment(node: Node): ISegment {
@@ -222,18 +277,19 @@ export class Layout {
         return { node: null, nodeOffset: NaN };
     }
 
-    private ensureAfter(position: number, parent: Node, node: Node, previous: Node) {
+    private ensureAfter(parent: Node, node: Node, previous: Node) {
         // Move 'node' to the correct position in the DOM, if it's not there already.
         if (node.parentNode !== parent || node.previousSibling !== previous) {
             Dom.insertAfter(parent, node, previous);
         }
 
-        this.trim(position, node);
+        this.trimAfter(node);
     }
 
-    private trim(position: number, node: Node) {
+    private trimAfter(node: Node) {
         // Remove any peers to the right of 'node' that are no longer in the tree, or now appear
         // earlier in the document.
+        const position = this.position;
         for (let next = node.nextSibling; next !== null; next = node.nextSibling) {
             const seg = this.nodeToSegment(next);
             if (seg && (this.doc.getPosition(seg) > position)) {
@@ -246,6 +302,8 @@ export class Layout {
     private getEnsuredFormatInfo<T>(formatter: Formatter<T>, segment: ISegment) {
         assert.strictEqual(segment.removedSeq, undefined);
 
+        // If we're requesting another formatter for the same segment, increment the depth.
+        // If we've moved to a new segment, look at zero.
         const depth = this.format.segment === segment
             ? this.format.depth + 1
             : 0;
@@ -256,15 +314,19 @@ export class Layout {
             this.segmentToFormatStackMap.set(segment, stack);
         }
 
+        let info: IFormatInfo;
         if (stack.length <= depth) {
-            stack.push({ format: formatter, state: formatter.createState(), segment, depth });
-        }
-
-        const info = stack[depth];
-        if (info.format !== formatter) {
-            info.format = formatter;
-            info.state = formatter.createState();
-            stack.splice(depth + 1, stack.length - depth);
+            info = { format: formatter, state: formatter.createState(), segment, depth };
+            stack.push(info);
+        } else {
+            info = stack[depth];
+            if (info.format !== formatter) {
+                info.format = formatter;
+                info.state = formatter.createState();
+                // The formatting structure has changed.  Reparenting is inevitable.  Delete
+                // all following formatters for this segment.
+                stack.splice(depth + 1, stack.length - depth);
+            }
         }
 
         return info;
