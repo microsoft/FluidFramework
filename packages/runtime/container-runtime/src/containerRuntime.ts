@@ -44,7 +44,6 @@ import { buildHierarchy, Deferred, flatten, isSystemType, readAndParse } from "@
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ComponentContext } from "./componentContext";
-import { ComponentStorageService } from "./componentStorageService";
 import { debug } from "./debug";
 import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
@@ -117,7 +116,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         const componentsP = new Array<Promise<void>>();
         for (const [componentId, snapshot] of components) {
-            const componentP = runtime.loadComponent(componentId, snapshot, context.blobs);
+            const componentP = runtime.loadComponent(componentId, snapshot);
             componentsP.push(componentP);
         }
 
@@ -304,10 +303,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public async loadComponent(
         id: string,
         snapshotTree: ISnapshotTree,
-        extraBlobs: Map<string, string>,
     ): Promise<void> {
         // Need to rip through snapshot and use that to populate extraBlobs
-        const runtimeStorage = new ComponentStorageService(this.storage, extraBlobs);
         const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
 
         // Create and store the unstarted component
@@ -316,7 +313,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             details.pkg,
             id,
             true,
-            runtimeStorage,
+            this.storage,
             snapshotTree,
             (cr: IComponentRuntime) => this.attachComponent(cr));
         this.componentContexts.set(id, component);
@@ -612,13 +609,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const componentContext = new ComponentContext(
             this,
             pkg,
             id,
             false,
-            runtimeStorage,
+            this.storage,
             null,
             (cr: IComponentRuntime) => this.attachComponent(cr));
 
@@ -948,14 +944,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             snapshotTree = buildHierarchy(flattened);
         }
 
-        // create storage service that wraps the attach data
-        const runtimeStorage = new ComponentStorageService(this.storage, new Map());
         const component = new ComponentContext(
             this,
             attachMessage.type,
             attachMessage.id,
             true,
-            runtimeStorage,
+            this.storage,
             snapshotTree,
             (cr: IComponentRuntime) => this.attachComponent(cr));
 

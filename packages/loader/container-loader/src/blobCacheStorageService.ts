@@ -16,7 +16,7 @@ import {
 /**
  * IDocumentStorageService adapter with pre-cached blobs.
  */
-export class ComponentStorageService implements IDocumentStorageService {
+export class BlobCacheStorageService implements IDocumentStorageService {
     public get repositoryUrl(): string {
         return this.storageService.repositoryUrl;
     }
@@ -25,7 +25,7 @@ export class ComponentStorageService implements IDocumentStorageService {
     }
 
     // TODO Will a subcomponent ever need this? Or we can probably restrict the ref to itself
-    public getSnapshotTree(version: IVersion): Promise<ISnapshotTree> {
+    public getSnapshotTree(version: IVersion): Promise<ISnapshotTree | null> {
         return this.storageService.getSnapshotTree(version);
     }
 
@@ -39,7 +39,7 @@ export class ComponentStorageService implements IDocumentStorageService {
 
     public async read(id: string): Promise<string> {
         if (this.blobs.has(id)) {
-            return this.blobs.get(id);
+            return this.blobs.get(id)!;
         }
 
         return this.storageService.read(id);

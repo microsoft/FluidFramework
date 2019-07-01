@@ -157,7 +157,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly branch: string;
     readonly minimumSequenceNumber: number | undefined;
     readonly baseSnapshot: ISnapshotTree | null;
-    readonly blobs: Map<string, string>;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;

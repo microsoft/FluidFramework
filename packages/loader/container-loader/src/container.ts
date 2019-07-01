@@ -44,6 +44,7 @@ import {
 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
@@ -469,7 +470,6 @@ export class Container extends EventEmitter implements IContainer {
                     this.codeLoader,
                     chaincode.chaincode,
                     tree!,
-                    new Map(),
                     attributes,
                     this.blobManager,
                     this._deltaManager!,
@@ -613,20 +613,20 @@ export class Container extends EventEmitter implements IContainer {
             minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
             sequenceNumber: this._deltaManager!.referenceSequenceNumber,
         };
-
+        const documentStorageService = blobs.size > 0
+            ? new BlobCacheStorageService(this.storageService!, blobs) : this.storageService;
         const loader = new RelativeLoader(this.loader, this.originalRequest);
         const newContext = await ContainerContext.load(
             this,
             this.codeLoader,
             chaincode,
             snapshotTree,
-            blobs,
             attributes,
             this.blobManager,
             this._deltaManager!,
             this.protocolHandler!.quorum,
             loader,
-            this.storageService,
+            documentStorageService,
             (err) => this.emit("error", err),
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
