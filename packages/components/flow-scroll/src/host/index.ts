@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowDocument } from "@chaincode/webflow";
 import { Component } from "@prague/app-component";
 import { IComponent } from "@prague/container-definitions";
 import { Scheduler } from "@prague/flow-util";
+import { SharedMap } from "@prague/map";
 import { IComponentCollection } from "@prague/runtime-definitions";
 import { HostView  } from "./host";
 import { importDoc } from "./template";
+
+const insightsMapId = "insights";
 
 export class WebFlowHost extends Component {
     public static readonly type = "@chaincode/webflow-host";
@@ -21,6 +25,9 @@ export class WebFlowHost extends Component {
             this.runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
             this.runtime.createAndAttachComponent("images", "@chaincode/image-collection"),
         ]);
+
+        const insights = SharedMap.create(this.runtime, insightsMapId);
+        this.root.set(insightsMapId, insights);
 
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
@@ -50,6 +57,8 @@ export class WebFlowHost extends Component {
                 videos: await videosP,
                 images: await imagesP,
             });
+
+        this.listenForLeaderEvent(docP);
     }
 
     private get docId() { return `${this.id}-doc`; }
@@ -64,5 +73,25 @@ export class WebFlowHost extends Component {
 
         const component = request.value as IComponent;
         return component.query<IComponentCollection>("IComponentCollection");
+    }
+
+    // TODO (mdaumi): Temporary way to schedule intelligent agents. This will be turned
+    // into agent-scheduler + webworker.
+    private listenForLeaderEvent(docP: Promise<FlowDocument>) {
+        if (this.context.leader) {
+            this.runTextAnalyzer(docP);
+        } else {
+            this.runtime.on("leader", (clientId) => {
+                this.runTextAnalyzer(docP);
+            });
+        }
+    }
+
+    private async runTextAnalyzer(docP: Promise<FlowDocument>) {
+        const flowDocument = await docP;
+        await this.root.wait(insightsMapId);
+        const insightsMap = this.root.get(insightsMapId);
+        const textAnalyzer = new TextAnalyzer();
+        textAnalyzer.run(flowDocument, insightsMap);
     }
 }

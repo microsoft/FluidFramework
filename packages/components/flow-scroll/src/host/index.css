@@ -50,3 +50,18 @@ html, body {
 .bold {
     font-weight: bold;
 }
+
+/*
+Styles for entities recognized by intelligent services.
+*/
+:global(.entity-person) {
+    background-color: yellow;
+}
+
+:global(.entity-location) {
+    background-color: blue;
+}
+
+:global(.entity-generic) {
+    background-color: red;
+}
