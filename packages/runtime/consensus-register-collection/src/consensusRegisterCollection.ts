@@ -16,14 +16,46 @@ import { ISharedObject, SharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { ConsensusRegisterCollectionExtension } from "./extension";
-import {
-    IConsensusRegisterCollection,
-    ILocalData,
-    ILocalRegister,
-    IRegisterValue,
-    ReadPolicy,
-    RegisterValueType,
-} from "./interfaces";
+import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
+
+interface ILocalData {
+    // Atomic version.
+    atomic: ILocalRegister;
+
+    // All versions.
+    versions: ILocalRegister[];
+}
+
+interface ILocalRegister {
+    // Register value
+    value: IRegisterValue;
+
+    // The sequence number when last consensus was reached.
+    sequenceNumber: number;
+}
+
+interface IRegisterValue {
+    // Type of the value
+    type: string;
+
+    // Actual Value
+    value: any;
+}
+
+/**
+ * Internal enum and interface describing the value serialization
+ */
+
+/**
+ * The type of serialized object, used describe values in snapshot or operation
+ */
+enum RegisterValueType {
+    // The value is another shared object
+    Shared,
+
+    // The value is a plain JavaScript object
+    Plain,
+}
 
 /**
  * An operation for consensus register collection

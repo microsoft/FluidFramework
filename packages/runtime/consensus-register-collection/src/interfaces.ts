@@ -71,30 +71,6 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject {
     on(event: "atomicChanged" | "versionChanged", listener: (...args: any[]) => void): this;
 }
 
-export interface ILocalData {
-    // Atomic version.
-    atomic: ILocalRegister;
-
-    // All versions.
-    versions: ILocalRegister[];
-}
-
-export interface ILocalRegister {
-    // Register value
-    value: IRegisterValue;
-
-    // The sequence number when last consensus was reached.
-    sequenceNumber: number;
-}
-
-export interface IRegisterValue {
-    // Type of the value
-    type: string;
-
-    // Actual Value
-    value: any;
-}
-
 /**
  * Read policies used when reading the map value.
  */
@@ -104,19 +80,4 @@ export enum ReadPolicy {
 
     // Last writer wins. Simply returns the last written value.
     LWW,
-}
-
-/**
- * Internal enum and interface describing the value serialization
- */
-
-/**
- * The type of serialized object, used describe values in snapshot or operation
- */
-export enum RegisterValueType {
-    // The value is another shared object
-    Shared,
-
-    // The value is a plain JavaScript object
-    Plain,
 }
