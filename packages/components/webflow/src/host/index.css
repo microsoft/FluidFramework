@@ -48,28 +48,30 @@ html, body {
     font-weight: bold;
 }
 
-p::before, ol::before, li::before {
+h1::before, h2::before, h3::before, h4::before, h5::before, h6::before, li::before, ol::before, p::before, ul::before {
     border: 1px solid #d97;
     background: #d97;
 }
 
-p::after, ol::after, li::after { 
+h1::after, h2::after, h3::after, h4::after, h5::after, h6::after, li::after, ol::after, p::after, ul::after { 
     border: 1px solid #796;
     background: #796;
 }
 
-p::before, p::after, ol::before, ol::after, li::before, li::after {
+h1::before, h2::before, h3::before, h4::before, h5::before, h6::before, li::before, ol::before, p::before, ul::before,
+h1::after, h2::after, h3::after, h4::after, h5::after, h6::after, li::after, ol::after, p::after, ul::after { 
     color: white;
     font-size: 0.4em;
     vertical-align: middle;
     border-radius: 1em;
 }
 
-p::before { content: "<p>"; display: table }
-p::after { content: "</p>"; display: table }
-b::before { content: "<b>" }
-b::after { content: "</b>" }
-ol::before { content: "<ol>" }
-ol::after { content: "</ol>" }
-li::before { content: "<li>" }
-li::after { content: "</li>" }
+li::before { content: "<li>" } li::after { content: "</li>" }
+h1::before { content: "<h1>" } h1::after { content: "</h1>" }
+h2::before { content: "<h2>" } h2::after { content: "</h2>" }
+h3::before { content: "<h3>" } h3::after { content: "</h3>" }
+h4::before { content: "<h4>" } h4::after { content: "</h4>" }
+h5::before { content: "<h5>" } h5::after { content: "</h5>" }
+h6::before { content: "<h6>" } h6::after { content: "</h6>" }
+ol::before { content: "<ol>" } ol::after { content: "</ol>" }
+p::before { content: "<p>"; display: table } p::after { content: "</p>"; display: table }

@@ -16,7 +16,9 @@ function concat(leftTokens: string, rightTokens: string) {
             : `${leftTokens} ${rightTokens}`;   // Otherwise concat left/right
 }
 
-export function syncCss(element: HTMLElement, { classList, style }: { classList?: string, style?: string }, className?: string) {
+export interface ICssProps { classList?: string; style?: string; }
+
+export function syncCss(element: HTMLElement, { classList, style }: ICssProps, className?: string) {
     const classes = concat(className, classList);
 
     if (!areStringsEquivalent(classes, element.className)) {
@@ -27,7 +29,7 @@ export function syncCss(element: HTMLElement, { classList, style }: { classList?
     }
 }
 
-export function sameCss(segment: ISegment, { classList, style }: { classList?: string, style?: string }) {
+export function sameCss(segment: ISegment, { classList, style }: ICssProps) {
     const actual = getCss(segment);
     return areStringsEquivalent(actual.classList, classList)
         && areStringsEquivalent(actual.style, style);

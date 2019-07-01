@@ -6,17 +6,19 @@
 import { CharCode } from "./charcode";
 
 export function findToken(tokenList: string, token: string) {
-    // tslint:disable-next-line:no-conditional-assignment
-    for (let start = 0; start >= 0; start = tokenList.indexOf(" ", start + 1)) {
-        start = tokenList.indexOf(token, start);
-        if (start < 0) {
-            return undefined;
-        }
+    if (tokenList) {
+        // tslint:disable-next-line:no-conditional-assignment
+        for (let start = 0; start >= 0; start = tokenList.indexOf(" ", start + 1)) {
+            start = tokenList.indexOf(token, start);
+            if (start < 0) {
+                return undefined;
+            }
 
-        if (start === 0 || tokenList.charCodeAt(start - 1) === CharCode.space) {
-            const end = start + token.length;
-            if (end === tokenList.length || end < tokenList.length && tokenList.charCodeAt(end) === CharCode.space) {
-                return { start, end };
+            if (start === 0 || tokenList.charCodeAt(start - 1) === CharCode.space) {
+                const end = start + token.length;
+                if (end === tokenList.length || end < tokenList.length && tokenList.charCodeAt(end) === CharCode.space) {
+                    return { start, end };
+                }
             }
         }
     }

@@ -5,13 +5,20 @@
 
 import { DocSegmentKind } from "../document";
 
-// Note: Tag names must be uppercase for comparison with HTMLElement.tagName via '=='.
+// Note: Tag values must be uppercase for comparison '===' with the 'tagName' property of Element.
 export const enum Tag {
-    listItem    = "LI",
-    orderedList = "OL",
-    paragraph   = "P",
-    span        = "SPAN",
-    lineBreak   = "BR",
+    br      = "BR",
+    h1      = "H1",
+    h2      = "H2",
+    h3      = "h4",
+    h4      = "H4",
+    h5      = "H5",
+    h6      = "H6",
+    li      = "LI",
+    ol      = "OL",
+    p       = "P",
+    span    = "SPAN",
+    ul      = "UL",
 }
 
 const segmentKindToIdPrefix = {

@@ -17,6 +17,8 @@ interface ILayoutCursor { parent: Node; previous: Node; }
 interface IFormatInfo {
     format: Formatter<IFormatterState>;
     state: IFormatterState;
+    segment: ISegment;
+    depth: number;
 }
 
 export class Layout {
@@ -27,7 +29,7 @@ export class Layout {
     private get slot() { return this.root; }
     private readonly formatStack: IFormatInfo[];
     private readonly cursorStack: ILayoutCursor[] = [];
-    private readonly segmentToFormatInfoMap = new WeakMap<ISegment, IFormatInfo>();
+    private readonly segmentToFormatStackMap = new WeakMap<ISegment, IFormatInfo[]>();
     private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
     private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
 
@@ -36,7 +38,7 @@ export class Layout {
     private readonly scheduleSync: () => void;
 
     constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scheduler = new Scheduler()) {
-        this.formatStack = [{ format: new DocumentFormatter(), state: { root }}];
+        this.formatStack = [{ format: new DocumentFormatter(), state: { root }, segment: undefined, depth: -1 }];
         this.scheduleSync = scheduler.coalesce(scheduler.onTurnEnd, () => {
             const start = this.startInvalid;
             const end = this.endInvalid;
@@ -84,13 +86,13 @@ export class Layout {
                 // See if we've constructed DOM for this tile.
                 start = tileInfo.pos;
                 const seg = tileInfo.tile as unknown as ISegment;
-                const info = this.segmentToFormatInfoMap.get(seg);
-                if (info) {
-                    const root = info.state.root;
+                const formats = this.segmentToFormatStackMap.get(seg);
+                if (formats) {
+                    const root = formats[0].state.root;
                     const cursor = this.internalCursor;
                     cursor.parent = root.parentNode;
                     cursor.previous = root.previousSibling;
-                    this.pushFormat(info.format, start, seg, 0, 0);
+                    this.pushFormat(formats[0].format, start, seg, 0, 0);
                     break;
                 }
             }
@@ -129,7 +131,7 @@ export class Layout {
     }
 
     public pushFormat<T extends IFormatterState>(format: Formatter<T>, position: number, segment: ISegment, startOffset: number, endOffset: number) {
-        debug("  pushFormat(%s,pos=%d,%s,start=%d,end=%d)", format.constructor.name, position, segment && segment.toString(), startOffset, endOffset);
+        debug("  pushFormat(%o,pos=%d,%s,start=%d,end=%d)", format, position, segment && segment.toString(), startOffset, endOffset);
         const formatInfo = this.getEnsuredFormatInfo(format, segment);
 
         formatInfo.state = {...formatInfo.state};
@@ -142,7 +144,7 @@ export class Layout {
 
     public popFormat(position: number, segment: ISegment, startOffset: number, endOffset: number) {
         const length = this.formatStack.length;
-        debug("  popFormat(): %d", length - 1);
+        debug("  popFormat(%o): %d", this.format.format, length - 1);
 
         // DocumentFormatter @0 must remain on the stack.
         assert(length > 1);
@@ -159,7 +161,7 @@ export class Layout {
     }
 
     public emitNode(node: Node, position: number, segment: ISegment) {
-        // debug("  emitNode(%o@%d)", node, position);
+        debug("  emitNode(%o@%d)", node, position);
 
         const top = this.internalCursor;
         const { parent, previous } = top;
@@ -210,9 +212,9 @@ export class Layout {
             }
         }
 
-        const format = this.segmentToFormatInfoMap.get(segment);
-        if (format) {
-            const node = format.state.root;
+        const stack = this.segmentToFormatStackMap.get(segment);
+        if (stack) {
+            const node = stack[stack.length - 1].state.root;
             assert.notStrictEqual(node.nodeType, Node.TEXT_NODE);
             return { node, nodeOffset: Math.min(offset, node.childNodes.length) };
         }
@@ -243,13 +245,29 @@ export class Layout {
 
     private getEnsuredFormatInfo<T>(formatter: Formatter<T>, segment: ISegment) {
         assert.strictEqual(segment.removedSeq, undefined);
-        let formatInfo = this.segmentToFormatInfoMap.get(segment);
-        if (!formatInfo) {
-            formatInfo = { format: formatter, state: formatter.createState() };
-            this.segmentToFormatInfoMap.set(segment, formatInfo);
+
+        const depth = this.format.segment === segment
+            ? this.format.depth + 1
+            : 0;
+
+        let stack = this.segmentToFormatStackMap.get(segment);
+        if (!stack) {
+            stack = [];
+            this.segmentToFormatStackMap.set(segment, stack);
         }
-        assert.strictEqual(formatInfo.format, formatter);
-        return formatInfo;
+
+        if (stack.length <= depth) {
+            stack.push({ format: formatter, state: formatter.createState(), segment, depth });
+        }
+
+        const info = stack[depth];
+        if (info.format !== formatter) {
+            info.format = formatter;
+            info.state = formatter.createState();
+            stack.splice(depth + 1, stack.length - depth);
+        }
+
+        return info;
     }
 
     private remove(node: Node) {

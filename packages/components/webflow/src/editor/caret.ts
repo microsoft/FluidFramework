@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@prague/flow-util";
 import { LocalReference } from "@prague/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
 import { debug, domRangeToString, windowSelectionToString } from "./debug";
+import * as styles from "./index.css";
 import { Layout } from "./view/layout";
 
 export class Caret {
@@ -18,11 +20,54 @@ export class Caret {
         this.endRef = this.doc.addLocalRef(0);
 
         document.addEventListener("selectionchange", this.onSelectionChange);
+        layout.root.addEventListener(CaretEventType.leave, ((e: ICaretEvent) => {
+            const detail = e.detail;
+            debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
+            const root = this.layout.root;
+            const node = e.target as Node;
+            if (root.contains(node)) {
+                let el = node.parentElement;
+
+                // tslint:disable-next-line:no-conditional-assignment
+                while (el && el !== root) {
+                    if (el.classList.contains(styles.inclusion)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const segment = this.layout.nodeToSegment(el);
+                        let position = this.doc.getPosition(segment);
+                        debug("  inclusion found @%d", position);
+
+                        switch (detail.direction) {
+                            case Direction.up:
+                            case Direction.right:
+                                break;
+                            default:
+                                position++;
+                        }
+
+                        requestAnimationFrame(() => {
+                            (root as HTMLElement).focus();
+                            this.setSelection(position, position);
+                            this.sync();
+                        });
+                        break;
+                    }
+                    el = el.parentElement;
+                }
+            }
+        }) as EventListener);
     }
 
     private get doc() { return this.layout.doc; }
     public get position() { return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length); }
     public get anchor() { return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length); }
+    public get bounds() {
+        const { focusNode, focusOffset } = window.getSelection();
+        return focusNode === null
+            ? undefined
+            : Dom.getClientRect(focusNode, focusOffset);
+    }
 
     public get selection() {
         const start = this.anchor;

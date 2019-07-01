@@ -7,6 +7,7 @@ import { ICommand, KeyCode, Scheduler, Template, View } from "@prague/flow-util"
 import { IComponentContext } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
+import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
@@ -61,7 +62,14 @@ export class WebflowHost extends View<IHostConfig> {
         searchMenu.attach(template.get(root, "search"), {
             commands: [
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
+                { name: "h1", enabled: () => true, exec: () => { insertTags([Tag.h1]); }},
+                { name: "h2", enabled: () => true, exec: () => { insertTags([Tag.h2]); }},
+                { name: "h3", enabled: () => true, exec: () => { insertTags([Tag.h3]); }},
+                { name: "h4", enabled: () => true, exec: () => { insertTags([Tag.h4]); }},
+                { name: "h5", enabled: () => true, exec: () => { insertTags([Tag.h5]); }},
+                { name: "h6", enabled: () => true, exec: () => { insertTags([Tag.h6]); }},
+                { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
             ],
             onComplete: this.onComplete,
          });

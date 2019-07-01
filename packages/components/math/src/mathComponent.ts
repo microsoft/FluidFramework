@@ -11,6 +11,7 @@ import {
     IResponse,
     ISharedComponent,
 } from "@prague/container-definitions";
+import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -33,6 +34,22 @@ import * as Sequence from "@prague/sequence";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import * as Katex from "katex";
+
+const directionToCursorDirection = {
+    [Direction.left]: ComponentCursorDirection.Left,
+    [Direction.right]: ComponentCursorDirection.Right,
+    [Direction.up]: ComponentCursorDirection.Top,
+    [Direction.down]: ComponentCursorDirection.Bottom,
+    [Direction.none]: ComponentCursorDirection.Airlift,
+};
+
+const cursorDirectionToDirection = {
+    [ComponentCursorDirection.Left]: Direction.left,
+    [ComponentCursorDirection.Right]: Direction.right,
+    [ComponentCursorDirection.Top]: Direction.up,
+    [ComponentCursorDirection.Bottom]: Direction.down,
+    [ComponentCursorDirection.Airlift]: Direction.none,
+};
 
 interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
     instance?: MathInstance;
@@ -115,6 +132,7 @@ export class MathInstance extends EventEmitter
         } else {
             mathMarker.mathCursor = 0;
             mathMarker.mathTokenIndex = 0;
+            this.noteLeft(ComponentCursorDirection.Right);
             return true;
         }
     }
@@ -124,6 +142,7 @@ export class MathInstance extends EventEmitter
         mathMarker.mathTokenIndex = ClientUI.controls.mathTokFwd(mathMarker.mathTokenIndex,
             mathMarker.mathTokens);
         if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
+            this.noteLeft(ComponentCursorDirection.Left);
             return true;
         } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
             const mathText = this.getMathText();
@@ -187,10 +206,14 @@ export class MathInstance extends EventEmitter
                 this.render(this.savedElm, this.options.displayType);
             }
         } else if (e.keyCode === ClientUI.controls.KeyCode.rightArrow) {
-            this.fwd();
+            if (this.fwd()) {
+                this.leave(ComponentCursorDirection.Right);
+            }
             this.localRender();
         } else if (e.keyCode === ClientUI.controls.KeyCode.leftArrow) {
-            this.rev();
+            if (this.rev()) {
+                this.leave(ComponentCursorDirection.Left);
+            }
             this.localRender();
         }
     }
@@ -229,11 +252,11 @@ export class MathInstance extends EventEmitter
     public setListeners() {
         this.savedElm.tabIndex = 0;
         this.savedElm.style.outline = "none";
-        this.savedElm.addEventListener("focus", (e) => {
+        this.savedElm.addEventListener("focus", () => {
             this.enter(ComponentCursorDirection.Left);
             this.localRender();
         });
-        this.savedElm.addEventListener("blur", (e) => {
+        this.savedElm.addEventListener("blur", () => {
             this.leave(ComponentCursorDirection.Right);
             this.localRender();
         });
@@ -243,6 +266,13 @@ export class MathInstance extends EventEmitter
         this.savedElm.addEventListener("keypress", (e) => {
             this.onKeypress(e);
         });
+        this.savedElm.addEventListener(CaretEventType.enter, ((e: ICaretEvent) => {
+            // Let caller know we've handled the event:
+            e.preventDefault();
+            e.stopPropagation();
+
+            this.enter(directionToCursorDirection[e.detail.direction]);
+        }) as EventListener);
     }
 
     public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
@@ -301,6 +331,14 @@ export class MathInstance extends EventEmitter
             }
         }
         elm.appendChild(innerElm);
+    }
+
+    private noteLeft(direction: ComponentCursorDirection) {
+        const cursorElement = ClientUI.controls.findFirstMatch(this.savedElm, (cursor: HTMLElement) => {
+            return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+        }) || this.savedElm;
+
+        Caret.caretLeave(this.savedElm, cursorDirectionToDirection[direction], cursorElement.getBoundingClientRect());
     }
 
     private getMathText() {
@@ -467,7 +505,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
             this.root = await this.runtime.getChannel("root") as ISharedMap;
             this.combinedMathText = await this.runtime.getChannel("mathText") as Sequence.SharedString;
         }
-        this.combinedMathText.on("sequenceDelta", (event, target) => {
+        this.combinedMathText.on("sequenceDelta", (event) => {
             if ((!event.isLocal) && (event.ranges.length > 0) && (event.clientId !== "original")) {
                 let pos: number;
                 let len = 0;

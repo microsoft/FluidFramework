@@ -7,6 +7,7 @@ import { IContainerContext, IRuntime } from "@prague/container-definitions";
 
 export { FlowDocument } from "./document";
 export { Editor } from "./editor";
+export { Tag } from "./util/tag";
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");

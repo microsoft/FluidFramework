@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Editor, FlowDocument } from "@chaincode/webflow";
+import { Editor, FlowDocument, Tag } from "@chaincode/webflow";
 import { ISharedComponent } from "@prague/container-definitions";
 import { ICommand, KeyCode, randomId, Scheduler, Template, View } from "@prague/flow-util";
 import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
@@ -76,14 +76,21 @@ export class HostView extends View<IHostConfig> {
 
         searchMenu.attach(template.get(root, "search"), {
             commands: [
+                { name: "h1", enabled: () => true, exec: () => { insertTags([Tag.h1]); }},
+                { name: "h2", enabled: () => true, exec: () => { insertTags([Tag.h2]); }},
+                { name: "h3", enabled: () => true, exec: () => { insertTags([Tag.h3]); }},
+                { name: "h4", enabled: () => true, exec: () => { insertTags([Tag.h4]); }},
+                { name: "h5", enabled: () => true, exec: () => { insertTags([Tag.h5]); }},
+                { name: "h6", enabled: () => true, exec: () => { insertTags([Tag.h6]); }},
+                { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
                 { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                { name: "insert list", enabled: () => true, exec: () => { insertTags(["OL", "LI"]); }},
-                { name: "insert math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
-                { name: "insert morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { name: "insert image", enabled: () => true, exec: () => insertComponentFromCollection(init.images, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { name: "insert ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", "display:block;width:61%;resize:both;overflow:hidden") },
-                { name: "insert table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
-                { name: "insert chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
+                { name: "math", enabled: () => true, exec: () => insertComponentFromCollection(init.math) },
+                { name: "morton", enabled: () => true, exec: () => insertComponentFromCollection(init.videos, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { name: "image", enabled: () => true, exec: () => insertComponentFromCollection(init.images, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { name: "ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", "display:block;width:61%;resize:both;overflow:hidden") },
+                { name: "table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view") },
+                { name: "chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view") },
             ],
             onComplete: this.onComplete,
          });
