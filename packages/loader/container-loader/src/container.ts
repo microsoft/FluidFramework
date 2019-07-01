@@ -118,8 +118,8 @@ export class Container extends EventEmitter implements IContainer {
         return this._id;
     }
 
-    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined {
-        return this._deltaManager;
+    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+        return this._deltaManager!;
     }
 
     public get connectionState(): ConnectionState {
@@ -472,7 +472,7 @@ export class Container extends EventEmitter implements IContainer {
                     new Map(),
                     attributes,
                     this.blobManager,
-                    this._deltaManager,
+                    this._deltaManager!,
                     this.protocolHandler!.quorum,
                     loader,
                     storageService,
@@ -623,7 +623,7 @@ export class Container extends EventEmitter implements IContainer {
             blobs,
             attributes,
             this.blobManager,
-            this._deltaManager,
+            this._deltaManager!,
             this.protocolHandler!.quorum,
             loader,
             this.storageService,
@@ -698,14 +698,8 @@ export class Container extends EventEmitter implements IContainer {
                 this._deltaManager!.attachOpHandler(
                     attributes.sequenceNumber,
                     {
-                        postProcess: (message, context) => {
-                            return this.postProcessRemoteMessage(message, context);
-                        },
-                        prepare: (message) => {
-                            return this.prepareRemoteMessage(message);
-                        },
-                        process: (message, context) => {
-                            this.processRemoteMessage(message, context);
+                        process: (message, callback) => {
+                            this.processRemoteMessage(message, callback);
                         },
                         processSignal: (message) => {
                             this.processSignal(message);
@@ -720,13 +714,7 @@ export class Container extends EventEmitter implements IContainer {
                 this._deltaManager!.attachOpHandler(
                     attributes.sequenceNumber,
                     {
-                        postProcess: (message, context) => {
-                            throw new Error("Delta manager is offline");
-                        },
-                        prepare: (message) => {
-                            throw new Error("Delta manager is offline");
-                        },
-                        process: (message, context) => {
+                        process: (message) => {
                             throw new Error("Delta manager is offline");
                         },
                         processSignal: (message) => {
@@ -802,21 +790,25 @@ export class Container extends EventEmitter implements IContainer {
         return clientSequenceNumber;
     }
 
-    private async prepareRemoteMessage(message: ISequencedDocumentMessage): Promise<any> {
-        const local = this._clientId === message.clientId;
-
-        if (isSystemMessage(message)) {
-            return;
+    private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {
+        if (this.context!.legacyMessaging) {
+            this.processRemoteMessageLegacy(message).then(
+                () => { callback(); },
+                (error) => { callback(error); });
+        } else {
+            this.processRemoteMessageNew(message);
+            callback();
         }
-
-        return this.context!.prepare(message, local);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage, context: any) {
+    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage) {
         const local = this._clientId === message.clientId;
+        let context;
 
         // Forward non system messages to the loaded runtime for processing
         if (!isSystemMessage(message)) {
+            context = await this.context!.prepare(message, local);
+
             this.context!.process(message, local, context);
         }
 
@@ -834,15 +826,24 @@ export class Container extends EventEmitter implements IContainer {
         this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
+
+        if (!isSystemMessage(message)) {
+            await this.context!.postProcess(message, local, context);
+        }
     }
 
-    private async postProcessRemoteMessage(message: ISequencedDocumentMessage, context: any) {
-        if (isSystemMessage(message)) {
-            return;
+    private processRemoteMessageNew(message: ISequencedDocumentMessage) {
+        const local = this._clientId === message.clientId;
+
+        // Forward non system messages to the loaded runtime for processing
+        if (!isSystemMessage(message)) {
+            this.context!.process(message, local, undefined);
         }
 
-        const local = this._clientId === message.clientId;
-        await this.context!.postProcess(message, local, context);
+        // Allow the protocol handler to process the message
+        this.protocolHandler!.processMessage(message, local);
+
+        this.emit("op", message);
     }
 
     private submitSignal(message: any) {

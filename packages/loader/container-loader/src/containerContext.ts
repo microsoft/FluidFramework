@@ -30,6 +30,10 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
 export class ContainerContext extends EventEmitter implements IContainerContext {
+    public static supportedInterfaces = [
+        "IMessageScheduler",
+    ];
+
     public static async load(
         container: Container,
         codeLoader: ICodeLoader,
@@ -38,8 +42,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         blobs: Map<string, string>,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined,
-        quorum: IQuorum | undefined,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        quorum: IQuorum,
         loader: ILoader,
         storage: IDocumentStorageService | null | undefined,
         errorFn: (err: any) => void,
@@ -117,6 +121,9 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.options;
     }
 
+    // Back compat flag - can remove in 0.6
+    public legacyMessaging = true;
+
     private runtime: IRuntime | undefined;
     // tslint:disable:variable-name allowing _ for params exposed with getter
     private readonly _minimumSequenceNumber: number | undefined;
@@ -130,8 +137,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly blobs: Map<string, string>,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined,
-        public readonly quorum: IQuorum | undefined,
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: any) => void,
@@ -143,6 +150,20 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         super();
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
         this.logger = container.subLogger;
+    }
+
+    public query(id: string): any {
+        // Detect updated messaging and mark accordingly
+        if (id === "IMessageScheduler") {
+            this.legacyMessaging = false;
+            return this;
+        }
+
+        return ContainerContext.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return ContainerContext.supportedInterfaces;
     }
 
     public async snapshot(tagMessage: string): Promise<ITree | null> {

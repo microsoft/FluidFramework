@@ -68,9 +68,9 @@ export interface IResponse {
 }
 
 export interface IContainer extends EventEmitter {
-    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
+    deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
-    getQuorum(): IQuorum | undefined;
+    getQuorum(): IQuorum;
 }
 
 export interface ILoader extends IComponent {

@@ -35,7 +35,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
         return !this.processing && this.q.length === 0;
     }
 
-    constructor(private readonly worker: (value: T, callback: (error) => void) => void) {
+    constructor(private readonly worker: (value: T, callback: (error?) => void) => void) {
         super();
     }
 
@@ -50,6 +50,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public push(task: T) {
         this.q.push(task);
+        this.emit("push", task);
         this.processDeltas();
     }
 

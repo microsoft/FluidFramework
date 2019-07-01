@@ -68,6 +68,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private baseSequenceNumber: number = 0;
 
     // tslint:disable:variable-name
+    private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage>;
@@ -125,13 +126,38 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         /* tslint:disable:strict-boolean-expressions */
         this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
+
         // Inbound message queue
-        this._inbound = new DeltaQueue<ISequencedDocumentMessage>((op, callback) => {
-            if (op!.contents === undefined) {
-                this.handleOpContent(op!, callback);
-            } else {
-                this.processInboundOp(op!, callback);
-            }
+        this._inboundPending = new DeltaQueue<ISequencedDocumentMessage>(
+            (op, callback) => {
+                // Explicitly split the two cases to avoid the async call in the case we are not split
+                if (op!.contents === undefined) {
+                    this.fetchOpContent(op).then(
+                        (opContents) => {
+                            op.contents = opContents.contents;
+                            this._inbound.push(op);
+                            callback();
+                        },
+                        (error) => {
+                            callback(error);
+                        });
+                } else {
+                    this._inbound.push(op);
+                    callback();
+                }
+            });
+
+        this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
+            (op, callback) => {
+                try {
+                    this.processMessage(op, callback);
+                } catch (error) {
+                    callback(error);
+                }
+            });
+
+        this._inboundPending.on("error", (error) => {
+            this.emit("error", error);
         });
 
         this._inbound.on("error", (error) => {
@@ -546,47 +572,27 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private handleOpContent(op: ISequencedDocumentMessage, callback: (error?) => void): void {
+    private async fetchOpContent(op: ISequencedDocumentMessage): Promise<IContentMessage> {
+        let result: IContentMessage;
         const opContent = this.contentCache.peek(op.clientId);
-        if (!opContent) {
-            this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
-                this.mergeAndProcess(op, content, callback);
-            }, (err) => {
-                callback(err);
-            });
-        } else if (opContent.clientSequenceNumber > op.clientSequenceNumber) {
-            this.fetchContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber).then((content) => {
-                this.mergeAndProcess(op, content, callback);
-            }, (err) => {
-                callback(err);
-            });
+
+        if (!opContent || opContent.clientSequenceNumber > op.clientSequenceNumber) {
+            result = await this.waitForContent(op.clientId, op.clientSequenceNumber, op.sequenceNumber);
         } else if (opContent.clientSequenceNumber < op.clientSequenceNumber) {
             let nextContent = this.contentCache.get(op.clientId);
             while (nextContent && nextContent.clientSequenceNumber < op.clientSequenceNumber) {
                 nextContent = this.contentCache.get(op.clientId);
             }
+
             assert(nextContent, "No content found");
             assert.equal(op.clientSequenceNumber, nextContent!.clientSequenceNumber, "Invalid op content order");
-            this.mergeAndProcess(op, nextContent!, callback);
+
+            result = nextContent!;
         } else {
-            this.mergeAndProcess(op, this.contentCache.get(op.clientId)!, callback);
+            result = this.contentCache.get(op.clientId)!;
         }
-    }
 
-    private processInboundOp(op: ISequencedDocumentMessage, callback: (error?) => void): void {
-        this.processMessage(op).then(
-            () => {
-                callback();
-            },
-            (error) => {
-                /* tslint:disable:no-unsafe-any */
-                callback(error);
-            });
-    }
-
-    private mergeAndProcess(message: ISequencedDocumentMessage, contentOp: IContentMessage, callback): void {
-        message.contents = contentOp.contents;
-        this.processInboundOp(message, callback);
+        return result;
     }
 
     private enqueueMessages(messages: ISequencedDocumentMessage[]): void {
@@ -602,7 +608,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private processMessage(message: ISequencedDocumentMessage): Promise<void> {
+    private processMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void): void {
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = Date.now();
 
@@ -621,40 +627,41 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             message.contents = JSON.parse(message.contents);
         }
 
-        // TODO handle error cases, NACK, etc...
-        const contextP = this.handler!.prepare(message);
-        return contextP.then((context) => {
-            // Add final ack trace.
-            if (message.traces && message.traces.length > 0) {
-                message.traces.push({
-                    action: "end",
-                    service: this.clientType,
-                    timestamp: Date.now(),
-                });
-            }
+        // Add final ack trace.
+        if (message.traces && message.traces.length > 0) {
+            message.traces.push({
+                action: "end",
+                service: this.clientType,
+                timestamp: Date.now(),
+            });
+        }
 
-            // Watch the minimum sequence number and be ready to update as needed
-            this.minSequenceNumber = message.minimumSequenceNumber;
-            this.baseSequenceNumber = message.sequenceNumber;
+        // Watch the minimum sequence number and be ready to update as needed
+        this.minSequenceNumber = message.minimumSequenceNumber;
+        this.baseSequenceNumber = message.sequenceNumber;
 
-            this.handler!.process(message, context);
+        this.handler!.process(
+            message,
+            (err?: any) => {
+                if (err) {
+                    callback(err);
+                }
 
-            // We will queue a message to update our reference sequence number upon receiving a server operation. This
-            // allows the server to know our true reference sequence number and be able to correctly update the minimum
-            // sequence number (MSN). We don't acknowledge other message types similarly (like a min sequence number
-            // update) to avoid acknowledgement cycles (i.e. ack the MSN update, which updates the MSN, then ack the
-            // update, etc...).
-            if (message.type === MessageType.Operation ||
-                message.type === MessageType.Propose) {
-                this.updateSequenceNumber(message.type);
-            }
+                // We will queue a message to update our reference sequence number upon receiving a server operation.
+                // This allows the server to know our true reference sequence number and be able to correctly update
+                // the minimum sequence number (MSN). We don't acknowledge other message types similarly (like a min
+                // sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN update, which updates the
+                // MSN, then ack the update, etc...).
+                if (message.type === MessageType.Operation ||
+                    message.type === MessageType.Propose) {
+                    this.updateSequenceNumber(message.type);
+                }
 
-            const endTime = Date.now();
-            this.emit("processTime", endTime - startTime);
+                const endTime = Date.now();
+                this.emit("processTime", endTime - startTime);
 
-            // Call the post-process function
-            return this.handler!.postProcess(message, context);
-        });
+                callback();
+            });
     }
 
     /**
@@ -702,7 +709,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private async waitForContent(
             clientId: string,
             clientSeqNumber: number,
-            seqNumber: number): Promise<IContentMessage> {
+            seqNumber: number,
+    ): Promise<IContentMessage> {
         const lateContentHandler = (clId: string) => {
             if (clientId === clId) {
                 const lateContent = this.contentCache.peek(clId);

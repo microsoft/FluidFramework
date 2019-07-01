@@ -19,6 +19,14 @@ import {
 class NullRuntime implements IRuntime {
     public ready: Promise<void> | undefined;
 
+    public query(id: string): any {
+        return undefined;
+    }
+
+    public list(): string[] {
+        return [];
+    }
+
     public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
     }

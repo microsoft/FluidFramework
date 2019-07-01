@@ -22,20 +22,10 @@ export interface IConnectionDetails {
  */
 export interface IDeltaHandlerStrategy {
     /**
-     * Preparess data necessary to process the message. The return value of the method will be passed to the process
-     * function.
-     */
-    prepare: (message: ISequencedDocumentMessage) => Promise<any>;
-
-    /**
      * Processes the message. The return value from prepare is passed in the context parameter.
+     * @param context - Deprecated: will be removed in a future release
      */
-    process: (message: ISequencedDocumentMessage, context: any) => void;
-
-    /**
-     * Called immediately after process.
-     */
-    postProcess: (message: ISequencedDocumentMessage, context: any) => Promise<void>;
+    process: (message: ISequencedDocumentMessage, callback: (err?: any) => void) => void;
 
     /**
      * Processes the signal.

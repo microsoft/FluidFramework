@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
+import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader, IRequest, IResponse } from "./loader";
@@ -88,7 +89,7 @@ export enum ConnectionState {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
+export interface IRuntime extends IComponent {
     /**
      * Executes a request against the runtime
      */
@@ -117,6 +118,7 @@ export interface IRuntime {
 
     /**
      * Prepares the given message for execution
+     * @deprecated being removed and replaced with only process
      */
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
@@ -127,6 +129,7 @@ export interface IRuntime {
 
     /**
      * Called immediately after a message has been processed but prior to the next message being executed
+     * @deprecated being removed and replaced with only process
      */
     postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
 
@@ -136,14 +139,17 @@ export interface IRuntime {
     processSignal(message: any, local: boolean);
 }
 
-export interface IContainerContext extends EventEmitter {
+export interface IMessageScheduler extends IComponent {
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+}
+
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IComponent {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
     readonly clientId: string | undefined;
     readonly clientType: string;
     readonly parentBranch: string | undefined | null;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
     readonly blobManager: IBlobManager | undefined;
     readonly storage: IDocumentStorageService | undefined | null;
     readonly connectionState: ConnectionState;
@@ -156,11 +162,10 @@ export interface IContainerContext extends EventEmitter {
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
-    readonly quorum: IQuorum | undefined;
+    readonly quorum: IQuorum;
     readonly loader: ILoader;
     readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;
-
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }

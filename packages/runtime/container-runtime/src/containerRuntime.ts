@@ -287,6 +287,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
+    public query(id: string): any {
+        return undefined;
+    }
+
+    public list(): string[] {
+        return [];
+    }
+
     /**
      * Loads a component from a snapshot.
      * @param id - Id for the component.
