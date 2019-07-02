@@ -45,25 +45,10 @@ data:
             "bucket": "snapshots",
             "restJsonSize": "50mb",
             "tenants": [
+                {{- $lastIndex := sub (len .Values.jarvis.tenants) 1}}
                 {{- range $index, $tenant := .Values.jarvis.tenants }}
-                {{ toJson . }},
+                {{ toJson . }}{{- if ne $index $lastIndex -}}, {{ end }}
                 {{- end }}
-                {
-                    "id": "prague",
-                    "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
-                },
-                {
-                    "id": "github",
-                    "key": "0bea3f87c186991a69245a29dc3f61d2"
-                },
-                {
-                    "id": "cobalt",
-                    "key": "0e3c439e9ba63d85936c7e7e9c79478c"
-                },
-                {
-                    "id": "local",
-                    "key": "43cfc3fbf04a97c0921fd23ff10f9e4b"
-                }
             ]
         },
         "client": {
@@ -161,47 +146,6 @@ data:
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "tenantConfig": [
-            {
-                "_id": "prague",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
-                "storage": {
-                    "url": "{{ .Values.gitrest.url }}",
-                    "owner": "prague",
-                    "repository": "prague"
-                }
-            },
-            {
-                "_id": "github",
-                "key": "0bea3f87c186991a69245a29dc3f61d2",
-                "storage": {
-                    "url": "https://api.github.com",
-                    "owner": "kurtb",
-                    "repository": "praguedocs",
-                    "direct": "https://api.github.com",
-                    "credentials": {
-                        "user": "",
-                        "password": ""
-                    }
-                }
-            },
-            {
-                "_id": "cobalt",
-                "key": "0e3c439e9ba63d85936c7e7e9c79478c",
-                "storage": {
-                    "url": "{{ .Values.cobalt.url }}",
-                    "owner": "prague",
-                    "repository": "prague"
-                }
-            },
-            {
-                "_id": "local",
-                "key": "43cfc3fbf04a97c0921fd23ff10f9e4b",
-                "storage": {
-                    "url": "{{ .Values.gitrest.url }}",
-                    "owner": "prague",
-                    "repository": "local"
-                }
-            }
         ],
         "metric": {
             "client": "telegraf",
