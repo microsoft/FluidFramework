@@ -170,7 +170,7 @@ export class Stream extends SharedObject implements IStream {
     /**
      * Perform custom processing once an attach has happened.  Nothing for Stream
      */
-    protected attachCore() {
+    protected registerCore() {
         return;
     }
 
