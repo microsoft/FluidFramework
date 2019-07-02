@@ -36,11 +36,6 @@ export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedP
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
-export interface IRejection {
-    // The sequence number of the proposal being rejected
-    sequenceNumber: number;
-}
-
 export interface IPendingProposal extends ISequencedProposal {
     reject();
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IProposal, IProtocolState } from "@prague/container-definitions";
+import { IProtocolState } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
@@ -43,14 +43,6 @@ export interface IFork {
 
     // The last forwarded sequence number
     lastForwardedSequenceNumber: number;
-}
-
-export interface ITrackedProposal {
-    sequenceNumber: number;
-
-    proposal: IProposal;
-
-    rejections: number;
 }
 
 export interface IScribe {
