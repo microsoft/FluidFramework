@@ -24,7 +24,7 @@ export class StreamExtension implements ISharedObjectExtension {
     /**
      * Version of the stream snapshot format.
      */
-    public readonly snapshotFormatVersion: string = "0.1";
+    public readonly snapshotFormatVersion: string = "0.2";
 
     /**
      * Creates a new Stream object and loads it with data from the given services.

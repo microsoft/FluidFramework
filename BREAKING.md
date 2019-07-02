@@ -20,6 +20,9 @@ To attach a `ComponentRuntime` you need to call `attach()` on the `ComponentRunt
 
 For compatibility there is still a `createAndAttachComponent` method on the `ComponentRuntime`. This method simply calls `createComponent` then calls `attach()` right away on that new component before returning.
 
+- Stream no longer inherit from SharedMap.   Create a separate SharedMap if needed. This also mean Stream snapshot format has changed
+- class Cell is renamed SharedCell
+
 # 0.4 Breaking Changes (June 17, 2019)
 
 The IComponent in @prague/runtime-defintions and IPlatform in @prague/container-definitions have been deprecated and

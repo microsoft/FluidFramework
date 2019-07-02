@@ -10,11 +10,11 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/container-definitions";
-import { SharedMap } from "@prague/map";
 import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { SharedObject } from "@prague/shared-object-common";
 import { StreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";
 import { ISnapshot, Snapshot } from "./snapshot";
@@ -32,7 +32,7 @@ const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
 /**
  * Inking data structure.
  */
-export class Stream extends SharedMap implements IStream {
+export class Stream extends SharedObject implements IStream {
     /**
      * Create a new shared stream
      *
@@ -41,7 +41,7 @@ export class Stream extends SharedMap implements IStream {
      * @returns newly create shared stream (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedMap.getIdForCreate(id), StreamExtension.Type) as Stream;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), StreamExtension.Type) as Stream;
     }
 
     /**
@@ -95,37 +95,9 @@ export class Stream extends SharedMap implements IStream {
     }
 
     /**
-     * Initialize the stream with a snapshot from the given storage.
-     *
-     * @param minimumSequenceNumber - Not used
-     * @param headerOrigin - Not used
-     * @param storage - Storage service to read from
-     */
-    protected async loadContent(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
-        storage: IObjectStorageService): Promise<void> {
-
-        const header = await storage.read(snapshotFileName);
-        /* tslint:disable:no-unsafe-any */
-        const data: ISnapshot = header
-            ? JSON.parse(Buffer.from(header, "base64")
-                .toString("utf-8"))
-            : emptySnapshot;
-        this.initialize(data);
-    }
-
-    /**
-     * Initialize an empty stream.
-     */
-    protected initializeContent() {
-        this.initialize(emptySnapshot);
-    }
-
-    /**
      * Get a snapshot of the current content as an ITree.
      */
-    protected snapshotContent(): ITree {
+    public snapshot(): ITree {
         const tree: ITree = {
             entries: [
                 {
@@ -145,15 +117,68 @@ export class Stream extends SharedMap implements IStream {
     }
 
     /**
+     * Initialize the stream with a snapshot from the given storage.
+     *
+     * @param minimumSequenceNumber - Not used
+     * @param headerOrigin - Not used
+     * @param storage - Storage service to read from
+     */
+    protected async loadCore(
+        minimumSequenceNumber: number,
+        headerOrigin: string,
+        storage: IObjectStorageService): Promise<void> {
+
+        const header = await storage.read(snapshotFileName);
+        /* tslint:disable:no-unsafe-any */
+        const data: ISnapshot = header
+            ? JSON.parse(Buffer.from(header, "base64")
+                .toString("utf-8"))
+            : emptySnapshot;
+        this.initialize(data);
+    }
+
+    /**
+     * Initialize an empty stream.
+     */
+    protected initializeLocalCore() {
+        this.initialize(emptySnapshot);
+    }
+
+    /**
+     * Prepares the given message for processing.  Nothing for Stream
+     *
+     * @param message - the message to prepare
+     * @param local - true if the object is local
+     * @returns resolved when message is prepared
+     */
+    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+        return Promise.resolve();
+    }
+
+    /**
      * Apply a delta to the snapshot.
      *
      * @param message - The message containing the delta to apply
      * @param local - Whether the message is local
      */
-    protected processContent(message: ISequencedDocumentMessage, local: boolean) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && !local) {
             this.inkSnapshot.apply(message.contents as IDelta);
         }
+    }
+
+    /**
+     * Perform custom processing once an attach has happened.  Nothing for Stream
+     */
+    protected attachCore() {
+        return;
+    }
+
+    /**
+     * Nothing to do when the object has disconnected from the delta stream
+     */
+    protected onDisconnect() {
+        return;
     }
 
     /**
