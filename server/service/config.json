@@ -58,13 +58,13 @@
     "login": {
         "enabled": false,
         "microsoft": {
-            "clientId": "3d642166-9884-4463-8248-78961b8c1300",
-            "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            "clientId": "",
+            "secret": ""
         },
         "accounts": [
             {
-                "username": "test",
-                "password": "mRTvhfDTE3FYbVc"
+                "username": "",
+                "password": ""
             }
         ]
     },
@@ -163,14 +163,14 @@
     },
     "error": {
         "track": false,
-        "endpoint" : "https://25f5c231660f474fb85fb4daeb070029:3301d25c7ed9434688e4f5bd998b9739@sentry.wu2.prague.office-int.com/2"
+        "endpoint" : ""
     },
     "worker": {
         "intelligence": {
             "resume": {
             },
             "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                "key": ""
             },
             "nativeTextAnalytics": {
             }

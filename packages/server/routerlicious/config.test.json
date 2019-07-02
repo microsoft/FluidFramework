@@ -36,8 +36,8 @@
     "login": {
         "enabled": false,
         "microsoft": {
-            "clientId": "3d642166-9884-4463-8248-78961b8c1300",
-            "secret": "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ="
+            "clientId": "",
+            "secret": ""
         }
     },
     "deli": {
@@ -107,7 +107,7 @@
             "resume": {
             },
             "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                "key": ""
             },
             "nativeTextAnalytics": {
             },
@@ -115,7 +115,7 @@
                 "url": "http://augmentation.westus2.cloudapp.azure.com/spellchecker"
             },
             "translation": {
-                "key": "75ed7b5c411649eb895e03dae6a6f873"
+                "key": ""
             }
         },
         "url": "http://localhost:4000",
