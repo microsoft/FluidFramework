@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ParsedPath, posix as pathutil } from "path";
+import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
+import { posix } from "path";
 import { defaultValueTypes } from "./defaultTypes";
-import { IMapOperation } from "./definitions";
-import { ISharedDirectory, IValueChanged, IValueType } from "./interfaces";
+import { IDirectory, ISharedDirectory, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
-import { ILocalViewElement, MapView } from "./view";
+import { ILocalViewElement } from "./view";
 
 /**
  * The extension that defines the directory
@@ -51,15 +50,14 @@ export class DirectoryExtension {
 }
 
 /**
- * SharedDirectory functions very similarly to SharedMap (e.g. getPath/setPath can be used much like get/set),
- * but will create supporting SubDirectory objects when the key looks like a path.  If the user does a getPath
- * on a key that is a SubDirectory, then that retrieved SubDirectory can be used with relative paths for
- * convenience.  E.g.:
- * mySharedDirectory.setPath("/a/b/c/foo", val1);
- * mySharedDirectory.setPath("/a/b/c/bar", val2);
- * const mySubDir = mySharedDirectory.getPath("/a/b/c");
- * mySubDir.getPath("foo"); // val1
- * mySubDir.getPath("bar"); // val2
+ * SharedDirectory is a SharedMap that can provide a working directory that is useful when combined with
+ * path-like keys.  The working directory allows relative paths to be used in the same fashion as a
+ * normal map.  E.g.:
+ * mySharedDirectory.set("/a/b/c/foo", val1);
+ * mySharedDirectory.set("/a/b/c/bar", val2);
+ * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
+ * mySubDir.get("foo"); // val1
+ * mySubDir.get("bar"); // val2
  */
 export class SharedDirectory extends SharedMap implements ISharedDirectory {
     /**
@@ -68,9 +66,24 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
     public static readonly PathSeparator = "/";
 
     /**
-     * The root of our directory structure.
+     * Create a new shared directory
+     *
+     * @param runtime - component runtime the new shared directory belongs to
+     * @param id - optional name of the shared directory
+     * @returns newly create shared directory (but not attached yet)
      */
-    public readonly subdirectory: ViewSubDirectory;
+    public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
+        return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryExtension.Type) as SharedDirectory;
+    }
+
+    /**
+     * Get a factory for SharedDirectory to register with the component.
+     *
+     * @returns a factory that creates and load SharedDirectory
+     */
+    public static getFactory(): ISharedObjectExtension {
+        return new DirectoryExtension();
+    }
 
     /**
      * Constructs a new shared directory. If the object is non-local an id and service interfaces will
@@ -84,196 +97,25 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
         runtime: IComponentRuntime,
     ) {
         super(id, runtime, DirectoryExtension.Type);
-        this.subdirectory = new ViewSubDirectory(this.view);
     }
 
     /**
-     * Sets a value at a path, and will create subdirectories in between if needed.
-     * @param path - full path string from root, including key name.  E.g. "/path/to/my/key" will produce
-     * 3 subdirectories and one key
-     * @param value - value to store in the key
-     * @param type - value type
+     * Get a SubDirectory within the directory, in order to use relative paths from that location.
+     * @param path - Path of the SubDirectory to get, relative to the root
      */
-    public setPath<T = any>(path: string, value: T, type?: string): void {
-        const values = this.view.prepareOperationValue(path, value, type);
-
-        const op: IMapOperation = {
-            key: path,
-            type: "setPath",
-            value: values.operationValue,
-        };
-
-        this.setPathCore(
-            op.key,
-            {
-                localType: values.operationValue.type,
-                localValue: values.localValue,
-            },
-            true,
-            null);
-        this.submitMapKeyMessage(op);
+    public getWorkingDirectory(path: string): SubDirectory {
+        return new SubDirectory(this, posix.resolve(SharedDirectory.PathSeparator, path));
     }
-
-    /**
-     * Returns a SubDirectory object if a subdirectory exists at the given path, or undefined otherwise.
-     * @param path - full path string from root, including the key!  "/this/is/a/subdirectory" will return the
-     * SubDirectory for "a", but "/this/is/a/subdirectory/key" will return the SubDirectory for
-     * "subdirectory".
-     */
-    public pathToSubdir(path: string) {
-        let relPath = path;
-        if (pathutil.isAbsolute(path)) {
-            relPath = path.substring(1);
-        }
-        const parsedPath = pathutil.parse(relPath);
-        let subdir: SubDirectory = this.subdirectory;
-        if (parsedPath.dir.length > 0) {
-            const dirNames = parsedPath.dir.split(SharedDirectory.PathSeparator);
-            for (const dirName of dirNames) {
-                let childDir: SubDirectory;
-                if (!subdir.hasKey(dirName)) {
-                    return undefined;
-                } else {
-                    const anyValue = subdir.getKey(dirName);
-                    if (anyValue instanceof SubDirectory) {
-                        childDir = anyValue;
-                    } else {
-                        return undefined;
-                    }
-                }
-                subdir = childDir;
-            }
-        }
-        return subdir;
-    }
-
-    /**
-     * Checks if something exists at the given path.
-     * @param path - full path string from root
-     */
-    public hasPath<T = any>(path: string): boolean {
-        return this.getPath(path) !== undefined;
-    }
-
-    /**
-     * Get whatever exists at the given path.
-     * @param path - full path string from root
-     */
-    public getPath<T = any>(path: string): T {
-        const subdir = this.pathToSubdir(path);
-        if (subdir) {
-            return subdir.getKey<T>(pathutil.basename(path));
-        }
-    }
-
-    /**
-     * Async version of getPath.
-     * @param path - full path string from root
-     */
-    public async waitPath<T>(path: string): Promise<T> {
-        if (this.hasPath(path)) {
-            return this.getPath(path);
-        }
-
-        // Otherwise subscribe to changes
-        return new Promise<T>((resolve, reject) => {
-            const callback = (value: IValueChanged) => {
-                if (path === value.key) {
-                    resolve(this.getPath(value.key));
-                    this.removeListener("valueChanged", callback);
-                }
-            };
-
-            this.on("valueChanged", callback);
-        });
-    }
-
-    /**
-     * Adds op handlers for setPath.
-     */
-    protected setMessageHandlers() {
-        // tslint:disable:no-backbone-get-set-outside-model
-        this.messageHandler.set(
-            "setPath",
-            {
-                prepare: (op, local) => {
-                    return local ? Promise.resolve(null) : this.view.prepareSetCore(op.key, op.value);
-                },
-                process: (op, context: ILocalViewElement, local, message) => {
-                    if (!this.needProcessKeyOperations(op, local, message)) {
-                        return;
-                    }
-                    this.setPathCore(op.key, context, local, message);
-                },
-                submit: (op) => {
-                    this.submitMapKeyMessage(op);
-                },
-            });
-
-    }
-
-    /**
-     * Core handling of setting the path.
-     * @param path - full path string from root
-     * @param value - pre-prepared value to be set
-     * @param local - whether the op came from the local machine
-     * @param op - the setPath op
-     */
-    private setPathCore<T = any>(path: string,
-                                 value: ILocalViewElement,
-                                 local: boolean,
-                                 op: ISequencedDocumentMessage) {
-        let relPath = path;
-        if (pathutil.isAbsolute(path)) {
-            relPath = path.substring(1);
-        }
-        const parsedPath = pathutil.parse(relPath);
-        const subdir = this.ensureSubDirectories(parsedPath);
-        const previousValue = subdir.getKey(parsedPath.name);
-        subdir.setKey(parsedPath.name, value.localValue);
-        const event: IValueChanged = { key: path, previousValue };
-        this.emit("valueChanged", event, local, op);
-    }
-
-    /**
-     * Checks that the directory structure to the given path exists, or creates it if it does not.
-     * @param parsedPath - a parsed path (using posix.parse()) from root
-     */
-    private ensureSubDirectories(parsedPath: ParsedPath): SubDirectory {
-        let absolutePath = "/";
-        let subdir: SubDirectory = this.subdirectory;
-        if (parsedPath.dir.length > 0) {
-            const dirNames = parsedPath.dir.split(SharedDirectory.PathSeparator);
-            for (const dirName of dirNames) {
-                absolutePath += (dirName + SharedDirectory.PathSeparator);
-                let childDir: SubDirectory;
-                if (!subdir.hasKey(dirName)) {
-                    childDir = new SubDirectory(this, absolutePath);
-                    subdir.setKey(dirName, childDir);
-                } else {
-                    childDir = subdir.getKey(dirName);
-                }
-                subdir = childDir;
-            }
-        }
-        return subdir;
-    }
-
-    // TODO: block ISharedMap methods such as get, set, clear by overriding them and raising an
-    // exception (these are not in ISharedDirectory and so not visible in the public API)
 }
 
 /**
  * Node of the directory tree.
  */
-export class SubDirectory implements ISharedDirectory {
-    /**
-     * Collection of keys and further SubDirectories
-     */
-    private readonly data = new Map<string, any>();
+export class SubDirectory implements IDirectory {
+    public [Symbol.toStringTag]: string = "SubDirectory";
 
     /**
-     * Constructor
+     * Constructor.
      * @param directory - reference back to the SharedDirectory to perform operations
      * @param absolutePath - the absolute path of this SubDirectory
      */
@@ -281,84 +123,160 @@ export class SubDirectory implements ISharedDirectory {
     }
 
     /**
-     * Checks if the key exists in this SubDirectory.
-     * @param key - string identifier
-     */
-    public hasKey(key: string) {
-        return this.data.has(key);
-    }
-
-    /**
-     * Retrieves whatever is at the given key in this SubDirectory.
-     * @param key - string identifier
-     */
-    public getKey<T = any>(key: string): T {
-        return this.data.get(key) as T;
-    }
-
-    /**
-     * Sets the given value for the given key in this SubDirectory.
-     * @param key - string identifier
-     * @param value - value to set (currently expecting an unpacked value, not an ILocalViewElement)
-     */
-    public setKey<T = any>(key: string, value: T) {
-        this.data.set(key, value);
-    }
-
-    /**
-     * Checks whether the given relative path exists, as referenced from this SubDirectory
+     * Checks whether the given relative path exists, as referenced from this SubDirectory.
      * @param path - relative path
      */
-    public hasPath(path: string): boolean {
-        return this.directory.hasPath(this.buildPath(path));
+    public has(path: string): boolean {
+        return this.directory.has(this.makeAbsolute(path));
     }
 
     /**
-     * Retrieves whatever is at the given relative path, as referenced from this SubDirectory
+     * Retrieves whatever is at the given relative path, as referenced from this SubDirectory.
      * @param path - relative path
      */
-    public getPath<T = any>(path: string): T {
-        return this.directory.getPath(this.buildPath(path));
+    public get(path: string) {
+        return this.directory.get(this.makeAbsolute(path));
     }
 
     /**
-     * Sets the given value at the given relative path, as referenced from this SubDirectory
+     * Sets the given value at the given relative path, as referenced from this SubDirectory.
      * @param path - relative path
      * @param value - value to set
      * @param type - value type
      */
-    public setPath<T = any>(path: string, value: T, type?: string): void {
-        this.directory.setPath(this.buildPath(path), value, type);
+    public set<T = any>(path: string, value: T, type?: string): this {
+        this.directory.set(this.makeAbsolute(path), value, type);
+        return this;
     }
 
     /**
-     * Async version of getPath
+     * Delete the entry at the given relative path.
      * @param path - relative path
      */
-    public async waitPath<T>(path: string): Promise<T> {
-        return this.directory.waitPath(this.buildPath(path));
+    public delete(path: string): boolean {
+        return this.directory.delete(this.makeAbsolute(path));
     }
 
     /**
-     * Converts the given relative path into an absolute path
+     * Clear all entries under this SubDirectory.
+     */
+    public clear(): void {
+        this.forEach((value, key, map) => {
+            map.delete(key);
+        });
+    }
+
+    /**
+     * Issue a callback on each entry under this SubDirectory.
+     * @param callback - callback to issue
+     */
+    public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
+        this.directory.forEach((value, key, map) => {
+            if (this.checkInSubtree(key)) {
+                callback(value, key, map);
+            }
+        });
+    }
+
+    /**
+     * The number of entries under this SubDirectory.
+     */
+    public get size(): number {
+        let count = 0;
+        this.forEach((value, key, map) => {
+            count++;
+        });
+        return count;
+    }
+
+    /**
+     * Get an iterator over the entries under this SubDirectory.
+     */
+    public entries(): IterableIterator<[string, ILocalViewElement]> {
+        const directoryEntriesArray = [...this.directory.entries()];
+        const subDirectoryEntriesArray = directoryEntriesArray.filter(([absolutePath, value]) => {
+            return this.checkInSubtree(absolutePath);
+        });
+        return this.getValuesIterator(subDirectoryEntriesArray);
+    }
+
+    /**
+     * Get an iterator over the keys under this Subdirectory.
+     */
+    public keys(): IterableIterator<string> {
+        const subDirectoryKeysArray = [...this.directory.keys()].filter(this.checkInSubtree.bind(this));
+        return this.getValuesIterator(subDirectoryKeysArray);
+    }
+
+    /**
+     * Get an iterator over the values under this Subdirectory.
+     */
+    public values(): IterableIterator<ILocalViewElement> {
+        const valuesArray = [...this.entries()].map(([absolutePath, value]) => {
+            return value;
+        });
+
+        return this.getValuesIterator(valuesArray);
+    }
+
+    /**
+     * Get an iterator over the entries under this Subdirectory.
+     */
+    public [Symbol.iterator](): IterableIterator<[string, ILocalViewElement]> {
+        return this.entries();
+    }
+
+    /**
+     * Async version of get.
      * @param path - relative path
      */
-    private buildPath(path: string) {
-        return pathutil.resolve(this.absolutePath, path);
+    public async wait<T>(path: string): Promise<T> {
+        return this.directory.wait(this.makeAbsolute(path));
     }
-}
 
-export class ViewSubDirectory extends SubDirectory {
-    constructor(private readonly view: MapView) {
-        super(view.getMap() as SharedDirectory, "/");
+    /**
+     * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
+     * @param path - Path of the SubDirectory to get, relative to this SubDirectory
+     */
+    public getWorkingDirectory(path: string): SubDirectory {
+        return new SubDirectory(this.directory, this.makeAbsolute(path));
     }
-    public hasKey(key: string) {
-        return this.view.has(key);
+
+    /**
+     * Converts the given relative path into an absolute path.
+     * @param path - relative path
+     */
+    private makeAbsolute(relativePath: string): string {
+        return posix.resolve(this.absolutePath, relativePath);
     }
-    public getKey(key: string) {
-        return this.view.get(key);
+
+    /**
+     * Verifies if a given absolute path is under this SubDirectory.
+     * @param absolutePath - path to verify
+     */
+    private checkInSubtree(absolutePath: string): boolean {
+        return absolutePath.indexOf(this.absolutePath) === 0;
     }
-    public setKey<T = any>(key: string, value: T) {
-        this.view.set(key, value);
+
+    /**
+     * Workaround for Array.prototype.values() missing from older versions of Node.
+     * @param valueArray - Array of values to iterate over
+     */
+    private getValuesIterator<T>(valueArray: T[]): IterableIterator<T> {
+        let curr = 0;
+        const iterator = {
+            next() {
+                if (curr === valueArray.length) {
+                    return { value: undefined, done: true };
+                } else {
+                    const returnVal = valueArray[curr++];
+                    return { value: returnVal, done: false };
+                }
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 }

@@ -169,7 +169,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return this.view.data.size;
     }
 
-    public forEach(callbackFn: (value: any, key: any, map: Map<string, any>) => void) {
+    public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void) {
         this.view.forEach(callbackFn);
     }
 
