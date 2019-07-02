@@ -7,6 +7,10 @@
   "ensureConsistentVersions": true,
   "projects": [
     {
+      "packageName": "@chaincode/flow-intel",
+      "projectFolder": "packages/agents/flow-intel/"
+    },
+    {
       "packageName": "@prague/intelligence-runner",
       "projectFolder": "packages/agents/intelligence-runner/"
     },
