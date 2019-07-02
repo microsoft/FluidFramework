@@ -259,11 +259,11 @@ export class MapView {
         if (local.localType === ValueType[ValueType.Shared]) {
             const distributedObject = local.localValue as ISharedObject;
 
-            // Attach the collab object to the document. If already attached the attach call will noop.
+            // If the map is already registered then register the sharedObject
             // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
             // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
             // (like attaching)
-            if (!this.map.isLocal()) {
+            if (this.map.isRegistered()) {
                 distributedObject.register();
             }
             return {

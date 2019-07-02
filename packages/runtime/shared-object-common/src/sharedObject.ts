@@ -157,7 +157,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
      * Registers the channel with the runtime. The channel will get attach when the runtime is.
      */
     public register(): void {
-        if (!this.isLocal()) {
+        if (this.isRegistered()) {
             return;
         }
 

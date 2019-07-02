@@ -45,6 +45,7 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ComponentContext } from "./componentContext";
 import { debug } from "./debug";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
@@ -939,17 +940,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         const attachMessage = message.contents as IAttachMessage;
         let snapshotTree: ISnapshotTree = null;
+        const flatBlobs = new Map<string, string>();
         if (attachMessage.snapshot) {
-            const flattened = flatten(attachMessage.snapshot.entries, new Map());
+            const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
             snapshotTree = buildHierarchy(flattened);
         }
 
+        const storage = new DocumentStorageServiceProxy(this.storage, flatBlobs);
         const component = new ComponentContext(
             this,
             attachMessage.type,
             attachMessage.id,
             true,
-            this.storage,
+            storage,
             snapshotTree,
             (cr: IComponentRuntime) => this.attachComponent(cr));
 
