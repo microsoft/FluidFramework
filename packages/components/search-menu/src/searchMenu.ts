@@ -5,11 +5,11 @@
 
 // tslint:disable:align
 import * as MergeTree from "@prague/merge-tree";
-import { CharacterCodes } from "../text";
-import * as ui from "../ui";
+import { CharacterCodes } from "./characterCodes";
 import { Cursor } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
+import * as ui from "./rectangle";
 
 export interface ISearchMenuHost {
     // TD switch to options structure
@@ -64,6 +64,8 @@ export interface ISelectionListBox {
     setItemTextPrefix(prefix: string): void;
     setItemTextSuffix(suffix: string): void;
     items(): ISearchMenuCommand[];
+    getItemTextPrefix(): string;
+    getItemTextSuffix(): string;
     getSelectedKey(): string;
     getSelectedItem(): ISearchMenuCommand;
     getSelectionIndex(): number;
@@ -91,6 +93,8 @@ export function selectionListBoxCreate(
 
     return {
         elm: listContainer,
+        getItemTextPrefix,
+        getItemTextSuffix,
         getSelectedItem,
         getSelectedKey,
         getSelectionIndex,
@@ -126,6 +130,14 @@ export function selectionListBoxCreate(
 
     function setItemTextSuffix(suffix: string) {
         itemTextSuffix = suffix;
+    }
+
+    function getItemTextPrefix() {
+        return itemTextPrefix;
+    }
+
+    function getItemTextSuffix() {
+        return itemTextSuffix;
     }
 
     function selectItemByKey(key: string) {

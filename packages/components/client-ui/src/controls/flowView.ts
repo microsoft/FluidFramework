@@ -6,6 +6,7 @@
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
 import { ProgressCollection } from "@chaincode/progress-bars";
+import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,
@@ -43,7 +44,6 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as MathMenu from "./mathMenu";
 import { PresenceSignal } from "./presenceSignal";
-import * as SearchMenu from "./searchMenu";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
 

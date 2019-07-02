@@ -4,10 +4,10 @@
  */
 
 // tslint:disable:object-literal-sort-keys align
+import * as SearchMenu from "@chaincode/search-menu";
 import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";
 import { CharacterCodes } from "../text";
-import * as SearchMenu from "./searchMenu";
 
 export const cursorTex = " \\textcolor{#800080}{\\vert}";
 export const cursorColor = "rgb(128, 0, 128)";

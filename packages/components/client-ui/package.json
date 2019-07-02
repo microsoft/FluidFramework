@@ -38,6 +38,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
+    "@chaincode/search-menu": "^0.5.0", 
     "@prague/build-common": "^0.5.0",
     "@types/jsdom": "^12.0.0",
     "@types/katex": "^0.10.1",

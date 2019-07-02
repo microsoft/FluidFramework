@@ -48,6 +48,7 @@ COPY packages/components/monaco/package*.json packages/components/monaco/
 COPY packages/components/owned-map/package*.json packages/components/owned-map/
 COPY packages/components/pinpoint-editor/package*.json packages/components/pinpoint-editor/
 COPY packages/components/shared-text/package*.json packages/components/shared-text/
+COPY packages/components/search-menu/package*.json packages/components/search-menu/
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/

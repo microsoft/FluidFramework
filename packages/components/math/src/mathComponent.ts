@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as SearchMenu from "@chaincode/search-menu";
 import * as ClientUI from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
@@ -57,7 +58,7 @@ interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
 
 export class MathInstance extends EventEmitter
     implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentLayout,
-    IComponentCursor, ClientUI.controls.ISearchMenuClient {
+    IComponentCursor, SearchMenu.ISearchMenuClient {
 
     public static supportedInterfaces = [
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentRenderHTML",
@@ -70,7 +71,7 @@ export class MathInstance extends EventEmitter
     public canInline = true;
     public cursorActive = false;
     public savedElm: HTMLElement;
-    public searchMenuHost: ClientUI.controls.ISearchMenuHost;
+    public searchMenuHost: SearchMenu.ISearchMenuHost;
 
     constructor(
         public url: string,
@@ -91,7 +92,7 @@ export class MathInstance extends EventEmitter
     }
 
     // ISearchMenuClient
-    public registerSearchMenuHost(host: ClientUI.controls.ISearchMenuHost) {
+    public registerSearchMenuHost(host: SearchMenu.ISearchMenuHost) {
         this.searchMenuHost = host;
     }
 
