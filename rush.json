@@ -27,7 +27,7 @@
       "projectFolder": "packages/agents/translator/"
     },
     {
-      "packageName": "@chaincode/agent-scheduler",
+      "packageName": "@component/agent-scheduler",
       "projectFolder": "packages/components/agent-scheduler/"
     },
     {

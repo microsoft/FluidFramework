@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/agent-scheduler",
+  "name": "@component/agent-scheduler",
   "description": "Component in charge of distributing agents across instances of a component",
   "version": "0.5.0",
   "author": "Microsoft",

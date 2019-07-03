@@ -13,7 +13,7 @@ import * as assert from "assert";
 import "mocha";
 import { AgentScheduler } from "../";
 
-const AgentSchedulerType = "@chaincode/agent-scheduler";
+const AgentSchedulerType = "@component/agent-scheduler";
 
 describe("AgentScheduler", () => {
     const createEmptyTask = (id: string) => {
