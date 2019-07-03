@@ -107,6 +107,10 @@
       "projectFolder": "packages/components/shared-text/"
     },
     {
+      "packageName": "@chaincode/search-menu",
+      "projectFolder": "packages/components/search-menu/"
+    },
+    {
       "packageName": "@chaincode/table-document",
       "projectFolder": "packages/components/table-document/"
     },
