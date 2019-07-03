@@ -335,11 +335,13 @@ export function selectionListBoxCreate(
 }
 
 export interface ISearchBox {
+    setOnExec(f: (c: ISearchMenuCommand) => void): void;
     showAllItems();
     showSelectionList(selectionItems: ISearchMenuCommand[]);
     dismiss(): void;
     keydown(e: KeyboardEvent): void;
     keypress(e: KeyboardEvent): boolean;
+    focus(): void;
     getSearchString(): string;
     getSelectedKey(): string;
     getSelectedItem(): ISearchMenuCommand;
@@ -474,20 +476,29 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     let inputBox: IInputBox;
     let selectionListBox: ISelectionListBox;
     let paramState: IParameterState;
+    let onExec: (c: ISearchMenuCommand) => void;
 
     init();
 
     return {
         dismiss,
+        focus: containerFocus,
         getSearchString,
         getSelectedItem,
         getSelectedKey,
         keydown,
         keypress,
+        setOnExec,
         showAllItems,
         showSelectionList,
         updateText,
     };
+
+    function containerFocus() {
+        container.focus();
+        container.addEventListener("keypress", keypress);
+        container.addEventListener("keydown", keydown);
+    }
 
     function showSelectionList(items: ISearchMenuCommand[], prefix = "", suffix = "") {
         if (selectionListBox) {
@@ -506,6 +517,10 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
                 showListContainer(selectionListBox.items().length === 0);
             }
         }
+    }
+
+    function setOnExec(f: (c: ISearchMenuCommand) => void) {
+        onExec = f;
     }
 
     function lookup(text: string) {
@@ -550,7 +565,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     }
 
     function dismiss() {
-        document.body.removeChild(container);
+        boundingElm.removeChild(container);
     }
 
     // TODO: check param state already shows in parameter
@@ -587,6 +602,10 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             selectionListBox.nextItem();
         } else if (e.keyCode === KeyCode.TAB) {
             onTAB(e.shiftKey);
+        } else if (e.keyCode === KeyCode.esc) {
+            if (cmdParser) {
+                cmdParser("");
+            }
         } else {
             textSegKeydown(e);
         }
@@ -611,6 +630,9 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
                 cmd.exec(cmd, params, context);
+                if (onExec) {
+                    onExec(cmd);
+                }
             } else {
                 if (cmdParser) {
                     cmdParser(getSearchString(), cmd);
@@ -672,6 +694,8 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
 
     function init() {
         container.style.zIndex = "4";
+        container.tabIndex = 0;
+        container.style.outline = "none";
         inputBox = inputBoxCreate((s) => updateText(),
             (s) => updateText());
         inputElm = inputBox.elm;
@@ -686,7 +710,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         resetInputBox();
 
         container.appendChild(inputElm);
-        document.body.appendChild(container);
+        boundingElm.appendChild(container);
         inputBox.initCursor(2);
     }
 }

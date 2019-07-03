@@ -38,6 +38,7 @@
     "@chaincode/math": "^0.5.0",
     "@chaincode/pinpoint-editor": "^0.5.0",
     "@chaincode/progress-bars": "^0.5.0",
+    "@chaincode/search-menu": "^0.5.0",
     "@chaincode/table-document": "^0.5.0",
     "@chaincode/table-view": "^0.5.0",
     "@chaincode/video-players": "^0.5.0",

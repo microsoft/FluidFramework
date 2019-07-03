@@ -185,7 +185,6 @@ export class MathInstance extends EventEmitter
 
     public localRender() {
         if (this.savedElm) {
-            console.log("rendering");
             ClientUI.controls.clearSubtree(this.savedElm);
             this.render(this.savedElm, this.options.displayType);
         }
@@ -514,7 +513,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
                     pos = range.offset;
                     len += range.segment.cachedLength;
                 });
-                console.log(`got event from ${event.clientId} pos: ${pos}`);
+                // console.log(`got event from ${event.clientId} pos: ${pos}`);
                 const tileInfo = this.findTile(pos, "math", false);
                 if (tileInfo && (tileInfo.tile.properties.mathEnd)) {
                     const mathMarker = tileInfo.tile as IMathMarkerInst;
@@ -522,7 +521,7 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
                     const instance = this.getInstance(leafId);
                     const startPos = this.getStartPos(instance);
                     instance.remoteEdit(pos - startPos, len, event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT);
-                    console.log(`found math remote ${leafId} instance ${instance !== undefined}`);
+                    // console.log(`found math remote ${leafId} instance ${instance !== undefined}`);
                     instance.localRender();
                 }
 
