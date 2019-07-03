@@ -76,6 +76,11 @@ interface IPendingRecord {
     resolve: () => void;
 
     /**
+     * The reject function to call if disconnection happens before local operation is ack'ed
+     */
+    reject: (reason?: string) => void;
+
+    /**
      * The client sequence number of the operation. For assert only.
      */
     clientSequenceNumber: number;
@@ -262,6 +267,10 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     protected onDisconnect() {
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
+        while (this.promiseResolveQueue.length > 0) {
+            const pending = this.promiseResolveQueue.shift();
+            pending.reject("Client got disconnected");
+        }
     }
 
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -356,7 +365,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         // tslint:disable:promise-must-complete
         return new Promise((resolve, reject) => {
             // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, clientSequenceNumber });
+            this.promiseResolveQueue.push({ resolve, reject, clientSequenceNumber });
         });
     }
 
