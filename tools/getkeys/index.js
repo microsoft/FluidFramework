@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 msRestAzure = require('ms-rest-azure');
 keyVault = require('azure-keyvault');
 const { exec } = require('child_process');

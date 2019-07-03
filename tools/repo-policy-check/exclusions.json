@@ -1,0 +1,5 @@
+[
+    "packages/components/client-ui/ext/",
+    "samples/hackathon/",
+    "packages/server/services-core/src/dockerNames.ts"
+]

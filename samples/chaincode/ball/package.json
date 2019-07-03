@@ -3,6 +3,7 @@
   "description": "Chaincode starter project",
   "version": "0.0.4",
   "author": "Microsoft",
+  "license": "MIT",
   "repository": "microsoft/prague",
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",

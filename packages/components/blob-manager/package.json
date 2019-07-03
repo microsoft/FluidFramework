@@ -7,6 +7,7 @@
   "types": "dist/index.d.ts",
   "sideEffects": "false",
   "author": "Microsoft",
+  "license": "MIT",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",

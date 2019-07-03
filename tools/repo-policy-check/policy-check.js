@@ -6,37 +6,38 @@
 const fs = require('fs');
 const readline = require('readline');
 const newline = require('os').EOL;
+const program = require('commander');
+const exclusions = require('./exclusions.json').map(e => new RegExp(e, "i"));
 
 /**
  * argument parsing
- * could use commander if this gets too complicated
  */
-// parse quiet arg
-const quiet = process.argv.some(arg => arg == '--quiet' || arg == '-q');
+program
+    .option('-q|--quiet', 'Quiet mode')
+    .option('-r|--resolve', 'Resolve errors if possible')
+    .option('-h|--handler <regex>', 'Filter handler names by <regex>')
+    .option('-p|--path <regex>', 'Filter file paths by <regex>')
+    .parse(process.argv);
+
+const handlerRegex = (program.handler ? new RegExp(program.handler, 'i') : /.?/);
+const pathRegex = (program.path ? new RegExp(program.path, 'i') : /.?/);
+
 function writeOutLine(output) {
-    if (!quiet) {
+    if (!program.quiet) {
         console.log(output);
     }
 }
 
-// parse resolve arg
-const shouldResolve = process.argv.some(arg => arg == '--resolve');
-if (shouldResolve) {
+if (program.resolve) {
     writeOutLine('Resolving errors if possible.');
 }
 
-// parse handler name regex arg
-const nameArg = process.argv.find(arg => /^-(-name|n)[:=]./.test(arg));
-const nameRegex = nameArg ? new RegExp(nameArg.substring(nameArg.match(/[:=]/).index + 1), 'i') : /.?/; // match all by default
-if (nameArg) {
-    writeOutLine("Filtering handlers by regex: " + nameRegex);
+if (program.handler) {
+    writeOutLine(`Filtering handlers by regex: ${handlerRegex}`);
 }
 
-// parse file filter (path) regex arg
-const pathArg = process.argv.find(arg => /^-(-path|p)[:=]./.test(arg));
-const pathRegex = pathArg ? new RegExp(pathArg.substring(pathArg.match(/[:=]/).index + 1), 'i') : /.?/; // match all by default
-if (pathArg) {
-    writeOutLine("Filtering file paths by regex: " + pathRegex);
+if (program.path) {
+    writeOutLine(`Filtering file paths by regex: ${pathRegex}`);
 }
 
 /**
@@ -156,12 +157,12 @@ const handlers = [
 // route files to their handlers by regex testing their full paths
 // synchronize output, exit code, and resolve decision for all handlers
 async function routeToHandlers(file) {
-    handlers.filter(handler => handler.match.test(file) && nameRegex.test(handler.name)).map(async handler => {
+    handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(async handler => {
         const result = await handler.handler(file);
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
 
-            if (shouldResolve && handler.resolver) {
+            if (program.resolve && handler.resolver) {
                 output += newline + 'attempting to resolve: ' + file;
                 const resolveResult = await handler.resolver(file);
 
@@ -188,7 +189,7 @@ let lineReader = readline.createInterface({
 });
 
 lineReader.on('line', line => {
-    if (pathRegex.test(line)) {
+    if (pathRegex.test(line) && exclusions.every(value => !value.test(line)) && fs.existsSync(line)) {
         routeToHandlers(line.trim());
     }
 });
