@@ -65,28 +65,28 @@ describe("Cell", () => {
         root3Cell = root3.get(cellId);
 
         // Set a starting value in the cell
-        await root1Cell.set(initialCellValue);
+        root1Cell.set(initialCellValue);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
     });
 
-    async function verifyCellValue(cell: ISharedCell, expectedValue, index: number): Promise<void> {
-        const userValue = await cell.get();
+    function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
+        const userValue = cell.get();
         assert.equal(userValue, expectedValue,
             `Incorrect value ${userValue} instead of ${expectedValue} in document ${index}`);
     }
 
-    async function verifyCellValues(value1, value2, value3): Promise<void> {
-        await verifyCellValue(root1Cell, value1, 1);
-        await verifyCellValue(root2Cell, value2, 2);
-        await verifyCellValue(root3Cell, value3, 3);
+    function verifyCellValues(value1, value2, value3) {
+        verifyCellValue(root1Cell, value1, 1);
+        verifyCellValue(root2Cell, value2, 2);
+        verifyCellValue(root3Cell, value3, 3);
     }
 
-    async function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean): Promise<void> {
-        const user1Empty = await root1Cell.empty();
+    function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean) {
+        const user1Empty = root1Cell.empty();
         assert.equal(user1Empty, value1, `Incorrect value ${user1Empty} instead of ${value1} in document1`);
-        const user2Empty = await root2Cell.empty();
+        const user2Empty = root2Cell.empty();
         assert.equal(user2Empty, value2, `Incorrect value ${user2Empty} instead of ${value2} in document2`);
-        const user3Empty = await root3Cell.empty();
+        const user3Empty = root3Cell.empty();
         assert.equal(user3Empty, value3, `Incorrect value ${user3Empty} instead of ${value3} in document3`);
     }
 
@@ -99,21 +99,21 @@ describe("Cell", () => {
 
     it("can get cell data in 3 documents correctly", async () => {
         // Cell was created and populated in beforeEach
-        await verifyCellValues(initialCellValue, initialCellValue, initialCellValue);
+        verifyCellValues(initialCellValue, initialCellValue, initialCellValue);
     });
 
     it("can set and get cell data in 3 documents correctly", async () => {
-        await root2Cell.set(newCellValue);
+        root2Cell.set(newCellValue);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        await verifyCellValues(newCellValue, newCellValue, newCellValue);
+        verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
 
     it("can delete cell data in 3 documents correctly", async () => {
-        await root3Cell.delete();
+        root3Cell.delete();
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        await verifyCellEmpty(true, true, true);
+        verifyCellEmpty(true, true, true);
     });
 
     it("can update value and trigger onValueChanged on other two documents", async () => {
@@ -135,7 +135,7 @@ describe("Cell", () => {
             user3ValueChangedCount = user3ValueChangedCount + 1;
         });
 
-        await root1Cell.set(newCellValue);
+        root1Cell.set(newCellValue);
 
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
@@ -143,56 +143,56 @@ describe("Cell", () => {
         assert.equal(user2ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 2");
         assert.equal(user3ValueChangedCount, 1, "Incorrect number of valueChanged op received in document 3");
 
-        await verifyCellValues(newCellValue, newCellValue, newCellValue);
+        verifyCellValues(newCellValue, newCellValue, newCellValue);
     });
 
     it("Simultaneous set should reach eventual consistency with the same value", async () => {
-        await root1Cell.set("value1");
-        await root2Cell.set("value2");
-        await root3Cell.set("value0");
-        await root3Cell.set("value3");
+        root1Cell.set("value1");
+        root2Cell.set("value2");
+        root3Cell.set("value0");
+        root3Cell.set("value3");
 
-        await verifyCellValues("value1", "value2", "value3");
+        verifyCellValues("value1", "value2", "value3");
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-        await verifyCellValues("value3", "value3", "value3");
+        verifyCellValues("value3", "value3", "value3");
     });
 
     it("Simultaneous delete/set should reach eventual consistency with the same value", async () => {
         // set after delete
-        await root1Cell.set("value1.1");
-        await root2Cell.delete();
-        await root3Cell.set("value1.3");
+        root1Cell.set("value1.1");
+        root2Cell.delete();
+        root3Cell.set("value1.3");
 
-        await verifyCellValues("value1.1", undefined, "value1.3");
+        verifyCellValues("value1.1", undefined, "value1.3");
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-        await verifyCellValues("value1.3", "value1.3", "value1.3");
+        verifyCellValues("value1.3", "value1.3", "value1.3");
     });
 
     it("Simultaneous delete/set on same cell should reach eventual consistency with the same value", async () => {
         // delete and then set on the same cell
-        await root1Cell.set("value2.1");
-        await root2Cell.delete();
-        await root3Cell.set("value2.3");
+        root1Cell.set("value2.1");
+        root2Cell.delete();
+        root3Cell.set("value2.3");
         // drain the outgoing so that the next set will come after
         await documentDeltaEventManager.processOutgoing(user1Document, user2Document, user3Document);
-        await root2Cell.set("value2.2");
+        root2Cell.set("value2.2");
 
-        await verifyCellValues("value2.1", "value2.2", "value2.3");
+        verifyCellValues("value2.1", "value2.2", "value2.3");
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-        await verifyCellValues("value2.2", "value2.2", "value2.2");
+        verifyCellValues("value2.2", "value2.2", "value2.2");
     });
 
     it("Simultaneous set/delete should reach eventual consistency with the same value", async () => {
         // delete after set
-        await root1Cell.set("value3.1");
-        await root2Cell.set("value3.2");
-        await root3Cell.delete();
+        root1Cell.set("value3.1");
+        root2Cell.set("value3.2");
+        root3Cell.delete();
 
-        await verifyCellValues("value3.1", "value3.2", undefined);
-        await verifyCellEmpty(false, false, true);
+        verifyCellValues("value3.1", "value3.2", undefined);
+        verifyCellEmpty(false, false, true);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-        await verifyCellValues(undefined, undefined, undefined);
-        await verifyCellEmpty(true, true, true);
+        verifyCellValues(undefined, undefined, undefined);
+        verifyCellEmpty(true, true, true);
     });
 
     afterEach(async () => {

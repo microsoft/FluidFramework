@@ -11,21 +11,27 @@ import { ISharedObject } from "@prague/shared-object-common";
 export interface ISharedCell extends ISharedObject {
     /**
      * Retrieves the cell value.
+     *
+     * @returns - the value of the cell
      */
-    get(): Promise<any>;
+    get(): any;
 
     /**
      * Sets the cell value.
+     *
+     * @param value - a JSON-able or SharedObject value to set the cell to
      */
-    set(value: any): Promise<void>;
+    set(value: any): void;
 
     /**
      * Checks whether cell is empty or not.
+     *
+     * @returns - `true` if the value of cell is `undefined`, `false` otherwise
      */
-    empty(): Promise<boolean>;
+    empty(): boolean;
 
     /**
      * Delete the value from the cell.
      */
-    delete(): Promise<void>;
+    delete(): void;
 }

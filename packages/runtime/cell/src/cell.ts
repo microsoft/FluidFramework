@@ -14,7 +14,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
-import { SharedObject } from "@prague/shared-object-common";
+import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ISharedCell } from "./interfaces";
@@ -71,7 +71,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      *
      * @returns a factory that creates and load SharedCell
      */
-    public static getFactory() {
+    public static getFactory(): ISharedObjectExtension {
         return new CellExtension();
     }
     /**
@@ -87,6 +87,9 @@ export class SharedCell extends SharedObject implements ISharedCell {
     /**
      * Constructs a new shared cell. If the object is non-local an id and service interfaces will
      * be provided
+     *
+     * @param runtime - component runtime the shared map belongs to
+     * @param id - optional name of the shared map
      */
     constructor(id: string, runtime: IComponentRuntime) {
         super(id, runtime, CellExtension.Type);
@@ -94,16 +97,16 @@ export class SharedCell extends SharedObject implements ISharedCell {
     }
 
     /**
-     * Retrieves the value of the cell.
+     * {@inheritDoc ISharedCell.get}
      */
-    public async get() {
+    public get() {
         return this.data;
     }
 
     /**
-     * Sets the value of the cell.
+     * {@inheritDoc ISharedCell.set}
      */
-    public async set(value: any): Promise<void> {
+    public set(value: any) {
         let operationValue: ICellValue;
         /* tslint:disable:no-unsafe-any */
         if (SharedObject.is(value)) {
@@ -132,8 +135,10 @@ export class SharedCell extends SharedObject implements ISharedCell {
         this.submitCellMessage(op);
     }
 
-    // Deletes the value from the cell.
-    public async delete(): Promise<void> {
+    /**
+     * {@inheritDoc ISharedCell.delete}
+     */
+    public delete() {
         const op: IDeleteCellOperation = {
             type: "deleteCell",
         };
@@ -143,12 +148,17 @@ export class SharedCell extends SharedObject implements ISharedCell {
     }
 
     /**
-     * Returns whether cell is empty or not.
+     * {@inheritDoc ISharedCell.empty}
      */
-    public async empty() {
-        return this.data === undefined ? true : false;
+    public empty() {
+        return this.data === undefined;
     }
 
+    /**
+     * Create a snapshot for the cell
+     *
+     * @returns the snapshot of the current state of the cell
+     */
     public snapshot(): ITree {
         // Get a serializable form of data
         let content: ICellValue;
@@ -183,6 +193,14 @@ export class SharedCell extends SharedObject implements ISharedCell {
         return tree;
     }
 
+    /**
+     * Load cell from snapshot
+     *
+     * @param minimumSequenceNumber - Not used
+     * @param headerOrigin - Not used
+     * @param storage - the storage to get the snapshot from
+     * @returns - promise that resolved when the load is completed
+     */
     protected async loadCore(
         minimumSequenceNumber: number,
         headerOrigin: string,
@@ -201,18 +219,34 @@ export class SharedCell extends SharedObject implements ISharedCell {
             : content.value;
     }
 
+    /**
+     * Initialize a local instance of cell
+     */
     protected initializeLocalCore() {
         this.data = undefined;
     }
 
+    /**
+     * Process the cell value on register
+     */
     protected registerCore() {
         return;
     }
 
+    /**
+     * Call back on disconnect
+     */
     protected onDisconnect() {
         debug(`Cell ${this.id} is now disconnected`);
     }
 
+    /**
+     * Prepare a cell operation
+     *
+     * @param message - the message to prepare
+     * @param local - whether the message was sent by the local client
+     * @returns - promise that resolve the value of the prepare, which will be passed as the context of process
+     */
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (message.type === MessageType.Operation && !local) {
             const op: ICellOperation = message.contents;
@@ -225,6 +259,13 @@ export class SharedCell extends SharedObject implements ISharedCell {
         }
     }
 
+    /**
+     * Process a cell operation
+     *
+     * @param message - the message to prepare
+     * @param local - whether the message was sent by the local client
+     * @param context - the value returned by prepareCore
+     */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
         if (this.pendingClientSequenceNumber !== -1) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.

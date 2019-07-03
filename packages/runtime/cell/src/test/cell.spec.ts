@@ -23,8 +23,8 @@ describe("Routerlicious", () => {
             });
 
             it("Can set and get cell data", async () => {
-                await testCell.set("testValue");
-                assert.equal(await testCell.get(), "testValue");
+                testCell.set("testValue");
+                assert.equal(testCell.get(), "testValue");
             });
 
         });
