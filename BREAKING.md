@@ -1,4 +1,6 @@
-# 0.5 Breaking Changes
+# 0.6 Breaking Changes
+
+# 0.5 Breaking Changes (July 3, 2019)
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
 
 - [attach() on IChannel/ISharedObject is now register()](#attach()-on-IChannel/ISharedObject-is-now-register())

@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-utils",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,10 +17,10 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.5.0",
-    "@prague/runtime-definitions": "^0.5.0",
-    "@prague/services-core": "^0.5.0",
-    "@prague/utils": "^0.5.0",
+    "@prague/container-definitions": "^0.6.0",
+    "@prague/runtime-definitions": "^0.6.0",
+    "@prague/services-core": "^0.6.0",
+    "@prague/utils": "^0.6.0",
     "bytes": "^3.0.0",
     "debug": "^4.1.1",
     "kafka-node": "^3.0.1",
@@ -31,8 +31,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.5.0",
-    "concurrently": "^4.1.0",
+    "@prague/build-common": "^0.6.0",
     "@types/bytes": "^3.0.0",
     "@types/debug": "^0.0.31",
     "@types/logform": "^1.2.0",
@@ -40,6 +39,7 @@
     "@types/node": "^10.12.12",
     "@types/randomstring": "^1.1.6",
     "@types/raven": "^2.5.1",
+    "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"

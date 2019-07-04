@@ -1,6 +1,6 @@
 {
   "name": "@prague/snapshotter",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Snapshotter for Prague container",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,17 +17,17 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.5.0",
-    "concurrently": "^4.1.0",
+    "@prague/build-common": "^0.6.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.5.0",
-    "@prague/container-runtime": "^0.5.0",
+    "@prague/container-definitions": "^0.6.0",
+    "@prague/container-runtime": "^0.6.0",
     "debug": "^4.1.1"
   },
   "license": "MIT"
