@@ -16,8 +16,7 @@ export class Caret {
     private endRef: LocalReference;
 
     public constructor(private readonly layout: Layout) {
-        this.startRef = this.doc.addLocalRef(0);
-        this.endRef = this.doc.addLocalRef(0);
+        this.startRef = this.endRef = this.doc.addLocalRef(0);
 
         document.addEventListener("selectionchange", this.onSelectionChange);
 
@@ -103,6 +102,14 @@ export class Caret {
             debug(`          now: (${windowSelectionToString()})`);
         } else {
             debug(`    caret unchanged: (${windowSelectionToString()})`);
+        }
+    }
+
+    public collapseForward() {
+        if (this.anchor < this.position) {
+            this.startRef = this.endRef;
+        } else {
+            this.endRef = this.startRef;
         }
     }
 

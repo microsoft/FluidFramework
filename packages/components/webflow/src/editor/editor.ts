@@ -60,6 +60,7 @@ export class Editor {
 
         const doc = this.doc;
         doc.remove(Math.max(0, start), Math.min(end, doc.length));
+        caret.collapseForward();
         caret.sync();
     }
 
@@ -157,9 +158,7 @@ export class Editor {
         } else {
             this.doc.replaceWithText(start, end, e.key);
         }
-        if (start !== end) {
-            this.caret.setSelection(end, end);
-        }
+        this.caret.collapseForward();
         this.caret.sync();
     }
 

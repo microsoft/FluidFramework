@@ -76,8 +76,12 @@ export class HostView extends View<IHostConfig> {
         };
 
         const setFormat = (tag: Tag) => {
-            const selection = editor.selection;
-            init.doc.setFormat(selection.end, tag);
+            const { end } = editor.selection;
+
+            // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
+            // format of that marker.  This looks unnatural to the user, since the caret is still at the end of
+            // the text on the previous line, hence the '- 1'.
+            init.doc.setFormat(end - 1, tag);
         };
 
         const toggleSelection = (className: string) => {
