@@ -601,9 +601,11 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
         } else if (e.keyCode === KeyCode.downArrow) {
             selectionListBox.nextItem();
         } else if (e.keyCode === KeyCode.TAB) {
+            e.preventDefault();
             onTAB(e.shiftKey);
         } else if (e.keyCode === KeyCode.esc) {
             if (cmdParser) {
+                e.preventDefault();
                 cmdParser("");
             }
         } else {
@@ -618,6 +620,7 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
     // TODO: change exec to take parameters if any
 
     function keypress(e: KeyboardEvent) {
+        e.preventDefault();
         if (e.charCode === CharacterCodes.cr) {
             let cmd: ISearchMenuCommand;
             let params = [] as string[];

@@ -118,6 +118,10 @@ export class HostView extends View<IHostConfig> {
 
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey && e.code === KeyCode.keyM) {
+                // Because the search menu is not yet attached to the DOM at the time this event is propagating,
+                // we should consume the event on the search menu's behalf.
+                e.preventDefault();
+
                 this.state.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
                 this.state.activeSearchBox = SearchMenu.searchBoxCreate(this, root,
                     baseSearchCommands, false, onComplete);
