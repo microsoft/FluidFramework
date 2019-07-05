@@ -73,8 +73,10 @@
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "repository": "prague",
-        "npm": "http://localhost:3002",
-        "clusterNpm": "http://auspkn:3000",
+        "npm": "https://pragueauspkn-3873244262.azureedge.net",
+        "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
+        "localNpm": "http://localhost:3002",
+        "localClusterNpm": "http://auspkn:3000",
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "loader": {

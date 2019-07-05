@@ -11,47 +11,44 @@
     <div id="content"></div>
 
     <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
-    {{#pkg}}
+    {{#scripts}}
         {{#scripts}}
         <script id="{{id}}" src="{{url}}" async></script>
         {{/scripts}}
-    {{/pkg}}
+    {{/scripts}}
 
     <script>
-        var config = {{{ config }}};
         var cache = {{{ cache }}};
         var timings = "{{ timings }}";
-
-        var chaincode = "{{ chaincode }}";
-
+        {{#chaincode}}
+        var chaincode = {{{ chaincode }}};
+        {{/chaincode}}
+        {{^chaincode}}
+        var chaincode;
+        {{/chaincode}}
         var url = "{{ url }}";
         var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";
+        var npm = "{{ npm }}";
 
-        {{#pkg}}
-        var entry = "{{ entrypoint }}";
+        {{#scripts}}
         var scriptIds = [
-            {{#pkg}}
             {{#scripts}}
             "{{id}}",
             {{/scripts}}
-            {{/pkg}}
         ];
-        {{/pkg}}
-        {{^pkg}}
-        var entry = null;
+        {{/scripts}}
+        {{^scripts}}
         var scriptIds = [];
-        {{/pkg}}
+        {{/scripts}}
   
         loader.initialize(
             window.location.href,
             resolved,
             cache,
-            config,
             chaincode,
-            entry,
             scriptIds,
-            config.npm,
+            npm,
             jwt);
     </script>
 </body>

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidCodeDetails } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { GitManager, Historian, IGitCache } from "@prague/services-client";
 import Axios from "axios";
@@ -33,7 +34,10 @@ export class Alfred implements IAlfred {
         return forkResponse.data;
     }
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
+    public async getFullTree(
+        tenantId: string,
+        documentId: string,
+    ): Promise<{ cache: IGitCache, code: string | IFluidCodeDetails }> {
         const gitManager = this.getGitManager(tenantId);
         const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
@@ -42,7 +46,8 @@ export class Alfred implements IAlfred {
 
         const fullTree = await gitManager.getFullTree(versions[0].sha);
 
-        let code: string = null;
+        // TODO this needs to be summary aware
+        let code: string | IFluidCodeDetails = null;
         if (fullTree.quorumValues) {
             let quorumValues;
             for (const blob of fullTree.blobs) {
@@ -51,7 +56,7 @@ export class Alfred implements IAlfred {
                         Array<[string, { value: string }]>;
 
                     for (const quorumValue of quorumValues) {
-                        if (quorumValue[0] === "code2") {
+                        if (quorumValue[0] === "code") {
                             code = quorumValue[1].value;
                             break;
                         }

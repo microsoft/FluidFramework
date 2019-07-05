@@ -13,7 +13,7 @@ import * as path from "path";
 import { parse } from "url";
 
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
-import { gatewayResolveUrl } from "../gateway-urlresolver";
+import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
 import { getConfig, getToken } from "../utils";
 import { defaultPartials } from "./partials";
@@ -197,7 +197,7 @@ export function create(
             config.get("error:track"));
 
         const [resolvedP, fullTreeP] =
-            gatewayResolveUrl(config, alfred, appTenants, tenantId, request.params.id, "sharedText", request);
+            resolveUrl(config, alfred, appTenants, tenantId, request.params.id, request);
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
 
         Promise.all([resolvedP, fullTreeP, treeTimeP]).then(([resolved, fullTree, treeTime]) => {

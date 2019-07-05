@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidCodeDetails } from "@prague/container-definitions";
+import { extractDetails, WebLoader } from "@prague/loader-web";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -10,12 +12,13 @@ import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import { parse } from "url";
+import { v4 } from "uuid";
 import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
-import { gatewayResolveUrl } from "../gateway-urlresolver";
+import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
 import { KeyValueManager } from "../keyValueManager";
-import { getConfig, getScriptsForCode } from "../utils";
+import { getConfig } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -27,6 +30,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
+    const webLoader = new WebLoader(config.get(config.get("worker:npm")));
 
     /**
      * Loading of a specific fluid document.
@@ -47,34 +51,80 @@ export function create(
 
         const tenantId = request.params.tenantId;
 
-        // SPO will always depends on the passed in chaincode since we don't get the fullTree on the server.
-        const codePackage: string = request.query.chaincode ? request.query.chaincode : "";
-        const spoSuffix = codePackage.replace(/[^A-Za-z0-9-]/g, "_");
         const search = parse(request.url).search;
         const [resolvedP, fullTreeP] =
-            gatewayResolveUrl(config, alfred, appTenants, tenantId, documentId, spoSuffix, request);
-
-        // Return the original string if the key was not found.
-        const chaincodeP = keyValueManager.get(codePackage).then((value) => {
-            winston.info(`Key: ${codePackage}, Value: ${value}`);
-            return value === undefined ? codePackage : `${codePackage}@${value}`;
-        }, () => {
-            winston.info(`${codePackage} not found in key-value store`);
-            return codePackage;
-        });
+            resolveUrl(config, alfred, appTenants, tenantId, documentId, request);
 
         const workerConfig = getConfig(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
 
-        const pkgP = Promise.all([fullTreeP, chaincodeP]).then(([fullTree, chaincode]) => {
-            winston.info(`Chaincode ${chaincode}`);
-            winston.info(`getScriptsForCode ${tenantId}/${documentId} +${Date.now() - start}`);
-            return getScriptsForCode(
-                config.get("worker:npm"),
-                config.get("worker:clusterNpm"),
-                fullTree && fullTree.code ? fullTree.code : chaincode);
+        const pkgP = fullTreeP.then((fullTree) => {
+            if (fullTree && fullTree.code) {
+                return webLoader.resolve(fullTree.code);
+            }
+
+            if (!request.query.chaincode) {
+                return;
+            }
+
+            const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
+            const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
+            const entryPoint = request.query.entrypoint;
+            const details = extractDetails(chaincode);
+
+            let codeDetails: IFluidCodeDetails;
+            if (chaincode.indexOf("http") === 0) {
+                codeDetails = {
+                    config: {
+                        [`@gateway:cdn`]: chaincode,
+                    },
+                    package: {
+                        fluid: {
+                            browser: {
+                                umd: {
+                                    files: [chaincode],
+                                    library: entryPoint,
+                                },
+                            },
+                        },
+                        name: `@gateway/${v4()}`,
+                        version: "0.0.0",
+                    },
+                };
+            } else {
+                codeDetails = {
+                    config: {
+                        [`@${details.scope}:cdn`]: cdn,
+                    },
+                    package: chaincode,
+                };
+            }
+
+            return webLoader.resolve(codeDetails);
+        });
+
+        const scriptsP = pkgP.then((pkg) => {
+            if (!pkg) {
+                return [];
+            }
+
+            const umd = pkg.pkg.fluid && pkg.pkg.fluid.browser && pkg.pkg.fluid.browser.umd;
+            if (!umd) {
+                return [];
+            }
+
+            return {
+                entrypoint: umd.library,
+                scripts: umd.files.map(
+                    (script, index) => {
+                        return {
+                            id: `${pkg.parsed.name}-${index}`,
+                            url: script.indexOf("http") === 0 ? script : `${pkg.packageUrl}/${script}`,
+                        };
+                    }),
+            };
         });
 
         // Track timing
@@ -82,8 +132,8 @@ export function create(
         const pkgTimeP = pkgP.then(() => Date.now() - start);
         const timingsP = Promise.all([treeTimeP, pkgTimeP]);
 
-        Promise.all([resolvedP, fullTreeP, pkgP, timingsP, chaincodeP])
-            .then(([resolved, fullTree, pkg, timings, chaincode]) => {
+        Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
+            .then(([resolved, fullTree, pkg, scripts, timings]) => {
             resolved.url += path + (search ? search : "");
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
@@ -93,12 +143,13 @@ export function create(
                 "loader",
                 {
                     cache: fullTree ? JSON.stringify(fullTree.cache) : undefined,
-                    chaincode: fullTree && fullTree.code ? fullTree.code : chaincode,
+                    chaincode: JSON.stringify(pkg),
                     config: workerConfig,
                     jwt: jwtToken,
+                    npm: config.get("worker:npm"),
                     partials: defaultPartials,
-                    pkg,
                     resolved: JSON.stringify(resolved),
+                    scripts,
                     timings: JSON.stringify(timings),
                     title: documentId,
                 });

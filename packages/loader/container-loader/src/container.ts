@@ -17,6 +17,7 @@ import {
     IDocumentMessage,
     IDocumentService,
     IDocumentStorageService,
+    IFluidCodeDetails,
     IGenericBlob,
     IQuorum,
     IRequest,
@@ -111,8 +112,8 @@ export class Container extends EventEmitter implements IContainer {
     // tslint:enable:variable-name
 
     private context: ContainerContext | undefined;
-    private pkg: string | null = null;
-
+    private pkg: string | IFluidCodeDetails | undefined;
+    private codeQuorumKey;
     private protocolHandler: ProtocolOpHandler | undefined;
 
     public get id(): string {
@@ -143,7 +144,7 @@ export class Container extends EventEmitter implements IContainer {
         return this._deltaManager!.clientType;
     }
 
-    public get chaincodePackage(): string | null {
+    public get chaincodePackage(): string | IFluidCodeDetails | undefined {
         return this.pkg;
     }
 
@@ -245,7 +246,7 @@ export class Container extends EventEmitter implements IContainer {
         }
 
         // Only snapshot once a code quorum has been established
-        if (!this.protocolHandler!.quorum.has("code2")) {
+        if (!this.protocolHandler!.quorum.has("code") && !this.protocolHandler!.quorum.has("code2")) {
             this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
             return;
         }
@@ -554,7 +555,17 @@ export class Container extends EventEmitter implements IContainer {
             "approveProposal",
             (sequenceNumber, key, value) => {
                 debug(`approved ${key}`);
-                if (key === "code2") {
+                if (key === "code" || key === "code2") {
+                    // back compat - can remove in 0.7
+                    if (!this.codeQuorumKey) {
+                        this.codeQuorumKey = key;
+                    }
+
+                    // back compat - can remove in 0.7
+                    if (key !== this.codeQuorumKey) {
+                        return;
+                    }
+
                     debug(`loadCode ${JSON.stringify(value)}`);
 
                     // Stop processing inbound messages/signals as we transition to the new code
@@ -588,7 +599,7 @@ export class Container extends EventEmitter implements IContainer {
         return blobManager;
     }
 
-    private async transitionRuntime(pkg: string): Promise<void> {
+    private async transitionRuntime(pkg: string | IFluidCodeDetails): Promise<void> {
         debug(`Transitioning runtime from ${this.pkg} to ${pkg}`);
         // No need to transition if package stayed the same
         if (pkg === this.pkg) {
@@ -639,8 +650,16 @@ export class Container extends EventEmitter implements IContainer {
         this.emit("contextChanged", this.pkg);
     }
 
-    private async loadCodeFromQuorum(quorum: Quorum): Promise<{ pkg: string | null, chaincode: IChaincodeFactory }> {
-        const pkg = quorum.has("code2") ? (quorum.get("code2") as string) : null;
+    private async loadCodeFromQuorum(
+        quorum: Quorum,
+    ): Promise<{ pkg: string | IFluidCodeDetails | undefined, chaincode: IChaincodeFactory }> {
+        // back compat - can remove in 0.7
+        const codeQuorumKey = quorum.has("code")
+            ? "code"
+            : quorum.has("code2") ? "code2" : undefined;
+        this.codeQuorumKey = codeQuorumKey;
+
+        const pkg = codeQuorumKey ? quorum.get(codeQuorumKey) as string | IFluidCodeDetails : undefined;
         const chaincode = await this.loadCode(pkg);
 
         return { chaincode, pkg };
@@ -649,8 +668,18 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: string | null): Promise<IChaincodeFactory> {
-        return pkg ? this.codeLoader.load(pkg) : new NullChaincode();
+    private async loadCode(pkg: string | IFluidCodeDetails | undefined): Promise<IChaincodeFactory> {
+        if (!pkg) {
+            return new NullChaincode();
+        }
+
+        if (typeof pkg === "string") {
+            return this.codeLoader.load<IChaincodeFactory>(pkg);
+        } else {
+            return typeof pkg.package === "string"
+                ? this.codeLoader.load<IChaincodeFactory>(pkg.package, pkg)
+                : this.codeLoader.load<IChaincodeFactory>(`${pkg.package.name}@${pkg.package.version}`, pkg);
+        }
     }
 
     private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): IConnectResult {

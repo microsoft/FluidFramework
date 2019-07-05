@@ -29,31 +29,31 @@ export interface IPerson {
 export interface IPackage {
     name: string;
     version: string;
-    description: string;
-    keywords: string[];
-    homepage: string;
-    bugs: { url: string; email: string };
-    license: string;
-    author: IPerson;
-    contributors: IPerson[];
-    files: string[];
-    main: string;
+    description?: string;
+    keywords?: string[];
+    homepage?: string;
+    bugs?: { url: string; email: string };
+    license?: string;
+    author?: IPerson;
+    contributors?: IPerson[];
+    files?: string[];
+    main?: string;
     // Same as main but for browser based clients (check if webpack supports this)
-    browser: string;
-    bin: { [key: string]: string };
-    man: string | string[];
-    repository: string | { type: string; url: string };
-    scripts: { [key: string]: string };
-    config: { [key: string]: string };
-    dependencies: { [key: string]: string };
-    devDependencies: { [key: string]: string };
-    peerDependencies: { [key: string]: string };
-    bundledDependencies: { [key: string]: string };
-    optionalDependencies: { [key: string]: string };
-    engines: { node: string; npm: string };
-    os: string[];
-    cpu: string[];
-    private: boolean;
+    browser?: string;
+    bin?: { [key: string]: string };
+    man?: string | string[];
+    repository?: string | { type: string; url: string };
+    scripts?: { [key: string]: string };
+    config?: { [key: string]: string };
+    dependencies?: { [key: string]: string };
+    devDependencies?: { [key: string]: string };
+    peerDependencies?: { [key: string]: string };
+    bundledDependencies?: { [key: string]: string };
+    optionalDependencies?: { [key: string]: string };
+    engines?: { node: string; npm: string };
+    os?: string[];
+    cpu?: string[];
+    private?: boolean;
 }
 
 export interface IPraguePackage extends IPackage {
@@ -65,6 +65,22 @@ export interface IPraguePackage extends IPackage {
 
             // Global for the entrypoint to the root package
             entrypoint: string;
+        };
+    };
+}
+
+export interface IFluidPackage extends IPackage {
+    fluid: {
+        browser: {
+            [libraryTarget: string]: {
+                // List of bundled JS files. Absolute URLs will be loaded directly. Relative paths will be specific
+                // to the CDN location
+                files: string[];
+
+                // if libraryTarget is umd then library is the global name that the script entry points will be exposed
+                // under. Other target formats may choose to reinterpret this value.
+                library: string;
+            };
         };
     };
 }
@@ -84,6 +100,29 @@ export enum ConnectionState {
      * The document is fully connected
      */
     Connected,
+}
+
+/**
+ * Package manager configuration. Provides a key value mapping of config values
+ */
+export interface IPackageConfig {
+    [key: string]: string;
+}
+
+/**
+ * Data structure used to describe the code to load on the Fluid document
+ */
+export interface IFluidCodeDetails {
+    /**
+     * The code package to be used on the Fluid document. This is either the package name which will be loaded
+     * from a package manager. Or the expanded fluid package.
+     */
+    package: string | IFluidPackage;
+
+    /**
+     * Configuration details. This includes links to the package manager and base CDNs.
+     */
+    config: IPackageConfig;
 }
 
 /**

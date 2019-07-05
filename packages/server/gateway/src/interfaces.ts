@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidCodeDetails } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;
 
-    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }>;
+    getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string | IFluidCodeDetails }>;
 
     getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]>;
 

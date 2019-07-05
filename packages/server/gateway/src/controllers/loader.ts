@@ -4,15 +4,12 @@
  */
 
 import {
-    IChaincodeFactory,
-    ICodeLoader,
     IComponent,
     IComponentHTMLViewable,
-    IPraguePackage,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { WebPlatform } from "@prague/loader-web";
+import { IResolvedPackage, WebLoader, WebPlatform } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
@@ -20,83 +17,7 @@ import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
 import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 
-export class WebLoader implements ICodeLoader {
-    private entryCache = new Map<string, Promise<any>>();
-
-    constructor(private baseUrl: string, pkg: string, entrypoint: string, scriptIds: string[]) {
-        if (entrypoint) {
-            // Check to see if the entrypoint exists - use it if so
-            const entrypointReadyP = new Promise<IChaincodeFactory>((resolve, reject) => {
-                if (entrypoint in window) {
-                    resolve(window[entrypoint]);
-                }
-
-                scriptIds.forEach((scriptId) => {
-                    const script = document.getElementById(scriptId) as HTMLScriptElement;
-                    script.onload = () => {
-                        if (entrypoint in window) {
-                            resolve(window[entrypoint]);
-                        }
-                    };
-
-                    script.onerror = (error) => {
-                        reject(error);
-                    };
-                });
-            });
-
-            this.entryCache.set(pkg, entrypointReadyP);
-        }
-    }
-
-    public async load<T>(source: string): Promise<T> {
-        if (!this.entryCache.has(source)) {
-            const entryP = this.loadCore(source);
-            this.entryCache.set(source, entryP);
-        }
-
-        return this.entryCache.get(source);
-    }
-
-    private async loadCore(source: string): Promise<IChaincodeFactory> {
-        const components = source.match(/(.*)\/(.*)@(.*)/);
-        if (!components) {
-            return Promise.reject("Invalid package");
-        }
-
-        const [, scope, name, version] = components;
-        const packageUrl = `${this.baseUrl}/${encodeURI(scope)}/${encodeURI(`${name}@${version}`)}`;
-
-        const response = await fetch(`${packageUrl}/package.json`);
-        const packageJson = await response.json() as IPraguePackage;
-
-        await Promise.all(
-            packageJson.prague.browser.bundle.map(async (bundle) => this.loadScript(`${packageUrl}/${bundle}`)));
-
-        // tslint:disable-next-line:no-unsafe-any
-        return window[packageJson.prague.browser.entrypoint];
-    }
-
-    private async loadScript(scriptUrl: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = scriptUrl;
-
-          // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
-          // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
-          // its dependencies have been loaded and executed.
-          script.async = false;
-
-          script.onload = () => resolve();
-          script.onerror = () =>
-            reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
-
-          document.head.appendChild(script);
-        });
-    }
-}
-
-async function initializeChaincode(document: Container, pkg: string): Promise<void> {
+async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
     if (!pkg) {
         return;
     }
@@ -110,7 +31,12 @@ async function initializeChaincode(document: Container, pkg: string): Promise<vo
 
     // And then make the proposal if a code proposal has not yet been made
     if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
+        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
+        // based format.
+        await Promise.all([
+            quorum.propose("code", pkg.details),
+            quorum.propose("code2", pkg.parsed.full),
+        ]);
     }
 
     console.log(`Code is ${quorum.get("code2")}`);
@@ -177,9 +103,7 @@ async function start(
     url: string,
     resolved: IResolvedUrl,
     cache: IGitCache,
-    config: any,
-    code: string,
-    entrypoint: string,
+    pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
     jwt: string,
@@ -199,10 +123,15 @@ async function start(
             "prague-odsp:": odspDocumentServiceFactory,
             "prague:": r11sDocumentServiceFactory,
         });
+
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebLoader(npm, code, entrypoint, scriptIds);
-    if (code) {
-        codeLoader.load(code).catch((error) => console.error("script load error", error));
+    const codeLoader = new WebLoader(npm);
+    if (pkg) {
+        if (pkg) {
+            codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);
+        }
+
+        codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 
     const loader = new Loader(
@@ -224,7 +153,7 @@ async function start(
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
     if (!container.existing) {
-        await initializeChaincode(container, code)
+        await initializeChaincode(container, pkg)
             .catch((error) => console.error("chaincode error", error));
     }
 }
@@ -233,9 +162,7 @@ export function initialize(
     url: string,
     resolved: IResolvedUrl,
     cache: IGitCache,
-    config: any,
-    chaincode: string,
-    entrypoint: string,
+    pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
     jwt: string,
@@ -245,9 +172,7 @@ export function initialize(
         url,
         resolved,
         cache,
-        config,
-        chaincode,
-        entrypoint,
+        pkg,
         scriptIds,
         npm,
         jwt);

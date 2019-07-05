@@ -69,7 +69,17 @@ class NullRuntime implements IRuntime {
 }
 
 export class NullChaincode implements IChaincodeFactory {
+    public static supportedInterfaces = ["IChaincodeFactory"];
+
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new NullRuntime();
+    }
+
+    public query(id: string): any {
+        return NullChaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return NullChaincode.supportedInterfaces;
     }
 }

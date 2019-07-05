@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IFluidCodeDetails } from "./chaincode";
 import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
@@ -16,11 +17,11 @@ export interface ICodeLoader {
     /**
      * Loads the package specified by IPackage and returns a promise to its entry point exports.
      *
-     * This definition will expand. A document likely stores a published package for the document within it. And that
-     * package then goes and refers to other stuff. The base package will have the ability to pull in, install
-     * data contained in the document.
+     * details is provided for backwards compatibility. Until 0.7 source will continue to be a string and
+     * details will contain the object. But the loader will be updated to check to see if the object is in
+     * source first.
      */
-    load<T>(source: string): Promise<T>;
+    load<T>(source: string | IFluidCodeDetails, details?: IFluidCodeDetails): Promise<T>;
 }
 
 export type IResolvedUrl = IWebResolvedUrl | IPragueResolvedUrl;

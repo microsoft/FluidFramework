@@ -38,8 +38,8 @@ function r11sResolveUrl(
     appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
-    request: Request) {
-
+    request: Request,
+) {
     let user: IAlfredUser | undefined;
     if ("cela" in request.query) {
         const celaName = chooseCelaName();
@@ -85,16 +85,17 @@ function r11sResolveUrl(
     return [resolvedP, fullTreeP];
 }
 
-export function gatewayResolveUrl(
+export function resolveUrl(
     config: Provider,
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
-    spoSuffix: string,
     request: Request,
 ) {
-    return isSpoTenant(tenantId)
-        ? spoResolveUrl(config, tenantId, `${documentId}.${spoSuffix}`, request)
-        : r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+    if (isSpoTenant(tenantId)) {
+        return spoResolveUrl(config, tenantId, `${documentId}`, request);
+    } else {
+        return r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+    }
 }
