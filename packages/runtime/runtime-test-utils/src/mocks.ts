@@ -205,6 +205,14 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public snapshotInternal(): ITreeEntry[] {
         return null;
     }
+
+    public async waitAttached(): Promise<void> {
+        return;
+    }
+
+    public async requestComponent(request: IRequest): Promise<IResponse> {
+        return null;
+    }
 }
 
 /**

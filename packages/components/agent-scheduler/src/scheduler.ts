@@ -270,6 +270,9 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
             await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
         }
 
+        // Wait for the component to be attached.
+        await this.runtime.waitAttached();
+
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
         const quorum = this.runtime.getQuorum();

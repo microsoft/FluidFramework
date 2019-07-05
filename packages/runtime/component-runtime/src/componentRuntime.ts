@@ -214,6 +214,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     }
 
     public async request(request: IRequest): Promise<IResponse> {
+        // system routes
+        if (request.url === "/_scheduler") {
+            return this.componentContext.hostRuntime.request(request);
+        }
+
         // Parse out the leading slash
         const id = request.url.substr(1);
 

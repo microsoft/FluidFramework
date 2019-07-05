@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as agentScheduler from "@component/agent-scheduler";
 import {
     Browser,
     ConnectionState,
@@ -91,7 +92,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         registry: IComponentRegistry,
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
-        const runtime = new ContainerRuntime(context, registry, runtimeOptions);
+        const componentRegistry = new WrappedComponentRegistry(registry);
+        const runtime = new ContainerRuntime(context, componentRegistry, runtimeOptions);
 
         const components = new Map<string, ISnapshotTree>();
         if (context.baseSnapshot.trees[".protocol"]) {
@@ -134,7 +136,15 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
         const chunksP = getChunks();
 
-        await Promise.all([...componentsP, chunksP]);
+        // Create all internal components in first load.
+        const internalComponentsP = new Array<Promise<void>>();
+        if (!context.existing) {
+            internalComponentsP.push(
+                runtime.createComponent("_scheduler", "_scheduler")
+                    .then((componentRuntime) => componentRuntime.attach()));
+        }
+
+        await Promise.all([...componentsP, chunksP, ...internalComponentsP]);
 
         return runtime;
     }
@@ -247,6 +257,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();
+
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
@@ -352,6 +363,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // system routes
         if (request.url === this.summarizer.url) {
             return { status: 200, mimeType: "prague/component", value: this.summarizer };
+        }
+
+        if (request.url === "/_scheduler") {
+            const component = await this.getComponentRuntime("_scheduler", true);
+            // TODO: Parse and extract more routers for scheduler.
+            return component.request({ url: ""});
         }
 
         // If no app specified handler has been specified then this is a 404
@@ -1064,6 +1081,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 debug(`Requesting remote help for ${helpTasks.robot}`);
                 this.submit(MessageType.RemoteHelp, remoteHelpMessage);
             }
+        }
+    }
+}
+
+// Wraps the provided list of packages and augments with some system level services.
+class WrappedComponentRegistry implements IComponentRegistry {
+    constructor(private readonly registry: IComponentRegistry) {
+    }
+
+    public async get(name: string): Promise<IComponentFactory> {
+        if (name === "_scheduler") {
+            return agentScheduler;
+        } else {
+            return this.registry.get(name);
         }
     }
 }

@@ -55,11 +55,9 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.6.0",
     "@prague/component-runtime": "^0.6.0",
     "@prague/consensus-register-collection": "^0.6.0",
     "@prague/container-definitions": "^0.6.0",
-    "@prague/container-runtime": "^0.6.0",
     "@prague/map": "^0.6.0",
     "@prague/runtime-definitions": "^0.6.0",
     "@prague/shared-object-common": "^0.6.0",
@@ -67,7 +65,6 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.6.0",
-    "@prague/local-test-server": "^0.6.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

@@ -25,6 +25,21 @@ import { ISharedObjectExtension } from "@prague/shared-object-common";
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
+// Temporary interfaces. Once finalized, these will be part of common runtime interfaces.
+interface ITask {
+    id: string;
+    callback?(): void;
+}
+
+interface IAgentScheduler {
+    leader: boolean;
+    register(...taskIds: string[]): Promise<void>;
+    pick(...tasks: ITask[]): Promise<void>;
+    release(...taskIds: string[]): Promise<void>;
+    pickedTasks(): string[];
+    on(event: "leader" | "picked", listener: (...args: any[]) => void): this;
+}
+
 export interface IKeyValue {
   set(key: string, value: any): void;
   get(key: string): any;
@@ -77,6 +92,20 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
+
+        // Example of using built-in services.
+        const response = await this.runtime.request({ url: "/_scheduler" });
+        const rawComponent = response.value as IComponent;
+
+        const scheduler = rawComponent.query<IAgentScheduler>("IAgentScheduler");
+        console.log(scheduler.pickedTasks());
+        if (scheduler.leader) {
+            console.log(`I am leader`);
+        } else {
+            scheduler.on("leader", () => {
+                console.log(`Newly elected leader`);
+            });
+        }
     }
 }
 
@@ -116,13 +145,8 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     });
 
     if (!runtime.existing) {
-        runtime.createComponent(ComponentName, ComponentName)
-        .then((componentRuntime) => {
-            componentRuntime.attach();
-        })
-        .catch((error) => {
-            context.error(error);
-        });
+        const created = await runtime.createComponent(ComponentName, ComponentName);
+        created.attach();
     }
 
     return runtime;
