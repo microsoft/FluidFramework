@@ -5,8 +5,9 @@
 
 import * as api from "@prague/container-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
+import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
-import { IGetter } from "./Getter";
+import { TokenProvider } from "./tokenProvider";
 import { getWithRetryForTokenRefresh } from "./utils";
 
 /**
@@ -36,9 +37,9 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
     constructor(
         queryParams: { [key: string]: string },
         private readonly deltaFeedUrl: string,
-        private readonly getter: IGetter,
+        private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
-        private readonly getToken: (refresh: boolean) => Promise<string>,
+        private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
     ) {
         this.queryString = getQueryString(queryParams);
     }
@@ -46,7 +47,7 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
     public async get(
         tenantId: string | null,
         id: string | null,
-        tokenProvider: api.ITokenProvider,
+        _: api.ITokenProvider,
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
@@ -66,27 +67,28 @@ export class OdspDeltaStorageService implements api.IDeltaStorageService {
             }
         }
 
-        let token: string;
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            token = await this.getToken(refresh);
-            const url = this.buildGetterUrl(token, from, to);
-            return this.getter.get<IDeltaStorageGetResponse>(url, url, {}).then((response) => {
-                const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = response.value;
-                if (operations.length > 0 && "op" in operations[0]) {
-                    return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
-                }
-                return operations as api.ISequencedDocumentMessage[];
-            });
+            const tokenProvider = await this.getTokenProvider(refresh);
+
+            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(this.buildUrl(from, to));
+
+            const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
+
+            const operations: api.ISequencedDocumentMessage[] | ISequencedDeltaOpMessage[] = response.value;
+            if (operations.length > 0 && "op" in operations[0]) {
+                return (operations as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
+            }
+
+            return operations as api.ISequencedDocumentMessage[];
         });
     }
 
-    public buildGetterUrl(token: string, from: number | undefined, to: number | undefined) {
+    public buildUrl(from: number | undefined, to: number | undefined) {
         const fromInclusive = from === undefined ? undefined : from + 1;
         const toInclusive = to === undefined ? undefined : to - 1;
 
         const filter = encodeURIComponent(`sequenceNumber ge ${fromInclusive} and sequenceNumber le ${toInclusive}`);
-        const fullQueryString =
-            `${(this.queryString ? `${this.queryString}&` : "?")}filter=${filter}&access_token=${token}`;
+        const fullQueryString = `${(this.queryString ? `${this.queryString}&` : "?")}filter=${filter}`;
         return `${this.deltaFeedUrl}${fullQueryString}`;
     }
 }

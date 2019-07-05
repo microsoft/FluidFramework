@@ -30,10 +30,44 @@ export class TokenProvider implements ITokenProvider {
         return !!this.socketToken;
     }
 
+    public getUrlAndHeadersWithAuth(url: string): { url: string, headers: { [index: string]: string } } {
+        if (!this.storageToken || this.storageToken.length === 0) {
+            return { url, headers: {} };
+        }
+
+        const queryParamStart = url.indexOf("?");
+
+        // determine if we need to add ?, &, or nothing (if the url ends with ?)
+        let tokenQueryParam = queryParamStart === -1 ? "?" : (queryParamStart !== url.length - 1 ? `&` : "");
+
+        const tokenIsQueryParam = this.storageToken[0] === "?";
+        if (tokenIsQueryParam) {
+            // the token itself is a query param
+            tokenQueryParam += this.storageToken.substring(1);
+
+        } else {
+            tokenQueryParam += `access_token=${encodeURIComponent(this.storageToken)}`;
+        }
+
+        if (tokenIsQueryParam || (url.length + tokenQueryParam.length) < 2048) {
+            return {
+                headers: {},
+                url: url + tokenQueryParam,
+            };
+        }
+
+        return {
+            headers: {
+                Authorization: `Bearer ${this.storageToken}`,
+            },
+            url,
+        };
+    }
+
     /**
      * Returns the default headers to pass when calling storage apis
      */
-    public getStorageHeaders(): { [index: string]: string | undefined} {
+    public getStorageHeaders(): { [index: string]: string | undefined } {
         const headers: { Authorization?: string } = {};
 
         if (this.storageToken && this.storageToken.length > 0 && this.storageToken[0] !== "?") {

@@ -4,9 +4,9 @@
  */
 
 import * as assert from "assert";
-import { HttpGetter } from "../Getter";
+import { FetchWrapper } from "../fetchWrapper";
 import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
-import { TokenProvider } from "../token";
+import { TokenProvider } from "../tokenProvider";
 
 describe("DeltaStorageService", () => {
     /*
@@ -19,10 +19,10 @@ describe("DeltaStorageService", () => {
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
     it("Should build the correct sharepoint delta url with auth", () => {
-        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, new HttpGetter(), undefined, (refresh) => Promise.resolve("?access_token=123"));
-        const actualDeltaUrl = deltaStorageService.buildGetterUrl("123", 2, 8);
+        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, new FetchWrapper(), undefined, async (refresh) => new TokenProvider("?access_token=123", null));
+        const actualDeltaUrl = deltaStorageService.buildUrl(2, 8);
         // tslint:disable-next-line:max-line-length
-        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207&access_token=123`;
+        const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
     });
 
@@ -64,13 +64,17 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const httpGetterMock: HttpGetter = {
+            const fetchWrapperMock: FetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
                         resolve(expectedDeltaFeedResponse);
                     }),
+                post: (url: string, postBody: string, headers: HeadersInit) => new Promise(
+                    (resolve, reject) => {
+                        reject("not implemented");
+                    }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, httpGetterMock, undefined, (refresh) => Promise.resolve(""));
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
@@ -118,13 +122,17 @@ describe("DeltaStorageService", () => {
 
         let deltaStorageService: OdspDeltaStorageService;
         before(() => {
-            const httpGetterMock: HttpGetter = {
+            const fetchWrapperMock: FetchWrapper = {
                 get: (url: string, _: string, headers: HeadersInit) => new Promise(
                     (resolve, reject) => {
                         resolve(expectedDeltaFeedResponse);
                     }),
+                post: (url: string, postBody: string, headers: HeadersInit) => new Promise(
+                    (resolve, reject) => {
+                        reject("not implemented");
+                    }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, httpGetterMock, undefined, (refresh) => Promise.resolve(""));
+            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {

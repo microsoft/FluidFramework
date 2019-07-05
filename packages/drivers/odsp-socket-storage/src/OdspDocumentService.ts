@@ -8,12 +8,12 @@ import * as resources from "@prague/gitresources";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as io from "socket.io-client";
 import { ISocketStorageDiscovery } from "./contracts";
-import { IGetter } from "./Getter";
+import { IFetchWrapper } from "./fetchWrapper";
 import { DocumentDeltaStorageService, OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { IOdspSnapshot } from "./OdspDocumentServiceFactory";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
-import { TokenProvider } from "./token";
+import { TokenProvider } from "./tokenProvider";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -26,16 +26,18 @@ export class OdspDocumentService implements api.IDocumentService {
 
     constructor(
         private readonly appId: string,
-        private readonly storageGetter: IGetter,
-        private readonly deltasGetter: IGetter,
+        private readonly storageFetchWrapper: IFetchWrapper,
+        private readonly deltasFetchWrapper: IFetchWrapper,
         private socketStorageDiscovery: ISocketStorageDiscovery,
         private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
         joinSession?: () => Promise<ISocketStorageDiscovery>,
     ) {
         this.attemptedDeltaStreamConnection = false;
+
         if (joinSession) {
             this.joinSessionP = new SinglePromise(joinSession);
         }
+
         this.tokenProvider = new TokenProvider(socketStorageDiscovery.storageToken, socketStorageDiscovery.socketToken);
     }
 
@@ -63,12 +65,12 @@ export class OdspDocumentService implements api.IDocumentService {
                 latestSha,
                 trees,
                 blobs,
-                this.storageGetter,
-                this.tokenProvider,
+                this.storageFetchWrapper,
                 async (refresh) => {
                     if (refresh) {
                         await this.refreshKnowledge();
                     }
+
                     return this.tokenProvider;
                 },
             ),
@@ -91,7 +93,7 @@ export class OdspDocumentService implements api.IDocumentService {
             new OdspDeltaStorageService(
                 { app_id: this.appId },
                 this.socketStorageDiscovery.deltaStorageUrl,
-                this.deltasGetter,
+                this.deltasFetchWrapper,
                 ops,
                 async (refresh) => {
                     if (refresh) {
@@ -102,7 +104,7 @@ export class OdspDocumentService implements api.IDocumentService {
                         throw new Error("unexpected missing storageToken upon refresh attempt!");
                     }
 
-                    return this.tokenProvider.storageToken;
+                    return this.tokenProvider;
                 },
             ),
         );

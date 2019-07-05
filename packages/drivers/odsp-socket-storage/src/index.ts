@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export * from "./Getter";
+export * from "./fetchWrapper";
 export * from "./OdspDocumentServiceFactory";
 export * from "./OdspDeltaStorageService";
 export * from "./OdspDocumentService";
 export * from "./OdspDocumentStorageManager";
 export * from "./OdspDeltaStorageService";
 export * from "./contracts";
-export * from "./token";
+export * from "./tokenProvider";
 export * from "./OdspUrlResolver";

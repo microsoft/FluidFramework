@@ -7,7 +7,7 @@ import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolve
 import * as resources from "@prague/gitresources";
 import { parse } from "url";
 import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
-import { HttpGetter, IGetter } from "./Getter";
+import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 export interface IOdspSnapshot {
@@ -23,28 +23,24 @@ export interface IOdspSnapshot {
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
-    private readonly storageGetter: IGetter;
-    private readonly deltasGetter: IGetter;
 
     /**
      * @param appId - app id used for telemetry for network requests
      * @param snapshot - snapshot
      * @param socketStorageDiscovery - the initial JoinSession response
      * @param joinSession - function to invoke to re-run JoinSession
-     * @param storageGetter - if not provided httpgetter will be used
-     * @param deltasGetter - if not provided httpgetter will be used
+     * @param storageFetchWrapper - if not provided FetchWrapper will be used
+     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      */
     constructor(
         private readonly appId: string,
         private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
         private readonly socketStorageDiscoveryP?: Promise<ISocketStorageDiscovery>,
         private readonly joinSession?: () => Promise<ISocketStorageDiscovery>,
-        storageGetter?: IGetter,
-        deltasGetter?: IGetter,
+        private readonly storageFetchWrapper: IFetchWrapper = new FetchWrapper(),
+        private readonly deltasFetchWrapper: IFetchWrapper = new FetchWrapper(),
         private readonly bypassSnapshot = false,
     ) {
-        this.storageGetter = storageGetter || new HttpGetter();
-        this.deltasGetter = deltasGetter || new HttpGetter();
     }
 
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
@@ -53,14 +49,15 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
                 (socketStorageDiscovery) =>
                     new OdspDocumentService(
                         this.appId,
-                        this.storageGetter,
-                        this.deltasGetter,
+                        this.storageFetchWrapper,
+                        this.deltasFetchWrapper,
                         socketStorageDiscovery,
                         this.snapshot,
                         this.joinSession,
                     ),
             );
         }
+
         if (resolvedUrl.type !== "prague") {
             return Promise.reject("Only Prague components currently supported in the OdspDocumentServiceFactory");
         }
@@ -103,8 +100,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         };
         return Promise.resolve(new OdspDocumentService(
             this.appId,
-            this.storageGetter,
-            this.deltasGetter,
+            this.storageFetchWrapper,
+            this.deltasFetchWrapper,
             socketStorageDiscoveryFromURL,
         ));
     }

@@ -4,7 +4,6 @@
  */
 
 import * as api from "@prague/container-definitions";
-import { buildHierarchy } from "@prague/utils";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 
 /**
@@ -14,11 +13,11 @@ export class OdspDocumentStorageService implements api.IDocumentStorageService {
     constructor(private readonly storageManager: OdspDocumentStorageManager) { }
 
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
-        throw new Error("Method not implemented.");
+        return this.storageManager.uploadSummary(commit);
     }
 
     public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        throw new Error("Method not implemented.");
+        return this.storageManager.downloadSummary(handle);
     }
 
     public get repositoryUrl(): string {
@@ -26,11 +25,7 @@ export class OdspDocumentStorageService implements api.IDocumentStorageService {
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
-        const tree = await this.storageManager.getTree(version);
-        if (tree) {
-            return buildHierarchy(tree);
-        }
-        return (null as any) as api.ISnapshotTree;
+        return this.storageManager.getTree(version);
     }
 
     public async getVersions(commitId: string | null, count: number): Promise<api.IVersion[]> {

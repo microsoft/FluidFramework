@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { TokenProvider } from "../token";
+import { TokenProvider } from "../tokenProvider";
 
 describe("TokenProvider", () => {
 
