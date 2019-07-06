@@ -54,7 +54,7 @@ endpoints:
   alfredUrl: https://alfred.wu2.prague.office-int.com
   packageUrl: https://pragueauspkn-3873244262.azureedge.net
   historianUrl: https://historian.wu2.prague.office-int.com
-  rabbitmq: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
+  rabbitmq: ""
   redis: winsome-wombat-redis
 `;
 

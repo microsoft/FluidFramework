@@ -115,7 +115,7 @@ zookeeper:
   url: left-numbat-zookeeper:2181
 
 rabbitmq:
-  connectionString: amqp://prague:JFqxYjRrIE@lumpy-worm-rabbitmq
+  connectionString: ""
 
 mongodb:
   url: mongodb://quieting-guppy-mongodb:27017

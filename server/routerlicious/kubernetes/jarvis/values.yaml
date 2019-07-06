@@ -45,7 +45,7 @@ zookeeper:
   url: youngling-heron-zookeeper:2181
 
 rabbitmq:
-  connectionString: amqp://prague:JFqxYjRrIE@auxilliary-blackbird-rabbitmq
+  connectionString: [insert rabbitmq connection string here]
 
 mongodb:
   url: mongodb://billowing-zebu-mongodb:27017
