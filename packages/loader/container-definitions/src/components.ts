@@ -9,7 +9,7 @@ export interface IComponent {
     /**
      * Queries for an interface of the given ID
      */
-    query<T>(id: string): T;
+    query<T>(id: string): T | undefined;
 
     /**
      * Returns a list of all interfaces

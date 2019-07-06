@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedComponent } from "@prague/container-definitions";
+import {
+  IComponent,
+  IResponse,
+  ISharedComponent,
+} from "@prague/container-definitions";
+import { IComponentForge } from "@prague/framework-definitions";
 import {
   IComponentContext,
   IComponentRuntime,
@@ -26,15 +31,12 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
   protected constructor(
     protected runtime: IComponentRuntime,
     protected context: IComponentContext,
-    supportedInterfaces?: string[],
+    supportedInterfaces: string[],
   ) {
     super();
 
     // concat supported interfaces
-    if (supportedInterfaces) {
-      this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
-    }
-
+    this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
     this.url = context.id;
   }
 
@@ -43,7 +45,13 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
   /**
    * Returns this object if interface supported
    */
-  public query(id: string): any {
+  public query<T>(id: string): any | undefined {
+
+    // If they are requesting `IComponentForge` and it's not creation then return undefined.
+    if (id === "IComponentForge" && this.runtime.existing) {
+      return undefined;
+    }
+
     return this.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
   }
 
@@ -55,6 +63,36 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
   }
 
   // end ISharedComponent
+
+  /**
+   * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
+   * component being created supports IComponentForge
+   *
+   * @param id - unique component id for the new component
+   * @param pkg - package name for the new component
+   * @param props - optional props to be passed in if the component supports IComponentForge
+   */
+  protected async createAndAttachComponent(id: string, pkg: string, props?: any) {
+    const runtime = await this.context.createComponent(id, pkg);
+    const response = await runtime.request({url: "/"});
+    const component = await this.isComponentResponse(response);
+
+    const forge = component.query<IComponentForge>("IComponentForge");
+    if (forge) {
+      await forge.forge(props);
+    }
+
+    runtime.attach();
+  }
+
+  /**
+   * Gets the component of a given id if any
+   * @param id - component id
+   */
+  protected async getComponent(id: string): Promise<IComponent> {
+    const response = await this.context.hostRuntime.request({ url: `/${id}` });
+    return this.isComponentResponse(response);
+  }
 
   /**
    * Called the first time the root component is initialized
@@ -84,6 +122,17 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     await this.initializeP;
 
     return;
+  }
+
+  /**
+   * Given a request response will return a component if a component was in the response.
+   */
+  private async isComponentResponse(response: IResponse): Promise<IComponent> {
+    if (response.mimeType === "prague/component") {
+      return response.value as IComponent;
+    }
+
+    return Promise.reject("response does not contain prague component");
   }
 
   private async initializeInternal(): Promise<void> {

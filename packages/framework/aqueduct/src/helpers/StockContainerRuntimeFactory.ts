@@ -11,6 +11,8 @@ import {
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 
 export class StockContainerRuntimeFactory {
+    public static readonly defaultComponentId = "default";
+
     /**
      * Helper function to instantiate a new default runtime
      */
@@ -18,9 +20,10 @@ export class StockContainerRuntimeFactory {
         context: IContainerContext,
         chaincode: string,
         registry: IComponentRegistry,
+        generateSummaries: boolean = false,
     ): Promise<IRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry);
+        const runtime = await ContainerRuntime.load(context, registry, { generateSummaries });
         // debug("runtime loaded.");
 
         // Register path handler for inbound messages
@@ -38,7 +41,7 @@ export class StockContainerRuntimeFactory {
             // retrieve the component ID. If from a URL we need to decode the URI component
             const componentId = requestUrl
                 ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-                : chaincode;
+                : this.defaultComponentId;
 
             // Pull the part of the URL after the component ID
             const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
@@ -54,7 +57,7 @@ export class StockContainerRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createComponent(chaincode, chaincode)
+            runtime.createComponent(this.defaultComponentId, chaincode)
             .then((componentRuntime) => {
                 componentRuntime.attach();
             })

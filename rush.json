@@ -67,6 +67,10 @@
       "projectFolder": "packages/components/image-collection/"
     },
     {
+      "packageName": "@chaincode/pond",
+      "projectFolder": "packages/components/pond/"
+    },
+    {
       "packageName": "@chaincode/progress-bars",
       "projectFolder": "packages/components/progress-bars/"
     },

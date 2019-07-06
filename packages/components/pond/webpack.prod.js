@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IViewProvider, IView } from "./view";
-export * from "./forge";
+module.exports = {
+    mode: "production",
+    devtool: "source-map"
+};
