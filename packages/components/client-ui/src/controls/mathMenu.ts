@@ -217,6 +217,7 @@ export function printTokens(tokIndex: number, mathCursor: number, tokens: MathTo
     console.log(buf);
 }
 
+// update this to use IMathCursor
 export function printMathMarker(marker: IMathMarker) {
     printTokens(marker.mathTokenIndex, marker.mathCursor, marker.mathTokens, marker.mathText);
 }
@@ -255,16 +256,21 @@ export function mathTokFwd(tokIndex: number, tokens: MathToken[]) {
     return tokIndex;
 }
 
+export interface IMathCursor {
+    mathCursor: number;
+    mathTokenIndex: number;
+}
+
 /**
  * This function updates the mathCursor and mathTokenIndex properties of mathMarker
  * @param mathMarker marker for end of math region
  */
-export function bksp(mathMarker: IMathMarker) {
+export function bksp(mathMarker: IMathMarker, mc: IMathCursor) {
     let curTok: MathToken;
-    if (mathMarker.mathTokenIndex < mathMarker.mathTokens.length) {
+    if (mc.mathTokenIndex < mathMarker.mathTokens.length) {
         curTok = mathMarker.mathTokens[mathMarker.mathTokenIndex];
     }
-    let prevTokIndex = mathTokRev(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+    let prevTokIndex = mathTokRev(mc.mathTokenIndex, mathMarker.mathTokens);
     while ((prevTokIndex >= 0) &&
         ((mathMarker.mathTokens[prevTokIndex].type === MathTokenType.EndCommand) ||
             (mathMarker.mathTokens[prevTokIndex].type === MathTokenType.MidCommand))) {
@@ -272,8 +278,8 @@ export function bksp(mathMarker: IMathMarker) {
     }
     if (prevTokIndex >= 0) {
         const prevTok = mathMarker.mathTokens[prevTokIndex];
-        mathMarker.mathTokenIndex = prevTokIndex;
-        mathMarker.mathCursor = prevTok.start;
+        mc.mathTokenIndex = prevTokIndex;
+        mc.mathCursor = prevTok.start;
         if ((prevTok.type === MathTokenType.Command) &&
             (prevTok.cmdInfo.arity > 0)) {
             return { start: prevTok.start, end: prevTok.endTok.end };

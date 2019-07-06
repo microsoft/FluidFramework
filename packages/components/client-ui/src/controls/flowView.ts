@@ -4475,7 +4475,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const mathTileInfo = this.inMathGetMarker();
                     if (mathTileInfo) {
                         const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
-                        const toRemoveMath = MathMenu.bksp(mathMarker);
+                        // remove along with non-component math
+                        const toRemoveMath = MathMenu.bksp(mathMarker, mathMarker);
                         if (toRemoveMath) {
                             const beginTileInfo = findTile(this, mathTileInfo.pos - 1, "math", true);
                             if (this.modes.showCursorLocation) {

@@ -375,6 +375,19 @@ export interface IComponentRenderHTML extends INewComponent {
     render(elm: HTMLElement, displayType?: ComponentDisplayType): void;
 }
 
+export interface IComponentHTMLViewOptions {
+    displayType?: ComponentDisplayType;
+}
+
+export interface IComponentHTMLView extends INewComponent {
+    show(containerElement: HTMLElement, options?: IComponentHTMLViewOptions): void;
+    remove(): void;
+}
+
+export interface IComponentHTMLViewable {
+    addView(scope?: INewComponent): IComponentHTMLView;
+}
+
 /**
  * Provide information about component preferences for layout.
  */

@@ -7,6 +7,7 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as ClientUI from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
+    IComponent,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -27,13 +28,15 @@ import {
     IComponentCollection,
     IComponentContext,
     IComponentCursor,
+    IComponentHTMLView,
+    IComponentHTMLViewable,
+    IComponentHTMLViewOptions,
     IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
-import { EventEmitter } from "events";
 import * as Katex from "katex";
 
 const directionToCursorDirection = {
@@ -56,56 +59,79 @@ interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
     instance?: MathInstance;
 }
 
-export class MathInstance extends EventEmitter
-    implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentLayout,
-    IComponentCursor, SearchMenu.ISearchMenuClient {
-
+class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public static supportedInterfaces = [
-        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentRenderHTML",
-        "IComponentLayout", "IComponentCursor", "ISearchMenuClient"];
+        "IComponentLayout", "IComponentCursor"];
 
-    public static defaultOptions: IMathOptions = { displayType: ComponentDisplayType.Inline };
-    public endMarker: IMathMarkerInst;
-    public startMarker: MergeTree.Marker;
+    public cursorActive = false;
     // IComponentLayout
     public canInline = true;
-    public cursorActive = false;
-    public savedElm: HTMLElement;
+    public containerElement: HTMLElement;
+    public mathCursor = 0;
+    public mathTokenIndex = 0;
     public searchMenuHost: SearchMenu.ISearchMenuHost;
+    public options?: IComponentHTMLViewOptions;
+    public rootElement: HTMLElement;
 
-    constructor(
-        public url: string,
-        public leafId: string,
-        private readonly collection: MathCollection,
-        public readonly options = MathInstance.defaultOptions,
-        inCombinedText = false) {
-        super();
-        this.initialize(inCombinedText);
+    constructor(public instance: MathInstance, public scope?: IComponent) {
+        if (scope) {
+            this.searchMenuHost = scope.query("ISearchMenuHost");
+        }
+        this.options = this.instance.options;
     }
 
     public query(id: string): any {
-        return MathInstance.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+        return MathView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
     public list(): string[] {
-        return MathInstance.supportedInterfaces;
+        return MathView.supportedInterfaces;
     }
 
-    // ISearchMenuClient
-    public registerSearchMenuHost(host: SearchMenu.ISearchMenuHost) {
-        this.searchMenuHost = host;
+    // IComponentHTMLView
+    public show(containerElement: HTMLElement, options?: IComponentHTMLViewOptions) {
+        if (options) {
+            this.options = options;
+        }
+        this.render(containerElement, this.options.displayType);
+    }
+
+    public remove() {
+        this.instance.removeView(this);
+    }
+
+    public remoteEdit(pos: number, len: number, isInsert: boolean) {
+        if (this.cursorActive) {
+            const mathMarker = this.instance.endMarker;
+            let mathCursorNew = this.mathCursor;
+            if (isInsert) {
+                if (pos <= mathCursorNew) {
+                    mathCursorNew += len;
+                }
+            } else {
+                if ((pos + len) <= mathCursorNew) {
+                    mathCursorNew -= len;
+                } else {
+                    mathCursorNew = pos;
+                }
+            }
+            this.mathCursor = mathCursorNew;
+            this.mathTokenIndex = ClientUI.controls.tokenAtPos(mathCursorNew,
+                mathMarker.mathTokens);
+        }
+        this.localRender();
     }
 
     // IComponentCursor
     public enter(direction: ComponentCursorDirection) {
         this.cursorActive = true;
         if (direction === ComponentCursorDirection.Left) {
-            this.endMarker.mathCursor = 0;
-            this.endMarker.mathTokenIndex = 0;
+            this.mathCursor = 0;
+            this.mathTokenIndex = 0;
         } else if (direction === ComponentCursorDirection.Right) {
-            const mathText = this.getMathText();
-            this.endMarker.mathCursor = mathText.length;
-            this.endMarker.mathTokenIndex = this.endMarker.mathTokens.length;
+            const mathText = this.instance.getMathText();
+            this.mathCursor = mathText.length;
+            this.mathTokenIndex = this.instance.endMarker.mathTokens.length;
         }
     }
 
@@ -113,97 +139,141 @@ export class MathInstance extends EventEmitter
         this.cursorActive = false;
     }
 
-    public async request(request: IRequest): Promise<IResponse> {
-        return {
-            mimeType: "prague/component",
-            status: 200,
-            value: this,
-        };
-    }
-
-    public detach() {
-    }
-
     public rev() {
-        const mathMarker = this.endMarker;
-        mathMarker.mathTokenIndex = ClientUI.controls.mathTokRev(mathMarker.mathTokenIndex,
+        const mathMarker = this.instance.endMarker;
+        this.mathTokenIndex = ClientUI.controls.mathTokRev(this.mathTokenIndex,
             mathMarker.mathTokens);
-        if (mathMarker.mathTokenIndex !== ClientUI.controls.Nope) {
-            mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+        if (this.mathTokenIndex !== ClientUI.controls.Nope) {
+            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
         } else {
-            mathMarker.mathCursor = 0;
-            mathMarker.mathTokenIndex = 0;
+            this.mathCursor = 0;
+            this.mathTokenIndex = 0;
             this.noteLeft(ComponentCursorDirection.Right);
             return true;
         }
     }
 
     public fwd() {
-        const mathMarker = this.endMarker;
-        mathMarker.mathTokenIndex = ClientUI.controls.mathTokFwd(mathMarker.mathTokenIndex,
+        const mathMarker = this.instance.endMarker;
+        this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex,
             mathMarker.mathTokens);
-        if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
+        if (this.mathTokenIndex > mathMarker.mathTokens.length) {
             this.noteLeft(ComponentCursorDirection.Left);
             return true;
-        } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
-            const mathText = this.getMathText();
-            mathMarker.mathCursor = mathText.length;
+        } else if (this.mathTokenIndex === mathMarker.mathTokens.length) {
+            const mathText = this.instance.getMathText();
+            this.mathCursor = mathText.length;
         } else {
-            mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
         }
     }
 
-    public remoteEdit(pos: number, len: number, isInsert: boolean) {
-        const mathMarker = this.endMarker;
-        let mathCursorNew = mathMarker.mathCursor;
-        if (isInsert) {
-            if (pos <= mathCursorNew) {
-                mathCursorNew += len;
-            }
-        } else {
-            if ((pos + len) <= mathCursorNew) {
-                mathCursorNew -= len;
-            } else {
-                mathCursorNew = pos;
-            }
-        }
-        mathMarker.mathCursor = mathCursorNew;
-        const mathText = this.collection.getText(this);
-        mathMarker.mathText = mathText;
-        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
-        mathMarker.mathTokenIndex = ClientUI.controls.tokenAtPos(mathCursorNew, mathMarker.mathTokens);
+    public setListeners() {
+        this.containerElement.tabIndex = 0;
+        this.containerElement.style.outline = "none";
+        this.containerElement.addEventListener("focus", () => {
+            this.enter(ComponentCursorDirection.Left);
+            this.localRender();
+        });
+        this.containerElement.addEventListener("blur", () => {
+            this.leave(ComponentCursorDirection.Right);
+            this.localRender();
+        });
+        this.containerElement.addEventListener("keydown", (e) => {
+            this.onKeydown(e);
+        });
+        this.containerElement.addEventListener("keypress", (e) => {
+            this.onKeypress(e);
+        });
+        this.containerElement.addEventListener(CaretEventType.enter, ((e: ICaretEvent) => {
+            // Let caller know we've handled the event:
+            e.preventDefault();
+            e.stopPropagation();
+
+            this.enter(directionToCursorDirection[e.detail.direction]);
+        }) as EventListener);
     }
 
-    public postInsert() {
-        const mathText = this.collection.getText(this);
-        const mathMarker = this.endMarker;
-        mathMarker.mathText = mathText;
-        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
-        mathMarker.mathTokenIndex = ClientUI.controls.mathTokFwd(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-        mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
+    public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
+        if (this.containerElement !== elm) {
+            this.containerElement = elm;
+            this.setListeners();
+        }
+        if (displayType === undefined) {
+            displayType = this.options.displayType;
+        }
+        const mathText = this.instance.getMathText();
+        let mathBuffer = mathText;
+        const mathMarker = this.instance.endMarker;
+        this.containerElement = elm;
+        if (mathMarker.mathTokens === undefined) {
+            ClientUI.controls.initMathMarker(mathMarker, mathText);
+        }
+        let rootElement: HTMLElement;
+        if (displayType === ComponentDisplayType.Inline) {
+            rootElement = document.createElement("span");
+            rootElement.style.marginLeft = "2px";
+            rootElement.style.marginTop = "4px";
+            rootElement.style.marginRight = "2px";
+            if (this.cursorActive) {
+                rootElement.style.borderLeft = "solid orange 2px";
+                rootElement.style.borderRight = "solid orange 2px";
+                // showCursor
+                mathBuffer = mathBuffer.substring(0, this.mathCursor) +
+                    ClientUI.controls.cursorTex +
+                    mathBuffer.substring(this.mathCursor);
+                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+            }
+            mathMarker.mathViewBuffer = mathBuffer;
+            Katex.render(mathBuffer, rootElement,
+                { throwOnError: false });
+        } else {
+            rootElement = document.createElement("div");
+            if (this.cursorActive) {
+                // showCursor
+                mathBuffer = mathBuffer.substring(0, this.mathCursor) +
+                    ClientUI.controls.cursorTex +
+                    mathBuffer.substring(this.mathCursor);
+                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+            }
+            mathBuffer = `\\tag{3.2} ${mathBuffer}`;
+            mathMarker.mathViewBuffer = mathBuffer;
+            Katex.render(mathBuffer, rootElement,
+                { throwOnError: false, displayMode: true });
+        }
+        if (this.cursorActive) {
+            const cursorElement = ClientUI.controls.findFirstMatch(rootElement, (cursor: HTMLElement) => {
+                return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+            });
+            if (cursorElement) {
+                cursorElement.classList.add("blinking");
+            }
+        }
+        this.rootElement = rootElement;
+        elm.appendChild(rootElement);
     }
 
     public localRender() {
-        if (this.savedElm) {
-            ClientUI.controls.clearSubtree(this.savedElm);
-            this.render(this.savedElm, this.options.displayType);
+        if (this.containerElement) {
+            ClientUI.controls.clearSubtree(this.containerElement);
+            this.render(this.containerElement, this.options.displayType);
         }
     }
 
     public onKeydown(e: KeyboardEvent) {
         if (e.keyCode === ClientUI.controls.KeyCode.backspace) {
-            const mathMarker = this.endMarker;
-            const toRemoveMath = ClientUI.controls.bksp(mathMarker);
+            const mathMarker = this.instance.endMarker;
+            const toRemoveMath = ClientUI.controls.bksp(mathMarker, this);
             if (toRemoveMath) {
-                this.collection.removeText(this, toRemoveMath.start, toRemoveMath.end);
+                this.instance.removeText(toRemoveMath.start, toRemoveMath.end);
             }
-            const mathText = this.collection.getText(this);
+            const mathText = this.instance.collection.getText(this.instance);
             mathMarker.mathText = mathText;
             mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
-            mathMarker.mathCursor = ClientUI.controls.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-            if (this.savedElm) {
-                ClientUI.controls.clearSubtree(this.savedElm);
-                this.render(this.savedElm, this.options.displayType);
+            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+            if (this.containerElement) {
+                ClientUI.controls.clearSubtree(this.containerElement);
+                this.render(this.containerElement, this.options.displayType);
             }
         } else if (e.keyCode === ClientUI.controls.KeyCode.rightArrow) {
             if (this.fwd()) {
@@ -219,10 +289,13 @@ export class MathInstance extends EventEmitter
     }
 
     public insertText(text: string) {
-        this.collection.insertText(text, this.leafId, this.endMarker.mathCursor);
-        if (this.savedElm) {
-            ClientUI.controls.clearSubtree(this.savedElm);
-            this.render(this.savedElm, this.options.displayType);
+        this.instance.insertText(text, this.mathCursor);
+        const mathMarker = this.instance.endMarker;
+        this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex, mathMarker.mathTokens);
+        this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+        if (this.containerElement) {
+            ClientUI.controls.clearSubtree(this.containerElement);
+            this.render(this.containerElement, this.instance.options.displayType);
         }
     }
 
@@ -249,99 +322,106 @@ export class MathInstance extends EventEmitter
         }
     }
 
-    public setListeners() {
-        this.savedElm.tabIndex = 0;
-        this.savedElm.style.outline = "none";
-        this.savedElm.addEventListener("focus", () => {
-            this.enter(ComponentCursorDirection.Left);
-            this.localRender();
-        });
-        this.savedElm.addEventListener("blur", () => {
-            this.leave(ComponentCursorDirection.Right);
-            this.localRender();
-        });
-        this.savedElm.addEventListener("keydown", (e) => {
-            this.onKeydown(e);
-        });
-        this.savedElm.addEventListener("keypress", (e) => {
-            this.onKeypress(e);
-        });
-        this.savedElm.addEventListener(CaretEventType.enter, ((e: ICaretEvent) => {
-            // Let caller know we've handled the event:
-            e.preventDefault();
-            e.stopPropagation();
+    private noteLeft(direction: ComponentCursorDirection) {
+        const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
+            return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+        }) || this.containerElement;
 
-            this.enter(directionToCursorDirection[e.detail.direction]);
-        }) as EventListener);
+        Caret.caretLeave(this.containerElement, cursorDirectionToDirection[direction], cursorElement.getBoundingClientRect());
+    }
+
+}
+
+export class MathInstance implements ISharedComponent, IComponentRenderHTML, IComponentRouter,
+    IComponentHTMLViewable {
+    public static defaultOptions: IMathOptions = { displayType: ComponentDisplayType.Inline };
+    public static supportedInterfaces = [
+        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLViewable",
+        "IComponentRenderHTML",
+    ];
+    public views: MathView[];
+    public endMarker: IMathMarkerInst;
+    public startMarker: MergeTree.Marker;
+    public searchMenuHost: SearchMenu.ISearchMenuHost;
+    private defaultView: MathView;
+
+    constructor(
+        public url: string,
+        public leafId: string,
+        public readonly collection: MathCollection,
+        public readonly options = MathInstance.defaultOptions,
+        inCombinedText = false) {
+        this.initialize(inCombinedText);
+    }
+
+    public addView(scope?: IComponent) {
+        if (!this.views) {
+            this.views = [];
+        }
+        const view = new MathView(this, scope);
+        this.views.push(view);
+        return view;
+    }
+
+    public removeView(view: MathView) {
+        const index = this.views.indexOf(view);
+        if (index >= 0) {
+            this.views.splice(index, 1);
+        }
     }
 
     public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
-        if (this.savedElm !== elm) {
-            this.savedElm = elm;
-            this.setListeners();
+        if (!this.defaultView) {
+            this.defaultView = this.addView();
         }
-        if (displayType === undefined) {
-            displayType = this.options.displayType;
-        }
-        const mathText = this.getMathText();
-        let mathBuffer = mathText;
+        this.defaultView.show(elm);
+    }
+
+    public insertText(text: string, pos: number) {
+        this.collection.insertText(text, this.leafId, pos);
+    }
+
+    public removeText(startPos: number, endPos: number) {
+        this.collection.removeText(this, startPos, endPos);
+    }
+
+    public query(id: string): any {
+        return MathInstance.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return MathInstance.supportedInterfaces;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        return {
+            mimeType: "prague/component",
+            status: 200,
+            value: this,
+        };
+    }
+
+    public detach() {
+    }
+
+    public remoteEdit(pos: number, len: number, isInsert: boolean) {
         const mathMarker = this.endMarker;
-        this.savedElm = elm;
-        if (mathMarker.mathTokens === undefined) {
-            ClientUI.controls.initMathMarker(mathMarker, mathText);
+        const mathText = this.collection.getText(this);
+        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
+        mathMarker.mathText = mathText;
+        for (const view of this.views) {
+            view.remoteEdit(pos, len, isInsert);
         }
-        let innerElm: HTMLElement;
-        if (displayType === ComponentDisplayType.Inline) {
-            innerElm = document.createElement("span");
-            innerElm.style.marginLeft = "2px";
-            innerElm.style.marginTop = "4px";
-            innerElm.style.marginRight = "2px";
-            if (this.cursorActive) {
-                innerElm.style.borderLeft = "solid orange 2px";
-                innerElm.style.borderRight = "solid orange 2px";
-                // showCursor
-                mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
-                    ClientUI.controls.cursorTex +
-                    mathBuffer.substring(mathMarker.mathCursor);
-                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
-            }
-            mathMarker.mathViewBuffer = mathBuffer;
-            Katex.render(mathBuffer, innerElm,
-                { throwOnError: false });
-        } else {
-            innerElm = document.createElement("div");
-            if (this.cursorActive) {
-                // showCursor
-                mathBuffer = mathBuffer.substring(0, mathMarker.mathCursor) +
-                    ClientUI.controls.cursorTex +
-                    mathBuffer.substring(mathMarker.mathCursor);
-                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
-            }
-            mathBuffer = `\\tag{3.2} ${mathBuffer}`;
-            mathMarker.mathViewBuffer = mathBuffer;
-            Katex.render(mathBuffer, innerElm,
-                { throwOnError: false, displayMode: true });
-        }
-        if (this.cursorActive) {
-            const cursorElement = ClientUI.controls.findFirstMatch(innerElm, (cursor: HTMLElement) => {
-                return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
-            });
-            if (cursorElement) {
-                cursorElement.classList.add("blinking");
-            }
-        }
-        elm.appendChild(innerElm);
     }
 
-    private noteLeft(direction: ComponentCursorDirection) {
-        const cursorElement = ClientUI.controls.findFirstMatch(this.savedElm, (cursor: HTMLElement) => {
-            return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
-        }) || this.savedElm;
-
-        Caret.caretLeave(this.savedElm, cursorDirectionToDirection[direction], cursorElement.getBoundingClientRect());
+    public postInsert() {
+        const mathText = this.collection.getText(this);
+        const mathMarker = this.endMarker;
+        mathMarker.mathText = mathText;
+        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
     }
 
-    private getMathText() {
+    public getMathText() {
         return this.collection.getText(this);
     }
 
@@ -360,7 +440,7 @@ export interface IMathOptions {
     displayType?: ComponentDisplayType;
 }
 
-export class MathCollection extends EventEmitter implements ISharedComponent, IComponentCollection, IComponentRouter {
+export class MathCollection implements ISharedComponent, IComponentCollection, IComponentRouter {
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",
         "IComponentCollection"];
 
@@ -377,8 +457,6 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
     private combinedMathText: Sequence.SharedString;
 
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
-        super();
-
         this.url = context.id;
     }
 
@@ -521,8 +599,6 @@ export class MathCollection extends EventEmitter implements ISharedComponent, IC
                     const instance = this.getInstance(leafId);
                     const startPos = this.getStartPos(instance);
                     instance.remoteEdit(pos - startPos, len, event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT);
-                    // console.log(`found math remote ${leafId} instance ${instance !== undefined}`);
-                    instance.localRender();
                 }
 
             }
