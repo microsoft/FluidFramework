@@ -3,9 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 
+class FlowScrollFactoryComponent implements IRuntimeFactory {
+    public static supportedInterfaces = ["IRuntimeFactory"];
+
+    public query(id: string): any {
+        return FlowScrollFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return FlowScrollFactoryComponent.supportedInterfaces;
+    }
+
+    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");
+        return entry.instantiateRuntime(context);
+    }
+}
+
+export const fluidExport = new FlowScrollFactoryComponent();
+
+// TODO included for back compat - can remove in 0.7 once fluidExport is default
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");
-    return entry.instantiateRuntime(context);
+    return fluidExport.instantiateRuntime(context);
 }

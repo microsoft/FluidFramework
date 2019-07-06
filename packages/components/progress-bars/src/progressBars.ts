@@ -22,6 +22,7 @@ import {
 } from "@prague/map";
 import {
     IComponentContext,
+    IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
@@ -223,21 +224,39 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
     }
 }
 
+class ProgressBarsFactory implements IComponent, IComponentFactory {
+    public static interfaces = ["IComponentFactory"];
+
+    public query(id: string): any {
+        return ProgressBarsFactory.interfaces.indexOf(id) !== -1 ? exports : undefined;
+    }
+
+    public list(): string[] {
+        return ProgressBarsFactory.interfaces;
+    }
+
+    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+        // Register default map value types
+        registerDefaultValueType(new DistributedSetValueType());
+        registerDefaultValueType(new CounterValueType());
+
+        const dataTypes = new Map<string, ISharedObjectExtension>();
+        const mapExtension = SharedMap.getFactory();
+        dataTypes.set(mapExtension.type, mapExtension);
+
+        const runtime = await ComponentRuntime.load(context, dataTypes);
+        const progressCollectionP = ProgressCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
+
+        return runtime;
+    }
+}
+
+export const fluidExport = new ProgressBarsFactory();
+
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    // Register default map value types
-    registerDefaultValueType(new DistributedSetValueType());
-    registerDefaultValueType(new CounterValueType());
-
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    const mapExtension = SharedMap.getFactory();
-    dataTypes.set(mapExtension.type, mapExtension);
-
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const progressCollectionP = ProgressCollection.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const progressCollection = await progressCollectionP;
-        return progressCollection.request(request);
-    });
-
-    return runtime;
+  return fluidExport.instantiateComponent(context);
 }

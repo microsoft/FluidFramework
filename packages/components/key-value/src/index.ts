@@ -11,11 +11,13 @@ import {
     IRequest,
     IResponse,
     IRuntime,
+    IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentContext,
+    IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
@@ -41,8 +43,8 @@ interface IAgentScheduler {
 }
 
 export interface IKeyValue {
-  set(key: string, value: any): void;
-  get(key: string): any;
+    set(key: string, value: any): void;
+    get(key: string): any;
 }
 
 export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
@@ -62,11 +64,11 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     }
 
     public set(key: string, value: any): void {
-      this.root.set(key, value);
+        this.root.set(key, value);
     }
 
     public get(key: string): any {
-      return this.root.get(key);
+        return this.root.get(key);
     }
 
     public query(id: string): any {
@@ -109,45 +111,68 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
+    public static supportedInterfaces = ["IRuntimeFactory", "IComponentFactory"];
 
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    const mapExtension = SharedMap.getFactory();
-    dataTypes.set(mapExtension.type, mapExtension);
-
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const keyValueP = KeyValue.load(runtime);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const keyValue = await keyValueP;
-        return keyValue.request(request);
-    });
-
-    return runtime;
-}
-
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const runtime = await ContainerRuntime.load(context, new Map([
-        [ComponentName, Promise.resolve({ instantiateComponent })],
-      ]));
-
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-            ? request.url.substr(1)
-            : request.url;
-        const trailingSlash = requestUrl.indexOf("/");
-        const componentId = requestUrl
-            ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-            : ComponentName;
-        console.log(componentId);
-        const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
-        const component = await runtime.getComponentRuntime(componentId, true);
-        return component.request({ url: pathForComponent });
-    });
-
-    if (!runtime.existing) {
-        const created = await runtime.createComponent(ComponentName, ComponentName);
-        created.attach();
+    public query(id: string): any {
+        return KeyValueFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
-    return runtime;
+    public list(): string[] {
+        return KeyValueFactoryComponent.supportedInterfaces;
+    }
+
+    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+        const dataTypes = new Map<string, ISharedObjectExtension>();
+        const mapExtension = SharedMap.getFactory();
+        dataTypes.set(mapExtension.type, mapExtension);
+
+        const runtime = await ComponentRuntime.load(context, dataTypes);
+        const keyValueP = KeyValue.load(runtime);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const keyValue = await keyValueP;
+            return keyValue.request(request);
+        });
+
+        return runtime;
+    }
+
+    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await ContainerRuntime.load(context, new Map([
+            [ComponentName, Promise.resolve({ instantiateComponent })],
+        ]));
+
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const trailingSlash = requestUrl.indexOf("/");
+            const componentId = requestUrl
+                ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
+                : ComponentName;
+            console.log(componentId);
+            const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
+            const component = await runtime.getComponentRuntime(componentId, true);
+            return component.request({ url: pathForComponent });
+        });
+
+        if (!runtime.existing) {
+            const created = await runtime.createComponent(ComponentName, ComponentName);
+            created.attach();
+        }
+
+        return runtime;
+    }
+}
+
+export const fluidExport = new KeyValueFactoryComponent();
+
+// TODO included for back compat - can remove in 0.7 once fluidExport is default
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return fluidExport.instantiateRuntime(context);
+}
+
+// TODO included for back compat - can remove in 0.7 once fluidExport is default
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    return fluidExport.instantiateComponent(context);
 }

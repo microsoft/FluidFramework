@@ -1,6 +1,7 @@
 # 0.6 Breaking Changes
 
 - Interface `IPragueResolvedUrl` renamed to `IFluidResolvedUrl`
+- Interface `IChaincodeFactory` renamed to `IRuntimeFactory`.
 
 # 0.5 Breaking Changes (July 3, 2019)
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.

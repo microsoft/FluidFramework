@@ -5,7 +5,6 @@
 
 import {
     ConnectionState,
-    IChaincodeFactory,
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
@@ -17,6 +16,7 @@ import {
     IRequest,
     IResponse,
     IRuntime,
+    IRuntimeFactory,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
@@ -37,7 +37,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     public static async load(
         container: Container,
         codeLoader: ICodeLoader,
-        chaincode: IChaincodeFactory,
+        chaincode: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
         attributes: IDocumentAttributes,
         blobManager: BlobManager | undefined,
@@ -130,7 +130,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     constructor(
         private readonly container: Container,
         public readonly codeLoader: ICodeLoader,
-        public readonly chaincode: IChaincodeFactory,
+        public readonly chaincode: IRuntimeFactory,
         public readonly baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,

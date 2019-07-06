@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IChaincodeFactory, ICodeLoader } from "@prague/container-definitions";
+import { ICodeLoader, IRuntimeFactory } from "@prague/container-definitions";
 
 export class TestLoader implements ICodeLoader {
-    private readonly typeToFactory: Map<string, Promise<IChaincodeFactory> | IChaincodeFactory>;
+    private readonly typeToFactory: Map<string, Promise<IRuntimeFactory> | IRuntimeFactory>;
 
-    constructor(factories: ReadonlyArray<[string, Promise<IChaincodeFactory> | IChaincodeFactory]>) {
+    constructor(factories: ReadonlyArray<[string, Promise<IRuntimeFactory> | IRuntimeFactory]>) {
         this.typeToFactory = new Map(factories);
     }
 

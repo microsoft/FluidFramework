@@ -139,12 +139,17 @@ export abstract class Component extends EventEmitter implements IComponent {
      * Helper function to create the component factory method for a given component
      */
     public static createComponentFactory<T extends Component>(ctor: new () => T): IComponentFactory {
-        return {
-            instantiateComponent: (context) => {
+        const supportedInterfaces = ["IComponentFactory"];
+        const value = {
+            instantiateComponent: (context: IComponentContext) => {
                 const component = new ctor();
                 return component.initialize(context);
             },
+            list: () => supportedInterfaces,
+            query: (id: string) => (supportedInterfaces.indexOf(id) !== -1 ? value : undefined) as any,
         };
+
+        return value;
     }
 
     private static readonly rootMapId = "root";

@@ -5,11 +5,11 @@
 
 import {
     ConnectionState,
-    IChaincodeFactory,
     IContainerContext,
     IRequest,
     IResponse,
     IRuntime,
+    IRuntimeFactory,
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
@@ -68,8 +68,8 @@ class NullRuntime implements IRuntime {
     }
 }
 
-export class NullChaincode implements IChaincodeFactory {
-    public static supportedInterfaces = ["IChaincodeFactory"];
+export class NullChaincode implements IRuntimeFactory {
+    public static supportedInterfaces = ["IRuntimeFactory"];
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new NullRuntime();

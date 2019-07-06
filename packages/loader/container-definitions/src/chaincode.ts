@@ -208,10 +208,14 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     requestSnapshot(tagMessage: string): Promise<void>;
 }
 
+export interface IFluidModule {
+    fluidExport: IComponent;
+}
+
 /**
  * Exported module definition
  */
-export interface IChaincodeFactory {
+export interface IRuntimeFactory {
     /**
      * Instantiates a new chaincode container
      */

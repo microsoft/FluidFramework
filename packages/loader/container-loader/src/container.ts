@@ -6,7 +6,6 @@
 import {
     ConnectionState,
     FileMode,
-    IChaincodeFactory,
     IClient,
     ICodeLoader,
     ICommittedProposal,
@@ -18,10 +17,12 @@ import {
     IDocumentService,
     IDocumentStorageService,
     IFluidCodeDetails,
+    IFluidModule,
     IGenericBlob,
     IQuorum,
     IRequest,
     IResponse,
+    IRuntimeFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
@@ -61,6 +62,8 @@ interface IConnectResult {
 
     handlerAttachedP: Promise<void>;
 }
+
+const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class Container extends EventEmitter implements IContainer {
     public static async load(
@@ -652,7 +655,7 @@ export class Container extends EventEmitter implements IContainer {
 
     private async loadCodeFromQuorum(
         quorum: Quorum,
-    ): Promise<{ pkg: string | IFluidCodeDetails | undefined, chaincode: IChaincodeFactory }> {
+    ): Promise<{ pkg: string | IFluidCodeDetails | undefined, chaincode: IRuntimeFactory }> {
         // back compat - can remove in 0.7
         const codeQuorumKey = quorum.has("code")
             ? "code"
@@ -668,18 +671,33 @@ export class Container extends EventEmitter implements IContainer {
     /**
      * Loads the code for the provided package
      */
-    private async loadCode(pkg: string | IFluidCodeDetails | undefined): Promise<IChaincodeFactory> {
+    private async loadCode(pkg: string | IFluidCodeDetails | undefined): Promise<IRuntimeFactory> {
         if (!pkg) {
             return new NullChaincode();
         }
 
+        let componentP: Promise<IRuntimeFactory | IFluidModule>;
         if (typeof pkg === "string") {
-            return this.codeLoader.load<IChaincodeFactory>(pkg);
+            componentP = this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg);
         } else {
-            return typeof pkg.package === "string"
-                ? this.codeLoader.load<IChaincodeFactory>(pkg.package, pkg)
-                : this.codeLoader.load<IChaincodeFactory>(`${pkg.package.name}@${pkg.package.version}`, pkg);
+            componentP = typeof pkg.package === "string"
+                ? this.codeLoader.load<IRuntimeFactory | IFluidModule>(pkg.package, pkg)
+                : this.codeLoader.load<IRuntimeFactory | IFluidModule>(
+                    `${pkg.package.name}@${pkg.package.version}`, pkg);
         }
+        const component = await componentP;
+
+        if ("fluidExport" in component) {
+            const factory = component.fluidExport.query<IRuntimeFactory>("IRuntimeFactory");
+            return factory ? factory : Promise.reject(PackageNotFactoryError);
+        }
+
+        // TODO included for back-compat
+        if ("instantiateRuntime" in component) {
+            return component;
+        }
+
+        return Promise.reject(PackageNotFactoryError);
     }
 
     private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): IConnectResult {

@@ -8,11 +8,12 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
 import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import {
-    IChaincodeFactory,
     ICodeLoader,
+    IComponent,
     IContainerContext,
     IRequest,
     IRuntime,
+    IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
 import * as map from "@prague/map";
@@ -25,8 +26,18 @@ import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { debug } from "./debug";
 
-class Chaincode implements IComponentFactory {
+class Chaincode implements IComponent, IComponentFactory {
+    public static supportedInterfaces = ["IComponentFactory"];
+
     constructor(private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
+    }
+
+    public query(id: string): any {
+        return Chaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return Chaincode.supportedInterfaces;
     }
 
     public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
@@ -84,11 +95,21 @@ class BackCompatLoader implements IComponentRegistry {
     }
 }
 
-export class ChaincodeFactory implements IChaincodeFactory {
+export class ChaincodeFactory implements IComponent, IRuntimeFactory {
+    public static supportedInterfaces = ["IRuntimeFactory"];
+
     constructor(
         private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
         private readonly runtimeOptions: IContainerRuntimeOptions,
     ) {
+    }
+
+    public query(id: string): any {
+        return ChaincodeFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return ChaincodeFactory.supportedInterfaces;
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -138,7 +159,7 @@ export class ChaincodeFactory implements IChaincodeFactory {
 }
 
 export class CodeLoader implements ICodeLoader {
-    private readonly factory: IChaincodeFactory;
+    private readonly factory: IRuntimeFactory;
 
     constructor(
         readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
