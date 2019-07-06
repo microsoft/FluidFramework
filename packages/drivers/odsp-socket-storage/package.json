@@ -61,6 +61,7 @@
     "@prague/utils": "^0.6.0",
     "axios": "^0.18.0",
     "debug": "^4.1.1",
+    "node-fetch": "^2.2.1",
     "socket.io-client": "^2.1.1"
   },
   "license": "MIT"

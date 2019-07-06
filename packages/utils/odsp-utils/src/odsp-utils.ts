@@ -49,11 +49,14 @@ function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, 
         + `&refresh_token=${lastRefreshToken}`;
 }
 
-async function processTokenBody(parsed: any): Promise<IODSPTokens> {
+async function processTokenBody(body: any): Promise<IODSPTokens> {
+    const parsed = JSON.parse(body);
     const accessToken = parsed.access_token;
     const refreshToken = parsed.refresh_token;
     if (accessToken === undefined || refreshToken === undefined) {
-        return Promise.reject(`Unable to get token\n${JSON.stringify(parsed, undefined, 2)} `);
+        const e = new Error("Unable to refresh access token");
+        (e as any).data = body;
+        return Promise.reject(e);
     }
     return { accessToken, refreshToken };
 }
@@ -68,8 +71,7 @@ export async function postTokenRequest(postBody: string): Promise<IODSPTokens> {
                     reject(error);
                     return;
                 }
-                const parsed = JSON.parse(body);
-                resolve(processTokenBody(parsed));
+                resolve(processTokenBody(body));
             });
     });
 }

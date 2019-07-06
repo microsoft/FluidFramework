@@ -159,7 +159,19 @@ export async function pragueDumpSnapshot(documentService: IDocumentService) {
                     await saveSnapshot(storage, version);
                 }
             } else if (paramSave !== undefined) {
-                await Promise.all(versions.map((v, i) => saveSnapshot(storage, v, i)));
+                const batch: Array<Promise<void>> = [];
+                let i = 0;
+                for (const v of versions) {
+                    batch.push(saveSnapshot(storage, v, i++));
+                    if (batch.length === 10) {
+                        // Only do 10 at a time concurrently to not spam the server
+                        await Promise.all(batch);
+                        batch.length = 0;
+                    }
+                }
+                if (batch.length) {
+                    await Promise.all(batch);
+                }
             }
         }
 

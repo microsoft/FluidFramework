@@ -86,7 +86,7 @@ export class Replayer {
 
     private isDoneFetch(replayTo: number) {
         if (replayTo >= 0) {
-            return this.currentReplayOp < replayTo;
+            return this.currentReplayOp >= replayTo;
         }
         return false;
     }

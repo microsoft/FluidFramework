@@ -74,7 +74,7 @@ class Replayer {
                     && this.firstTimeStamp !== undefined
                     && lastTimeStamp - this.firstTimeStamp < this.replayTo);
             }
-            return fetchCurrent < this.replayTo;
+            return fetchCurrent >= this.replayTo;
         }
         return false;
     }

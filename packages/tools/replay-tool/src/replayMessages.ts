@@ -4,10 +4,12 @@
  */
 
 import * as API from "@prague/client-api";
-import { IDocumentServiceFactory,
+import {
+    IDocumentServiceFactory,
     IHost,
     IPragueResolvedUrl,
-    IResolvedUrl } from "@prague/container-definitions";
+    IResolvedUrl
+} from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { Replayer, ReplayFileDeltaConnection } from "@prague/file-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -60,7 +62,7 @@ export async function playMessagesFromFileStorage(
     let replayTo = -1;
 
     replayer.currentReplayedOp = container.deltaManager.referenceSequenceNumber;
-    console.log("last replayed op = ", replayer.currentReplayedOp);
+    console.log("current replayed op = ", replayer.currentReplayedOp);
     let snapshotMessage =
         `Message:ReplayTool Snapshot;OutputDirectoryName:${replayTool.outDirName ? replayTool.outDirName : "output"}`;
     if (replayTool.snapFreq) {
@@ -76,12 +78,15 @@ export async function playMessagesFromFileStorage(
                 break;
             }
         }
-    } else if (replayTool.takeSnapshot) {
+    } else {
         await replayer.replay(replayTool.to);
+        await isOpsProcessingDone(container);
+        console.log("last replayed op = ", replayer.currentReplayedOp);
+        if (replayTool.takeSnapshot) {
+            snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
+            await container.snapshot(snapshotMessage);
+        }
     }
-    await isOpsProcessingDone(container);
-    snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
-    await container.snapshot(snapshotMessage);
 }
 
 function delay(ms: number) {

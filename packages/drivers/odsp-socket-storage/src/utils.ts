@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { default as fetch } from "node-fetch";
+
 /**
  * Provides exponential backup functionality.
  */

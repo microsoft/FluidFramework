@@ -148,12 +148,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             ];
         }
 
-        if (!blobid || !this.snapshotUrl || this.latestSha === "") {
+        if (!this.snapshotUrl || this.latestSha === "") {
             return [];
         }
 
         const treeSha = blobid === this.documentId && this.latestSha ? this.latestSha : blobid;
-        const cachedTree = this.treesCache.get(treeSha);
+        const cachedTree = treeSha ? this.treesCache.get(treeSha) : undefined;
         if (cachedTree && count === 1) {
             return [{ id: cachedTree.sha, treeId: undefined! }];
         }
@@ -162,17 +162,26 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const tokenProvider = await this.getTokenProvider(refresh);
             // fetch the latest snapshot versions for the document
             const versionsResponse = await this.fetchWrapper
-                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions?count=${count}`, blobid, {
+                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions?count=${count}`, this.documentId, {
                     Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
                 })
                 .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
-            if (versionsResponse && Array.isArray(versionsResponse.value)) {
-                return versionsResponse.value.map((version) => {
-                    return {
-                        id: version.sha,
-                        treeId: undefined!,
-                    };
-                });
+            if (versionsResponse) {
+                if (Array.isArray(versionsResponse.value)) {
+                    return versionsResponse.value.map((version) => {
+                        return {
+                            id: version.sha,
+                            treeId: undefined!,
+                        };
+                    });
+                }
+
+                if ((versionsResponse as any).error) {
+                    // If the URL have error, the server might not response with an error code, but an error object
+                    const e = new Error("getVersions fetch error");
+                    (e as any).data = versionsResponse;
+                    return Promise.reject(JSON.stringify(versionsResponse));
+                }
             }
 
             return [];

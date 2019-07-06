@@ -100,20 +100,23 @@ async function acquireTokens(server: string): Promise<IODSPTokens> {
     return tokens;
 }
 
-async function getODSPTokens(server: string): Promise<IODSPTokens> {
-    const odspTokens = await loadODSPTokens(server);
-    if (odspTokens === undefined || odspTokens.refreshToken === undefined) {
-        return acquireTokens(server);
+async function getODSPTokens(server: string, forceTokenRefresh: boolean): Promise<IODSPTokens> {
+    if (!forceTokenRefresh) {
+        const odspTokens = await loadODSPTokens(server);
+        if (odspTokens !== undefined && odspTokens.refreshToken !== undefined) {
+            return odspTokens;
+        }
     }
-    return odspTokens;
+    return acquireTokens(server);
 }
 
 async function joinODSPSession(
     server: string,
     documentDrive: string,
-    documentItem: string) {
+    documentItem: string,
+    forceTokenRefresh: boolean = false) {
 
-    const odspTokens = await getODSPTokens(server);
+    const odspTokens = await getODSPTokens(server, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
         const resolvedUrl = await getODSPPragueResolvedUrl(server,
@@ -124,6 +127,9 @@ async function joinODSPSession(
         return resolvedUrl;
     } catch (e) {
         const parsedBody = JSON.parse(e.data);
+        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh)  {
+            return joinODSPSession(server, documentDrive, documentItem, true);
+        }
         const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
         return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
     }
