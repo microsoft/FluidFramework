@@ -7,7 +7,7 @@ import * as map from "@prague/map";
 import { UnboxedOper, Workbook } from "../../ext/calc";
 
 /**
- * To avoid a cyclic build dependency, the Workbook base class has no knowledge of Prague.
+ * To avoid a cyclic build dependency, the Workbook base class has no knowledge of Fluid.
  * This subclass adds basic storage to an ISharedMap using "row,col" as the key.
  */
 export class SharedWorkbook extends Workbook {

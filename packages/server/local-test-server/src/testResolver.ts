@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
+import { IFluidResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
 import { generateToken } from "@prague/services-core";
 
 export class TestResolver implements IUrlResolver {
@@ -12,7 +12,7 @@ export class TestResolver implements IUrlResolver {
     private tokenKey = "tokenKey";
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const resolved: IPragueResolvedUrl = {
+        const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl: "test.com",
                 ordererUrl: "test.com",

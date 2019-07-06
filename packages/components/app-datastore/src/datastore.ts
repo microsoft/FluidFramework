@@ -6,8 +6,8 @@
 import {
     ICodeLoader,
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IPlatform,
-    IPragueResolvedUrl,
     IRequest,
     IResolvedUrl,
     ITokenClaims,
@@ -64,7 +64,7 @@ class InsecureUrlResolver implements IUrlResolver {
         const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(tenantId)}`;
 
         // tslint:disable-next-line:no-unnecessary-local-variable
-        const response: IPragueResolvedUrl = {
+        const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
                 ordererUrl: this.ordererUrl,
@@ -91,13 +91,13 @@ class InsecureUrlResolver implements IUrlResolver {
 }
 
 /**
- * Instance of a Prague data store, used to open/create component instances.
+ * Instance of a Fluid data store, used to open/create component instances.
  *
  * @deprecated This class is deprecated. Please use vanilla-loader instead
  */
 export class DataStore {
     /**
-     * Given the 'hostUrl' of a routerlicious service, returns a Prague data store that can
+     * Given the 'hostUrl' of a routerlicious service, returns a Fluid data store that can
      * open, create, and instantiate components from that server.
      *
      * @param hostUrl - The url of the routerlicious service to (e.g., "http://localhost:3000")

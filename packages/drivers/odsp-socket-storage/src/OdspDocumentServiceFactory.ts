@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import { IDocumentService, IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { parse } from "url";
 import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
@@ -59,10 +59,10 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         }
 
         if (resolvedUrl.type !== "prague") {
-            return Promise.reject("Only Prague components currently supported in the OdspDocumentServiceFactory");
+            return Promise.reject("Only Fluid components currently supported in the OdspDocumentServiceFactory");
         }
 
-        const pragueResolvedUrl = resolvedUrl as IPragueResolvedUrl;
+        const pragueResolvedUrl = resolvedUrl as IFluidResolvedUrl;
         const storageUrl = pragueResolvedUrl.endpoints.storageUrl;
         const deltaStorageUrl = pragueResolvedUrl.endpoints.deltaStorageUrl;
         const ordererUrl = pragueResolvedUrl.endpoints.ordererUrl;

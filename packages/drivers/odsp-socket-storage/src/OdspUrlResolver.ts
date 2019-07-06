@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
+import { IFluidResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 
 export class OdspUrlResolver implements IUrlResolver {
@@ -12,22 +12,22 @@ export class OdspUrlResolver implements IUrlResolver {
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
         // TODO: no need to resolve the request against SPO now. We already have SPO info from Purple app. In theory, this resolve would take an SPO typical doc url and perform the SPO joinSession steps to retrieve all this info.
         console.log(`resolving url=${JSON.stringify(request)}`);
-        const pragueSocketStorageDiscovery = await this.storageDiscoveryPromise;
+        const fluidSocketStorageDiscovery = await this.storageDiscoveryPromise;
         const documentUrl =
-            `prague-odsp://${new URL(pragueSocketStorageDiscovery.deltaStorageUrl).host}` +
-            `/${encodeURIComponent(pragueSocketStorageDiscovery.tenantId)}` +
-            `/${encodeURIComponent(pragueSocketStorageDiscovery.id)}`;
+            `prague-odsp://${new URL(fluidSocketStorageDiscovery.deltaStorageUrl).host}` +
+            `/${encodeURIComponent(fluidSocketStorageDiscovery.tenantId)}` +
+            `/${encodeURIComponent(fluidSocketStorageDiscovery.id)}`;
 
         // tslint:disable-next-line: no-unnecessary-local-variable
-        const response: IPragueResolvedUrl = {
+        const response: IFluidResolvedUrl = {
             endpoints: {
-                deltaStorageUrl: pragueSocketStorageDiscovery.deltaStorageUrl,
-                ordererUrl: pragueSocketStorageDiscovery.deltaStreamSocketUrl,
-                storageUrl: pragueSocketStorageDiscovery.snapshotStorageUrl,
+                deltaStorageUrl: fluidSocketStorageDiscovery.deltaStorageUrl,
+                ordererUrl: fluidSocketStorageDiscovery.deltaStreamSocketUrl,
+                storageUrl: fluidSocketStorageDiscovery.snapshotStorageUrl,
             },
             tokens: {
-                socketToken: pragueSocketStorageDiscovery.socketToken,
-                storageToken: pragueSocketStorageDiscovery.storageToken,
+                socketToken: fluidSocketStorageDiscovery.socketToken,
+                storageToken: fluidSocketStorageDiscovery.storageToken,
             },
             type: "prague",
             url: documentUrl,

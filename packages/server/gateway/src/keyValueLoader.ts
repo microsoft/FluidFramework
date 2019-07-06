@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IPlatform, IPragueResolvedUrl } from "@prague/container-definitions";
+import { IClient, IFluidResolvedUrl, IPlatform } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -98,7 +98,7 @@ export class KeyValueLoader {
 
         const storageUrl = this.storage + "/repos" + `/${encodeURIComponent(this.tenantId)}`;
 
-        const resolved: IPragueResolvedUrl = {
+        const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
                 ordererUrl: this.orderer,

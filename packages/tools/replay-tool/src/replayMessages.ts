@@ -6,8 +6,8 @@
 import * as API from "@prague/client-api";
 import {
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IHost,
-    IPragueResolvedUrl,
     IResolvedUrl
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -30,7 +30,7 @@ const apiVersion = require("../package.json").version;
 export async function playMessagesFromFileStorage(
     replayTool: ReplayTool,
     documentServiceFactory: IDocumentServiceFactory) {
-    const resolved: IPragueResolvedUrl = {
+    const resolved: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl: "replay.com",
             ordererUrl: "replay.com",
@@ -116,7 +116,7 @@ async function load(
         },
         { generateSummaries: false });
 
-    // Load the Prague document
+    // Load the Fluid document
     const loader = new Loader(host, serviceFactory, codeLoader, options);
     const container: Container = await loader.resolve({ url });
 

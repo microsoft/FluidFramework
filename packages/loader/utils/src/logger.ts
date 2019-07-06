@@ -33,7 +33,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 
 /**
  * TelemetryLogger class contains various helper telemetry methods,
- * encoding in one place schemas for various types of Prague telemetry events.
+ * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLogger {
@@ -190,7 +190,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
 /**
  * ChildLogger class contains various helper telemetry methods,
- * encoding in one place schemas for various types of Prague telemetry events.
+ * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export class ChildLogger extends TelemetryLogger {

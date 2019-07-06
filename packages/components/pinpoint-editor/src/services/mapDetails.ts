@@ -17,7 +17,7 @@ export class MapDetailsService {
         $rootScope.$watch(
             () => ({ details: this.details, sequenceNumber: this.sequenceNumber }),
             (newValue, oldValue) => {
-                // Bit of a hack to make angular data binding work easier with Prague - especially when dealing with
+                // Bit of a hack to make angular data binding work easier with Fluid - especially when dealing with
                 // a single JSON object in a map key.
                 // If the remote SN for the old and new values differ then we are merging both remote and local changes.
                 // We wait for the remote changes to stabalize before sending our new change.

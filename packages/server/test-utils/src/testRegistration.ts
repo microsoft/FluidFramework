@@ -17,7 +17,7 @@ class TestDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
             // tslint:disable-next-line:max-line-length
-            return Promise.reject("Only Prague components currently supported in the RouterliciousDocumentServiceFactory");
+            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
         const parsedUrl = parse(resolvedUrl.url);

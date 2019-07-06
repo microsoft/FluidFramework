@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { IClientConfig } from "@prague/odsp-utils";
 import { IGitCache } from "@prague/services-client";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";

@@ -11,7 +11,7 @@ import {
     Browser,
     IClient,
     IDocumentServiceFactory,
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IResolvedUrl,
     ISequencedClient,
 } from "@prague/container-definitions";
@@ -80,7 +80,7 @@ async function addTranslation(
 }
 
 export async function load(
-    resolved: IPragueResolvedUrl,
+    resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
@@ -104,7 +104,7 @@ export async function load(
 }
 
 async function loadDocument(
-    resolved: IPragueResolvedUrl,
+    resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,

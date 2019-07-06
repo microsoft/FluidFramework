@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getODSPPragueResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
+import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
 import { URL } from "url";
 
 const spoTenants = new Map<string, string>([
@@ -74,5 +74,5 @@ export async function spoJoinSession(
     }
     // Only .b items can be prague
     const encoded = encodeURIComponent(`${id}.b`);
-    return getODSPPragueResolvedUrl(server, `drive/root:/r11s/${encoded}:`, tokens, clientConfig, true);
+    return getODSPFluidResolvedUrl(server, `drive/root:/r11s/${encoded}:`, tokens, clientConfig, true);
 }

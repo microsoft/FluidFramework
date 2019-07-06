@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -122,7 +122,7 @@ export function create(
                 "/repos" +
                 `/${encodeURIComponent(tenantId)}`;
 
-            const resolved: IPragueResolvedUrl = {
+            const resolved: IFluidResolvedUrl = {
                 endpoints: {
                     deltaStorageUrl,
                     ordererUrl: config.get("worker:serverUrl"),

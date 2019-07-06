@@ -12,9 +12,9 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         if (resolvedUrl.type === "prague") {
             const urlObj = new URL(resolvedUrl.url);
             const factory = this.factoryMap[urlObj.protocol];
-            if (factory === undefined) { return Promise.reject(new Error("Unknown prague protocol")); }
+            if (factory === undefined) { return Promise.reject(new Error("Unknown fluid protocol")); }
             return factory.createDocumentService(resolvedUrl);
         }
-        return Promise.reject(new Error("Not a prague url"));
+        return Promise.reject(new Error("Not a fluid url"));
     }
 }

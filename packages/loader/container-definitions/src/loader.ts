@@ -24,7 +24,7 @@ export interface ICodeLoader {
     load<T>(source: string | IFluidCodeDetails, details?: IFluidCodeDetails): Promise<T>;
 }
 
-export type IResolvedUrl = IWebResolvedUrl | IPragueResolvedUrl;
+export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 export interface IResolvedUrlBase {
     type: string;
@@ -35,7 +35,7 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
     data: string;
 }
 
-export interface IPragueResolvedUrl extends IResolvedUrlBase {
+export interface IFluidResolvedUrl extends IResolvedUrlBase {
     type: "prague";
     url: string;
     tokens: { [name: string]: string };
@@ -84,7 +84,7 @@ export interface ILoader extends IComponent {
      * Resolves the resource specified by the URL + headers contained in the request object
      * to the underlying container that will resolve the request.
      *
-     * An analogy for this is resolve is a DNS resolve of a Prague container. Request then executes
+     * An analogy for this is resolve is a DNS resolve of a Fluid container. Request then executes
      * a request against the server found from the resolve step.
      */
     resolve(request: IRequest): Promise<IContainer>;

@@ -12,7 +12,7 @@ import {
     Browser,
     IClient,
     IDocumentServiceFactory,
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IResolvedUrl,
     ISequencedClient,
 } from "@prague/container-definitions";
@@ -36,7 +36,7 @@ const clockStart = Date.now();
 export let theFlow: controls.FlowView;
 
 export async function load(
-    resolved: IPragueResolvedUrl,
+    resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,
@@ -62,7 +62,7 @@ export async function load(
 }
 
 async function loadDocument(
-    resolved: IPragueResolvedUrl,
+    resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
     pageInk: boolean,

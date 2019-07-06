@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/container-definitions";
 import * as request from "request";
 
 export interface IODSPTokens {
@@ -84,12 +84,12 @@ async function refreshAccessToken(server: string, clientConfig: IClientConfig, t
     return odspTokens;
 }
 
-export async function getODSPPragueResolvedUrl(
+export async function getODSPFluidResolvedUrl(
     server: string,
     path: string,
     tokens: IODSPTokens,
     clientConfig: IClientConfig,
-    create: boolean = false): Promise<IPragueResolvedUrl> {
+    create: boolean = false): Promise<IFluidResolvedUrl> {
 
     const baseUri = `https://${server}/_api/v2.1/${path}`;
     const joinSessionUri = `${baseUri}/opStream/joinSession`;

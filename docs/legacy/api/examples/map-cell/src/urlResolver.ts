@@ -4,7 +4,7 @@
  */
 
 import {
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IRequest,
     IResolvedUrl,
     ITokenClaims,
@@ -35,7 +35,7 @@ export class InsecureUrlResolver implements IUrlResolver {
             `/${encodeURIComponent(documentId)}`;
 
         // tslint:disable-next-line:no-unnecessary-local-variable
-        const response: IPragueResolvedUrl = {
+        const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl: this.deltaStorageUrl,
                 ordererUrl: this.ordererUrl,

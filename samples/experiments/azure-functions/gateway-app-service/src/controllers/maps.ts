@@ -5,7 +5,7 @@
 
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
-import { Browser, IClient, IHost, IPragueResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
+import { Browser, IClient, IFluidResolvedUrl, IHost, IResolvedUrl } from "@prague/container-definitions";
 import {
     Counter,
     CounterValueType,
@@ -156,7 +156,7 @@ async function randomizeMap(map: ISharedMap) {
     }, 1000);
 }
 
-export async function load(resolved: IPragueResolvedUrl, jwt: string, config: any) {
+export async function load(resolved: IFluidResolvedUrl, jwt: string, config: any) {
 
     const resolver = new ContainerUrlResolver(
         document.location.origin,

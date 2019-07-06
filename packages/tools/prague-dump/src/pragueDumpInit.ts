@@ -7,7 +7,7 @@
 import { IDocumentService } from "@prague/container-definitions";
 import * as odsp from "@prague/odsp-socket-storage";
 import {
-    getODSPPragueResolvedUrl,
+    getODSPFluidResolvedUrl,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
@@ -119,7 +119,7 @@ async function joinODSPSession(
     const odspTokens = await getODSPTokens(server, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
-        const resolvedUrl = await getODSPPragueResolvedUrl(server,
+        const resolvedUrl = await getODSPFluidResolvedUrl(server,
             `drives/${documentDrive}/items/${documentItem}`, odspTokens, clientConfig);
         if (oldAccessToken !== odspTokens.accessToken) {
             await saveAccessToken(server, odspTokens);

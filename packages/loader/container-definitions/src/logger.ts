@@ -64,7 +64,7 @@ export interface ITelemetryPerformanceEvent {
 
 /**
  * ITelemetryLogger interface contains various helper telemetry methods,
- * encoding in one place schemas for various types of Prague telemetry events.
+ * encoding in one place schemas for various types of Fluid telemetry events.
  * Creates sub-logger that appends properties to all events
  */
 export interface ITelemetryLogger extends ITelemetryBaseLogger {

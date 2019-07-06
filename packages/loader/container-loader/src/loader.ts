@@ -7,9 +7,9 @@ import {
     ICodeLoader,
     IDocumentService,
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
     IHost,
     ILoader,
-    IPragueResolvedUrl,
     IRequest,
     IResolvedUrl,
     IResponse,
@@ -96,13 +96,13 @@ export class RelativeLoader extends EventEmitter implements ILoader {
 }
 
 /**
- * Manages Prague resource loading
+ * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
     public static supportedInterfaces = ["ILoader"];
 
     private readonly containers = new Map<string, Promise<Container>>();
-    private readonly resolveCache = new Map<string, IPragueResolvedUrl>();
+    private readonly resolveCache = new Map<string, IFluidResolvedUrl>();
 
     constructor(
         private readonly containerHost: IHost,
@@ -177,17 +177,17 @@ export class Loader extends EventEmitter implements ILoader {
         if (!this.resolveCache.has(request.url)) {
             const toCache = await this.containerHost.resolver.resolve(request);
             if (toCache.type !== "prague") {
-                return Promise.reject("Only Prague components currently supported");
+                return Promise.reject("Only Fluid components currently supported");
             }
             this.resolveCache.set(request.url, toCache);
         }
         const resolved = this.resolveCache.get(request.url)!;
 
         // Parse URL into components
-        const resolvedAsPrague = resolved as IPragueResolvedUrl;
-        const parsed = this.parseUrl(resolvedAsPrague.url);
+        const resolvedAsFluid = resolved as IFluidResolvedUrl;
+        const parsed = this.parseUrl(resolvedAsFluid.url);
         if (!parsed) {
-            return Promise.reject(`Invalid URL ${resolvedAsPrague.url}`);
+            return Promise.reject(`Invalid URL ${resolvedAsFluid.url}`);
         }
 
         let canCache = true;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { IClientConfig } from "@prague/odsp-utils";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
@@ -54,7 +54,7 @@ function r11sResolveUrl(
 
     const token = getToken(tenantId, documentId, appTenants, user);
 
-    const pragueUrl = "prague://" +
+    const fluidUrl = "prague://" +
         `${parse(config.get("worker:serverUrl")).host}/` +
         `${encodeURIComponent(tenantId)}/` +
         `${encodeURIComponent(documentId)}`;
@@ -69,7 +69,7 @@ function r11sResolveUrl(
         "/repos" +
         `/${encodeURIComponent(tenantId)}`;
 
-    const resolvedUrl: IPragueResolvedUrl = {
+    const resolvedUrl: IFluidResolvedUrl = {
         endpoints: {
             deltaStorageUrl,
             ordererUrl: config.get("worker:serverUrl"),
@@ -77,7 +77,7 @@ function r11sResolveUrl(
         },
         tokens: { jwt: token },
         type: "prague",
-        url: pragueUrl,
+        url: fluidUrl,
     };
     const resolvedP = Promise.resolve(resolvedUrl);
 

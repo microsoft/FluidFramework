@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -16,7 +16,7 @@ import { defaultPartials } from "./partials";
 
 function createLoaderScript(
     loaderUrl: string,
-    resolved: IPragueResolvedUrl,
+    resolved: IFluidResolvedUrl,
     cache: any,
     workerConfig: string,
     chainCode: string,
@@ -94,7 +94,7 @@ export function create(
             "/repos" +
             `/${encodeURIComponent(tenantId)}`;
 
-        const resolved: IPragueResolvedUrl = {
+        const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
                 ordererUrl: config.get("worker:serverUrl"),

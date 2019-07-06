@@ -41,7 +41,7 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
 }
 
 /**
- * Base class for chainloadable Prague components.
+ * Base class for chainloadable Fluid components.
  */
 export abstract class Component extends EventEmitter implements IComponent {
     private get dbgName() {

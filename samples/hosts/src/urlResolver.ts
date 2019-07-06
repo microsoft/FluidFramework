@@ -4,7 +4,7 @@
  */
 
 import {
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IRequest,
     IResolvedUrl,
     ITokenClaims,
@@ -49,7 +49,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         const storageUrl = `${this.storageUrl}/repos/${encodeURIComponent(this.tenantId)}`;
 
-        const response: IPragueResolvedUrl = {
+        const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
                 ordererUrl: this.ordererUrl,

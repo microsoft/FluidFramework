@@ -41,7 +41,7 @@ export interface IComponentRouter {
 }
 
 /**
- * Interface for viewing a Prague component with the HTML DOM
+ * Interface for viewing a Fluid component with the HTML DOM
  */
 export interface IComponentHTMLViewable {
     addView(host: IComponent, element: HTMLElement): Promise<IHTMLView>;

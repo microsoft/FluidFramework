@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPragueResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -24,7 +24,7 @@ async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl
     } as IWebResolvedUrl;
 }
 
-// Resolves from other Prague endpoints.
+// Resolves from other Fluid endpoints.
 async function getExternalComponent(
     request: Request,
     hostUrl: string,
@@ -93,10 +93,10 @@ async function getInternalComponent(
         tokens: { jwt: token },
         type: "prague",
         url: pragueUrl,
-    } as IPragueResolvedUrl;
+    } as IFluidResolvedUrl;
 }
 
-// Checks whether the url belongs to other Prague endpoints.
+// Checks whether the url belongs to other Fluid endpoints.
 function isExternalComponent(url: string, endpoints: string[]) {
     return endpoints.indexOf(url) !== -1;
 }

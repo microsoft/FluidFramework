@@ -122,7 +122,7 @@ We make use of continuous integration and deployment via VSTS at https://offnet.
 
 ## Design principals
 
-* Screw the Client
+* Leverage the Client
 * Perf === Magic
 
 ## Architecture

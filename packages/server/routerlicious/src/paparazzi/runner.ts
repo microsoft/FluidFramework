@@ -7,7 +7,7 @@ import * as agent from "@prague/agent";
 import {
     IDocumentService,
     IDocumentServiceFactory,
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -35,28 +35,28 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
         if (resolvedUrl.type !== "prague") {
-            Promise.reject("only prague type urls can be resolved.");
+            Promise.reject("only fluid type urls can be resolved.");
         }
 
-        const urlAsPragueUrl = resolvedUrl as IPragueResolvedUrl;
+        const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;
 
-        const ordererUrl = urlAsPragueUrl.endpoints.ordererUrl;
-        const storageUrl = urlAsPragueUrl.endpoints.storageUrl;
-        const deltaStorageUrl = urlAsPragueUrl.endpoints.deltaStorageUrl;
+        const ordererUrl = urlAsFluidUrl.endpoints.ordererUrl;
+        const storageUrl = urlAsFluidUrl.endpoints.storageUrl;
+        const deltaStorageUrl = urlAsFluidUrl.endpoints.deltaStorageUrl;
 
         if (!ordererUrl || !storageUrl || !deltaStorageUrl) {
             // tslint:disable-next-line:max-line-length
             Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = url.parse(urlAsPragueUrl.url);
+        const parsedUrl = url.parse(urlAsFluidUrl.url);
         const [, tenantId, documentId] = parsedUrl.path.split("/");
         if (!documentId || !tenantId) {
             // tslint:disable-next-line:max-line-length
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const jwtToken = urlAsPragueUrl.tokens.jwt;
+        const jwtToken = urlAsFluidUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
         }
@@ -190,7 +190,7 @@ export class PaparazziRunner implements utils.IRunner {
                 "/repos" +
                 `/${encodeURIComponent(requestMsg.tenantId)}`;
 
-            const resolved: IPragueResolvedUrl = {
+            const resolved: IFluidResolvedUrl = {
                 endpoints: {
                     deltaStorageUrl,
                     ordererUrl: this.workerConfig.get("alfredUrl"),

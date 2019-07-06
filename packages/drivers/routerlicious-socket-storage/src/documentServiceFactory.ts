@@ -7,7 +7,7 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IErrorTrackingService,
-    IPragueResolvedUrl,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { ICredentials, IGitCache } from "@prague/services-client";
@@ -41,26 +41,26 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
             // tslint:disable-next-line:max-line-length
-            return Promise.reject("Only Prague components currently supported in the RouterliciousDocumentServiceFactory");
+            return Promise.reject("Only Fluid components currently supported in the RouterliciousDocumentServiceFactory");
         }
 
-        const pragueResolvedUrl = resolvedUrl as IPragueResolvedUrl;
-        const storageUrl = pragueResolvedUrl.endpoints.storageUrl;
-        const ordererUrl = pragueResolvedUrl.endpoints.ordererUrl;
-        const deltaStorageUrl = pragueResolvedUrl.endpoints.deltaStorageUrl;
+        const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
+        const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
+        const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
+        const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
         if (!ordererUrl || !deltaStorageUrl) {
             // tslint:disable-next-line:max-line-length
             return Promise.reject(`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = parse(pragueResolvedUrl.url);
+        const parsedUrl = parse(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
         if (!documentId || !tenantId) {
             // tslint:disable-next-line:max-line-length
             return Promise.reject(`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);
         }
 
-        const jwtToken = pragueResolvedUrl.tokens.jwt;
+        const jwtToken = fluidResolvedUrl.tokens.jwt;
         if (!jwtToken) {
             return Promise.reject(`Token was not provided.`);
         }

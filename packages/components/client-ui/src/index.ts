@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// Packaging and re-exporting of prague UI framework
+// Packaging and re-exporting of fluid UI framework
 
 import * as ui from "./ui";
 export { ui };
