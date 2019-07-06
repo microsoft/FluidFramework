@@ -4,20 +4,7 @@
  */
 
 /**
- * Task interface to be used with IAgentScheduler.
- */
-export interface ITask {
-
-    // id of the task given client wants to pick
-    id: string;
-
-    // callback run by agent scheduler when the task gets picked by the client.
-    callback?(): void;
-}
-
-/**
- * Agent scheduler.
- * Distributes a set of tasks/variables across connected clients.
+ * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
 export interface IAgentScheduler {
 
@@ -33,23 +20,23 @@ export interface IAgentScheduler {
      *
      * This method should only be called once per task. Duplicate calls will be rejected.
      */
-    register(...taskIds: string[]): Promise<void>;
+    register(...taskUrls: string[]): Promise<void>;
 
     /**
      * Attempts to pick a set of tasks. A client will only run the task if it's chosen based on consensus.
-     * Resolves when the tasks are assigned to any connected client.
+     * Resolves when the tasks are assigned to one of the connected clients.
      *
      * This method should only be called once per task. Duplicate calls will be rejected.
      */
-    pick(...tasks: ITask[]): Promise<void>;
+    pick(...taskUrls: string[]): Promise<void>;
 
     /**
      * Releases a set of tasks for other clients to grab. Resolves when the tasks are released.
      *
-     * Only previously picked tasks are allowed. Non picked tasks will be rejected.
+     * Only previously picked tasks are allowed. Releasing non picked tasks will get a rejection.
      * App can call pickedTasks() to get the picked list first.
      */
-    release(...taskIds: string[]): Promise<void>;
+    release(...taskUrls: string[]): Promise<void>;
 
     /**
      * Returns a list of all tasks running on this client
@@ -59,5 +46,5 @@ export interface IAgentScheduler {
     /**
      * Event listeners
      */
-    on(event: "leader" | "picked", listener: (...args: any[]) => void): this;
+    on(event: "leader" | "picked" | "running", listener: (...args: any[]) => void): this;
 }

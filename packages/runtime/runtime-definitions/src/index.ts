@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./agent";
 export * from "./channel";
 export * from "./components";
 export * from "./extensions";

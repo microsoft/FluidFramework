@@ -27,6 +27,10 @@ export interface IComponentLoadable extends IComponent {
     url: string;
 }
 
+export interface IComponentRunnable extends IComponent {
+    run(): Promise<void>;
+}
+
 /**
  * A shared component has a URL from which it can be referenced
  */
