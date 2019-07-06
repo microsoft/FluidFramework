@@ -126,10 +126,10 @@ export class DocumentStorageService implements IDocumentStorageService  {
                     const pathHandle = await this.writeSummaryObject(
                         entry,
                         submodule,
-                        `${path}/${key}`);
+                        `${path}/${encodeURIComponent(key)}`);
                     const treeEntry: resources.ICreateTreeEntry = {
                         mode: this.getGitMode(entry),
-                        path: key,
+                        path: encodeURIComponent(key),
                         sha: pathHandle,
                         type: this.getGitType(entry),
                     };

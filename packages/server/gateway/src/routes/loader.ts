@@ -72,7 +72,6 @@ export function create(
             const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
             const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
             const entryPoint = request.query.entrypoint;
-            const details = extractDetails(chaincode);
 
             let codeDetails: IFluidCodeDetails;
             if (chaincode.indexOf("http") === 0) {
@@ -94,6 +93,7 @@ export function create(
                     },
                 };
             } else {
+                const details = extractDetails(chaincode);
                 codeDetails = {
                     config: {
                         [`@${details.scope}:cdn`]: cdn,

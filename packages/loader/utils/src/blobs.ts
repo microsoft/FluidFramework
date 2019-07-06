@@ -125,12 +125,12 @@ export function buildHierarchy(flatTree: git.ITree): ISnapshotTree {
         // Add in either the blob or tree
         if (entry.type === "tree") {
             const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
-            node.trees[entryPathBase] = newTree;
+            node.trees[decodeURIComponent(entryPathBase)] = newTree;
             lookup[entry.path] = newTree;
         } else if (entry.type === "blob") {
-            node.blobs[entryPathBase] = entry.sha;
+            node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
         } else if (entry.type === "commit") {
-            node.commits[entryPathBase] = entry.sha;
+            node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
         }
     }
 
