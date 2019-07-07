@@ -8,7 +8,6 @@ import { IRequest } from "@prague/container-definitions";
 import {
     CounterValueType,
     DistributedSetValueType,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
@@ -23,14 +22,16 @@ import { MonacoRunner } from "./chaincode";
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const modules = new Map<string, any>();
 
-    // Register default map value types
-    registerDefaultValueType(new DistributedSetValueType());
-    registerDefaultValueType(new CounterValueType());
-    registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-    registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+    // Map value types to register as defaults
+    const mapValueTypes = [
+        new DistributedSetValueType(),
+        new CounterValueType(),
+        new sequence.SharedStringIntervalCollectionValueType(),
+        new sequence.SharedIntervalCollectionValueType(),
+    ];
 
     // Create channel extensions
-    const mapExtension = SharedMap.getFactory();
+    const mapExtension = SharedMap.getFactory(mapValueTypes);
     const sharedStringExtension = sequence.SharedString.getFactory();
     const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
     const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();

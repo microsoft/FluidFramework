@@ -599,6 +599,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         // when testing and using mock runtime, intervalCollections would be null.
         if (this.intervalCollections) {
+            // Ensure intervalCollections has registered the ValueTypes that SharedSegmentSequence depends on
+            this.intervalCollections.registerValueType(new SharedStringIntervalCollectionValueType());
+            this.intervalCollections.registerValueType(new SharedIntervalCollectionValueType());
+
             // Listen and initialize new SharedIntervalCollections
             this.intervalCollections.on("valueChanged", (ev: IValueChanged) => {
                 const intervalCollection =

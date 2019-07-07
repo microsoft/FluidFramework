@@ -10,7 +10,7 @@ import {
     ITree,
     TreeEntry,
 } from "@prague/container-definitions";
-import { ISharedMap, SharedMap } from "@prague/map";
+import { ISharedMap, IValueType, SharedMap } from "@prague/map";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { OwnedMapExtension } from "./extension";
@@ -39,8 +39,8 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      *
      * @returns a factory that creates and load OwnedSharedMap
      */
-    public static getFactory() {
-        return new OwnedMapExtension();
+    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []) {
+        return new OwnedMapExtension(defaultValueTypes);
     }
 
     public owner: string;

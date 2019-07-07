@@ -4,7 +4,7 @@
  */
 
 import { Component } from "@prague/app-component";
-import { Counter, CounterValueType, MapExtension, registerDefaultValueType } from "@prague/map";
+import { Counter, CounterValueType, MapExtension } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
@@ -15,8 +15,10 @@ export class TestComponent extends Component {
     private counter: Counter;
 
     constructor() {
-        super([[MapExtension.Type, new MapExtension()]]);
-        registerDefaultValueType(new CounterValueType());
+        const mapValueTypes = [
+            new CounterValueType(),
+        ];
+        super([[MapExtension.Type, new MapExtension(mapValueTypes)]]);
     }
 
     public get value(): number { return this.counter.value; }

@@ -17,7 +17,6 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import {
@@ -236,12 +235,14 @@ class ProgressBarsFactory implements IComponent, IComponentFactory {
     }
 
     public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-        // Register default map value types
-        registerDefaultValueType(new DistributedSetValueType());
-        registerDefaultValueType(new CounterValueType());
+        // Map value types to register as defaults
+        const mapValueTypes = [
+            new DistributedSetValueType(),
+            new CounterValueType(),
+        ];
 
         const dataTypes = new Map<string, ISharedObjectExtension>();
-        const mapExtension = SharedMap.getFactory();
+        const mapExtension = SharedMap.getFactory(mapValueTypes);
         dataTypes.set(mapExtension.type, mapExtension);
 
         const runtime = await ComponentRuntime.load(context, dataTypes);

@@ -41,14 +41,16 @@ class Chaincode implements IComponent, IComponentFactory {
     }
 
     public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-        // Register default map value types
-        map.registerDefaultValueType(new map.DistributedSetValueType());
-        map.registerDefaultValueType(new map.CounterValueType());
-        map.registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-        map.registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+        // Map value types to register as defaults
+        const mapValueTypes = [
+            new map.DistributedSetValueType(),
+            new map.CounterValueType(),
+            new sequence.SharedStringIntervalCollectionValueType(),
+            new sequence.SharedIntervalCollectionValueType(),
+        ];
 
         // Create channel extensions
-        const mapExtension = map.SharedMap.getFactory();
+        const mapExtension = map.SharedMap.getFactory(mapValueTypes);
         const sharedStringExtension = sequence.SharedString.getFactory();
         const streamExtension = stream.Stream.getFactory();
         const cellExtension = cell.SharedCell.getFactory();
@@ -58,7 +60,7 @@ class Chaincode implements IComponent, IComponentFactory {
         const consensusStackExtension = ConsensusStack.getFactory();
         const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
         const sparseMatrixExtension = sequence.SparseMatrix.getFactory();
-        const directoryExtension = map.SharedDirectory.getFactory();
+        const directoryExtension = map.SharedDirectory.getFactory(mapValueTypes);
 
         // Register channel extensions
         const modules = new Map<string, any>();

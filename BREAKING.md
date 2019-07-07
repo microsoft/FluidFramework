@@ -1,13 +1,41 @@
 # 0.6 Breaking Changes
 
+- [Interface renames](#interface-renames)
+- [defaultValueTypes is no longer global](#defaultValueTypes-is-no-longer-global)
+
+## Interface renames
+
 - Interface `IPragueResolvedUrl` renamed to `IFluidResolvedUrl`
 - Interface `IChaincodeFactory` renamed to `IRuntimeFactory`.
+
+## defaultValueTypes is no longer global
+
+Previously, value types for `SharedMap`s were registered via calls to `registerDefaultValueType(type)`, which would add the type to a global collection.  This global has been replaced by a member on the extension, which can be set as a parameter to the `.getFactory()` method.  So for example, the following usage:
+
+```typescript
+registerDefaultValueType(new DistributedSetValueType());
+registerDefaultValueType(new CounterValueType());
+const mapExtension = SharedMap.getFactory();
+```
+
+Should change to the following:
+
+```typescript
+const mapValueTypes = [
+    new DistributedSetValueType(),
+    new CounterValueType(),
+];
+const mapExtension = SharedMap.getFactory(mapValueTypes);
+```
+
+You can also still register value types on a `SharedMap` itself via `map.registerValueType(type)` after it is created.
 
 # 0.5 Breaking Changes (July 3, 2019)
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
 
 - [attach() on IChannel/ISharedObject is now register()](#attach()-on-IChannel/ISharedObject-is-now-register())
 - [Separate Create and Attach Component](#Separate-Create-and-Attach-Component)
+- [Stream inheritance and Cell rename](#Stream-inheritance-and-Cell-rename)
 
 ## attach() on IChannel/ISharedObject is now register()
 
@@ -24,6 +52,8 @@ Now the `ContainerRuntime` consists of a `createComponent(id: string, pkg: strin
 To attach a `ComponentRuntime` you need to call `attach()` on the `ComponentRuntime` directly. The framework guarantees that any channels `registered()`on the runtime when attach is called will be snapshotted and sent as a part of the original Attach OP (see above).  
 
 For compatibility there is still a `createAndAttachComponent` method on the `ComponentRuntime`. This method simply calls `createComponent` then calls `attach()` right away on that new component before returning.
+
+## Stream inheritance and Cell rename
 
 - Stream no longer inherit from SharedMap.   Create a separate SharedMap if needed. This also mean Stream snapshot format has changed
 - class Cell is renamed SharedCell

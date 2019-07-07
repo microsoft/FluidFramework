@@ -4,7 +4,6 @@
  */
 
 export * from "./counter";
-export * from "./defaultTypes";
 export * from "./interfaces";
 export * from "./map";
 export * from "./set";

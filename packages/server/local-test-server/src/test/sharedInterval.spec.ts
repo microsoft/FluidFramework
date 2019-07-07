@@ -3,21 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { registerDefaultValueType } from "@prague/map";
 import { IntervalType, LocalReference } from "@prague/merge-tree";
 import {
-    SharedIntervalCollectionValueType,
     SharedIntervalCollectionView,
     SharedString,
     SharedStringExtension,
     SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import * as assert from "assert";
 import { TestHost } from "..";
-
-registerDefaultValueType(new SharedStringIntervalCollectionValueType());
-registerDefaultValueType(new SharedIntervalCollectionValueType());
 
 const assertIntervalsHelper = (
     sharedString: SharedString,

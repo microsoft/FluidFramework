@@ -8,20 +8,17 @@ import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-defini
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { OwnedSharedMap } from "./ownedMap";
 
-// register default types
-const defaultValueTypes = new Array<IValueType<any>>();
-export function registerDefaultValueType(type: IValueType<any>) {
-    defaultValueTypes.push(type);
-}
-
 /**
  * The extension that defines the map
  */
 export class OwnedMapExtension implements ISharedObjectExtension {
     public static Type = "https://graph.microsoft.com/types/ownedmap";
 
-    public type: string = OwnedMapExtension.Type;
+    public readonly type: string = OwnedMapExtension.Type;
     public readonly snapshotFormatVersion: string = "0.1";
+
+    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    }
 
     public async load(
         runtime: IComponentRuntime,
@@ -31,7 +28,7 @@ export class OwnedMapExtension implements ISharedObjectExtension {
         headerOrigin: string): Promise<ISharedMap> {
 
         const map = new OwnedSharedMap(id, runtime, OwnedMapExtension.Type);
-        this.registerValueTypes(map, defaultValueTypes);
+        this.registerValueTypes(map);
         await map.load(minimumSequenceNumber, headerOrigin, services);
 
         return map;
@@ -39,14 +36,14 @@ export class OwnedMapExtension implements ISharedObjectExtension {
 
     public create(document: IComponentRuntime, id: string): ISharedMap {
         const map = new OwnedSharedMap(id, document, OwnedMapExtension.Type);
-        this.registerValueTypes(map, defaultValueTypes);
+        this.registerValueTypes(map);
         map.initializeLocal();
 
         return map;
     }
 
-    private registerValueTypes(map: OwnedSharedMap, valueTypes: Array<IValueType<any>>) {
-        for (const type of valueTypes) {
+    private registerValueTypes(map: OwnedSharedMap) {
+        for (const type of this.defaultValueTypes) {
             map.registerValueType(type);
         }
     }

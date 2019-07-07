@@ -11,7 +11,6 @@ import {
 import {
     CounterValueType,
     DistributedSetValueType,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import {
@@ -77,12 +76,14 @@ export class CollectionManager extends EventEmitter {
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    // Register default map value types
-    registerDefaultValueType(new DistributedSetValueType());
-    registerDefaultValueType(new CounterValueType());
+    // Map value types to register as defaults
+    const mapValueTypes = [
+        new DistributedSetValueType(),
+        new CounterValueType(),
+    ];
 
     const dataTypes = new Map<string, ISharedObjectExtension>();
-    const mapExtension = SharedMap.getFactory();
+    const mapExtension = SharedMap.getFactory(mapValueTypes);
 
     dataTypes.set(mapExtension.type, mapExtension);
 

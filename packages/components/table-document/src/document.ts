@@ -5,7 +5,7 @@
 
 import { Component } from "@prague/app-component";
 // tslint:disable-next-line:no-submodule-imports
-import { CounterValueType, MapExtension, registerDefaultValueType  } from "@prague/map";
+import { CounterValueType, MapExtension } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
@@ -51,14 +51,14 @@ export class TableDocument extends Component implements ITable {
 
     constructor() {
         super([
-            [MapExtension.Type, new MapExtension()],
+            [MapExtension.Type, new MapExtension([
+                new CounterValueType(),
+                new SharedStringIntervalCollectionValueType(),
+                new SharedIntervalCollectionValueType(),
+            ])],
             [SparseMatrixExtension.Type, new SparseMatrixExtension()],
             [SharedNumberSequenceExtension.Type, new SharedNumberSequenceExtension()],
         ]);
-
-        registerDefaultValueType(new CounterValueType());
-        registerDefaultValueType(new SharedStringIntervalCollectionValueType());
-        registerDefaultValueType(new SharedIntervalCollectionValueType());
     }
 
     public evaluateCell(row: number, col: number) {

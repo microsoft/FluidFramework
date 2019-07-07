@@ -17,7 +17,6 @@ import {
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
-import { defaultValueTypes } from "./defaultTypes";
 import { IMapOperation } from "./definitions";
 import { ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
 import { MapView } from "./view";
@@ -60,6 +59,9 @@ export class MapExtension implements ISharedObjectExtension {
     public readonly type: string = MapExtension.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
+    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    }
+
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -68,22 +70,22 @@ export class MapExtension implements ISharedObjectExtension {
         headerOrigin: string): Promise<ISharedMap> {
 
         const map = new SharedMap(id, runtime);
-        this.registerValueTypes(map, defaultValueTypes);
+        this.registerValueTypes(map);
         await map.load(minimumSequenceNumber, headerOrigin, services);
 
         return map;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedMap {
-        const map = new SharedMap(id, document);
-        this.registerValueTypes(map, defaultValueTypes);
+    public create(runtime: IComponentRuntime, id: string): ISharedMap {
+        const map = new SharedMap(id, runtime);
+        this.registerValueTypes(map);
         map.initializeLocal();
 
         return map;
     }
 
-    private registerValueTypes(map: SharedMap, valueTypes: Array<IValueType<any>>) {
-        for (const type of valueTypes) {
+    private registerValueTypes(map: SharedMap) {
+        for (const type of this.defaultValueTypes) {
             map.registerValueType(type);
         }
     }
@@ -109,8 +111,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(): ISharedObjectExtension {
-        return new MapExtension();
+    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectExtension {
+        return new MapExtension(defaultValueTypes);
     }
 
     public [Symbol.toStringTag]: string;

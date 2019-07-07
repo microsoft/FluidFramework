@@ -14,7 +14,6 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -245,14 +244,16 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
     const modules = new Map<string, any>();
 
-    // Register default map value types
-    registerDefaultValueType(new DistributedSetValueType());
-    registerDefaultValueType(new CounterValueType());
-    registerDefaultValueType(new SharedStringIntervalCollectionValueType());
-    registerDefaultValueType(new SharedIntervalCollectionValueType());
+    // Map value types to register as defaults
+    const mapValueTypes = [
+        new DistributedSetValueType(),
+        new CounterValueType(),
+        new SharedStringIntervalCollectionValueType(),
+        new SharedIntervalCollectionValueType(),
+    ];
 
     // Create channel extensions
-    const mapExtension = SharedMap.getFactory();
+    const mapExtension = SharedMap.getFactory(mapValueTypes);
     const sharedStringExtension = SharedString.getFactory();
     const streamExtension = Stream.getFactory();
     const cellExtension = SharedCell.getFactory();

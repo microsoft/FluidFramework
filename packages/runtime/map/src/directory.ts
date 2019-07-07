@@ -6,7 +6,6 @@
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { posix } from "path";
-import { defaultValueTypes } from "./defaultTypes";
 import { IDirectory, ISharedDirectory, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
 import { ILocalViewElement } from "./view";
@@ -20,6 +19,9 @@ export class DirectoryExtension {
     public readonly type: string = DirectoryExtension.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
+    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    }
+
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -28,7 +30,7 @@ export class DirectoryExtension {
         headerOrigin: string): Promise<ISharedDirectory> {
 
         const directory = new SharedDirectory(id, runtime);
-        this.registerValueTypes(directory, defaultValueTypes);
+        this.registerValueTypes(directory);
         await directory.load(minimumSequenceNumber, headerOrigin, services);
 
         return directory;
@@ -36,14 +38,14 @@ export class DirectoryExtension {
 
     public create(document: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, document);
-        this.registerValueTypes(directory, defaultValueTypes);
+        this.registerValueTypes(directory);
         directory.initializeLocal();
 
         return directory;
     }
 
-    private registerValueTypes(directory: SharedDirectory, valueTypes: Array<IValueType<any>>) {
-        for (const type of valueTypes) {
+    private registerValueTypes(directory: SharedDirectory) {
+        for (const type of this.defaultValueTypes) {
             directory.registerValueType(type);
         }
     }
@@ -81,8 +83,8 @@ export class SharedDirectory extends SharedMap implements ISharedDirectory {
      *
      * @returns a factory that creates and load SharedDirectory
      */
-    public static getFactory(): ISharedObjectExtension {
-        return new DirectoryExtension();
+    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectExtension {
+        return new DirectoryExtension(defaultValueTypes);
     }
 
     /**

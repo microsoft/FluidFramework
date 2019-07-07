@@ -18,7 +18,6 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
@@ -608,15 +607,18 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    // Register default map value types
-    registerDefaultValueType(new DistributedSetValueType());
-    registerDefaultValueType(new CounterValueType());
-    registerDefaultValueType(new Sequence.SharedStringIntervalCollectionValueType());
-    registerDefaultValueType(new Sequence.SharedIntervalCollectionValueType());
+    // Map value types to register as defaults
+    const mapValueTypes = [
+        new DistributedSetValueType(),
+        new CounterValueType(),
+        new Sequence.SharedStringIntervalCollectionValueType(),
+        new Sequence.SharedIntervalCollectionValueType(),
+    ];
+
     // tslint:disable-next-line:no-require-imports no-submodule-imports
     require("katex/dist/katex.min.css");
 
-    const mapExtension = SharedMap.getFactory();
+    const mapExtension = SharedMap.getFactory(mapValueTypes);
     const sharedStringExtension = Sequence.SharedString.getFactory();
 
     const dataTypes = new Map<string, ISharedObjectExtension>();

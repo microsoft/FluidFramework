@@ -17,7 +17,6 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import {
@@ -108,11 +107,13 @@ export class ClickerWithForge extends RootComponent implements IComponentHTMLVie
     public static async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
         // Register default map value types (Register the DDS we care about)
         // We need to register the Map and the Counter so we can create a root and a counter on that root
-        registerDefaultValueType(new DistributedSetValueType());
-        registerDefaultValueType(new CounterValueType());
+        const mapValueTypes = [
+            new DistributedSetValueType(),
+            new CounterValueType(),
+        ];
 
         const dataTypes = new Map<string, ISharedObjectExtension>();
-        const mapExtension = SharedMap.getFactory();
+        const mapExtension = SharedMap.getFactory(mapValueTypes);
         dataTypes.set(mapExtension.type, mapExtension);
 
         // Create a new runtime for our component

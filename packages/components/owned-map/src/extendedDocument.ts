@@ -9,7 +9,6 @@ import {
     CounterValueType,
     DistributedSetValueType,
     ISharedMap,
-    registerDefaultValueType,
     SharedMap,
 } from "@prague/map";
 import * as sequence from "@prague/sequence";
@@ -18,15 +17,17 @@ import { OwnedSharedMap } from "./ownedMap";
 
 export abstract class ExtendedDocument extends Component {
     constructor() {
-        // Register default map value types
-        registerDefaultValueType(new DistributedSetValueType());
-        registerDefaultValueType(new CounterValueType());
-        registerDefaultValueType(new sequence.SharedStringIntervalCollectionValueType());
-        registerDefaultValueType(new sequence.SharedIntervalCollectionValueType());
+        // Map value types to register as defaults
+        const mapValueTypes = [
+            new DistributedSetValueType(),
+            new CounterValueType(),
+            new sequence.SharedStringIntervalCollectionValueType(),
+            new sequence.SharedIntervalCollectionValueType(),
+        ];
 
         // Create channel extensions
-        const ownedMapExtension = OwnedSharedMap.getFactory();
-        const mapExtension = SharedMap.getFactory();
+        const ownedMapExtension = OwnedSharedMap.getFactory(mapValueTypes);
+        const mapExtension = SharedMap.getFactory(mapValueTypes);
         const sharedStringExtension = sequence.SharedString.getFactory();
         const streamExtension = stream.Stream.getFactory();
         const cellExtension = cell.SharedCell.getFactory();
