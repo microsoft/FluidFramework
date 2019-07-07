@@ -6,8 +6,6 @@
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ISharedObject } from "@prague/shared-object-common";
 
-export type SerializeFilter = (key: string, serializedValue: any, type: string) => any;
-
 export interface ISet<T> {
     add(value: T): ISet<T>;
 
@@ -78,12 +76,6 @@ export interface IMapRegistry {
      * Registers a new operation on the map
      */
     registerValueType<T>(type: IValueType<T>);
-
-    /**
-     * Registers a custom filter to provide extra processing on the condensed log.
-     * This is a very advanced feature and should be used with extreme caution.
-     */
-    registerSerializeFilter(filter: SerializeFilter);
 }
 
 /**

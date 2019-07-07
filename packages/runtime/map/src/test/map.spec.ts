@@ -144,7 +144,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("object", subMap);
 
                     const concrete = (sharedMap as SharedMap).internalView();
-                    const serialized = concrete.serialize((key, value, type) => value);
+                    const serialized = concrete.serialize();
                     const parsed = JSON.parse(serialized);
 
                     sharedMap.forEach((value, key) => {

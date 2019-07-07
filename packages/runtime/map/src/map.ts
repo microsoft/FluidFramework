@@ -18,7 +18,7 @@ import {
 import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { IMapOperation } from "./definitions";
-import { ISharedMap, IValueChanged, IValueOperation, IValueType, SerializeFilter } from "./interfaces";
+import { ISharedMap, IValueChanged, IValueOperation, IValueType } from "./interfaces";
 import { MapView } from "./view";
 
 const snapshotFileName = "header";
@@ -120,7 +120,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     protected view: MapView;
     protected readonly pendingKeys: Map<string, number>;
     protected pendingClearClientSequenceNumber: number;
-    protected serializeFilter: SerializeFilter;
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
     /**
@@ -133,7 +132,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
         type = MapExtension.Type) {
 
         super(id, runtime, type);
-        this.serializeFilter = (key, value, valueType) => value;
 
         this.messageHandler = new Map<string, IMapMessageHandler>();
         this.pendingKeys = new Map<string, number>();
@@ -211,7 +209,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.view.serialize(this.serializeFilter),
+                        contents: this.view.serialize(),
                         encoding: "utf-8",
                     },
                 },
@@ -295,10 +293,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     public getValueType(type: string) {
         return this.valueTypes.get(type);
-    }
-
-    public registerSerializeFilter(filter: SerializeFilter) {
-        this.serializeFilter = filter;
     }
 
     /**

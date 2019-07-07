@@ -7,7 +7,7 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import { IMapOperation, IMapValue } from "./definitions";
-import { IValueChanged, IValueOpEmitter, SerializeFilter } from "./interfaces";
+import { IValueChanged, IValueOpEmitter } from "./interfaces";
 import { SharedMap } from "./map";
 
 class ValueOpEmitter implements IValueOpEmitter {
@@ -186,12 +186,10 @@ export class MapView {
     /**
      * Serializes the shared map to a JSON string
      */
-    public serialize(filter: SerializeFilter): string {
+    public serialize(): string {
         const serialized: any = {};
         this.data.forEach((value, key) => {
-            const spilledValue = this.spill(value);
-            const filteredValue = filter(key, spilledValue.value, spilledValue.type);
-            serialized[key] = { type: spilledValue.type, value: filteredValue } as IMapValue;
+            serialized[key] = this.spill(value);
         });
         return JSON.stringify(serialized);
     }
