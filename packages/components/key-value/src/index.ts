@@ -16,6 +16,7 @@ import {
 import { ContainerRuntime } from "@prague/container-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
+    IAgentScheduler,
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
@@ -26,21 +27,6 @@ import { ISharedObjectExtension } from "@prague/shared-object-common";
 // tslint:disable no-require-imports
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
-
-// Temporary interfaces. Once finalized, these will be part of common runtime interfaces.
-interface ITask {
-    id: string;
-    callback?(): void;
-}
-
-interface IAgentScheduler {
-    leader: boolean;
-    register(...taskIds: string[]): Promise<void>;
-    pick(...tasks: ITask[]): Promise<void>;
-    release(...taskIds: string[]): Promise<void>;
-    pickedTasks(): string[];
-    on(event: "leader" | "picked", listener: (...args: any[]) => void): this;
-}
 
 export interface IKeyValue {
     set(key: string, value: any): void;
