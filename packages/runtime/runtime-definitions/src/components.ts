@@ -324,8 +324,6 @@ export interface IComponentFactory {
 /**
  * A component that implements a collection of components.  Typically, the
  * components in the collection would be like-typed.
- * INewComponent is temporarily used for backward compatibility (but has the members of the new
- * IComponent interface).
  */
 export interface IComponentCollection extends IComponent {
     create<TOpt = object>(options?: TOpt): IComponent;
@@ -368,13 +366,13 @@ export interface IComponentHTMLViewOptions {
     displayType?: ComponentDisplayType;
 }
 
-export interface IComponentHTMLView extends INewComponent {
+export interface IComponentHTMLView extends IComponent {
     show(containerElement: HTMLElement, options?: IComponentHTMLViewOptions): void;
     remove(): void;
 }
 
 export interface IComponentHTMLViewable {
-    addView(scope?: INewComponent): IComponentHTMLView;
+    addView(scope?: IComponent): IComponentHTMLView;
 }
 
 /**
