@@ -22,6 +22,8 @@ import {
     paramSnapshotVersionIndex,
 } from "./pragueDumpArgs";
 
+import { latestVersionsId } from "./pragueDumpInit";
+
 async function fetchSnapshotTreeBlobs(
     storage: IDocumentStorageService,
     tree: ISnapshotTree,
@@ -148,7 +150,7 @@ export async function pragueDumpSnapshot(documentService: IDocumentService) {
         const storage = await documentService.connectToStorage();
         let version: IVersion | undefined;
         if (dumpSnapshotVersions || paramSnapshotVersionIndex !== undefined || paramSave !== undefined) {
-            const versions = await storage.getVersions("", paramNumSnapshotVersions);
+            const versions = await storage.getVersions(latestVersionsId, paramNumSnapshotVersions);
             if (dumpSnapshotVersions) {
                 console.log("Snapshot versions");
                 console.log(versions);

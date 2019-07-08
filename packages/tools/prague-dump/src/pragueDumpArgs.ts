@@ -105,6 +105,11 @@ export function parseArguments() {
                         paramURL = arg;
                         break;
                     }
+                    // tslint:disable-next-line: no-http-string
+                    if (url.protocol === "http:" && url.hostname === "localhost") {
+                        paramURL = arg;
+                        break;
+                    }
                 } catch (e) {
                     console.error(e);
                 }

@@ -21,7 +21,7 @@ import { paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 
 export let paramDocumentService: IDocumentService;
-
+export let latestVersionsId: string = "";
 export let connectionInfo: any;
 
 // TODO: put this somewhere else
@@ -127,7 +127,7 @@ async function joinODSPSession(
         return resolvedUrl;
     } catch (e) {
         const parsedBody = JSON.parse(e.data);
-        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh)  {
+        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
             return joinODSPSession(server, documentDrive, documentItem, true);
         }
         const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
@@ -189,6 +189,9 @@ async function initializeR11s(server: string, pathname: string) {
     const tenantId = path[2];
     const documentId = path[3];
 
+    // latest version id is the documentId for r11s
+    latestVersionsId = documentId;
+
     connectionInfo = {
         server,
         tenantId,
@@ -202,6 +205,38 @@ async function initializeR11s(server: string, pathname: string) {
         `https://alfred.${serverSuffix}`,
         `https://alfred.${serverSuffix}/deltas/${tenantId}/${documentId}`,
         `https://historian.${serverSuffix}/repos/${tenantId}`,
+        tokenProvider,
+        tenantId,
+        documentId);
+}
+
+async function initializeR11sLocalhost(pathname: string) {
+    const path = pathname.split("/");
+    let tenantId;
+    let documentId;
+    if (path.length >= 4) {
+        tenantId = path[2];
+        documentId = path[3];
+    } else {
+        tenantId = "prague";
+        documentId = path[2];
+    }
+
+    // latest version id is the documentId for r11s
+    latestVersionsId = documentId;
+
+    connectionInfo = {
+        server: "localhost",
+        tenantId,
+        id: documentId,
+    };
+
+    console.log(`Connecting to r11s localhost: tenantId=${tenantId} id:${documentId}`);
+    const tokenProvider = new r11s.TokenProvider(paramJWT);
+    paramDocumentService = r11s.createDocumentService(
+        `http://localhost:3000`,
+        `http://localhost:3000/deltas/${tenantId}/${documentId}`,
+        `http://localhost:3001/repos/${tenantId}`,
         tokenProvider,
         tenantId,
         documentId);
@@ -235,7 +270,10 @@ export async function pragueDumpInit() {
             return initializeODSP(server, url.pathname);
         } else if (r11sServers.indexOf(server) !== -1) {
             return initializeR11s(server, url.pathname);
+        } else if (server === "localhost" && url.port === "3000") {
+            return initializeR11sLocalhost(url.pathname);
         }
+        console.log(server);
         return Promise.reject(`Unknown URL ${paramURL}`);
     }
     return Promise.reject("Missing URL");
