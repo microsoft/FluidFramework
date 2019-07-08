@@ -1,4 +1,9 @@
-import { IPraguePackage} from "@prague/container-definitions";
+/*!
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IPraguePackage } from "@prague/container-definitions";
 import { IComponentRegistry } from "@prague/container-runtime";
 import { IComponentFactory, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
