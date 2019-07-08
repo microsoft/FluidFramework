@@ -33,14 +33,14 @@ export class WebFlowHost extends Component {
         const template = url.searchParams.get("template");
         if (template) {
             importDoc(
-                this.runtime.openComponent(this.docId, /* wait: */ true),
+                this.openComponent(this.docId, /* wait: */ true),
                 template,
             );
         }
     }
 
     protected async opened() {
-        const docP = this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true);
+        const docP = this.openComponent<FlowDocument>(this.docId, /* wait: */ true);
         const mathP = this.openCollection("math");
         const videosP = this.openCollection("video-players");
         const imagesP = this.openCollection("images");

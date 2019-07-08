@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ServicePlatform } from "@prague/component-runtime";
+import { ServicePlatform } from "@prague/app-component";
 import { IComponent } from "@prague/container-definitions";
 import { Marker } from "@prague/merge-tree";
-import { IComponent as ILegacyComponent, IComponentRenderHTML } from "@prague/runtime-definitions";
+import { IComponentRenderHTML } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
 import { Tag } from "../../util/tag";
@@ -74,10 +74,10 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
             const slot = document.createElement(Tag.span);
             state.root.appendChild(slot);
 
-            layout.doc.getComponent(segment as Marker).then((component: IComponent | ILegacyComponent) => {
+            layout.doc.getComponent(segment as Marker).then((component: IComponent) => {
                 // TODO included for back compat - can remove once we migrate to 0.5
                 if ("attach" in component) {
-                    const legacyComponent = component as ILegacyComponent;
+                    const legacyComponent = component as { attach(platform: ServicePlatform) };
                     legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
                 } else {
                     const renderable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");

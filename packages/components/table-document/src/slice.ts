@@ -119,7 +119,7 @@ export class TableSlice extends Component implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
-            this.maybeDoc = await this.runtime.openComponent(docId, true);
+            this.maybeDoc = await this.openComponent(docId, true);
         }
     }
 

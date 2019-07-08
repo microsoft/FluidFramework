@@ -21,14 +21,14 @@ export class WebFlow extends Component {
         const template = url.searchParams.get("template");
         if (template) {
             importDoc(
-                this.runtime.openComponent(this.docId, /* wait: */ true),
+                this.openComponent(this.docId, /* wait: */ true),
                 template,
             );
         }
     }
 
     protected async opened() {
-        const docP = this.runtime.openComponent<FlowDocument>(this.docId, /* wait: */ true);
+        const docP = this.openComponent<FlowDocument>(this.docId, /* wait: */ true);
         const div = await this.platform.queryInterface<Element>("div");
 
         const scheduler = new Scheduler();

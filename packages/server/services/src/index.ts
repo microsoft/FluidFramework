@@ -13,7 +13,6 @@ export * from "./messageReceiver";
 export * from "./messageSender";
 export * from "./mongodb";
 export * from "./nodeCodeLoader";
-export * from "./nodePlatform";
 export * from "./redis";
 export * from "./socketIoRedisPublisher";
 export * from "./storage";

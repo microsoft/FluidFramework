@@ -6,14 +6,13 @@
 import {
     ConnectionState,
     IBlobManager,
-    IComponent as INewComponent,
+    IComponent,
     IComponentRouter,
     IDeltaManager,
     IDocumentMessage,
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
@@ -166,21 +165,6 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
      * Errors raised by distributed data structures
      */
     error(err: any): void;
-}
-
-/**
- * @deprecated Being replaced with IComponent in container-definitions
- */
-export interface IComponent {
-    /**
-     * Identifier for the component
-     */
-    id: string;
-
-    /**
-     * Allows for attachment to the given component
-     */
-    attach(platform: IPlatform): Promise<IPlatform>;
 }
 
 export interface IComponentRouter {
@@ -343,9 +327,9 @@ export interface IComponentFactory {
  * INewComponent is temporarily used for backward compatibility (but has the members of the new
  * IComponent interface).
  */
-export interface IComponentCollection extends INewComponent {
-    create<TOpt = object>(options?: TOpt): INewComponent;
-    remove(instance: INewComponent): void;
+export interface IComponentCollection extends IComponent {
+    create<TOpt = object>(options?: TOpt): IComponent;
+    remove(instance: IComponent): void;
     // need iteration
 }
 
@@ -376,7 +360,7 @@ export enum ComponentDisplayType {
  * If elm has an empty client rect, then it is assumed that it will expand to hold the
  * rendered component.
  */
-export interface IComponentRenderHTML extends INewComponent {
+export interface IComponentRenderHTML extends IComponent {
     render(elm: HTMLElement, displayType?: ComponentDisplayType): void;
 }
 
@@ -396,7 +380,7 @@ export interface IComponentHTMLViewable {
 /**
  * Provide information about component preferences for layout.
  */
-export interface IComponentLayout extends INewComponent {
+export interface IComponentLayout extends IComponent {
     aspectRatio?: number;
     minimumWidth?: number;
     minimumHeight?: number;
@@ -418,7 +402,7 @@ export enum ComponentCursorDirection {
     Airlift,
 }
 
-export interface IComponentCursor extends INewComponent {
+export interface IComponentCursor extends IComponent {
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
     // returns true if cursor leaves the component
@@ -427,7 +411,7 @@ export interface IComponentCursor extends INewComponent {
 }
 
 // used when another component will forward keyboard events to this component
-export interface IComponentKeyHandlers extends INewComponent {
+export interface IComponentKeyHandlers extends IComponent {
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;
 }

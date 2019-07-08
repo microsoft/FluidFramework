@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IFluidResolvedUrl, IPlatform } from "@prague/container-definitions";
+import { IClient, IFluidResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap } from "@prague/map";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { NodeCodeLoader, NodePlatform } from "@prague/services";
+import { NodeCodeLoader } from "@prague/services";
 import { Deferred } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as url from "url";
@@ -20,7 +20,17 @@ const waitTimeoutMS = 60000;
 
 interface ISharedMapWrapper {
     root: ISharedMap;
-    attach(platform: IPlatform): Promise<IPlatform>;
+    attach(platform: NodePlatform): Promise<any>;
+}
+
+class NodePlatform {
+    public async queryInterface<T>(id: string): Promise<any> {
+        return null;
+    }
+
+    public detach() {
+        return;
+    }
 }
 
 export class KeyValueLoader {

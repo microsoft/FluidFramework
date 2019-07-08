@@ -8,10 +8,8 @@ import {
     ICodeLoader,
     IDocumentServiceFactory,
     IHost,
-    IPlatform,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { IComponent } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";
 import { parse } from "url";
 import { debug } from "../debug";
@@ -49,11 +47,6 @@ export class ChaincodeWork extends EventEmitter {
         this.document = await loader.resolve({ url });
 
         if (attachPlatform) {
-            this.registerAttach(
-                loader,
-                this.document,
-                url,
-                new NodePlatform());
             this.attachListeners();
         }
 
@@ -81,28 +74,6 @@ export class ChaincodeWork extends EventEmitter {
     public removeListeners() {
         this.events.removeAllListeners();
         this.removeAllListeners();
-    }
-
-    private registerAttach(loader: Loader, container: Container, uri: string, platform: NodePlatform) {
-        this.attach(loader, uri, platform);
-        container.on("contextChanged", (value) => {
-            this.attach(loader, uri, platform);
-        });
-    }
-
-    private async attach(loader: Loader, url: string, platform: NodePlatform) {
-        const response = await loader.request({ url });
-        if (response.status !== 200) {
-            return;
-        }
-        switch (response.mimeType) {
-            case "prague/component":
-                const component = response.value as IComponent;
-                if ("attach" in component) {
-                    component.attach(platform);
-                }
-                break;
-        }
     }
 
     private attachListeners() {
@@ -145,15 +116,5 @@ export class ChaincodeWork extends EventEmitter {
             }
         }
         return true;
-    }
-}
-
-class NodePlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<any> {
-        return null;
-    }
-
-    public detach() {
-        return;
     }
 }

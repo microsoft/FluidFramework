@@ -11,7 +11,6 @@ import * as api from "@prague/client-api";
 import {
     IComponent,
     IGenericBlob,
-    IPlatform,
     ISequencedDocumentMessage,
     ISharedComponent,
     IUser,
@@ -74,7 +73,7 @@ interface IComponentViewMarker extends MergeTree.Marker {
     instance?: IComponentRenderHTML;
 }
 
-interface IMathCollection extends IComponent, IPlatform {
+interface IMathCollection extends IComponent {
     create(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
@@ -548,24 +547,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertInnerComponent("chart", "@chaincode/charts");
-        },
-        key: "insert chart",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertInnerComponent("map", "@chaincode/pinpoint-editor");
-        },
-        key: "insert map",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertInnerComponent("code", "@chaincode/monaco");
-        },
-        key: "insert monaco",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertComponentNew("charts", "@chaincode/charts");
         },
         key: "insert new chart",
@@ -596,12 +577,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertProgressBar();
-        },
-        key: "insert progress",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertNewCollectionComponent(f.videoPlayers);
         },
         key: "insert morton",
@@ -615,8 +590,8 @@ const commands: IFlowViewCmd[] = [
     {
         exec: (c, p, f) => {
             (navigator as any).clipboard.readText().then((text) => {
+                // TODO bring back paste support
                 console.log(`Inserting ${text}`);
-                f.insertDocument(text);
             });
         },
         key: "paste component",
@@ -5172,14 +5147,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.insertComponent("sheetlet", {});
     }
 
-    public insertInnerComponent(prefix: string, chaincode: string) {
-        const id = `${prefix}${Date.now()}`;
-
-        this.collabDocument.runtime.createAndAttachComponent(id, chaincode);
-
-        this.insertComponent("innerComponent", { id, chaincode });
-    }
-
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
@@ -5264,16 +5231,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         const markerPos = this.cursor.pos;
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
-    }
-
-    public insertProgressBar() {
-        const instance = this.progressBars.create();
-        this.insertComponent("innerComponent", { id: instance.url });
-    }
-
-    /** Insert an external Document */
-    public insertDocument(url: string) {
-        this.insertComponent("document", { url });
     }
 
     /** Insert a Formula box to display the given 'formula'. */
@@ -5648,12 +5605,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     // If it starts with "*", assume it's a slider definition.
                     if (searchString.startsWith("*")) {
                         this.insertSlider("=" + searchString.substring(1));
-                    }
-
-                    // If it starts with &, assume it's a document ID
-                    if (searchString.startsWith("&")) {
-                        const [id, pkg] = searchString.substring(1).split(" ");
-                        this.insertInnerComponent(id, pkg);
                     }
                 };
                 this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,

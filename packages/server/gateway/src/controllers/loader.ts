@@ -9,12 +9,12 @@ import {
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { IResolvedPackage, WebLoader, WebPlatform } from "@prague/loader-web";
+import { IResolvedPackage, WebLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { IGitCache } from "@prague/services-client";
+import { EventEmitter } from "events";
 import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 
 async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
@@ -49,9 +49,9 @@ async function attach(loader: Loader, url: string, host: Host) {
         return;
     }
 
-    // TODO included for back compat - can remove once we migrate to 0.5
+    // TODO included for back compat - continued to be included to support very old components
     if ("attach" in response.value) {
-        const legacy = response.value as ILegacyComponent;
+        const legacy = response.value as { attach(platform: LocalPlatform): void };
         legacy.attach(new LocalPlatform(host.div));
         return;
     }
@@ -74,12 +74,32 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
     });
 }
 
-class LocalPlatform extends WebPlatform {
-    constructor(div: HTMLElement) {
-        super(div);
+class LocalPlatform extends EventEmitter {
+    constructor(private readonly div: HTMLElement) {
+        super();
     }
 
-    public async detach() {
+    /**
+     * Queries the platform for an interface of the given ID.
+     * @param id - id of the interface for which the query is made.
+     */
+    public async queryInterface<T>(id: string): Promise<any> {
+        switch (id) {
+            case "dom":
+                return document;
+            case "div":
+                return this.div;
+            default:
+                return null;
+        }
+    }
+
+    // Temporary measure to indicate the UI changed
+    public update() {
+        this.emit("update");
+    }
+
+    public detach() {
         return;
     }
 }

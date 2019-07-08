@@ -11,7 +11,6 @@ export * from "./consensus";
 export * from "./deltas";
 export * from "./loader";
 export * from "./logger";
-export * from "./platform";
 export * from "./protocol";
 export * from "./storage";
 export * from "./summary";

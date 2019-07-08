@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { Component } from "./component";
+export { Component, ServicePlatform } from "./component";
 export { Document } from "./document";

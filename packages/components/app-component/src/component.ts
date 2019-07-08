@@ -6,19 +6,51 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IContainerContext,
-    IPlatform,
     IRequest,
     IResponse,
     IRuntime,
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
 import { ISharedMap, MapExtension, SharedMap } from "@prague/map";
-import { IComponent, IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
 const typeToFactorySym: unique symbol = Symbol("Component.typeToFactory()");
+
+/**
+ * The platform interface exposes access to underlying pl
+ * @deprecated being removed in favor of QI on container-definitions IComponent
+ */
+export interface IPlatform extends EventEmitter {
+    /**
+     * Queries the platform for an interface of the given ID.
+     */
+    queryInterface<T>(id: string): Promise<T>;
+
+    /**
+     * Detaches the given platform
+     */
+    detach();
+}
+
+export class ServicePlatform extends EventEmitter {
+    private readonly qi: Map<string, Promise<any>>;
+
+    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
+        super();
+        this.qi = new Map(services);
+    }
+
+    public async queryInterface(id: string): Promise<any> {
+        return this.qi.has(id) ? this.qi.get(id) : null;
+    }
+
+    public detach() {
+        return;
+    }
+}
 
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has
@@ -43,7 +75,7 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
 /**
  * Base class for chainloadable Fluid components.
  */
-export abstract class Component extends EventEmitter implements IComponent {
+export abstract class Component extends EventEmitter {
     private get dbgName() {
         return `${this.constructor.name}:'${this._runtime ? this._runtime.id : ""}'`;
     }
@@ -217,6 +249,28 @@ export abstract class Component extends EventEmitter implements IComponent {
             status: 404,
             value: `${request.url} not found`,
         };
+    }
+
+    /**
+     * Opens the component with the given 'id'.
+     */
+    protected async openComponent<T extends Component>(
+        id: string,
+        wait: boolean,
+        services?: ReadonlyArray<[string, Promise<any>]>,
+    ): Promise<T> {
+        // tslint:disable-next-line:no-non-null-assertion
+        const runtime = await this.context!.getComponentRuntime(id, wait);
+        const component = await runtime.request({ url: "/" });
+
+        if (component.status !== 200 || component.mimeType !== "prague/component") {
+            return Promise.reject("Not found");
+        }
+
+        const result = component.value as T;
+        await result.attach(new ServicePlatform(services));
+
+        return result;
     }
 
     /**

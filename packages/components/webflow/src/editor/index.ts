@@ -22,7 +22,7 @@ export class FlowEditor extends Component {
     public async opened() {
         const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
         if (maybeDiv) {
-            const doc = await this.runtime.openComponent<FlowDocument>(await this.root.wait("docId"), true);
+            const doc = await this.openComponent<FlowDocument>(await this.root.wait("docId"), true);
 
             // tslint:disable-next-line:no-unused-expression
             new Editor(doc, maybeDiv);

@@ -7,6 +7,8 @@
 
 - Interface `IPragueResolvedUrl` renamed to `IFluidResolvedUrl`
 - Interface `IChaincodeFactory` renamed to `IRuntimeFactory`.
+- Deprecated `IComponent` interface has been removed
+- Deprecated `IPlatform` has been removed
 
 ## defaultValueTypes is no longer global
 

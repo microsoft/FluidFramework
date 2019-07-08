@@ -12,7 +12,6 @@ import {
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
-    IPlatform,
     IQuorum,
     IRequest,
     IResponse,
@@ -27,7 +26,6 @@ import {
     IAttachMessage,
     IChannel,
     IChannelAttributes,
-    IComponent,
     IComponentContext,
     IComponentRuntime,
     IEnvelope,
@@ -55,23 +53,6 @@ interface IObjectServices {
     deltaConnection: ChannelDeltaConnection;
     objectStorage: IObjectStorageService;
     baseId: string;
-}
-
-export class ServicePlatform extends EventEmitter implements IPlatform {
-    private readonly qi: Map<string, Promise<any>>;
-
-    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
-        super();
-        this.qi = new Map(services);
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        return this.qi.has(id) ? this.qi.get(id) : null;
-    }
-
-    public detach() {
-        return;
-    }
 }
 
 export interface ISharedObjectRegistry {
@@ -190,27 +171,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
         newComponentRuntime.attach();
         return newComponentRuntime;
-    }
-
-    /**
-     * Opens the component with the given 'id'.
-     */
-    public async openComponent<T extends IComponent>(
-        id: string,
-        wait: boolean,
-        services?: ReadonlyArray<[string, Promise<any>]>,
-    ): Promise<T> {
-        const runtime = await this.componentContext.getComponentRuntime(id, wait);
-        const component = await runtime.request({ url: "/" });
-
-        if (component.status !== 200 || component.mimeType !== "prague/component") {
-            return Promise.reject("Not found");
-        }
-
-        const result = component.value as T;
-        await result.attach(new ServicePlatform(services));
-
-        return result;
     }
 
     public async request(request: IRequest): Promise<IResponse> {

@@ -25,7 +25,6 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@prague/merge-tree";
-import { IComponent as ILegacyComponent } from "@prague/runtime-definitions";
 import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
 import { Tag } from "../util/tag";
@@ -160,7 +159,7 @@ export class FlowDocument extends Component {
             return Promise.reject("Not found");
         }
 
-        return response.value as (IComponent | ILegacyComponent);
+        return response.value as IComponent;
     }
 
     public getSegmentAndOffset(position: number) {

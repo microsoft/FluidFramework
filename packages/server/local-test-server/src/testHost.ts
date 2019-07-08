@@ -5,7 +5,7 @@
 
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IComponent, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedStringExtension, SparseMatrixExtension } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import {
@@ -31,12 +31,13 @@ class TestRootComponent extends Component {
         return this.runtime.createAndAttachComponent(id, type);
     }
 
-    public openComponent<T extends IComponent>(
+    // tslint:disable-next-line: no-unnecessary-override
+    public openComponent<T extends Component>(
         id: string,
         wait: boolean,
         services?: [string, Promise<any>][],
     ) {
-        return this.runtime.openComponent<T>(id, wait, services);
+        return super.openComponent<T>(id, wait, services);
     }
 
     public createType<T extends ISharedObject>(id: string, type: string) {
@@ -98,7 +99,7 @@ export class TestHost {
     // tslint:disable-next-line:promise-must-complete
     private root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
 
-    private components: IComponent[] = [];
+    private components: Component[] = [];
 
     constructor(
         private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
@@ -148,7 +149,7 @@ export class TestHost {
      * @param services component services for query interface
      * @returns Component object
      */
-    public async createAndOpenComponent<T extends IComponent>(
+    public async createAndOpenComponent<T extends Component>(
         id: string,
         type: string,
         services?: [string, Promise<any>][],
@@ -177,7 +178,7 @@ export class TestHost {
      * @param services component services for query interface
      * @returns Component object
      */
-    public async openComponent<T extends IComponent>(
+    public async openComponent<T extends Component>(
         id: string,
         services?: [string, Promise<any>][],
     ): Promise<T> {
