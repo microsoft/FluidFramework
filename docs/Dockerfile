@@ -43,7 +43,8 @@ RUN npm run build:docs
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api
-RUN sed "1,3d" toc.yml > tmpfile; mv tmpfile toc.yml
+RUN sed -i "s/SharePoint Framework reference/API overview/g" toc.yml 
+RUN sed -i "s/\~\/overview\/sharepoint.md/\~\/api_overview.md/g" toc.yml 
 
 # Run DocFX
 WORKDIR /docfx

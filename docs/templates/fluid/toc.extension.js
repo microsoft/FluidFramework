@@ -25,18 +25,19 @@ var packageMapping = {
   "socket-storage-shared": "driver",
   "odsp-socket-storage": "driver",
   "file-socket-storage": "driver",
+  "replay-socket-storage": "driver",
 
   "utils": "misc",
 }
 
 var groupNames = {
-  runtime: "Runtime",
-  dds: "Distributed Data Structure",
   framework: "Framework",
+  dds: "Distributed Data Structure",
+  runtime: "Runtime",
   loader: "Loader",
   driver: "Driver",
   misc: "Misc",
-  unknown: "Unknown",
+  unknown: "Internal/Deprecated",
 };
 
 /**
@@ -44,23 +45,23 @@ var groupNames = {
  */
 exports.preTransform = function (model) {
   if (model.items && model.items.length > 0) {
-    var groupedPackages = {};
-    for (var group in groupNames) {
-      groupedPackages[group] = [];
-    }
-    var hasGrouped = false;
-    model.items.forEach(function(element) {
-      var group = packageMapping[element.name];
-      if (group === undefined || groupedPackages[group] === undefined) {
-        group = "unknown";
-      } else {
-        hasGrouped = true;
+    if (model.items[0].name === "API overview") {
+      var overview = model.items[0];
+      var children = overview.items;
+      overview.items = undefined;
+      var groupedPackages = {};
+      for (var group in groupNames) {
+        groupedPackages[group] = [];
       }
-      groupedPackages[group].push(element);
-    });
+      children.forEach(function(element) {
+        var group = packageMapping[element.name];
+        if (group === undefined || groupedPackages[group] === undefined) {
+          group = "unknown";
+        }
+        groupedPackages[group].push(element);
+      });
 
-    if (hasGrouped) {
-      model.items = [];
+      model.items = [ overview ];
       for (var group in groupedPackages) {
         model.items.push(
           { name: groupNames[group], items: groupedPackages[group] }
