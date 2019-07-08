@@ -806,6 +806,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.context!.changeConnectionState(value, this.clientId!, this._version!);
 
+        this.protocolHandler!.quorum.changeConnectionState(value, this.clientId!);
+
         if (this.connectionState === ConnectionState.Connected) {
             this.emit("connected", this.pendingClientId, version);
         } else {

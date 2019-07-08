@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPendingProposal, IQuorum } from "@prague/container-definitions";
+import { ConnectionState, IPendingProposal, IQuorum } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
@@ -14,6 +14,7 @@ export const QuorumKey = "leader";
  */
 export class LeaderElector extends EventEmitter {
     private leader: string;
+    private connected = false;
 
     constructor(private readonly quorum: IQuorum, private readonly clientId: string) {
         super();
@@ -34,6 +35,10 @@ export class LeaderElector extends EventEmitter {
         return this.leader;
     }
 
+    public changeConnectionState(value: ConnectionState, clientId: string) {
+        this.connected = value === ConnectionState.Connected;
+    }
+
     private attachQuorumListeners() {
         this.quorum.on("approveProposal", (sequenceNumber: number, key: string, value: any) => {
             if (key === QuorumKey) {
@@ -44,7 +49,8 @@ export class LeaderElector extends EventEmitter {
 
         this.quorum.on("addProposal", (proposal: IPendingProposal) => {
             if (proposal.key === QuorumKey) {
-                if (this.leader !== undefined) {
+                // If we are not connected, we can't reject proposal :(
+                if (this.leader !== undefined && this.connected) {
                     proposal.reject();
                 }
             }

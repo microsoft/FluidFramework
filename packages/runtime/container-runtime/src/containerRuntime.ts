@@ -232,6 +232,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public get leader(): boolean {
+        if (!this.connected) {
+            return false;
+        }
+        // Note: this.clientId can be undefined in disconnected state
+        // This can result in leader() returning true in such state, and undesired results.
         return this.leaderElector && (this.leaderElector.getLeader() === this.clientId);
     }
 
@@ -244,6 +249,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
+    private proposeLeadershipOnConnection = false;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap = new Map<string, string[]>();
@@ -263,13 +269,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.startLeaderElection();
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            assert(this.connected);
+            this.logger.debugAssert(this.connected, "allSentOpsAckd in disconnected state");
             this.updateDocumentDirtyState(false);
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
-            assert(this.connected);
             if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
+                this.logger.debugAssert(this.connected, "submitOp in disconnected state");
                 this.updateDocumentDirtyState(true);
             }
         });
@@ -524,8 +530,16 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             componentContext.changeConnectionState(value, clientId);
         }
 
+        if (this.leaderElector) {
+            this.leaderElector.changeConnectionState(value, clientId);
+        }
+
         if (value === ConnectionState.Connected) {
             this.emit("connected", this.clientId);
+
+            if (this.proposeLeadershipOnConnection) {
+                this.proposeLeadership();
+            }
 
             // TODO can remove in 0.6 - legacy drivers may be missing version
             if (version && version.indexOf("^0.2") === 0) {
@@ -703,7 +717,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             type: componentContext.pkg,
         };
         this.pendingAttach.set(componentRuntime.id, message);
-        this.submit(MessageType.Attach, message);
+        if (this.connected) {
+            this.submit(MessageType.Attach, message);
+        }
 
         // Resolve the deferred so other local components can access it.
         const deferred = this.componentContextsDeferred.get(componentRuntime.id);
@@ -856,6 +872,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     private submit(type: MessageType, content: any): number {
         this.verifyNotClosed();
+
+        // Can't submit messages in disconnected state!
+        // It's usually a bug that needs to be addressed in the code
+        // (as callers should have logic to retain messages in disconnected state and resubmit on connection)
+        // It's possible to remove this check -  we would need to skip deltaManager.maxMessageSize call below.
+        if (!this.connected) {
+            this.logger.sendErrorEvent({eventName: "submitInDisconnectedState", type});
+        }
 
         const serializedContent = JSON.stringify(content);
         const maxOpSize = this.context.deltaManager.maxMessageSize;
@@ -1011,11 +1035,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     private startLeaderElection() {
         if (this.deltaManager && this.deltaManager.clientType === Browser) {
-            if (this.connected) {
-                this.initLeaderElection();
-            } else {
-                this.once("connected", () => this.initLeaderElection());
-            }
+            this.initLeaderElection();
         }
     }
 
@@ -1049,10 +1069,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     private proposeLeadership() {
+        if (!this.connected) {
+            this.proposeLeadershipOnConnection = true;
+            return;
+        }
+        this.proposeLeadershipOnConnection = false;
+
         this.leaderElector.proposeLeadership().then(() => {
             debug(`Leadership proposal accepted for ${this.clientId}`);
         }, (err) => {
             debug(`Leadership proposal rejected ${err}`);
+            if (!this.connected) {
+                this.proposeLeadershipOnConnection = true;
+            }
         });
     }
 
@@ -1063,6 +1092,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      */
     private runTaskAnalyzer() {
         // Analyze the current state and ask for local and remote help separately.
+        if (this.clientId === undefined) {
+            this.logger.sendErrorEvent({eventName: "runTasksAnalyzerWithoutClientId"});
+            return;
+        }
+
         const helpTasks = analyzeTasks(this.clientId, this.getQuorum().getMembers(), this.tasks);
         if (helpTasks && (helpTasks.browser.length > 0 || helpTasks.robot.length > 0)) {
             if (helpTasks.browser.length > 0) {

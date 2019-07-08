@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionState,
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
@@ -184,6 +185,9 @@ export class Quorum extends EventEmitter implements IQuorum {
     public propose(key: string, value: any): Promise<void> {
         const clientSequenceNumber = this.sendProposal(key, value);
         if (clientSequenceNumber < 0) {
+            if (this.logger) {
+                this.logger.sendErrorEvent({eventName: "ProposalInDisconnectedState", key });
+            }
             return Promise.reject(false);
         }
 
@@ -221,6 +225,10 @@ export class Quorum extends EventEmitter implements IQuorum {
         // after we have emitted the event.
         this.emit("addProposal", proposal);
         proposal.disableRejection();
+
+        if (local) {
+            this.localProposals.delete(clientSequenceNumber);
+        }
     }
 
     /**
@@ -363,6 +371,15 @@ export class Quorum extends EventEmitter implements IQuorum {
 
                     this.pendingCommit.delete(pendingCommit.key);
                 });
+        }
+    }
+
+    public changeConnectionState(value: ConnectionState, clientId: string) {
+        if (value === ConnectionState.Disconnected) {
+            this.localProposals.forEach((deferral) => {
+                deferral.reject("Client got disconnected");
+            });
+            this.localProposals.clear();
         }
     }
 }

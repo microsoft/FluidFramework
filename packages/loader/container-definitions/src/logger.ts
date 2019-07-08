@@ -78,8 +78,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
     /**
      * Send information telemetry event
      * @param event - Event to send
+     * @param error - optional error object to log
      */
-    sendTelemetryEvent(event: ITelemetryGenericEvent): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
 
     /**
      * Send error telemetry event
