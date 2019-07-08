@@ -75,7 +75,7 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
     public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
 
     public query(id: string): any {
-        return SharedTextFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? exports : undefined;
+        return SharedTextFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
     public list(): string[] {
