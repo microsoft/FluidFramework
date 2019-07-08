@@ -37,6 +37,7 @@ COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/chart-view/package*.json packages/components/chart-view/
 COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
+COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/pond/package*.json packages/components/pond/
 COPY packages/components/progress-bars/package*.json packages/components/progress-bars/

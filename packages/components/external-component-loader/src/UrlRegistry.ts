@@ -2,34 +2,38 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// tslint:disable: no-console
 import { IPraguePackage } from "@prague/container-definitions";
 import { IComponentRegistry } from "@prague/container-runtime";
-import { IComponentFactory, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentFactory } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 
-export class UrlRegistry implements IComponentRegistry{
-    private static readonly WindowKeyPrefix = "FluidExternalComponent"
+/**
+ * A component registry that can load component via their url
+ */
+export class UrlRegistry implements IComponentRegistry {
+    private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
     private readonly registryMap = new Map<string, Promise<IComponentFactory>>();
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
-    constructor(...entries: [string, Promise<IComponentFactory>][]) {
-        entries.forEach((e)=>this.registryMap.set(e[0], e[1]))
+    constructor(entries: Map<string, Promise<IComponentFactory>>) {
+
+        entries.forEach((v, k) => this.registryMap.set(k, v));
 
         // stash on the window so multiple instance can coordinate
-        const loadingPackagesKey =`${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
-        if(window[loadingPackagesKey] === undefined){
+        const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
+        if (window[loadingPackagesKey] === undefined) {
             window[loadingPackagesKey] = new Map<string, Promise<unknown>>();
         }
-        this.loadingPackages = window[loadingPackagesKey];
+        this.loadingPackages = window[loadingPackagesKey] as Map<string, Promise<unknown>>;
 
-        const loadingEntrypointsKey =`${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
-        if(window[loadingEntrypointsKey] === undefined){
+        const loadingEntrypointsKey = `${UrlRegistry.WindowKeyPrefix}LoadingEntrypoints`;
+        if (window[loadingEntrypointsKey] === undefined) {
             window[loadingEntrypointsKey] = new Map<string, Promise<unknown>>();
         }
-        this.loadingEntrypoints = window[loadingEntrypointsKey];
+        this.loadingEntrypoints = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
     }
 
     public async get(name: string): Promise<IComponentFactory> {
@@ -41,43 +45,45 @@ export class UrlRegistry implements IComponentRegistry{
                     this.loadingPackages.set(name, this.loadEntrypoint(name));
                 }
 
-                const entrypoint = await this.loadingPackages.get(name);
+                const entrypoint = (await this.loadingPackages.get(name)) as IComponentFactory;
 
                 if (entrypoint === undefined) {
                     reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
                 } else {
-                    const instantiateComponent =
-                        entrypoint["instantiateComponent"] as (context: IComponentContext) => Promise<IComponentRuntime>;
 
-                    if (instantiateComponent === undefined) {
+                    if (entrypoint.instantiateComponent === undefined) {
                         reject(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
                     }
-                    resolve({ instantiateComponent });
+                    resolve(entrypoint);
                 }
             }));
         }
-
-        return this.registryMap.get(name);
+        const factoryP = this.registryMap.get(name);
+        if (factoryP !== undefined) {
+            return factoryP;
+        }
+        throw new Error();
     }
 
-
-    private async loadEntrypoint(name: string): Promise<any>{
+    private async loadEntrypoint(name: string): Promise<any> {
         const response = await fetch(`${name}/package.json`);
         if (!response.ok) {
-            console.log(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`)
+            console.log(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
         } else {
             const responseText = await response.text();
             const packageJson = JSON.parse(responseText) as IPraguePackage;
 
-            if (!packageJson) {
+            if (packageJson === undefined) {
                 console.log(`UrlRegistry: ${name}: Package json not deserializable as IPraguePackage`);
-            } else if (!packageJson.prague) {
+            } else if (packageJson.prague  === undefined) {
                 console.log(`UrlRegistry: ${name}: Package contains no prague property`);
-            } else if (!packageJson.prague.browser) {
+            } else if (packageJson.prague.browser  === undefined) {
                 console.log(`UrlRegistry: ${name}: Package contains no prague.browser property`);
-            } else if (!packageJson.prague.browser.entrypoint || packageJson.prague.browser.entrypoint == "") {
+            } else if (packageJson.prague.browser.entrypoint === undefined
+                || packageJson.prague.browser.entrypoint === "") {
                 console.log(`UrlRegistry: ${name}: Package contains no or empty prague.browser.entrypoint property`);
-            } else if (!packageJson.prague.browser.bundle || packageJson.prague.browser.bundle.length === 0) {
+            } else if (packageJson.prague.browser.bundle === undefined
+                || packageJson.prague.browser.bundle.length === 0) {
                 console.log(`UrlRegistry: ${name}: Package contains no or empty prague.browser.bundle property`);
             } else {
 
@@ -88,6 +94,7 @@ export class UrlRegistry implements IComponentRegistry{
                 }
                 const loadingEntrypoint = new Deferred();
                 this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
+                const preservedEntryPoint = window[entrypointName];
                 try {
                     await Promise.all(
                         packageJson.prague.browser.bundle.map(
@@ -102,6 +109,7 @@ export class UrlRegistry implements IComponentRegistry{
 
                 } finally {
                     // release the entry point
+                    window[entrypointName] = preservedEntryPoint;
                     loadingEntrypoint.resolve();
                     this.loadingEntrypoints.delete(entrypointName);
                 }
