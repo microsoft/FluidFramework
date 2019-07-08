@@ -26,7 +26,7 @@ export interface ISharedObject extends IChannel {
     on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /**
-     * Removes the specified listenever
+     * Removes the specified listener
      */
     removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
 

@@ -490,6 +490,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.deferredAttached.promise;
     }
 
+    public error(error: any): void {
+        this.componentContext.error(error);
+    }
+
     /**
      * Attach channel should only be called after the componentRuntime has been attached
      */

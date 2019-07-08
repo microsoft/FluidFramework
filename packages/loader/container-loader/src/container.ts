@@ -40,12 +40,12 @@ import {
     buildHierarchy,
     ChildLogger,
     DebugLogger,
+    EventEmitterWithErrorHandling,
     flatten,
     PerformanceEvent,
     readAndParse,
 } from "@prague/utils";
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -65,7 +65,7 @@ interface IConnectResult {
 
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
-export class Container extends EventEmitter implements IContainer {
+export class Container extends EventEmitterWithErrorHandling implements IContainer {
     public static async load(
         id: string,
         version: string,
@@ -212,17 +212,6 @@ export class Container extends EventEmitter implements IContainer {
     /* tslint:disable:no-unnecessary-override */
     public on(event: string | symbol, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
-    }
-
-    /**
-     * Modifies emit to also forward to the active runtime.
-     */
-    public emit(message: string | symbol, ...args: any[]): boolean {
-        // Still need to emit down to a runtime?
-        // const runtimeResult = this._runtime ? this._runtime.emit(message, ...args) : true;
-        // Returns true if the event had listeners, false otherwise.
-        // return superResult && runtimeResult;
-        return super.emit(message, ...args);
     }
 
     public close() {

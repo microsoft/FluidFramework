@@ -213,6 +213,8 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public async requestComponent(request: IRequest): Promise<IResponse> {
         return null;
     }
+
+    public error(err: any): void {}
 }
 
 /**

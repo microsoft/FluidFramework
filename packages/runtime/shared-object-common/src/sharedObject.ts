@@ -15,10 +15,9 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { ChildLogger } from "@prague/utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@prague/utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";
-import { EventEmitter } from "events";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
@@ -28,7 +27,7 @@ import { ValueType } from "./valueType";
 /**
  *  Base class from which all shared objects derive
  */
-export abstract class SharedObject extends EventEmitter implements ISharedObject {
+export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
 
     /**
      *
@@ -107,6 +106,10 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
             runtime !== null ? runtime.logger : undefined, type, { SharedObjectId: id });
+
+        this.on("error", (error: any) => {
+            runtime.emit("error", error);
+        });
     }
 
     /**
@@ -204,6 +207,7 @@ export abstract class SharedObject extends EventEmitter implements ISharedObject
     public on(
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    public on(event: "error", listener: (error: any) => void): this;
     public on(event: string | symbol, listener: (...args: any[]) => void): this;
 
     /* tslint:disable:no-unnecessary-override */

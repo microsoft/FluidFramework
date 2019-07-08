@@ -161,6 +161,11 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
      * Resolves when a local component is attached.
      */
     waitAttached(): Promise<void>;
+
+    /**
+     * Errors raised by distributed data structures
+     */
+    error(err: any): void;
 }
 
 /**
