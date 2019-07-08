@@ -87,7 +87,7 @@ commander
     .option(
         "-t, --tenant [tenant]",
         "Aria tenant",
-        "249d93644d18425ea36b3e443d49e59a-a78d2c7d-4380-47be-8830-7a8f2f9370d5-7185")
+        "")
     .arguments("<path> <name>")
     .action((path: string, name: string) => {
         uploadMetrics(path, name, commander.tenant)
