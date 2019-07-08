@@ -93,6 +93,7 @@ the [tag Prague](https://stackoverflow.microsoft.com/questions/tagged/prague)
 
 * [Loader](./packages/loader) startup code that loads Fluid container
 * [Runtime](./packages/runtime) core Fluid runtime definition and distributed data structures
+* [Framework](./packages/framework) base classes and interfaces for Fluid Framework that implements basic default behavior of components and containers.
 * [Drivers](./packages/drivers) contains the drivers targeting different server implementation endpoints (e.g. Routerlicious and ODSP)
 * [Components](./packages/components) contains the component mechanism that enable components to be built on top of the Fluid runtime.  It also contains the sample Flow and Table components.
 * [Server](./packages/server) (To be moved to `server` directory) contains libraries for the reference implementation of the core server services
