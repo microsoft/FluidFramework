@@ -28,7 +28,12 @@ import { debug } from "./debug";
 interface IParsedUrl {
     id: string;
     path: string;
-    version: string;
+    /**
+     * null means do not use snapshots
+     * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
+     * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
+     */
+    version: string | null;
 }
 
 // Protocol version supported by the loader
@@ -151,21 +156,20 @@ export class Loader extends EventEmitter implements ILoader {
     private parseUrl(url: string): IParsedUrl | null {
         const parsed = parse(url);
         const qs = querystring.parse(parsed.query!);
-        let qsVersion: string | string[] | null;
+        let version: string | null;
 
-        // null is required later if you don't want to make the get latest version call.
-        // there is no way to encode null in a query string
+        // version = null means not use any snapshot.
         if (qs.version === "null") {
-            qsVersion = null;
+            version = null;
         } else {
-            qsVersion = qs.version;
+            version = qs.version as string;
         }
 
         const regex = /^\/([^\/]*\/[^\/]*)(\/?.*)$/;
         const match = parsed.pathname!.match(regex);
 
         return (match && match.length === 3)
-            ? { id: match[1], path: match[2], version: qsVersion as string }
+            ? { id: match[1], path: match[2], version }
             : null;
     }
 
@@ -270,9 +274,13 @@ export class Loader extends EventEmitter implements ILoader {
         return { container, parsed };
     }
 
+    // @param version -one of the following
+    //   - null: use ops, no snapshots
+    //   - undefined - fetch latest snapshot
+    //   - otherwise, version sha to load snapshot
     private loadContainer(
         id: string,
-        version: string,
+        version: string | null | undefined,
         connection: string,
         documentService: IDocumentService,
         request: IRequest,

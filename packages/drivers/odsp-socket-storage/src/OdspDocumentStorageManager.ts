@@ -138,7 +138,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         if (blobid && blobid !== this.documentId) {
-            // each commit calls getVersions but odsp doesn't have a history for each version
+            // each commit calls getVersions but odsp doesn't have a history for each commit
             // return the blobid as is
             return [
                 {
@@ -152,10 +152,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return [];
         }
 
-        const treeSha = blobid === this.documentId && this.latestSha ? this.latestSha : blobid;
-        const cachedTree = treeSha ? this.treesCache.get(treeSha) : undefined;
-        if (cachedTree && count === 1) {
-            return [{ id: cachedTree.sha, treeId: undefined! }];
+        if (count === 1) {
+            const treeSha = blobid === this.documentId && this.latestSha ? this.latestSha : blobid;
+            const cachedTree = treeSha ? this.treesCache.get(treeSha) : undefined;
+            if (cachedTree) {
+                return [{ id: cachedTree.sha, treeId: undefined! }];
+            }
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {

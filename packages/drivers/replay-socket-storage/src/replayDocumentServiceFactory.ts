@@ -4,14 +4,38 @@
  */
 
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
+import { DebugReplayController } from "./fluidDebugger";
 import { createReplayDocumentService } from "./registration";
+import { IReplayController } from "./replayController";
+import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
+    public static create(
+            from: number,
+            to: number,
+            documentServiceFactory: IDocumentServiceFactory) {
+        return new ReplayDocumentServiceFactory(
+            documentServiceFactory,
+            new ReplayControllerStatic(from, to),
+        );
+    }
+
+    public static createDebugger(
+            documentServiceFactory: IDocumentServiceFactory) {
+        const controller = DebugReplayController.create();
+        if (!controller) {
+            return documentServiceFactory;
+        }
+        return new ReplayDocumentServiceFactory(
+            documentServiceFactory,
+            controller,
+        );
+    }
+
     constructor(
-        private readonly from: number,
-        private readonly to: number,
-        private readonly documentServiceFactory: IDocumentServiceFactory) {}
+        private readonly documentServiceFactory: IDocumentServiceFactory,
+        private readonly controller: IReplayController) {}
 
     /**
      * Creates a replay document service which uses the document service of provided
@@ -21,8 +45,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
      */
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         return Promise.resolve(createReplayDocumentService(
-            this.from,
-            this.to,
-            await this.documentServiceFactory.createDocumentService(resolvedUrl)));
+            await this.documentServiceFactory.createDocumentService(resolvedUrl),
+            this.controller));
     }
 }

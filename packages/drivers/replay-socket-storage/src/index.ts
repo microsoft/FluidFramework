@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export * from "./deltaStorageService";
-export * from "./documentService";
-export * from "./replayDocumentStorageService";
+export * from "./fluidDebugger";
 export * from "./registration";
-export * from "./documentDeltaConnection";
+export * from "./replayDeltaStorageService";
+export * from "./replayDocumentDeltaConnection";
+export * from "./replayDocumentService";
 export * from "./replayDocumentServiceFactory";
+export * from "./replayDocumentStorageService";

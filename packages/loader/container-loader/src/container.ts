@@ -66,9 +66,18 @@ interface IConnectResult {
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class Container extends EventEmitterWithErrorHandling implements IContainer {
+    /**
+     * Load container.
+     *
+     * @param specifiedVersion - one of the following
+     *   - null: use ops, no snapshots
+     *   - undefined - fetch latest snapshot
+     *   - otherwise, version sha to load snapshot
+     * @param connection - options (list of keywords). Accepted options are open & pause.
+     */
     public static async load(
         id: string,
-        version: string,
+        version: string | null | undefined,
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
@@ -354,7 +363,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
-    private async load(specifiedVersion: string, connection: string): Promise<void> {
+    /**
+     * Load container.
+     *
+     * @param specifiedVersion - one of the following
+     *   - null: use ops, no snapshots
+     *   - undefined - fetch latest snapshot
+     *   - otherwise, version sha to load snapshot
+     * @param connection - options (list of keywords). Accepted options are open & pause.
+     */
+    private async load(specifiedVersion: string | null | undefined, connection: string): Promise<void> {
         const connectionValues = connection.split(",");
 
         const connect = connectionValues.indexOf("open") !== -1;
@@ -363,23 +381,22 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const perfEvent = PerformanceEvent.start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
 
         const storageP = this.service.connectToStorage()
-            .then((storage) => storage ? new PrefetchDocumentStorageService(storage) : null);
-
-        // If a version is specified we will load it directly - otherwise will query historian for the latest
-        // version and then load it
-        const versionP = storageP.then(async (storage) => {
-            if (specifiedVersion === null) {
-                return null;
-            } else {
-                const versionId = specifiedVersion ? specifiedVersion : this.id;
-                const versions = await storage!.getVersions(versionId, 1);
-                return versions.length > 0 ? versions[0] : null;
-            }
-        });
+            .then((storage) => new PrefetchDocumentStorageService(storage));
 
         // Get the snapshot tree
-        const treeP = Promise.all([storageP, versionP]).then(
-            ([storage, version]) => storage!.getSnapshotTree(version!));
+        const treeP = storageP.then(async (storage) => {
+            // If a version is specified we will load it directly - otherwise will query historian for the latest
+            // version and then load it
+            if (specifiedVersion !== null) {
+                const versionId = specifiedVersion ? specifiedVersion : this.id;
+                const versions = await storage.getVersions(versionId, 1);
+                const version = versions.length > 0 ? versions[0] : null;
+                if (version !== null) {
+                    return storage.getSnapshotTree(version);
+                }
+            }
+            return null; // not using snapshots!
+        });
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
@@ -395,7 +412,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ? tree.trees[".protocol"].blobs.attributes
                     : tree.blobs[".attributes"];
 
-                return readAndParse<IDocumentAttributes>(storage!, attributesHash);
+                return readAndParse<IDocumentAttributes>(storage, attributesHash);
             });
 
         // ...begin the connection process to the delta stream
@@ -405,21 +422,20 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const protocolHandlerP = Promise.all([attributesP, storageP, treeP]).then(
             ([attributes, storage, tree]) => {
                 // Initialize the protocol handler
-                return this.initializeProtocolState(attributes, storage!, tree!);
+                return this.initializeProtocolState(attributes, storage, tree!);
             });
 
         // ...instantiate the chaincode defined on the document
         const chaincodeP = protocolHandlerP.then((protocolHandler) => this.loadCodeFromQuorum(protocolHandler.quorum));
 
         const blobManagerP = Promise.all([storageP, treeP]).then(
-            ([storage, tree]) => this.loadBlobManager(storage!, tree!));
+            ([storage, tree]) => this.loadBlobManager(storage, tree!));
 
         // Wait for all the loading promises to finish
         return Promise
             .all([
                 storageP,
                 treeP,
-                versionP,
                 attributesP,
                 blobManagerP,
                 protocolHandlerP,
@@ -429,7 +445,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             .then(async ([
                 storageService,
                 tree,
-                version,
                 attributes,
                 blobManager,
                 protocolHandler,
@@ -444,7 +459,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
-                if (version) {
+                if (tree) {
                     this._existing = true;
                     this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
                 } else {

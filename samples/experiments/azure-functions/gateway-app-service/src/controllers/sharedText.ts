@@ -136,7 +136,7 @@ async function loadDocument(
         });
     if (replayMode) {
         documentServiceFactory =
-            new ReplayDocumentServiceFactory(
+            ReplayDocumentServiceFactory.create(
                 from,
                 to,
                 documentServiceFactory);
