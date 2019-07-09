@@ -1,0 +1,28 @@
+{
+  "name": "search-content-extractor",
+  "version": "1.0.0",
+  "description": "extract search content from snapshot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "dependencies": {
+    "@prague/container-definitions": "^0.5.0",
+    "@prague/odsp-socket-storage": "^0.5.0",
+    "@prague/odsp-utils": "^0.5.0",
+    "@prague/routerlicious-socket-storage": "^0.5.0",
+    "@prague/runtime-definitions": "^0.5.0",
+    "request": "^2.88.0"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.5.0",
+    "@types/node": "^10.14.12",
+    "@types/request": "^2.47.1",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
+}
