@@ -54,6 +54,7 @@ COPY packages/components/search-menu/package*.json packages/components/search-me
 COPY packages/components/table-document/package*.json packages/components/table-document/
 COPY packages/components/table-test/package*.json packages/components/table-test/
 COPY packages/components/table-view/package*.json packages/components/table-view/
+COPY packages/components/todo/package*.json packages/components/todo/
 COPY packages/components/webflow/package*.json packages/components/webflow/
 COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/
 COPY packages/drivers/replay-socket-storage/package*.json packages/drivers/replay-socket-storage/

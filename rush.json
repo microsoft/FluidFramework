@@ -123,6 +123,10 @@
       "projectFolder": "packages/components/table-test/"
     },
     {
+      "packageName": "@chaincode/todo",
+      "projectFolder": "packages/components/todo/"
+    },
+    {
       "packageName": "@chaincode/table-view",
       "projectFolder": "packages/components/table-view/"
     },
