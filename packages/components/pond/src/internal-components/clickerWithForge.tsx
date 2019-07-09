@@ -44,9 +44,9 @@ export class ClickerWithForge extends RootComponent implements IComponentHTMLVie
     /**
      * Do setup work here
      */
-    protected async created() {
+    protected async create() {
         // This allows the RootComponent to do setup. In this case it creates the root map
-        await super.created();
+        await super.create();
 
         this.hasForged = this.runtime.existing;
         this.root.set("clicks", 0, CounterValueType.Name);

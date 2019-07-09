@@ -48,9 +48,9 @@ export class Todo extends RootComponent implements IComponentHTMLViewable {
   /**
    * Do setup work here
    */
-  protected async created() {
+  protected async create() {
     // This allows the RootComponent to do setup. In this case it creates the root map
-    await super.created();
+    await super.create();
 
     this.root.set("ids", SharedMap.create(this.runtime));
 

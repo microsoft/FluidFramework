@@ -75,8 +75,8 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
     return myDiv;
   }
 
-  protected async created() {
-    await super.created();
+  protected async create() {
+    await super.create();
     this.root.set("clicks", 0, CounterValueType.Name);
     const sequence = SharedObjectSequence.create<string>(this.runtime);
     sequence.register();

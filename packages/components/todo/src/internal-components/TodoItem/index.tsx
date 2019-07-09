@@ -57,9 +57,9 @@ export class TodoItem extends RootComponent
   /**
    * Do setup work here
    */
-  protected async created() {
+  protected async create() {
     // This allows the RootComponent to do setup. In this case it creates the root map
-    await super.created();
+    await super.create();
 
     this.root.set("text", SharedCell.create(this.runtime));
     this.root.set("checked", 0, CounterValueType.Name);

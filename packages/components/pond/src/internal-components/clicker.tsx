@@ -40,9 +40,9 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
     /**
      * Do setup work here
      */
-    protected async created() {
+    protected async create() {
         // This allows the RootComponent to do setup. In this case it creates the root map
-        await super.created();
+        await super.create();
         this.root.set("clicks", 0, CounterValueType.Name);
 
         const clicks = this.root.get<Counter>("clicks");

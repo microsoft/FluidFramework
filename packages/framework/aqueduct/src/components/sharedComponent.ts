@@ -97,7 +97,7 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
   /**
    * Called the first time the root component is initialized
    */
-  protected async created(): Promise<void> { }
+  protected async create(): Promise<void> { }
 
   /**
    * Called every time but the first time the component is initialized
@@ -140,7 +140,7 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     if (this.runtime.existing) {
       await this.existing();
     } else {
-      await this.created();
+      await this.create();
     }
 
     await this.opened();

@@ -73,7 +73,7 @@ export abstract class RootComponent extends SharedComponent implements IComponen
         await super.initialize();
     }
 
-    protected async created(): Promise<void> {
+    protected async create(): Promise<void> {
         // If it's the first time we are creating the component then create a root map
         this.root = SharedMap.create(this.runtime, this.rootMapId);
 

@@ -44,9 +44,9 @@ export class Pond extends RootComponent implements IComponentHTMLViewable {
   /**
    * Do setup work here
    */
-  protected async created() {
+  protected async create() {
     // This allows the RootComponent to do setup. In this case it creates the root map
-    await super.created();
+    await super.create();
     await this.createAndAttachComponent("clicker", ClickerName);
     await this.createAndAttachComponent("clicker-with-forge", ClickerWithForgeName, { initialValue: 100 });
   }
