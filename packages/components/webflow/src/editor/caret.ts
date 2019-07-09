@@ -41,7 +41,7 @@ export class Caret {
 
                         switch (detail.direction) {
                             case Direction.up:
-                            case Direction.right:
+                            case Direction.left:
                                 break;
                             default:
                                 position++;

@@ -18,6 +18,7 @@ export const enum Tag {
     li          = "LI",
     ol          = "OL",
     p           = "P",
+    div         = "DIV",
     span        = "SPAN",
     ul          = "UL",
 }

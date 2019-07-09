@@ -285,8 +285,9 @@ export class FlowDocument extends Component {
         this.sharedString.insertMarker(position, ReferenceType.Tile, FlowDocument.lineBreakProperties);
     }
 
-    public insertComponent(position: number, url: string, style?: string, classList?: string[]) {
-        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.inclusionProperties, url, style, classList: classList && classList.join(" ") }));
+    public insertComponent(position: number, url: string, componentOptions: object, style?: string, classList?: string[]) {
+        this.sharedString.insertMarker(position, ReferenceType.Tile, Object.freeze({ ...FlowDocument.inclusionProperties,
+            componentOptions, url, style, classList: classList && classList.join(" ") }));
     }
 
     public setFormat(position: number, tag: Tag) {

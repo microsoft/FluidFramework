@@ -5,6 +5,7 @@
 
 // tslint:disable:object-literal-sort-keys align
 import * as SearchMenu from "@chaincode/search-menu";
+import { IComponent } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";
 import { CharacterCodes } from "../text";
@@ -27,14 +28,6 @@ export enum MathTokenType {
 }
 
 export const Nope = -1;
-
-export interface IMathMarker extends MergeTree.Marker {
-    mathCursor: number;
-    mathTokenIndex: number;
-    mathTokens: MathToken[];
-    mathViewBuffer?: string;
-    mathText: string;
-}
 
 export interface IMathCommand extends SearchMenu.ISearchMenuCommand {
     arity?: number;
@@ -217,11 +210,6 @@ export function printTokens(tokIndex: number, mathCursor: number, tokens: MathTo
     console.log(buf);
 }
 
-// update this to use IMathCursor
-export function printMathMarker(marker: IMathMarker) {
-    printTokens(marker.mathTokenIndex, marker.mathCursor, marker.mathTokens, marker.mathText);
-}
-
 export function posAtToken(tokIndex: number, tokens: MathToken[]) {
     let pos = 0;
     for (let i = 0; i < tokIndex; i++) {
@@ -261,15 +249,18 @@ export interface IMathCursor {
     mathTokenIndex: number;
 }
 
+export interface IMathMarker extends MergeTree.Marker {
+    mathTokens: MathToken[];
+    mathViewBuffer?: string;
+    mathText: string;
+    mathInstance?: IComponent;
+}
+
 /**
  * This function updates the mathCursor and mathTokenIndex properties of mathMarker
  * @param mathMarker marker for end of math region
  */
 export function bksp(mathMarker: IMathMarker, mc: IMathCursor) {
-    let curTok: MathToken;
-    if (mc.mathTokenIndex < mathMarker.mathTokens.length) {
-        curTok = mathMarker.mathTokens[mathMarker.mathTokenIndex];
-    }
     let prevTokIndex = mathTokRev(mc.mathTokenIndex, mathMarker.mathTokens);
     while ((prevTokIndex >= 0) &&
         ((mathMarker.mathTokens[prevTokIndex].type === MathTokenType.EndCommand) ||
@@ -472,11 +463,4 @@ function lexMathRange(mathBuffer: string, tokens: MathToken[],
 
 export function lexMath(mathBuffer: string) {
     return lexMathRange(mathBuffer, [] as MathToken[], 0, [] as MathToken[]);
-}
-
-export function initMathMarker(mathMarker: IMathMarker, mathText: string) {
-    mathMarker.mathText = mathText;
-    mathMarker.mathTokens = lexMath(mathMarker.mathText);
-    mathMarker.mathCursor = 0;
-    mathMarker.mathTokenIndex = 0;
 }

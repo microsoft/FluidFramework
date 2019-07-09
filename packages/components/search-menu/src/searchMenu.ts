@@ -633,13 +633,13 @@ export function searchBoxCreate(context: any, boundingElm: HTMLElement,
             // If the searchbox successfully resolved to a simple command, execute it.
             if (cmd && cmd.exec) {
                 cmd.exec(cmd, params, context);
-                if (onExec) {
-                    onExec(cmd);
-                }
             } else {
                 if (cmdParser) {
                     cmdParser(getSearchString(), cmd);
                 }
+            }
+            if (onExec) {
+                onExec(cmd);
             }
             return true;
         } else if (e.charCode >= 32) {

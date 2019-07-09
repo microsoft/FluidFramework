@@ -18,15 +18,13 @@ import {
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentCursorDirection, ComponentDisplayType,
-    IComponentCollection, IComponentCursor, IComponentKeyHandlers, IComponentLayout, IComponentRenderHTML,
-    IInboundSignalMessage,
+    ComponentCursorDirection, IComponentCollection, IComponentCursor, IComponentKeyHandlers,
+    IComponentLayout, IComponentRenderHTML, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as Geocoder from "geocoder";
-import * as Katex from "katex";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
@@ -82,7 +80,7 @@ interface IMathCollection extends IComponent {
 // here due to package dependencies
 
 interface IMathOptions {
-    displayType?: ComponentDisplayType;
+    display: string;
 }
 
 export interface IMathInstance extends ISharedComponent, IComponentRenderHTML, IComponentCursor,
@@ -294,12 +292,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.showKatex();
-        },
-        key: "katex",
-    },
-    {
-        exec: (c, p, f) => {
             f.setColor("red");
         },
         key: "red",
@@ -428,7 +420,7 @@ const commands: IFlowViewCmd[] = [
         exec: (c, p, f) => {
             f.modes.showBookmarks = true;
             f.tempBookmarks = undefined;
-            f.localQueueRender(f.cursor.pos);
+            f.hostSearchMenu(f.cursor.pos);
         },
         key: "show bookmarks",
     },
@@ -459,7 +451,7 @@ const commands: IFlowViewCmd[] = [
         exec: (c, p, f) => {
             f.modes.showBookmarks = false;
             f.tempBookmarks = undefined;
-            f.localQueueRender(f.cursor.pos);
+            f.hostSearchMenu(f.cursor.pos);
         },
         key: "hide bookmarks",
     },
@@ -469,7 +461,7 @@ const commands: IFlowViewCmd[] = [
         },
         exec: (c, p, f) => {
             f.modes.showComments = true;
-            f.localQueueRender(f.cursor.pos);
+            f.hostSearchMenu(f.cursor.pos);
         },
         key: "show comments",
     },
@@ -479,7 +471,7 @@ const commands: IFlowViewCmd[] = [
         },
         exec: (c, p, f) => {
             f.modes.showComments = false;
-            f.localQueueRender(f.cursor.pos);
+            f.hostSearchMenu(f.cursor.pos);
         },
         key: "hide comments",
     },
@@ -487,7 +479,7 @@ const commands: IFlowViewCmd[] = [
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
             Table.createTable(f.cursor.pos, f.sharedString);
-            f.localQueueRender(f.cursor.pos);
+            f.hostSearchMenu(f.cursor.pos);
         },
         key: "table test",
     },
@@ -918,7 +910,7 @@ function renderSegmentIntoLine(
                         });
                     }
                 } else {
-                    componentMarker.instance.render(span, ComponentDisplayType.Inline);
+                    componentMarker.instance.render(span, { display: "inline" });
                     componentMarker.properties.cachedElement = span;
                     lineContext.contentDiv.appendChild(span);
                 }
@@ -946,58 +938,6 @@ function renderSegmentIntoLine(
 
                     lineContext.contentDiv.appendChild(newElement);
                 }
-            }
-        }
-
-        if (segment.hasTileLabel("math")) {
-            if (segment.properties.mathStart) {
-                lineContext.mathMode = true;
-                lineContext.mathSegpos = segpos;
-            } else {
-                const mathMarker = segment as MathMenu.IMathMarker;
-                lineContext.span = makeMathSpan(lineContext.mathSegpos, 0);
-                lineContext.span.style.marginLeft = "2px";
-                lineContext.span.style.marginTop = "4px";
-                lineContext.span.style.marginRight = "2px";
-                if (mathMarker.mathTokens === undefined) {
-                    MathMenu.initMathMarker(mathMarker, lineContext.mathBuffer);
-                }
-                const cpos = lineContext.flowView.cursor.pos;
-                let cursorPresent = false;
-                if ((cpos > lineContext.mathSegpos) && (cpos <= segpos)) {
-                    lineContext.span.style.borderLeft = "solid orange 2px";
-                    lineContext.span.style.borderRight = "solid orange 2px";
-                    if ((!mathMarker.mathViewBuffer) || (cpos === segpos)) {
-                        mathMarker.mathCursor = lineContext.mathBuffer.length;
-                        lineContext.mathBuffer += MathMenu.cursorTex;
-                    } else {
-                        // showCursor
-                        lineContext.mathBuffer = lineContext.mathBuffer.substring(0, mathMarker.mathCursor) +
-                            MathMenu.cursorTex +
-                            lineContext.mathBuffer.substring(mathMarker.mathCursor);
-                    }
-                    cursorPresent = true;
-                    lineContext.flowView.cursor.assignToLine(0, lineContext.lineDivHeight,
-                        lineContext.lineDiv, false);
-                }
-                lineContext.mathBuffer = MathMenu.boxEmptyParam(lineContext.mathBuffer);
-                mathMarker.mathViewBuffer = lineContext.mathBuffer;
-                Katex.render(lineContext.mathBuffer, lineContext.span,
-                    { throwOnError: false });
-                if (cursorPresent) {
-                    const cursorElement = domutils.findFirstMatch(lineContext.span, elm => {
-                        return elm.style && (elm.style.color === MathMenu.cursorColor);
-                    });
-                    if (cursorElement) {
-                        cursorElement.classList.add("blinking");
-                    }
-                }
-                lineContext.contentDiv.appendChild(lineContext.span);
-                lineContext.lineDiv.lineEnd += lineContext.mathBuffer.length;
-                lineContext.mathBuffer = "";
-                lineContext.mathMode = false;
-                const mathEndMarker = segment as IMathEndMarker;
-                mathEndMarker.outerSpan = lineContext.span;
             }
         }
 
@@ -2064,16 +2004,6 @@ interface IRenderOutput {
     viewportEndPos: number;
 }
 
-export function getRenderedMathWidthHeight(hostDiv: HTMLDivElement, mathText: string, font: string) {
-    const elt = document.createElement("div");
-    hostDiv.appendChild(elt);
-    elt.style.font = font;
-    Katex.render(mathText, elt, { throwOnError: false });
-    const bb = elt.getBoundingClientRect();
-    hostDiv.removeChild(elt);
-    return { h: bb.height, w: bb.width };
-}
-
 function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     function gtw(text: string, fontstr: string) {
         return domutils.getTextWidth(text, fontstr);
@@ -2091,13 +2021,9 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
         }
     }
 
-    function getRMWH(mathText: string, font: string) {
-        return getRenderedMathWidthHeight(docContext.viewportDiv, mathText, font);
-    }
     return {
         getFont,
         getLineHeight: glh,
-        getMathWidthHeight: getRMWH,
         getTextWidth: gtw,
     };
 }
@@ -2262,7 +2188,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     const deferredPGs = (layoutContext.containingPGMarker !== undefined);
     const paragraphLexer = new Paragraph.ParagraphLexer({
         markerToken: Paragraph.markerToItems,
-        mathToken: Paragraph.textToMathItem,
         textToken: Paragraph.textTokenToItems,
     }, itemsContext);
     itemsContext.paragraphLexer = paragraphLexer;
@@ -2448,7 +2373,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 }
                 const blockDiv = makeBlockDiv(0, layoutContext.viewport.getLineTop(), minWidth, minHeight);
                 blockDiv.style.width = minWidth;
-                newBlock.instance.render(blockDiv, ComponentDisplayType.Block);
+                newBlock.instance.render(blockDiv, { display: "block" });
                 ch = blockDiv.getBoundingClientRect().height;
             } else {
                 if (newBlock.instance) {
@@ -2479,7 +2404,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         }
                         absBlockDiv.style.width = width;
                         absBlockDiv.style.display = "block";
-                        newBlock.instance.render(absBlockDiv, ComponentDisplayType.Block);
+                        newBlock.instance.render(absBlockDiv, { display: "block" });
                         // cache this in flow view
                         ch = absBlockDiv.getBoundingClientRect().height;
                     } else {
@@ -2488,7 +2413,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         if ((!layout) || (!layout.variableHeight)) {
                             blockDiv.style.height = minHeight;
                         }
-                        newBlock.instance.render(blockDiv, ComponentDisplayType.Block);
+                        newBlock.instance.render(blockDiv, { display: "block" });
                         // cache this in FlowView
                         ch = blockDiv.getBoundingClientRect().height;
                         console.log(`block height ${ch}`);
@@ -2518,7 +2443,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP.then((instance) => {
                             newBlock.instance = instance;
                             const compPos = getOffset(layoutContext.flowView, asMarker);
-                            layoutContext.flowView.localQueueRender(compPos);
+                            layoutContext.flowView.hostSearchMenu(compPos);
                         });
                     }
 
@@ -2762,7 +2687,7 @@ function makeSegSpan(
                             const text = itemElm.innerText.trim();
                             context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
                             context.sharedString.insertText(text, span.textErrorRun.start);
-                            context.localQueueRender(span.textErrorRun.start);
+                            context.hostSearchMenu(span.textErrorRun.start);
                         }
                         function selectItem(ev: MouseEvent) {
                             const itemElm = ev.target as HTMLElement;
@@ -3429,7 +3354,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // Expose the ability to invalidate the current layout when a component's width/height changes.
         this.services.set("invalidateLayout", () => {
             console.log("Component invalidated layout");
-            this.localQueueRender(FlowView.docStartPosition);
+            this.hostSearchMenu(FlowView.docStartPosition);
         });
 
         // Provide access to the containing shared object
@@ -3559,7 +3484,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const props = { clid: this.sharedString.client.longClientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
         }
-        this.localQueueRender(-1);
+        this.hostSearchMenu(-1);
     }
 
     public updatePresenceCursors() {
@@ -3583,7 +3508,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.historyVersion.innerText = `Version @${seq}`;
         this.historyBubble.style.left = `${l}px`;
         this.cursor.pos = FlowView.docStartPosition;
-        this.localQueueRender(FlowView.docStartPosition);
+        this.hostSearchMenu(FlowView.docStartPosition);
     }
 
     public updateHistoryBubble(seq: number) {
@@ -3653,7 +3578,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.historyClient = undefined;
             this.status.removeSlider();
             this.topChar = 0;
-            this.localQueueRender(0);
+            this.hostSearchMenu(0);
         }
     }
 
@@ -3663,7 +3588,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const seq = this.client.undo();
             this.updateHistoryBubble(seq);
             this.cursor.pos = FlowView.docStartPosition;
-            this.localQueueRender(FlowView.docStartPosition);
+            this.hostSearchMenu(FlowView.docStartPosition);
         }
     }
 
@@ -3673,7 +3598,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const seq = this.client.redo();
             this.updateHistoryBubble(seq);
             this.cursor.pos = FlowView.docStartPosition;
-            this.localQueueRender(FlowView.docStartPosition);
+            this.hostSearchMenu(FlowView.docStartPosition);
         }
     }
 
@@ -4032,12 +3957,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public getCanonicalX() {
-        let rect = this.cursor.rect();
-        const mathTileInfo = this.inMathGetMarker();
-        if (mathTileInfo) {
-            const mathEndMarker = mathTileInfo.tile as IMathEndMarker;
-            rect = mathEndMarker.outerSpan.getBoundingClientRect();
-        }
+        const rect = this.cursor.rect();
         let x: number;
         if (this.lastVerticalX >= 0) {
             x = this.lastVerticalX;
@@ -4231,7 +4151,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.cursor.clearSelection();
             this.broadcastPresence();
             if (render) {
-                this.localQueueRender(this.cursor.pos);
+                this.hostSearchMenu(this.cursor.pos);
             }
         }
     }
@@ -4447,20 +4367,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.clearSelection();
                 } else if (e.keyCode === KeyCode.backspace) {
                     // TODO: in math region; don't backspace if region empty
-                    const mathTileInfo = this.inMathGetMarker();
-                    if (mathTileInfo) {
-                        const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
-                        // remove along with non-component math
-                        const toRemoveMath = MathMenu.bksp(mathMarker, mathMarker);
-                        if (toRemoveMath) {
-                            const beginTileInfo = findTile(this, mathTileInfo.pos - 1, "math", true);
-                            if (this.modes.showCursorLocation) {
-                                this.cursorLocation();
-                            }
-                            const adjPos = beginTileInfo.pos + 1;
-                            this.sharedString.removeText(adjPos + toRemoveMath.start, adjPos + toRemoveMath.end);
-                        }
-                    } else if (this.getMathViewMarker()) {
+                    if (this.getMathViewMarker()) {
                         this.mathComponentViewKeydown(e);
                     } else {
                         let toRemove = this.cursor.getSelection();
@@ -4508,9 +4415,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos < (this.client.getLength() - 1)) {
-                        if (this.inMathGetMarker()) {
-                            this.mathCursorFwd();
-                        } else if (this.getMathViewMarker()) {
+                        if (this.getMathViewMarker()) {
                             const marker = getContainingSegment(this, this.cursor.pos).segment as IMathViewMarker;
                             this.mathComponentViewCursorFwd(marker);
                         } else {
@@ -4523,12 +4428,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                                 this.clearSelection();
                             }
                             this.cursorFwd();
-                            const mathTileInfo = this.inMathGetMarker();
-                            if (mathTileInfo) {
-                                const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
-                                mathMarker.mathTokenIndex = 0;
-                                mathMarker.mathCursor = 0;
-                            }
                             this.broadcastPresence();
                             this.cursor.updateView(this);
                         }
@@ -4536,9 +4435,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 } else if (e.keyCode === KeyCode.leftArrow) {
                     this.undoRedoManager.closeCurrentOperation();
                     if (this.cursor.pos > FlowView.docStartPosition) {
-                        if (this.inMathGetMarker()) {
-                            this.mathCursorRev();
-                        } else if (this.getMathViewMarker()) {
+                        if (this.getMathViewMarker()) {
                             const marker = getContainingSegment(this, this.cursor.pos).segment as IMathViewMarker;
                             this.mathComponentViewCursorRev(marker);
                         } else {
@@ -4551,12 +4448,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                                 this.clearSelection();
                             }
                             this.cursorRev();
-                            const mathTileInfo = this.inMathGetMarker();
-                            if (mathTileInfo) {
-                                const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
-                                mathMarker.mathTokenIndex = mathMarker.mathTokens.length;
-                                mathMarker.mathCursor = mathTileInfo.pos;
-                            }
                             this.broadcastPresence();
                             this.cursor.updateView(this);
                         }
@@ -4579,10 +4470,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     }
                     const vpEnd = this.viewportEndPos;
                     if ((this.cursor.pos < maxPos) || (lineCount < 0)) {
-                        let fromMath = false;
-                        if (this.inMathGetMarker()) {
-                            fromMath = true;
-                        }
                         if (!this.verticalMove(lineCount)) {
                             if (((this.viewportStartPos > 0) && (lineCount < 0)) ||
                                 ((this.viewportEndPos < maxPos) && (lineCount > 0))) {
@@ -4604,13 +4491,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                         }
                         this.broadcastPresence();
                         this.cursor.updateView(this);
-                        if (this.inMathGetMarker()) {
-                            this.mathNormalizeCursor();
-                            fromMath = true;
-                        }
-                        if (fromMath) {
-                            this.localQueueRender(this.cursor.pos);
-                        }
                     }
                 } else {
                     if (!e.ctrlKey) {
@@ -4639,28 +4519,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     // TODO: other labels; for now assume only list/pg tile labels
                     this.insertParagraph(this.cursor.pos++);
                 } else {
-                    const mathTileInfo = this.inMathGetMarker();
-
-                    if (mathTileInfo) {
-                        if (code === CharacterCodes.backslash) {
-                            this.activeSearchBox = MathMenu.mathMenuCreate(this, this.viewportDiv,
-                                (s, cmd) => {
-                                    let text = "\\" + s;
-                                    if (cmd) {
-                                        text = cmd.texString;
-                                    }
-                                    this.sharedString.insertText(text, pos);
-                                });
-                            this.activeSearchBox.showAllItems();
-                        } else {
-                            const toInsert = MathMenu.transformInputCode(code);
-                            if (toInsert) {
-                                this.sharedString.insertText(toInsert, pos);
-                            } else {
-                                console.log(`unrecognized math input ${e.char}`);
-                            }
-                        }
-                    } else if (this.getMathViewMarker()) {
+                    if (this.getMathViewMarker()) {
                         this.mathComponentViewKeypress(e);
                     } else {
                         this.sharedString.insertText(String.fromCharCode(code), pos);
@@ -4733,119 +4592,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
         this.broadcastPresence();
         this.cursor.updateView(this);
-    }
-
-    public mathCursorFwd() {
-        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
-        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
-        mathMarker.mathTokenIndex = MathMenu.mathTokFwd(mathMarker.mathTokenIndex,
-            mathMarker.mathTokens);
-        MathMenu.printMathMarker(mathMarker);
-        if (mathMarker.mathTokenIndex > mathMarker.mathTokens.length) {
-            this.cursor.pos = endTileInfo.pos + 1;
-        } else if (mathMarker.mathTokenIndex === mathMarker.mathTokens.length) {
-            this.cursor.pos = endTileInfo.pos;
-        } else {
-            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-            let pos = this.cursor.pos;
-            if (pos === endTileInfo.pos) {
-                pos--;
-            }
-            const beginTileInfo = findTile(this, pos, "math", true);
-            this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
-        }
-        this.broadcastPresence();
-        this.cursor.updateView(this);
-    }
-
-    public mathCursorRev() {
-        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
-        let pos = this.cursor.pos;
-        if (pos === endTileInfo.pos) {
-            pos--;
-        }
-        const beginTileInfo = findTile(this, pos, "math", true);
-        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
-        mathMarker.mathTokenIndex = MathMenu.mathTokRev(mathMarker.mathTokenIndex,
-            mathMarker.mathTokens);
-        MathMenu.printMathMarker(mathMarker);
-        if (mathMarker.mathTokenIndex === MathMenu.Nope) {
-            this.cursor.pos = beginTileInfo.pos;
-            mathMarker.mathTokenIndex = 0;
-        } else {
-            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-            this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
-        }
-        this.broadcastPresence();
-        this.cursor.updateView(this);
-    }
-
-    // put the cursor at ... (but for now put it at end)
-    public mathNormalizeCursor() {
-        const endTileInfo = findTile(this, this.cursor.pos, "math", false);
-        this.cursor.pos = endTileInfo.pos;
-        const mathMarker = endTileInfo.tile as MathMenu.IMathMarker;
-        if (mathMarker.mathTokens) {
-            mathMarker.mathTokenIndex = mathMarker.mathTokens.length;
-            mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-        } else {
-            const beginTileInfo = findTile(this, endTileInfo.pos - 1, "math", true);
-            const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endTileInfo.pos);
-            MathMenu.initMathMarker(mathMarker, mathText);
-        }
-    }
-
-    public inMathGetMarker() {
-        const tileInfo = findTile(this, this.cursor.pos, "math", false);
-        if (tileInfo && (tileInfo.tile.properties.mathEnd)) {
-            return tileInfo;
-        }
-    }
-
-    public endOfMathRegion(posInRegion: number) {
-        const tileInfo = findTile(this, posInRegion, "math", false);
-        return tileInfo.pos;
-    }
-
-    public mathMarkerPostRemove(mathMarker: MathMenu.IMathMarker, endPos: number) {
-        const beginTileInfo = findTile(this, endPos - 1, "math", true);
-        const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endPos);
-        mathMarker.mathText = mathText;
-        mathMarker.mathTokens = MathMenu.lexMath(mathText);
-        console.log("math backspace token");
-        MathMenu.printMathMarker(mathMarker);
-    }
-
-    public mathMarkerPostInsert(mathMarker: MathMenu.IMathMarker, endPos: number) {
-        const beginTileInfo = findTile(this, endPos - 1, "math", true);
-        const mathText = this.sharedString.getText(beginTileInfo.pos + 1, endPos);
-        mathMarker.mathText = mathText;
-        mathMarker.mathTokens = MathMenu.lexMath(mathText);
-        MathMenu.printMathMarker(mathMarker);
-        mathMarker.mathTokenIndex = MathMenu.mathTokFwd(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-        mathMarker.mathCursor = MathMenu.posAtToken(mathMarker.mathTokenIndex, mathMarker.mathTokens);
-        this.cursor.pos = beginTileInfo.pos + 1 + mathMarker.mathCursor;
-        console.log("advance math token");
-        MathMenu.printMathMarker(mathMarker);
-    }
-
-    public enterMathMode() {
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Tile,
-            { [MergeTree.reservedTileLabelsKey]: ["math"], mathStart: true });
-        this.sharedString.insertMarker(this.cursor.pos, MergeTree.ReferenceType.Tile,
-            { [MergeTree.reservedTileLabelsKey]: ["math"], mathEnd: true });
-        const tileInfo = this.inMathGetMarker();
-        const mathMarker = tileInfo.tile as MathMenu.IMathMarker;
-        mathMarker.mathTokenIndex = 0;
-        mathMarker.mathTokens = [] as MathMenu.MathToken[];
-        mathMarker.mathCursor = 0;
-        mathMarker.mathText = "";
-        this.clearSelection();
-        if (this.modes.showCursorLocation) {
-            this.cursorLocation();
-        }
-        this.updatePGInfo(this.cursor.pos);
-        this.localQueueRender(this.cursor.pos);
     }
 
     public viewTileProps() {
@@ -5086,7 +4832,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 }
                 console.log(`${descr} bookmark is [${s},${e})`);
                 this.tempBookmarks = [result];
-                this.localQueueRender(this.cursor.pos);
+                this.hostSearchMenu(this.cursor.pos);
             }
         }
     }
@@ -5101,15 +4847,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const text = this.sharedString.getText(sel.start, sel.end);
             Geocoder.geocode(text, (err, data) => console.log(data),
                 { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
-        }
-    }
-
-    public showKatex() {
-        const sel = this.cursor.getSelection();
-        if (sel) {
-            const text = this.sharedString.getText(sel.start, sel.end);
-            const html = Katex.renderToString(text, { throwOnError: false });
-            this.statusMessage("math", html);
         }
     }
 
@@ -5138,7 +4875,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 MergeTree.IntervalType.SlideOnRemove,
                 { story: commentStory });
             this.cursor.clearSelection();
-            this.localQueueRender(this.cursor.pos);
+            this.hostSearchMenu(this.cursor.pos);
         }
     }
 
@@ -5174,7 +4911,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public loadMath(mathMarker: IMathViewMarker) {
         if (!mathMarker.instance) {
             const inline = mathMarker.properties.crefTest.layout.inline;
-            const mathOptions: IMathOptions = { displayType: inline ? ComponentDisplayType.Inline : ComponentDisplayType.Block };
+            const mathOptions: IMathOptions = { display: inline ? "inline" : "block" };
             const mathInstance = this.math.getInstance(mathMarker.properties.leafId, mathOptions);
             mathMarker.instance = mathInstance;
             if (mathInstance.query("ISearchMenuClient")) {
@@ -5184,7 +4921,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public insertMath(inline = true) {
-        const mathOptions: IMathOptions = { displayType: inline ? ComponentDisplayType.Inline : ComponentDisplayType.Block };
+        const mathOptions: IMathOptions = { display: inline ? "inline" : "block" };
         const mathInstance = this.math.create(mathOptions);
         const props = {
             crefTest: {
@@ -5631,7 +5368,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.G:
                 this.viewTileProps();
-                this.localQueueRender(this.cursor.pos);
+                this.hostSearchMenu(this.cursor.pos);
                 break;
             case CharacterCodes.S:
                 this.collabDocument.save();
@@ -5641,9 +5378,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.Z:
                 this.undoRedoManager.undo();
-                break;
-            case CharacterCodes.S4:
-                this.enterMathMode();
                 break;
             default:
                 console.log(`got command key ${String.fromCharCode(charCode)} code: ${charCode}`);
@@ -5857,9 +5591,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    public localQueueRender(updatePos: number) {
+    public hostSearchMenu(updatePos: number) {
         if (this.parentFlow) {
-            this.parentFlow.localQueueRender(updatePos);
+            this.parentFlow.hostSearchMenu(updatePos);
         } else {
             if (updatePos >= 0) {
                 this.updatePGInfo(updatePos);
@@ -5977,7 +5711,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.movingInclusion.dx = remoteDragInfo.dx;
         this.movingInclusion.dy = remoteDragInfo.dy;
         this.movingInclusion.onTheMove = remoteDragInfo.onTheMove;
-        this.localQueueRender(Nope);
+        this.hostSearchMenu(Nope);
     }
 
     private remotePresenceToLocal(longClientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
@@ -6105,19 +5839,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (event.isLocal) {
             if (opCursorPos !== undefined) {
                 this.cursor.pos = opCursorPos;
-                const mathTileInfo = this.inMathGetMarker();
-                if (mathTileInfo) {
-                    const mathMarker = mathTileInfo.tile as MathMenu.IMathMarker;
-                    if (event.deltaOperation === MergeTree.MergeTreeDeltaType.INSERT) {
-                        this.mathMarkerPostInsert(mathMarker, mathTileInfo.pos);
-                    } else if (event.deltaOperation === MergeTree.MergeTreeDeltaType.REMOVE) {
-                        // assume single range from backspace for now
-                        this.mathMarkerPostRemove(mathMarker, mathTileInfo.pos);
-                    }
-                }
-
             }
-            this.localQueueRender(this.cursor.pos);
+            this.hostSearchMenu(this.cursor.pos);
         } else {
             if (opCursorPos !== undefined) {
                 this.remotePresenceFromEdit(

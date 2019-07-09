@@ -5,7 +5,6 @@
 
 import { IPinpointOptions, Pinpoint } from "@kurtb/pinpoint";
 import { ISharedMap } from "@prague/map";
-import { ComponentDisplayType } from "@prague/runtime-definitions";
 import { Document } from "./document";
 
 export class PinpointEmbed {
@@ -47,7 +46,7 @@ export class PinpointEmbed {
             });
     }
 
-    public render(mapHost: HTMLElement, displayType: ComponentDisplayType) {
+    public render(mapHost: HTMLElement, display?: string) {
         if (this.div.parentElement !== mapHost) {
             this.div.remove();
             // this.div.style.width = mapHost.style.minWidth;

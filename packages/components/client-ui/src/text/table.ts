@@ -614,7 +614,6 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                         };
                         let paragraphLexer = new Paragraph.ParagraphLexer({
                             markerToken: Paragraph.markerToItems,
-                            mathToken: Paragraph.textToMathItem,
                             textToken: Paragraph.textTokenToItems,
                         }, itemsContext);
                         itemsContext.paragraphLexer = paragraphLexer;

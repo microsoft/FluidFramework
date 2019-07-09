@@ -6,7 +6,7 @@
 import { ServicePlatform } from "@prague/app-component";
 import { IComponent } from "@prague/container-definitions";
 import { Marker } from "@prague/merge-tree";
-import { IComponentRenderHTML } from "@prague/runtime-definitions";
+import { IComponentHTMLView,  IComponentHTMLViewable, IComponentRenderHTML } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
 import { Tag } from "../../util/tag";
@@ -61,7 +61,7 @@ export class DocumentFormatter extends Formatter<IFormatterState> {
     }
 }
 
-interface IInclusionState { root?: HTMLElement; }
+interface IInclusionState { root?: HTMLElement; slot?: HTMLElement; view?: IComponentHTMLView; }
 
 export class InclusionFormatter extends Formatter<IInclusionState> {
     public createState() { return {}; }
@@ -69,20 +69,37 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     public begin(state: IInclusionState, layout: Layout) {
         const segment = layout.segment;
         if (!state.root) {
-            state.root = document.createElement(Tag.span);
+            let tag = Tag.span;
+            const marker = segment as Marker;
+            if (marker.properties.componentOptions) {
+                if (marker.properties.componentOptions.display === "block") {
+                    tag = Tag.div;
+                }
+            }
+            state.root = document.createElement(tag);
             state.root.contentEditable = "false";
-            const slot = document.createElement(Tag.span);
+            const slot = document.createElement(tag);
             state.root.appendChild(slot);
+            state.slot = slot;
 
-            layout.doc.getComponent(segment as Marker).then((component: IComponent) => {
+            layout.doc.getComponent(marker).then((component: IComponent) => {
                 // TODO included for back compat - can remove once we migrate to 0.5
                 if ("attach" in component) {
                     const legacyComponent = component as { attach(platform: ServicePlatform) };
                     legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
                 } else {
-                    const renderable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");
-                    if (renderable) {
-                        renderable.render(slot);
+                    const viewable = (component as IComponent).query<IComponentHTMLViewable>("IComponentHTMLViewable");
+                    if (viewable) {
+                        const view = viewable.addView(layout.scope);
+                        // add view options here
+                        // where do we remove the view when finished?
+                        view.render(slot);
+                        state.view = view;
+                    } else {
+                        const renderable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");
+                        if (renderable) {
+                            renderable.render(slot);
+                        }
                     }
                 }
             });
@@ -100,6 +117,9 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 
     public end(state: IInclusionState, layout: Layout) {
+        if (state.view) {
+            state.view.remove();
+        }
         layout.popNode();
     }
 }
@@ -180,9 +200,9 @@ class TagsFormatter extends Formatter<ITagsState> {
 interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 
 class ParagraphFormatter extends Formatter<IParagraphState> {
-    constructor(private readonly defaultTag: Tag) { super (); }
+    constructor(private readonly defaultTag: Tag) { super(); }
 
-    public createState(): IParagraphState { return { }; }
+    public createState(): IParagraphState { return {}; }
 
     public begin(state: IParagraphState, layout: Layout) {
         const segment = layout.segment;
@@ -231,7 +251,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssProps; }
 
 class TextFormatter extends Formatter<ITextState> {
-    public createState(): ITextState { return { }; }
+    public createState(): ITextState { return {}; }
 
     public begin(state: ITextState, layout: Layout) {
         state.root = this.pushTag(layout, Tag.span, state.root) as HTMLElement;
@@ -251,7 +271,7 @@ class TextFormatter extends Formatter<ITextState> {
                 }
                 layout.emitText();
                 return true;
-        }
+            }
 
             default:
                 debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);

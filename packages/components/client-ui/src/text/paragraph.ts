@@ -164,7 +164,6 @@ export const enum ParagraphLexerState {
 export interface ParagraphTokenActions<TContext> {
     textToken(text: string, type: ParagraphItemType, leadSegment: MergeTree.TextSegment, context?: TContext): void;
     markerToken(marker: MergeTree.Marker, context?: TContext): void;
-    mathToken(mathText: string, context?: TContext): void;
 }
 
 export class ParagraphLexer<TContext> {
@@ -188,17 +187,6 @@ export class ParagraphLexer<TContext> {
     public mark(marker: MergeTree.Marker) {
         this.emit();
         this.emitMarker(marker);
-    }
-
-    public mathBoundary(isStart: boolean) {
-        if (isStart) {
-            this.emit();
-            this.state = ParagraphLexerState.AccumMath;
-            this.mathBuf = "";
-        } else {
-            this.emitMath();
-            this.reset();
-        }
     }
 
     public lex(textSegment: MergeTree.TextSegment) {
@@ -253,10 +241,6 @@ export class ParagraphLexer<TContext> {
             this.tokenActions.textToken(this.textBuf, ParagraphItemType.Block, this.leadSegment, this.actionContext);
             this.textBuf = "";
         }
-    }
-
-    private emitMath() {
-        this.tokenActions.mathToken(this.mathBuf, this.actionContext);
     }
 
     private emitMarker(marker: MergeTree.Marker) {
@@ -471,7 +455,6 @@ export interface IFontInfo {
     getTextWidth(text: string, fontstr: string);
     getLineHeight(fontstr: string, lineHeight?: string): number;
     getFont(pg: IParagraphMarker): string;
-    getMathWidthHeight(mathText: string, fontstr: string): IHeightWidth;
 }
 
 export interface IItemsContext {
@@ -513,19 +496,6 @@ export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsCont
 
     // Otherwise, assume this is a paragraph marker.  (Note early 'return' above.)
     items.push(makeIPGMarker(marker));
-}
-
-export function textToMathItem(mathText: string, itemsContext: IItemsContext) {
-    let fontInfo = itemsContext.fontInfo;
-    let pgFontstr = fontInfo.getFont(itemsContext.curPGMarker);
-    const hw = itemsContext.fontInfo.getMathWidthHeight(mathText, pgFontstr);
-    if ((itemsContext.itemInfo.maxHeight===undefined)||(hw.h > itemsContext.itemInfo.maxHeight)) {
-        itemsContext.itemInfo.maxHeight = hw.h;
-    }
-    if (hw.w>itemsContext.itemInfo.minWidth) {
-        itemsContext.itemInfo.minWidth = hw.w;
-    }
-    return makeIPGMathBlock(hw.w, mathText);
 }
 
 export function textTokenToItems(
@@ -607,9 +577,7 @@ export function segmentToItems(
         } else if (segment.hasTileLabel("pg") || isEndBox(segment)) {
             context.nextPGPos = segpos;
             return false;
-        } else if (segment.hasTileLabel("math")) {
-            context.paragraphLexer.mathBoundary(segment.properties.mathStart);
-        }
+        } 
     }
     return true;
 }

@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// tslint:disable:align
+import { IComponent } from "@prague/container-definitions";
 import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, Marker, ReferenceType, reservedMarkerIdKey, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
@@ -51,7 +52,8 @@ export class Layout {
     private endInvalid = -Infinity;
     private readonly scheduleSync: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scheduler = new Scheduler()) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scope?: IComponent,
+        public readonly scheduler = new Scheduler()) {
         this.formatStack = [{ format: new DocumentFormatter(), state: { root }, segment: undefined, depth: -1 }];
         this.scheduleSync = scheduler.coalesce(scheduler.onTurnEnd, () => {
             const start = this.startInvalid;

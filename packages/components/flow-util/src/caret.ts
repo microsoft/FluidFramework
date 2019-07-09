@@ -39,9 +39,10 @@ export namespace Caret {
 
         if (focusTarget && "focus" in focusTarget) {
             focusTarget.focus();
+            return dispatchCaretEvent(CaretEventType.enter, focusTarget, direction, caretBounds);
+        } else {
+            return dispatchCaretEvent(CaretEventType.enter, target, direction, caretBounds);
         }
-
-        return dispatchCaretEvent(CaretEventType.enter, target, direction, caretBounds);
     }
 
     export function caretLeave(target: Element, direction: Direction, caretBounds: ICaretBounds) {

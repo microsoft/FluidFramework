@@ -20,8 +20,8 @@ import {
     MergeTreeDeltaType,
 } from "@prague/merge-tree";
 import {
-    ComponentDisplayType,
     IComponentContext,
+    IComponentHTMLOptions,
     IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
@@ -160,7 +160,7 @@ export class MonacoRunner extends EventEmitter implements
         return MonacoRunner.supportedInterfaces;
     }
 
-    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
             this.mapHost.style.width = "100%";

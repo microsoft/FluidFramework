@@ -13,8 +13,8 @@ import {
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import {
-    ComponentDisplayType,
     IComponentContext,
+    IComponentHTMLOptions,
     IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
@@ -358,12 +358,15 @@ export class PinpointRunner extends EventEmitter implements
         return PinpointRunner.supportedInterfaces;
     }
 
-    public render(elm: HTMLElement, displayType: ComponentDisplayType): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.embed) {
             this.embed = new PinpointEmbed(this.collabDoc, this.rootView);
         }
-
-        this.embed.render(elm, displayType);
+        let display = "block";
+        if (options && options.display) {
+            display  = options.display;
+        }
+        this.embed.render(elm, display);
     }
 
     public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
@@ -397,7 +400,7 @@ export class PinpointRunner extends EventEmitter implements
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            this.render(element, ComponentDisplayType.Block);
+            this.render(element, { display: "block" });
         }
     }
 

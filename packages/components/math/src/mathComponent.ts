@@ -23,13 +23,12 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentCursorDirection,
-    ComponentDisplayType,
     IComponentCollection,
     IComponentContext,
     IComponentCursor,
+    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLViewable,
-    IComponentHTMLViewOptions,
     IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
@@ -41,22 +40,20 @@ import * as Katex from "katex";
 const directionToCursorDirection = {
     [Direction.left]: ComponentCursorDirection.Left,
     [Direction.right]: ComponentCursorDirection.Right,
-    [Direction.up]: ComponentCursorDirection.Top,
-    [Direction.down]: ComponentCursorDirection.Bottom,
+    [Direction.up]: ComponentCursorDirection.Up,
+    [Direction.down]: ComponentCursorDirection.Down,
     [Direction.none]: ComponentCursorDirection.Airlift,
 };
 
 const cursorDirectionToDirection = {
     [ComponentCursorDirection.Left]: Direction.left,
     [ComponentCursorDirection.Right]: Direction.right,
-    [ComponentCursorDirection.Top]: Direction.up,
-    [ComponentCursorDirection.Bottom]: Direction.down,
+    [ComponentCursorDirection.Up]: Direction.up,
+    [ComponentCursorDirection.Down]: Direction.down,
     [ComponentCursorDirection.Airlift]: Direction.none,
 };
 
-interface IMathMarkerInst extends ClientUI.controls.IMathMarker {
-    instance?: MathInstance;
-}
+type IMathMarkerInst = ClientUI.controls.IMathMarker;
 
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public static supportedInterfaces = [
@@ -69,7 +66,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public mathCursor = 0;
     public mathTokenIndex = 0;
     public searchMenuHost: SearchMenu.ISearchMenuHost;
-    public options?: IComponentHTMLViewOptions;
+    public options?: IComponentHTMLOptions;
     public rootElement: HTMLElement;
 
     constructor(public instance: MathInstance, public scope?: IComponent) {
@@ -88,11 +85,11 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     }
 
     // IComponentHTMLView
-    public show(containerElement: HTMLElement, options?: IComponentHTMLViewOptions) {
+    public render(containerElement: HTMLElement, options?: IComponentHTMLOptions) {
         if (options) {
             this.options = options;
         }
-        this.render(containerElement, this.options.displayType);
+        this.buildTree(containerElement, this.options.display);
     }
 
     public remove() {
@@ -123,11 +120,12 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     // IComponentCursor
     public enter(direction: ComponentCursorDirection) {
+        console.log(`enter: ${ComponentCursorDirection[direction]}`);
         this.cursorActive = true;
-        if (direction === ComponentCursorDirection.Left) {
+        if (direction === ComponentCursorDirection.Right) {
             this.mathCursor = 0;
             this.mathTokenIndex = 0;
-        } else if (direction === ComponentCursorDirection.Right) {
+        } else if (direction === ComponentCursorDirection.Left) {
             const mathText = this.instance.getMathText();
             this.mathCursor = mathText.length;
             this.mathTokenIndex = this.instance.endMarker.mathTokens.length;
@@ -147,7 +145,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         } else {
             this.mathCursor = 0;
             this.mathTokenIndex = 0;
-            this.noteLeft(ComponentCursorDirection.Right);
+            this.noteCursorExit(ComponentCursorDirection.Left);
             return true;
         }
     }
@@ -157,7 +155,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex,
             mathMarker.mathTokens);
         if (this.mathTokenIndex > mathMarker.mathTokens.length) {
-            this.noteLeft(ComponentCursorDirection.Left);
+            this.noteCursorExit(ComponentCursorDirection.Right);
             return true;
         } else if (this.mathTokenIndex === mathMarker.mathTokens.length) {
             const mathText = this.instance.getMathText();
@@ -171,11 +169,12 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         this.containerElement.tabIndex = 0;
         this.containerElement.style.outline = "none";
         this.containerElement.addEventListener("focus", () => {
-            this.enter(ComponentCursorDirection.Left);
+            console.log("focus...");
+            this.enter(ComponentCursorDirection.Focus);
             this.localRender();
         });
         this.containerElement.addEventListener("blur", () => {
-            this.leave(ComponentCursorDirection.Right);
+            this.leave(ComponentCursorDirection.Focus);
             this.localRender();
         });
         this.containerElement.addEventListener("keydown", (e) => {
@@ -188,28 +187,30 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             // Let caller know we've handled the event:
             e.preventDefault();
             e.stopPropagation();
-
-            this.enter(directionToCursorDirection[e.detail.direction]);
+            const cursorDirection = directionToCursorDirection[e.detail.direction];
+            console.log(`caret event ${ComponentCursorDirection[cursorDirection]}`);
+            this.enter(cursorDirection);
         }) as EventListener);
     }
 
-    public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
+    public buildTree(elm: HTMLElement, display?: string) {
         if (this.containerElement !== elm) {
             this.containerElement = elm;
             this.setListeners();
         }
-        if (displayType === undefined) {
-            displayType = this.options.displayType;
+        if (display === undefined) {
+            display = this.options.display;
         }
         const mathText = this.instance.getMathText();
         let mathBuffer = mathText;
         const mathMarker = this.instance.endMarker;
         this.containerElement = elm;
         if (mathMarker.mathTokens === undefined) {
-            ClientUI.controls.initMathMarker(mathMarker, mathText);
+            mathMarker.mathTokens = [] as ClientUI.controls.MathToken[];
+            mathMarker.mathText = "";
         }
         let rootElement: HTMLElement;
-        if (displayType === ComponentDisplayType.Inline) {
+        if (display === "inline") {
             rootElement = document.createElement("span");
             rootElement.style.marginLeft = "2px";
             rootElement.style.marginTop = "4px";
@@ -255,7 +256,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public localRender() {
         if (this.containerElement) {
             ClientUI.controls.clearSubtree(this.containerElement);
-            this.render(this.containerElement, this.options.displayType);
+            this.buildTree(this.containerElement, this.options.display);
         }
     }
 
@@ -272,7 +273,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
             if (this.containerElement) {
                 ClientUI.controls.clearSubtree(this.containerElement);
-                this.render(this.containerElement, this.options.displayType);
+                this.buildTree(this.containerElement, this.options.display);
             }
         } else if (e.keyCode === ClientUI.controls.KeyCode.rightArrow) {
             if (this.fwd()) {
@@ -292,14 +293,14 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         const mathMarker = this.instance.endMarker;
         this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex, mathMarker.mathTokens);
         this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+        console.log(`set math cursor to ${this.mathCursor} on input ${text}`);
         if (this.containerElement) {
             ClientUI.controls.clearSubtree(this.containerElement);
-            this.render(this.containerElement, this.instance.options.displayType);
+            this.buildTree(this.containerElement, this.instance.options.display);
         }
     }
 
     public onKeypress(e: KeyboardEvent) {
-        let toInsert: string;
         if (e.charCode === ClientUI.controls.CharacterCodes.backslash) {
             if (this.searchMenuHost) {
                 this.searchMenuHost.showSearchMenu(ClientUI.controls.mathCmdTree, false, true,
@@ -312,16 +313,16 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                     });
             }
         } else {
-            toInsert = ClientUI.controls.transformInputCode(e.charCode);
-        }
-        if (toInsert) {
-            this.insertText(toInsert);
-        } else {
-            console.log(`unrecognized math input ${e.char}`);
+            const toInsert = ClientUI.controls.transformInputCode(e.charCode);
+            if (toInsert) {
+                this.insertText(toInsert);
+            } else {
+                console.log(`unrecognized math input ${e.char}`);
+            }
         }
     }
 
-    private noteLeft(direction: ComponentCursorDirection) {
+    private noteCursorExit(direction: ComponentCursorDirection) {
         const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
             return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
         }) || this.containerElement;
@@ -333,7 +334,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
 export class MathInstance implements ISharedComponent, IComponentRenderHTML, IComponentRouter,
     IComponentHTMLViewable {
-    public static defaultOptions: IMathOptions = { displayType: ComponentDisplayType.Inline };
+    public static defaultOptions: IMathOptions = { display: "inline" };
     public static supportedInterfaces = [
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLViewable",
         "IComponentRenderHTML",
@@ -341,7 +342,6 @@ export class MathInstance implements ISharedComponent, IComponentRenderHTML, ICo
     public views: MathView[];
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
-    public searchMenuHost: SearchMenu.ISearchMenuHost;
     private defaultView: MathView;
 
     constructor(
@@ -369,11 +369,15 @@ export class MathInstance implements ISharedComponent, IComponentRenderHTML, ICo
         }
     }
 
-    public render(elm: HTMLElement, displayType?: ComponentDisplayType) {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions) {
         if (!this.defaultView) {
             this.defaultView = this.addView();
         }
-        this.defaultView.show(elm);
+        let localOptions = this.options;
+        if (options) {
+            localOptions = options;
+        }
+        this.defaultView.render(elm, localOptions);
     }
 
     public insertText(text: string, pos: number) {
@@ -436,7 +440,7 @@ function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
 const endIdPrefix = "end-";
 
 export interface IMathOptions {
-    displayType?: ComponentDisplayType;
+    display?: string;
 }
 
 export class MathCollection implements ISharedComponent, IComponentCollection, IComponentRouter {
@@ -477,6 +481,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
                 mathStart: true,
             });
             this.combinedMathText.insertMarker(pos, MergeTree.ReferenceType.Tile, {
+                componentOptions: instance.options,
                 [MergeTree.reservedTileLabelsKey]: ["math"],
                 [MergeTree.reservedMarkerIdKey]: endId,
                 mathEnd: true,
@@ -485,11 +490,9 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
         let seg = this.combinedMathText.client.mergeTree.getSegmentFromId(endId);
         const mathMarker = seg as ClientUI.controls.IMathMarker;
         instance.endMarker = mathMarker;
+        mathMarker.mathInstance = instance;
         seg = this.combinedMathText.client.mergeTree.getSegmentFromId(instance.leafId);
         instance.startMarker = seg as MergeTree.Marker;
-        mathMarker.mathTokenIndex = 0;
-        mathMarker.mathTokens = [] as ClientUI.controls.MathToken[];
-        mathMarker.mathCursor = 0;
         mathMarker.mathText = this.getText(instance);
         mathMarker.mathTokens = ClientUI.controls.lexMath(mathMarker.mathText);
     }
@@ -554,10 +557,13 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
         const endId = endIdPrefix + id;
         const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
         if (mathMarker !== undefined) {
-            if (!mathMarker.instance) {
-                mathMarker.instance = new MathInstance(`${this.url}/${id}`, id, this, options, true);
+            if (!mathMarker.mathInstance) {
+                if (mathMarker.properties.componentOptions) {
+                    options = mathMarker.properties.componentOptions;
+                }
+                mathMarker.mathInstance = new MathInstance(`${this.url}/${id}`, id, this, options, true);
             }
-            return mathMarker.instance;
+            return mathMarker.mathInstance as MathInstance;
         }
     }
 

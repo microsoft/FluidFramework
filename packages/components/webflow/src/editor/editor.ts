@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@prague/container-definitions";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "@prague/flow-util";
 import { SequenceDeltaEvent } from "@prague/sequence";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
@@ -16,8 +17,8 @@ export class Editor {
     private readonly caret: Caret;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, root: HTMLElement) {
-        this.layout = new Layout(doc, root);
+    constructor(doc: FlowDocument, root: HTMLElement, scope?: IComponent) {
+        this.layout = new Layout(doc, root, scope);
         this.caret = new Caret(this.layout);
 
         root.tabIndex = 0;

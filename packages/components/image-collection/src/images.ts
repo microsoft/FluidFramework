@@ -15,9 +15,9 @@ import {
 } from "@prague/container-definitions";
 import { ISharedMap, MapExtension } from "@prague/map";
 import {
-    ComponentDisplayType,
     IComponentCollection,
     IComponentContext,
+    IComponentHTMLOptions,
     IComponentLayout,
     IComponentRenderHTML,
     IComponentRuntime,
@@ -64,7 +64,7 @@ export class ImageComponent implements
         };
     }
 
-    public render(elm: HTMLElement, displayType?: ComponentDisplayType): void {
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         const img = document.createElement("img");
         img.src = this.imageUrl;
         elm.appendChild(img);

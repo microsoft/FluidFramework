@@ -334,24 +334,6 @@ export interface IComponentCollection extends IComponent {
 // Following is what loosely-coupled hosts need to show a component
 
 /**
- * How to render the component.
- */
-export enum ComponentDisplayType {
-    /**
-     * Render the component in on a separate line.
-     */
-    Block,
-    /**
-     * Render the component as part of an inline flow.
-     */
-    Inline,
-    /**
-     * Render the component as part of an inline flow, but in a single block.
-     */
-    InlineBlock,
-}
-
-/**
  * Render the component into an HTML element. In the case of Block display,
  * elm.getBoundingClientRect() defines the dimensions of the viewport in which
  * to render. Typically, this means that elm should already be placed into the DOM.
@@ -359,15 +341,14 @@ export enum ComponentDisplayType {
  * rendered component.
  */
 export interface IComponentRenderHTML extends IComponent {
-    render(elm: HTMLElement, displayType?: ComponentDisplayType): void;
+    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
 
-export interface IComponentHTMLViewOptions {
-    displayType?: ComponentDisplayType;
+export interface IComponentHTMLOptions {
+    display?: string;
 }
 
-export interface IComponentHTMLView extends IComponent {
-    show(containerElement: HTMLElement, options?: IComponentHTMLViewOptions): void;
+export interface IComponentHTMLView extends IComponentRenderHTML {
     remove(): void;
 }
 
@@ -395,9 +376,10 @@ export interface IComponentLayout extends IComponent {
 export enum ComponentCursorDirection {
     Left,
     Right,
-    Top,
-    Bottom,
+    Up,
+    Down,
     Airlift,
+    Focus,
 }
 
 export interface IComponentCursor extends IComponent {
