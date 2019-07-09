@@ -33,6 +33,7 @@
     "watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
     "watch:tsc": "lerna run --parallel tsc -- -- --watch",
     "watch:webpack": "lerna run --parallel webpack -- -- --watch",
+    "webpack": "lerna run --parallel webpack --stream",
     "build:r11s": "cd server/routerlicious && npm run build",
     "clean:r11s": "cd server/routerlicious && npm run clean",
     "postinstall:r11s": "cd server/routerlicious && npm run registryAuth",
