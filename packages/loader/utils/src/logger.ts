@@ -51,7 +51,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // WARNING: Exceptions can contain PII!
             // For example, XHR will throw object derived from Error that contains config information
             // for failed request, including all the headers, and thus - user tokens!
-            const errorAsObject = error as { stack?: string; message?: string};
+            const errorAsObject = error as { stack?: string; message?: string };
 
             // Extract call stack from exception if available
             // Same for message if there is one (see Error object).
@@ -166,8 +166,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param condition - the condition to assert on
      * @param exception - the message to log if the condition fails
      */
-    public debugAssert(condition: boolean, message?: string): void {
-        this.shipAssert(condition, message);
+    public debugAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
+        this.shipAssert(condition, event);
     }
 
     /**
@@ -176,9 +176,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param condition - the condition to assert on
      * @param exception - the message to log if the condition fails
      */
-    public shipAssert(condition: boolean, message?: string): void {
+    public shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void {
         if (!condition) {
-            this.sendErrorEvent({ eventName: "Assert", message, stack: TelemetryLogger.getStack() });
+            const realEvent: ITelemetryErrorEvent = event === undefined ? { eventName: "" } : event;
+            realEvent.isAssert = true;
+            realEvent.stack = TelemetryLogger.getStack();
+            this.sendErrorEvent(realEvent);
         }
     }
 

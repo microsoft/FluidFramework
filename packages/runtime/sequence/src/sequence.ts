@@ -565,8 +565,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
-        this.logger.shipAssert(chunk1.chunkLengthChars <= chunk1.totalLengthChars, "Mismatch in totalLengthChars");
-        this.logger.shipAssert(chunk1.chunkSegmentCount <= chunk1.totalSegmentCount, "Mismatch in totalSegmentCount");
+        this.logger.shipAssert(
+            chunk1.chunkLengthChars <= chunk1.totalLengthChars,
+            { eventName: "Mismatch in totalLengthChars" });
+
+        this.logger.shipAssert(
+            chunk1.chunkSegmentCount <= chunk1.totalSegmentCount,
+            { eventName: "Mismatch in totalSegmentCount" });
+
         if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
             return;
         }
@@ -575,10 +581,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         this.logger.shipAssert(
             chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,
-            "Mismatch in totalLengthChars");
+            { eventName: "Mismatch in totalLengthChars" });
+
         this.logger.shipAssert(
             chunk1.chunkSegmentCount  + chunk2.chunkSegmentCount === chunk1.totalSegmentCount,
-            "Mismatch in totalSegmentCount");
+            { eventName: "Mismatch in totalSegmentCount" });
 
         const mergeTree = this.client.mergeTree;
         const clientId = mergeTree.collabWindow.clientId;

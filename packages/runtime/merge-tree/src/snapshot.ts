@@ -110,8 +110,14 @@ export class Snapshot {
             });
         }
 
-        this.logger.shipAssert(length === this.header.segmentsTotalLength, "emit: mismatch in segmentsTotalLength");
-        this.logger.shipAssert(segments === chunk1.totalSegmentCount, "emit: mismatch in totalSegmentCount");
+        this.logger.shipAssert(
+            length === this.header.segmentsTotalLength,
+            { eventName: "emit: mismatch in segmentsTotalLength" });
+
+        this.logger.shipAssert(
+            segments === chunk1.totalSegmentCount,
+            { eventName: "emit: mismatch in totalSegmentCount" });
+
         return tree;
     }
 

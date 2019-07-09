@@ -269,13 +269,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.startLeaderElection();
 
         this.deltaManager.on("allSentOpsAckd", () => {
-            this.logger.debugAssert(this.connected, "allSentOpsAckd in disconnected state");
+            this.logger.debugAssert(this.connected, { eventName: "allSentOpsAckd in disconnected state" });
             this.updateDocumentDirtyState(false);
         });
 
         this.deltaManager.on("submitOp", (message: IDocumentMessage) => {
             if (!isSystemType(message.type) && message.type !== MessageType.NoOp) {
-                this.logger.debugAssert(this.connected, "submitOp in disconnected state");
+                this.logger.debugAssert(this.connected, { eventName: "submitOp in disconnected state" });
                 this.updateDocumentDirtyState(true);
             }
         });

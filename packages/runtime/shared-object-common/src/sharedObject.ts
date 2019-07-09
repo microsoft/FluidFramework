@@ -6,6 +6,7 @@
 import {
     ConnectionState,
     ISequencedDocumentMessage,
+    ITelemetryErrorEvent,
     ITelemetryLogger,
     ITree,
     MessageType,
@@ -353,8 +354,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @param condition - if false, assert is logged
      * @param message - actual message to log; ideally should be unique message to identify call site
      */
-    protected debugAssert(condition: boolean, message: string) {
-        this.logger.debugAssert(condition, message);
+    protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
+        this.logger.debugAssert(condition, event);
     }
 
     private attachDeltaHandler() {

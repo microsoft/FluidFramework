@@ -423,7 +423,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         // Container.submitMessage should chunk messages properly.
         // Content can still be 2x size of maxMessageSize due to character escaping.
         const splitSize = this.maxMessageSize * 2;
-        this.logger.debugAssert(!contents || contents.length <= splitSize, "Splitting should not happen");
+        this.logger.debugAssert(
+            !contents || contents.length <= splitSize,
+            { eventName: "Splitting should not happen" });
         return false;
     }
 
@@ -662,8 +664,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
             const clientSequenceNumber = message.clientSequenceNumber;
+
             this.logger.debugAssert(this.clientSequenceNumberObserved <= clientSequenceNumber);
             this.logger.debugAssert(clientSequenceNumber <= this.clientSequenceNumber);
+
             this.clientSequenceNumberObserved = clientSequenceNumber;
             if (clientSequenceNumber === this.clientSequenceNumber) {
                 this.emit("allSentOpsAckd");
