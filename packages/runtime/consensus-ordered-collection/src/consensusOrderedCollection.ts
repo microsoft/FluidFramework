@@ -160,10 +160,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         return this.data.load(this.runtime, storage);
     }
 
-    protected initializeLocalCore() {
-        return;
-    }
-
     protected registerCore() {
         return;
     }

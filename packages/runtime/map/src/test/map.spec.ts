@@ -143,8 +143,7 @@ describe("Routerlicious", () => {
                     const subMap = extension.create(null, "subMap");
                     sharedMap.set("object", subMap);
 
-                    const concrete = (sharedMap as SharedMap).internalView();
-                    const serialized = concrete.serialize();
+                    const serialized = (sharedMap as SharedMap).serialize();
                     const parsed = JSON.parse(serialized);
 
                     sharedMap.forEach((value, key) => {

@@ -257,10 +257,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         }
     }
 
-    protected initializeLocalCore() {
-        return;
-    }
-
     protected registerCore() {
         return;
     }

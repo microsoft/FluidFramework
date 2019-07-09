@@ -57,7 +57,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.view.serialize(),
+                        contents: this.serialize(),
                         encoding: "utf-8",
                     },
                 },

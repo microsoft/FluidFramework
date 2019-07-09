@@ -108,7 +108,10 @@ export class InkStream extends BaseStream implements IStream {
         this.inkSnapshot = Snapshot.clone(data);
     }
 
-    protected initializeContent() {
+    /**
+     * Initialize with an empty ink snapshot
+     */
+    protected initializeLocalCore() {
         this.inkSnapshot = Snapshot.clone(emptySnapshot);
     }
 

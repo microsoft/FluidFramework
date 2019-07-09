@@ -144,3 +144,11 @@ export interface ISharedMap extends ISharedObject, IMapRegistry, Map<string, any
                                         op: ISequencedDocumentMessage,
                                         target: this) => void): this;
 }
+
+export interface ILocalViewElement {
+    // The type of local value
+    localType: string;
+
+    // The actual local value
+    localValue: any;
+}

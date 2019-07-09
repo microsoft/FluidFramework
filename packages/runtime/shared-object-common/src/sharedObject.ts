@@ -256,7 +256,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Allows the distributed data type to perform custom local loading
      */
-    protected abstract initializeLocalCore();
+    protected initializeLocalCore() {
+        return;
+    }
 
     /**
      * Allows the distributive data type the ability to perform custom processing once an attach has happened

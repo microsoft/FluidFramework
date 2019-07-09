@@ -371,7 +371,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                 });
     }
 
-    protected initializeContent() {
+    protected initializeLocalCore() {
         const intervalCollections = SharedMap.create(this.runtime);
         this.set("intervalCollections", intervalCollections);
         assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);

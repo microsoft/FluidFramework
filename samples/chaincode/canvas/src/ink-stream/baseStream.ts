@@ -35,11 +35,6 @@ export abstract class BaseStream extends SharedMap {
     ): Promise<void>;
 
     /**
-     * Initialize an empty stream.
-     */
-    protected abstract initializeContent();
-
-    /**
      * Get a snapshot of the current content as an ITree.
      */
     protected abstract snapshotContent(): ITree;

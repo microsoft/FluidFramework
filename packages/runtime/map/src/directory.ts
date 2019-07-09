@@ -6,9 +6,8 @@
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
 import { posix } from "path";
-import { IDirectory, ISharedDirectory, IValueType } from "./interfaces";
+import { IDirectory, ILocalViewElement, ISharedDirectory, IValueType } from "./interfaces";
 import { SharedMap } from "./map";
-import { ILocalViewElement } from "./view";
 
 /**
  * The extension that defines the directory
