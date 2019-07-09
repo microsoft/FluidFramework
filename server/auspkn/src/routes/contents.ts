@@ -99,7 +99,7 @@ export function create(store: nconf.Provider): Router {
             packageDetails.path,
             npmUrl,
             auth.username,
-            auth.password).catch((error) => error.toString());
+            auth.password);
 
         return { contents, path: packageDetails.path, type: packageDetails.type };
     }
