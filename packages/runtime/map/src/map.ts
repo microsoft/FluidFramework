@@ -605,7 +605,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             const valueType = this.getValueType(remote.type);
             translatedValue = valueType.factory.load(new MapValueOpEmitter(remote.type, key, this), remote.value);
         } else {
-            return Promise.reject("Unknown value type");
+            return Promise.reject(`Unknown value type "${remote.type}"`);
         }
 
         return {
