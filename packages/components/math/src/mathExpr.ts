@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:object-literal-sort-keys align
+// tslint:disable:object-literal-sort-keys align prefer-template
 import * as SearchMenu from "@chaincode/search-menu";
 import { IComponent } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";
-import { CharacterCodes } from "../text";
+import { CharacterCodes } from "./characterCodes";
 
 export const cursorTex = " \\textcolor{#800080}{\\vert}";
 export const cursorColor = "rgb(128, 0, 128)";
@@ -340,6 +340,7 @@ export function transformInputCode(c: number) {
                 return "^{}";
             case CharacterCodes._:
                 return "_{}";
+            default:
         }
     }
 }
@@ -455,7 +456,6 @@ function lexMathRange(mathBuffer: string, tokens: MathToken[],
                 // assume single-character variable
                 tokens.push(new MathToken(MathTokenType.Variable, pos, pos + 1));
                 pos++;
-                break;
         }
     }
     return tokens;

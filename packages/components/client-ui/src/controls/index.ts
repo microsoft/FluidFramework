@@ -14,7 +14,6 @@ export * from "./popup";
 export * from "./status";
 export * from "../text/characterCodes";
 export * from "./keycode";
-export * from "./mathMenu";
 export * from "./domutils";
 export * from "./overlayCanvas";
 export * from "./shapeRecognizer";

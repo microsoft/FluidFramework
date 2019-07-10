@@ -36,6 +36,7 @@ import {
 import * as Sequence from "@prague/sequence";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as Katex from "katex";
+import * as MathExpr from "./mathExpr";
 
 const directionToCursorDirection = {
     [Direction.left]: ComponentCursorDirection.Left,
@@ -53,7 +54,7 @@ const cursorDirectionToDirection = {
     [ComponentCursorDirection.Airlift]: Direction.none,
 };
 
-type IMathMarkerInst = ClientUI.controls.IMathMarker;
+type IMathMarkerInst = MathExpr.IMathMarker;
 
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public static supportedInterfaces = [
@@ -112,7 +113,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                 }
             }
             this.mathCursor = mathCursorNew;
-            this.mathTokenIndex = ClientUI.controls.tokenAtPos(mathCursorNew,
+            this.mathTokenIndex = MathExpr.tokenAtPos(mathCursorNew,
                 mathMarker.mathTokens);
         }
         this.localRender();
@@ -138,10 +139,10 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     public rev() {
         const mathMarker = this.instance.endMarker;
-        this.mathTokenIndex = ClientUI.controls.mathTokRev(this.mathTokenIndex,
+        this.mathTokenIndex = MathExpr.mathTokRev(this.mathTokenIndex,
             mathMarker.mathTokens);
-        if (this.mathTokenIndex !== ClientUI.controls.Nope) {
-            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+        if (this.mathTokenIndex !== MathExpr.Nope) {
+            this.mathCursor = MathExpr.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
         } else {
             this.mathCursor = 0;
             this.mathTokenIndex = 0;
@@ -152,7 +153,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     public fwd() {
         const mathMarker = this.instance.endMarker;
-        this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex,
+        this.mathTokenIndex = MathExpr.mathTokFwd(this.mathTokenIndex,
             mathMarker.mathTokens);
         if (this.mathTokenIndex > mathMarker.mathTokens.length) {
             this.noteCursorExit(ComponentCursorDirection.Right);
@@ -161,7 +162,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             const mathText = this.instance.getMathText();
             this.mathCursor = mathText.length;
         } else {
-            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+            this.mathCursor = MathExpr.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
         }
     }
 
@@ -206,7 +207,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         const mathMarker = this.instance.endMarker;
         this.containerElement = elm;
         if (mathMarker.mathTokens === undefined) {
-            mathMarker.mathTokens = [] as ClientUI.controls.MathToken[];
+            mathMarker.mathTokens = [] as MathExpr.MathToken[];
             mathMarker.mathText = "";
         }
         let rootElement: HTMLElement;
@@ -220,30 +221,41 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                 rootElement.style.borderRight = "solid orange 2px";
                 // showCursor
                 mathBuffer = mathBuffer.substring(0, this.mathCursor) +
-                    ClientUI.controls.cursorTex +
+                    MathExpr.cursorTex +
                     mathBuffer.substring(this.mathCursor);
-                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+                mathBuffer = MathExpr.boxEmptyParam(mathBuffer);
             }
             mathMarker.mathViewBuffer = mathBuffer;
             Katex.render(mathBuffer, rootElement,
                 { throwOnError: false });
         } else {
+            const useArray = false;
             rootElement = document.createElement("div");
+            rootElement.style.lineHeight = "2.1";
             if (this.cursorActive) {
                 // showCursor
                 mathBuffer = mathBuffer.substring(0, this.mathCursor) +
-                    ClientUI.controls.cursorTex +
+                    MathExpr.cursorTex +
                     mathBuffer.substring(this.mathCursor);
-                mathBuffer = ClientUI.controls.boxEmptyParam(mathBuffer);
+                mathBuffer = MathExpr.boxEmptyParam(mathBuffer);
             }
-            mathBuffer = `\\tag{3.2} ${mathBuffer}`;
+            if (!useArray) {
+                mathBuffer = `\\tag{1} ${mathBuffer}`;
+            } else {
+                if (mathBuffer.indexOf("=") >= 0) {
+                    mathBuffer = mathBuffer.replace("=", "& = &");
+                } else {
+                    mathBuffer = `& ${mathBuffer} &`;
+                }
+                mathBuffer = `\\begin{array}{rcllr} \n ${mathBuffer} & \\textcolor{green}{\\surd} & \\small \\textrm{(1)} \\\\ \n x^4 &= & 0 & & \\small \\textrm{(2)} \\\\ \n \\end{array}`;
+            }
             mathMarker.mathViewBuffer = mathBuffer;
             Katex.render(mathBuffer, rootElement,
                 { throwOnError: false, displayMode: true });
         }
         if (this.cursorActive) {
             const cursorElement = ClientUI.controls.findFirstMatch(rootElement, (cursor: HTMLElement) => {
-                return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+                return cursor.style && (cursor.style.color === MathExpr.cursorColor);
             });
             if (cursorElement) {
                 cursorElement.classList.add("blinking");
@@ -263,14 +275,14 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public onKeydown(e: KeyboardEvent) {
         if (e.keyCode === ClientUI.controls.KeyCode.backspace) {
             const mathMarker = this.instance.endMarker;
-            const toRemoveMath = ClientUI.controls.bksp(mathMarker, this);
+            const toRemoveMath = MathExpr.bksp(mathMarker, this);
             if (toRemoveMath) {
                 this.instance.removeText(toRemoveMath.start, toRemoveMath.end);
             }
             const mathText = this.instance.collection.getText(this.instance);
             mathMarker.mathText = mathText;
-            mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
-            this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+            mathMarker.mathTokens = MathExpr.lexMath(mathText);
+            this.mathCursor = MathExpr.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
             if (this.containerElement) {
                 ClientUI.controls.clearSubtree(this.containerElement);
                 this.buildTree(this.containerElement, this.options.display);
@@ -291,8 +303,8 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public insertText(text: string) {
         this.instance.insertText(text, this.mathCursor);
         const mathMarker = this.instance.endMarker;
-        this.mathTokenIndex = ClientUI.controls.mathTokFwd(this.mathTokenIndex, mathMarker.mathTokens);
-        this.mathCursor = ClientUI.controls.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
+        this.mathTokenIndex = MathExpr.mathTokFwd(this.mathTokenIndex, mathMarker.mathTokens);
+        this.mathCursor = MathExpr.posAtToken(this.mathTokenIndex, mathMarker.mathTokens);
         console.log(`set math cursor to ${this.mathCursor} on input ${text}`);
         if (this.containerElement) {
             ClientUI.controls.clearSubtree(this.containerElement);
@@ -303,17 +315,17 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public onKeypress(e: KeyboardEvent) {
         if (e.charCode === ClientUI.controls.CharacterCodes.backslash) {
             if (this.searchMenuHost) {
-                this.searchMenuHost.showSearchMenu(ClientUI.controls.mathCmdTree, false, true,
+                this.searchMenuHost.showSearchMenu(MathExpr.mathCmdTree, false, true,
                     (s, cmd) => {
                         let text = `\\${s}`;
                         if (cmd) {
-                            text = (cmd as ClientUI.controls.IMathCommand).texString;
+                            text = (cmd as MathExpr.IMathCommand).texString;
                         }
                         this.insertText(text);
                     });
             }
         } else {
-            const toInsert = ClientUI.controls.transformInputCode(e.charCode);
+            const toInsert = MathExpr.transformInputCode(e.charCode);
             if (toInsert) {
                 this.insertText(toInsert);
             } else {
@@ -324,7 +336,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     private noteCursorExit(direction: ComponentCursorDirection) {
         const cursorElement = ClientUI.controls.findFirstMatch(this.containerElement, (cursor: HTMLElement) => {
-            return cursor.style && (cursor.style.color === ClientUI.controls.cursorColor);
+            return cursor.style && (cursor.style.color === MathExpr.cursorColor);
         }) || this.containerElement;
 
         Caret.caretLeave(this.containerElement, cursorDirectionToDirection[direction], cursorElement.getBoundingClientRect());
@@ -410,7 +422,7 @@ export class MathInstance implements ISharedComponent, IComponentRenderHTML, ICo
     public remoteEdit(pos: number, len: number, isInsert: boolean) {
         const mathMarker = this.endMarker;
         const mathText = this.collection.getText(this);
-        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
+        mathMarker.mathTokens = MathExpr.lexMath(mathText);
         mathMarker.mathText = mathText;
         for (const view of this.views) {
             view.remoteEdit(pos, len, isInsert);
@@ -421,7 +433,7 @@ export class MathInstance implements ISharedComponent, IComponentRenderHTML, ICo
         const mathText = this.collection.getText(this);
         const mathMarker = this.endMarker;
         mathMarker.mathText = mathText;
-        mathMarker.mathTokens = ClientUI.controls.lexMath(mathText);
+        mathMarker.mathTokens = MathExpr.lexMath(mathText);
     }
 
     public getMathText() {
@@ -488,13 +500,13 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
             });
         }
         let seg = this.combinedMathText.client.mergeTree.getSegmentFromId(endId);
-        const mathMarker = seg as ClientUI.controls.IMathMarker;
+        const mathMarker = seg as MathExpr.IMathMarker;
         instance.endMarker = mathMarker;
         mathMarker.mathInstance = instance;
         seg = this.combinedMathText.client.mergeTree.getSegmentFromId(instance.leafId);
         instance.startMarker = seg as MergeTree.Marker;
         mathMarker.mathText = this.getText(instance);
-        mathMarker.mathTokens = ClientUI.controls.lexMath(mathMarker.mathText);
+        mathMarker.mathTokens = MathExpr.lexMath(mathMarker.mathText);
     }
 
     public create(options?: IMathOptions): MathInstance {

@@ -39,7 +39,6 @@ import * as ui from "../ui";
 import { Cursor, IRange } from "./cursor";
 import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
-import * as MathMenu from "./mathMenu";
 import { PresenceSignal } from "./presenceSignal";
 import { Status } from "./status";
 import { UndoRedoStackManager } from "./undoRedo";
