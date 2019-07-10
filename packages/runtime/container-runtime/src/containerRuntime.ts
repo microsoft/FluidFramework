@@ -84,16 +84,20 @@ export interface IContainerRuntimeOptions {
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /**
      * Load the components from a snapshot and returns the runtime.
-     * @param context - Conext of the contianer.
+     * @param context - Context of the container.
      * @param registry - Mapping to the components.
+     * @param createRequestHandler - create a request handler to handle container requests
+     * @param runtimeOptions - Additional options to be passed to the runtime
      */
     public static async load(
         context: IContainerContext,
         registry: IComponentRegistry,
+        createRequestHandler?: (runtime: ContainerRuntime) => ((request: IRequest) => Promise<IResponse>),
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new WrappedComponentRegistry(registry);
         const runtime = new ContainerRuntime(context, componentRegistry, runtimeOptions);
+        runtime.requestHandler = createRequestHandler(runtime);
 
         const components = new Map<string, ISnapshotTree>();
         if (context.baseSnapshot.trees[".protocol"]) {
@@ -245,11 +249,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private readonly componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
     private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
     private proposeLeadershipOnConnection = false;
+    private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     // Local copy of incomplete received chunks.
     private readonly chunkMap = new Map<string, string[]>();
@@ -263,7 +267,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();
-
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
@@ -343,14 +346,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         await component.start();
 
         deferred.resolve(component);
-    }
-
-    /**
-     * Notifies this object to register the handler for the requests made to the container.
-     * @param handler - Handler to handle the requests.
-     */
-    public registerRequestHandler(handler: (request: IRequest) => Promise<IResponse>) {
-        this.requestHandler = handler;
     }
 
     /**

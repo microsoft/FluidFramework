@@ -118,28 +118,7 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
         const chaincode = new Chaincode(this.runFn);
         const registry = new BackCompatLoader(chaincode);
 
-        const runtime = await ContainerRuntime.load(context, registry, this.runtimeOptions);
-
-        // Register path handler for inbound messages
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            debug(request.url);
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
-
-            const componentId = requestUrl
-                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                : "text";
-            const component = await runtime.getComponentRuntime(componentId, true);
-
-            // If there is a trailing slash forward to the component. Otherwise handle directly.
-            if (trailingSlash === -1) {
-                return { status: 200, mimeType: "prague/component", value: component };
-            } else {
-                return component.request({ url: requestUrl.substr(trailingSlash) });
-            }
-        });
+        const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler, this.runtimeOptions);
 
         // On first boot create the base component
         if (!runtime.existing) {
@@ -157,6 +136,32 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
         }
 
         return runtime;
+    }
+
+    /**
+     * Add create and store a request handler as pat of ContainerRuntime load
+     * @param runtime - Container Runtime instance
+     */
+    private createRequestHandler(runtime: ContainerRuntime) {
+        return async (request: IRequest) => {
+            debug(request.url);
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const trailingSlash = requestUrl.indexOf("/");
+
+            const componentId = requestUrl
+                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                : "text";
+            const component = await runtime.getComponentRuntime(componentId, true);
+
+            // If there is a trailing slash forward to the component. Otherwise handle directly.
+            if (trailingSlash === -1) {
+                return { status: 200, mimeType: "prague/component", value: component };
+            } else {
+                return component.request({ url: requestUrl.substr(trailingSlash) });
+            }
+        };
     }
 }
 

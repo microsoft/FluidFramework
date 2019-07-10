@@ -23,11 +23,30 @@ export class StockContainerRuntimeFactory {
         generateSummaries: boolean = false,
     ): Promise<IRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry, { generateSummaries });
+        const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler.bind(this), { generateSummaries });
         // debug("runtime loaded.");
 
-        // Register path handler for inbound messages
-        runtime.registerRequestHandler(async (request: IRequest) => {
+        // On first boot create the base component
+        if (!runtime.existing) {
+            // debug(`createAndAttachComponent(chaincode=${chaincode})`);
+            runtime.createComponent(this.defaultComponentId, chaincode)
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                })
+                .catch((error) => {
+                    context.error(error);
+                });
+        }
+
+        return runtime;
+    }
+
+    /**
+     * Add create and store a request handler as pat of ContainerRuntime load
+     * @param runtime - Container Runtime instance
+     */
+    private static createRequestHandler(runtime: ContainerRuntime) {
+        return async (request: IRequest) => {
             // debug(`request(url=${request.url})`);
 
             // Trim off an opening slash if it exists
@@ -52,20 +71,6 @@ export class StockContainerRuntimeFactory {
 
             // And then defer the handling of the request to the component
             return component.request({ url: pathForComponent });
-        });
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createComponent(this.defaultComponentId, chaincode)
-            .then((componentRuntime) => {
-                componentRuntime.attach();
-            })
-            .catch((error) => {
-                context.error(error);
-            });
-        }
-
-        return runtime;
+        };
     }
 }

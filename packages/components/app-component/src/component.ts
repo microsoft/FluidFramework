@@ -120,48 +120,51 @@ export abstract class Component extends EventEmitter {
         registry: IComponentRegistry,
         runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ): Promise<IRuntime> {
+
+        // Register the request handler after the ContainerRuntime is created.
+        const createRequestHandler = (containerRuntime: ContainerRuntime) => {
+            return async (request: IRequest) => {
+                debug(`request(url=${request.url})`);
+
+                // Trim off an opening slash if it exists
+                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                    ? request.url.substr(1)
+                    : request.url;
+
+                // Get the next slash to identify the componentID (if it exists)
+                const trailingSlash = requestUrl.indexOf("/");
+
+                // retrieve the component ID. If from a URL we need to decode the URI component
+                const componentId = requestUrl
+                    ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
+                    : chaincode;
+
+                // Pull the part of the URL after the component ID
+                const pathForComponent = trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash);
+
+                debug(`awaiting component ${componentId}`);
+                const component = await containerRuntime.getComponentRuntime(componentId, true);
+                debug(`have component ${componentId}`);
+
+                // And then defer the handling of the request to the component
+                return component.request({ url: pathForComponent });
+            };
+        };
+
         debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
-        const runtime = await ContainerRuntime.load(context, registry, runtimeOptions);
+        const runtime = await ContainerRuntime.load(context, registry, createRequestHandler, runtimeOptions);
         debug("runtime loaded.");
-
-        // Register path handler for inbound messages
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            debug(`request(url=${request.url})`);
-
-            // Trim off an opening slash if it exists
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-
-            // Get the next slash to identify the componentID (if it exists)
-            const trailingSlash = requestUrl.indexOf("/");
-
-            // retrieve the component ID. If from a URL we need to decode the URI component
-            const componentId = requestUrl
-                ? decodeURIComponent(requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash))
-                : chaincode;
-
-            // Pull the part of the URL after the component ID
-            const pathForComponent = trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash);
-
-            debug(`awaiting component ${componentId}`);
-            const component = await runtime.getComponentRuntime(componentId, true);
-            debug(`have component ${componentId}`);
-
-            // And then defer the handling of the request to the component
-            return component.request({ url: pathForComponent });
-        });
 
         // On first boot create the base component
         if (!runtime.existing) {
             debug(`createAndAttachComponent(chaincode=${chaincode})`);
             runtime.createComponent(chaincode, chaincode)
-            .then((componentRuntime) => {
-                componentRuntime.attach();
-            })
-            .catch((error) => {
-                context.error(error);
-            });
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                })
+                .catch((error) => {
+                    context.error(error);
+                });
         }
 
         return runtime;
@@ -185,6 +188,7 @@ export abstract class Component extends EventEmitter {
     }
 
     private static readonly rootMapId = "root";
+
     private readonly [typeToFactorySym]: ReadonlyMap<string, ISharedObjectExtension>;
 
     // tslint:disable-next-line:variable-name
@@ -320,7 +324,7 @@ export abstract class Component extends EventEmitter {
             // If this is the first client to attempt opening the component, create the component's
             // root map and call 'create()' to give the component author a chance to initialize the
             // component's shared data structures.
-            this._root = SharedMap.create(this. runtime, Component.rootMapId);
+            this._root = SharedMap.create(this.runtime, Component.rootMapId);
             this._root.register();
             debug(`${this.dbgName}.create() - begin`);
             await this.create();

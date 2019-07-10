@@ -124,11 +124,26 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(context, new Map([
-            [ComponentName, Promise.resolve({ instantiateComponent })],
-        ]));
+        const runtime = await ContainerRuntime.load(
+            context,
+            new Map([[ComponentName, Promise.resolve({ instantiateComponent })]]),
+            this.createContainerRequestHandler,
+        );
 
-        runtime.registerRequestHandler(async (request: IRequest) => {
+        if (!runtime.existing) {
+            const created = await runtime.createComponent(ComponentName, ComponentName);
+            created.attach();
+        }
+
+        return runtime;
+    }
+
+    /**
+     * Add create and store a request handler as pat of ContainerRuntime load
+     * @param runtime - Container Runtime instance
+     */
+    private createContainerRequestHandler(runtime: ContainerRuntime) {
+        return async (request: IRequest) => {
             const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
                 ? request.url.substr(1)
                 : request.url;
@@ -140,14 +155,7 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
             const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
             const component = await runtime.getComponentRuntime(componentId, true);
             return component.request({ url: pathForComponent });
-        });
-
-        if (!runtime.existing) {
-            const created = await runtime.createComponent(ComponentName, ComponentName);
-            created.attach();
-        }
-
-        return runtime;
+        };
     }
 }
 

@@ -95,33 +95,8 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
         const runtime = await ContainerRuntime.load(
             context,
             new MyRegistry(context, this),
+            this.createContainerRequestHandler,
             { generateSummaries });
-
-        // Register path handler for inbound messages
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            console.log(request.url);
-
-            if (request.url === "/graphiql") {
-                const sharedText = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
-                return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
-            } else if (request.url === "/text-analyzer") {
-                const textAnalyzer = new TextAnalyzer();
-                return textAnalyzer.request(request);
-            } else {
-                console.log(request.url);
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                    ? request.url.substr(1)
-                    : request.url;
-                const trailingSlash = requestUrl.indexOf("/");
-
-                const componentId = requestUrl
-                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                    : "text";
-                const component = await runtime.getComponentRuntime(componentId, true);
-
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash) });
-            }
-        });
 
         // Registering for tasks to run in headless runner.
         if (!generateSummaries) {
@@ -155,6 +130,37 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
         }
 
         return runtime;
+    }
+
+    /**
+     * Add create and store a request handler as pat of ContainerRuntime load
+     * @param runtime - Container Runtime instance
+     */
+    private createContainerRequestHandler(runtime: ContainerRuntime) {
+        return async (request: IRequest) => {
+            console.log(request.url);
+
+            if (request.url === "/graphiql") {
+                const sharedText = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
+                return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
+            } else if (request.url === "/text-analyzer") {
+                const textAnalyzer = new TextAnalyzer();
+                return textAnalyzer.request(request);
+            } else {
+                console.log(request.url);
+                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                    ? request.url.substr(1)
+                    : request.url;
+                const trailingSlash = requestUrl.indexOf("/");
+
+                const componentId = requestUrl
+                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                    : "text";
+                const component = await runtime.getComponentRuntime(componentId, true);
+
+                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash) });
+            }
+        };
     }
 }
 

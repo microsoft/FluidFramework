@@ -2,6 +2,7 @@
 
 - [Interface renames](#interface-renames)
 - [defaultValueTypes is no longer global](#defaultValueTypes-is-no-longer-global)
+- [ContainerRuntime registerRequestHandler passed into the constructor](#containerRuntime-registerRequestHandler-passed-into-the-constructor)
 
 ## Interface renames
 
@@ -31,6 +32,32 @@ const mapExtension = SharedMap.getFactory(mapValueTypes);
 ```
 
 You can also still register value types on a `SharedMap` itself via `map.registerValueType(type)` after it is created.
+
+## ContainerRuntime registerRequestHandler passed into the constructor
+
+Previously you would call something like this:
+
+```javascript
+const runtime = await ContainerRuntime.load(context, registry);
+runtime.registerRequestHandler(async (request: IRequest) => {
+    // Request Handling Logic
+});
+```
+
+In `ContainerRuntime.load(...)` if we are loading from a snapshot we trigger the load of all the components. This means if any of the components call `request(...)` on the ContainerRuntime it will not be registered yet. By passing in a `createRequestHandler` we can set the requestHandler before we load any components.
+
+Now:
+
+```javascript
+const createRequestHandler = (runtime: ContainerRuntime) => {
+    return(async (request: IRequest) => {
+        // Request Handling Logic
+    });
+};
+const runtime = await ContainerRuntime.load(context, registry, createRequestHandler);
+```
+
+We use a factory so we can pass in the runtime after it has been created to be used in the request routing.
 
 # 0.5 Breaking Changes (July 3, 2019)
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
