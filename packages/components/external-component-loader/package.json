@@ -7,7 +7,7 @@
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:tsc npm:build:esnext npm:tslint npm:webpack",
+    "build": "concurrently npm:tsc npm:build:esnext npm:tslint",
     "build:compile": "npm run build",
     "build:full": "npm run build",
     "build:full:compile": "npm run build",
