@@ -12,11 +12,6 @@ import { getQueryString } from "./getQueryString";
 import { TokenProvider } from "./tokenProvider";
 import { getWithRetryForTokenRefresh } from "./utils";
 
-/**
- * This class has the following functionality
- * 1. If a snapshotUrl is not provided or if latestSha is an empty string, all functions are disabled and an empty list is returned from getVersions
- * 2. A latestSha, trees and blobs can be supplied which will then be used as cache for getVersions, getTree and getBlob
- */
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private static readonly errorMessage = "Method not supported because no snapshotUrl was provided";
 
@@ -105,10 +100,14 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return null;
         }
 
-        let id = version && version.id ? version.id : "latest";
-
-        if (id === "latest" && this.latestSha) {
+        let id: string;
+        if (!version || !version.id) {
+            if (!this.latestSha) {
+                return null;
+            }
             id = this.latestSha;
+        } else {
+            id = version.id;
         }
 
         const tree = await this.readTree(id);
@@ -137,27 +136,38 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
-        if (blobid && blobid !== this.documentId) {
-            // each commit calls getVersions but odsp doesn't have a history for each commit
-            // return the blobid as is
-            return [
-                {
-                    id: blobid,
-                    treeId: undefined!,
-                },
-            ];
-        }
-
-        if (!this.snapshotUrl || this.latestSha === "") {
-            return [];
-        }
-
-        if (count === 1) {
-            const treeSha = blobid === this.documentId && this.latestSha ? this.latestSha : blobid;
-            const cachedTree = treeSha ? this.treesCache.get(treeSha) : undefined;
-            if (cachedTree) {
-                return [{ id: cachedTree.sha, treeId: undefined! }];
+        // Regular load workflow uses blobId === documentID to indicate "latest".
+        if (blobid === this.documentId) {
+            if (count === 1) {
+                // If app does not provide latest snapshot, do not bother asking SPO - this adds substantially to load time
+                if (!this.latestSha) {
+                    return [];
+                }
+                const cachedTree = this.treesCache.get(this.latestSha);
+                if (cachedTree) {
+                    return [{ id: cachedTree.sha, treeId: undefined! }];
+                }
             }
+            // We should not be getting here - that's likely a perf hit for the apps!
+            console.error("getVersions() is likely causing perf issues");
+        } else {
+            // PragueDump & FluidDebugger tools use empty sting to query for versions
+            // In such case we need to make a call against SPO to give full picture to the tool, no matter if we have
+            // Otherwise, each commit calls getVersions but odsp doesn't have a history for each commit
+            // return the blobid as is
+            if (blobid) {
+                return [
+                    {
+                        id: blobid,
+                        treeId: undefined!,
+                    },
+                ];
+            }
+        }
+
+        // Can't really make a call if we do not have URL
+        if (!this.snapshotUrl) {
+            return [];
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {

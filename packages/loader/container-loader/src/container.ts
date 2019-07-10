@@ -32,6 +32,7 @@ import {
     ITelemetryLogger,
     ITree,
     ITreeEntry,
+    IVersion,
     MessageType,
     TelemetryEventRaisedOnContainer,
     TreeEntry,
@@ -287,7 +288,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const message = `Commit @${deltaDetails} ${tagMessage}`;
 
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.storageService!.getVersions(this.id, 1);
+        const lastVersion = await this.getVersion(this.id);
 
         const parents = lastVersion.length > 0 ? [lastVersion[0].id] : [];
 
@@ -363,6 +364,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return root;
     }
 
+    private async getVersion(version: string): Promise<IVersion[]> {
+        try {
+            return await this.storageService!.getVersions(version, 1);
+        } catch (error) {
+            this.logger.logException({eventName: "GetVersionsFailed"}, error);
+            return [];
+        }
+    }
+
     /**
      * Load container.
      *
@@ -380,8 +390,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const perfEvent = PerformanceEvent.start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
 
-        const storageP = this.service.connectToStorage()
-            .then((storage) => new PrefetchDocumentStorageService(storage));
+        const storageP = this.service.connectToStorage().then((storage) => {
+            this.storageService = new PrefetchDocumentStorageService(storage);
+            return this.storageService;
+        });
 
         // Get the snapshot tree
         const treeP = storageP.then(async (storage) => {
@@ -389,7 +401,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // version and then load it
             if (specifiedVersion !== null) {
                 const versionId = specifiedVersion ? specifiedVersion : this.id;
-                const versions = await storage.getVersions(versionId, 1);
+                const versions = await this.getVersion(versionId);
                 const version = versions.length > 0 ? versions[0] : null;
                 if (version !== null) {
                     return storage.getSnapshotTree(version);
@@ -451,7 +463,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 chaincode]) => {
 
                 this.protocolHandler = protocolHandler;
-                this.storageService = storageService;
                 this.blobManager = blobManager;
                 this.pkg = chaincode.pkg;
 
