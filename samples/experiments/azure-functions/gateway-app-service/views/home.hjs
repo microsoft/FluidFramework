@@ -1,7 +1,7 @@
 {{<layout}}
 {{$content}}
 <div class="container">
-    <h1>Prague</h1>
+    <h1>Fluid Framework</h1>
 
     <h2>Get The Source Code</h2>
     <p>
