@@ -41,12 +41,14 @@ export class DebugReplayController implements IReplayController {
                 typeof window !== "object" ||
                 window === null ||
                 typeof window.document !== "object" ||
-                window.document == null) {
+                window.document == null ||
+                typeof localStorage !== "object" ||
+                localStorage === null) {
             console.error("Can't create debugger window - not running in browser!");
             return;
         }
 
-        if (!DebugReplayController.disableDebugger) {
+        if (localStorage.FluidDebugger) {
             const win = window.open(
                 "",
                 "",
@@ -58,8 +60,6 @@ export class DebugReplayController implements IReplayController {
         }
         return;
     }
-
-    protected static readonly disableDebugger = true;
 
     protected static async seqFromTree(
         documentStorageService: IDocumentStorageService,
