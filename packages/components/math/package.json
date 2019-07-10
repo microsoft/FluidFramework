@@ -23,7 +23,10 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -51,7 +54,10 @@
     "copyfiles": "^2.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
   },
   "license": "MIT"
 }
