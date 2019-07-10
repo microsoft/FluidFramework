@@ -9,9 +9,9 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { SharedObject } from "@prague/shared-object-common";
+import { SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
-import { ConsensusValueType, IConsensusOrderedCollectionValue } from "./values";
+import { IConsensusOrderedCollectionValue } from "./values";
 
 /**
  * Consensus collection snapshot definition
@@ -26,12 +26,12 @@ export class SnapshotableArray<T> extends Array {
         for (const item of this.data) {
             if (SharedObject.is(item)) {
                 content.push({
-                    type: ConsensusValueType[ConsensusValueType.Shared],
+                    type: ValueType[ValueType.Shared],
                     value: item.id, // (this.data as ISharedObject).id,
                 });
             } else {
                 content.push({
-                    type: ConsensusValueType[ConsensusValueType.Plain],
+                    type: ValueType[ValueType.Plain],
                     value: item,
                 });
             }
@@ -70,11 +70,11 @@ export class SnapshotableArray<T> extends Array {
 
             for (const item of values) {
                 switch (item.type) {
-                    case ConsensusValueType[ConsensusValueType.Plain]:
+                    case ValueType[ValueType.Plain]:
                         // assuming type T
                         this.data.push(item.value as T);
                         break;
-                    case ConsensusValueType[ConsensusValueType.Shared]:
+                    case ValueType[ValueType.Shared]:
                         const channel = await runtime.getChannel(item.value as string);
                         // assuming type T
                         this.data.push(channel as unknown as T);

@@ -12,7 +12,7 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { ISharedObject, SharedObject } from "@prague/shared-object-common";
+import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { ConsensusRegisterCollectionExtension } from "./extension";
@@ -40,21 +40,6 @@ interface IRegisterValue {
 
     // Actual Value
     value: any;
-}
-
-/**
- * Internal enum and interface describing the value serialization
- */
-
-/**
- * The type of serialized object, used describe values in snapshot or operation
- */
-enum RegisterValueType {
-    // The value is another shared object
-    Shared,
-
-    // The value is a plain JavaScript object
-    Plain,
 }
 
 /**
@@ -147,12 +132,12 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         if (SharedObject.is(value)) {
             value.register();
             operationValue = {
-                type: RegisterValueType[RegisterValueType.Shared],
+                type: ValueType[ValueType.Shared],
                 value: value.id,
             };
         } else {
             operationValue = {
-                type: RegisterValueType[RegisterValueType.Plain],
+                type: ValueType[ValueType.Plain],
                 value,
             };
         }
@@ -274,7 +259,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
             const op: IRegisterOperation = message.contents;
             if (op.type === "write") {
                 /* tslint:disable:no-return-await */
-                return op.value.type === RegisterValueType[RegisterValueType.Shared]
+                return op.value.type === ValueType[ValueType.Shared]
                     ? await this.runtime.getChannel(op.value.value as string)
                     : op.value.value;
             }
@@ -367,7 +352,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     private snapshotItem(item: ILocalRegister): ILocalRegister {
         let innerValue: any;
-        if (item.value.type === RegisterValueType[RegisterValueType.Shared]) {
+        if (item.value.type === ValueType[ValueType.Shared]) {
             innerValue = (item.value.value as ISharedObject).id;
         } else {
             innerValue = item.value.value;
@@ -383,9 +368,9 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     private async loadItem(item: ILocalRegister): Promise<ILocalRegister> {
         switch (item.value.type) {
-            case RegisterValueType[RegisterValueType.Plain]:
+            case ValueType[ValueType.Plain]:
                 return item;
-            case RegisterValueType[RegisterValueType.Shared]:
+            case ValueType[ValueType.Shared]:
                 const channel = await this.runtime.getChannel(item.value.value as string);
                 const fullValue: ILocalRegister = {
                     sequenceNumber: item.sequenceNumber,

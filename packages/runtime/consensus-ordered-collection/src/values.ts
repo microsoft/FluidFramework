@@ -10,17 +10,6 @@
  */
 
 /**
- * The type of serialized object, used describe values in snapshot or operation
- */
-export enum ConsensusValueType {
-    // The value is another shared object
-    Shared,
-
-    // The value is a plain JavaScript object
-    Plain,
-}
-
-/**
  * Describe values in snapshot or operation
  */
 export interface IConsensusOrderedCollectionValue {

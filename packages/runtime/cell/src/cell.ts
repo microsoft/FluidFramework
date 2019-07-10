@@ -14,7 +14,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension, SharedObject } from "@prague/shared-object-common";
+import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import { CellExtension } from "./extension";
 import { ISharedCell } from "./interfaces";
@@ -31,14 +31,6 @@ interface ISetCellOperation {
 
 interface IDeleteCellOperation {
     type: "deleteCell";
-}
-
-enum CellValueType {
-    // The value is another shared object
-    Shared,
-
-    // The value is a plain JavaScript object
-    Plain,
 }
 
 interface ICellValue {
@@ -116,12 +108,12 @@ export class SharedCell extends SharedObject implements ISharedCell {
             }
 
             operationValue = {
-                type: CellValueType[CellValueType.Shared],
+                type: ValueType[ValueType.Shared],
                 value: value.id,
             };
         } else {
             operationValue = {
-                type: CellValueType[CellValueType.Plain],
+                type: ValueType[ValueType.Plain],
                 value,
             };
         }
@@ -164,12 +156,12 @@ export class SharedCell extends SharedObject implements ISharedCell {
         let content: ICellValue;
         if (SharedObject.is(this.data)) {
             content = {
-                type: CellValueType[CellValueType.Shared],
+                type: ValueType[ValueType.Shared],
                 value: this.data.id, // (this.data as ISharedObject).id,
             };
         } else {
             content = {
-                type: CellValueType[CellValueType.Plain],
+                type: ValueType[ValueType.Plain],
                 value: this.data,
             };
         }
@@ -212,9 +204,9 @@ export class SharedCell extends SharedObject implements ISharedCell {
         const content = rawContent
             ? JSON.parse(Buffer.from(rawContent, "base64")
                 .toString("utf-8")) as ICellValue
-            : { type: CellValueType[CellValueType.Plain], value: undefined };
+            : { type: ValueType[ValueType.Plain], value: undefined };
 
-        this.data = content.type === CellValueType[CellValueType.Shared]
+        this.data = content.type === ValueType[ValueType.Shared]
             ? await this.runtime.getChannel(content.value)
             : content.value;
     }
@@ -252,7 +244,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
             const op: ICellOperation = message.contents;
             if (op.type === "setCell") {
                 /* tslint:disable:no-return-await */
-                return op.value.type === CellValueType[CellValueType.Shared]
+                return op.value.type === ValueType[ValueType.Shared]
                     ? await this.runtime.getChannel(op.value.value)
                     : op.value.value;
             }

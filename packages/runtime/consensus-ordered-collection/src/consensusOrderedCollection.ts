@@ -5,11 +5,11 @@
 
 import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { SharedObject } from "@prague/shared-object-common";
+import { SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
 import { IConsensusOrderedCollection, IOrderedCollection } from "./interfaces";
-import { ConsensusValueType, IConsensusOrderedCollectionValue } from "./values";
+import { IConsensusOrderedCollectionValue } from "./values";
 
 /**
  * An operation for consensus ordered collection
@@ -101,12 +101,12 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             }
 
             operationValue = {
-                type: ConsensusValueType[ConsensusValueType.Shared],
+                type: ValueType[ValueType.Shared],
                 value: value.id,
             };
         } else {
             operationValue = {
-                type: ConsensusValueType[ConsensusValueType.Plain],
+                type: ValueType[ValueType.Plain],
                 value,
             };
         }
@@ -173,7 +173,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
             const op: IConsensusOrderedCollectionOperation = message.contents;
             if (op.opName === "add") {
                 /* tslint:disable:no-return-await */
-                return op.value.type === ConsensusValueType[ConsensusValueType.Shared]
+                return op.value.type === ValueType[ValueType.Shared]
                     ? await this.runtime.getChannel(op.value.value)
                     : op.value.value;
             }
