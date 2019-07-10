@@ -35,7 +35,8 @@ function setEnv(name, value) {
         case "fish":
             return exec(`set -xU '${name}' '${value}'`, {"shell": process.env.SHELL}, stdResponse);
         default: //windows
-            return exec(`setx ${name} '${value}'`, stdResponse);
+            const escapedValue = value.split('"').join('\\"');
+            return exec(`setx ${name} "${escapedValue}"`, stdResponse);
     }
 }
 

@@ -10,6 +10,9 @@ services:
         environment:
             - DEBUG=prague:*
             - NODE_ENV=development
+            - login__microsoft__clientId
+            - login__microsoft__secret
+            - login__accounts
         restart: always
     alfred:
         build:
