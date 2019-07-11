@@ -823,6 +823,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         } else if (value === ConnectionState.Connected) {
             this._deltaManager!.disableReadonlyMode();
             this._clientId = this.pendingClientId;
+        } else if (value === ConnectionState.Disconnected) {
+            // Important as we process our own joinSession message through delta request
+            this.pendingClientId = undefined;
         }
 
         if (!this.loaded) {
