@@ -10,6 +10,7 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
+    TelemetryEventPropertyType,
     TelemetryPerfType,
 } from "@prague/container-definitions";
 import * as registerDebug from "debug";
@@ -333,30 +334,44 @@ export class DebugLogger extends TelemetryLogger {
      * @param event - the event to send
      */
     public send(event: ITelemetryBaseEvent): void {
-        const newEvent = this.prepareEvent(event);
+        const newEvent: { [index: string]: TelemetryEventPropertyType } = this.prepareEvent(event);
         let logger = newEvent.category === "error" ? this.debugErr : this.debug;
 
         // Use debug's coloring schema for base of the event
-        const index = newEvent.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
-        const name = newEvent.eventName.substring(index + 1);
+        const index = event.eventName.lastIndexOf(TelemetryLogger.eventNamespaceSeparator);
+        const name = event.eventName.substring(index + 1);
         if (index > 0) {
-            logger = logger.extend(newEvent.eventName.substring(0, index));
+            logger = logger.extend(event.eventName.substring(0, index));
+        }
+        newEvent.eventName = undefined;
+
+        let tick = "";
+        if (newEvent.tick) {
+            tick = `tick=${newEvent.tick}`;
+            newEvent.tick = undefined;
         }
 
-        // Filter out event name and category from json payload
-        let tick: string = "";
-        let payload = JSON.stringify(newEvent, (k, v) => {
-            if (k === "tick") {
-                tick = `tick=${v}`;
-                return undefined;
-            }
-            return (k !== "eventName") ? v : undefined;
-        });
+        // Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
+        const stack = newEvent.stack ? newEvent.stack : "";
+        newEvent.stack = undefined;
+
+        // Watch out for circular references - they can come from two sources
+        // 1) error object - we do not control it and should remove it and retry
+        // 2) properties supplied by telemetry caller - that's a bug that should be addressed!
+        let payload: string;
+        try {
+            payload = JSON.stringify(newEvent);
+        } catch (error) {
+            newEvent.error = undefined;
+            payload = JSON.stringify(newEvent);
+        }
 
         if (payload === "{}") {
             payload = "";
         }
-        logger(`${name} ${payload} ${tick}`);
+
+        // print multi-line.
+        logger(`${name} ${payload} ${tick} ${stack}`);
     }
 }
 
