@@ -9,7 +9,6 @@ import "./publicpath";
 
 import { IComponent, IContainerContext, IRequest, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
-import { TextAnalyzer } from "@prague/intelligence-runner";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import * as Snapshotter from "@prague/snapshotter";
@@ -27,6 +26,8 @@ const videoPlayers = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/video-players");
 const images = import(
     /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection");
+
+const DefaultComponentName = "text";
 
 // tslint:disable
 (self as any).MonacoEnvironment = {
@@ -115,7 +116,7 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
             await Promise.all([
                 runtime.createComponent("progress-bars", "@chaincode/progress-bars")
                     .then((componentRuntime) => componentRuntime.attach()),
-                runtime.createComponent("text", "@chaincode/shared-text")
+                runtime.createComponent(DefaultComponentName, "@chaincode/shared-text")
                     .then((componentRuntime) => componentRuntime.attach()),
                 runtime.createComponent("math", "@chaincode/math")
                     .then((componentRuntime) => componentRuntime.attach()),
@@ -143,9 +144,6 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
             if (request.url === "/graphiql") {
                 const sharedText = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
                 return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
-            } else if (request.url === "/text-analyzer") {
-                const textAnalyzer = new TextAnalyzer();
-                return textAnalyzer.request(request);
             } else {
                 console.log(request.url);
                 const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"

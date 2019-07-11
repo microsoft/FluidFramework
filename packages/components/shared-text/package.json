@@ -18,6 +18,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"production\"",
+    "start:live": "prague-dev-server --config webpack.config.js --package package.json --live --env=\"production\"",
     "start:dev": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""

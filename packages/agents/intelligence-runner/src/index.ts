@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
+import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { IntelRunner } from "./intelRunner";
 
-export interface ITextAnalyzer {
-    run(sharedString: Sequence.SharedString, insightsMap: ISharedMap): void;
-}
+export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
 
-export class TextAnalyzer implements IComponent, IComponentRouter, ITextAnalyzer {
+    public static supportedInterfaces = ["IComponentRunnable"];
 
-    public static supportedInterfaces = ["ITextAnalyzer"];
+    constructor(
+        private readonly sharedString: Sequence.SharedString,
+        private readonly insightsMap: ISharedMap) {}
 
     public query(id: string): any {
         return TextAnalyzer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -24,11 +24,9 @@ export class TextAnalyzer implements IComponent, IComponentRouter, ITextAnalyzer
         return TextAnalyzer.supportedInterfaces;
     }
 
-    public run(sharedString: Sequence.SharedString, insightsMap: ISharedMap) {
-        const intelRunner = new IntelRunner(sharedString, insightsMap);
-        intelRunner.start().catch((err) => {
-            console.log(err);
-        });
+    public async run() {
+        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap);
+        return intelRunner.start();
     }
 
     public async request(request: IRequest): Promise<IResponse> {

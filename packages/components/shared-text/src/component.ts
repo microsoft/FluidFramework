@@ -7,7 +7,14 @@ import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IComponent, IComponentHTMLViewable, IHTMLView, IRequest } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLViewable,
+    IComponentLoadable,
+    IComponentRouter,
+    IHTMLView,
+    IRequest,
+    IResponse } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -17,7 +24,7 @@ import {
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IAgentScheduler, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
@@ -25,9 +32,7 @@ import {
     SharedString,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
-import { SpellChecker } from "@prague/spellchecker";
 import { IStream, Stream } from "@prague/stream";
-import { Translator } from "@prague/translator";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires
@@ -36,7 +41,6 @@ const debug = require("debug")("prague:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { Document } from "./document";
-import { createCacheHTML } from "./pageCacher";
 import {
     addTranslation,
     downloadRawText,
@@ -44,9 +48,10 @@ import {
     waitForFullConnection,
 } from "./utils";
 
-const translationApiKey = "bd099a1e38724333b253fcff7523f76a";
+const textAnalyzerRoute = "/tasks/intel";
 
-export class SharedTextRunner extends EventEmitter implements IComponent, IComponentHTMLViewable {
+export class SharedTextRunner extends EventEmitter
+    implements IComponent, IComponentHTMLViewable, IComponentLoadable, IComponentRouter {
     public static supportedInterfaces = ["IComponentHTMLViewable"];
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
@@ -56,6 +61,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         return runner;
     }
 
+    public readonly url = "/text";
     private sharedString: SharedString;
     private insightsMap: DistributedMap.ISharedMap;
     private rootView: ISharedMap;
@@ -71,6 +77,17 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
 
     public list(): string[] {
         return SharedTextRunner.supportedInterfaces;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        if (request.url === textAnalyzerRoute) {
+            const textAnalyzer = new TextAnalyzer(this.sharedString, this.insightsMap);
+            return { status: 200, mimeType: "prague/component", value: textAnalyzer };
+        } else if (request.url === "" || request.url === "/") {
+            return { status: 200, mimeType: "prague/component", value: this };
+        } else {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        }
     }
 
     public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
@@ -190,55 +207,32 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         debug(`Partial load fired: ${performanceNow()}`);
 
         waitForFullConnection(this.runtime).then(() => {
-            this.runTask(this.context.clientType);
+            this.registerTasks().then(() => {
+                console.log(`Requested tasks`);
+            })
+            .catch((err) => {
+                console.log(`Error requesting tasks ${err}`);
+            });
         });
-
-        this.listenForLeaderEvent();
     }
 
-    // TODO: Leader only runs intel now until we figure out web worker story.
-    private listenForLeaderEvent() {
-        if (this.context.leader) {
-            this.runTask("intel");
+    // TODO: component will ask host for capability before registering.
+    private async registerTasks() {
+        const response = await this.runtime.request({ url: "/_scheduler" });
+        const rawComponent = response.value as IComponent;
+
+        const scheduler = rawComponent.query<IAgentScheduler>("IAgentScheduler");
+
+        // TODO: Pick tasks once stuff are finalized.
+        if (scheduler.leader) {
+            console.log(`This instance is the leader`);
         } else {
-            this.runtime.on("leader", (clientId) => {
-                this.runTask("intel");
+            scheduler.on("leader", () => {
+                console.log(`This instance is the leader`);
             });
         }
     }
 
-    // TODO: Eventually agent-scheduler will request for specific task.
-    private runTask(taskType: string) {
-        switch (taskType) {
-            case "intel":
-                console.log(`@chaincode/shared-text running ${taskType}`);
-                const textAnalyzer = new TextAnalyzer();
-                textAnalyzer.run(this.sharedString, this.insightsMap);
-            case "translation":
-                console.log(`@chaincode/shared-text running ${taskType}`);
-                const translator = new Translator();
-                translator.run(
-                    this.sharedString,
-                    this.insightsMap,
-                    translationApiKey);
-                break;
-            case "spell":
-                console.log(`@chaincode/shared-text running ${taskType}`);
-                const speller = new SpellChecker();
-                speller.run(this.sharedString);
-                break;
-            case "cache":
-                console.log(`@chaincode/shared-text running ${taskType}`);
-                // Todo: Wrap this in a snapshot like scheduler
-                setInterval(() => {
-                    console.log(`Generated cached page in chaincode`);
-                    createCacheHTML();
-                }, 10000);
-                break;
-            default:
-                break;
-        }
-    }
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
@@ -273,9 +267,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     runtime.registerRequestHandler(async (request: IRequest) => {
         debug(`request(url=${request.url})`);
         const runner = await runnerP;
-        return request.url && request.url !== "/"
-            ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
-            : { status: 200, mimeType: "prague/component", value: runner };
+        return runner.request(request);
     });
 
     return runtime;

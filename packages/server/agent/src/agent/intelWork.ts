@@ -46,8 +46,8 @@ export class IntelWork extends BaseWork implements IWork {
             if (!insightsMap.has(sharedString.id)) {
                 const insightSlot = SharedMap.create(this.document.runtime);
                 insightsMap.set(sharedString.id, insightSlot);
-                const textAnalyzer = new TextAnalyzer();
-                textAnalyzer.run(sharedString, insightsMap);
+                const textAnalyzer = new TextAnalyzer(sharedString, insightsMap);
+                return textAnalyzer.run();
             }
         }
     }
