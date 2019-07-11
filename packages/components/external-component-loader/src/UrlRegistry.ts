@@ -50,7 +50,6 @@ export class UrlRegistry implements IComponentRegistry {
                 if (entrypoint === undefined) {
                     reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
                 } else {
-
                     if (entrypoint.instantiateComponent === undefined) {
                         reject(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
                     }
@@ -68,23 +67,24 @@ export class UrlRegistry implements IComponentRegistry {
     private async loadEntrypoint(name: string): Promise<any> {
         const response = await fetch(`${name}/package.json`);
         if (!response.ok) {
-            console.log(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
+            throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
         } else {
             const responseText = await response.text();
             const packageJson = JSON.parse(responseText) as IPraguePackage;
 
             if (packageJson === undefined) {
-                console.log(`UrlRegistry: ${name}: Package json not deserializable as IPraguePackage`);
+                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IPraguePackage`);
             } else if (packageJson.prague  === undefined) {
-                console.log(`UrlRegistry: ${name}: Package contains no prague property`);
+                throw new Error(`UrlRegistry: ${name}: Package contains no prague property`);
             } else if (packageJson.prague.browser  === undefined) {
-                console.log(`UrlRegistry: ${name}: Package contains no prague.browser property`);
+                throw new Error(`UrlRegistry: ${name}: Package contains no prague.browser property`);
             } else if (packageJson.prague.browser.entrypoint === undefined
                 || packageJson.prague.browser.entrypoint === "") {
-                console.log(`UrlRegistry: ${name}: Package contains no or empty prague.browser.entrypoint property`);
+                throw new Error(
+                    `UrlRegistry: ${name}: Package contains no or empty prague.browser.entrypoint property`);
             } else if (packageJson.prague.browser.bundle === undefined
                 || packageJson.prague.browser.bundle.length === 0) {
-                console.log(`UrlRegistry: ${name}: Package contains no or empty prague.browser.bundle property`);
+                throw new Error(`UrlRegistry: ${name}: Package contains no or empty prague.browser.bundle property`);
             } else {
 
                 // prevent entry points from overwriting each other before we stash them
@@ -95,15 +95,29 @@ export class UrlRegistry implements IComponentRegistry {
                 const loadingEntrypoint = new Deferred();
                 this.loadingEntrypoints.set(entrypointName, loadingEntrypoint.promise);
                 const preservedEntryPoint = window[entrypointName];
+                window[entrypointName] = undefined;
                 try {
-                    await Promise.all(
+                    const scriptLoadPromises =
                         packageJson.prague.browser.bundle.map(
-                            async (bundle) => loadScript(`${name}/${bundle}`)));
+                            async (bundle) => loadScript(`${name}/${bundle}`));
+
+                    const errors = [];
+                    while (scriptLoadPromises.length > 0) {
+                        try {
+                            await scriptLoadPromises.shift();
+                        } catch (e) {
+                            errors.push(e);
+                        }
+                    }
+                    if (errors.length > 0) {
+                        throw new Error(errors.join("\n"));
+                    }
 
                     // stash the entry point
                     const entrypoint = window[entrypointName];
                     if (entrypoint === undefined) {
-                        console.log(`UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
+                        throw new Error(
+                            `UrlRegistry: ${name}: Entrypoint: ${entrypointName}: Entry point is undefined`);
                     }
                     return entrypoint;
 
@@ -120,18 +134,17 @@ export class UrlRegistry implements IComponentRegistry {
 
 async function loadScript(scriptUrl: string): Promise<{}> {
     return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = scriptUrl;
+        const script = document.createElement("script");
+        script.src = scriptUrl;
 
-      // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
-      // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
-      // its dependencies have been loaded and executed.
-      script.async = false;
+        // Dynamically added scripts are async by default. By setting async to false, we are enabling the scripts
+        // to be downloaded in parallel, but executed in order. This ensures that a script is executed after all of
+        // its dependencies have been loaded and executed.
+        script.async = false;
 
-      script.onload = resolve;
-      script.onerror = () =>
-        reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`Failed to download the script at url: ${scriptUrl}`));
 
-      document.head.appendChild(script);
+        document.head.appendChild(script);
     });
 }
