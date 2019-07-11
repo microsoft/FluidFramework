@@ -15,35 +15,45 @@ interface s {
     checked: boolean;
 }
 
-// tslint:disable:react-a11y-input-elements
-export class FluidReactCheckbox extends React.Component<p, s> {
+/**
+ * Fluid enabled checkbox
+ * The checkbox uses the counter to ensure consistency if two people both hit the button.
+ */
+export class CollaborativeCheckbox extends React.Component<p, s> {
     constructor(props: p) {
         super(props);
 
         this.state = {
-            checked: this.props.counter.value % 2 !== 0,
+            checked: this.isChecked(),
         };
 
         this.updateCheckbox = this.updateCheckbox.bind(this);
+        this.isChecked = this.isChecked.bind(this);
     }
 
     updateCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
         this.props.counter.increment(1);
     }
 
-    componentDidMount() {
+    isChecked(): boolean {
+        // odd is true, even is false
+        return this.props.counter.value % 2 !== 0;
+    }
+
+    componentWillMount() {
+        // Register a callback for when an increment happens
         this.props.counter.onIncrement = () => {
-            // odd is true even is false
-            const checked = this.props.counter.value % 2 !== 0;
+            const checked = this.isChecked();
             this.setState({ checked });
         };
     }
 
     render() {
+        // tslint:disable:react-a11y-input-elements
         return(
             <input
                 type="checkbox"
-                aria-checked={false}
+                aria-checked={this.state.checked}
                 name= {this.props.id}
                 checked = {this.state.checked}
                 onChange={this.updateCheckbox} />

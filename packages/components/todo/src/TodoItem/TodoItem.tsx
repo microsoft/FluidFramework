@@ -10,12 +10,10 @@ import {
   ISharedCell,
   SharedCell,
 } from "@prague/cell";
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
   IComponentHTMLViewable,
   IHTMLView,
-  IRequest,
 } from "@prague/container-definitions";
 import {
   IComponentForge,
@@ -23,28 +21,32 @@ import {
 import {
   Counter,
   CounterValueType,
-  DistributedSetValueType,
-  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
   IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { EmbeddedReactComponentFactory } from "../../component-lib/embeddedComponent";
-import { IComponentReactViewable } from "../../component-lib/interfaces";
+import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
+import { EmbeddedReactComponentFactory } from "../component-lib/embeddedComponent";
+import { IComponentReactViewable } from "../component-lib/interfaces";
+
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../../../package.json");
-export const TodoItemName = `${pkg.name as string}-todo-item`;
+const pkg = require("../../package.json");
+export const TodoItemName = `${pkg.name as string}-item`;
 
 /**
- * Todo Item comment that is not at all similar to the title
+ * Todo Item is a singular todo entry consisting of:
+ * - Checkbox
+ * - Collaborative string
+ * - Embedded component
+ * - Link to open component in separate tab
+ * - Button to remove entry
  */
 export class TodoItem extends RootComponent
   implements
@@ -55,48 +57,73 @@ export class TodoItem extends RootComponent
       ["IComponentHTMLViewable", "IComponentReactViewable", "IComponentForge"];
 
   /**
-   * Do setup work here
+   * Do creation work
    */
   protected async create() {
     // This allows the RootComponent to do setup. In this case it creates the root map
     await super.create();
 
+    // create a cell that will be use for the text entry
     this.root.set("text", SharedCell.create(this.runtime));
+
+    // create a counter that will be used for the checkbox
+    // we use a counter so if both users press the button at the same time it will result
+    // in the button being the same value.
     this.root.set("checked", 0, CounterValueType.Name);
 
+    // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
+    // user choose the component they want to embed. We store it in a cell for easier event handling.
     const innerIdCell = SharedCell.create(this.runtime);
     innerIdCell.set("");
     this.root.set("innerId", innerIdCell);
   }
 
+  // start IComponentForge
+
+  /**
+   * Forge is called after create and before attach. It allows the creating component to pass in a property bag
+   * that can be used to further set values before any other user sees the component.
+   *
+   * In our forge we allow the creating component to set initial text.
+   */
   public async forge(props?: any): Promise<void> {
-    let newItemText = "New Item Text";
+    let newItemText = "New Item";
+
+    // if the creating component passed props with a startingText value then set it.
     if (props && props.startingText) {
       newItemText = props.startingText;
     }
 
+    // Set our text cell to the initial value.
     const cell = this.root.get<ISharedCell>("text");
     cell.set(newItemText);
   }
 
+  // end IComponentForge
+
   /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
+   * Having a static load function allows us to make async calls while creating our object.
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TodoItem> {
-    const todo = new TodoItem(runtime, context, TodoItem.supportedInterfaces);
-    await todo.initialize();
+    const todoItem = new TodoItem(runtime, context, TodoItem.supportedInterfaces);
+    await todoItem.initialize();
 
-    return todo;
+    return todoItem;
   }
 
   // start IComponentHTMLViewable
 
   /**
-   * Will return a new Todo view
+   * Creates a new view for a caller that doesn't directly support React.
+   *
+   * This is called when the caller does not support React. Currently this happens when the TodoItem
+   * is loaded separately on the webpage.
    */
   public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLView> {
+    // Because we are using React and our caller is not we will use the
+    // ReactDOM to render our JSX.Element directly into the provided div.
+    // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
+    // we can just call that and minimize duplicate code.
     ReactDOM.render(
         this.createViewElement(),
         div,
@@ -109,7 +136,8 @@ export class TodoItem extends RootComponent
   // start IComponentReactViewable
 
   /**
-   * React Render if the caller supports it.
+   * If our caller supports React they can query against the IComponentReactViewable
+   * Since this returns a JSX.Element it allows for an easier model.
    */
   public createViewElement(): JSX.Element {
       const cell = this.root.get<ISharedCell>("text");
@@ -131,43 +159,11 @@ export class TodoItem extends RootComponent
   // end IComponentReactViewable
 
   /**
-   * Future thing: move this to it's own class like Kurt's new model
+   * The Todo Item can embed multiple types of components. This is where these components are defined.
+   * @param type - component to be created
+   * @param props - props to be passed into component creation
    */
-  public static async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    // Register default map value types (Register the DDS we care about)
-    // We need to register the Map and the Counter so we can create a root and a counter on that root
-    const mapValueTypes = [
-      new DistributedSetValueType(),
-      new CounterValueType(),
-    ];
-
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-
-    // Add Map DDS
-    const mapExtension = SharedMap.getFactory(mapValueTypes);
-    dataTypes.set(mapExtension.type, mapExtension);
-
-    // Add Cell DDS
-    const cellExtension = SharedCell.getFactory();
-    dataTypes.set(cellExtension.type, cellExtension);
-    // Create a new runtime for our component
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-
-    // Create a new instance of our component
-    const counterNewP = TodoItem.load(runtime, context);
-
-    // Add a handler for the request() on our runtime to send it to our component
-    // This will define how requests to the runtime object we just created gets handled
-    // Here we want to simply defer those requests to our component
-    runtime.registerRequestHandler(async (request: IRequest) => {
-      const counter = await counterNewP;
-      return counter.request(request);
-    });
-
-    return runtime;
-  }
-
-  private async createComponent(type: string, props?: any): Promise<void> {
+  private async createComponent(type: TodoItemSupportedComponents, props?: any): Promise<void> {
     const id = `item${Date.now().toString()}`;
 
     switch (type) {

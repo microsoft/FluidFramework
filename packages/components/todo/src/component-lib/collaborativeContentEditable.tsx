@@ -17,9 +17,11 @@ interface s {
 }
 
 /**
- * Given a map (should be shared string) will provide an editable component
+ * Given a cell will provide an editable component
+ * This produces a single line content editable box. It's single line because doing
+ * multiple lines means you have to manage line breaks which is hard.
  */
-export class FluidContentEditable extends React.Component<p, s> {
+export class CollaborativeContentEditable extends React.Component<p, s> {
     constructor(props: p) {
         super(props);
 
@@ -30,7 +32,9 @@ export class FluidContentEditable extends React.Component<p, s> {
         this.handleChange = this.handleChange.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
+        // Sets an event listener so we can update our state is the value changes
+        // Setting the state triggers the render function to get called.
         this.props.cell.on("op", () => {
             this.setState({ text: this.props.cell.get() });
         });

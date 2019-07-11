@@ -7,6 +7,17 @@ import { IComponent, IComponentHTMLViewable  } from "@prague/container-definitio
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 
+/**
+ * Creates a new Embedded Component while allowing you to register the getComponent call upfront.
+ */
+export class EmbeddedReactComponentFactory {
+    constructor(private readonly getComponent: (id: string) => Promise<IComponent>) { }
+
+    public create(id: string): JSX.Element {
+        return <EmbeddedComponent getComponent={this.getComponent} id={id} />;
+    }
+}
+
 interface pEmbed {
     getComponent(id: string): Promise<IComponent>;
     id: string;
@@ -16,26 +27,38 @@ interface sEmbed {
     element: JSX.Element;
 }
 
-class FluidEmbeddedComponent extends React.Component<pEmbed, sEmbed> {
+/**
+ * Given a way to get a component will render that component via react if the component supports IComponentReactViewable
+ * or standard HTML if the component supports IComponentHTMLViewable.
+ *
+ * If the component doesn't exist or supports neither interfaces we render and empty <span/>
+ */
+export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
     constructor(props: pEmbed) {
         super(props);
 
         this.state = {
-            element: <span></span>,
+            element: <span/>,
         };
     }
 
     async componentWillMount() {
         const component = await this.props.getComponent(this.props.id);
-        const reactViewable = component.query<IComponentReactViewable>("IComponentReactViewable");
-        if (reactViewable) {
-            this.setState({ element: <FluidReactEmbeddedComponent component={reactViewable}/>});
+        if (!component) {
             return;
         }
 
+        // Query to see if the component supports IComponentReactViewable
+        const reactViewable = component.query<IComponentReactViewable>("IComponentReactViewable");
+        if (reactViewable) {
+            this.setState({ element: <ReactEmbeddedComponent component={reactViewable}/>});
+            return;
+        }
+
+        // If not Query to see if the component supports IComponentHTMLViewable
         const htmlViewable = component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
         if (htmlViewable) {
-            this.setState({ element: <FluidHTMLEmbeddedComponent component={htmlViewable} />});
+            this.setState({ element: <HTMLEmbeddedComponent component={htmlViewable} />});
             return;
         }
     }
@@ -49,7 +72,10 @@ interface pHTML {
     component: IComponentHTMLViewable;
 }
 
-class FluidHTMLEmbeddedComponent extends React.Component<pHTML, { }> {
+/**
+ * Embeds a Fluid Component that supports IComponentHTMLViewable
+ */
+class HTMLEmbeddedComponent extends React.Component<pHTML, { }> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
     constructor(props: pHTML) {
@@ -59,6 +85,10 @@ class FluidHTMLEmbeddedComponent extends React.Component<pHTML, { }> {
     }
 
     async componentDidMount() {
+        // After the div is mounted to the dom we can pass that div to the
+        // addView to be used. Because addView requires a physical div we need
+        // to wait till the div is mounted and use react ref to reference the
+        // physical object.
         await this.props.component.addView(undefined, this.ref.current);
     }
 
@@ -71,15 +101,10 @@ interface pReact {
     component: IComponentReactViewable;
 }
 
+/**
+ * Embeds a Fluid Component that supports IComponentReactViewable
+ */
 // tslint:disable-next-line:function-name
-function FluidReactEmbeddedComponent(props: pReact) {
-    return (props.component.createViewElement());
-}
-
-export class EmbeddedReactComponentFactory {
-    constructor(private readonly getComponent: (id: string) => Promise<IComponent>) { }
-
-    public create(id: string): JSX.Element {
-        return <FluidEmbeddedComponent getComponent={this.getComponent} id={id} />;
-    }
+function ReactEmbeddedComponent(props: pReact) {
+    return props.component.createViewElement();
 }

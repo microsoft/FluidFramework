@@ -7,8 +7,10 @@ import { ISharedCell } from "@prague/cell";
 import { Counter } from "@prague/map";
 import * as React from "react";
 
-import { FluidReactCheckbox } from "../../component-lib/checkbox";
-import { FluidContentEditable } from "../../component-lib/contentEditable";
+import { TodoItemSupportedComponents } from "./supportedComponent";
+
+import { CollaborativeCheckbox } from "../component-lib/collaborativeCheckbox";
+import { CollaborativeContentEditable } from "../component-lib/collaborativeContentEditable";
 
 interface p {
     cell: ISharedCell;
@@ -16,7 +18,7 @@ interface p {
     id: string;
     innerIdCell: ISharedCell;
     getComponentView(id: string): JSX.Element;
-    createComponent(types: string, props?: any): Promise<void>;
+    createComponent(types: TodoItemSupportedComponents, props?: any): Promise<void>;
 }
 
 interface s {
@@ -24,7 +26,6 @@ interface s {
     innerId: string;
 }
 
-// tslint:disable:react-a11y-input-elements
 export class TodoItemView extends React.Component<p, s> {
     private readonly baseUrl = `${window.location.origin}/${window.location.pathname.split("/")[1]}`;
     private readonly buttonStyle = {
@@ -45,7 +46,7 @@ export class TodoItemView extends React.Component<p, s> {
         this.createComponent = this.createComponent.bind(this);
     }
 
-    async createComponent(type: "clicker" | "todo") {
+    async createComponent(type: TodoItemSupportedComponents) {
         await this.props.createComponent(type, { startingText: "Content"});
     }
 
@@ -56,13 +57,14 @@ export class TodoItemView extends React.Component<p, s> {
     }
 
     render() {
+        // tslint:disable:strict-boolean-expressions
         return (
             <div>
                 <h2>
-                    <FluidReactCheckbox
+                    <CollaborativeCheckbox
                         counter={this.props.checkedCounter}
                         id={this.props.id}/>
-                    <FluidContentEditable
+                    <CollaborativeContentEditable
                         cell={this.props.cell}
                         tagName="span"/>
                     <span>
@@ -86,8 +88,8 @@ export class TodoItemView extends React.Component<p, s> {
                         {
                             this.state.innerId === "" &&
                             <span>
-                                <button type="button" onClick={() => this.createComponent("todo")}>todo</button>
-                                <button type="button" onClick={() => this.createComponent("clicker")}>clicker</button>
+                                <button onClick={async () => this.createComponent("todo")}>todo</button>
+                                <button onClick={async () => this.createComponent("clicker")}>clicker</button>
                             </span>
                         }
                         {this.state.innerId !== "" && this.props.getComponentView(this.state.innerId)}

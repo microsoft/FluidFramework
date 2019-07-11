@@ -4,8 +4,8 @@
  */
 
 import {
+  ClickerFactoryComponent,
   ClickerName,
-  instantiateComponent as instantiateClickerComponent,
 } from "@chaincode/clicker";
 
 import { StockContainerRuntimeFactory } from "@prague/aqueduct";
@@ -15,14 +15,14 @@ import {
 } from "@prague/container-definitions";
 
 import {
-  Todo,
+  TodoInstantiationFactory,
   TodoName,
-} from "./internal-components/Todo/index";
+} from "./Todo/index";
 
 import {
-  TodoItem,
+  TodoItemInstantiationFactory,
   TodoItemName,
-} from "./internal-components/TodoItem/index";
+} from "./TodoItem/index";
 
 /**
  * This will get called by the Container as part of setup
@@ -33,9 +33,9 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     context,
     TodoName,
     new Map([
-      [TodoName, Promise.resolve({ instantiateComponent: Todo.instantiateComponent })],
-      [TodoItemName, Promise.resolve({ instantiateComponent: TodoItem.instantiateComponent })],
-      [ClickerName, Promise.resolve({ instantiateComponent: instantiateClickerComponent })],
+      [TodoName, Promise.resolve(new TodoInstantiationFactory())],
+      [TodoItemName, Promise.resolve(new TodoItemInstantiationFactory())],
+      [ClickerName, Promise.resolve(new ClickerFactoryComponent())],
     ]),
     true,
   );

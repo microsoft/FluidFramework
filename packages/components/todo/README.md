@@ -1,8 +1,30 @@
-# Pond
+# Todo
 
-The pond is a grab bag of fluid scenarios.
+This is a simple Todo application that covers many of the core scenarios for building a Fluid Component. The Todo app uses React as it's view rendering platform.
 
-## Getting Started
+[Live Example on wu2-ppe](https://www.wu2-ppe.prague.office-int.com/loader/prague/sample-todo?chaincode=@chaincode/todo@0.6.0)
+
+![Todo Example](./resources/todo-screen-capture.gif)
+
+## Components
+
+There are two components that make up the Todo application:
+
+## [Todo](./src/Todo/index.tsx)  
+
+A Todo is the top level component and contains three core concepts:
+
+1. Title
+2. Ability to create new Todo Items
+3. Collection of Todo Items
+
+## [TodoItem](./src/TodoItem/index.tsx)
+
+A Todo Item is a singular todo entry. Because each Todo Item is its own component each Todo Item can be independently opened.
+
+Todo Items can contain one inner component. These can currently be another Todo Item or a Clicker.
+
+## Getting Started with Development
 
 To start coding, open this directory in your IDE and check out ./src/index.tsx
 
@@ -26,31 +48,6 @@ We suggest you start by typing:
 ```node
 npm start
 ```
-
-## Deploy
-
-To deploy and make your chaincode "Live" you'll have to deploy it to verdaccio, our private NPM repository.
-
-Go to https://packages.wu2.prague.office-int.com
-
-Login with:
-
-> UN: prague
-> PW: bohemia
-
-And follow the npm adduser steps
-
-To deploy, use
-
-```node
-npm run deploy
-```
-
-To view your chaincode, you can go to the URL
-
-> https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
-
-This link is then shareable and, in an expanding list of components, embeddable!
 
 ## NPM or VSTS Auth Issue
 

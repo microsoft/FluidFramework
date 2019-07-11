@@ -7,6 +7,7 @@
         "no-unsafe-any": false,
         "member-ordering": false,
         "member-access": false,
-        "react-this-binding-issue": false
+        "react-this-binding-issue": false,
+        "strict-boolean-expressions": false
     }
 }

@@ -9,6 +9,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "start": "prague-dev-server --config webpack.config.js --live --package package.json",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@prague/prague-dev-server": "~3.5.0",
+    "@prague/build-common": "^0.6.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",

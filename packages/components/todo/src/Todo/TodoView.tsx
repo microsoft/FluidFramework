@@ -7,7 +7,7 @@ import { ISharedCell } from "@prague/cell";
 import { ISharedMap } from "@prague/map";
 import * as React from "react";
 
-import { FluidContentEditable } from "../../component-lib/contentEditable";
+import { CollaborativeContentEditable } from "../component-lib/collaborativeContentEditable";
 
 interface p {
     createComponent(props?: any): Promise<void>;
@@ -54,7 +54,7 @@ export class TodoView extends React.Component<p, s> {
      * This allows us to prevent default form behavior while getting all the benefits
      */
     async handleSubmit(ev: React.FormEvent<HTMLFormElement>): Promise<void> {
-        event.preventDefault();
+        ev.preventDefault();
         await this.createComponent();
         this.setState({inputValue: ""});
     }
@@ -71,7 +71,7 @@ export class TodoView extends React.Component<p, s> {
 
         return (
             <div style={{padding: "5px"}}>
-                <FluidContentEditable
+                <CollaborativeContentEditable
                     cell={this.props.textCell}
                     tagName="h1"
                 />
@@ -82,7 +82,7 @@ export class TodoView extends React.Component<p, s> {
                         value={this.state.inputValue}
                         onChange={this.updateInputValue}
                         ref={(input) => { this.newTextInput = input; }}/>
-                    <button type="button" onClick={this.createComponent}>+</button>
+                    <button type="submit">+</button>
                     </form>
                 </span>
                 {todoItemComponents}
