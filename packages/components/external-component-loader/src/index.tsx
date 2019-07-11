@@ -8,6 +8,7 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
   IComponentHTMLViewable,
+  IComponentLoadable,
   IContainerContext,
   IHTMLView,
   IPraguePackage,
@@ -15,7 +16,7 @@ import {
   IRuntime,
 } from "@prague/container-definitions";
 import { Counter, CounterValueType, SharedMap } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedIntervalCollectionValueType, SharedObjectSequence, SubSequence } from "@prague/sequence";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as uuid from "uuid";
@@ -102,30 +103,44 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
         const seq = this.root.get<SharedObjectSequence<string>>("componentIds");
 
         await this.context.createComponent(uuid(), value)
-          .then((cr) => {
+          .then(async (cr) => {
             if (cr.attach !== undefined) {
               cr.attach();
             }
+            const request = await cr.request({url: "/"});
+
+            let component = request.value as IComponentLoadable;
+            const componentCollection = component.query<IComponentCollection>("IComponentCollection");
+            if (componentCollection !== undefined) {
+              component = componentCollection.create() as IComponentLoadable;
+            }
             counter.increment(1);
-            seq.insert(seq.getLength(), [cr.id]);
+            seq.insert(seq.getLength(), [component.url]);
           });
       }
     }
   }
 
-  private async attachComponentView(id: string, host: HTMLElement) {
+  private async attachComponentView(url: string, host: HTMLElement) {
 
     const componentDiv = document.createElement("div");
-    componentDiv.id = `${this.context.id}_${id}`;
+    componentDiv.style.border = "1px solid lightgray";
+    componentDiv.id = `${this.context.id}_${url}`;
     host.appendChild(componentDiv);
 
-    const componentRuntime = await this.context.getComponentRuntime(id, true);
-    const request = await componentRuntime.request({url: "/"});
-    const htmlViewableComponent: IComponentHTMLViewable = request.value;
-    if (htmlViewableComponent.addView !== undefined) {
-      await htmlViewableComponent.addView(
+    const urlSplit = url.split("/");
+    const componentRuntime = await this.context.getComponentRuntime(urlSplit.shift(), true);
+    const request = await componentRuntime.request({url: `/${urlSplit.join("/")}`});
+    const component = request.value as IComponent;
+
+    const htmlViewableComponent: IComponentHTMLViewable = component.query("IComponentHTMLViewable");
+    if (htmlViewableComponent !== undefined) {
+      const view = await htmlViewableComponent.addView(
         this,
-        componentDiv);
+        componentDiv) as any;
+      if (view !== undefined && view.render !== undefined) {
+        view.render(componentDiv);
+      }
     }
   }
 }
