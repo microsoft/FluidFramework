@@ -6,9 +6,11 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLOptions,
+    IComponentHTMLViewableDeprecated,
     IComponentLoadable,
-    IHTMLView,
+    IComponentRenderHTML,
+    IHTMLViewDeprecated,
     ISharedComponent,
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
@@ -21,9 +23,7 @@ import {
 } from "@prague/merge-tree";
 import {
     IComponentContext,
-    IComponentHTMLOptions,
     IComponentLayout,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
@@ -73,13 +73,13 @@ const defaultCompilerOptions = {
  * Component for using the Monaco text editor.
  */
 export class MonacoRunner extends EventEmitter implements
-    ISharedComponent, IComponentHTMLViewable, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
+    ISharedComponent, IComponentHTMLViewableDeprecated, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
 
     /**
      * Interfaces supported by this component.
      */
     public static supportedInterfaces = [
-        "IComponentHTMLViewable",
+        "IComponentHTMLViewableDeprecated",
         "IComponentRenderHTML",
         "IComponentLoadable",
         "IComponentLayout",
@@ -181,7 +181,7 @@ export class MonacoRunner extends EventEmitter implements
      * @param host Not used
      * @param element The element parent of the view
      */
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
         if (this.mapHost) {
             return Promise.reject("Only one view supported");
         }

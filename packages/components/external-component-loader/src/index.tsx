@@ -7,10 +7,10 @@ import { RootComponent, StockContainerRuntimeFactory} from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
-  IComponentHTMLViewable,
+  IComponentHTMLViewableDeprecated,
   IComponentLoadable,
   IContainerContext,
-  IHTMLView,
+  IHTMLViewDeprecated,
   IPraguePackage,
   IRequest,
   IRuntime,
@@ -25,7 +25,7 @@ import { UrlRegistry } from "./UrlRegistry";
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends RootComponent implements IComponentHTMLViewable {
+export class ExternalComponentLoader extends RootComponent implements IComponentHTMLViewableDeprecated {
 
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExternalComponentLoader> {
     const ucl = new ExternalComponentLoader(runtime, context, ExternalComponentLoader.supportedInterfaces);
@@ -33,9 +33,9 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
 
     return ucl;
   }
-  private static readonly supportedInterfaces = ["IComponentHTMLViewable", "IComponentRouter"];
+  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
 
-  public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+  public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
 
     const myDiv = document.createElement("div");
     myDiv.id = this.context.id;
@@ -133,7 +133,7 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
     const request = await componentRuntime.request({url: `/${urlSplit.join("/")}`});
     const component = request.value as IComponent;
 
-    const htmlViewableComponent: IComponentHTMLViewable = component.query("IComponentHTMLViewable");
+    const htmlViewableComponent: IComponentHTMLViewableDeprecated = component.query("IComponentHTMLViewableDeprecated");
     if (htmlViewableComponent !== undefined) {
       const view = await htmlViewableComponent.addView(
         this,

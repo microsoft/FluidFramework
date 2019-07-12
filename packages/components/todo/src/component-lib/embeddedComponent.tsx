@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLViewable  } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLViewableDeprecated  } from "@prague/container-definitions";
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 
@@ -56,7 +56,7 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
         }
 
         // If not Query to see if the component supports IComponentHTMLViewable
-        const htmlViewable = component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+        const htmlViewable = component.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
         if (htmlViewable) {
             this.setState({ element: <HTMLEmbeddedComponent component={htmlViewable} />});
             return;
@@ -69,7 +69,7 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
 }
 
 interface pHTML {
-    component: IComponentHTMLViewable;
+    component: IComponentHTMLViewableDeprecated;
 }
 
 /**

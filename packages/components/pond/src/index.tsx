@@ -7,9 +7,9 @@ import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
-  IComponentHTMLViewable,
+  IComponentHTMLViewableDeprecated,
   IContainerContext,
-  IHTMLView,
+  IHTMLViewDeprecated,
   IRequest,
   IRuntime,
 } from "@prague/container-definitions";
@@ -38,8 +38,8 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends RootComponent implements IComponentHTMLViewable {
-  private static readonly supportedInterfaces = ["IComponentHTMLViewable", "IComponentRouter"];
+export class Pond extends RootComponent implements IComponentHTMLViewableDeprecated {
+  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
 
   /**
    * Do setup work here
@@ -63,12 +63,12 @@ export class Pond extends RootComponent implements IComponentHTMLViewable {
     return clicker;
   }
 
-  // start IComponentHTMLViewable
+  // start IComponentHTMLViewableDeprecated
 
   /**
    * Will return a new Pond view
    */
-  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLView> {
+  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
 
     // Pond wrapper component setup
     // Set the border to green to denote components boundaries.
@@ -101,17 +101,17 @@ export class Pond extends RootComponent implements IComponentHTMLViewable {
     div.appendChild(clicker3Div);
 
     const clicker2 = await this.getComponent("clicker");
-    const clicker2Viewable = clicker2.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+    const clicker2Viewable = clicker2.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
     await clicker2Viewable.addView(undefined, clicker2Div);
 
     const clicker3 = await this.getComponent("clicker-with-forge");
-    const clicker3Viewable = clicker3.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+    const clicker3Viewable = clicker3.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
     await clicker3Viewable.addView(undefined, clicker3Div);
 
     return div;
   }
 
-  // end IComponentHTMLViewable
+  // end IComponentHTMLViewableDeprecated
 }
 
 // ----- COMPONENT SETUP STUFF -----

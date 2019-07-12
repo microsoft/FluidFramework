@@ -8,6 +8,10 @@ import * as ClientUI from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentRenderHTML,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -26,11 +30,7 @@ import {
     IComponentCollection,
     IComponentContext,
     IComponentCursor,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-    IComponentHTMLViewable,
     IComponentLayout,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
@@ -344,11 +344,10 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
 }
 
-export class MathInstance implements ISharedComponent, IComponentRenderHTML, IComponentRouter,
-    IComponentHTMLViewable {
+export class MathInstance implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
     public static supportedInterfaces = [
-        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLViewable",
+        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLVisual",
         "IComponentRenderHTML",
     ];
     public views: MathView[];

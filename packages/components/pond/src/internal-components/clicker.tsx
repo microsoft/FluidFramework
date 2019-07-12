@@ -7,8 +7,8 @@ import { RootComponent } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewable,
-    IHTMLView,
+    IComponentHTMLViewableDeprecated,
+    IHTMLViewDeprecated,
     IRequest,
 } from "@prague/container-definitions";
 import {
@@ -34,8 +34,8 @@ export const ClickerName = `${pkg.name as string}-clicker`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends RootComponent implements IComponentHTMLViewable {
-    private static readonly supportedInterfaces = ["IComponentHTMLViewable", "IComponentRouter"];
+export class Clicker extends RootComponent implements IComponentHTMLViewableDeprecated {
+    private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
 
     /**
      * Do setup work here
@@ -68,12 +68,12 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
         return clicker;
     }
 
-    // start IComponentHTMLViewable
+    // start IComponentHTMLViewableDeprecated
 
     /**
      * Will return a new Clicker view
      */
-    public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLView> {
+    public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
         // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         const otherMap = this.root.get("secondMap");
@@ -84,7 +84,7 @@ export class Clicker extends RootComponent implements IComponentHTMLViewable {
         return div;
     }
 
-    // end IComponentHTMLViewable
+    // end IComponentHTMLViewableDeprecated
 
     // ----- COMPONENT SETUP STUFF -----
 

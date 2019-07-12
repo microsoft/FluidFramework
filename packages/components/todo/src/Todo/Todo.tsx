@@ -10,8 +10,8 @@ import {
 } from "@prague/cell";
 import {
   IComponent,
-  IComponentHTMLViewable,
-  IHTMLView,
+  IComponentHTMLViewableDeprecated,
+  IHTMLViewDeprecated,
 } from "@prague/container-definitions";
 import {
   ISharedMap,
@@ -42,8 +42,8 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends RootComponent implements IComponentHTMLViewable, IComponentReactViewable {
-  private static readonly supportedInterfaces = ["IComponentHTMLViewable", "IComponentReactViewable"];
+export class Todo extends RootComponent implements IComponentHTMLViewableDeprecated, IComponentReactViewable {
+  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentReactViewable"];
 
   // DDS ids stored as variables to minimize simple string mistakes
   private readonly innerCellIds = "innerCellIds";
@@ -83,7 +83,7 @@ export class Todo extends RootComponent implements IComponentHTMLViewable, IComp
   /**
    * Creates a new view for a caller that doesn't directly support React
    */
-  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLView> {
+  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
     // Because we are using React and our caller is not we will use the
     // ReactDOM to render our JSX.Element directly into the provided div.
     // Because we support IComponentReactViewable and createViewElement returns a JSX.Element

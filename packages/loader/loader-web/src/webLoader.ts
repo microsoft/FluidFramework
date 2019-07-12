@@ -164,25 +164,29 @@ class FluidPackage {
 
     private async resolveCore(): Promise<IResolvedPackage> {
         // Load or normalize to a Fluid package
-        let fluidPackage: IFluidPackage;
+        let packageJson: IPackage;
         if (typeof this.details.details.package === "string") {
             const response = await fetch(`${this.details.packageUrl}/package.json`);
-            const packageJson = await response.json() as IPackage;
-            fluidPackage = packageJson as IFluidPackage;
-
-            if (!("fluid" in packageJson)) {
-                const praguePackage = packageJson as IPraguePackage;
-                fluidPackage.fluid = {
-                    browser: {
-                        umd: {
-                            files: praguePackage.prague.browser.bundle,
-                            library: praguePackage.prague.browser.entrypoint,
-                        },
-                    },
-                };
-            }
+            packageJson = await response.json() as IPackage;
         } else {
-            fluidPackage = this.details.details.package;
+            packageJson = this.details.details.package;
+        }
+
+        if (!("fluid" in packageJson || "prague" in packageJson)) {
+            return Promise.reject("Not a fluid pacakge");
+        }
+
+        const fluidPackage = packageJson as IFluidPackage;
+        if (!("fluid" in packageJson)) {
+            const praguePackage = packageJson as IPraguePackage;
+            fluidPackage.fluid = {
+                browser: {
+                    umd: {
+                        files: praguePackage.prague.browser.bundle,
+                        library: praguePackage.prague.browser.entrypoint,
+                    },
+                },
+            };
         }
 
         return {

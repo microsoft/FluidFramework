@@ -10,6 +10,7 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,
+    IComponentRenderHTML,
     IGenericBlob,
     ISequencedDocumentMessage,
     ISharedComponent,
@@ -19,7 +20,7 @@ import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     ComponentCursorDirection, IComponentCollection, IComponentCursor, IComponentKeyHandlers,
-    IComponentLayout, IComponentRenderHTML, IInboundSignalMessage,
+    IComponentLayout, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";

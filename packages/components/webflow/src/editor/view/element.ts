@@ -4,9 +4,13 @@
  */
 
 import { ServicePlatform } from "@prague/app-component";
-import { IComponent } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IComponentRenderHTML,
+} from "@prague/container-definitions";
 import { Marker } from "@prague/merge-tree";
-import { IComponentHTMLView,  IComponentHTMLViewable, IComponentRenderHTML } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
 import { Tag } from "../../util/tag";
@@ -88,7 +92,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     const legacyComponent = component as { attach(platform: ServicePlatform) };
                     legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
                 } else {
-                    const viewable = (component as IComponent).query<IComponentHTMLViewable>("IComponentHTMLViewable");
+                    const viewable = (component as IComponent).query<IComponentHTMLVisual>("IComponentHTMLVisual");
                     if (viewable) {
                         const view = viewable.addView(layout.scope);
                         // add view options here

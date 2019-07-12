@@ -5,7 +5,7 @@
 
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLViewableDeprecated,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -58,7 +58,7 @@ async function attach(loader: Loader, url: string, host: Host) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.query<IComponentHTMLViewable>("IComponentHTMLViewable");
+    const viewable = component.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
     if (!viewable) {
         return;
     }

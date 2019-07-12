@@ -331,31 +331,6 @@ export interface IComponentCollection extends IComponent {
     // need iteration
 }
 
-// Following is what loosely-coupled hosts need to show a component
-
-/**
- * Render the component into an HTML element. In the case of Block display,
- * elm.getBoundingClientRect() defines the dimensions of the viewport in which
- * to render. Typically, this means that elm should already be placed into the DOM.
- * If elm has an empty client rect, then it is assumed that it will expand to hold the
- * rendered component.
- */
-export interface IComponentRenderHTML extends IComponent {
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-}
-
-export interface IComponentHTMLOptions {
-    display?: string;
-}
-
-export interface IComponentHTMLView extends IComponentRenderHTML {
-    remove(): void;
-}
-
-export interface IComponentHTMLViewable {
-    addView(scope?: IComponent): IComponentHTMLView;
-}
-
 /**
  * Provide information about component preferences for layout.
  */

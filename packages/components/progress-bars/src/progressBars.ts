@@ -6,9 +6,9 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLViewableDeprecated,
     IComponentRouter,
-    IHTMLView,
+    IHTMLViewDeprecated,
     IRequest,
     IResponse,
     ISharedComponent,
@@ -30,7 +30,7 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires no-submodule-imports
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView implements IHTMLView {
+class ProgressBarView implements IHTMLViewDeprecated {
     private div: HTMLDivElement;
 
     constructor(private bar: ProgressBar, parent: Element) {
@@ -79,8 +79,8 @@ class ProgressBarView implements IHTMLView {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IComponentRouter {
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLViewable", "IComponentRouter"];
+export class ProgressBar implements ISharedComponent, IComponentHTMLViewableDeprecated, IComponentRouter {
+    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLViewableDeprecated", "IComponentRouter"];
     private views = new Set<ProgressBarView>();
 
     constructor(
@@ -98,7 +98,7 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewable, IC
         return ProgressBar.supportedInterfaces;
     }
 
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
         const attached = new ProgressBarView(this, element);
         this.views.add(attached);
 

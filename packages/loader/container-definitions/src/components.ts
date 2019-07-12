@@ -46,14 +46,41 @@ export interface IComponentRouter {
 
 /**
  * Interface for viewing a Fluid component with the HTML DOM
+ * @deprecated replaced with IComponentHTMLViewable
  */
-export interface IComponentHTMLViewable {
-    addView(host: IComponent, element: HTMLElement): Promise<IHTMLView>;
+export interface IComponentHTMLViewableDeprecated {
+    addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated>;
 }
 
 /**
  * HTML View for a component
+ * @deprecated replaced with IHTMLView
  */
-export interface IHTMLView {
+export interface IHTMLViewDeprecated {
     remove();
+}
+
+// Following is what loosely-coupled hosts need to show a component
+
+/**
+ * Render the component into an HTML element. In the case of Block display,
+ * elm.getBoundingClientRect() defines the dimensions of the viewport in which
+ * to render. Typically, this means that elm should already be placed into the DOM.
+ * If elm has an empty client rect, then it is assumed that it will expand to hold the
+ * rendered component.
+ */
+export interface IComponentRenderHTML extends IComponent {
+    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
+}
+
+export interface IComponentHTMLOptions {
+    display?: string;
+}
+
+export interface IComponentHTMLView extends IComponentRenderHTML {
+    remove(): void;
+}
+
+export interface IComponentHTMLVisual extends IComponentRenderHTML {
+    addView?(scope?: IComponent): IComponentHTMLView;
 }

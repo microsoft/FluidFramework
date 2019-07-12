@@ -9,12 +9,13 @@ import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLViewableDeprecated,
     IComponentLoadable,
     IComponentRouter,
-    IHTMLView,
+    IHTMLViewDeprecated,
     IRequest,
-    IResponse } from "@prague/container-definitions";
+    IResponse,
+} from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -51,8 +52,12 @@ import {
 const textAnalyzerRoute = "/tasks/intel";
 
 export class SharedTextRunner extends EventEmitter
-    implements IComponent, IComponentHTMLViewable, IComponentLoadable, IComponentRouter {
-    public static supportedInterfaces = ["IComponentHTMLViewable"];
+    implements IComponent, IComponentHTMLViewableDeprecated, IComponentLoadable, IComponentRouter {
+    public static supportedInterfaces = [
+        "IComponentHTMLViewableDeprecated",
+        "IComponentLoadable",
+        "IComponentRouter",
+    ];
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
@@ -90,7 +95,7 @@ export class SharedTextRunner extends EventEmitter
         }
     }
 
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
+    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");

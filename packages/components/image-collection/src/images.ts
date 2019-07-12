@@ -6,9 +6,9 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLOptions,
+    IComponentRenderHTML,
     IComponentRouter,
-    IHTMLView,
     IRequest,
     IResponse,
     ISharedComponent,
@@ -17,24 +17,19 @@ import { ISharedMap, MapExtension } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
-    IComponentHTMLOptions,
     IComponentLayout,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
-    ISharedComponent, IComponentHTMLViewable, IComponentRouter, IComponentRenderHTML, IComponentLayout {
+    ISharedComponent, IComponentRouter, IComponentRenderHTML, IComponentLayout {
     public static supportedInterfaces = [
         "IComponentLoadable",
-        "IComponentHTMLViewable",
         "IComponentLayout",
         "IComponentRouter",
         "IComponentRenderHTML"];
-
-    private playerDiv: HTMLDivElement;
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
@@ -52,16 +47,6 @@ export class ImageComponent implements
 
     public list(): string[] {
         return ImageComponent.supportedInterfaces;
-    }
-
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
-        this.render(element);
-
-        return {
-            remove: () => {
-                this.playerDiv.remove();
-            },
-        };
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {

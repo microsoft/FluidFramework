@@ -6,9 +6,9 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewable,
+    IComponentHTMLOptions,
+    IComponentRenderHTML,
     IComponentRouter,
-    IHTMLView,
     IRequest,
     IResponse,
     ISharedComponent,
@@ -17,9 +17,7 @@ import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
-    IComponentHTMLOptions,
     IComponentLayout,
-    IComponentRenderHTML,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
@@ -81,10 +79,9 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    ISharedComponent, IComponentHTMLViewable, IComponentRouter, IComponentRenderHTML, IComponentLayout {
+    ISharedComponent, IComponentRouter, IComponentRenderHTML, IComponentLayout {
     public static supportedInterfaces = [
         "IComponentLoadable",
-        "IComponentHTMLViewable",
         "IComponentLayout",
         "IComponentRouter",
         "IComponentRenderHTML"];
@@ -122,30 +119,6 @@ export class VideoPlayer implements
         // Right now we're assuming it's 22px per line
         // 18 is simply an arbitrary number and was chosen to differ from the pinpoint map's choice of 24
         return 18;
-    }
-
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLView> {
-        if (!this.player) {
-            this.playerDiv = document.createElement("div");
-            const youTubeDiv = document.createElement("div");
-            this.playerDiv.appendChild(youTubeDiv);
-            element.appendChild(this.playerDiv);
-
-            this.player = this.youTubeApi.createPlayer(
-                youTubeDiv,
-                640,
-                390,
-                this.videoId);
-        } else {
-            this.playerDiv.remove();
-            element.appendChild(this.playerDiv);
-        }
-
-        return {
-            remove: () => {
-                this.playerDiv.remove();
-            },
-        };
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
