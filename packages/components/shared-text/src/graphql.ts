@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLViewableDeprecated, IHTMLViewDeprecated } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLVisual } from "@prague/container-definitions";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
@@ -13,8 +13,8 @@ import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-export class GraphIQLView extends EventEmitter implements IComponent, IComponentHTMLViewableDeprecated {
-    public static supportedInterfaces = ["IComponentHTMLViewableDeprecated"];
+export class GraphIQLView extends EventEmitter implements IComponent, IComponentHTMLVisual {
+    public static supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
     public readonly id = "graphiql";
 
@@ -30,7 +30,7 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
         return GraphIQLView.supportedInterfaces;
     }
 
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
+    public render(element: HTMLElement) {
         const graphQLDiv = document.createElement("div");
         element.appendChild(graphQLDiv);
 
@@ -56,9 +56,5 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
             ),
             graphQLDiv,
         );
-
-        return {
-            remove: () => { },
-        };
     }
 }

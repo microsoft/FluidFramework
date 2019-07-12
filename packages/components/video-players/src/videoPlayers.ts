@@ -6,8 +6,7 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLOptions,
-    IComponentRenderHTML,
+    IComponentHTMLVisual,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -79,12 +78,13 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    ISharedComponent, IComponentRouter, IComponentRenderHTML, IComponentLayout {
+    ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
     public static supportedInterfaces = [
         "IComponentLoadable",
+        "IComponentHTMLVisual",
         "IComponentLayout",
         "IComponentRouter",
-        "IComponentRenderHTML"];
+        "IComponentHTMLRender"];
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
@@ -121,7 +121,7 @@ export class VideoPlayer implements
         return 18;
     }
 
-    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    public render(elm: HTMLElement): void {
         const size = elm.getBoundingClientRect();
 
         if (!this.player) {

@@ -6,9 +6,9 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IComponentHTMLViewableDeprecated,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
     IComponentRouter,
-    IHTMLViewDeprecated,
     IRequest,
     IResponse,
     ISharedComponent,
@@ -30,15 +30,32 @@ import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires no-submodule-imports
 require("bootstrap/dist/css/bootstrap.min.css");
 
-class ProgressBarView implements IHTMLViewDeprecated {
-    private div: HTMLDivElement;
+class ProgressBarView implements IComponentHTMLView {
+    public static supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLView"];
 
-    constructor(private bar: ProgressBar, parent: Element) {
+    public parent: HTMLElement;
+
+    constructor(private bar: ProgressBar) {
+    }
+
+    public query(id: string): any {
+        return ProgressBarView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return ProgressBarView.supportedInterfaces;
+    }
+
+    public remove() {
+        this.bar.detach(this);
+    }
+
+    public render(parent: HTMLElement) {
         if (parent) {
-            this.div = document.createElement("div");
-            this.div.classList.add("progress");
+            const div = document.createElement("div");
+            div.classList.add("progress");
             // tslint:disable-next-line:max-line-length no-inner-html
-            this.div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
+            div.innerHTML = `<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>`;
 
             const urlDiv = document.createElement("div");
             urlDiv.innerText = this.bar.url;
@@ -56,32 +73,23 @@ class ProgressBarView implements IHTMLViewDeprecated {
                 this.bar.changeValue(this.bar.value + 1);
             };
 
-            parent.appendChild(this.div);
+            parent.appendChild(div);
             parent.appendChild(urlDiv);
             parent.appendChild(downButton);
             parent.appendChild(upButton);
+
+            (div.firstElementChild as HTMLDivElement).style.width = `${this.bar.value}%`;
+            this.parent = parent;
         }
-
-        this.render();
-    }
-
-    public remove() {
-        this.bar.detach(this);
-    }
-
-    public render() {
-        if (!this.div) {
-            return;
-        }
-
-        (this.div.firstElementChild as HTMLDivElement).style.width = `${this.bar.value}%`;
     }
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements ISharedComponent, IComponentHTMLViewableDeprecated, IComponentRouter {
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLViewableDeprecated", "IComponentRouter"];
+export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, IComponentRouter {
+    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLVisual",
+    "IComponentHTMLRender", "IComponentRouter"];
     private views = new Set<ProgressBarView>();
+    private defaultView: ProgressBarView;
 
     constructor(
         public value: number,
@@ -98,8 +106,15 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewableDepr
         return ProgressBar.supportedInterfaces;
     }
 
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
-        const attached = new ProgressBarView(this, element);
+    public render(elm: HTMLElement) {
+        if (!this.defaultView) {
+            this.defaultView = this.addView(this);
+        }
+        this.defaultView.render(elm);
+    }
+
+    public addView(host: IComponent) {
+        const attached = new ProgressBarView(this);
         this.views.add(attached);
 
         return attached;
@@ -117,7 +132,7 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLViewableDepr
         this.value = value;
 
         for (const view of this.views) {
-            view.render();
+            view.render(view.parent);
         }
     }
 
@@ -259,5 +274,5 @@ class ProgressBarsFactory implements IComponent, IComponentFactory {
 export const fluidExport = new ProgressBarsFactory();
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-  return fluidExport.instantiateComponent(context);
+    return fluidExport.instantiateComponent(context);
 }

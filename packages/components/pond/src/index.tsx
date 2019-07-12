@@ -6,10 +6,9 @@
 import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-  IComponent,
-  IComponentHTMLViewableDeprecated,
+  IComponentHTMLRender,
+  IComponentHTMLVisual,
   IContainerContext,
-  IHTMLViewDeprecated,
   IRequest,
   IRuntime,
 } from "@prague/container-definitions";
@@ -38,9 +37,17 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends RootComponent implements IComponentHTMLViewableDeprecated {
-  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
+export class Pond extends RootComponent implements IComponentHTMLVisual {
+  private static readonly supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLVisual",
+  "IComponentRouter"];
 
+  public clicker2Render: IComponentHTMLRender;
+  public clicker3Render: IComponentHTMLRender;
+
+  protected async existing() {
+    await super.existing();
+    await this.setupSubComponents();
+  }
   /**
    * Do setup work here
    */
@@ -49,6 +56,7 @@ export class Pond extends RootComponent implements IComponentHTMLViewableDepreca
     await super.create();
     await this.createAndAttachComponent("clicker", ClickerName);
     await this.createAndAttachComponent("clicker-with-forge", ClickerWithForgeName, { initialValue: 100 });
+    await this.setupSubComponents();
   }
 
   /**
@@ -63,13 +71,16 @@ export class Pond extends RootComponent implements IComponentHTMLViewableDepreca
     return clicker;
   }
 
-  // start IComponentHTMLViewableDeprecated
+  async setupSubComponents() {
+    const clicker2 = await this.getComponent("clicker");
+    this.clicker2Render = clicker2.query<IComponentHTMLRender>("IComponentHTMLRender");
+    const clicker3 = await this.getComponent("clicker");
+    this.clicker3Render = clicker3.query<IComponentHTMLRender>("IComponentHTMLRender");
+  }
 
-  /**
-   * Will return a new Pond view
-   */
-  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
+  // start IComponentHTMLVisual
 
+  public render(div: HTMLElement) {
     // Pond wrapper component setup
     // Set the border to green to denote components boundaries.
     div.style.border = "1px dotted green";
@@ -100,18 +111,13 @@ export class Pond extends RootComponent implements IComponentHTMLViewableDepreca
     div.appendChild(clicker2Div);
     div.appendChild(clicker3Div);
 
-    const clicker2 = await this.getComponent("clicker");
-    const clicker2Viewable = clicker2.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
-    await clicker2Viewable.addView(undefined, clicker2Div);
-
-    const clicker3 = await this.getComponent("clicker-with-forge");
-    const clicker3Viewable = clicker3.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
-    await clicker3Viewable.addView(undefined, clicker3Div);
+    this.clicker2Render.render(clicker2Div);
+    this.clicker3Render.render(clicker3Div);
 
     return div;
   }
 
-  // end IComponentHTMLViewableDeprecated
+  // end IComponentHTMLVisual
 }
 
 // ----- COMPONENT SETUP STUFF -----

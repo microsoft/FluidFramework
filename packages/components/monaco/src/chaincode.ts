@@ -5,12 +5,9 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import {
-    IComponent,
     IComponentHTMLOptions,
-    IComponentHTMLViewableDeprecated,
+    IComponentHTMLVisual,
     IComponentLoadable,
-    IComponentRenderHTML,
-    IHTMLViewDeprecated,
     ISharedComponent,
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
@@ -73,14 +70,14 @@ const defaultCompilerOptions = {
  * Component for using the Monaco text editor.
  */
 export class MonacoRunner extends EventEmitter implements
-    ISharedComponent, IComponentHTMLViewableDeprecated, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
+    ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
 
     /**
      * Interfaces supported by this component.
      */
     public static supportedInterfaces = [
-        "IComponentHTMLViewableDeprecated",
-        "IComponentRenderHTML",
+        "IComponentHTMLVisual",
+        "IComponentHTMLRender",
         "IComponentLoadable",
         "IComponentLayout",
     ];
@@ -173,32 +170,6 @@ export class MonacoRunner extends EventEmitter implements
                 elm.appendChild(this.mapHost);
             }
         }
-    }
-
-    /**
-     * Creates and initializes the view, returning the root element.  Only supports
-     * one view currently.
-     * @param host Not used
-     * @param element The element parent of the view
-     */
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
-        if (this.mapHost) {
-            return Promise.reject("Only one view supported");
-        }
-
-        this.mapHost = document.createElement("div");
-        element.appendChild(this.mapHost);
-
-        await this.initializeEditorDiv();
-
-        return this;
-    }
-
-    /**
-     * Drop the reference to the root element.
-     */
-    public remove() {
-        this.mapHost = null;
     }
 
     /**

@@ -5,12 +5,9 @@
 
 import { Pinpoint } from "@kurtb/pinpoint";
 import {
-    IComponent,
     IComponentHTMLOptions,
-    IComponentHTMLViewableDeprecated,
+    IComponentHTMLVisual,
     IComponentLoadable,
-    IComponentRenderHTML,
-    IHTMLViewDeprecated,
     ISharedComponent,
 } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
@@ -312,11 +309,11 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter implements
-    ISharedComponent, IComponentHTMLViewableDeprecated, IComponentRenderHTML, IComponentLoadable, IComponentLayout {
+    ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
 
     public static supportedInterfaces = [
-        "IComponentHTMLViewableDeprecated",
-        "IComponentRenderHTML",
+        "IComponentHTMLVisual",
+        "IComponentHTMLRender",
         "IComponentLoadable",
         "IComponentLayout",
     ];
@@ -364,26 +361,11 @@ export class PinpointRunner extends EventEmitter implements
         }
         let display = "block";
         if (options && options.display) {
-            display  = options.display;
+            display = options.display;
         }
-        this.embed.render(elm, display);
-    }
-
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
-        if (this.mapHost) {
-            return Promise.reject("Only one view supported");
-        }
-
-        this.mapHost = element;
-        this.editor = this.mapHost.id === "content";
+        this.editor = elm.id === "content";
 
         if (this.editor) {
-            const googleP = new Promise<void>((resolve) => {
-                GoogleMapsLoader.load((google) => {
-                    pinpointTool.value("google", google);
-                    resolve();
-                });
-            });
 
             this.mapHost.innerHTML = "<div ng-view></div>";
 
@@ -391,7 +373,6 @@ export class PinpointRunner extends EventEmitter implements
                 return new MapDetailsService($rootScope, this.collabDoc.getRoot(), this.rootView);
             }]);
 
-            await googleP;
             angular.element(document).ready(() => {
                 angular.module("pinpointTool").config(["configServiceProvider", (configServiceProvider) => {
                     configServiceProvider.config(config);
@@ -400,17 +381,19 @@ export class PinpointRunner extends EventEmitter implements
                 angular.bootstrap(document, ["pinpointTool"]);
             });
         } else {
-            this.render(element, { display: "block" });
+            this.embed.render(elm, display);
         }
-    }
-
-    public remove() {
-        this.mapHost = null;
     }
 
     private async initialize(): Promise<void> {
         this.collabDoc = await Document.load(this.runtime);
         this.rootView = await this.collabDoc.getRoot();
+        await new Promise<void>((resolve) => {
+            GoogleMapsLoader.load((google) => {
+                pinpointTool.value("google", google);
+                resolve();
+            });
+        });
 
         // Add in the text string if it doesn't yet exist
         if (!this.collabDoc.existing) {

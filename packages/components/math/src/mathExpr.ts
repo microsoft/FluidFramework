@@ -17,7 +17,7 @@ export function boxEmptyParam(viewText: string) {
 }
 
 export enum MathTokenType {
-    Variable,
+    Identifier,
     Command,
     InfixOp,
     LCurly,
@@ -25,6 +25,7 @@ export enum MathTokenType {
     MidCommand,
     EndCommand,
     Space,
+    Newline,
 }
 
 export const Nope = -1;
@@ -143,7 +144,7 @@ const logic = [
 ];
 
 greekLetters.map((letter) => addCommand(mathCmdTree,
-    { key: letter, arity: 0, texString: "\\" + letter + " ", tokenType: MathTokenType.Variable }));
+    { key: letter, arity: 0, texString: "\\" + letter + " ", tokenType: MathTokenType.Identifier }));
 
 bigOpsSubExp.map((name) => {
     addCommand(mathCmdTree, {
@@ -340,6 +341,8 @@ export function transformInputCode(c: number) {
                 return "^{}";
             case CharacterCodes._:
                 return "_{}";
+            case CharacterCodes.linefeed:
+                return "\n";
             default:
         }
     }
@@ -452,9 +455,13 @@ function lexMathRange(mathBuffer: string, tokens: MathToken[],
             case " ":
                 pos = lexSpace(tokens, pos, mathBuffer);
                 break;
+            case "\n":
+                tokens.push(new MathToken(MathTokenType.Newline, pos, pos + 1));
+                pos++;
+                break;
             default:
                 // assume single-character variable
-                tokens.push(new MathToken(MathTokenType.Variable, pos, pos + 1));
+                tokens.push(new MathToken(MathTokenType.Identifier, pos, pos + 1));
                 pos++;
         }
     }

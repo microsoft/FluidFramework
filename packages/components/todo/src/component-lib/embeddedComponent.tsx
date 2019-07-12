@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLViewableDeprecated  } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLVisual  } from "@prague/container-definitions";
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 
@@ -55,10 +55,9 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
             return;
         }
 
-        // If not Query to see if the component supports IComponentHTMLViewable
-        const htmlViewable = component.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
-        if (htmlViewable) {
-            this.setState({ element: <HTMLEmbeddedComponent component={htmlViewable} />});
+        const htmlVisual = component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+        if (htmlVisual) {
+            this.setState({ element: <HTMLEmbeddedComponent component={htmlVisual} />});
             return;
         }
     }
@@ -69,7 +68,7 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
 }
 
 interface pHTML {
-    component: IComponentHTMLViewableDeprecated;
+    component: IComponentHTMLVisual;
 }
 
 /**
@@ -85,14 +84,10 @@ class HTMLEmbeddedComponent extends React.Component<pHTML, { }> {
     }
 
     async componentDidMount() {
-        // After the div is mounted to the dom we can pass that div to the
-        // addView to be used. Because addView requires a physical div we need
-        // to wait till the div is mounted and use react ref to reference the
-        // physical object.
-        await this.props.component.addView(undefined, this.ref.current);
     }
 
     render() {
+        this.props.component.render(this.ref.current);
         return <div ref={this.ref}></div>;
     }
 }

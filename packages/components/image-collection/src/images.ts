@@ -7,7 +7,8 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentHTMLOptions,
-    IComponentRenderHTML,
+    IComponentHTMLRender,
+    IComponentHTMLVisual,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -24,12 +25,13 @@ import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
-    ISharedComponent, IComponentRouter, IComponentRenderHTML, IComponentLayout {
+    ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentHTMLRender, IComponentLayout {
     public static supportedInterfaces = [
         "IComponentLoadable",
+        "IComponentHTMLVisual",
         "IComponentLayout",
         "IComponentRouter",
-        "IComponentRenderHTML"];
+        "IComponentHTMLRender"];
 
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;

@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, StockContainerRuntimeFactory} from "@prague/aqueduct";
+import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
-  IComponentHTMLViewableDeprecated,
+  IComponentHTMLVisual,
   IComponentLoadable,
   IContainerContext,
-  IHTMLViewDeprecated,
   IPraguePackage,
   IRequest,
   IRuntime,
@@ -22,21 +21,40 @@ import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as uuid from "uuid";
 import { UrlRegistry } from "./UrlRegistry";
 
+export function clearSubtree(elm: HTMLElement) {
+  const removeList: Node[] = [];
+  for (const child of elm.childNodes) {
+      if (!(child as HTMLElement).classList.contains("preserve")) {
+          removeList.push(child);
+      }
+  }
+  for (const node of removeList) {
+      elm.removeChild(node);
+  }
+}
+
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends RootComponent implements IComponentHTMLViewableDeprecated {
-
+export class ExternalComponentLoader extends RootComponent implements IComponentHTMLVisual {
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExternalComponentLoader> {
     const ucl = new ExternalComponentLoader(runtime, context, ExternalComponentLoader.supportedInterfaces);
     await ucl.initialize();
 
     return ucl;
   }
-  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
 
-  public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
+  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
+  public sequence: SharedObjectSequence<string>;
+  private readonly urlToComponent = new Map<string, IComponent>();
+  private savedElement: HTMLElement;
 
+  public render(element: HTMLElement) {
+    if (element !== this.savedElement) {
+      this.savedElement = element;
+    } else {
+      clearSubtree(element);
+    }
     const myDiv = document.createElement("div");
     myDiv.id = this.context.id;
     element.appendChild(myDiv);
@@ -54,26 +72,25 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
     counterButton.onclick = () => this.click();
     myDiv.appendChild(counterButton);
 
-    const counterSpan = document.createElement("span");
-    counterSpan.id = `counterSpan"${this.context.id}`;
-    myDiv.appendChild(counterSpan);
+    const createCounterSpan = document.createElement("span");
+    createCounterSpan.id = `counterSpan"${this.context.id}`;
+    myDiv.appendChild(createCounterSpan);
 
-    const sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
-    sequence.getItems(0, sequence.getLength()).forEach((id) => this.attachComponentView(id, element));
-
-    sequence.on("sequenceDelta", (event, target) => {
-      event.ranges.forEach((r) => {
-        if (SubSequence.is(r.segment)) {
-          r.segment.items.forEach((id) => this.attachComponentView(id, element));
-        }
-      });
-      this.render();
+    const counter = this.root.get<Counter>("clicks");
+    const counterSpan = document.getElementById(`counterSpan"${this.context.id}`);
+    counterSpan.textContent = counter.value.toString();
+    this.sequence.getItems(0, this.sequence.getLength()).forEach((id) => {
+      const componentDiv = document.createElement("div");
+      componentDiv.style.border = "1px solid lightgray";
+      componentDiv.id = `${this.context.id}_${id}`;
+      element.appendChild(componentDiv);
+      const component = this.urlToComponent.get(id);
+      const componentVisual =
+        component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+      if (componentVisual) {
+        componentVisual.render(componentDiv);
+      }
     });
-    this.root.on("op", () => {
-      this.render();
-    });
-
-    return myDiv;
   }
 
   protected async create() {
@@ -82,12 +99,39 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
     const sequence = SharedObjectSequence.create<string>(this.runtime);
     sequence.register();
     this.root.set("componentIds", sequence);
+    await this.init();
   }
 
-  protected render() {
-    const counter = this.root.get<Counter>("clicks");
-    const counterSpan = document.getElementById(`counterSpan"${this.context.id}`);
-    counterSpan.textContent = counter.value.toString();
+  protected async existing() {
+    await super.existing();
+    await this.init();
+  }
+
+  private localRender() {
+    if (this.savedElement) {
+      this.render(this.savedElement);
+    }
+  }
+
+  private async init() {
+    this.sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
+    this.root.on("op", () => {
+      this.localRender();
+    });
+    this.sequence.on("sequenceDelta", (event, target) => {
+      event.deltaArgs.deltaSegments.forEach((segment) => {
+        if (SubSequence.is(segment.segment)) {
+          segment.segment.items.forEach(async (url: string) => {
+            const urlSplit = url.split("/");
+            const componentRuntime = await this.context.getComponentRuntime(urlSplit.shift(), true);
+            const request = await componentRuntime.request({ url: `/${urlSplit.join("/")}` });
+            const component = request.value as IComponent;
+            this.urlToComponent.set(url, component);
+          });
+        }
+      });
+      this.localRender();
+    });
   }
 
   private async click() {
@@ -107,7 +151,7 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
             if (cr.attach !== undefined) {
               cr.attach();
             }
-            const request = await cr.request({url: "/"});
+            const request = await cr.request({ url: "/" });
 
             let component = request.value as IComponentLoadable;
             const componentCollection = component.query<IComponentCollection>("IComponentCollection");
@@ -120,31 +164,7 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
       }
     }
   }
-
-  private async attachComponentView(url: string, host: HTMLElement) {
-
-    const componentDiv = document.createElement("div");
-    componentDiv.style.border = "1px solid lightgray";
-    componentDiv.id = `${this.context.id}_${url}`;
-    host.appendChild(componentDiv);
-
-    const urlSplit = url.split("/");
-    const componentRuntime = await this.context.getComponentRuntime(urlSplit.shift(), true);
-    const request = await componentRuntime.request({url: `/${urlSplit.join("/")}`});
-    const component = request.value as IComponent;
-
-    const htmlViewableComponent: IComponentHTMLViewableDeprecated = component.query("IComponentHTMLViewableDeprecated");
-    if (htmlViewableComponent !== undefined) {
-      const view = await htmlViewableComponent.addView(
-        this,
-        componentDiv) as any;
-      if (view !== undefined && view.render !== undefined) {
-        view.render(componentDiv);
-      }
-    }
-  }
 }
-
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json") as IPraguePackage;
 
@@ -152,7 +172,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
   return StockContainerRuntimeFactory.instantiateRuntime(
     context,
     pkg.name,
-    new UrlRegistry(new Map([[pkg.name, Promise.resolve({instantiateComponent})]])));
+    new UrlRegistry(new Map([[pkg.name, Promise.resolve({ instantiateComponent })]])));
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {

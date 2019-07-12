@@ -7,15 +7,7 @@ import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
-import {
-    IComponent,
-    IComponentHTMLViewableDeprecated,
-    IComponentLoadable,
-    IComponentRouter,
-    IHTMLViewDeprecated,
-    IRequest,
-    IResponse,
-} from "@prague/container-definitions";
+import { IComponent, IComponentHTMLVisual, IRequest, IResponse } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -51,13 +43,8 @@ import {
 
 const textAnalyzerRoute = "/tasks/intel";
 
-export class SharedTextRunner extends EventEmitter
-    implements IComponent, IComponentHTMLViewableDeprecated, IComponentLoadable, IComponentRouter {
-    public static supportedInterfaces = [
-        "IComponentHTMLViewableDeprecated",
-        "IComponentLoadable",
-        "IComponentRouter",
-    ];
+export class SharedTextRunner extends EventEmitter implements IComponent, IComponentHTMLVisual {
+    public static supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
@@ -84,6 +71,13 @@ export class SharedTextRunner extends EventEmitter
         return SharedTextRunner.supportedInterfaces;
     }
 
+    public render(element: HTMLElement) {
+    }
+
+    public getRoot(): ISharedMap {
+        return this.rootView;
+    }
+
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url === textAnalyzerRoute) {
             const textAnalyzer = new TextAnalyzer(this.sharedString, this.insightsMap);
@@ -95,7 +89,64 @@ export class SharedTextRunner extends EventEmitter
         }
     }
 
-    public async addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated> {
+    private async initialize(): Promise<void> {
+        this.collabDoc = await Document.load(this.runtime);
+        this.rootView = await this.collabDoc.getRoot();
+
+        if (!this.runtime.existing) {
+            const insightsMapId = "insights";
+
+            const insights = this.collabDoc.createMap(insightsMapId);
+            this.rootView.set(insightsMapId, insights);
+
+            debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
+            this.rootView.set("users", this.collabDoc.createMap());
+            this.rootView.set("calendar", undefined, SharedIntervalCollectionValueType.Name);
+            const seq = SharedNumberSequence.create(this.collabDoc.runtime);
+            this.rootView.set("sequence-test", seq);
+            const newString = this.collabDoc.createString() as SharedString;
+
+            const template = parse(window.location.search.substr(1)).template;
+            const starterText = template
+                ? await downloadRawText(`/public/literature/${template}`)
+                : " ";
+
+            const segments = MergeTree.loadSegments(starterText, 0, true);
+            for (const segment of segments) {
+                if (MergeTree.TextSegment.is(segment)) {
+                    newString.insertText(segment.text, newString.client.getLength(),
+                    segment.properties);
+                } else {
+                    // assume marker
+                    const marker = segment as MergeTree.Marker;
+                    newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+                }
+            }
+            this.rootView.set("text", newString);
+            this.rootView.set("ink", this.collabDoc.createMap());
+
+            insights.set(newString.id, this.collabDoc.createMap());
+        }
+
+        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
+        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
+
+        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
+
+        this.sharedString = this.rootView.get("text") as SharedString;
+        debug(`Shared string ready - ${performanceNow()}`);
+        debug(`id is ${this.runtime.id}`);
+        debug(`Partial load fired: ${performanceNow()}`);
+
+        waitForFullConnection(this.runtime).then(() => {
+            this.registerTasks().then(() => {
+                console.log(`Requested tasks`);
+            })
+            .catch((err) => {
+                console.log(`Error requesting tasks ${err}`);
+            });
+        });
+
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
@@ -150,74 +201,6 @@ export class SharedTextRunner extends EventEmitter
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(performanceNow());
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
-        });
-
-        return {
-            remove: () => { },
-        };
-    }
-
-    public getRoot(): ISharedMap {
-        return this.rootView;
-    }
-
-    private async initialize(): Promise<void> {
-        this.collabDoc = await Document.load(this.runtime);
-        this.rootView = await this.collabDoc.getRoot();
-
-        if (!this.runtime.existing) {
-            const insightsMapId = "insights";
-
-            const insights = this.collabDoc.createMap(insightsMapId);
-            this.rootView.set(insightsMapId, insights);
-
-            debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
-            this.rootView.set("users", this.collabDoc.createMap());
-            this.rootView.set("calendar", undefined, SharedIntervalCollectionValueType.Name);
-            const seq = SharedNumberSequence.create(this.collabDoc.runtime);
-            this.rootView.set("sequence-test", seq);
-            const newString = this.collabDoc.createString() as SharedString;
-
-            const template = parse(window.location.search.substr(1)).template;
-            const starterText = template
-                ? await downloadRawText(`/public/literature/${template}`)
-                : " ";
-
-            const segments = MergeTree.loadSegments(starterText, 0, true);
-            for (const segment of segments) {
-                if (MergeTree.TextSegment.is(segment)) {
-                    newString.insertText(segment.text, newString.client.getLength(),
-                    segment.properties);
-                } else {
-                    // assume marker
-                    const marker = segment as MergeTree.Marker;
-                    newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
-                }
-            }
-            this.rootView.set("text", newString);
-            this.rootView.set("ink", this.collabDoc.createMap());
-
-            insights.set(newString.id, this.collabDoc.createMap());
-        }
-
-        debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
-        debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
-
-        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
-
-        this.sharedString = this.rootView.get("text") as SharedString;
-        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
-        debug(`Shared string ready - ${performanceNow()}`);
-        debug(`id is ${this.runtime.id}`);
-        debug(`Partial load fired: ${performanceNow()}`);
-
-        waitForFullConnection(this.runtime).then(() => {
-            this.registerTasks().then(() => {
-                console.log(`Requested tasks`);
-            })
-            .catch((err) => {
-                console.log(`Error requesting tasks ${err}`);
-            });
         });
     }
 

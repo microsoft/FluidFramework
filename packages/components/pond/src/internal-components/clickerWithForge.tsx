@@ -6,9 +6,7 @@
 import { RootComponent } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-    IComponent,
-    IComponentHTMLViewableDeprecated,
-    IHTMLViewDeprecated,
+    IComponentHTMLVisual,
     IRequest,
 } from "@prague/container-definitions";
 import { IComponentForge } from "@prague/framework-definitions";
@@ -35,9 +33,9 @@ export const ClickerWithForgeName = `${pkg.name as string}-clickerWithForge`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithForge extends RootComponent implements IComponentHTMLViewableDeprecated, IComponentForge {
+export class ClickerWithForge extends RootComponent implements IComponentHTMLVisual, IComponentForge {
     private static readonly supportedInterfaces =
-        ["IComponentHTMLViewableDeprecated", "IComponentRouter", "IComponentForge"];
+        ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter", "IComponentForge"];
 
     private hasForged = false;
 
@@ -82,22 +80,18 @@ export class ClickerWithForge extends RootComponent implements IComponentHTMLVie
         return clicker;
     }
 
-    // start IComponentHTMLViewableDeprecated
+    // start IComponentHTMLVisual
 
-    /**
-     * Will return a new Clicker view
-     */
-    public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
+    public render(div: HTMLElement) {
         // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
             <CounterReactView map={this.root}counter={counter} />,
             div,
         );
-        return div;
     }
 
-    // end IComponentHTMLViewableDeprecated
+    // end IComponentHTMLVisual
 
     // ----- COMPONENT SETUP STUFF -----
 

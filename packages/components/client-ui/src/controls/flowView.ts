@@ -10,7 +10,7 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,
-    IComponentRenderHTML,
+    IComponentHTMLRender,
     IGenericBlob,
     ISequencedDocumentMessage,
     ISharedComponent,
@@ -62,13 +62,13 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentRenderHTML>;
-    instance?: IComponentRenderHTML;
+    instanceP?: Promise<IComponentHTMLRender>;
+    instance?: IComponentHTMLRender;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentRenderHTML>;
-    instance?: IComponentRenderHTML;
+    instanceP?: Promise<IComponentHTMLRender>;
+    instance?: IComponentHTMLRender;
 }
 
 interface IMathCollection extends IComponent {
@@ -83,7 +83,7 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends ISharedComponent, IComponentRenderHTML, IComponentCursor,
+export interface IMathInstance extends ISharedComponent, IComponentHTMLRender, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     id: string;
     leafId: string;
@@ -896,7 +896,7 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.query<IComponentRenderHTML>("IComponentRenderHTML");
+                                const viewable = component.query<IComponentHTMLRender>("IComponentHTMLRender");
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2430,9 +2430,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
                                 const component = response.value as IComponent;
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentRenderHTML to IComponentLayout.
+                                // IComponent. Then you can go from IComponentHTMLRender to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.query<any>("IComponentRenderHTML") as IComponentRenderHTML;
+                                const viewable = component.query<any>("IComponentHTMLRender") as IComponentHTMLRender;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }

@@ -9,9 +9,9 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentHTMLOptions,
+    IComponentHTMLRender,
     IComponentHTMLView,
     IComponentHTMLVisual,
-    IComponentRenderHTML,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -58,7 +58,7 @@ type IMathMarkerInst = MathExpr.IMathMarker;
 
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
     public static supportedInterfaces = [
-        "IComponentLayout", "IComponentCursor"];
+        "IComponentLayout", "IComponentCursor", "IComponentHTMLRender", "IComponentHTMLView"];
 
     public cursorActive = false;
     // IComponentLayout
@@ -229,9 +229,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             Katex.render(mathBuffer, rootElement,
                 { throwOnError: false });
         } else {
-            const useArray = false;
             rootElement = document.createElement("div");
-            rootElement.style.lineHeight = "2.1";
             if (this.cursorActive) {
                 // showCursor
                 mathBuffer = mathBuffer.substring(0, this.mathCursor) +
@@ -239,16 +237,18 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                     mathBuffer.substring(this.mathCursor);
                 mathBuffer = MathExpr.boxEmptyParam(mathBuffer);
             }
-            if (!useArray) {
-                mathBuffer = `\\tag{1} ${mathBuffer}`;
-            } else {
-                if (mathBuffer.indexOf("=") >= 0) {
-                    mathBuffer = mathBuffer.replace("=", "& = &");
+            const mathLines = mathBuffer.split("\n");
+            mathBuffer = "\\begin{array}{rcllr} \n";
+            let count = 1;
+            for (let line of mathLines) {
+                if (line.indexOf("=") >= 0) {
+                    line = line.replace("=", "& = &");
                 } else {
-                    mathBuffer = `& ${mathBuffer} &`;
+                    line = `& ${line} &`;
                 }
-                mathBuffer = `\\begin{array}{rcllr} \n ${mathBuffer} & \\textcolor{green}{\\surd} & \\small \\textrm{(1)} \\\\ \n x^4 &= & 0 & & \\small \\textrm{(2)} \\\\ \n \\end{array}`;
+                mathBuffer += `${line} & & \\small \\textrm{(${count++})} \\\\ \n`;
             }
+            mathBuffer += "\\end{array}";
             mathMarker.mathViewBuffer = mathBuffer;
             Katex.render(mathBuffer, rootElement,
                 { throwOnError: false, displayMode: true });
@@ -344,11 +344,12 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
 }
 
-export class MathInstance implements ISharedComponent, IComponentRenderHTML, IComponentRouter, IComponentHTMLVisual {
+export class MathInstance implements ISharedComponent, IComponentRouter,
+    IComponentHTMLVisual, IComponentHTMLRender {
     public static defaultOptions: IMathOptions = { display: "inline" };
     public static supportedInterfaces = [
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLVisual",
-        "IComponentRenderHTML",
+        "IComponentHTMLRender",
     ];
     public views: MathView[];
     public endMarker: IMathMarkerInst;

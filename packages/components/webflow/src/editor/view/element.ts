@@ -4,12 +4,7 @@
  */
 
 import { ServicePlatform } from "@prague/app-component";
-import {
-    IComponent,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
-    IComponentRenderHTML,
-} from "@prague/container-definitions";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
@@ -88,23 +83,20 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
 
             layout.doc.getComponent(marker).then((component: IComponent) => {
                 // TODO included for back compat - can remove once we migrate to 0.5
-                if ("attach" in component) {
-                    const legacyComponent = component as { attach(platform: ServicePlatform) };
-                    legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
-                } else {
-                    const viewable = (component as IComponent).query<IComponentHTMLVisual>("IComponentHTMLVisual");
-                    if (viewable) {
-                        const view = viewable.addView(layout.scope);
+                const visual = (component as IComponent).query<IComponentHTMLVisual>("IComponentHTMLVisual");
+                if (visual) {
+                    if (visual.addView) {
+                        const view = visual.addView(layout.scope);
                         // add view options here
                         // where do we remove the view when finished?
                         view.render(slot);
                         state.view = view;
                     } else {
-                        const renderable = (component as IComponent).query<IComponentRenderHTML>("IComponentRenderHTML");
-                        if (renderable) {
-                            renderable.render(slot);
-                        }
+                        visual.render(slot);
                     }
+                } else if ("attach" in component) {
+                    const legacyComponent = component as { attach(platform: ServicePlatform) };
+                    legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
                 }
             });
         }

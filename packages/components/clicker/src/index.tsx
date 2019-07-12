@@ -6,10 +6,8 @@
 import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-  IComponent,
-  IComponentHTMLViewableDeprecated,
+  IComponentHTMLVisual,
   IContainerContext,
-  IHTMLViewDeprecated,
   IRequest,
   IRuntime,
   IRuntimeFactory,
@@ -38,8 +36,9 @@ export const ClickerName = pkg.name as string;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends RootComponent implements IComponentHTMLViewableDeprecated {
-  private static readonly supportedInterfaces = ["IComponentHTMLViewableDeprecated", "IComponentRouter"];
+export class Clicker extends RootComponent implements IComponentHTMLVisual {
+  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
+  "IComponentRouter"];
 
   /**
    * Do setup work here
@@ -62,12 +61,12 @@ export class Clicker extends RootComponent implements IComponentHTMLViewableDepr
     return clicker;
   }
 
-  // start IComponentHTMLViewableDeprecated
+  // start IComponentHTMLVisual
 
   /**
    * Will return a new Clicker view
    */
-  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
+  public render(div: HTMLElement) {
     // Get our counter object that we set in initialize and pass it in to the view.
     const counter = this.root.get("clicks");
     ReactDOM.render(
@@ -77,7 +76,7 @@ export class Clicker extends RootComponent implements IComponentHTMLViewableDepr
     return div;
   }
 
-  // end IComponentHTMLViewableDeprecated
+  // end IComponentHTMLVisual
 }
 
 // ----- REACT STUFF -----

@@ -11,9 +11,7 @@ import {
   SharedCell,
 } from "@prague/cell";
 import {
-  IComponent,
-  IComponentHTMLViewableDeprecated,
-  IHTMLViewDeprecated,
+  IComponentHTMLVisual,
 } from "@prague/container-definitions";
 import {
   IComponentForge,
@@ -50,11 +48,11 @@ export const TodoItemName = `${pkg.name as string}-item`;
  */
 export class TodoItem extends RootComponent
   implements
-    IComponentHTMLViewableDeprecated,
+    IComponentHTMLVisual,
     IComponentReactViewable,
     IComponentForge {
     private static readonly supportedInterfaces =
-      ["IComponentHTMLViewableDeprecated", "IComponentReactViewable", "IComponentForge"];
+      ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentReactViewable", "IComponentForge"];
 
   /**
    * Do creation work
@@ -111,28 +109,16 @@ export class TodoItem extends RootComponent
     return todoItem;
   }
 
-  // start IComponentHTMLViewableDeprecated
+  // start IComponentHTMLVisual
 
-  /**
-   * Creates a new view for a caller that doesn't directly support React.
-   *
-   * This is called when the caller does not support React. Currently this happens when the TodoItem
-   * is loaded separately on the webpage.
-   */
-
-  public async addView(host: IComponent, div: HTMLElement): Promise<IHTMLViewDeprecated> {
-    // Because we are using React and our caller is not we will use the
-    // ReactDOM to render our JSX.Element directly into the provided div.
-    // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
-    // we can just call that and minimize duplicate code.
+  public render(div: HTMLElement) {
     ReactDOM.render(
         this.createViewElement(),
         div,
     );
-    return div;
   }
 
-  // end IComponentHTMLViewableDeprecated
+  // end IComponentHTMLVisual
 
   // start IComponentReactViewable
 
