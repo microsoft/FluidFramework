@@ -21,7 +21,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "~3.5.0",
+    "@prague/prague-dev-server": "~3.6.0",
     "@types/node": "^10.12.12",
     "@prague/build-common": "^0.6.0",
     "concurrently": "^4.1.0",

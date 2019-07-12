@@ -340,7 +340,6 @@ export class PinpointRunner extends EventEmitter implements
     private collabDoc: Document;
     private rootView: ISharedMap;
     private editor: boolean = false;
-    private mapHost: HTMLElement;
     private embed: PinpointEmbed;
 
     constructor(private runtime: IComponentRuntime) {
@@ -359,15 +358,12 @@ export class PinpointRunner extends EventEmitter implements
         if (!this.embed) {
             this.embed = new PinpointEmbed(this.collabDoc, this.rootView);
         }
-        let display = "block";
-        if (options && options.display) {
-            display = options.display;
-        }
+
+        const display = options && options.display ? options.display : "block";
         this.editor = elm.id === "content";
 
         if (this.editor) {
-
-            this.mapHost.innerHTML = "<div ng-view></div>";
+            elm.innerHTML = "<div ng-view></div>";
 
             pinpointTool.factory("mapDetailsSvc", ["$rootScope", ($rootScope) => {
                 return new MapDetailsService($rootScope, this.collabDoc.getRoot(), this.rootView);

@@ -46,7 +46,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.6.0",
-    "@prague/prague-dev-server": "~3.5.0",
+    "@prague/prague-dev-server": "~3.6.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
@@ -63,12 +63,14 @@
     "webpack-cli": "^3.1.2",
     "webpack-serve": "^2.0.2"
   },
-  "prague": {
+  "fluid": {
     "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
     }
   },
   "license": "MIT"
