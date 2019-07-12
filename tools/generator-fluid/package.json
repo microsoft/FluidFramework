@@ -1,5 +1,5 @@
 {
-  "name": "generator-fluid",
+  "name": "@prague/generator-fluid",
   "version": "0.1.0",
   "description": "A yeoman project generator for fluid chaincode",
   "main": "app/index.js",
@@ -12,7 +12,6 @@
   "keywords": [
     "yeoman-generator"
   ],
-  "files": [],
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
