@@ -29,7 +29,7 @@ interface sEmbed {
 
 /**
  * Given a way to get a component will render that component via react if the component supports IComponentReactViewable
- * or standard HTML if the component supports IComponentHTMLViewable.
+ * or standard HTML if the component supports IComponentHTMLVisual
  *
  * If the component doesn't exist or supports neither interfaces we render and empty <span/>
  */
@@ -72,7 +72,7 @@ interface pHTML {
 }
 
 /**
- * Embeds a Fluid Component that supports IComponentHTMLViewable
+ * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
 class HTMLEmbeddedComponent extends React.Component<pHTML, { }> {
     private readonly ref: React.RefObject<HTMLDivElement>;

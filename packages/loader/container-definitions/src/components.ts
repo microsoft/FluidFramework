@@ -69,20 +69,6 @@ export interface IComponentHTMLVisual extends IComponentHTMLRender {
     addView?(scope?: IComponent): IComponentHTMLView;
 }
 
-/**
- * DEPRECATED: Interface for viewing a Fluid component with the HTML DOM
- */
-export interface IComponentHTMLViewableDeprecated {
-    addView(host: IComponent, element: HTMLElement): Promise<IHTMLViewDeprecated>;
-}
-
-/**
- * DEPRECATED: HTML View for a component
- */
-export interface IHTMLViewDeprecated {
-    remove();
-}
-
 // Following is what loosely-coupled hosts need to show a component
 
 /**
