@@ -5,7 +5,8 @@
 
 import {
     IComponent,
-    IComponentHTMLViewableDeprecated,
+    IComponentHTMLVisual,
+    IComponentRenderHTML,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -49,22 +50,27 @@ async function attach(loader: Loader, url: string, host: Host) {
         return;
     }
 
+    // Check if the component is viewable
+    const component = response.value as IComponent;
+    const viewable = "query" in component
+        ? component.query<IComponentHTMLVisual>("IComponentHTMLVisual")
+        : undefined;
+    if (viewable) {
+        let renderable = viewable as IComponentRenderHTML;
+        if (viewable.addView) {
+            renderable = viewable.addView();
+        }
+
+        renderable.render(host.div);
+        return;
+    }
+
     // TODO included for back compat - continued to be included to support very old components
     if ("attach" in response.value) {
         const legacy = response.value as { attach(platform: LocalPlatform): void };
         legacy.attach(new LocalPlatform(host.div));
         return;
     }
-
-    // Check if the component is viewable
-    const component = response.value as IComponent;
-    const viewable = component.query<IComponentHTMLViewableDeprecated>("IComponentHTMLViewableDeprecated");
-    if (!viewable) {
-        return;
-    }
-
-    // Attach our div to the host
-    viewable.addView(host, host.div);
 }
 
 async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {
