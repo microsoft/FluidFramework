@@ -4846,7 +4846,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (sel) {
             const text = this.sharedString.getText(sel.start, sel.end);
             Geocoder.geocode(text, (err, data) => console.log(data),
-                { key: "AIzaSyCY3kHHzocQSos6QNOzJINWmNo_a4IqN-8" });
+                { key: "" });
         }
     }
 
