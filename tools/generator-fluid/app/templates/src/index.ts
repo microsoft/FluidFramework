@@ -3,94 +3,80 @@
  * Licensed under the MIT License.
  */
 
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+ import { IContainerContext, IRuntime, IRuntimeFactory, IRequest } from "@prague/container-definitions";
+import { IComponentContext, IComponentRuntime, IComponentFactory } from "@prague/runtime-definitions";
+import { DistributedSetValueType, CounterValueType, SharedMap } from "@prague/map";
+import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ComponentRuntime } from "@prague/component-runtime";
+import { StockContainerRuntimeFactory } from "@prague/aqueduct";
 
+import { Clicker } from "./main";
+
+// tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
-const chaincodeName = pkg.name;
+const chaincodeName = pkg.name as string;
 
-export class Clicker extends Document {
+export class ClickerFactoryComponent implements IComponentFactory, IRuntimeFactory {
+  public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
+
+  public query(id: string): any {
+    return ClickerFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+  }
+
+  public list(): string[] {
+    return ClickerFactoryComponent.supportedInterfaces;
+  }
+
   /**
-   * Create the component's schema and perform other initialization tasks
-   * (only called when document is initially created).
+   * This is where we do component setup.
    */
-  protected async create() {
-    this.root.set("clicks", 0, CounterValueType.Name);
+  public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    // Register default map value types (Register the DDS we care about)
+    // We need to register the Map and the Counter so we can create a root and a counter on that root
+    const mapValueTypes = [
+      new DistributedSetValueType(),
+      new CounterValueType(),
+    ];
 
-    // Uncomment the line below to add a title to your data schema!
-    // this.root.set("title", "Initial Title Value");
+    const dataTypes = new Map<string, ISharedObjectExtension>();
+    const mapExtension = SharedMap.getFactory(mapValueTypes);
+    dataTypes.set(mapExtension.type, mapExtension);
+
+    // Create a new runtime for our component
+    const runtime = await ComponentRuntime.load(context, dataTypes);
+
+    // Create a new instance of our component
+    const counterNewP = Component.load(runtime, context);
+
+    // Add a handler for the request() on our runtime to send it to our component
+    // This will define how requests to the runtime object we just created gets handled
+    // Here we want to simply defer those requests to our component
+    runtime.registerRequestHandler(async (request: IRequest) => {
+      const counter = await counterNewP;
+      return counter.request(request);
+    });
+
+    return runtime;
   }
-
-  protected render() {
-    // Uncomment the block below to live update your title
-    /*
-    const title = this.root.get("title");
-    const titleParagraph = document.getElementById("titleParagraph");
-    titleParagraph.textContent = title;
-    */
-
-    const counter = this.root.get<Counter>("clicks");
-    const counterSpan = document.getElementById("counterSpan");
-    counterSpan.textContent = counter.value.toString();
-
-  }
-
-  protected createComponentDom(host: HTMLDivElement) {
-
-    const counter = this.root.get<Counter>("clicks");
-
-    // Uncomment the block below to create a title in your components DOM
-    /*
-    const titleParagraph = document.createElement("p");
-    titleParagraph.id = "titleParagraph";
-    host.appendChild(titleParagraph);
-
-    const titleInput = document.createElement("input");
-    titleInput.id = "titleInput";
-    titleInput.type = "text";
-    titleInput.oninput = ( e) => { this.root.set("title", (e.target as any).value) };
-    host.appendChild(titleInput);
-    */
-
-    const counterSpan = document.createElement("span");
-    counterSpan.id = "counterSpan";
-    host.appendChild(counterSpan);
-
-    const counterButton = document.createElement("button");
-    counterButton.id = "counterButton";
-    counterButton.textContent = "+";
-    counterButton.onclick = () => counter.increment(1);
-    host.appendChild(counterButton);
-
-    this.render();
-  }
-
   /**
-   *  The component has been loaded. Render the component into the provided div
-   * */
-  public async opened() {
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      await this.root.wait<Counter>("clicks");
-
-      this.createComponentDom(maybeDiv);
-      this.root.on("op", () => {
-        // this.render(maybeDiv);
-        this.render();
-      });
-    } else {
-      return;
-    }
+  * This will get called by the Container as part of setup
+  * We provide all the components we will care about as a registry.
+  */
+  public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+    return StockContainerRuntimeFactory.instantiateRuntime(context, chaincodeName, new Map([
+      [chaincodeName, Promise.resolve(this)],
+    ]));
   }
 }
 
-export async function instantiateRuntime(
-  context: IContainerContext
-): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, chaincodeName, new Map([
-    [chaincodeName, Promise.resolve({instantiateComponent})]
-  ]));
+export const fluidExport = new ClickerFactoryComponent();
+
+// Included for back compat - can remove in 0.7 once fluidExport is default
+export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+  return fluidExport.instantiateRuntime(context);
 }
 
-export const instantiateComponent = Component.createComponentFactory(Clicker).instantiateComponent;
+// Included for back compat - can remove in 0.7 once fluidExport is default
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+  return fluidExport.instantiateComponent(context);
+}

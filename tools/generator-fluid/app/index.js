@@ -54,7 +54,7 @@ module.exports = class extends Generator {
         type: "input",
         name: "path",
         message: "Where would you like to put your Fluid component?",
-        default: function(answers) {
+        default: function (answers) {
           return "./" + answers.name;
         }
       }
@@ -75,6 +75,7 @@ module.exports = class extends Generator {
 
     this._copyPackageFile();
     this._copyComponent();
+    this._copyFactory();
 
     this.fs.copy(
       this.templatePath("webpack.*.js"), // FROM
@@ -128,19 +129,46 @@ module.exports = class extends Generator {
   }
 
   _copyComponent() {
-    const fileString = this.fs.read(this.templatePath((this.answers.template === "react" ) ? "src/index.tsx" : "src/index.ts"));
+    const fileString = this.fs.read(this.templatePath((this.answers.template === "react") ? "src/main.tsx" : "src/main.ts"));
 
     const project = new Project({});
 
     const file = project.createSourceFile(
-      this.destinationPath("src/index.tsx"),
+      this.destinationPath("src/main.tsx"),
+      fileString
+    );
+
+    const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
+    file.getClass("Clicker").rename(chaincodeClassName);
+
+    // TODO: Move this save so that it saves when the rest of the fs does a commit
+    // Or write to a string and use fs to write.
+    file.save();
+  }
+
+  _copyFactory() {
+    const fileString = this.fs.read(this.templatePath("src/index.ts"));
+
+    const project = new Project({});
+
+    const file = project.createSourceFile(
+      this.destinationPath("src/index.ts"),
       fileString
     );
 
     // Change Classname plus references
+    const componentDec = file.getImportDeclaration((dec) => {
+      return dec.isModuleSpecifierRelative()
+    });
+
     const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    file.getClass("Clicker").rename(chaincodeClassName);
+    componentDec.removeNamedImports();
+    const importSpecifier = componentDec.addNamedImport(chaincodeClassName);
+    importSpecifier.setAlias("Component");
     
+    // Change Classname plus references
+    file.getClass("ClickerFactoryComponent").rename(chaincodeClassName + "FactoryComponent");
+
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
     file.save();
