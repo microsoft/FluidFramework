@@ -9,7 +9,7 @@ import { TrackingGroup } from "../mergeTreeTracking";
 import { TextSegment } from "../textSegment";
 
 describe("MergeTree.tracking", () => {
-    const localClientId = 43;
+    const localClientId = 0;
     let mergeTree: MergeTree.MergeTree;
     let referenceSequenceNumber: number;
 

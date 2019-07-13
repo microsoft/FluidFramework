@@ -41,11 +41,11 @@ describe("snapshot", () => {
 
         const client1 = new TestClient();
         client1.startCollaboration("me");
-        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 100; i++) {
+        for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             client1.applyMsg(client1.makeOpMessage(op, i + 1));
         }
-        client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 100);
+        client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 10);
 
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();
@@ -56,10 +56,11 @@ describe("snapshot", () => {
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
+        assert.equal(client2.getText(), client1.getText(0, Snapshot.sizeOfFirstChunk));
 
         const bodyChunk = await Snapshot.loadChunk(services, "body");
         client2.mergeTree.insertSegments(
-            client2.mergeTree.root.cachedLength,
+            client2.getLength(),
             bodyChunk.segmentTexts.map(specToSegment),
             UniversalSequenceNumber,
             client2.mergeTree.collabWindow.clientId,
@@ -67,7 +68,7 @@ describe("snapshot", () => {
             undefined);
 
         assert.equal(client2.getLength(), client1.getLength());
-        assert.equal(client2.getText(), client1.getText());
+        assert.equal(client2.getText(Snapshot.sizeOfFirstChunk - 1), client1.getText(Snapshot.sizeOfFirstChunk - 1));
     })
     // tslint:disable-next-line: mocha-no-side-effect-code
     .timeout(5000);

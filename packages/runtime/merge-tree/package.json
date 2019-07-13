@@ -12,6 +12,7 @@
     "build:docs": "echo \"Skipping @prague/merge-tree; see https://github.com/microsoft/Prague/issues/2270\"",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:test": "npm run tsc && npm run test",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",

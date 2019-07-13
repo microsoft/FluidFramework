@@ -82,7 +82,7 @@ describe("SubSequence", () => {
             }
         }
         cli.applyMsg(cli.makeOpMessage(insert));
-        cli.insertItemsRemote(6, [1, 5, 6, 2, 3], undefined, 4, 2, "2");
+        cli.insertItemsRemote(5, [1, 5, 6, 2, 3], undefined, 4, 2, "2");
         cli.insertItemsRemote(0, [9], undefined, 5, 0, "2");
         if (verbose) {
             console.log(cli.mergeTree.toString());

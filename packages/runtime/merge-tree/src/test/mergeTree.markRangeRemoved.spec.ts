@@ -19,6 +19,7 @@ describe("MergeTree.markRangeRemoved", () => {
                     client.insertTextLocal(client.getLength(), char),
                     client.getCurrentSeq() + 1));
         }
+        assert.equal(client.getText(), "hello world");
      });
 
     it("local remove followed by local insert", () => {

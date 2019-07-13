@@ -2396,16 +2396,21 @@ export class MergeTree {
     private breakTie(pos: number, len: number, seq: number, node: IMergeNode, refSeq: number,
         clientId: number, candidateSegment?: ISegment) {
         if (node.isLeaf()) {
-            let segment = <ISegment>node;
-            // TODO: marker/marker tie break & alternate tie break rules
-            if (pos == 0) {
-                return segment.seq !== UnassignedSequenceNumber;
+            if (pos === 0) {
+                let segment = <ISegment>node;
+                if (segment.seq !== UnassignedSequenceNumber) {
+                    // ensure we merge right. segments with lower seq should come before segments with higher seq
+                    return true
+                } else {
+                    // if the segment is unacked, and the new segment is unacked, the new segment should go first
+                    // if the new segment is not unacked, the old segment should go first as it will have a greater seq
+                    if (seq === UnassignedSequenceNumber) {
+                        return true;
+                    }
+                }
             }
-            else {
-                return false;
-            }
-        }
-        else {
+            return false;
+        } else {
             return true;
         }
     }
@@ -2539,12 +2544,13 @@ export class MergeTree {
                     if (MergeTree.traceTraversal) {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
-                    const segment = child as ISegment;
+                    const segment = child as ISegment
                     if (MergeTree.options.insertAfterRemovedSegs === true && len === 0) {
                         const branchId = this.getBranchId(clientId);
                         const segmentBranchId = this.getBranchId(segment.clientId);
                         const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
-                        if (removalInfo && removalInfo.removedSeq) {
+                        // only skipped ack segments above the refSeq of the insert
+                        if (removalInfo && removalInfo.removedSeq >= refSeq) {
                             continue;
                         }
                     }

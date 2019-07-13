@@ -4,6 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as random from "random-js";
@@ -13,10 +14,12 @@ import {
     ISegment,
     Marker,
     UnassignedSequenceNumber,
+    UniversalSequenceNumber,
 } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
-import { IMarkerDef, IMergeTreeOp, ReferenceType } from "../ops";
+import { IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
+import { Snapshot } from "../snapshot";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -46,12 +49,40 @@ export class TestClient extends Client {
      */
     public static useCheckQ = false;
 
+    public static async createFromSnapshot(client1: TestClient): Promise<TestClient> {
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
+        snapshot.extractSync();
+        const snapshotTree = snapshot.emit();
+        const services = new MockStorage(snapshotTree);
+
+        const client2 = new TestClient(undefined);
+
+        const headerChunk = await Snapshot.loadChunk(services, "header");
+        client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
+        assert.equal(client2.getText(), client1.getText(0, Snapshot.sizeOfFirstChunk));
+
+        if (client1.getLength() > Snapshot.sizeOfFirstChunk) {
+
+            const bodyChunk = await Snapshot.loadChunk(services, "body");
+            client2.mergeTree.insertSegments(
+                client2.getLength(),
+                bodyChunk.segmentTexts.map(specToSegment),
+                UniversalSequenceNumber,
+                client2.mergeTree.collabWindow.clientId,
+                UniversalSequenceNumber,
+                undefined);
+
+            assert.equal(client2.getLength(), client1.getLength());
+            assert.equal(client2.getText(), client1.getText());
+        }
+        return client2;
+    }
+
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
     protected readonly q: Collections.List<ISequencedDocumentMessage> =
         Collections.ListMakeHead<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
-
     constructor(
         options?: PropertySet,
         ...handlers: Array<(spec: any) => ISegment>) {
@@ -67,6 +98,16 @@ export class TestClient extends Client {
         DebugLogger.create("prague:testClient"),
         options);
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
+
+        // validate by default
+        this.mergeTree.mergeTreeDeltaCallback = (o, d) => {
+            // assert.notEqual(d.deltaSegments.length, 0);
+            d.deltaSegments.forEach((s) => {
+                if (d.operation === MergeTreeDeltaType.INSERT) {
+                    assert.notEqual(s.segment.parent, undefined);
+                }
+            });
+        };
     }
 
     public getText(start?: number, end?: number): string {

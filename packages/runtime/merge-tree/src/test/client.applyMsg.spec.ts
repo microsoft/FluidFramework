@@ -7,6 +7,7 @@ import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as assert from "assert";
 import { SegmentGroup, UnassignedSequenceNumber } from "..";
 import { TestClient } from "./testClient";
+import { TestClientLogger } from "./testClientLogger";
 
 describe("client.applyMsg", () => {
     const localUserLongId = "localUser";
@@ -242,13 +243,13 @@ describe("client.applyMsg", () => {
         const remoteClient = new TestClient();
         remoteClient.insertTextLocal(0, client.getText());
         remoteClient.startCollaboration("remoteUser");
-
+        const logger = new TestClientLogger([client, remoteClient]);
+        logger.log();
         let seq = 0;
         const initalMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
-        client.applyMsg(initalMsg);
-        remoteClient.applyMsg(initalMsg);
 
-        assert.equal(remoteClient.getText(), client.getText());
+        logger.log(initalMsg, (c) => c.applyMsg(initalMsg));
+        logger.validate();
 
         const messages = [
             client.makeOpMessage(client.insertTextLocal(0, "L"), ++seq),
@@ -257,17 +258,13 @@ describe("client.applyMsg", () => {
             remoteClient.makeOpMessage(remoteClient.removeRangeLocal(1, 2), ++seq),
         ];
 
-        console.log(`${client.getText()} | ${remoteClient.getText()}`);
-
+        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            client.applyMsg(msg);
-            remoteClient.applyMsg(msg);
-            console.log(`${client.getText()} | ${remoteClient.getText()}`);
+            logger.log(msg, (c) => c.applyMsg(msg));
         }
 
-        assert.equal(remoteClient.getText(), client.getText());
-        console.log(remoteClient.getText());
+        logger.validate();
     });
 
     it("intersecting insert after local delete", () => {
@@ -283,18 +280,111 @@ describe("client.applyMsg", () => {
         let seq = 0;
 
         const messages = [
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "1"), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
             clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
-            clientB.makeOpMessage(clientB.insertTextLocal(0, "2"), ++seq),
-            clientC.makeOpMessage(clientC.insertTextLocal(0, "3"), ++seq),
+            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
         ];
 
+        const logger = new TestClientLogger(clients);
+        logger.log();
         while (messages.length > 0) {
             const msg = messages.shift();
-            clients.forEach((c) => c.applyMsg(msg));
-            console.log(clients.map((c) => c.getText().padEnd(5)).join(" | "));
+            logger.log(msg, (c) => {
+                c.applyMsg(msg);
+            });
         }
 
-        assert.equal(clientC.getText(), clientB.getText());
+        logger.validate();
+    });
+
+    it("conflicting insert after shared delete", () => {
+        const clientA = new TestClient();
+        clientA.insertTextLocal(0, "a");
+        clientA.startCollaboration("A");
+        const clientB = new TestClient();
+        clientB.insertTextLocal(0, clientA.getText());
+        clientB.startCollaboration("B");
+        const clientC = new TestClient();
+        clientC.insertTextLocal(0, clientA.getText());
+        clientC.startCollaboration("C");
+
+        const clients = [clientA, clientB, clientC];
+        let seq = 0;
+
+        const messages = [
+            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
+            clientC.makeOpMessage(clientC.removeRangeLocal(0, clientC.getLength()), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+        ];
+
+        const logger = new TestClientLogger(clients);
+        logger.log();
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            logger.log(msg, (c) => {
+                c.applyMsg(msg);
+            });
+        }
+
+        logger.validate();
+    });
+
+    it("local remove followed by conflicting insert", () => {
+        const clientA = new TestClient();
+        clientA.startCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startCollaboration("B");
+        const clientC = new TestClient();
+        clientC.startCollaboration("C");
+
+        const clients = [clientA, clientB, clientC];
+        let seq = 0;
+
+        const messages = [
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+            clientB.makeOpMessage(clientB.insertTextLocal(0, "b"), ++seq),
+            clientC.makeOpMessage(clientC.removeRangeLocal(0, 1), ++seq),
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+        ];
+
+        const logger = new TestClientLogger(clients);
+        logger.log();
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            logger.log(msg, (c) => {
+                c.applyMsg(msg);
+            });
+        }
+
+        logger.validate();
+    });
+
+    it("insersecting insert with unack insert and delete", () => {
+        const clientA = new TestClient();
+        clientA.startCollaboration("A");
+        const clientB = new TestClient();
+        clientB.startCollaboration("B");
+        const clientC = new TestClient();
+        clientC.startCollaboration("C");
+
+        const clients = [clientA, clientB, clientC];
+        let seq = 0;
+        const messages = [
+            clientC.makeOpMessage(clientC.insertTextLocal(0, "c"), ++seq),
+            clientB.makeOpMessage(clientB.insertTextLocal(0, "bb"), ++seq),
+            clientB.makeOpMessage(clientB.removeRangeLocal(0, 1), ++seq),
+        ];
+
+        const logger = new TestClientLogger(clients);
+        logger.log();
+        while (messages.length > 0) {
+            const msg = messages.shift();
+            logger.log(msg, (c) => {
+                c.applyMsg(msg);
+            });
+        }
+
+        logger.validate();
     });
 });
