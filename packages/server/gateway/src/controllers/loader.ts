@@ -153,10 +153,12 @@ async function start(
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm);
     if (pkg) {
-        if (pkg) {
+        if (pkg.pkg) {
             codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);
+            if (pkg.details.package === pkg.pkg.name) {
+                pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
+            }
         }
-
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 

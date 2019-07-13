@@ -17,7 +17,7 @@ export interface IParsedPackage {
     full: string;
     pkg: string;
     name: string;
-    version: string;
+    version: string | undefined;
     scope: string;
 }
 
@@ -35,12 +35,24 @@ interface IPackageDetails {
 }
 
 export function extractDetails(value: string): IParsedPackage {
-    const components = value.match(/(@(.*)\/)?((.*)@(.*))/);
-    if (!components || components.length !== 6) {
-        throw new Error("Invalid package");
+    let full: string;
+    let scope: string;
+    let pkg: string;
+    let name: string;
+    let version: string | undefined;
+    if (value.indexOf("@") !== value.lastIndexOf("@")) {
+        const componentsWithVersion = value.match(/(@(.*)\/)?((.*)@(.*))/);
+        if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
+            throw new Error("Invalid package");
+        }
+        [full, , scope, pkg, name, version] = componentsWithVersion;
+    } else {
+        const componentsWithoutVersion = value.match(/(@(.*)\/)?((.*))/);
+        if ((!componentsWithoutVersion || componentsWithoutVersion.length !== 5)) {
+            throw new Error("Invalid package");
+        }
+        [full, , scope, pkg, name] = componentsWithoutVersion;
     }
-
-    const [full, , scope, pkg, name, version] = components;
     return {
         full,
         name,
@@ -264,13 +276,16 @@ export class WebLoader implements ICodeLoader {
 
         const fullPkg = typeof details.package === "string"
             ? details.package
-            : `${details.package.name}@${details.package.version}`;
+            : !details.package.version
+                ? `${details.package.name}`
+                : `${details.package.name}@${details.package.version}`;
         const parsed = extractDetails(fullPkg);
 
         const cdn = details.config[`${parsed.scope ? `@${parsed.scope}:` : ""}cdn`];
         const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
-        const packageUrl =
-            `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`;
+        const packageUrl = parsed.version !== undefined
+            ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`
+            : `${cdn}/${scopePath}${encodeURI(`${parsed.name}`)}`;
 
         return {
             details,
