@@ -7,5 +7,5 @@
   * If something is react viewable then render can simply return a JSX Element
   */
  export interface IComponentReactViewable {
-     createViewElement(): JSX.Element;
- }
+    createJSXElement(props?: {}): JSX.Element;
+}

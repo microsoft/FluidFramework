@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import {
+    CollaborativeCheckbox,
+    CollaborativeInput,
+} from "@prague/aqueduct";
 import { ISharedCell } from "@prague/cell";
 import { Counter } from "@prague/map";
+import { SharedString } from "@prague/sequence";
 import * as React from "react";
 
 import { TodoItemSupportedComponents } from "./supportedComponent";
 
-import { CollaborativeCheckbox } from "../component-lib/collaborativeCheckbox";
-import { CollaborativeContentEditable } from "../component-lib/collaborativeContentEditable";
-
 interface p {
-    cell: ISharedCell;
+    sharedString: SharedString;
     checkedCounter: Counter;
     id: string;
     innerIdCell: ISharedCell;
@@ -47,7 +49,7 @@ export class TodoItemView extends React.Component<p, s> {
     }
 
     async createComponent(type: TodoItemSupportedComponents) {
-        await this.props.createComponent(type, { startingText: "Content"});
+        await this.props.createComponent(type, { startingText: type});
     }
 
     componentDidMount() {
@@ -64,9 +66,17 @@ export class TodoItemView extends React.Component<p, s> {
                     <CollaborativeCheckbox
                         counter={this.props.checkedCounter}
                         id={this.props.id}/>
-                    <CollaborativeContentEditable
-                        cell={this.props.cell}
-                        tagName="span"/>
+                    <CollaborativeInput
+                        sharedString={this.props.sharedString}
+                        style={{
+                            border: "none",
+                            fontFamily: "inherit",
+                            fontSize: 20,
+                            marginBottom: 5,
+                            marginTop: 5,
+                            outline: "none",
+                            width: "inherit",
+                        }}/>
                     <span>
                         <button
                             style={this.buttonStyle}
@@ -90,6 +100,7 @@ export class TodoItemView extends React.Component<p, s> {
                             <span>
                                 <button onClick={async () => this.createComponent("todo")}>todo</button>
                                 <button onClick={async () => this.createComponent("clicker")}>clicker</button>
+                                <button onClick={async () => this.createComponent("textBox")}>textBox</button>
                             </span>
                         }
                         {this.state.innerId !== "" && this.props.getComponentView(this.state.innerId)}

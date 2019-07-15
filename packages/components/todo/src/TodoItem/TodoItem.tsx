@@ -5,7 +5,11 @@
 
 import { ClickerName } from "@chaincode/clicker";
 
-import { RootComponent } from "@prague/aqueduct";
+import {
+  EmbeddedReactComponentFactory,
+  IComponentReactViewable,
+  RootComponent,
+} from "@prague/aqueduct";
 import {
   ISharedCell,
   SharedCell,
@@ -24,6 +28,9 @@ import {
   IComponentContext,
   IComponentRuntime,
 } from "@prague/runtime-definitions";
+import {
+  SharedString,
+} from "@prague/sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -31,8 +38,7 @@ import * as ReactDOM from "react-dom";
 import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
-import { EmbeddedReactComponentFactory } from "../component-lib/embeddedComponent";
-import { IComponentReactViewable } from "../component-lib/interfaces";
+import { TextBoxName } from "../TextBox";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
@@ -62,7 +68,7 @@ export class TodoItem extends RootComponent
     await super.create();
 
     // create a cell that will be use for the text entry
-    this.root.set("text", SharedCell.create(this.runtime));
+    this.root.set("text", SharedString.create(this.runtime));
 
     // create a counter that will be used for the checkbox
     // we use a counter so if both users press the button at the same time it will result
@@ -93,8 +99,8 @@ export class TodoItem extends RootComponent
     }
 
     // Set our text cell to the initial value.
-    const cell = this.root.get<ISharedCell>("text");
-    cell.set(newItemText);
+    const text = this.root.get<SharedString>("text");
+    text.insertText(newItemText, 0);
   }
 
   // end IComponentForge
@@ -113,7 +119,7 @@ export class TodoItem extends RootComponent
 
   public render(div: HTMLElement) {
     ReactDOM.render(
-        this.createViewElement(),
+        this.createJSXElement(),
         div,
     );
   }
@@ -126,15 +132,15 @@ export class TodoItem extends RootComponent
    * If our caller supports React they can query against the IComponentReactViewable
    * Since this returns a JSX.Element it allows for an easier model.
    */
-  public createViewElement(): JSX.Element {
-      const cell = this.root.get<ISharedCell>("text");
+  public createJSXElement(): JSX.Element {
+      const text = this.root.get<SharedString>("text");
       const checkedCounter = this.root.get<Counter>("checked");
       const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
 
       const innerIdCell = this.root.get<ISharedCell>("innerId");
       return (
         <TodoItemView
-          cell={cell}
+          sharedString={text}
           id={this.url}
           innerIdCell={innerIdCell}
           checkedCounter={checkedCounter}
@@ -159,6 +165,9 @@ export class TodoItem extends RootComponent
           break;
       case "clicker":
           await this.createAndAttachComponent(id, ClickerName, props);
+          break;
+      case "textBox":
+          await this.createAndAttachComponent(id, TextBoxName, props);
           break;
       default:
     }

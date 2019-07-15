@@ -6,12 +6,12 @@ import { Counter } from "@prague/map";
 
 import * as React from "react";
 
-interface p {
+interface IProps {
     counter: Counter;
     id: string;
 }
 
-interface s {
+interface IState {
     checked: boolean;
 }
 
@@ -19,8 +19,8 @@ interface s {
  * Fluid enabled checkbox
  * The checkbox uses the counter to ensure consistency if two people both hit the button.
  */
-export class CollaborativeCheckbox extends React.Component<p, s> {
-    constructor(props: p) {
+export class CollaborativeCheckbox extends React.Component<IProps, IState> {
+    constructor(props: IProps) {
         super(props);
 
         this.state = {
@@ -31,16 +31,7 @@ export class CollaborativeCheckbox extends React.Component<p, s> {
         this.isChecked = this.isChecked.bind(this);
     }
 
-    updateCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
-        this.props.counter.increment(1);
-    }
-
-    isChecked(): boolean {
-        // odd is true, even is false
-        return this.props.counter.value % 2 !== 0;
-    }
-
-    componentWillMount() {
+    public componentWillMount() {
         // Register a callback for when an increment happens
         this.props.counter.on("incremented", () => {
             const checked = this.isChecked();
@@ -48,7 +39,7 @@ export class CollaborativeCheckbox extends React.Component<p, s> {
         });
     }
 
-    render() {
+    public render() {
         // tslint:disable:react-a11y-input-elements
         return(
             <input
@@ -58,5 +49,14 @@ export class CollaborativeCheckbox extends React.Component<p, s> {
                 checked = {this.state.checked}
                 onChange={this.updateCheckbox} />
         );
+    }
+
+    private updateCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
+        this.props.counter.increment(1);
+    }
+
+    private isChecked(): boolean {
+        // odd is true, even is false
+        return this.props.counter.value % 2 !== 0;
     }
 }

@@ -3,6 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./components";
-export * from "./helpers";
-export * from "./react";
+export * from "./TextBox";
+export * from "./TextBoxInstantiationFactory";

@@ -24,6 +24,11 @@ import {
   TodoItemName,
 } from "./TodoItem/index";
 
+import {
+  TextBoxInstantiationFactory,
+  TextBoxName,
+} from "./TextBox/index";
+
 /**
  * This will get called by the Container as part of setup
  * We provide all the components we will care about as a registry.
@@ -35,6 +40,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
     new Map([
       [TodoName, Promise.resolve(new TodoInstantiationFactory())],
       [TodoItemName, Promise.resolve(new TodoItemInstantiationFactory())],
+      [TextBoxName, Promise.resolve(new TextBoxInstantiationFactory())],
       [ClickerName, Promise.resolve(new ClickerFactoryComponent())],
     ]),
     true,

@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import {
+    CollaborativeInput,
+} from "@prague/aqueduct";
 import { ISharedCell } from "@prague/cell";
 import { ISharedMap } from "@prague/map";
+import { SharedString } from "@prague/sequence";
 import * as React from "react";
-
-import { CollaborativeContentEditable } from "../component-lib/collaborativeContentEditable";
 
 interface p {
     createComponent(props?: any): Promise<void>;
     getComponentView(id: string): JSX.Element;
     map: ISharedMap;
     textCell: ISharedCell;
+    textSharedString: SharedString;
 }
 
 interface s {
@@ -71,9 +74,17 @@ export class TodoView extends React.Component<p, s> {
 
         return (
             <div style={{padding: "5px"}}>
-                <CollaborativeContentEditable
-                    cell={this.props.textCell}
-                    tagName="h1"
+                <CollaborativeInput
+                    sharedString={this.props.textSharedString}
+                    style={{
+                        border: "none",
+                        fontFamily: "inherit",
+                        fontSize: 30,
+                        marginBottom: 5,
+                        marginTop: 5,
+                        outline: "none",
+                        width: "inherit",
+                    }}
                 />
                 <span>
                     <form onSubmit={this.handleSubmit}>

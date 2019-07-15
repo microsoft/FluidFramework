@@ -40,6 +40,7 @@
     "@prague/framework-definitions": "^0.6.0",
     "@prague/map": "^0.6.0",
     "@prague/runtime-definitions": "^0.6.0",
+    "@prague/sequence": "^0.6.0",
     "@prague/shared-object-common": "^0.6.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",

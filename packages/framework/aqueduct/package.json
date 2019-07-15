@@ -24,7 +24,9 @@
     "@prague/container-runtime": "^0.6.0",
     "@prague/framework-definitions": "^0.6.0",
     "@prague/map": "^0.6.0",
-    "@prague/runtime-definitions": "^0.6.0"
+    "@prague/runtime-definitions": "^0.6.0",
+    "@prague/sequence": "^0.6.0",
+    "react": "^16.8.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",

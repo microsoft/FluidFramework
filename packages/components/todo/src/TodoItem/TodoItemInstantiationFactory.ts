@@ -18,13 +18,15 @@ import {
     IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import {
+    SharedString,
+} from "@prague/sequence";
 
 import { TodoItem } from "./index";
 
 /**
  * This Factory provides the entry for creating a new TodoItem Component.
- * The `instantiateComponent` function will be called every time a unique Todo component is loaded.
+ * The `instantiateComponent` function will be called every time a unique TodoItem component is loaded.
  *
  * Loading happens after creating a new component, after another person creates a new component, and
  * whenever the page loads.
@@ -48,7 +50,7 @@ export class TodoItemInstantiationFactory implements IComponentFactory {
         // All DDS' used in this component must be registered at this time.
         // This is because if we are loading from a snapshot we need to know everything that could
         // exist in that snapshot
-        const dataTypes = new Map<string, ISharedObjectExtension>();
+        const dataTypes = new Map<string, any>();
 
         // Add Map DDS with Counter value type
         const mapValueTypes = [
@@ -60,6 +62,10 @@ export class TodoItemInstantiationFactory implements IComponentFactory {
         // Add Cell DDS
         const cellExtension = SharedCell.getFactory();
         dataTypes.set(cellExtension.type, cellExtension);
+
+        // Add SharedString DDS
+        const sharedStringExtension = SharedString.getFactory();
+        dataTypes.set(sharedStringExtension.type, sharedStringExtension);
 
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component

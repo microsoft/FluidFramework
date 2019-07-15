@@ -2,15 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    SharedCell,
-} from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IRequest,
 } from "@prague/container-definitions";
 import {
-    CounterValueType,
     SharedMap,
 } from "@prague/map";
 import {
@@ -18,26 +14,28 @@ import {
     IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
+import {
+    SharedString,
+} from "@prague/sequence";
 
-import { Todo } from "./index";
+import { TextBox } from "./index";
 
 /**
- * This Factory provides the entry for creating a new Todo Component.
- * The `instantiateComponent` function will be called every time a unique Todo component is loaded.
+ * This Factory provides the entry for creating a new TextBox Component.
+ * The `instantiateComponent` function will be called every time a unique TextBox component is loaded.
  *
  * Loading happens after creating a new component, after another person creates a new component, and
  * whenever the page loads.
  */
-export class TodoInstantiationFactory implements IComponentFactory {
+export class TextBoxInstantiationFactory implements IComponentFactory {
     public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
 
     public query(id: string): any {
-        return TodoInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+        return TextBoxInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
     public list(): string[] {
-        return TodoInstantiationFactory.supportedInterfaces;
+        return TextBoxInstantiationFactory.supportedInterfaces;
     }
 
     /**
@@ -51,15 +49,8 @@ export class TodoInstantiationFactory implements IComponentFactory {
         const dataTypes = new Map<string, any>();
 
         // Add Map DDS with Counter value type
-        const mapValueTypes = [
-            new CounterValueType(),
-        ];
-        const mapExtension = SharedMap.getFactory(mapValueTypes);
+        const mapExtension = SharedMap.getFactory();
         dataTypes.set(mapExtension.type, mapExtension);
-
-        // Add Cell DDS
-        const cellExtension = SharedCell.getFactory();
-        dataTypes.set(cellExtension.type, cellExtension);
 
         // Add SharedString DDS
         const sharedStringExtension = SharedString.getFactory();
@@ -70,23 +61,16 @@ export class TodoInstantiationFactory implements IComponentFactory {
         const runtime = await ComponentRuntime.load(context, dataTypes);
 
         // Create a new instance of our component
-        const counterNewP = Todo.load(runtime, context);
+        const counterNewP = TextBox.load(runtime, context);
 
         // This will get called anytime a request({url: string}) call is made to the container
         // where the url is our unique component id.
         // We leverage this to return our instance of the component.
         runtime.registerRequestHandler(async (request: IRequest) => {
-            const counter = await counterNewP;
-            return counter.request(request);
+        const counter = await counterNewP;
+        return counter.request(request);
         });
 
         return runtime;
     }
-}
-
-export const fluidExport = new TodoInstantiationFactory();
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
 }

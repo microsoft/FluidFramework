@@ -18,12 +18,12 @@ export class EmbeddedReactComponentFactory {
     }
 }
 
-interface pEmbed {
-    getComponent(id: string): Promise<IComponent>;
+interface IProps {
     id: string;
+    getComponent(id: string): Promise<IComponent>;
 }
 
-interface sEmbed {
+interface IState {
     element: JSX.Element;
 }
 
@@ -33,8 +33,8 @@ interface sEmbed {
  *
  * If the component doesn't exist or supports neither interfaces we render and empty <span/>
  */
-export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
-    constructor(props: pEmbed) {
+export class EmbeddedComponent extends React.Component<IProps, IState> {
+    constructor(props: IProps) {
         super(props);
 
         this.state = {
@@ -42,7 +42,7 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
         };
     }
 
-    async componentWillMount() {
+    public async componentWillMount() {
         const component = await this.props.getComponent(this.props.id);
         if (!component) {
             return;
@@ -62,37 +62,39 @@ export class EmbeddedComponent extends React.Component<pEmbed, sEmbed> {
         }
     }
 
-    render() {
+    public render() {
         return this.state.element;
     }
 }
 
-interface pHTML {
+interface IHTMLProps {
     component: IComponentHTMLVisual;
 }
 
 /**
  * Embeds a Fluid Component that supports IComponentHTMLVisual
  */
-class HTMLEmbeddedComponent extends React.Component<pHTML, { }> {
+class HTMLEmbeddedComponent extends React.Component<IHTMLProps, { }> {
     private readonly ref: React.RefObject<HTMLDivElement>;
 
-    constructor(props: pHTML) {
+    constructor(props: IHTMLProps) {
         super(props);
 
         this.ref = React.createRef<HTMLDivElement>();
     }
 
-    async componentDidMount() {
+    public async componentDidMount() {
+        if (this.ref.current) {
+            this.props.component.render(this.ref.current);
+        }
     }
 
-    render() {
-        this.props.component.render(this.ref.current);
+    public render() {
         return <div ref={this.ref}></div>;
     }
 }
 
-interface pReact {
+interface IReactProps {
     component: IComponentReactViewable;
 }
 
@@ -100,6 +102,6 @@ interface pReact {
  * Embeds a Fluid Component that supports IComponentReactViewable
  */
 // tslint:disable-next-line:function-name
-function ReactEmbeddedComponent(props: pReact) {
-    return props.component.createViewElement();
+function ReactEmbeddedComponent(props: IReactProps) {
+    return props.component.createJSXElement();
 }

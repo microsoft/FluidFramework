@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent } from "@prague/aqueduct";
+import {
+  EmbeddedReactComponentFactory,
+  IComponentReactViewable,
+  RootComponent,
+} from "@prague/aqueduct";
 import {
   ISharedCell,
   SharedCell,
@@ -19,15 +23,13 @@ import {
   IComponentContext,
   IComponentRuntime,
 } from "@prague/runtime-definitions";
+import { SharedString } from "@prague/sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { TodoView } from "./TodoView";
-
-import { EmbeddedReactComponentFactory } from "../component-lib/embeddedComponent";
-import { IComponentReactViewable } from "../component-lib/interfaces";
 import { TodoItemName } from "../TodoItem/index";
+import { TodoView } from "./TodoView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
@@ -65,6 +67,10 @@ export class Todo extends RootComponent implements IComponentHTMLVisual, ICompon
     // Set the default title
     cell.set("My New Todo");
     this.root.set(this.titleId, cell);
+
+    const text = SharedString.create(this.runtime);
+    text.insertText("Title", 0);
+    this.root.set("sharedString-title", text);
   }
 
   /**
@@ -88,7 +94,7 @@ export class Todo extends RootComponent implements IComponentHTMLVisual, ICompon
     // Because we support IComponentReactViewable and createViewElement returns a JSX.Element
     // we can just call that and minimize duplicate code.
     ReactDOM.render(
-        this.createViewElement(),
+        this.createJSXElement(),
         div,
     );
   }
@@ -101,7 +107,7 @@ export class Todo extends RootComponent implements IComponentHTMLVisual, ICompon
    * If our caller supports React they can query against the IComponentReactViewable
    * Since this returns a JSX.Element it allows for an easier model.
    */
-  public createViewElement(): JSX.Element {
+  public createJSXElement(): JSX.Element {
     const innerCellIdsMap = this.root.get<ISharedMap>(this.innerCellIds);
 
     // callback that allows for creation of new Todo Items
@@ -120,11 +126,13 @@ export class Todo extends RootComponent implements IComponentHTMLVisual, ICompon
     // getComponent call throughout the app.
     const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
     const titleTextCell = this.root.get<ISharedCell>(this.titleId);
+    const titleTextSharedString = this.root.get<SharedString>("sharedString-title");
     return(
       <TodoView
           getComponentView = {(id: string) => factory.create(id)}
           createComponent={createComponent.bind(this)}
           map={innerCellIdsMap}
+          textSharedString={titleTextSharedString}
           textCell={titleTextCell}/>
     );
   }
