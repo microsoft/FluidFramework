@@ -16,7 +16,6 @@ import {
   Counter,
   CounterValueType,
   DistributedSetValueType,
-  ISharedMap,
   SharedMap,
 } from "@prague/map";
 import {
@@ -70,7 +69,7 @@ export class Clicker extends RootComponent implements IComponentHTMLVisual {
     // Get our counter object that we set in initialize and pass it in to the view.
     const counter = this.root.get("clicks");
     ReactDOM.render(
-      <CounterReactView map={this.root} counter={counter} />,
+      <CounterReactView counter={counter} />,
       div,
     );
     return div;
@@ -82,7 +81,6 @@ export class Clicker extends RootComponent implements IComponentHTMLVisual {
 // ----- REACT STUFF -----
 
 interface p {
-  map: ISharedMap;
   counter: Counter;
 }
 
@@ -100,12 +98,8 @@ class CounterReactView extends React.Component<p, s> {
   }
 
   componentDidMount() {
-    // set a listener so when the counter increments we will update our state
-    // counter is annoying because it only allows you to register one listener.
-    // this causes problems when we have multiple views off the same counter.
-    // so we are listening to the map
-    this.props.map.on("valueChanged", () => {
-      this.setState({ value: this.props.counter.value });
+    this.props.counter.on("incremented", (incrementValue: number, currentValue: number) => {
+      this.setState({ value: currentValue });
     });
   }
 

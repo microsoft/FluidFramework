@@ -52,22 +52,13 @@ describe("Routerlicious", () => {
             });
 
             describe(".increment", () => {
-                it("Should be able to register an onIncrement callback", () => {
-                    const callback = (value: number) => {
-                        return;
-                    };
-
-                    testCounter.onIncrement = callback;
-                    assert.equal(testCounter.onIncrement, callback);
-                });
-
-                it("Should fire onIncrementAt callback after increment", () => {
+                it("Should fire listener callback after increment", () => {
                     let fired = false;
 
-                    testCounter.onIncrement = (value: number) => {
+                    testCounter.on("incremented", (value: number) => {
                         fired = true;
                         assert.equal(value, 10);
-                    };
+                    });
 
                     testCounter.increment(10);
                     assert.ok(fired);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 
 export class CounterFactory implements IValueFactory<Counter> {
@@ -16,20 +17,22 @@ export class CounterFactory implements IValueFactory<Counter> {
     }
 }
 
-export class Counter {
+export class Counter extends EventEmitter {
     public get value(): number {
         return this._value;
     }
 
     // tslint:disable-next-line:variable-name
     constructor(private readonly emitter: IValueOpEmitter, private _value: number) {
+        super();
     }
 
-    /**
-     * Can be set to register an event listener for when the counter is incremented. The callback indicates the
-     * amount the counter was incremented by.
-     */
-    public onIncrement = (value: number) => { return; };
+    // tslint:disable-next-line:no-unnecessary-override
+    public on(
+        event: "incremented",
+        listener: (incrementValue: number, currentValue: number) => void) {
+        return super.on(event, listener);
+    }
 
     public increment(value: number, submit = true) {
         const previousValue = this._value;
@@ -38,8 +41,7 @@ export class Counter {
             this.emitter.emit("increment", previousValue, value);
         }
 
-        this.onIncrement(value);
-
+        this.emit("incremented", value, this._value);
         return this;
     }
 }

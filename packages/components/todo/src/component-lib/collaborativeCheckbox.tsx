@@ -42,10 +42,10 @@ export class CollaborativeCheckbox extends React.Component<p, s> {
 
     componentWillMount() {
         // Register a callback for when an increment happens
-        this.props.counter.onIncrement = () => {
+        this.props.counter.on("incremented", () => {
             const checked = this.isChecked();
             this.setState({ checked });
-        };
+        });
     }
 
     render() {
