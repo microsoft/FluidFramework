@@ -62,7 +62,7 @@ export class OwnedMap extends Document {
     if (this.ownedMap) {
       amOwner = this.ownedMap.isOwner(this.runtime.clientId);
       change = (e: Event) => this.ownedMap.set("title", (e.target as HTMLInputElement).value);
-      title = this.ownedMap.get("title") as string;
+      title = this.ownedMap.get<string>("title");
 
       if (amOwner) {
         console.log("I am owner");

@@ -602,7 +602,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private initializeIntervalCollections() {
-        this.intervalCollections = this.get("intervalCollections") as ISharedMap;
+        this.intervalCollections = this.get<ISharedMap>("intervalCollections");
 
         // when testing and using mock runtime, intervalCollections would be null.
         if (this.intervalCollections) {

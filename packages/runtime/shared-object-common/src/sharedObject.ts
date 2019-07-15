@@ -261,7 +261,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Allows the distributive data type the ability to perform custom processing once an attach has happened
+     * Allows the distributed data type the ability to perform custom processing once an attach has happened
      */
     protected abstract registerCore();
 

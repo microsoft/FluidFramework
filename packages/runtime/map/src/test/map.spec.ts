@@ -115,7 +115,7 @@ describe("Routerlicious", () => {
                 it("Should iterate over all keys in the map", () => {
                     // We use a set to mark the values we want to insert. When we iterate we will remove from the set
                     // and then check it's empty at the end
-                    const set = new Set();
+                    const set = new Set<string>();
                     set.add("first");
                     set.add("second");
                     set.add("third");
