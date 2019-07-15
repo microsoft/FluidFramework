@@ -5,12 +5,19 @@
 
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
-import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse } from "@prague/container-definitions";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IAgentScheduler,
     IComponentContext,
     IComponentRuntime,
+    ITask,
+    ITaskManager,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import * as assert from "assert";
@@ -23,7 +30,7 @@ interface IChanged {
 
 const LeaderTaskId = "leader";
 
-export class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
+class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
 
     public static supportedInterfaces = ["IAgentScheduler"];
 
@@ -346,6 +353,65 @@ export class AgentScheduler extends EventEmitter implements IAgentScheduler, ICo
     }
 }
 
+export class TaskManager implements ITaskManager {
+    public static supportedInterfaces = ["IAgentScheduler", "ITaskManager"];
+
+    public static async load(runtime: IComponentRuntime): Promise<TaskManager> {
+        const agentScheduler = await AgentScheduler.load(runtime);
+        return new TaskManager(agentScheduler);
+    }
+
+    public url = "/_tasks";
+
+    private readonly taskMap = new Map<string, IComponentRunnable>();
+    constructor(private readonly scheduler: IAgentScheduler) {
+
+    }
+
+    public query(id: string): any {
+        if (TaskManager.supportedInterfaces.indexOf(id) !== -1) {
+            return id === "ITaskManager" ? this : this.scheduler;
+        } else {
+            return undefined;
+        }
+    }
+
+    public list(): string[] {
+        return AgentScheduler.supportedInterfaces;
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        if (request.url === "" || request.url === "/") {
+            return { status: 200, mimeType: "prague/component", value: this };
+        } else if (!request.url.startsWith(this.url)) {
+            return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+        } else {
+            const trimmedUrl = request.url.substr(this.url.length);
+            const taskUrl = trimmedUrl.length > 0 && trimmedUrl.charAt(0) === "/"
+                ? trimmedUrl.substr(1)
+                : "";
+            if (taskUrl === "" || !this.taskMap.has(taskUrl)) {
+                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            } else {
+                return { status: 200, mimeType: "prague/component", value: this.taskMap.get(taskUrl) };
+            }
+        }
+
+    }
+
+    public async pick(componentUrl: string, request: IRequest, ...tasks: ITask[]) {
+        if (request.headers && request.headers["fluid-reconnect"] === false) {
+            return Promise.reject("Picking now allowed on secondary copy");
+        }
+        const registersP: Array<Promise<void>> = [];
+        for (const task of tasks) {
+            this.taskMap.set(task.id, task.instance);
+            registersP.push(this.scheduler.pick(`${componentUrl}${this.url}/${task.id}`));
+        }
+        await Promise.all(registersP);
+    }
+}
+
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
 
     const mapExtension = SharedMap.getFactory();
@@ -355,10 +421,10 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
-    const agentSchedulerP = AgentScheduler.load(runtime);
+    const taskManagerP = TaskManager.load(runtime);
     runtime.registerRequestHandler(async (request: IRequest) => {
-        const agentScheduler = await agentSchedulerP;
-        return agentScheduler.request(request);
+        const taskManager = await taskManagerP;
+        return taskManager.request(request);
     });
 
     return runtime;

@@ -3,10 +3,30 @@
  * Licensed under the MIT License.
  */
 
+import {
+    IComponent,
+    IComponentLoadable,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+} from "@prague/container-definitions";
+
+export interface ITask {
+    id: string;
+    instance: IComponentRunnable;
+}
+
+/**
+ * Wrapper on top of IAgentScheduler.
+ */
+export interface ITaskManager extends IComponentLoadable, IComponentRouter {
+    pick(componentUrl: string, request: IRequest, ...tasks: ITask[]): Promise<void>;
+}
+
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler {
+export interface IAgentScheduler extends IComponent, IComponentRouter {
 
     /**
      * Whether this instance is the leader.
