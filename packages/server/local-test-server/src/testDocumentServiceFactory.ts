@@ -11,8 +11,8 @@ import {
 } from "@prague/container-definitions";
 import { TokenProvider } from "@prague/routerlicious-socket-storage";
 import { parse } from "url";
-import { createTestDocumentService } from "./registration";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
+import { createTestDocumentService } from "./testDocumentService";
 
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
 

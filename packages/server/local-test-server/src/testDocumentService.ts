@@ -5,13 +5,17 @@
 
 import * as api from "@prague/container-definitions";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
+import { TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentStorageService } from "@prague/test-utils";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
-import { TestDeltaStorageService } from "./testDeltaStorageService";
-import { TestDocumentDeltaConnection } from "./testDocumentDeltaConnection";
-import { TestDocumentStorageService } from "./testDocumentStorageService";
 
-/**
- */
+export function createTestDocumentService(
+    testDeltaConnectionServer: ITestDeltaConnectionServer,
+    tokenProvider: socketStorage.TokenProvider,
+    tenantId: string,
+    documentId: string): api.IDocumentService {
+        return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
+}
+
 export class TestDocumentService implements api.IDocumentService {
     constructor(
         private testDeltaConnectionServer: ITestDeltaConnectionServer,
@@ -32,6 +36,7 @@ export class TestDocumentService implements api.IDocumentService {
     }
 
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
+        // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
             this.tenantId,
             this.documentId,

@@ -35,6 +35,7 @@
     "@prague/runtime-definitions": "^0.6.0",
     "@prague/services-client": "^0.6.0",
     "@prague/services-core": "^0.6.0",
+    "@prague/socket-storage-shared": "^0.6.0",
     "@prague/utils": "^0.6.0",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
