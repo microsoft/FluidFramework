@@ -129,6 +129,9 @@ RUN npm run build:full
 # Partial Build Target for publishing
 FROM base AS publish
 
+# Webpack components for publishing
+RUN npm run webpack
+
 # Initialize a base repo for Lerna
 RUN git init
 RUN git config --global user.email "praguertdev@microsoft.com"
