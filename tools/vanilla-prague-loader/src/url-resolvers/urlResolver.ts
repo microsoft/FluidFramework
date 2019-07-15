@@ -46,8 +46,8 @@ export class UrlResolver implements IUrlResolver {
     if (isSpoTenant(this.tenant)) {
       // resolve to SPO
       const microsoftLogin: IClientConfig = {
-        clientId: "3d642166-9884-4463-8248-78961b8c1300",
-        clientSecret: "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
+        clientId: "",
+        clientSecret: "",
       };
 
       const token: IODSPTokens = {
@@ -87,18 +87,14 @@ export class UrlResolver implements IUrlResolver {
 
 export async function fetchSecret(tenant: string, getToken: () => Promise<string>): Promise<string> {
   switch (tenant) {
-    case "stupefied-kilby": {
-      return "4a9211594f7c3daebca3deb8d6115fe2";
-    }
     case "prague": {
       return "43cfc3fbf04a97c0921fd23ff10f9e4b";
     }
-    case "elastic-dijkstra": {
-      return "9f29be02664c7e3fa1f470faa05104ca";
-    }
-    case "github": {
-      return "0bea3f87c186991a69245a29dc3f61d2";
-    }
+    case "stupefied-kilby":
+    case "elastic-dijkstra":
+    case "github":
+      throw new Error("In preparation for Fluid going open source, these tenants have been deprecated. " +
+        "Please use the \"prague\" tenant, or provide your own tenant");
     default: {
       if (!getToken) {
         throw new Error("Tenant Not Recognized. No getToken function provided.");
