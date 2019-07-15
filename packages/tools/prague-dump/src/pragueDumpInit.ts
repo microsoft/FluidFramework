@@ -24,15 +24,9 @@ export let paramDocumentService: IDocumentService;
 export let latestVersionsId: string = "";
 export let connectionInfo: any;
 
-// TODO: put this somewhere else
-const clientConfig: IClientConfig = {
-    clientId: "3d642166-9884-4463-8248-78961b8c1300",
-    clientSecret: "IefegJIsumWtD1Of/9AIUWvm6ryR624vgMtKRmcNEsQ=",
-};
-
 const redirectUri = "http://localhost:7000/auth/callback";
 
-async function getAuthorizationCode(server: string): Promise<string> {
+async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
     console.log("Please open browser and navigate to this URL:");
     console.log(`  https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
@@ -84,39 +78,44 @@ async function saveAccessToken(server: string, odspTokens: IODSPTokens) {
     return saveRC(rc);
 }
 
-async function getRequestAccessTokenBody(server: string) {
+async function getRequestAccessTokenBody(server: string, clientConfig: IClientConfig) {
     return `scope=offline_access https://${server}/AllSites.Write`
         + `&client_id=${clientConfig.clientId}`
         + `&client_secret=${clientConfig.clientSecret}`
         + `&grant_type=authorization_code`
-        + `&code=${await getAuthorizationCode(server)}`
+        + `&code=${await getAuthorizationCode(server, clientConfig)}`
         + `&redirect_uri=${redirectUri}`;
 }
 
-async function acquireTokens(server: string): Promise<IODSPTokens> {
+async function acquireTokens(server: string, clientConfig: IClientConfig): Promise<IODSPTokens> {
     console.log("Acquiring tokens");
-    const tokens = await postTokenRequest(await getRequestAccessTokenBody(server));
+    const tokens = await postTokenRequest(await getRequestAccessTokenBody(server, clientConfig));
     await saveAccessToken(server, tokens);
     return tokens;
 }
 
-async function getODSPTokens(server: string, forceTokenRefresh: boolean): Promise<IODSPTokens> {
+async function getODSPTokens(
+    server: string,
+    clientConfig: IClientConfig,
+    forceTokenRefresh: boolean): Promise<IODSPTokens> {
+
     if (!forceTokenRefresh) {
         const odspTokens = await loadODSPTokens(server);
         if (odspTokens !== undefined && odspTokens.refreshToken !== undefined) {
             return odspTokens;
         }
     }
-    return acquireTokens(server);
+    return acquireTokens(server, clientConfig);
 }
 
 async function joinODSPSession(
     server: string,
     documentDrive: string,
     documentItem: string,
+    clientConfig: IClientConfig,
     forceTokenRefresh: boolean = false) {
 
-    const odspTokens = await getODSPTokens(server, forceTokenRefresh);
+    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
     try {
         const oldAccessToken = odspTokens.accessToken;
         const resolvedUrl = await getODSPFluidResolvedUrl(server,
@@ -128,7 +127,7 @@ async function joinODSPSession(
     } catch (e) {
         const parsedBody = JSON.parse(e.data);
         if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
-            return joinODSPSession(server, documentDrive, documentItem, true);
+            return joinODSPSession(server, documentDrive, documentItem, clientConfig, true);
         }
         const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
         return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
@@ -136,6 +135,14 @@ async function joinODSPSession(
 }
 
 async function initializeODSPCore(server: string, drive: string, item: string) {
+    if (!process.env.login__microsoft__clientId || !process.env.login__microsoft__secret) {
+        return Promise.reject("ODSP clientId/secret must be set as environment variables. " +
+            "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+    }
+    const clientConfig: IClientConfig = {
+        clientId: process.env.login__microsoft__clientId,
+        clientSecret: process.env.login__microsoft__secret,
+    };
     connectionInfo = {
         server,
         drive,
@@ -144,7 +151,7 @@ async function initializeODSPCore(server: string, drive: string, item: string) {
 
     console.log(`Connecting to ODSP:\n  drive=${drive}\n  item=${item}`);
 
-    const resolvedUrl = await joinODSPSession(server, drive, item);
+    const resolvedUrl = await joinODSPSession(server, drive, item, clientConfig);
 
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory("prague-dumper");
     paramDocumentService = await odspDocumentServiceFactory.createDocumentService(resolvedUrl);

@@ -1,6 +1,7 @@
 # Prague Dumper
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
+In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 
 ## Usage
 
@@ -10,7 +11,6 @@ Connection using ODSP or routerlicious driver to dump the messages or snapshot i
       --dump:rawmessage             : dump all messages
       --dump:snapshotTree           : dump the snapshot trees
       --dump:snapshotBlob           : dump the contents of snapshot blobs
-      --dump:snapshotSha            : dump a table of snapshot path and blob's sha
       --stat:message                : show a table of message type counts and size
       --stat:snapshot               : show a table of snapshot path and blob size
       --stat:dataType               : show a table of data type
