@@ -4,8 +4,7 @@
  */
 
 import { IUser } from "@prague/container-definitions";
-import { IAlfredTenant } from "@prague/services-core";
-import { generateToken } from "@prague/services-core";
+import { generateToken, IAlfredTenant } from "@prague/services-core";
 import * as _ from "lodash";
 
 export interface IAlfredUser extends IUser {

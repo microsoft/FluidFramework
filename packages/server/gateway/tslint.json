@@ -5,7 +5,6 @@
         "completed-docs": false,
         "max-func-body-length": false,
         "no-console": false,
-        "no-duplicate-imports": false,
         "no-floating-promises": false,
         "no-import-side-effect": false,
         "no-null-keyword": false,

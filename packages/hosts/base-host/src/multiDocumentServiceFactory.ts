@@ -5,10 +5,13 @@
 
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
 
-// TODO: Move this into the runtime
+// TODO: Move this into drivers
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(private factoryMap: { [protocol: string]: IDocumentServiceFactory }) { }
-    public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
+    constructor(private readonly factoryMap: { [protocol: string]: IDocumentServiceFactory }) {
+
+    }
+
+    public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type === "prague") {
             const urlObj = new URL(resolvedUrl.url);
             const factory = this.factoryMap[urlObj.protocol];

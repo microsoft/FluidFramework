@@ -10,7 +10,6 @@ import * as connectRedis from "connect-redis";
 import * as cookieParser from "cookie-parser";
 import * as cors from "cors";
 import * as express from "express";
-import { Express } from "express";
 import * as expressSession from "express-session";
 import * as fs from "fs";
 import * as morgan from "morgan";
@@ -159,7 +158,7 @@ export function create(
     });
 
     // Express app configuration
-    const app: Express = express();
+    const app: express.Express = express();
 
     // Running behind iisnode
     app.set("trust proxy", 1);

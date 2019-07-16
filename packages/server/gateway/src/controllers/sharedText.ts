@@ -26,8 +26,8 @@ import { IGitCache } from "@prague/services-client";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
+import { MultiDocumentServiceFactory } from "@prague/base-host";
 import * as url from "url";
-import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 import { BrowserErrorTrackingService } from "./errorTracking";
 
 // first script loaded
