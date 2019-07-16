@@ -156,7 +156,11 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
                     : "text";
                 const component = await runtime.getComponentRuntime(componentId, true);
 
-                return component.request({ url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash) });
+                return component.request(
+                    {
+                        headers: request.headers,
+                        url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
+                    });
             }
         };
     }

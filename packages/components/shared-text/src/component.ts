@@ -7,7 +7,12 @@ import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IComponent, IComponentHTMLVisual, IRequest, IResponse } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLVisual,
+    IComponentLoadable,
+    IRequest,
+    IResponse } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -17,7 +22,11 @@ import {
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { IAgentScheduler, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import {
+    IComponentContext,
+    IComponentRuntime,
+    ITask,
+    ITaskManager } from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
@@ -41,9 +50,10 @@ import {
     waitForFullConnection,
 } from "./utils";
 
-const textAnalyzerRoute = "/tasks/intel";
-
-export class SharedTextRunner extends EventEmitter implements IComponent, IComponentHTMLVisual {
+export class SharedTextRunner extends EventEmitter implements
+    IComponent,
+    IComponentHTMLVisual,
+    IComponentLoadable {
     public static supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
@@ -58,6 +68,7 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
     private insightsMap: DistributedMap.ISharedMap;
     private rootView: ISharedMap;
     private collabDoc: Document;
+    private taskManager: ITaskManager;
 
     private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
         super();
@@ -79,14 +90,29 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
     }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url === textAnalyzerRoute) {
-            const textAnalyzer = new TextAnalyzer(this.sharedString, this.insightsMap);
-            return { status: 200, mimeType: "prague/component", value: textAnalyzer };
+        if (request.url.startsWith(this.taskManager.url)) {
+            return this.taskManager.request(request);
         } else if (request.url === "" || request.url === "/") {
+            this.parse(request);
             return { status: 200, mimeType: "prague/component", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
+    }
+
+    private parse(request: IRequest) {
+        // TODO: component will ask host for capability before registering.
+        waitForFullConnection(this.runtime).then(() => {
+            const intelTask: ITask = {
+                id: "intel",
+                instance: new TextAnalyzer(this.sharedString, this.insightsMap),
+            };
+            this.taskManager.pick(this.url, request, intelTask).then(() => {
+                console.log(`Picked intel task`);
+            }, (err) => {
+                console.log(err);
+            });
+        });
     }
 
     private async initialize(): Promise<void> {
@@ -134,18 +160,10 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
 
         this.sharedString = this.rootView.get("text") as SharedString;
+        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
-
-        waitForFullConnection(this.runtime).then(() => {
-            this.registerTasks().then(() => {
-                console.log(`Requested tasks`);
-            })
-            .catch((err) => {
-                console.log(`Error requesting tasks ${err}`);
-            });
-        });
 
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
@@ -176,6 +194,10 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
         const theFlow = container.flowView;
         browserContainerHost.attach(container);
 
+        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
+        const schedulerComponent = schedulerResponse.value as IComponent;
+        this.taskManager = schedulerComponent.query<ITaskManager>("ITaskManager");
+
         const options = parse(window.location.search.substr(1));
         addTranslation(
             this.collabDoc,
@@ -203,24 +225,6 @@ export class SharedTextRunner extends EventEmitter implements IComponent, ICompo
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
     }
-
-    // TODO: component will ask host for capability before registering.
-    private async registerTasks() {
-        const response = await this.runtime.request({ url: "/_scheduler" });
-        const rawComponent = response.value as IComponent;
-
-        const scheduler = rawComponent.query<IAgentScheduler>("IAgentScheduler");
-
-        // TODO: Pick tasks once stuff are finalized.
-        if (scheduler.leader) {
-            console.log(`This instance is the leader`);
-        } else {
-            scheduler.on("leader", () => {
-                console.log(`This instance is the leader`);
-            });
-        }
-    }
-
 }
 
 export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
