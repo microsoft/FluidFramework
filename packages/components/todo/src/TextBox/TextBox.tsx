@@ -5,7 +5,7 @@
 import {
   CollaborativeTextArea,
   IComponentReactViewable,
-  RootComponent,
+  PrimedComponent,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
@@ -32,7 +32,7 @@ export const TextBoxName = `${pkg.name as string}-textbox`;
  * TextBox is a really simple component that uses the CollaborativeTextArea to provide a
  * collaborative textarea.
  */
-export class TextBox extends RootComponent
+export class TextBox extends PrimedComponent
   implements
     IComponentHTMLVisual,
     IComponentReactViewable,
@@ -44,7 +44,7 @@ export class TextBox extends RootComponent
    * Do creation work
    */
   protected async create() {
-    // This allows the RootComponent to do setup. In this case it creates the root map
+    // This allows the PrimedComponent to create the root map
     await super.create();
 
     // create a cell that will be use for the text entry

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
+import { PrimedComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
@@ -36,7 +36,7 @@ export function clearSubtree(elm: HTMLElement) {
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends RootComponent implements IComponentHTMLVisual {
+export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLVisual {
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExternalComponentLoader> {
     const ucl = new ExternalComponentLoader(runtime, context, ExternalComponentLoader.supportedInterfaces);
     await ucl.initialize();

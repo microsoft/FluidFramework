@@ -6,7 +6,7 @@
 import {
   EmbeddedReactComponentFactory,
   IComponentReactViewable,
-  RootComponent,
+  PrimedComponent,
 } from "@prague/aqueduct";
 import {
   ISharedCell,
@@ -42,7 +42,7 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - New todo item entry
  * - List of todo items
  */
-export class Todo extends RootComponent implements IComponentHTMLVisual, IComponentReactViewable {
+export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
   private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
   "IComponentReactViewable"];
 
@@ -54,7 +54,7 @@ export class Todo extends RootComponent implements IComponentHTMLVisual, ICompon
    * Do setup work here
    */
   protected async create() {
-    // This allows the RootComponent to do setup. In this case it creates the root map
+    // This allows the PrimedComponent to create the root map
     await super.create();
 
     // create a list for of all inner todo item components

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent } from "@prague/aqueduct";
+import { PrimedComponent } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponentHTMLVisual,
@@ -32,7 +32,7 @@ export const ClickerName = `${pkg.name as string}-clicker`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class Clicker extends RootComponent implements IComponentHTMLVisual {
+export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
     "IComponentRouter"];
 
@@ -40,7 +40,7 @@ export class Clicker extends RootComponent implements IComponentHTMLVisual {
      * Do setup work here
      */
     protected async create() {
-        // This allows the RootComponent to do setup. In this case it creates the root map
+        // This allows the PrimedComponent to create the root map
         await super.create();
         this.root.set("clicks", 0, CounterValueType.Name);
 

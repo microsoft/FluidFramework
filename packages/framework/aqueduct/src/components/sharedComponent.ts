@@ -5,12 +5,14 @@
 
 import {
   IComponent,
+  IRequest,
   IResponse,
   ISharedComponent,
 } from "@prague/container-definitions";
 import { IComponentForge } from "@prague/framework-definitions";
 import {
   IComponentContext,
+  IComponentRouter,
   IComponentRuntime,
 } from "@prague/runtime-definitions";
 
@@ -20,11 +22,11 @@ import { EventEmitter } from "events";
  * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent extends EventEmitter implements ISharedComponent {
+export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
 
   public readonly url: string; // ISharedComponent
 
-  private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent"];
+  private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent", "IComponentForge", "IComponentRouter"];
 
   private initializeP: Promise<void> | undefined;
 
@@ -40,19 +42,52 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     this.url = context.id;
   }
 
+  // start IComponentForge
+
+  /**
+   * This should only be called before the component has attached. It allows to pass in props to do setup.
+   * Forge will be called after all the initialize steps.
+   */
+  public async forge(props?: any) { }
+
+  // end IComponentForge
+
+  // start IComponentRouter
+
+  /**
+   * Return this object if someone requests it directly
+   * We will return this object in three scenarios
+   *  1. the request url is a "/"
+   *  2. the request url is our url
+   *  3. the request url is empty
+   */
+  public async request(req: IRequest): Promise<IResponse> {
+    if (req.url === "/" || req.url === this.url || req.url === "") {
+        return {
+            mimeType: "prague/component",
+            status: 200,
+            value: this,
+        };
+    }
+
+    return Promise.reject(`unknown request url: ${req.url}`);
+  }
+
+  // end IComponentRouter
+
   // start ISharedComponent
 
   /**
    * Returns this object if interface supported
    */
-  public query<T>(id: string): any | undefined {
+  public query<T>(id: string): T | undefined {
 
     // If they are requesting `IComponentForge` and it's not creation then return undefined.
     if (id === "IComponentForge" && this.runtime.existing) {
       return undefined;
     }
 
-    return this.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    return this.supportedInterfaces.indexOf(id) !== -1 ? (this as unknown) as T : undefined;
   }
 
   /**
@@ -70,9 +105,9 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
    *
    * @param id - unique component id for the new component
    * @param pkg - package name for the new component
-   * @param props - optional props to be passed in if the component supports IComponentForge
+   * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
    */
-  protected async createAndAttachComponent(id: string, pkg: string, props?: any) {
+  protected async createAndAttachComponent(id: string, pkg: string, props?: any): Promise<IComponent> {
     const runtime = await this.context.createComponent(id, pkg);
     const response = await runtime.request({url: "/"});
     const component = await this.isComponentResponse(response);
@@ -83,6 +118,8 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     }
 
     runtime.attach();
+
+    return component;
   }
 
   /**

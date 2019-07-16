@@ -8,7 +8,7 @@ import { ClickerName } from "@chaincode/clicker";
 import {
   EmbeddedReactComponentFactory,
   IComponentReactViewable,
-  RootComponent,
+  PrimedComponent,
 } from "@prague/aqueduct";
 import {
   ISharedCell,
@@ -52,7 +52,7 @@ export const TodoItemName = `${pkg.name as string}-item`;
  * - Link to open component in separate tab
  * - Button to remove entry
  */
-export class TodoItem extends RootComponent
+export class TodoItem extends PrimedComponent
   implements
     IComponentHTMLVisual,
     IComponentReactViewable,
@@ -64,7 +64,7 @@ export class TodoItem extends RootComponent
    * Do creation work
    */
   protected async create() {
-    // This allows the RootComponent to do setup. In this case it creates the root map
+    // This allows the PrimedComponent to create the root map
     await super.create();
 
     // create a cell that will be use for the text entry

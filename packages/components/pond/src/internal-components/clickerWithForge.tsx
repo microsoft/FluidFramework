@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent } from "@prague/aqueduct";
+import { PrimedComponent } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponentHTMLVisual,
@@ -33,7 +33,7 @@ export const ClickerWithForgeName = `${pkg.name as string}-clickerWithForge`;
 /**
  * Basic Clicker example using new interfaces and stock component classes.
  */
-export class ClickerWithForge extends RootComponent implements IComponentHTMLVisual, IComponentForge {
+export class ClickerWithForge extends PrimedComponent implements IComponentHTMLVisual, IComponentForge {
     private static readonly supportedInterfaces =
         ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter", "IComponentForge"];
 
@@ -43,7 +43,7 @@ export class ClickerWithForge extends RootComponent implements IComponentHTMLVis
      * Do setup work here
      */
     protected async create() {
-        // This allows the RootComponent to do setup. In this case it creates the root map
+        // This allows the PrimedComponent to create the root map
         await super.create();
 
         this.hasForged = this.runtime.existing;

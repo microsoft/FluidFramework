@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
+import { PrimedComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponentHTMLRender,
@@ -37,7 +37,7 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends RootComponent implements IComponentHTMLVisual {
+export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   private static readonly supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLVisual",
   "IComponentRouter"];
 
@@ -52,7 +52,7 @@ export class Pond extends RootComponent implements IComponentHTMLVisual {
    * Do setup work here
    */
   protected async create() {
-    // This allows the RootComponent to do setup. In this case it creates the root map
+    // This allows the PrimedComponent to create the root map
     await super.create();
     await this.createAndAttachComponent("clicker", ClickerName);
     await this.createAndAttachComponent("clicker-with-forge", ClickerWithForgeName, { initialValue: 100 });
