@@ -13,15 +13,12 @@ import { generateStrings } from "./generateSharedStrings";
 
 describe("SharedString Snapshot Version", () => {
     const filebase: string = "src/test/sequenceTestSnapshot";
-
-    // tslint:disable-next-line:mocha-no-side-effect-code
-    it("snapshot rebuild", async () => {
-        const message = "SharedString snapshot format has changed." +
+    const message = "SharedString snapshot format has changed." +
         "Please update the snapshotFormatVersion if appropriate " +
         "and then run npm test:newsnapfiles to create new snapshot test files.";
 
-        let i = 0;
-        for (const testString of generateStrings()) {
+    function generateSnapshotRebuildTest(testString: SharedString, i: number) {
+        it(`string ${i + 1}`, async () => {
             const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
@@ -34,8 +31,8 @@ describe("SharedString Snapshot Version", () => {
 
             // load snapshot into sharedString
             const documentId = "fakeId";
-            const runtime: mocks.MockRuntime = new mocks.MockRuntime();
-            const deltaConnectionFactory: mocks.MockDeltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
+            const runtime = new mocks.MockRuntime();
+            const deltaConnectionFactory = new mocks.MockDeltaConnectionFactory();
 
             const services = {
                 // deltaConnection: new mocks.MockDeltaConnection(runtime),
@@ -73,18 +70,22 @@ describe("SharedString Snapshot Version", () => {
             testString.removeText(0, testString.getLength());
             assert(sharedString.getLength() === testString.getLength(), message);
             assert(sharedString.getText() === testString.getText(), message);
+        });
+    }
+    function generateSnapshotRebuildTests() {
+        describe("Snapshot rebuild", () => {
+            let index = 0;
+            for (const str of generateStrings()) {
+                generateSnapshotRebuildTest(str, index);
+                index++;
+            }
+        });
+    }
+    // tslint:disable-next-line:mocha-no-side-effect-code
+    generateSnapshotRebuildTests();
 
-            ++i;
-        }
-    }).timeout(3000);
-
-    it("snapshot diff", async () => {
-        const message = "SharedString snapshot format has changed. " +
-        "Please update the snapshotFormatVersion if appropriate " +
-        "and then run npm test:newsnapfiles to create new snapshot test files.";
-
-        let i = 0;
-        for (const testString of generateStrings()) {
+    function generateSnapshotDiffTest(testString: SharedString, i: number) {
+        it(`string ${i + 1}`, async () => {
             const filename = `${filebase}${i + 1}.json`;
             assert(fs.existsSync(filename), `test snapshot file does not exist: ${filename}`);
             const data = fs.readFileSync(filename, "utf8");
@@ -92,9 +93,20 @@ describe("SharedString Snapshot Version", () => {
             if (data !== testData) {
                 assert(false, `${message}\n\t${diff(data, testData)}\n\t${diff(testData, data)}`);
             }
-            ++i;
-        }
-    });
+        });
+    }
+
+    function generateSnapshotDiffTests() {
+        describe("Snapshot diff", () => {
+            let index = 0;
+            for (const str of generateStrings()) {
+                generateSnapshotDiffTest(str, index);
+                index++;
+            }
+        });
+    }
+    // tslint:disable-next-line:mocha-no-side-effect-code
+    generateSnapshotDiffTests();
 
     function diff(s1: string, s2: string): string {
         let i = 0;
