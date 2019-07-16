@@ -13,6 +13,7 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
+import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports
 import * as sha1 from "sha.js/sha1";
 
@@ -83,7 +84,18 @@ function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<strin
                 url: "",
             };
             entries.push(entry);
+        } else if (treeEntry.type === TreeEntry[TreeEntry.Commit]) {
+            const entry: git.ITreeEntry = {
+                mode: FileMode[treeEntry.mode],
+                path: subPath,
+                sha: treeEntry.value as string,
+                size: -1,
+                type: "commit",
+                url: "",
+            };
+            entries.push(entry);
         } else {
+            assert(treeEntry.type === TreeEntry[TreeEntry.Tree]);
             const t = treeEntry.value as ITree;
             const entry: git.ITreeEntry = {
                 mode: FileMode[treeEntry.mode],

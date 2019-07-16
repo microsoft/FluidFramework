@@ -27,6 +27,13 @@ export interface IReplayController {
         version?: IVersion): Promise<ISnapshotTree | null>;
 
     /**
+     * IDocumentStorageService.read() intercept
+     */
+    read(
+        documentStorageService: IDocumentStorageService,
+        blobId: string): Promise<string>;
+
+    /**
      * Returns sequence number to start processing ops
      * Should be zero if not using snapshot, and snapshot seq# otherwise
      */

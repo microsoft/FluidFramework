@@ -29,7 +29,7 @@ export class ReplayDocumentStorageService implements api.IDocumentStorageService
     }
 
     public async read(blobId: string): Promise<string> {
-        return this.documentStorageService.read(blobId);
+        return this.controller.read(this.documentStorageService, blobId);
     }
 
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {

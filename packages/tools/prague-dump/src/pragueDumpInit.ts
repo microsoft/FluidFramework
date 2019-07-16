@@ -241,8 +241,8 @@ async function initializeR11sLocalhost(pathname: string) {
     console.log(`Connecting to r11s localhost: tenantId=${tenantId} id:${documentId}`);
     const tokenProvider = new r11s.TokenProvider(paramJWT);
     paramDocumentService = r11s.createDocumentService(
-        `http://localhost:3000`,
-        `http://localhost:3000/deltas/${tenantId}/${documentId}`,
+        `http://localhost:3003/`,
+        `http://localhost:3003/deltas/${tenantId}/${documentId}`,
         `http://localhost:3001/repos/${tenantId}`,
         tokenProvider,
         tenantId,

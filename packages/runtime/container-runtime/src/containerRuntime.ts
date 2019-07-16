@@ -436,13 +436,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         const componentVersionsP = new Array<Promise<{ id: string, version: string }>>();
         for (const [componentId, componentSnapshot] of componentEntries) {
             // If ID exists then previous commit is still valid
-            if (componentSnapshot.id) {
+            const commit = tree.commits[componentId];
+            if (componentSnapshot.id && !commit) {
+                this.logger.sendErrorEvent({
+                    componentId,
+                    eventName: "MissingCommit",
+                    id: componentSnapshot.id,
+                });
+            }
+            if (componentSnapshot.id && commit) {
                 componentVersionsP.push(Promise.resolve({
                     id: componentId,
-                    version: tree.commits[componentId],
+                    version: commit,
                 }));
             } else {
-                const parent = componentId in tree.commits ? [tree.commits[componentId]] : [];
+                const parent = commit ? [commit] : [];
                 const componentVersionP = this.storage
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
                     .then((version) => {

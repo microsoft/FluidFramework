@@ -56,6 +56,10 @@ export class ReplayControllerStatic implements IReplayController {
         return version ? Promise.reject("Invalid operation") : null;
     }
 
+    public async read(documentStorageService: IDocumentStorageService, blobId: string): Promise<string> {
+        return Promise.reject("Invalid operation");
+    }
+
     public async getStartingOpSequence(): Promise<number> {
         return 0;
     }

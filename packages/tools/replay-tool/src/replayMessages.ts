@@ -11,15 +11,14 @@ import {
     IResolvedUrl
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { Replayer, ReplayFileDeltaConnection } from "@prague/file-socket-storage";
+import { FileStorageDocumentName, Replayer, ReplayFileDeltaConnection } from "@prague/file-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { generateToken } from "@prague/services-core";
-import { Deferred } from "@prague/utils";
+import * as assert from "assert";
+import * as fs from "fs";
 import { ReplayTool } from "./replayTool";
 
 // tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
-const apiVersion = require("../package.json").version;
 
 /**
  * This api will make calls to replay ops and take snapshots according to user input.
@@ -38,7 +37,7 @@ export async function playMessagesFromFileStorage(
         },
         tokens: { jwt: generateToken("prague", "replay-tool", "replay-tool") },
         type: "prague",
-        url: "prague://localhost:6000/prague/replay-tool",
+        url: `prague://localhost:6000/prague/${FileStorageDocumentName}`,
     };
     if (replayTool.version !== undefined) {
         resolved.url = `prague://localhost:6000/prague/${replayTool.version}`;
@@ -59,34 +58,46 @@ export async function playMessagesFromFileStorage(
 
     const replayer: Replayer = ReplayFileDeltaConnection.getReplayer();
 
-    let replayTo = -1;
-
     replayer.currentReplayedOp = container.deltaManager.referenceSequenceNumber;
-    console.log("current replayed op = ", replayer.currentReplayedOp);
-    let snapshotMessage =
-        `Message:ReplayTool Snapshot;OutputDirectoryName:${replayTool.outDirName ? replayTool.outDirName : "output"}`;
+
+    console.log("Starting with seq# ", replayer.currentReplayedOp);
+
     if (replayTool.snapFreq) {
-        let opsCountToReplay: number;
         while (replayer.currentReplayedOp < replayTool.to) {
-            opsCountToReplay = replayTool.snapFreq - (replayer.currentReplayedOp % replayTool.snapFreq);
-            replayTo = Math.min(replayer.currentReplayedOp + opsCountToReplay, replayTool.to);
+            const replayTo = Math.min(replayer.currentReplayedOp + replayTool.snapFreq, replayTool.to);
             await replayer.replay(replayTo);
-            await isOpsProcessingDone(container);
-            snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
-            await container.snapshot(snapshotMessage);
+            await isOpsProcessingDone(container, replayer);
+
+            await generateSnapshot(container, replayer.currentReplayedOp, replayTool.outDirName);
+
+            // If we got less than asked, we run out of ops.
             if (replayer.currentReplayedOp < replayTo) {
                 break;
             }
         }
     } else {
         await replayer.replay(replayTool.to);
-        await isOpsProcessingDone(container);
-        console.log("last replayed op = ", replayer.currentReplayedOp);
+        await isOpsProcessingDone(container, replayer);
         if (replayTool.takeSnapshot) {
-            snapshotMessage += `;OP:${replayer.currentReplayedOp}`;
-            await container.snapshot(snapshotMessage);
+            await generateSnapshot(container, replayer.currentReplayedOp, replayTool.outDirName);
         }
     }
+    console.log("Last replayed op seq# ", replayer.currentReplayedOp);
+}
+
+async function generateSnapshot(container: Container, op: number, outputDir: string) {
+    // NOTE: This string is parsed by FileDocumentStorageService.write!
+    const dir = `${outputDir}/op_${op}`;
+    const snapshotMessage =
+        `Message:ReplayTool Snapshot;OutputDirectoryName:${dir};OP:${op}`;
+    await container.snapshot(snapshotMessage);
+
+    // Follow up:
+    // Summary needs commits (same way as snapshot), that is available in FileDocumentStorageService.write()
+    const tree = await container.summarize();
+    const file = `${dir}/summary.json`;
+    // tslint:disable-next-line:non-literal-fs-path
+    fs.writeFileSync(file, JSON.stringify(tree, undefined, 2));
 }
 
 function delay(ms: number) {
@@ -94,10 +105,9 @@ function delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function isOpsProcessingDone(container: Container) {
-    while (container.deltaManager && container.deltaManager.inbound.length > 0) {
+async function isOpsProcessingDone(container: Container, replayer: Replayer) {
+    while (container.deltaManager && container.deltaManager.referenceSequenceNumber < replayer.currentReplayedOp) {
         await delay(10);
-        continue;
     }
 }
 
@@ -107,46 +117,15 @@ async function load(
     options: any = {},
     serviceFactory: IDocumentServiceFactory): Promise<Container> {
 
-    const runDeferred = new Deferred<{ runtime: IComponentRuntime; context: IComponentContext }>();
-
     const codeLoader = new API.CodeLoader(
-        async (r, c) => {
-            runDeferred.resolve({ runtime: r, context: c });
-            return null;
-        },
+        async (r, c) => {},
         { generateSummaries: false });
 
     // Load the Fluid document
     const loader = new Loader(host, serviceFactory, codeLoader, options);
     const container: Container = await loader.resolve({ url });
 
-    if (!container.existing) {
-        console.log("Container did not existed");
-        initializeChaincode(container, `@prague/client-api@${apiVersion}`)
-            .catch((error) => {
-                console.log("chaincode error", error);
-            });
-    }
-
-    // Wait for loader to start us
-    await runDeferred.promise;
+    assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
 
     return container;
-}
-
-async function initializeChaincode(container: Container, pkg: string): Promise<void> {
-    const quorum = container.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!container.connected) {
-        // tslint:disable-next-line
-        await new Promise<void>((resolve) => container.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        await quorum.propose("code2", pkg);
-    }
-
-    console.log(`Code is ${quorum.get("code2")}`);
 }

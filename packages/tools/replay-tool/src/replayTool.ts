@@ -10,14 +10,14 @@ export let replayTool: ReplayTool;
 
 const optionsArray =
     [
-        ["--indir", "name of the directory containing the output of the prague dumper tool"],
-        ["--to", "the last op number to be replayed"],
-        ["--snapshot", "Take snapshot after replaying all the ops(do not specify anything as value of this parameter"],
-        ["--snapfreq", "n. A snapshot will be taken after every nth op."],
-        ["--outdir", "Name of the output directory where the snapshots will appear. If not specified a directory",
-                     "will be created in current directory with name Output"],
-        ["--version", "Name of the directory inside the --indir containing the snapshot blobs if you want to load the",
-                     "document from a snapshot initially."],
+        ["--indir <directory>", "Name of the directory containing the output of the prague dumper tool"],
+        ["--to <op#>", "The last op number to be replayed"],
+        ["--snapshot", "Take snapshot after replaying all the ops"],
+        ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
+        ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
+                     "If not specified a directory will be created in current directory with name Output"],
+        ["--version <version>", "Load document from particualr snapshot.",
+                     "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
     ];
 
 /**
@@ -26,9 +26,9 @@ const optionsArray =
 export class ReplayTool {
 
     public inDirName: string;
-    public outDirName: string;
+    public outDirName: string = "output";
     public from: number = 0;
-    public to: number = -1;
+    public to: number = Number.MAX_SAFE_INTEGER;
     public takeSnapshot = false;
     public snapFreq: number;
     public version: string;
@@ -38,6 +38,11 @@ export class ReplayTool {
     }
 
     public parseArguments() {
+        if (process.argv.length <= 2) {
+            this.printUsage();
+            process.exit(-1);
+        }
+
         for (let i = 2; i < process.argv.length; i++) {
             const arg = process.argv[i];
             switch (arg) {
@@ -100,8 +105,13 @@ export class ReplayTool {
     public printUsage() {
         console.log("Usage: replayTool [options]");
         console.log("Options:");
-        for (const i of optionsArray) {
-            console.log(`  ${i[0].padEnd(32)}: ${i[1]}`);
+        const empty = "".padEnd(32);
+        for (const rec of optionsArray) {
+            let header = `${rec[0].padEnd(32)}`;
+            for (const el of rec.slice(1)) {
+                console.log(`  ${header}${el}`);
+                header = empty;
+            }
         }
     }
 }

@@ -15,8 +15,6 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 
-// Simulated delay interval for emitting the ops
-const DelayInterval = 50;
 const MaxBatchDeltas = 2000;
 
 // Since the replay service never actually sends messages the size below is arbitrary
@@ -41,22 +39,6 @@ export class Replayer {
 
     public set currentReplayedOp(op: number) {
         this.currentReplayOp = op;
-    }
-
-    public async start() {
-        let done: boolean;
-        do {
-            const fetchedOps = await this.documentStorageService.getFromWebSocket(
-                this.currentReplayOp,
-                this.currentReplayOp + 1);
-            if (fetchedOps.length <= 0) {
-                break;
-            } else {
-                await this.replayCore(fetchedOps);
-                this.currentReplayOp += fetchedOps.length;
-                done = fetchedOps[0].type === "op" ? true : false;
-            }
-        } while (!done);
     }
 
     /**
@@ -94,28 +76,6 @@ export class Replayer {
     private emit(ops: ISequencedDocumentMessage[]) {
         ops.map((op) => this.deltaConnection.emit("op", op.clientId, op));
     }
-
-    private async replayCore(fetchedOps: ISequencedDocumentMessage[]) {
-        let current = 0;
-
-        const replayNextOps = () => {
-            const currentOp = fetchedOps[current];
-            const playbackOps = [currentOp];
-            const nextInterval = DelayInterval;
-            current += 1;
-
-            scheduleNext(nextInterval);
-            this.emit(playbackOps);
-        };
-        const scheduleNext = (nextInterval: number) => {
-            if (nextInterval >= 0 && current < fetchedOps.length) {
-                setTimeout(replayNextOps, nextInterval);
-            } else {
-                // this.replayCurrent += current;
-            }
-        };
-        scheduleNext(DelayInterval);
-    }
 }
 
 export class ReplayFileDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
@@ -125,9 +85,8 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @param documentDeltaStorageService - The delta storage service to get ops from.
      * @returns Document delta connection.
      */
-    public static async create(documentDeltaStorageService: FileDeltaStorageService)
-    : Promise<IDocumentDeltaConnection> {
-
+    public static async create(
+            documentDeltaStorageService: FileDeltaStorageService): Promise<IDocumentDeltaConnection> {
         const connection = {
             clientId: "",
             existing: true,
@@ -160,9 +119,6 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         this.replayer =  new Replayer(
             deltaConnection,
             documentDeltaStorageService);
-
-        // tslint:disable-next-line: no-floating-promises
-        this.replayer.start();
     }
 
     public static getReplayer() {

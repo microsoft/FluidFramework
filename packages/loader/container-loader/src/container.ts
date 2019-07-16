@@ -28,6 +28,7 @@ import {
     ISequencedProposal,
     ISignalMessage,
     ISnapshotTree,
+    ISummaryTree,
     ITelemetryBaseLogger,
     ITelemetryLogger,
     ITree,
@@ -97,12 +98,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             canReconnect,
             logger);
-        await container.load(version, connection);
+
+        // Log error right away to telemetry pipeline
+        await container.load(version, connection).catch((error) => {
+            container.emit("error", error);
+            throw error;
+        });
 
         return container;
     }
-
-    public runtime: any = null;
 
     public subLogger: ITelemetryLogger;
     private readonly logger: ITelemetryLogger;
@@ -238,6 +242,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         return this.context!.request(path);
+    }
+
+    // Used by tools like replay tool
+    public summarize(): Promise<ISummaryTree> {
+        return this.context!.summarize();
     }
 
     public async snapshot(tagMessage: string): Promise<void> {
