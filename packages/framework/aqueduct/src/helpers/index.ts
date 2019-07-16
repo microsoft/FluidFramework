@@ -4,3 +4,4 @@
  */
 
 export * from "./StockContainerRuntimeFactory";
+export * from "./StockModuleInstantiationFactory";

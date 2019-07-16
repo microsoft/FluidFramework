@@ -6,9 +6,7 @@ import {
     SharedCell,
 } from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
-import {
-    IRequest,
-} from "@prague/container-definitions";
+import { IComponent, IRequest } from "@prague/container-definitions";
 import {
     CounterValueType,
     SharedMap,
@@ -19,18 +17,17 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
-
 import { Todo } from "./index";
 
 /**
  * This Factory provides the entry for creating a new Todo Component.
- * The `instantiateComponent` function will be called every time a unique Todo component is loaded.
  *
  * Loading happens after creating a new component, after another person creates a new component, and
  * whenever the page loads.
  */
-export class TodoInstantiationFactory implements IComponentFactory {
-    public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
+export class TodoInstantiationFactory implements IComponent, IComponentFactory {
+
+    public static supportedInterfaces = ["IComponentFactory"];
 
     public query(id: string): any {
         return TodoInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -82,11 +79,4 @@ export class TodoInstantiationFactory implements IComponentFactory {
 
         return runtime;
     }
-}
-
-export const fluidExport = new TodoInstantiationFactory();
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
 }

@@ -7,7 +7,7 @@ import {
 } from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
-    IRequest,
+    IComponent, IRequest,
 } from "@prague/container-definitions";
 import {
     CounterValueType,
@@ -31,8 +31,8 @@ import { TodoItem } from "./index";
  * Loading happens after creating a new component, after another person creates a new component, and
  * whenever the page loads.
  */
-export class TodoItemInstantiationFactory implements IComponentFactory {
-    public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
+export class TodoItemInstantiationFactory implements IComponent, IComponentFactory {
+    public static supportedInterfaces = ["IComponentFactory"];
 
     public query(id: string): any {
         return TodoItemInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
