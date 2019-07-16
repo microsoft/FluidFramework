@@ -4,7 +4,8 @@
   "version": "0.6.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "main": "dist/main.bundle.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:tsc npm:build:esnext npm:tslint",
