@@ -20,6 +20,8 @@
     "alfred": "node dist/alfred/www.js",
     "alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
     "tsc": "tsc",
+    "test": "mocha --recursive dist/test --exit",
+    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "author": "Microsoft",
