@@ -15,12 +15,14 @@ const { exec } = require('child_process');
     console.log("Getting secrets...");
     const secretList = await keyVaultClient.getSecrets(vaultUri);
     for (const secret of secretList) {
-        const secretName = secret.id.split('/').pop();
-        keyVaultClient.getSecret(vaultUri, secretName, '').then((response) => {
-            const envName = secretName.split('-').join('__'); // secret name can't contain underscores
-            console.log(`Setting environment variable ${envName}...`);
-            setEnv(envName, response.value);
-        });
+        if (secret.attributes.enabled) {
+            const secretName = secret.id.split('/').pop();
+            keyVaultClient.getSecret(vaultUri, secretName, '').then((response) => {
+                const envName = secretName.split('-').join('__'); // secret name can't contain underscores
+                console.log(`Setting environment variable ${envName}...`);
+                setEnv(envName, response.value);
+            });
+        }
     }
 })();
 
