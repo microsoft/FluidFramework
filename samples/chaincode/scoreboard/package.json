@@ -1,0 +1,60 @@
+{
+  "name": "@chaincode/scoreboard",
+  "description": "Scoreboard component",
+  "version": "0.0.4",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "license": "MIT",
+  "main": "dist/main.bundle.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\"",
+    "dev": "webpack --env=\"development\"",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --pragueHost https://www.wu2.prague.office-int.com --tenantId cocky-ramanujan --tenantSecret 3e439fcb58228d3f8f7deb55399d978c",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "getUrl -p",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "@prague/app-component": "^0.6.9017",
+    "@prague/aqueduct": "^0.6.9017",
+    "@prague/build-common": "^0.6.9017",
+    "@prague/component-runtime": "^0.6.9017",
+    "@prague/container-definitions": "^0.6.9017",
+    "@prague/map": "^0.6.9017",
+    "@prague/runtime-definitions": "^0.6.9017",
+    "@prague/shared-object-common": "^0.6.9017",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.9.0",
+    "@prague/prague-dev-server": "^3.6.1",
+    "@prague/url-generator": "^1.0.7860",
+    "@types/node": "^12.6.4",
+    "@types/react-dom": "^16.8.4",
+    "bulma": "^0.7.5",
+    "css-loader": "^3.0.0",
+    "extract-text-webpack-plugin": "^4.0.0-beta.0",
+    "mini-css-extract-plugin": "^0.7.0",
+    "node-sass": "^4.12.0",
+    "sass-loader": "^7.1.0",
+    "style-loader": "^0.23.1",
+    "ts-loader": "^6.0.4",
+    "tslint": "^5.18.0",
+    "typescript": "~3.5.3",
+    "webpack": "4.35.3",
+    "webpack-cli": "3.3.6",
+    "webpack-merge": "4.2.1"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  }
+}
