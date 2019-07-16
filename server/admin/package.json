@@ -83,7 +83,7 @@
     "@types/serve-favicon": "^2.2.30",
     "@types/split": "^0.3.28",
     "@types/winston": "^2.3.7",
-    "css-loader": "^0.28.10",
+    "css-loader": "^3.0.0",
     "source-map-loader": "^0.2.3",
     "style-loader": "^0.20.2",
     "tslint": "^5.9.1",

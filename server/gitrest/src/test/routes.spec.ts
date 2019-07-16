@@ -467,7 +467,7 @@ describe("Historian", () => {
                 }
 
                 return resultP;
-            });
+            }).timeout(4000);
         });
 
         // Higher level repository tests
