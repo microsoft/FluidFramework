@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@prague/agent": "^0.6.0",
-    "@prague/app-datastore": "^0.6.0",
+
     "@prague/cell": "^0.6.0",
     "@prague/client-api": "^0.6.0",
     "@prague/client-ui": "^0.6.0",
