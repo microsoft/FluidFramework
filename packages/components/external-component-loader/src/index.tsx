@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
+import { RootComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponent,
@@ -169,7 +169,7 @@ export class ExternalComponentLoader extends RootComponent implements IComponent
 const pkg = require("../package.json") as IPraguePackage;
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return StockContainerRuntimeFactory.instantiateRuntime(
+  return SimpleContainerRuntimeFactory.instantiateRuntime(
     context,
     pkg.name,
     new UrlRegistry(new Map([[pkg.name, Promise.resolve({ instantiateComponent })]])));

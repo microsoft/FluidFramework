@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
+import { RootComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponentHTMLRender,
@@ -161,7 +161,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
  * We provide all the components we will care about as a registry.
  */
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return StockContainerRuntimeFactory.instantiateRuntime(
+  return SimpleContainerRuntimeFactory.instantiateRuntime(
     context,
     PondName,
     new Map([

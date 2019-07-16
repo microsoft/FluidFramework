@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent, StockContainerRuntimeFactory } from "@prague/aqueduct";
+import { RootComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
   IComponentHTMLVisual,
@@ -164,7 +164,7 @@ export class ClickerFactoryComponent implements IComponentFactory, IRuntimeFacto
    * We provide all the components we will care about as a registry.
    */
   public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return StockContainerRuntimeFactory.instantiateRuntime(context, ClickerName, new Map([
+    return SimpleContainerRuntimeFactory.instantiateRuntime(context, ClickerName, new Map([
       [ClickerName, Promise.resolve(this)],
     ]));
   }

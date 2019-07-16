@@ -10,7 +10,7 @@ import {
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 
-export class StockContainerRuntimeFactory {
+export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
 
     /**

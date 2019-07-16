@@ -9,17 +9,17 @@ import { IComponentRegistry } from "@prague/container-runtime";
 import {
     IComponentContext, IComponentFactory, IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { StockContainerRuntimeFactory } from "./StockContainerRuntimeFactory";
+import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
- *  Stock Fluid Module instantiation library. This should be exposed as fuildExport off the entrypoint to your module
+ *  Simple Fluid Module instantiation library. This should be exposed as fuildExport off the entrypoint to your module
  *
  * This factory exposes the following interfaces:
  *  IComponentFactory: instantiates the default component directly, sub-components must be registered manually
  *  IRuntimeFactory: instantiates a container runtime that includes the default component and sub-components
  *  IComponentRegistry: instantiates a component registry that include the default component and sub-components
  */
-export class StockModuleInstantiationFactory implements
+export class SimpleModuleInstantiationFactory implements
     IComponent,
     IRuntimeFactory,
     IComponentRegistry,
@@ -33,11 +33,11 @@ export class StockModuleInstantiationFactory implements
     }
 
     public query(id: string): any {
-        return StockModuleInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+        return SimpleModuleInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
 
     public list(): string[] {
-        return StockModuleInstantiationFactory.supportedInterfaces;
+        return SimpleModuleInstantiationFactory.supportedInterfaces;
     }
 
     public async get(name: string): Promise<IComponentFactory> {
@@ -50,7 +50,7 @@ export class StockModuleInstantiationFactory implements
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        return StockContainerRuntimeFactory.instantiateRuntime(
+        return SimpleContainerRuntimeFactory.instantiateRuntime(
           context,
           this.defaultComponentName,
           this.registry,

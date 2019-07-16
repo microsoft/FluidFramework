@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 import { ClickerFactoryComponent, ClickerName } from "@chaincode/clicker";
-import { StockModuleInstantiationFactory } from "@prague/aqueduct";
+import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { TextBoxInstantiationFactory, TextBoxName } from "./TextBox";
 import { TodoInstantiationFactory, TodoName } from "./Todo";
 import { TodoItemInstantiationFactory, TodoItemName } from "./TodoItem";
 
-export const fluidExport = new StockModuleInstantiationFactory (
+export const fluidExport = new SimpleModuleInstantiationFactory(
     TodoName,
     new Map([
-        [TodoName, Promise.resolve(new TodoInstantiationFactory())],
-        [TodoItemName, Promise.resolve(new TodoItemInstantiationFactory())],
-        [TextBoxName, Promise.resolve(new TextBoxInstantiationFactory())],
+        [TodoName, Promise.resolve(TodoInstantiationFactory)],
+        [TodoItemName, Promise.resolve(TodoItemInstantiationFactory)],
+        [TextBoxName, Promise.resolve(TextBoxInstantiationFactory)],
         [ClickerName, Promise.resolve(new ClickerFactoryComponent())],
-    ]));
+    ]),
+);
