@@ -451,9 +451,8 @@ function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
 
 const endIdPrefix = "end-";
 
-export interface IMathOptions {
-    display?: string;
-}
+// tslint:disable-next-line:no-empty-interface
+export interface IMathOptions extends IComponentHTMLOptions { }
 
 export class MathCollection implements ISharedComponent, IComponentCollection, IComponentRouter {
     public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",

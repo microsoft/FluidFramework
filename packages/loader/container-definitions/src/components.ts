@@ -58,7 +58,7 @@ export interface IComponentHTMLRender extends IComponent {
 }
 
 export interface IComponentHTMLOptions {
-    display?: string;
+    display?: "block" | "inline";
 }
 
 export interface IComponentHTMLView extends IComponentHTMLRender {
@@ -80,10 +80,6 @@ export interface IComponentHTMLVisual extends IComponentHTMLRender {
  */
 export interface IComponentRenderHTML extends IComponent {
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-}
-
-export interface IComponentHTMLOptions {
-    display?: string;
 }
 
 export interface IComponentHTMLView extends IComponentRenderHTML {
