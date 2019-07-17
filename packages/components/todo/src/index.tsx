@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ClickerFactoryComponent, ClickerName } from "@chaincode/clicker";
+import { ClickerInstantiationFactory, ClickerName } from "@chaincode/clicker";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { TextBoxInstantiationFactory, TextBoxName } from "./TextBox";
 import { TodoInstantiationFactory, TodoName } from "./Todo";
@@ -14,6 +14,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [TodoName, Promise.resolve(TodoInstantiationFactory)],
         [TodoItemName, Promise.resolve(TodoItemInstantiationFactory)],
         [TextBoxName, Promise.resolve(TextBoxInstantiationFactory)],
-        [ClickerName, Promise.resolve(new ClickerFactoryComponent())],
+        [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
     ]),
 );
