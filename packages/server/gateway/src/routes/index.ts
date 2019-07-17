@@ -19,6 +19,7 @@ import * as scribe from "./scribe";
 import * as sharedText from "./sharedText";
 import * as templates from "./templates";
 import * as versions from "./versions";
+import * as waterpark from "./waterpark";
 
 export function create(
     config: Provider,
@@ -46,5 +47,6 @@ export function create(
         sharedText: sharedText.create(config, alfred, appTenants, ensureLoggedIn),
         templates: templates.create(config),
         versions: versions.create(alfred, ensureLoggedIn),
+        waterpark: waterpark.create(config, alfred, appTenants, ensureLoggedIn),
     };
 }
