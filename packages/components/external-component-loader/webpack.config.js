@@ -14,13 +14,13 @@ module.exports = env => {
 
     return merge({
         entry: {
-            main: "./src/index.tsx"
+            main: "./src/index.ts"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
+            rules: [{
                 test: /\.tsx?$/,
                 loader: "ts-loader"
             }]
@@ -30,7 +30,7 @@ module.exports = env => {
             path: path.resolve(__dirname, "dist"),
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
-            // https://github.com/webpack/webpack/issues/7939            
+            // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: chaincodeName,
             libraryTarget: "umd"
         },

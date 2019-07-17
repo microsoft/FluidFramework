@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
-import { ComponentRuntime } from "@prague/component-runtime";
+import {
+  PrimedComponent,
+  SimpleComponentInstantiationFactory,
+  SimpleModuleInstantiationFactory,
+} from "@prague/aqueduct";
 import {
   IComponentHTMLRender,
   IComponentHTMLVisual,
-  IContainerContext,
-  IRequest,
-  IRuntime,
 } from "@prague/container-definitions";
 import {
   CounterValueType,
@@ -21,8 +21,6 @@ import {
   IComponentContext,
   IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
-
 import {
   Clicker,
   ClickerName,
@@ -38,8 +36,8 @@ export const PondName = pkg.name as string;
  * Basic Pond example using new interfaces and stock component classes.
  */
 export class Pond extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLVisual",
-  "IComponentRouter"];
+  private static readonly supportedInterfaces =
+    ["IComponentHTMLRender", "IComponentHTMLVisual", "IComponentRouter"];
 
   public clicker2Render: IComponentHTMLRender;
   public clicker3Render: IComponentHTMLRender;
@@ -122,53 +120,16 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
 // ----- COMPONENT SETUP STUFF -----
 
-/**
- * This is where we do component setup.
- */
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-  // Register default map value types (Register the DDS we care about)
-  // We need to register the Map and the Counter so we can create a root and a counter on that root
-  const mapValueTypes = [
-    new DistributedSetValueType(),
-    new CounterValueType(),
-  ];
+export const pondInstantiationFactory = new SimpleComponentInstantiationFactory(
+  [
+    SharedMap.getFactory([new DistributedSetValueType(), new CounterValueType()]),
+  ],
+  Pond.load);
 
-  const dataTypes = new Map<string, ISharedObjectExtension>();
-  const mapExtension = SharedMap.getFactory(mapValueTypes);
-  dataTypes.set(mapExtension.type, mapExtension);
-
-  // Create a new runtime for our component
-  const runtime = await ComponentRuntime.load(context, dataTypes);
-
-  // Create a new instance of our component
-  const counterNewP = Pond.load(runtime, context);
-
-  // Add a handler for the request() on our runtime to send it to our component
-  // This will define how requests to the runtime object we just created gets handled
-  // Here we want to simply defer those requests to our component
-  runtime.registerRequestHandler(async (request: IRequest) => {
-    const counter = await counterNewP;
-    return counter.request(request);
-  });
-
-  return runtime;
-}
-
-// ----- CONTAINER STUFF -----
-
-/**
- * This will get called by the Container as part of setup
- * We provide all the components we will care about as a registry.
- */
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-  return SimpleContainerRuntimeFactory.instantiateRuntime(
-    context,
-    PondName,
-    new Map([
-      [PondName, Promise.resolve({ instantiateComponent })],
-      [ClickerName, Promise.resolve({ instantiateComponent: Clicker.instantiateComponent })],
-      [ClickerWithForgeName, Promise.resolve({ instantiateComponent: ClickerWithForge.instantiateComponent })],
-    ]),
-    true,
-  );
-}
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  PondName,
+  new Map([
+    [PondName, Promise.resolve(pondInstantiationFactory)],
+    [ClickerName, Promise.resolve({ instantiateComponent: Clicker.instantiateComponent })],
+    [ClickerWithForgeName, Promise.resolve({ instantiateComponent: ClickerWithForge.instantiateComponent })],
+  ]));

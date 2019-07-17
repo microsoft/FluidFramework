@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-console
-import { IPraguePackage } from "@prague/container-definitions";
+import { IComponent, IFluidPackage, IPraguePackage } from "@prague/container-definitions";
 import { IComponentRegistry } from "@prague/container-runtime";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
@@ -15,12 +15,14 @@ export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
     private readonly registryMap = new Map<string, Promise<IComponentFactory>>();
+    private readonly subRegistries: IComponentRegistry[] = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
     constructor(entries: Map<string, Promise<IComponentFactory>>) {
 
         entries.forEach((v, k) => this.registryMap.set(k, v));
+        this.subRegistries.push(this.registryMap);
 
         // stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -38,30 +40,64 @@ export class UrlRegistry implements IComponentRegistry {
 
     public async get(name: string): Promise<IComponentFactory> {
 
-        if (!this.registryMap.has(name)) {
+        let factoryP = this.getFromSubRegistries(name);
+        if (factoryP !== undefined) {
+            return factoryP;
+        } else {
             this.registryMap.set(name, new Promise<IComponentFactory>(async (resolve, reject) => {
 
                 if (!this.loadingPackages.has(name)) {
                     this.loadingPackages.set(name, this.loadEntrypoint(name));
                 }
 
-                const entrypoint = (await this.loadingPackages.get(name)) as IComponentFactory;
+                const entrypoint = await this.loadingPackages.get(name);
 
                 if (entrypoint === undefined) {
                     reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
                 } else {
-                    if (entrypoint.instantiateComponent === undefined) {
-                        reject(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
+                    const fluidExport: IComponent = entrypoint.fluidExport;
+                    let componentFactory = entrypoint as IComponentFactory;
+
+                    if (fluidExport !== undefined && fluidExport.query !== undefined) {
+                        const registry = fluidExport.query<IComponentRegistry>("IComponentRegistry");
+                        if (registry !== undefined) {
+                            this.subRegistries.push(registry);
+                        }
+
+                        const exportFactory = fluidExport.query<IComponentFactory>("IComponentFactory");
+                        if (exportFactory !== undefined) {
+                            componentFactory = exportFactory;
+                        }
                     }
-                    resolve(entrypoint);
+
+                    if (componentFactory === undefined || componentFactory.instantiateComponent === undefined) {
+                        reject(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
+                    } else {
+                        resolve(componentFactory);
+                    }
                 }
             }));
+
+            factoryP = this.getFromSubRegistries(name);
+            if (factoryP !== undefined) {
+                return factoryP;
+            }
         }
-        const factoryP = this.registryMap.get(name);
-        if (factoryP !== undefined) {
-            return factoryP;
+
+        throw new Error(`Unknown package: ${name}`);
+    }
+
+    // tslint:disable-next-line: promise-function-async
+    private getFromSubRegistries(name: string): Promise<IComponentFactory>  {
+        for (const registry of this.subRegistries) {
+            try {
+                const factory = registry.get(name);
+                if (factory !== undefined) {
+                    return factory;
+                }
+            } catch { }
         }
-        throw new Error();
+        return undefined;
     }
 
     private async loadEntrypoint(name: string): Promise<any> {
@@ -70,25 +106,24 @@ export class UrlRegistry implements IComponentRegistry {
             throw new Error(`UrlRegistry: ${name}: fetch was no ok. status code: ${response.status}`);
         } else {
             const responseText = await response.text();
-            const packageJson = JSON.parse(responseText) as IPraguePackage;
+            const packageJson = JSON.parse(responseText);
+            const praguePackage = packageJson as IPraguePackage;
+            const fluidPackage = packageJson as IFluidPackage;
 
-            if (packageJson === undefined) {
-                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IPraguePackage`);
-            } else if (packageJson.prague  === undefined) {
-                throw new Error(`UrlRegistry: ${name}: Package contains no prague property`);
-            } else if (packageJson.prague.browser  === undefined) {
-                throw new Error(`UrlRegistry: ${name}: Package contains no prague.browser property`);
-            } else if (packageJson.prague.browser.entrypoint === undefined
-                || packageJson.prague.browser.entrypoint === "") {
-                throw new Error(
-                    `UrlRegistry: ${name}: Package contains no or empty prague.browser.entrypoint property`);
-            } else if (packageJson.prague.browser.bundle === undefined
-                || packageJson.prague.browser.bundle.length === 0) {
-                throw new Error(`UrlRegistry: ${name}: Package contains no or empty prague.browser.bundle property`);
+            let entrypointName: string;
+            let scripts: string[];
+            if (fluidPackage.fluid && fluidPackage.fluid.browser && fluidPackage.fluid.browser.umd) {
+                entrypointName = fluidPackage.fluid.browser.umd.library;
+                scripts = fluidPackage.fluid.browser.umd.files;
+            } else if (praguePackage.prague !== undefined) {
+                entrypointName = packageJson.prague.browser.entrypoint;
+                scripts = packageJson.prague.browser.bundle;
             } else {
+                throw new Error(`UrlRegistry: ${name}: Package json not deserializable as IFluidPackage`);
+            }
 
-                // prevent entry points from overwriting each other before we stash them
-                const entrypointName = packageJson.prague.browser.entrypoint;
+            if (entrypointName && scripts) {
+
                 while (this.loadingEntrypoints.has(entrypointName)) {
                     await this.loadingEntrypoints.get(entrypointName);
                 }
@@ -98,7 +133,7 @@ export class UrlRegistry implements IComponentRegistry {
                 window[entrypointName] = undefined;
                 try {
                     const scriptLoadPromises =
-                        packageJson.prague.browser.bundle.map(
+                        scripts.map(
                             async (bundle) => loadScript(`${name}/${bundle}`));
 
                     const errors = [];
