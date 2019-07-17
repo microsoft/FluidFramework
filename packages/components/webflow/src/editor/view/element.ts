@@ -7,7 +7,7 @@ import { ServicePlatform } from "@prague/app-component";
 import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
-import { DocSegmentKind, getCss, getDocSegmentKind } from "../../document";
+import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../../document";
 import { Tag } from "../../util/tag";
 import { debug } from "../debug";
 import * as styles from "../index.css";
@@ -68,13 +68,10 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     public begin(state: IInclusionState, layout: Layout) {
         const segment = layout.segment;
         if (!state.root) {
-            let tag = Tag.span;
+            const tag = getComponentOptions(segment).display === "block"
+                ? Tag.div
+                : Tag.span;
             const marker = segment as Marker;
-            if (marker.properties.componentOptions) {
-                if (marker.properties.componentOptions.display === "block") {
-                    tag = Tag.div;
-                }
-            }
             state.root = document.createElement(tag);
             state.root.contentEditable = "false";
             const slot = document.createElement(tag);
@@ -225,6 +222,11 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
             }
 
             case DocSegmentKind.inclusion: {
+                // If the inclusion is a block, it implicitly terminates the current paragraph.
+                if (getComponentOptions(segment).display === "block") {
+                    layout.popFormat();
+                }
+
                 layout.pushFormat(inclusionFormatter);
                 return false;
             }

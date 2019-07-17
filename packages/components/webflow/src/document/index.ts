@@ -4,7 +4,7 @@
  */
 
 import { Component } from "@prague/app-component";
-import { IComponent } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLOptions } from "@prague/container-definitions";
 import { randomId, TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {
@@ -51,12 +51,6 @@ export const enum DocTile {
     paragraph = DocSegmentKind.paragraph,
 }
 
-const styleProperty = "style";
-export const getStyle = (segment: BaseSegment): CSSStyleDeclaration => segment.properties && segment.properties[styleProperty];
-export const setStyle = (segment: BaseSegment, style: CSSStyleDeclaration) => {
-    segment.properties = {...(segment.properties || {}),  [styleProperty]: style};
-};
-
 export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
     if (segment === endOfTextSegment) {
@@ -86,8 +80,14 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
     }
 };
 
+const empty = Object.freeze({});
+
 export function getCss(segment: ISegment): Readonly<{ style?: string, classList?: string }> {
-    return segment.properties || {};
+    return segment.properties || empty;
+}
+
+export function getComponentOptions(segment: ISegment): IComponentHTMLOptions | undefined {
+    return (segment.properties && segment.properties.componentOptions) || empty;
 }
 
 type LeafAction = (position: number, segment: ISegment, startOffset: number, endOffset: number) => boolean;
