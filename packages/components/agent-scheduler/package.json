@@ -1,7 +1,7 @@
 {
   "name": "@component/agent-scheduler",
   "description": "Component in charge of distributing agents across instances of a component",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -53,16 +53,16 @@
     }
   },
   "dependencies": {
-    "@prague/component-runtime": "^0.6.0",
-    "@prague/consensus-register-collection": "^0.6.0",
-    "@prague/container-definitions": "^0.6.0",
-    "@prague/map": "^0.6.0",
-    "@prague/runtime-definitions": "^0.6.0",
-    "@prague/shared-object-common": "^0.6.0",
+    "@prague/component-runtime": "^0.7.0",
+    "@prague/consensus-register-collection": "^0.7.0",
+    "@prague/container-definitions": "^0.7.0",
+    "@prague/map": "^0.7.0",
+    "@prague/runtime-definitions": "^0.7.0",
+    "@prague/shared-object-common": "^0.7.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.6.0",
+    "@prague/build-common": "^0.7.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
