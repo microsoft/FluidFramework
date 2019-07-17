@@ -4,10 +4,9 @@
  */
 
 import * as api from "@prague/container-definitions";
-import { IReplayController } from "./replayController";
+import { ReplayController } from "./replayController";
 import { ReplayDeltaStorageService } from "./replayDeltaStorageService";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
-import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
 
 /**
  * The Replay document service dummies out the snapshot and the delta storage.
@@ -16,7 +15,7 @@ import { ReplayDocumentStorageService } from "./replayDocumentStorageService";
  */
 export class ReplayDocumentService implements api.IDocumentService {
     constructor(private readonly documentService: api.IDocumentService,
-                private readonly controller: IReplayController) {
+                private readonly controller: ReplayController) {
     }
 
     /**
@@ -25,7 +24,8 @@ export class ReplayDocumentService implements api.IDocumentService {
      */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         const documentService = await this.documentService.connectToStorage();
-        return new ReplayDocumentStorageService(documentService, this.controller);
+        await this.controller.initStorage(documentService);
+        return this.controller;
     }
 
     /**

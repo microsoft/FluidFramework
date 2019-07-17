@@ -13,7 +13,7 @@ import {
 } from "@prague/container-definitions";
 import { buildHierarchy, Deferred, flatten, readAndParse } from "@prague/utils";
 import * as assert from "assert";
-import { IReplayController } from "./replayController";
+import { ReplayController, ReplayStorageService } from "./replayController";
 import { MaxBatchDeltas } from "./replayDocumentDeltaConnection";
 
 /**
@@ -27,11 +27,101 @@ export interface IFileSnapshot {
 // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
 const FileStorageVersionTreeId = "FileStorageTreeId";
 
-enum LoadSource {
-    Undecided,
-    file,
-    ops,
-    snapshot,
+class FileStorage extends ReplayStorageService {
+    protected docId?: string;
+    protected tree: ISnapshotTree;
+    protected blobs = new Map<string, string>();
+    protected commits: {[key: string]: ITree} = {};
+
+    public constructor(json: IFileSnapshot) {
+        super();
+        this.commits = json.commits;
+        const flattened = flatten(json.tree.entries, this.blobs);
+        this.tree = buildHierarchy(flattened);
+    }
+
+    public async getVersions(
+            versionId: string,
+            count: number): Promise<IVersion[]> {
+        if (this.docId === undefined || this.docId === versionId) {
+            this.docId = versionId;
+            return [{id: "latest", treeId: ""}];
+        }
+
+        if (this.commits[versionId] !== undefined) {
+            return [{id: versionId, treeId: FileStorageVersionTreeId}];
+        }
+        throw new Error(`Unknown version ID: ${versionId}`);
+    }
+
+    public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
+        if (versionRequested && versionRequested.id !== "latest") {
+            if (versionRequested.treeId !== FileStorageVersionTreeId) {
+                throw new Error(`Unknown version id: ${versionRequested}`);
+            }
+            const tree = this.commits[versionRequested.id];
+            if (tree === undefined) {
+                throw new Error(`Can't find version ${versionRequested.id}`);
+            }
+
+            const flattened = flatten(tree.entries, this.blobs);
+            return buildHierarchy(flattened);
+        }
+        return this.tree;
+    }
+
+    public async read(blobId: string): Promise<string> {
+        const blob = this.blobs.get(blobId);
+        if (blob !== undefined) {
+            return blob;
+        }
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+}
+
+class SnapshotStorage extends ReplayStorageService {
+    protected docId?: string;
+
+    constructor(
+            protected readonly storage: IDocumentStorageService,
+            protected readonly tree: ISnapshotTree | null) {
+        super();
+        assert(this.tree);
+    }
+
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+        if (this.docId === undefined || this.docId === versionId) {
+            this.docId = versionId;
+            return [{id: "latest", treeId: ""}];
+        }
+        return this.storage.getVersions(versionId, count);
+    }
+
+    public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
+        if (versionRequested && versionRequested.id !== "latest") {
+            return this.storage.getSnapshotTree(versionRequested);
+        }
+
+        return this.tree;
+    }
+
+    public read(blobId: string): Promise<string> {
+        return this.storage.read(blobId);
+    }
+}
+
+class OpStorage extends ReplayStorageService {
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
+        return [];
+    }
+
+    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+        throw new Error("no snapshot tree should be asked when playing ops");
+    }
+
+    public async read(blobId: string): Promise<string> {
+        throw new Error(`Unknown blob ID: ${blobId}`);
+    }
 }
 
 const debuggerWindowHtml =
@@ -55,7 +145,7 @@ Step to move: <input type='number' id='steps' value='1' style='width:50px'/>\
 /**
  * Replay controller that uses pop-up window to control op playback
  */
-export class DebugReplayController implements IReplayController {
+export class DebugReplayController extends ReplayController {
     public static create(): DebugReplayController | undefined {
         if (
                 typeof window !== "object" ||
@@ -115,17 +205,16 @@ export class DebugReplayController implements IReplayController {
 
     protected stepsDeferred?: Deferred<number>;
     protected startSeqDeferred = new Deferred<number>();
+    protected doneFetchingOps = false;
     protected documentStorageService?: IDocumentStorageService;
     protected versions: IVersion[] = [];
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
 
-    protected source: LoadSource = LoadSource.Undecided;
-    protected tree: ISnapshotTree | null = null;
-    protected blobs = new Map<string, string>();
-    private commits: {[key: string]: ITree} = {};
+    protected storage?: ReplayStorageService;
 
     public constructor(protected readonly debuggerWindow: Window) {
+        super();
         const doc = this.debuggerWindow.document;
         doc.write(debuggerWindowHtml);
 
@@ -149,8 +238,7 @@ export class DebugReplayController implements IReplayController {
             let index = this.selector.selectedIndex;
             if (index === 0 || !this.documentStorageService) {
                 // no snapshot
-                this.source = LoadSource.ops;
-                this.startSeqDeferred.resolve(0);
+                this.resolveStorage(0, new OpStorage());
                 return;
             }
             index--;
@@ -158,10 +246,9 @@ export class DebugReplayController implements IReplayController {
                 index = 0;
             }
 
-            this.source = LoadSource.snapshot;
-            this.tree = await this.documentStorageService.getSnapshotTree(this.versions[index]);
-            const seq = await DebugReplayController.seqFromTree(this.documentStorageService, this.tree);
-            this.startSeqDeferred.resolve(seq);
+            const tree = await this.documentStorageService.getSnapshotTree(this.versions[index]);
+            const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
+            this.resolveStorage(seq, new SnapshotStorage(this.documentStorageService, tree));
         };
 
         this.buttonOps.disabled = true;
@@ -187,11 +274,6 @@ export class DebugReplayController implements IReplayController {
                         const text = reader.result as string;
                         try {
                             const json: IFileSnapshot = JSON.parse(text) as IFileSnapshot;
-                            this.commits = json.commits;
-                            const flattened = flatten(json.tree.entries, this.blobs);
-                            this.tree = buildHierarchy(flattened);
-                            this.source = LoadSource.file;
-
                             /*
                             const docStorage = this.documentStorageService;
                             const storage = {
@@ -199,11 +281,14 @@ export class DebugReplayController implements IReplayController {
                             };
                             const seq = await DebugReplayController.seqFromTree(
                                 storage as IDocumentStorageService,
-                                this.tree);
+                                tree);
                             this.startSeqDeferred.resolve(seq);
                             */
                             // No ability to load ops, so just say - pick up from infinite op.
-                            this.startSeqDeferred.resolve(Number.MAX_SAFE_INTEGER);
+                            this.doneFetchingOps = true;
+                            this.resolveStorage(
+                                Number.MAX_SAFE_INTEGER,
+                                new FileStorage(json));
 
                             this.buttonVers.disabled = true;
                             this.selector.disabled = true;
@@ -223,93 +308,64 @@ export class DebugReplayController implements IReplayController {
         return currentOp + MaxBatchDeltas;
     }
 
-    public async read(documentStorageService: IDocumentStorageService, blobId: string): Promise<string> {
-        // For cases where we load snapshot from file, we need to use local cache
-        const blob = this.blobs.get(blobId);
-        if (blob !== undefined) {
-            assert(this.source === LoadSource.file);
-            return blob;
-        }
-        // For cases where we load version from storage, we need to go to storage
-        assert(this.source === LoadSource.snapshot);
-        return documentStorageService.read(blobId);
-    }
-
-    public async getVersions(
-            documentStorageService: IDocumentStorageService,
-            versionId: string,
-            count: number): Promise<IVersion[]> {
-        // Redirect only first call to "our" version/snapshot
-        // Better check would be to check versionID === documentID, but we do not have documentID.
-        if (this.tree === null) {
-            // everything else is possible as user can select it sooner then this call comes in.
-            assert(this.source !== LoadSource.snapshot);
-            return [{id: "latest", treeId: ""}];
-        }
-
-        if (this.commits[versionId] !== undefined) {
-            assert(this.source === LoadSource.file);
-            return [{id: versionId, treeId: FileStorageVersionTreeId}];
-        }
-
-        assert(this.source === LoadSource.snapshot);
-        return documentStorageService.getVersions(versionId, count);
-    }
-
-    public async getSnapshotTree(
-                documentStorageService: IDocumentStorageService,
-                versionRequested?: IVersion): Promise<ISnapshotTree | null> {
-        if (versionRequested && versionRequested.id !== "latest") {
-            if (versionRequested.treeId === FileStorageVersionTreeId) {
-                assert(this.source === LoadSource.file);
-                const tree = this.commits[versionRequested.id];
-                if (tree === undefined) {
-                    console.error(`Can't find version ${versionRequested.id}`);
-                    return null;
-                }
-
-                const flattened = flatten(tree.entries, this.blobs);
-                return buildHierarchy(flattened);
-            }
-
-            assert(this.source === LoadSource.snapshot);
-            return documentStorageService.getSnapshotTree(versionRequested);
-        }
-
+    public async waitForSourceSelection(documentStorageService: IDocumentStorageService): Promise<void> {
+        assert(documentStorageService);
         if (!this.documentStorageService) {
             this.documentStorageService = documentStorageService;
 
-            // User may have clicked "no snapshot" before we had a chance to populate snapshots
-            if (this.source !== LoadSource.ops) {
-                assert(this.source === LoadSource.Undecided);
-
-                this.versions = await documentStorageService.getVersions("", 50);
-                if (this.versions.length === 0) {
-                    this.buttonVers.disabled = true;
-                    this.selector.disabled = true;
-                    this.startSeqDeferred.resolve(0);
-                    return null;
-                }
-
-                this.versions.map(async (version) => {
-                    const treeV = await documentStorageService.getSnapshotTree(version);
-                    const seqV = await DebugReplayController.seqFromTree(documentStorageService, treeV);
-
-                    const option = document.createElement("option");
-                    option.text = `id = ${version.id}   seq = ${seqV}`;
-                    this.selector.add(option);
-                });
+            this.versions = await documentStorageService.getVersions("", 50);
+            if (this.versions.length === 0) {
+                this.buttonVers.disabled = true;
+                this.selector.disabled = true;
+                this.resolveStorage(0, new OpStorage());
+                return;
             }
-        } else {
-            assert(documentStorageService === this.documentStorageService);
-            // we already returned "no version"
-            assert(!versionRequested);
-            assert(this.source === LoadSource.ops);
-            assert(this.tree === null);
-        }
 
+            this.versions.map(async (version) => {
+                const treeV = await documentStorageService.getSnapshotTree(version);
+                const seqV = await DebugReplayController.seqFromTree(documentStorageService, treeV);
+
+                const option = document.createElement("option");
+                option.text = `id = ${version.id}   seq = ${seqV}`;
+                this.selector.add(option);
+            });
+        }
         await this.startSeqDeferred.promise;
-        return this.tree;
+        assert(this.storage);
+    }
+
+    public resolveStorage(seq: number, storage: ReplayStorageService) {
+        assert(!this.storage);
+        assert(storage);
+        this.storage = storage;
+        this.startSeqDeferred.resolve(seq);
+    }
+
+    public initStorage(storage: IDocumentStorageService): Promise<void> {
+        return this.waitForSourceSelection(storage);
+    }
+
+    public async read(blobId: string): Promise<string> {
+        if (this.storage) {
+            return this.storage.read(blobId);
+        }
+        throw new Error("Reading blob before storage is setup properly");
+    }
+
+    public async getVersions(
+            versionId: string,
+            count: number): Promise<IVersion[]> {
+        if (this.storage) {
+            return this.storage.getVersions(versionId, count);
+        }
+        throw new Error("initStorage() was not called!");
+    }
+
+    public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
+        if (this.storage) {
+            return this.storage.getSnapshotTree(versionRequested);
+        }
+        throw new Error("Reading snapshot tree before storage is setup properly");
     }
 
     public getStartingOpSequence() {
@@ -325,7 +381,7 @@ export class DebugReplayController implements IReplayController {
             this.lastOpReached = true;
             this.lastOpText.textContent = `Last op: ${currentOp}`;
         }
-        return this.source === LoadSource.file;
+        return this.doneFetchingOps;
     }
 
     public async replay(

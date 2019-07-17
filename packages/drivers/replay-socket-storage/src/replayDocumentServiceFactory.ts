@@ -6,7 +6,7 @@
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
 import { DebugReplayController } from "./fluidDebugger";
 import { createReplayDocumentService } from "./registration";
-import { IReplayController } from "./replayController";
+import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
@@ -35,7 +35,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
     constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
-        private readonly controller: IReplayController) {}
+        private readonly controller: ReplayController) {}
 
     /**
      * Creates a replay document service which uses the document service of provided

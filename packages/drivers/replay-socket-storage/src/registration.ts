@@ -5,7 +5,7 @@
 
 import { IDocumentService } from "@prague/container-definitions";
 import { DebugReplayController } from "./fluidDebugger";
-import { IReplayController } from "./replayController";
+import { ReplayController } from "./replayController";
 import { ReplayDocumentService } from "./replayDocumentService";
 
 /**
@@ -18,7 +18,7 @@ import { ReplayDocumentService } from "./replayDocumentService";
  */
 export function createReplayDocumentService(
     documentService: IDocumentService,
-    controller: IReplayController,
+    controller: ReplayController,
 ): IDocumentService {
     return new ReplayDocumentService(documentService, controller);
 }

@@ -16,11 +16,11 @@ import {
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
-import { IReplayController } from "./replayController";
+import { ReplayController } from "./replayController";
 
 export const MaxBatchDeltas = 2000;
 
-export class ReplayControllerStatic implements IReplayController {
+export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
     private static readonly ReplayResolution = 15;
 
@@ -36,27 +36,29 @@ export class ReplayControllerStatic implements IReplayController {
      * @param unitIsTime - True is user want to play ops that are within a replay resolution window.
      */
    public constructor(
-        public readonly replayFrom: number,
-        public readonly replayTo: number,
-        public readonly unitIsTime?: boolean) {
+            public readonly replayFrom: number,
+            public readonly replayTo: number,
+            public readonly unitIsTime?: boolean) {
+        super();
         if (unitIsTime !== true) {
             // There is no code in here to start with snapshot, thus we have to start with op #0.
             this.replayTo = 0;
         }
     }
 
-    public async getVersions(
-            documentStorageService: IDocumentStorageService,
-            versionId: string,
-            count: number): Promise<IVersion[]> {
+    public initStorage(storage: IDocumentStorageService) {
+        return Promise.resolve();
+    }
+
+    public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         return [];
     }
 
-    public async getSnapshotTree(documentStorageService: IDocumentStorageService, version?: IVersion) {
+    public async getSnapshotTree(version?: IVersion) {
         return version ? Promise.reject("Invalid operation") : null;
     }
 
-    public async read(documentStorageService: IDocumentStorageService, blobId: string): Promise<string> {
+    public async read(blobId: string): Promise<string> {
         return Promise.reject("Invalid operation");
     }
 
@@ -181,7 +183,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      */
     public static async create(
         documentStorageService: IDocumentDeltaStorageService,
-        controller: IReplayController): Promise<IDocumentDeltaConnection> {
+        controller: ReplayController): Promise<IDocumentDeltaConnection> {
 
         const connection: messages.IConnected = {
             clientId: "",
@@ -262,7 +264,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      */
     private async fetchAndEmitOps(
             documentStorageService: IDocumentDeltaStorageService,
-            controller: IReplayController): Promise<void> {
+            controller: ReplayController): Promise<void> {
         let done;
         let replayP = Promise.resolve();
 

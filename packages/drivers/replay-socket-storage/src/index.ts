@@ -9,4 +9,3 @@ export * from "./replayDeltaStorageService";
 export * from "./replayDocumentDeltaConnection";
 export * from "./replayDocumentService";
 export * from "./replayDocumentServiceFactory";
-export * from "./replayDocumentStorageService";

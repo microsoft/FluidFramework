@@ -3,48 +3,79 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentStorageService,
-    ISequencedDocumentMessage,
-    ISnapshotTree,
-    IVersion,
-} from "@prague/container-definitions";
+import * as api from "@prague/container-definitions";
 
-export interface IReplayController {
+/**
+ * Partial implementation of IDocumentStorageService
+ */
+export abstract class ReplayStorageService implements api.IDocumentStorageService {
     /**
      * IDocumentStorageService.getVersions() intercept
      */
-    getVersions(
-        documentStorageService: IDocumentStorageService,
-        versionId: string,
-        count: number): Promise<IVersion[]>;
+    public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
 
     /**
      * IDocumentStorageService.getSnapshotTree() intercept
      */
-    getSnapshotTree(
-        documentStorageService: IDocumentStorageService,
-        version?: IVersion): Promise<ISnapshotTree | null>;
+    public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
 
     /**
      * IDocumentStorageService.read() intercept
      */
-    read(
-        documentStorageService: IDocumentStorageService,
-        blobId: string): Promise<string>;
+    public abstract read(blobId: string): Promise<string>;
+
+    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public async getContent(version: api.IVersion, path: string): Promise<string> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public async write(tree: api.ITree, parents: string[], message: string): Promise<api.IVersion> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public getRawUrl(blobId: string): string {
+        throw new Error("Invalid operation");
+    }
+    public get repositoryUrl(): string {
+        throw new Error("Invalid operation");
+    }
+}
+
+/**
+ * Replay controller object
+ * It controls where we start (snapshot, local file, no snapshots)
+ * As well as dispatch of ops
+ */
+export abstract class ReplayController extends ReplayStorageService {
+    /**
+     * Initialize reply controller
+     * @param storage - real document storage
+     */
+    public abstract initStorage(storage: api.IDocumentStorageService): Promise<void>;
 
     /**
      * Returns sequence number to start processing ops
      * Should be zero if not using snapshot, and snapshot seq# otherwise
      */
-    getStartingOpSequence(): Promise<number>;
+    public abstract getStartingOpSequence(): Promise<number>;
 
     /**
      * Returns last op number to fetch from current op
      * Note: this API is called while replay() is in progress - next batch of ops is downloaded in parallel
      * @param currentOp - current op
      */
-    fetchTo(currentOp: number): number;
+    public abstract fetchTo(currentOp: number): number;
 
     /**
      * Returns true if no more ops should be processed (or downloaded for future processing).
@@ -55,7 +86,7 @@ export interface IReplayController {
      * @param currentOp - current op
      * @param lastTimeStamp - timestamp of last op (if more ops are available). Undefined otherwise.
      */
-    isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean;
+    public abstract isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean;
 
     /**
      * Replay batch of ops
@@ -63,5 +94,7 @@ export interface IReplayController {
      * @param emitter - callback to emit ops
      * @param fetchedOps - ops to process
      */
-    replay(emitter: (op: ISequencedDocumentMessage) => void, fetchedOps: ISequencedDocumentMessage[]): Promise<void>;
+    public abstract replay(
+        emitter: (op: api.ISequencedDocumentMessage) => void,
+        fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
 }
