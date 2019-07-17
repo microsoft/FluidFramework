@@ -2,41 +2,81 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import {
+  PrimedComponent,
+  SimpleComponentInstantiationFactory,
+} from "@prague/aqueduct";
+import {
+  IComponentHTMLVisual,
+} from "@prague/container-definitions";
+import {
+  Counter,
+  CounterValueType,
+  SharedMap,
+} from "@prague/map";
+import {
+  IComponentContext,
+  IComponentRuntime,
+} from "@prague/runtime-definitions";
 
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+/**
+ * Clicker example using view interfaces and stock component classes.
+ */
+export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
-const pkg = require("../package.json");
-const chaincodeName = pkg.name;
-
-export class Clicker extends Document {
-  /**
-   * Create the component's schema and perform other initialization tasks
-   * (only called when document is initially created).
+    /**
+   * Create is where you do setup for your component. This is only called once the first time your component 
+   * is created. Anything that happens in create will happen before any other user will see the component.
    */
   protected async create() {
+    // Calling super.create() creates a root SharedMap that you can work off.
+    await super.create();
     this.root.set("clicks", 0, CounterValueType.Name);
 
     // Uncomment the line below to add a title to your data schema!
-    // this.root.set("title", "Initial Title Value");
-  }
-
-  protected render() {
-    // Uncomment the block below to live update your title
     /*
-    const title = this.root.get("title");
-    const titleParagraph = document.getElementById("titleParagraph");
-    titleParagraph.textContent = title;
+    this.root.set("title", "Initial Title Value");
     */
-
-    const counter = this.root.get<Counter>("clicks");
-    const counterSpan = document.getElementById("counterSpan");
-    counterSpan.textContent = counter.value.toString();
-
   }
 
-  protected createComponentDom(host: HTMLDivElement) {
+  /**
+   * Static load function that allows us to make async calls while creating our object.
+   * This becomes the standard practice for creating components in the new world.
+   * Using a static allows us to have async calls in class creation that you can't have in a constructor
+   */
+  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
+    const clicker = new Clicker(runtime, context, Clicker.supportedInterfaces);
+    await clicker.initialize();
+
+    return clicker;
+  }
+
+  /**
+   * Will return a new Clicker view
+   */
+  public render(div: HTMLElement) {
+    const counter = this.root.get<Counter>("clicks");
+
+    // Do initial setup off the provided div.
+    this.createComponentDom(div);
+
+    // When the value of the counter is incremented we will reRender the 
+    // value in the counter span
+    counter.on("incremented", () => {
+      // Uncomment the block below to live update your title
+      /*
+      const title = this.root.get("title");
+      const titleParagraph = document.getElementById("titleParagraph");
+      titleParagraph.textContent = title;
+      */
+
+     const counterSpan = document.getElementById("counterSpan");
+     counterSpan.textContent = counter.value.toString();
+    });
+  }
+
+  private createComponentDom(host: HTMLElement) {
 
     const counter = this.root.get<Counter>("clicks");
 
@@ -55,6 +95,7 @@ export class Clicker extends Document {
 
     const counterSpan = document.createElement("span");
     counterSpan.id = "counterSpan";
+    counterSpan.textContent = counter.value.toString();
     host.appendChild(counterSpan);
 
     const counterButton = document.createElement("button");
@@ -62,34 +103,15 @@ export class Clicker extends Document {
     counterButton.textContent = "+";
     counterButton.onclick = () => counter.increment(1);
     host.appendChild(counterButton);
-
-    this.render();
-  }
-
-  /**
-   *  The component has been loaded. Render the component into the provided div
-   * */
-  public async opened() {
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      await this.root.wait<Counter>("clicks");
-
-      this.createComponentDom(maybeDiv);
-      this.root.on("op", () => {
-        this.render();
-      });
-    } else {
-      return;
-    }
   }
 }
 
-export async function instantiateRuntime(
-  context: IContainerContext
-): Promise<IRuntime> {
-  return Component.instantiateRuntime(context, chaincodeName, new Map([
-    [chaincodeName, Promise.resolve({instantiateComponent})]
-  ]));
-}
-
-export const instantiateComponent = Component.createComponentFactory(Clicker).instantiateComponent;
+/**
+ * This is where you define all your Distributed Data Structures
+ */
+export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
+  [
+    SharedMap.getFactory([new CounterValueType()]),
+  ],
+  Clicker.load
+);

@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent } from "@prague/aqueduct";
+import {
+  PrimedComponent,
+  SimpleComponentInstantiationFactory,
+} from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
-  IComponent,
-  IComponentHTMLView,
 } from "@prague/container-definitions";
 import {
-  // Counter,
   CounterValueType,
+  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -21,16 +22,18 @@ import {
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-
 /**
  * Clicker example using view interfaces and stock component classes.
- * // TODO: Rename "Root Component"
  */
-export class Clicker extends RootComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
-  "IComponentRouter"];
+export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
+  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
+  /**
+   * Create is where you do setup for your component. This is only called once the first time your component 
+   * is created. Anything that happens in create will happen before any other user will see the component.
+   */
   protected async create() {
+    // Calling super.create() creates a root SharedMap that you can work off.
     await super.create();
     this.root.set("clicks", 0, CounterValueType.Name);
   }
@@ -48,15 +51,6 @@ export class Clicker extends RootComponent implements IComponentHTMLVisual {
   }
 
   /**
-   * Canonically, this should return the view component from the instance component
-   * In this case we don't have a view instance and view component, so we just return this
-   * @param scope The component that owns the view
-   */
-  public addView(scope: IComponent): IComponentHTMLView {
-    return this;
-  }
-
-  /**
    * Will return a new Clicker view
    */
   public render(div: HTMLElement) {
@@ -71,17 +65,26 @@ export class Clicker extends RootComponent implements IComponentHTMLVisual {
         </div>,
         div
       );
-    }
+    };
 
     rerender();
     this.root.on("valueChanged", () => {
       rerender();
-    })
+    });
     return div;
   }
 
   public remove() {
       throw new Error("Not Implemented");
   }
-
 }
+
+/**
+ * This is where you define all your Distributed Data Structures
+ */
+export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
+  [
+    SharedMap.getFactory([new CounterValueType()]),
+  ],
+  Clicker.load
+);

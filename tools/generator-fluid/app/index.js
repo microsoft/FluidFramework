@@ -141,6 +141,8 @@ module.exports = class extends Generator {
     const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
     file.getClass("Clicker").rename(chaincodeClassName);
 
+    file.getVariableDeclaration("ClickerInstantiationFactory").rename(`${chaincodeClassName}InstantiationFactory`)
+
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
     file.save();
@@ -162,12 +164,9 @@ module.exports = class extends Generator {
     });
 
     const chaincodeClassName = this.answers.name.charAt(0).toUpperCase() + this.answers.name.slice(1);
-    componentDec.removeNamedImports();
-    const importSpecifier = componentDec.addNamedImport(chaincodeClassName);
-    importSpecifier.setAlias("Component");
-    
-    // Change Classname plus references
-    file.getClass("ClickerFactoryComponent").rename(chaincodeClassName + "FactoryComponent");
+    const factoryImportName = `${chaincodeClassName}InstantiationFactory`;
+    const importSpecifier = componentDec.addNamedImport(factoryImportName);
+    importSpecifier.setAlias("ComponentInstantiationFactory");
 
     // TODO: Move this save so that it saves when the rest of the fs does a commit
     // Or write to a string and use fs to write.
