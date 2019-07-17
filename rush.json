@@ -63,6 +63,10 @@
       "projectFolder": "packages/components/client-ui/"
     },
     {
+      "packageName": "@chaincode/externalcomponentloader",
+      "projectFolder": "packages/components/external-component-loader/"
+    },
+    {
       "packageName": "@chaincode/image-collection",
       "projectFolder": "packages/components/image-collection/"
     },
@@ -123,12 +127,12 @@
       "projectFolder": "packages/components/table-test/"
     },
     {
-      "packageName": "@chaincode/todo",
-      "projectFolder": "packages/components/todo/"
-    },
-    {
       "packageName": "@chaincode/table-view",
       "projectFolder": "packages/components/table-view/"
+    },
+    {
+      "packageName": "@chaincode/todo",
+      "projectFolder": "packages/components/todo/"
     },
     {
       "packageName": "@chaincode/webflow",
@@ -185,6 +189,10 @@
     {
       "packageName": "@prague/utils",
       "projectFolder": "packages/loader/utils/"
+    },
+    {
+      "packageName": "@prague/base-host",
+      "projectFolder": "packages/hosts/base-host/"
     },
     {
       "packageName": "@prague/shared-object-common",
