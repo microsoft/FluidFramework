@@ -16,3 +16,9 @@ The quickest way to get started with Fluid is to build a component. Here's what 
 
 ## Useful stuff
 
+The Fluid Framework repo lives [https://github.com/Microsoft/Prague/](https://github.com/Microsoft/Prague/)  
+
+# Repo Access
+
+To gain access to the repo you must be part of the Microsoft organization on GitHub. You can do that by following the
+steps provided at [https://repos.opensource.microsoft.com/link](https://repos.opensource.microsoft.com/link).

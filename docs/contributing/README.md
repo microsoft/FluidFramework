@@ -20,4 +20,8 @@ to follow our [coding guidelines](./coding-guidelines.md) and keep code changes 
 Avoid pure formatting changes to code that has not been modified otherwise. Pull requests should contain tests
 whenever possible.
 
+## Forking
+
+We only accept pull requests from forks of the master branch. To learn more about forking a repo check out [Fork a repo](https://help.github.com/en/articles/fork-a-repo).
+
 ## Issues and Suggestions
