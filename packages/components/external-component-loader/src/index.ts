@@ -13,7 +13,7 @@ import { ExternalComponentLoader } from "./externalComponentLoader";
 import { UrlRegistry } from "./UrlRegistry";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
-const pkg = require("../package.json") as IPraguePackage;
+export const pkg = require("../package.json") as IPraguePackage;
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     pkg.name,

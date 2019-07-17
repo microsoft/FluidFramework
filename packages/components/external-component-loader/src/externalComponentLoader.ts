@@ -13,6 +13,7 @@ import { MergeTreeDeltaType } from "@prague/merge-tree";
 import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";
 import * as uuid from "uuid";
+import { pkg } from ".";
 
 /**
  * Component that loads extneral components via their url
@@ -44,7 +45,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
         if (this.savedElement) {
             while (this.savedElement.firstChild) {
-                this.savedElement.firstChild.remove();
+                this.savedElement.removeChild(this.savedElement.firstChild);
             }
         }
 
@@ -52,34 +53,34 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
         if (this.savedElement) {
             const mainDiv = document.createElement("div");
-            mainDiv.style.display = "inline:block";
+            this.savedElement.appendChild(mainDiv);
+
             const inputDiv = document.createElement("div");
+            mainDiv.appendChild(inputDiv);
             inputDiv.style.border = "1px solid lightgray";
             inputDiv.style.maxWidth = "800px";
             inputDiv.style.margin = "5px";
             inputDiv.style.padding = "5px";
             const dataList = document.createElement("datalist");
+            inputDiv.append(dataList);
             dataList.id = uuid();
             ExternalComponentLoader.defaultComponents.forEach((url) => {
                 const option = document.createElement("option");
-                option.value = url;
+                option.value = `${url}@${pkg.version}`;
                 dataList.append(option);
             });
 
-            inputDiv.append(dataList);
-
             const input = document.createElement("input");
+            inputDiv.append(input);
             input.setAttribute("list", dataList.id);
             input.type = "text";
-            input.placeholder = "@chaincode/componentname";
+            input.placeholder = "@chaincode/componentname@version";
             input.style.width = "100%";
-            inputDiv.append(input);
 
             const counterButton = document.createElement("button");
-            counterButton.textContent = "Add Component";
-            counterButton.onclick = () => this.click(input.value);
             inputDiv.appendChild(counterButton);
-            mainDiv.appendChild(inputDiv);
+            counterButton.textContent = "Add Component";
+            counterButton.onclick = () => this.inputClick(input);
 
             const sequence = this.root.get<SharedObjectSequence<string>>("componentIds");
             if (sequence !== undefined) {
@@ -89,40 +90,37 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                         const componentVisual =
                             component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
                         if (componentVisual) {
-                            const componentDiv = document.createElement("div");
-                            const style = componentDiv.style;
+                            const containerDiv = document.createElement("div");
+                            mainDiv.appendChild(containerDiv);
+                            const style = containerDiv.style;
                             style.border = "1px solid lightgray";
                             style.maxWidth = "800px";
+                            style.width = "800px";
                             style.margin = "5px";
-                            style.padding = "5px";
                             style.overflow = "hidden";
+                            style.position = "relative";
 
-                            const height = this.root.get(`${url}-height`);
-                            if (height) {
-                                style.height = height;
-                            }
-                            const width = this.root.get(`${url}-width`);
-                            if (width) {
-                                style.width = width;
-                            }
-
+                            const componentDiv = document.createElement("div");
+                            containerDiv.appendChild(componentDiv);
+                            componentDiv.style.margin = "5px";
+                            componentDiv.style.overflow = "hidden";
+                            componentDiv.style.zIndex = "0";
+                            componentDiv.style.position = "relative";
                             componentVisual.render(componentDiv);
-                            mainDiv.appendChild(componentDiv);
-                            if (!height) {
-                                // hack to make sure components render at a reasonable height,
-                                // looking at you monaco
+                            if (!this.root.has(`${url}-height`)) {
                                 requestAnimationFrame(() => {
                                     if (componentDiv.getBoundingClientRect().height < 100) {
-                                        this.root.set(`${url}-height`, "100px");
+                                        this.root.set(`${url}-height`, 100);
                                     }
                                 });
+                            } else {
+                                componentDiv.style.height = `${this.root.get(`${url}-height`)}px`;
                             }
+                            this.renderResize(url, containerDiv);
                         }
                     }
                 });
             }
-
-            this.savedElement.appendChild(mainDiv);
         }
     }
 
@@ -179,7 +177,8 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         this.render(this.savedElement);
     }
 
-    private async click(value: string) {
+    private async inputClick(input: HTMLInputElement) {
+        const value = input.value;
         if (value !== undefined && value.length > 0) {
             let url = value;
             if (url.startsWith("@chaincode")) {
@@ -202,5 +201,35 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                     seq.insert(seq.getLength(), [component.url]);
                 });
         }
+    }
+    private renderResize(url: string, containerDiv: HTMLDivElement) {
+        const resizeDiv = document.createElement("div");
+        containerDiv.appendChild(resizeDiv);
+        const resizeStyle = resizeDiv.style;
+        resizeStyle.backgroundColor = "lightgray";
+        resizeDiv.style.width = "100%";
+        resizeDiv.style.height = "3px";
+        resizeDiv.style.position = "absolute";
+        resizeDiv.style.bottom = "0px";
+        resizeDiv.style.left = "0px";
+        resizeDiv.style.cursor = "ns-resize";
+        resizeDiv.onpointerdown = (dev) => {
+            dev.preventDefault();
+            let prevEv = dev;
+            document.onpointermove = (ev) => {
+                const heightDiff = ev.clientY - prevEv.clientY;
+                if (Math.abs(heightDiff) > 5) {
+                    if (!this.root.has(`${url}-height`)) {
+                        this.root.set(`${url}-height`, containerDiv.getBoundingClientRect().height);
+                    }
+                    const newheight = this.root.get<number>(`${url}-height`) + heightDiff;
+                    this.root.set(`${url}-height`, newheight);
+                    prevEv = ev;
+                }
+            };
+            document.onpointerup = () => {
+                document.onpointermove = undefined;
+            };
+        };
     }
 }
