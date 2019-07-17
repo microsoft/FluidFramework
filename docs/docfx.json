@@ -25,7 +25,7 @@
     ],
     "dest": "_site",
     "globalMetadata": {
-      "_appTitle": "Prague Documentation",
+      "_appTitle": "Fluid Documentation",
       "_enableSearch": true,
       "_gitContribute": {
         "repo": "https://github.com/Microsoft/Prague",

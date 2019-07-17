@@ -4,6 +4,8 @@ uid: dds
 
 # Distributed Data Structures
 
+
+
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
 as <xref:map.SharedMap> and the various types in the <xref:sequence> package, are [eventually
 consistent](https://en.wikipedia.org/wiki/Eventual_consistency). The Fluid runtime manages these data structures; as

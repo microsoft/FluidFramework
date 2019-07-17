@@ -1,10 +1,12 @@
 - name: Get started
   href: README.md
   items:
-    - name: Yo prague
-      href: yo-prague.md
+    - name: Yo fluid
+      href: yo-fluid.md
     - name: Build a component
       href: build-a-component.md
+    - name: Water Park
+      href: water-park.md
 - name: Concepts
   href: concepts.md
   items:

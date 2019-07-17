@@ -1,6 +1,6 @@
 - name: Get Started
   href: get-started/
-  topicHref: get-started/yo-prague.md
+  topicHref: get-started/README.md
 - name: Examples
   href: examples/
   topicHref: examples/README.md

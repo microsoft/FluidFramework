@@ -5,7 +5,7 @@
 
 Welcome to Fluid!
 
-We built Fluid to make it simpler for developers to build collaborative experiences using Web technology.
+We built Fluid to make it simpler for developers to build real-time collaborative experiences using Web technology.
 
 Fluid enables distributed, collaborative applications by providing developers with eventually consistent <xref:dds>, a
 flexible component and app model ("Chaincode"), and a reference server implementation ("Routerlicious.")
@@ -20,45 +20,44 @@ focus on your app's business logic. Fluid's data synchronization is fast, effici
 bandwidth. Fluid is extensible, too. You can write components which can be re-used or you can even create new
 distributed data structures.
 
-## Benefits
 
-* You can focus on your app's business logic; Fluid takes care of data consistency between all clients
-* It's easy to build 'version history' experiences with your data
-* Components can be embedded in multiple places; reduce, reuse, recycle!
+<div class="panel panel-primary">
+  <div class="panel-heading">Where did Prague go?</div>
+  <div class="panel-body">
+    <p>Prague was the code name for the Fluid Framework. Fluid is the name we'll use going forward.</p>
+    <p>"Prague" === "Fluid" === "Fluid Framework"</p>
+  </div>
+</div>
 
-## Features
 
-* Runtime ensures data consistency between all clients
-* Data persistence including automatic change tracking for all of your data
-* Data synchronization is ludicrously fast
-* Easy to plug in custom components
+## What is Fluid?
 
-## Build with Fluid
+See [this draft document](xref:what-is-fluid) for some more information about Fluid.
 
-Use <xref:yo-prague> to get set up quickly.
 
-First, do these one time steps:
+## Get started now
 
-````bash
-npm install -g yo
+[!include[<yo yo yo>](./get-started/_yo-fluid-content.md)]
 
-cd .../Prague/tools/generator-fluid
 
-npm install
-npm link
-````
+## Get the Fluid source code, including examples
 
-Yo Fluid is now ready. Try it!
+The repository is located at <https://github.com/Microsoft/Prague/>. To gain access you will need to link your GitHub
+and Microsoft accounts. To do so follow the instructions at <https://repos.opensource.microsoft.com/link>.
 
-````bash
-yo fluid
-````
+After linking your accounts you should be added to the <https://github.com/orgs/Microsoft/teams/everyone> group which
+will grant you access to the Prague repo. If for some reason you are not automatically added to that group request to
+join at <https://repos.opensource.microsoft.com/Microsoft/teams/pragueread>.
 
-\* For Yo Fluid setup issues: [Unauthorized - Stack
-Overflow](https://stackoverflow.microsoft.com/questions/137930/npm-install-fails-with-auth-issues/137931#137931)
 
-## Stack Overflow
+## Help
 
-The Fluid team answers questions on the [Microsoft internal stack overflow](https://stackoverflow.microsoft.com/) using
+### Stack Overflow
+
+The Fluid team answers **questions** on the [Microsoft Stack Overflow](https://stackoverflow.microsoft.com/) using
 the [Prague](https://stackoverflow.microsoft.com/questions/tagged/prague) and
 [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tags.
+
+Bugs, suggestions, and issues should be directed to our [issues page](https://github.com/Microsoft/Prague/issues).
+
+Logistical questions can be directed to our [Teams group](https://teams.microsoft.com/l/team/19%3a10ccb94cae324ec2aabcd6b6322b1a25%40thread.skype/conversations?groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47).
