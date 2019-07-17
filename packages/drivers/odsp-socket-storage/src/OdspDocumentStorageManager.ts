@@ -6,7 +6,7 @@
 import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { buildHierarchy } from "@prague/utils";
-import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, SnapshotTreeValue, SnapshotType } from "./contracts";
+import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { TokenProvider } from "./tokenProvider";
@@ -83,9 +83,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
             const tokenProvider = await this.getTokenProvider(refresh);
-            return this.fetchWrapper.get<resources.IBlob>(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, version.id, {
-                Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
-            });
+
+            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`);
+
+            return this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
         });
     }
 
@@ -172,11 +173,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         return getWithRetryForTokenRefresh(async (refresh) => {
             const tokenProvider = await this.getTokenProvider(refresh);
+
+            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`);
+
             // fetch the latest snapshot versions for the document
             const versionsResponse = await this.fetchWrapper
-                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions?count=${count}`, this.documentId, {
-                    Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
-                })
+                .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers)
                 .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
             if (versionsResponse) {
                 if (Array.isArray(versionsResponse.value)) {
@@ -373,7 +375,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         for (const key of keys) {
             const summaryObject = tree.tree[key];
 
-            let value: SnapshotTreeValue;
+            let id: string | undefined;
+            let value: SnapshotTreeValue | undefined;
 
             switch (summaryObject.type) {
                 case api.SummaryType.Tree:
@@ -392,14 +395,12 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     break;
 
                 case api.SummaryType.Handle:
+                    id = summaryObject.handle;
+
+                    // TODO: SPO will deprecate this soon
                     if (summaryObject.handleType === api.SummaryType.Commit) {
                         value = {
                             content: summaryObject.handle,
-                        };
-
-                    } else {
-                        value = {
-                            id: summaryObject.handle,
                         };
                     }
 
@@ -409,12 +410,32 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     throw new Error(`Unknown tree type ${summaryObject.type}`);
             }
 
-            snapshotTree.entries!.push({
+            const baseEntry: ISnapshotTreeBaseEntry = {
                 mode: "100644",
                 path: encodeURIComponent(key),
                 type: this.getServerType(summaryObject),
-                value,
-            });
+            };
+
+            let entry: SnapshotTreeEntry;
+
+            if (value) {
+                entry = {
+                    ...baseEntry,
+                    id,
+                    value,
+                };
+
+            } else if (id) {
+                entry = {
+                    ...baseEntry,
+                    id,
+                };
+
+            } else {
+                throw new Error(`Invalid tree entry for ${summaryObject.type}`);
+            }
+
+            snapshotTree.entries!.push(entry);
         }
 
         return snapshotTree;

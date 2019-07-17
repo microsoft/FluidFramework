@@ -119,7 +119,7 @@ export interface ISnapshotRequest {
     type: SnapshotType;
     message: string;
     sequenceNumber: number;
-    entries: ISnapshotTreeEntry[];
+    entries: SnapshotTreeEntry[];
     sha: string | null;
 }
 
@@ -127,23 +127,29 @@ export interface ISnapshotResponse {
     sha: string;
 }
 
-export interface ISnapshotTreeEntry {
+export type SnapshotTreeEntry = ISnapshotTreeValueEntry | ISnapshotTreeHandleEntry;
+
+export interface ISnapshotTreeBaseEntry {
     path: string;
     type: string;
-    value: SnapshotTreeValue;
     mode: string;
 }
 
-export type SnapshotTreeValue = ISnapshotBlob | ISnapshotTree | ISnapshotCommit | ISnapshotHandle;
+export interface ISnapshotTreeValueEntry extends ISnapshotTreeBaseEntry {
+    id?: string;
+    value: SnapshotTreeValue;
+}
 
-export interface ISnapshotHandle {
+export interface ISnapshotTreeHandleEntry extends ISnapshotTreeBaseEntry {
     id: string;
 }
+
+export type SnapshotTreeValue = ISnapshotTree | ISnapshotBlob | ISnapshotCommit;
 
 export interface ISnapshotTree {
     id?: string;
     sha?: string;
-    entries?: ISnapshotTreeEntry[];
+    entries?: SnapshotTreeEntry[];
 }
 
 export interface ISnapshotBlob {
