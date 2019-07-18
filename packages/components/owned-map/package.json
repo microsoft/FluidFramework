@@ -31,6 +31,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "dependencies": {
     "@prague/app-component": "^0.7.0",
     "@prague/cell": "^0.7.0",

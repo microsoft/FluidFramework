@@ -65,5 +65,15 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "license": "MIT"
 }

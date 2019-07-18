@@ -33,6 +33,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "dependencies": {
     "@chaincode/charts": "^0.7.0",
     "@chaincode/image-collection": "^0.7.0",

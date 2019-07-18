@@ -52,6 +52,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "dependencies": {
     "@prague/component-runtime": "^0.7.0",
     "@prague/consensus-register-collection": "^0.7.0",

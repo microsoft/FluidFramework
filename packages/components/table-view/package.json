@@ -14,6 +14,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext npm:build:copy",

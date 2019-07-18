@@ -29,6 +29,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "license": "MIT",
   "dependencies": {
     "@chaincode/clicker": "^0.7.0",

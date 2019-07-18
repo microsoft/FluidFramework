@@ -43,6 +43,16 @@
       ]
     }
   },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
   "dependencies": {
     "@prague/aqueduct": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",

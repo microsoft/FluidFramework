@@ -62,5 +62,15 @@
         "dist/main.bundle.js"
       ]
     }
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
   }
 }
