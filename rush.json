@@ -1,7 +1,7 @@
 {
-  "pnpmVersion": "2.25.7",
-  "rushVersion": "5.7.0",
-  "nodeSupportedVersionRange": ">=8.0.0",
+  "pnpmVersion": "3.6.0",
+  "rushVersion": "5.10.3",
+  "nodeSupportedVersionRange": ">=10.16.0",
   "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 999,
   "ensureConsistentVersions": true,
@@ -191,12 +191,12 @@
       "projectFolder": "packages/loader/utils/"
     },
     {
-        "packageName": "@prague/base-host",
-        "projectFolder": "packages/hosts/base-host/"
+      "packageName": "@prague/base-host",
+      "projectFolder": "packages/hosts/base-host/"
     },
     {
-        "packageName": "@prague/tiny-web-host",
-        "projectFolder": "packages/hosts/tiny-web-host/"
+      "packageName": "@prague/tiny-web-host",
+      "projectFolder": "packages/hosts/tiny-web-host/"
     },
     {
       "packageName": "@prague/shared-object-common",

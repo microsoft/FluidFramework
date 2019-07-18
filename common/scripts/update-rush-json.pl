@@ -6,9 +6,9 @@ open(my $inFile,  "<./server/routerlicious/Dockerfile") || die "Unable to open '
 
 print <<'END';
 {
-  "pnpmVersion": "2.25.7",
-  "rushVersion": "5.7.0",
-  "nodeSupportedVersionRange": ">=8.0.0",
+  "pnpmVersion": "3.6.0",
+  "rushVersion": "5.10.3",
+  "nodeSupportedVersionRange": ">=10.16.0",
   "projectFolderMinDepth": 1,
   "projectFolderMaxDepth": 999,
   "ensureConsistentVersions": true,
