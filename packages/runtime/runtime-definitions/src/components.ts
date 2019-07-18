@@ -7,6 +7,7 @@ import {
     ConnectionState,
     IBlobManager,
     IComponent,
+    IComponentConfiguration,
     IComponentRouter,
     IDeltaManager,
     IDocumentMessage,
@@ -252,6 +253,7 @@ export interface IHostRuntime extends IRuntime {
     readonly options: any;
     readonly clientId: string;
     readonly clientType: string;
+    readonly configuration: IComponentConfiguration;
     readonly parentBranch: string;
     readonly connected: boolean;
     readonly leader: boolean;

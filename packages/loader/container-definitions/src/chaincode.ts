@@ -186,6 +186,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
+    readonly configuration: IComponentConfiguration;
     readonly clientId: string | undefined;
     readonly clientType: string;
     readonly parentBranch: string | undefined | null;
@@ -206,6 +207,10 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly logger: ITelemetryLogger;
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
+}
+
+export interface IComponentConfiguration {
+    canReconnect: boolean;
 }
 
 export interface IFluidModule {

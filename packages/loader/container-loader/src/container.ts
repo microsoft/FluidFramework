@@ -92,11 +92,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const container = new Container(
             id,
             options,
+            canReconnect,
             service,
             codeLoader,
             loader,
             request,
-            canReconnect,
             logger);
 
         // Log error right away to telemetry pipeline
@@ -182,11 +182,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     constructor(
         id: string,
         public readonly options: any,
+        public readonly canReconnect: boolean,
         private readonly service: IDocumentService,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
-        private readonly canReconnect: boolean,
         logger?: ITelemetryBaseLogger,
     ) {
         super();

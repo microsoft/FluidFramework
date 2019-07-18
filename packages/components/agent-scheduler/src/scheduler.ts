@@ -356,15 +356,15 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 export class TaskManager implements ITaskManager {
     public static supportedInterfaces = ["IAgentScheduler", "ITaskManager"];
 
-    public static async load(runtime: IComponentRuntime): Promise<TaskManager> {
+    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
         const agentScheduler = await AgentScheduler.load(runtime);
-        return new TaskManager(agentScheduler);
+        return new TaskManager(agentScheduler, context);
     }
 
     public url = "/_tasks";
 
     private readonly taskMap = new Map<string, IComponentRunnable>();
-    constructor(private readonly scheduler: IAgentScheduler) {
+    constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
 
     }
 
@@ -399,8 +399,8 @@ export class TaskManager implements ITaskManager {
 
     }
 
-    public async pick(componentUrl: string, request: IRequest, ...tasks: ITask[]) {
-        if (request.headers && request.headers["fluid-reconnect"] === false) {
+    public async pick(componentUrl: string, ...tasks: ITask[]) {
+        if (!this.context.hostRuntime.configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }
         const registersP: Array<Promise<void>> = [];
@@ -421,7 +421,7 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
 
     const runtime = await ComponentRuntime.load(context, dataTypes);
-    const taskManagerP = TaskManager.load(runtime);
+    const taskManagerP = TaskManager.load(runtime, context);
     runtime.registerRequestHandler(async (request: IRequest) => {
         const taskManager = await taskManagerP;
         return taskManager.request(request);

@@ -11,6 +11,7 @@ import {
     IBlob,
     IBlobManager,
     IChunkedOp,
+    IComponentConfiguration,
     IContainerContext,
     IDeltaManager,
     IDocumentMessage,
@@ -222,6 +223,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.context.loader;
     }
 
+    public get configuration(): IComponentConfiguration {
+        return this.context.configuration;
+    }
+
     public readonly logger: ITelemetryLogger;
     public readonly summaryManager: SummaryManager;
 
@@ -368,8 +373,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         if (request.url === "/_scheduler") {
             const component = await this.getComponentRuntime("_scheduler", true);
-            // TODO: Parse and extract more routers for scheduler.
-            return component.request({ url: ""});
+            return component.request({url: ""});
         }
 
         // If no app specified handler has been specified then this is a 404
@@ -377,7 +381,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
 
-        // Otherwise we defer to the app to handle the requset
+        // Otherwise defer to the app to handle the request
         return this.requestHandler(request);
     }
 

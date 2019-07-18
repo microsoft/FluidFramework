@@ -47,7 +47,6 @@ import {
     addTranslation,
     downloadRawText,
     getInsights,
-    waitForFullConnection,
 } from "./utils";
 
 export class SharedTextRunner extends EventEmitter implements
@@ -93,26 +92,10 @@ export class SharedTextRunner extends EventEmitter implements
         if (request.url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
         } else if (request.url === "" || request.url === "/") {
-            this.parse(request);
             return { status: 200, mimeType: "prague/component", value: this };
         } else {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
-    }
-
-    private parse(request: IRequest) {
-        // TODO: component will ask host for capability before registering.
-        waitForFullConnection(this.runtime).then(() => {
-            const intelTask: ITask = {
-                id: "intel",
-                instance: new TextAnalyzer(this.sharedString, this.insightsMap),
-            };
-            this.taskManager.pick(this.url, request, intelTask).then(() => {
-                console.log(`Picked intel task`);
-            }, (err) => {
-                console.log(err);
-            });
-        });
     }
 
     private async initialize(): Promise<void> {
@@ -223,6 +206,37 @@ export class SharedTextRunner extends EventEmitter implements
         this.sharedString.loaded.then(() => {
             theFlow.loadFinished(performanceNow());
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
+        });
+
+        const taskScheduler = new TaskScheduler(
+            this.taskManager,
+            this.url,
+            this.sharedString,
+            this.insightsMap,
+        );
+        taskScheduler.start();
+    }
+}
+
+class TaskScheduler {
+    constructor(
+        private taskManager: ITaskManager,
+        private componentUrl: string,
+        private sharedString: SharedString,
+        private insightsMap: DistributedMap.ISharedMap,
+    ) {
+
+    }
+
+    public start() {
+        const intelTask: ITask = {
+            id: "intel",
+            instance: new TextAnalyzer(this.sharedString, this.insightsMap),
+        };
+        this.taskManager.pick(this.componentUrl, intelTask).then(() => {
+            console.log(`Picked intel task`);
+        }, (err) => {
+            console.log(err);
         });
     }
 }

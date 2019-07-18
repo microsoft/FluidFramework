@@ -8,7 +8,6 @@ import {
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
-    IRequest,
 } from "@prague/container-definitions";
 
 export interface ITask {
@@ -20,7 +19,7 @@ export interface ITask {
  * Wrapper on top of IAgentScheduler.
  */
 export interface ITaskManager extends IComponentLoadable, IComponentRouter {
-    pick(componentUrl: string, request: IRequest, ...tasks: ITask[]): Promise<void>;
+    pick(componentUrl: string, ...tasks: ITask[]): Promise<void>;
 }
 
 /**

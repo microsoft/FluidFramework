@@ -6,6 +6,7 @@
 import {
     ConnectionState,
     ICodeLoader,
+    IComponentConfiguration,
     IContainerContext,
     IDeltaManager,
     IDocumentAttributes,
@@ -117,6 +118,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     // tslint:disable-next-line:no-unsafe-any
     public get options(): any {
         return this.container.options;
+    }
+
+    public get configuration(): IComponentConfiguration {
+        return {
+            canReconnect: this.container.canReconnect,
+        };
     }
 
     // Back compat flag - can remove in 0.6
