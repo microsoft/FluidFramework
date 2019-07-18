@@ -1,5 +1,5 @@
 {
-  "name": "@prague/base-host",
+  "name": "@prague/tiny-web-host",
   "version": "0.7.0",
   "description": "Loader client app",
   "main": "dist/index.js",
@@ -10,12 +10,15 @@
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
+    "build:webpack": "webpack --env build",
     "build:full:compile": "npm run build:compile",
     "build:docs": "api-extractor run --local",
+    "start": "webpack-dev-server",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack  --env build"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -28,9 +31,13 @@
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
     "tslint": "^5.11.0",
+    "webpack-dev-server": "^3.7.1",
+    "webpack-cli": "^3.3.0",
+    "webpack": "^4.36.0",
     "typescript": "~3.4.5"
   },
   "dependencies": {
+    "@prague/base-host": "^0.7.0",
     "@prague/container-definitions": "^0.7.0",
     "@prague/container-loader": "^0.7.0",
     "@prague/loader-web": "^0.7.0",
@@ -38,9 +45,13 @@
     "@prague/routerlicious-host": "^0.7.0",
     "@prague/routerlicious-socket-storage": "^0.7.0",
     "@prague/services-client": "^0.7.0",
+    "@prague/services-core": "^0.7.0",
+    "@prague/odsp-utils": "^0.7.0",
     "@prague/gitresources": "^0.7.0",
+    "url-parse": "^1.4.4",
     "chalk": "^2.4.1",
-    "isomorphic-fetch": "^2.2.1"
+    "isomorphic-fetch": "^2.2.1",
+    "jsonwebtoken": "^8.5.1"
   },
   "license": "MIT"
 }

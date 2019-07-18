@@ -191,8 +191,12 @@
       "projectFolder": "packages/loader/utils/"
     },
     {
-      "packageName": "@prague/base-host",
-      "projectFolder": "packages/hosts/base-host/"
+        "packageName": "@prague/base-host",
+        "projectFolder": "packages/hosts/base-host/"
+    },
+    {
+        "packageName": "@prague/tiny-web-host",
+        "projectFolder": "packages/hosts/tiny-web-host/"
     },
     {
       "packageName": "@prague/shared-object-common",

@@ -135,6 +135,7 @@ export async function start(
     scriptIds: string[],
     npm: string,
     jwt: string,
+    div?: HTMLDivElement,
 ): Promise<void> {
     const errorService = new DefaultErrorTracking();
 
@@ -173,7 +174,7 @@ export async function start(
 
     lastLoaded = container;
 
-    const platform = new Host(document.getElementById("content"));
+    const platform = new Host(div ? div : document.getElementById("content"));
     registerAttach(
         loader,
         container,
