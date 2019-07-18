@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 # Note that the build of this file is assumed to have happend from the parent directory
-FROM node:8.14.0-slim
+FROM node:10.16.0-slim
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \

@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:8.15.0-slim AS base
+FROM node:10.16.0-slim AS base
 
 # node-gyp and docfx dependencies
 RUN apt-get update && apt-get install -y \

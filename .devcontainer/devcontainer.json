@@ -1,6 +1,6 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
-	"name": "Node.js 8",
+	"name": "Node.js 10",
 	"dockerFile": "Dockerfile",
 	
 	// Uncomment the next line if you want to publish any ports.

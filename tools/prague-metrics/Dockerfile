@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-FROM node:8.11.1-alpine
+FROM node:10.16.0-alpine
 
 # node-gyp dependencies
 RUN apk add --no-cache --virtual .gyp python make g++
