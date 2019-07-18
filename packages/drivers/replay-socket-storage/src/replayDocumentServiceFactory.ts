@@ -33,7 +33,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         );
     }
 
-    constructor(
+    private constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly controller: ReplayController) {}
 
