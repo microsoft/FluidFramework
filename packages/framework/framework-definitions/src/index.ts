@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { IViewProvider, IView } from "./view";
 export * from "./forge";
