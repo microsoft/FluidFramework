@@ -12,6 +12,8 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 
+	"runArgs": ["-u", "node"],
+
 	"extensions": [
 		"dbaeumer.vscode-eslint"
 	]
