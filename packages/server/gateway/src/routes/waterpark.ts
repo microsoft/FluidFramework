@@ -10,6 +10,7 @@ import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
+import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
@@ -33,7 +34,10 @@ export function create(
     /**
      * Loading of a specific fluid document.
      */
-    router.get("/:id", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
+    router.get("/:id?", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
+        if (!request.params.id) {
+            return response.status(302).redirect(`${request.baseUrl}/${moniker.choose()}`);
+        }
         const start = Date.now();
 
         const jwtToken = jwt.sign(

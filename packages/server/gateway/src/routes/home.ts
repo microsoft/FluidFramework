@@ -4,7 +4,6 @@
  */
 
 import { Router } from "express";
-import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as passport from "passport";
 import { defaultPartials } from "./partials";
@@ -19,7 +18,6 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         response.render("home", {
             partials: defaultPartials,
             title: "Routerlicious",
-            waterparkMoniker: moniker.choose(),
         });
     });
 
