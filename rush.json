@@ -199,6 +199,10 @@
       "projectFolder": "packages/hosts/tiny-web-host/"
     },
     {
+      "packageName": "@prague/react-web-host",
+      "projectFolder": "packages/hosts/react-web-host/"
+    },
+    {
       "packageName": "@prague/shared-object-common",
       "projectFolder": "packages/runtime/shared-object-common/"
     },

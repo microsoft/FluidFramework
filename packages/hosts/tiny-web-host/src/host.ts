@@ -27,6 +27,8 @@ const appTenants = [
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div - The div to load the component into
  * @param appId - The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
+ * @param clientId - The SPO clientId
+ * @param clientSecret - The SPO clientSecret
  */
 export async function loadPragueComponent(
     url: string,

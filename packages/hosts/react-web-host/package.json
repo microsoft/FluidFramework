@@ -1,0 +1,46 @@
+{
+  "name": "@prague/react-web-host",
+  "version": "0.7.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/tiny-web-host": "^0.7.0",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
+
+  },
+  "devDependencies": {
+    "@types/react": "^16.7.7",
+    "ts-loader": "^4.5.0",
+    "webpack-dev-server": "^3.1.14",
+    "webpack-cli": "^3.1.2",
+    "webpack": "^4.8.2",
+    "webpack-merge": "^4.1.2",
+    "@microsoft/api-extractor": "^7.1.6",
+    "@prague/build-common": "^0.7.0",
+    "@types/isomorphic-fetch": "^0.0.35",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "source-map-loader": "^0.2.4",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  },
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:webpack": "webpack --env build",
+    "build:full:compile": "npm run build:compile",
+    "build:docs": "api-extractor run --local",
+    "start": "webpack-dev-server",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "npm run build:webpack"
+  },
+  "license": "MIT"
+}

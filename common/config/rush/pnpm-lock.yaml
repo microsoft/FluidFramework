@@ -55,6 +55,7 @@ dependencies:
   '@rush-temp/pond': 'file:projects/pond.tgz'
   '@rush-temp/prague-dump': 'file:projects/prague-dump.tgz'
   '@rush-temp/progress-bars': 'file:projects/progress-bars.tgz'
+  '@rush-temp/react-web-host': 'file:projects/react-web-host.tgz'
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/replay-tool': 'file:projects/replay-tool.tgz'
   '@rush-temp/routerlicious': 'file:projects/routerlicious.tgz'
@@ -12941,6 +12942,30 @@ packages:
       integrity: sha512-+1dsbJn3TRZc9UGN7j45y4s6RJbOY95RSE9A5fvVdQYSJKn4U/2bkJL79I6TgSO7MDTvKVBfs5f5biDTVorQDA==
       tarball: 'file:projects/progress-bars.tgz'
     version: 0.0.0
+  'file:projects/react-web-host.tgz':
+    dependencies:
+      '@microsoft/api-extractor': 7.3.2
+      '@types/isomorphic-fetch': 0.0.35
+      '@types/node': 10.14.13
+      '@types/react': 16.8.23
+      concurrently: 4.1.1
+      react: 16.8.6
+      react-dom: 16.8.6_react@16.8.6
+      rimraf: 2.6.3
+      source-map-loader: 0.2.4
+      ts-loader: 4.5.0
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+      webpack: 4.36.1_webpack@4.36.1
+      webpack-cli: 3.3.6_webpack@4.36.1
+      webpack-dev-server: 3.7.2_webpack@4.36.1
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/react-web-host'
+    resolution:
+      integrity: sha512-gjxIIqY6HLu9cWh3rik5TnXTiUneMSJRn2WHbAS71juG2Kzvuoifah6I7oesyFBkIPoRICdzkA8H3f4iJzFHTA==
+      tarball: 'file:projects/react-web-host.tgz'
+    version: 0.0.0
   'file:projects/replay-socket-storage.tgz':
     dependencies:
       '@types/debug': 0.0.31
@@ -13678,6 +13703,7 @@ packages:
       integrity: sha512-Dwqz4yjGhLXfKBH7iSjsiyx+Kaa8b4SwZrNJ1wNlcjiKB+QgcMq0heGcPh0zW+S4F55ej/w0iL8wbUgXM36RYw==
       tarball: 'file:projects/webflow.tgz'
     version: 0.0.0
+registry: ''
 specifiers:
   '@azure/event-hubs': ^1.0.8
   '@azure/event-processor-host': ^1.0.6
@@ -13735,6 +13761,7 @@ specifiers:
   '@rush-temp/pond': 'file:./projects/pond.tgz'
   '@rush-temp/prague-dump': 'file:./projects/prague-dump.tgz'
   '@rush-temp/progress-bars': 'file:./projects/progress-bars.tgz'
+  '@rush-temp/react-web-host': 'file:./projects/react-web-host.tgz'
   '@rush-temp/replay-socket-storage': 'file:./projects/replay-socket-storage.tgz'
   '@rush-temp/replay-tool': 'file:./projects/replay-tool.tgz'
   '@rush-temp/routerlicious': 'file:./projects/routerlicious.tgz'

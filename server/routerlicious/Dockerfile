@@ -71,6 +71,7 @@ COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/
+COPY packages/hosts/react-web-host/package*.json packages/hosts/react-web-host/
 COPY packages/runtime/shared-object-common/package*.json packages/runtime/shared-object-common/
 COPY packages/runtime/component-runtime/package*.json packages/runtime/component-runtime/
 COPY packages/runtime/consensus-ordered-collection/package*.json packages/runtime/consensus-ordered-collection/
