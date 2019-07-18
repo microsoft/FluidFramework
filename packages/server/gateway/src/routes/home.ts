@@ -15,7 +15,10 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
      * Route to retrieve the home page for the app
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
-        response.render("home", { partials: defaultPartials, title: "Routerlicious" });
+        response.render("home", {
+            partials: defaultPartials,
+            title: "Routerlicious",
+        });
     });
 
     /**

@@ -53,6 +53,15 @@
                 yo fluid
             </p>
         </div>
+        <br>
+        <h3>Component Waterpark</h3>
+        <p>
+            The Component Waterpark is a place to explore, test, and share components.
+            It can load any component made with "yo fuild" and published to verdaccio.
+            "yo fuild" provides instructions on how to publish your components to verdaccio.
+            <br>
+            <a href="/waterpark">Water Park</a>
+        </p>
     </p>
     <h2>Help</h2>
     <p>
