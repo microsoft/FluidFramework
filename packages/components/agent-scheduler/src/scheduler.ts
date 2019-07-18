@@ -7,6 +7,7 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import {
     IComponent,
+    IComponentConfiguration,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -400,7 +401,8 @@ export class TaskManager implements ITaskManager {
     }
 
     public async pick(componentUrl: string, ...tasks: ITask[]) {
-        if (!this.context.hostRuntime.configuration.canReconnect) {
+        const configuration = this.context.hostRuntime.query<IComponentConfiguration>("IComponentConfiguration");
+        if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }
         const registersP: Array<Promise<void>> = [];

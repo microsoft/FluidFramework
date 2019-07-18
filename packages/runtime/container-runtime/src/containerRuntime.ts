@@ -83,6 +83,7 @@ export interface IContainerRuntimeOptions {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
+    public static supportedInterfaces = ["IComponentConfiguration"];
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -313,11 +314,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public query(id: string): any {
+        if (id === "IComponentConfiguration") {
+            return this.context.configuration;
+        }
         return undefined;
     }
 
     public list(): string[] {
-        return [];
+        return ContainerRuntime.supportedInterfaces;
     }
 
     /**
