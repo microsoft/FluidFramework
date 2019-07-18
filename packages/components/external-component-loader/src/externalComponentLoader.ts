@@ -40,8 +40,13 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
     private readonly urlToComponent = new Map<string, IComponent>();
     private savedElement: HTMLElement;
+    private error: string;
 
     public render(element: HTMLElement) {
+
+        if (element === undefined) {
+            return;
+        }
 
         if (this.savedElement) {
             while (this.savedElement.firstChild) {
@@ -74,13 +79,19 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             inputDiv.append(input);
             input.setAttribute("list", dataList.id);
             input.type = "text";
-            input.placeholder = "@chaincode/componentname@version";
+            input.placeholder = "@chaincode/component-name@version";
             input.style.width = "100%";
 
             const counterButton = document.createElement("button");
             inputDiv.appendChild(counterButton);
             counterButton.textContent = "Add Component";
             counterButton.onclick = () => this.inputClick(input);
+
+            if (this.error) {
+                const errorDiv = document.createElement("div");
+                inputDiv.appendChild(errorDiv);
+                errorDiv.innerText = this.error;
+            }
 
             const sequence = this.root.get<SharedObjectSequence<string>>("componentIds");
             if (sequence !== undefined) {
@@ -106,7 +117,11 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                             componentDiv.style.overflow = "hidden";
                             componentDiv.style.zIndex = "0";
                             componentDiv.style.position = "relative";
-                            componentVisual.render(componentDiv);
+                            componentVisual.render(
+                                componentDiv,
+                                {
+                                    display: "block",
+                                });
                             if (!this.root.has(`${url}-height`)) {
                                 requestAnimationFrame(() => {
                                     if (componentDiv.getBoundingClientRect().height < 100) {
@@ -167,7 +182,12 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                     },
                     []);
                 await cacheComponentsByUrl(items)
-                    .then(() => this.render(this.savedElement));
+                    .then(() => this.render(this.savedElement))
+                    .catch((e) => {
+                        this.error = e;
+                        this.render(this.savedElement);
+                    });
+
             }
         });
         this.root.on("valueChanged", () => {
@@ -179,9 +199,10 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
     private async inputClick(input: HTMLInputElement) {
         const value = input.value;
+        this.error = undefined;
         if (value !== undefined && value.length > 0) {
             let url = value;
-            if (url.startsWith("@chaincode")) {
+            if (url.startsWith("@")) {
                 url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
             }
             const seq = await this.root.wait<SharedObjectSequence<string>>("componentIds");
@@ -199,7 +220,13 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                         component = componentCollection.create() as IComponentLoadable;
                     }
                     seq.insert(seq.getLength(), [component.url]);
+                })
+                .catch((e) => {
+                    this.error = e;
+                    this.render(this.savedElement);
                 });
+        } else {
+            input.style.backgroundColor = "#FEE";
         }
     }
     private renderResize(url: string, containerDiv: HTMLDivElement) {

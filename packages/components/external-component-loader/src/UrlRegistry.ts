@@ -14,15 +14,16 @@ import { Deferred } from "@prague/utils";
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly registryMap = new Map<string, Promise<IComponentFactory>>();
-    private readonly subRegistries: IComponentRegistry[] = [];
+    private readonly urlRegistryMap = new Map<string, Promise<IComponentFactory>>();
+    // tslint:disable-next-line: prefer-array-literal
+    private readonly subRegistries: Array<Promise<IComponentRegistry>> = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
     constructor(entries: Map<string, Promise<IComponentFactory>>) {
 
-        entries.forEach((v, k) => this.registryMap.set(k, v));
-        this.subRegistries.push(this.registryMap);
+        this.subRegistries.push(Promise.resolve(entries));
+        this.subRegistries.push(Promise.resolve(this.urlRegistryMap));
 
         // stash on the window so multiple instance can coordinate
         const loadingPackagesKey = `${UrlRegistry.WindowKeyPrefix}LoadingPackages`;
@@ -40,12 +41,10 @@ export class UrlRegistry implements IComponentRegistry {
 
     public async get(name: string): Promise<IComponentFactory> {
 
-        let factoryP = this.getFromSubRegistries(name);
-        if (factoryP !== undefined) {
-            return factoryP;
-        } else {
-            this.registryMap.set(name, new Promise<IComponentFactory>(async (resolve, reject) => {
+        if (!this.urlRegistryMap.has(name)
+            && (name.startsWith("http://") || name.startsWith("https://"))) {
 
+            const entryPointPromise = new Promise<any>(async (resolve, reject) => {
                 if (!this.loadingPackages.has(name)) {
                     this.loadingPackages.set(name, this.loadEntrypoint(name));
                 }
@@ -55,45 +54,58 @@ export class UrlRegistry implements IComponentRegistry {
                 if (entrypoint === undefined) {
                     reject(`UrlRegistry: ${name}: Entrypoint is undefined`);
                 } else {
-                    const fluidExport: IComponent = entrypoint.fluidExport;
-                    let componentFactory = entrypoint as IComponentFactory;
+                    resolve(entrypoint);
+                }
+            });
 
-                    if (fluidExport !== undefined && fluidExport.query !== undefined) {
-                        const registry = fluidExport.query<IComponentRegistry>("IComponentRegistry");
-                        if (registry !== undefined) {
-                            this.subRegistries.push(registry);
-                        }
-
-                        const exportFactory = fluidExport.query<IComponentFactory>("IComponentFactory");
-                        if (exportFactory !== undefined) {
-                            componentFactory = exportFactory;
-                        }
-                    }
-
-                    if (componentFactory === undefined || componentFactory.instantiateComponent === undefined) {
-                        reject(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
-                    } else {
-                        resolve(componentFactory);
+            this.subRegistries.push(entryPointPromise.then((entrypoint) => {
+                const fluidExport: IComponent = entrypoint.fluidExport;
+                if (fluidExport !== undefined && fluidExport.query !== undefined) {
+                    const registry = fluidExport.query<IComponentRegistry>("IComponentRegistry");
+                    if (registry !== undefined) {
+                        return registry;
                     }
                 }
+                return undefined;
             }));
 
-            factoryP = this.getFromSubRegistries(name);
-            if (factoryP !== undefined) {
-                return factoryP;
-            }
+            this.urlRegistryMap.set(name, entryPointPromise.then((entrypoint) => {
+                const fluidExport: IComponent = entrypoint.fluidExport;
+                let componentFactory = entrypoint as IComponentFactory;
+
+                if (fluidExport !== undefined && fluidExport.query !== undefined) {
+                    const exportFactory = fluidExport.query<IComponentFactory>("IComponentFactory");
+                    if (exportFactory !== undefined) {
+                        componentFactory = exportFactory;
+                    }
+                }
+
+                if (componentFactory === undefined || componentFactory.instantiateComponent === undefined) {
+                    throw new Error(`UrlRegistry: ${name}: instantiateComponent does not exist on entrypoint`);
+                } else {
+                    return componentFactory;
+                }
+            }));
+        }
+
+        const factory = await this.getFromSubRegistries(name);
+        if (factory !== undefined) {
+            return factory;
         }
 
         throw new Error(`Unknown package: ${name}`);
     }
 
     // tslint:disable-next-line: promise-function-async
-    private getFromSubRegistries(name: string): Promise<IComponentFactory>  {
-        for (const registry of this.subRegistries) {
+    private async getFromSubRegistries(name: string): Promise<IComponentFactory>  {
+        for (const registryP of this.subRegistries) {
             try {
-                const factory = registry.get(name);
-                if (factory !== undefined) {
-                    return factory;
+                const registry = await registryP;
+                if (registry !== undefined) {
+                    const factory = await registry.get(name);
+                    if (factory !== undefined) {
+                        return factory;
+                    }
                 }
             } catch { }
         }
