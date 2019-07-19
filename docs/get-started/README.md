@@ -16,6 +16,7 @@ The quickest way to get started with Fluid is to build a component. Here's what 
 
 ## Useful stuff
 
+The Fluid packages are publish to our [private NPM feed](xref:package-feed)
 The Fluid Framework repo lives [https://github.com/Microsoft/Prague/](https://github.com/Microsoft/Prague/)  
 
 # Repo Access

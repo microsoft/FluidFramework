@@ -6,7 +6,7 @@ Simple service that listens to the Prague Kafka topics and then exports metrics 
 
 ## Building and running
 
-To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../../doc)
+To begin you'll need to connect to the Prague private NPM repository. Instructions can be found [here](../../docs/get-started/package-feed.md)
 
 You can build the production container by running.
 

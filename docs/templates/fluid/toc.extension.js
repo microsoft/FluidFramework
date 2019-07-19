@@ -27,6 +27,10 @@ var packageMapping = {
   "file-socket-storage": "driver",
   "replay-socket-storage": "driver",
 
+  "base-host": "host",
+  "tiny-web-host": "host",
+  "react-web-host": "host",
+  
   "utils": "misc",
 }
 
@@ -36,6 +40,7 @@ var groupNames = {
   runtime: "Runtime",
   loader: "Loader",
   driver: "Driver",
+  host: "Sample Hosts",
   misc: "Misc",
   unknown: "Internal/Deprecated",
 };
