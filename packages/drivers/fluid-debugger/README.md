@@ -25,7 +25,7 @@ In order to use it, these changes are required:
 
 Once debugger starts, you have the following choices on first screen: 
 
-![picture alt](images/screenshot1.jpg "Screenshot of debugger, first page")
+![picture alt](images/Screenshot1.jpg "Screenshot of debugger, first page")
 
 1. Close window. Debugger will be disabled and normal document flow would proceed - document is read/write. In all other options document is read-only, i.e. no local changes are committed to storage. 
 
@@ -42,7 +42,7 @@ You can load snapshot from a different file (given above). As long as it's for s
 
 If you chose storage snapshot (not snapshot from file) or no snapshot, you are presented with a screen that allows you to play ops (on top of snapshot). You can chose any number of ops to play at once and click "Go" button: 
 
-![picture alt](images/screenshot2.jpg "Screenshot of debugger, second page")
+![picture alt](images/Screenshot2.jpg "Screenshot of debugger, second page")
 
 Please note that playback is asynchronous, so even though Debugger UI might have acknowledged that ops where played out (and you can select next batch), application might be still in the process of processing previous batch. 
 
