@@ -58,11 +58,13 @@ describe("Routerlicious", () => {
         describe("eventsMap", () => {
             it("listeners should listen to fired map events", async () => {
                 const dummyMap = testMap;
-                let called: boolean = false;
-                dummyMap.on("op", (agr1, arg2, arg3) => called = true);
-                dummyMap.on("valueChanged", (agr1, arg2, arg3, arg4) => called = true);
+                let called1: boolean = false;
+                let called2: boolean = false;
+                dummyMap.on("op", (agr1, arg2, arg3) => called1 = true);
+                dummyMap.on("valueChanged", (agr1, arg2, arg3, arg4) => called2 = true);
                 dummyMap.set("dwyane", "johnson");
-                assert.equal(called, true);
+                assert.equal(called1, false, "op");
+                assert.equal(called2, true, "valueChanged");
             });
         });
 

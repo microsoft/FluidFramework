@@ -79,18 +79,13 @@ export interface IMapRegistry {
 }
 
 /**
- * Interface describing actions on a directory.
+ * Interface describing actions on a directory.  When used as a Map, operates on its keys.
  */
 export interface IDirectory extends Map<string, any> {
     /**
      * Retrieves the given key from the map
      */
     get<T = any>(key: string): T;
-
-    /**
-     * A form of get except it will only resolve the promise once the key exists in the map.
-     */
-    wait<T>(key: string): Promise<T>;
 
     /**
      * Sets the key to the provided value. An optional type can be specified to initialize the key
@@ -108,7 +103,14 @@ export interface IDirectory extends Map<string, any> {
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedMap, IDirectory {
+export interface ISharedDirectory extends ISharedObject, IDirectory {
+}
+
+/**
+ * Type of "valueChanged" event parameter for SharedDirectory
+ */
+export interface IDirectoryValueChanged extends IValueChanged {
+    path: string;
 }
 
 /**
