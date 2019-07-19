@@ -8,7 +8,7 @@ import * as React from "react";
 
 export { isPragueURL, isSpoUrl } from "@prague/tiny-web-host";
 
-interface ILoaderProps {
+export interface ILoaderProps {
 
   clientId?: string;
 

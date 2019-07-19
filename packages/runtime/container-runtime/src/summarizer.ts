@@ -75,7 +75,7 @@ export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
             await new Promise((resolve) => this.runtime.once("connected", resolve));
         }
 
-        if (this.runtime.summaryManager.summarizer !== onBehalfOf) {
+        if (this.runtime.summarizerClientId !== onBehalfOf) {
             return;
         }
 

@@ -15,6 +15,9 @@ interface IState {
     checked: boolean;
 }
 
+export { IProps as ICollaborativeCheckboxProps };
+export { IState as ICollaborativeCheckboxState };
+
 /**
  * Fluid enabled checkbox
  * The checkbox uses the counter to ensure consistency if two people both hit the button.

@@ -5,6 +5,7 @@
 
 export * from "./fluidDebugger";
 export * from "./registration";
+export * from "./replayController";
 export * from "./replayDeltaStorageService";
 export * from "./replayDocumentDeltaConnection";
 export * from "./replayDocumentService";

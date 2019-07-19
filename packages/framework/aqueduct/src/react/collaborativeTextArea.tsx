@@ -18,6 +18,9 @@ interface IState {
     text: string;
 }
 
+export { IProps as ICollaborativeTextAreaProps };
+export { IState as ICollaborativeTextAreaState };
+
 /**
  * Given a cell will provide an editable component
  * This produces a single line content editable box. It's single line because doing

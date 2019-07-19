@@ -27,6 +27,9 @@ interface IState {
     element: JSX.Element;
 }
 
+export { IProps as IEmbeddedComponentProps };
+export { IState as IEmbeddedComponentState };
+
 /**
  * Given a way to get a component will render that component via react if the component supports IComponentReactViewable
  * or standard HTML if the component supports IComponentHTMLVisual

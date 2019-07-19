@@ -113,6 +113,9 @@
         "logLevel": "error"
         // "addToApiReviewFile": false
       },
+      "ae-forgotten-export": {
+        "logLevel": "error"
+      },
       "ae-extra-release-tag": {
         "logLevel": "warning"
       },

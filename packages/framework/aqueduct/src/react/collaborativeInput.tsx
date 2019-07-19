@@ -18,6 +18,9 @@ interface IState {
     text: string;
 }
 
+export { IProps as ICollaborativeInputProps };
+export { IState as ICollaborativeInputState };
+
 /**
  * Given a SharedString will produce a collaborative input element.
  */

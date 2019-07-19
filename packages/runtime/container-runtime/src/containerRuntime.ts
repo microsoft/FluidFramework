@@ -229,7 +229,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public readonly logger: ITelemetryLogger;
-    public readonly summaryManager: SummaryManager;
+    private readonly summaryManager: SummaryManager;
 
     private tasks: string[] = [];
     private leaderElector: LeaderElector;
@@ -248,6 +248,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // Note: this.clientId can be undefined in disconnected state
         // This can result in leader() returning true in such state, and undesired results.
         return this.leaderElector && (this.leaderElector.getLeader() === this.clientId);
+    }
+
+    public get summarizerClientId(): string {
+        return this.summaryManager.summarizer;
     }
 
     // Components tracked by the Domain

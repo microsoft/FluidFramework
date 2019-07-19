@@ -356,7 +356,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return tree;
     }
 
-    public submitMapMessage(op: IMapOperation): number {
+    /**
+     * Public only because of MapValueOpEmitter
+     * Expose the function to send an operation message.
+     * @internal
+     */
+    public submitMapMessage(op: any): number {
         return this.submitLocalMessage(op);
     }
 
