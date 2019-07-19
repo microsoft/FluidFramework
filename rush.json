@@ -147,6 +147,10 @@
       "projectFolder": "packages/drivers/replay-socket-storage/"
     },
     {
+      "packageName": "@prague/fluid-debugger",
+      "projectFolder": "packages/drivers/fluid-debugger/"
+    },
+    {
       "packageName": "@prague/file-socket-storage",
       "projectFolder": "packages/drivers/file-socket-storage/"
     },

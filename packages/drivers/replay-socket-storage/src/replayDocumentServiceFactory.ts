@@ -4,10 +4,9 @@
  */
 
 import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
-import { DebugReplayController } from "./fluidDebugger";
-import { createReplayDocumentService } from "./registration";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
+import { ReplayDocumentService } from "./replayDocumentService";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
@@ -21,19 +20,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         );
     }
 
-    public static createDebugger(
-            documentServiceFactory: IDocumentServiceFactory) {
-        const controller = DebugReplayController.create();
-        if (!controller) {
-            return documentServiceFactory;
-        }
-        return new ReplayDocumentServiceFactory(
-            documentServiceFactory,
-            controller,
-        );
-    }
-
-    private constructor(
+    public constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly controller: ReplayController) {}
 
@@ -44,7 +31,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
      * @returns returns the requested document service
      */
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        return Promise.resolve(createReplayDocumentService(
+        return Promise.resolve(ReplayDocumentService.create(
             await this.documentServiceFactory.createDocumentService(resolvedUrl),
             this.controller));
     }

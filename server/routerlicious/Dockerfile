@@ -58,6 +58,7 @@ COPY packages/components/todo/package*.json packages/components/todo/
 COPY packages/components/webflow/package*.json packages/components/webflow/
 COPY packages/drivers/odsp-socket-storage/package*.json packages/drivers/odsp-socket-storage/
 COPY packages/drivers/replay-socket-storage/package*.json packages/drivers/replay-socket-storage/
+COPY packages/drivers/fluid-debugger/package*.json packages/drivers/fluid-debugger/
 COPY packages/drivers/file-socket-storage/package*.json packages/drivers/file-socket-storage/
 COPY packages/drivers/routerlicious-host/package*.json packages/drivers/routerlicious-host/
 COPY packages/drivers/routerlicious-socket-storage/package*.json packages/drivers/routerlicious-socket-storage/

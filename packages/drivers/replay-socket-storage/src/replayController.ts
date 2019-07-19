@@ -9,19 +9,8 @@ import * as api from "@prague/container-definitions";
  * Partial implementation of IDocumentStorageService
  */
 export abstract class ReplayStorageService implements api.IDocumentStorageService {
-    /**
-     * IDocumentStorageService.getVersions() intercept
-     */
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
-
-    /**
-     * IDocumentStorageService.getSnapshotTree() intercept
-     */
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
-
-    /**
-     * IDocumentStorageService.read() intercept
-     */
     public abstract read(blobId: string): Promise<string>;
 
     public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
@@ -61,8 +50,10 @@ export abstract class ReplayController extends ReplayStorageService {
     /**
      * Initialize reply controller
      * @param storage - real document storage
+     * @returns - Boolean, indicating if controller should be used.
+     * If false is returned, caller should fallback to original storage.
      */
-    public abstract initStorage(storage: api.IDocumentStorageService): Promise<void>;
+    public abstract initStorage(storage: api.IDocumentStorageService): Promise<boolean>;
 
     /**
      * Returns sequence number to start processing ops
