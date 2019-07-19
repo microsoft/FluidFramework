@@ -3,6 +3,9 @@
   "version": "0.7.0",
   "description": "",
   "main": "dist/pragueDump.js",
+  "bin" : {
+    "prague-dump": "bin/prague-dump"
+  },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "tsc",
