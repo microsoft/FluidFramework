@@ -32,6 +32,7 @@ dependencies:
   '@rush-temp/flow-intel': 'file:projects/flow-intel.tgz'
   '@rush-temp/flow-scroll': 'file:projects/flow-scroll.tgz'
   '@rush-temp/flow-util': 'file:projects/flow-util.tgz'
+  '@rush-temp/fluid-debugger': 'file:projects/fluid-debugger.tgz'
   '@rush-temp/framework-definitions': 'file:projects/framework-definitions.tgz'
   '@rush-temp/gateway': 'file:projects/gateway.tgz'
   '@rush-temp/gitresources': 'file:projects/gitresources.tgz'
@@ -197,7 +198,6 @@ dependencies:
   jsonwebtoken: 8.5.1
   jwt-decode: 2.2.0
   kafka-node: 3.0.1
-  kafka-rest: 0.0.5
   katex: 0.10.2
   keypress: 0.2.1
   knockout: 3.5.0
@@ -238,7 +238,6 @@ dependencies:
   react-simple-contenteditable: 0.0.5
   redis: 2.8.0
   request: 2.88.0
-  request-promise-native: 1.0.7_request@2.88.0
   rimraf: 2.6.3
   sass-loader: 7.1.0_webpack@4.36.1
   semver: 6.2.0
@@ -12276,7 +12275,7 @@ packages:
     dev: false
     name: '@rush-temp/externalcomponentloader'
     resolution:
-      integrity: sha512-4zPCijmIrpmmSBGtX1iYBAYee/jfM6Su8MvT6xbIvv2mtHo9QkEMRS2vC4oSoOaF9e29p7okAXUvOPuIzOC5Lw==
+      integrity: sha512-y/xdWMHWGc0bgKko8Rt6pipp5cyE95L7vFThAW58dozzv9V5tV5mNkguDnDAn7YQb8vAd8HQoHWMSb8ml19vIA==
       tarball: 'file:projects/externalcomponentloader.tgz'
     version: 0.0.0
   'file:projects/file-socket-storage.tgz':
@@ -12310,7 +12309,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-intel'
     resolution:
-      integrity: sha512-xA/w+pDYf6rOYmimMnBags1E6DQaR5taKvXA7+TklfvIlPw2/BagPpeUB6A9Ls9wfLNPkCAXQCDi7hXGivXxqA==
+      integrity: sha512-2bAeXFtT9m5ieMuAebRy4IGeBV1Uhq9pg+ydT8O7JPzE3m3b8hiJ1bVFTUclhPC7yx6J0F5lnD8pRrmh8+RjYg==
       tarball: 'file:projects/flow-intel.tgz'
     version: 0.0.0
   'file:projects/flow-scroll.tgz':
@@ -12348,7 +12347,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-scroll'
     resolution:
-      integrity: sha512-0oPEzfEwagnWBSAbirb+XlRRDJFpz8DPxos3dPdfK7wSGpkdm7yb8MoMx6yUITwQuMm6DmkiXlTW3qi/eBZorA==
+      integrity: sha512-qxhv4Qa+sbRNqENhOeY+F2+zk+7cX24rSaN5Zou0E13QJAoGKfqzqWgHPrKyO9Qc3aZByzJ7WSXoVjaWCoVJ+Q==
       tarball: 'file:projects/flow-scroll.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -12375,6 +12374,24 @@ packages:
     resolution:
       integrity: sha512-56MS10Q+ZAnTK6VfgBLCpj1LZHX0kjRMVq/9KSerqruspSUGsfsT+iGj5NezzAME41t3SB0hw+05/+QuX6enpw==
       tarball: 'file:projects/flow-util.tgz'
+    version: 0.0.0
+  'file:projects/fluid-debugger.tgz':
+    dependencies:
+      '@microsoft/api-extractor': 7.3.2
+      '@types/debug': 0.0.31
+      '@types/mocha': 5.2.7
+      '@types/node': 10.14.13
+      concurrently: 4.1.1
+      debug: 4.1.1
+      mocha: 5.2.0
+      rimraf: 2.6.3
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+    dev: false
+    name: '@rush-temp/fluid-debugger'
+    resolution:
+      integrity: sha512-ZMP+Mlt7XcxaJFWJ8Ogq8sWWjBaAHvhkVb/OL012pvtNDxlaGe7rR+Htt4YAt8P0MY0If3zkH2KHgjIVVohI/Q==
+      tarball: 'file:projects/fluid-debugger.tgz'
     version: 0.0.0
   'file:projects/framework-definitions.tgz':
     dependencies:
@@ -12968,6 +12985,7 @@ packages:
     version: 0.0.0
   'file:projects/replay-socket-storage.tgz':
     dependencies:
+      '@microsoft/api-extractor': 7.3.2
       '@types/debug': 0.0.31
       '@types/keypress.js': 2.1.0
       '@types/mocha': 5.2.7
@@ -12985,7 +13003,7 @@ packages:
     dev: false
     name: '@rush-temp/replay-socket-storage'
     resolution:
-      integrity: sha512-+eWb5vfGZ+rM15k6Pl7/6gFAjZmMedMS2femq+9ur9vT1UA08fde3rrn4GigLTwzYg/QZERzIkshHD6FSFuRXw==
+      integrity: sha512-tzBbTjjCtS4gFeJc4ZnF43uG6pSBntkDrKexhSFDXmyhUI0UN0QJuYQwEHUY4su0nxzn2MXTlUC11TIPibcCrQ==
       tarball: 'file:projects/replay-socket-storage.tgz'
     version: 0.0.0
   'file:projects/replay-tool.tgz':
@@ -13170,7 +13188,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-lLgUYjCoK+IRJu6EhVvlslIVLCFVS7HLnbkTTz77JLZa2sN75NP90clb88tbxbD5qtkhCKVPYFRctSPDaNLeiw==
+      integrity: sha512-076rpAlKBEfiuJjHSN3Qi4qa/kqJuSVG584KPWz5YlwDjW/9yzoy4ECUqezP+xZFC0/3q2ssBibxejNNvfnzWA==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -13548,6 +13566,7 @@ packages:
       '@microsoft/api-extractor': 7.3.2
       '@types/isomorphic-fetch': 0.0.35
       '@types/node': 10.14.13
+      '@types/url-parse': 1.4.3
       chalk: 2.4.2
       concurrently: 4.1.1
       isomorphic-fetch: 2.2.1
@@ -13563,7 +13582,7 @@ packages:
     dev: false
     name: '@rush-temp/tiny-web-host'
     resolution:
-      integrity: sha512-NGY3SYhAlLrCZvvojWKt7F08nZ2EkwaSdiR9CxE0E9D5wK1RpFfRuicqb4uQd2Z9pFtWaiyfEIOtJgkgmWqDDg==
+      integrity: sha512-vUWd4VAjLUWpYFT9T+TvL1baH3bzsgZ8iJuWtPPQoELr7ipqTMaM3rNUVjFVs9ASH5AciK5PBHuTtFajeVEx6Q==
       tarball: 'file:projects/tiny-web-host.tgz'
     version: 0.0.0
   'file:projects/todo.tgz':
@@ -13738,6 +13757,7 @@ specifiers:
   '@rush-temp/flow-intel': 'file:./projects/flow-intel.tgz'
   '@rush-temp/flow-scroll': 'file:./projects/flow-scroll.tgz'
   '@rush-temp/flow-util': 'file:./projects/flow-util.tgz'
+  '@rush-temp/fluid-debugger': 'file:./projects/fluid-debugger.tgz'
   '@rush-temp/framework-definitions': 'file:./projects/framework-definitions.tgz'
   '@rush-temp/gateway': 'file:./projects/gateway.tgz'
   '@rush-temp/gitresources': 'file:./projects/gitresources.tgz'
@@ -13903,7 +13923,6 @@ specifiers:
   jsonwebtoken: ^8.4.0
   jwt-decode: ^2.2.0
   kafka-node: ^3.0.1
-  kafka-rest: ^0.0.5
   katex: ^0.10.2
   keypress: ^0.2.1
   knockout: ^3.4.2
@@ -13944,7 +13963,6 @@ specifiers:
   react-simple-contenteditable: 0.0.5
   redis: ^2.8.0
   request: ^2.88.0
-  request-promise-native: ^1.0.5
   rimraf: ^2.6.2
   sass-loader: ^7.1.0
   semver: ^6.0.0
