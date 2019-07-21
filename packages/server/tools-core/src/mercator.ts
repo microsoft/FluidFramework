@@ -57,7 +57,8 @@ export async function run(
     const token = jwt.sign(
         {
             documentId: id,
-            permission: "read:write", // use "read:write" for now
+            permission: "read:write", // use "read:write" for now,
+            scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId,
             user: {
                 id: "test",

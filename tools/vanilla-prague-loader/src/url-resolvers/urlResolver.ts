@@ -109,6 +109,7 @@ function auth(tenantId: string, documentId: string, secret: string) {
   const claims: ITokenClaims = {
     documentId,
     permission: "read:write",
+    scopes: ["doc:read", "doc:write", "summary:write"],
     tenantId,
     user: { id: "anonymous-coward" },
   };

@@ -74,6 +74,7 @@ export async function testPragueService(config: Provider): Promise<void> {
         {
             documentId,
             permission: "read:write",
+            scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: params.tenant,
             user: {id: "node-chatter"},
         },

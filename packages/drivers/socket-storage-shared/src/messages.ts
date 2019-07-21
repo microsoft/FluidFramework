@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IContentMessage, ISequencedDocumentMessage, ISignalMessage } from "@prague/container-definitions";
+import {
+    IClient,
+    IContentMessage,
+    ISequencedDocumentMessage,
+    ISignalMessage,
+    ITokenClaims } from "@prague/container-definitions";
 
 /**
  * Message sent to connect to the given document
@@ -39,6 +44,11 @@ export interface IConnect {
  * Message sent to indicate a client has connected to the server
  */
 export interface IConnected {
+    /**
+     * Claims for the client
+     */
+    claims: ITokenClaims;
+
     /**
      * The client who is sending the message
      */

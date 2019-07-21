@@ -5,9 +5,11 @@
 
 import { IUser } from "./users";
 
+// TODO: Remove permission.
 export interface ITokenClaims {
     documentId: string;
     permission: string;
+    scopes: string[];
     tenantId: string;
     user: IUser;
 }

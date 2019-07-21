@@ -9,6 +9,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
+    ITokenClaims,
 } from "@prague/container-definitions";
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
@@ -21,6 +22,16 @@ const MaxBatchDeltas = 2000;
 const ReplayMaxMessageSize = 16 * 1024;
 
 const fileProtocolVersion = "^0.1.0";
+
+const Claims: ITokenClaims = {
+    documentId: "",
+    permission: "",
+    scopes: [],
+    tenantId: "",
+    user: {
+        id: "",
+    },
+};
 
 /**
  * Replay service used to play ops using the delta connection.
@@ -88,6 +99,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
     public static async create(
             documentDeltaStorageService: FileDeltaStorageService): Promise<IDocumentDeltaConnection> {
         const connection = {
+            claims: Claims,
             clientId: "",
             existing: true,
             initialContents: [],

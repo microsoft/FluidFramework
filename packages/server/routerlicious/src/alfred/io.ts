@@ -123,6 +123,7 @@ export function register(
                 connectionsMap.set(clientId, connection);
 
                 const connectedMessage: IConnected = {
+                    claims,
                     clientId,
                     existing: connection.existing,
                     maxMessageSize: connection.maxMessageSize,
@@ -135,6 +136,7 @@ export function register(
             } else {
                 // TODO: We should split storage stuff from orderer to get the following fields right.
                 const connectedMessage: IConnected = {
+                    claims,
                     clientId,
                     existing: true, // Readonly client can only open an existing document.
                     maxMessageSize: 1024, // Readonly client can't send ops.

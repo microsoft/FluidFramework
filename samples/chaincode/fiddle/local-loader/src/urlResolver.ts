@@ -65,6 +65,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     const claims: ITokenClaims = {
       documentId,
       permission: "read:write",
+      scopes: ["doc:read", "doc:write", "summary:write"],
       tenantId,
       user: { id: this.user },
     };

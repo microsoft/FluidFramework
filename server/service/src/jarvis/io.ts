@@ -176,6 +176,7 @@ class SocketConnection {
 
         // And return the connection information to the client
         const connectedMessage: socketStorage.IConnected = {
+            claims,
             clientId: connection.clientId,
             existing: connection.existing,
             maxMessageSize: connection.maxMessageSize,

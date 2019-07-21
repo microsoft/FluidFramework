@@ -295,6 +295,7 @@ Routerlicious uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) li
         {
             documentId: <document_id>,
             permission: "read:write",
+            scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId: <tenant_id>,
             user: <user_id>,
         },

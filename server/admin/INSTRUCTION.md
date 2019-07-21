@@ -22,6 +22,7 @@ Prague uses [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library f
             documentId: <document_id>, // required
             tenantId: tenantId, // required.
             permission: "read:write", // use "read:write" for now
+            scopes: ["doc:read", "doc:write", "summary:write"],
             user: {
                 id: <unique_user_id>, // required. use oid provided by AAD auth.
             },

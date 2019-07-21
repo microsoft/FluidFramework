@@ -11,6 +11,7 @@ import {
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISignalMessage,
+    ITokenClaims,
     IVersion,
 } from "@prague/container-definitions";
 import * as messages from "@prague/socket-storage-shared";
@@ -186,6 +187,7 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         controller: ReplayController): Promise<IDocumentDeltaConnection> {
 
         const connection: messages.IConnected = {
+            claims: ReplayDocumentDeltaConnection.claims,
             clientId: "",
             existing: true,
             initialContents: [],
@@ -206,6 +208,16 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
     private static readonly replayProtocolVersion = "^0.1.0";
     // Since the replay service never actually sends messages the size below is arbitrary
     private static readonly ReplayMaxMessageSize = 16 * 1024;
+
+    private static readonly claims: ITokenClaims = {
+        documentId: "",
+        permission: "",
+        scopes: [],
+        tenantId: "",
+        user: {
+            id: "",
+        },
+    };
 
     public get clientId(): string {
         return this.details.clientId;

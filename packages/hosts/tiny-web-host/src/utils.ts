@@ -33,6 +33,7 @@ export async function auth(tenantId: string, documentId: string, getToken: () =>
     const claims: ITokenClaims = {
         documentId,
         permission: "read:write",
+        scopes: ["doc:read", "doc:write", "summary:write"],
         tenantId,
         user: { id: "anonymous-coward" },
     };
