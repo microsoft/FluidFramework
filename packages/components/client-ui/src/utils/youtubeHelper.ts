@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable-next-line:no-namespace
 declare global {
     // tslint:disable-next-line:interface-name
     interface Window {

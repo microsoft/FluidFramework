@@ -26,7 +26,6 @@ export function findToken(tokenList: string, token: string) {
     return undefined;
 }
 
-// tslint:disable-next-line:no-namespace
 export namespace TokenList {
     export function set(tokenList: string, token: string) {
         return !tokenList                       // If the list is empty

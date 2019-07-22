@@ -21,7 +21,6 @@ export const enum CaretEventType {
     leave = "fluid:caretleave",
 }
 
-// tslint:disable-next-line:no-namespace
 export namespace Caret {
     function dispatchCaretEvent(type: CaretEventType, target: Element, direction: Direction, caretBounds: ICaretBounds) {
         return !(target.dispatchEvent(

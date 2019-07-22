@@ -9,6 +9,7 @@
         "no-empty": false,
         "no-increment-decrement": false,
         "no-backbone-get-set-outside-model": false,
+        "no-namespace": false,
         "no-this-assignment": [
             true,
             {
