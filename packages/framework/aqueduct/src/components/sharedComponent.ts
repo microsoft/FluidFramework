@@ -16,13 +16,11 @@ import {
   IComponentRuntime,
 } from "@prague/runtime-definitions";
 
-import { EventEmitter } from "events";
-
 /**
  * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
+export abstract class SharedComponent implements ISharedComponent, IComponentForge, IComponentRouter {
 
   public readonly url: string; // ISharedComponent
 
@@ -35,8 +33,6 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     protected context: IComponentContext,
     supportedInterfaces: string[],
   ) {
-    super();
-
     // concat supported interfaces
     this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
     this.url = context.id;
