@@ -21,6 +21,11 @@ const stream = split().on("data", (message) => {
   winston.info(message);
 });
 
+/**
+ * Creates and configures an Express server application for handling
+ * package requests.
+ * @param config - configuration for app
+ */
 export function create(config: nconf.Provider) {
     // Express app configuration
     const app: Express = express();

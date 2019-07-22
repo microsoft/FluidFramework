@@ -59,6 +59,10 @@ function getPackageDetails(fullPath: string): IPackageDetails {
     };
 }
 
+/**
+ * Creates and configures a router for responding to npm package requests.
+ * @param store - config store for router
+ */
 export function create(store: nconf.Provider): Router {
     const router: Router = Router();
 

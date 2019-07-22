@@ -8,6 +8,17 @@ import { Stream } from "stream";
 import * as tar from "tar-stream";
 import * as zlib from "zlib";
 
+/**
+ * Fetches an npm package from an npm registry.  This will get a tarball
+ * from the registry and stream the unzipped data returning a buffer of
+ * the raw package data.
+ * @param name - name of package to fetch
+ * @param version - version of package to fetch
+ * @param path - path of package to fetch
+ * @param baseUrl - base URL for npm package registry
+ * @param username - username for npm package registry
+ * @param password - password for npm package registry
+ */
 export async function fetchFile(
     name: string,
     version: string,
