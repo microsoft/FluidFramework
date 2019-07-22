@@ -5,8 +5,8 @@
 
 import {
     IComponent,
+    IComponentHTMLRender,
     IComponentHTMLVisual,
-    IComponentRenderHTML,
     IResolvedUrl,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -57,7 +57,7 @@ async function attach(loader: Loader, url: string, host: Host) {
         ? component.query<IComponentHTMLVisual>("IComponentHTMLVisual")
         : undefined;
     if (viewable) {
-        let renderable = viewable as IComponentRenderHTML;
+        let renderable = viewable as IComponentHTMLRender;
         if (viewable.addView) {
             renderable = viewable.addView();
         }
