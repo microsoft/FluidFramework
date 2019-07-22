@@ -40,6 +40,8 @@ See [this draft document](xref:what-is-fluid) for some more information about Fl
 [!include[<yo yo yo>](./get-started/_yo-fluid-content.md)]
 
 
+<a name="fluid-source" />
+
 ## Get the Fluid source code, including examples
 
 The repository is located at <https://github.com/Microsoft/Prague/>. To gain access you will need to link your GitHub

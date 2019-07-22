@@ -22,6 +22,7 @@ whenever possible.
 
 ## Forking
 
-We only accept pull requests from forks of the master branch. To learn more about forking a repo check out [Fork a repo](https://help.github.com/en/articles/fork-a-repo).
+We only accept pull requests from forks of the master branch. To learn more about forking a repo check out [Fork a
+repo](https://help.github.com/en/articles/fork-a-repo).
 
 ## Issues and Suggestions

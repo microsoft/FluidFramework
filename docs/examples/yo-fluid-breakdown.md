@@ -1,3 +1,7 @@
+---
+uid: yo-fluid-details
+---
+
 # Yo Fluid Breakdown
 
 So you've used <xref:yo-fluid> to crate your first component! If you haven't done, head over to <xref:yo-prague>.
@@ -69,10 +73,10 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `SimpleComponentInstantiationFactory` from `@prague/aqueduct` provides helper functionality.  
-`IComponentHTMLVisual` from `@prague/container-definitions` provides the interface for enabling rendering.  
-`CounterValueType` and `SharedMap` from `@prague/map` are Distributed Data Structures.  
-`IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.  
+`PrimedComponent` and `SimpleComponentInstantiationFactory` from `@prague/aqueduct` provides helper functionality.
+`IComponentHTMLVisual` from `@prague/container-definitions` provides the interface for enabling rendering.
+`CounterValueType` and `SharedMap` from `@prague/map` are Distributed Data Structures.
+`IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for react* and enable React use.
 
 ```typescript
@@ -426,7 +430,7 @@ const pkg = require("../package.json");
 const chaincodeName = pkg.name as string;
 
 /**
- * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the 
+ * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
  * EmbeddedComponentLoader.
  *
  * There are two important things here:

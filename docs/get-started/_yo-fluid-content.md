@@ -1,17 +1,23 @@
-TODO-HACKATHON: Finish these directions
-
 Use yo fluid to get set up quickly.
 
-First, install yo fluid:
+First, [clone the Fluid repo locally](../index.md#fluid-source).
 
-````bash
-./install-yo-fluid
-````
+Once you've cloned the repo, you can set up the `yo fluid` bootstrapper:
+
+```text
+npm install -g yo
+cd /Prague/tools/generator-fluid
+npm install
+npm link
+```
 
 Yo fluid is now ready. Use it to scaffold a new component!
 
-````bash
+```text
 yo fluid
-````
+```
+
+> [!TIP]
+> if you get an error when running `yo fluid` saying that a generator cannot be found, try using `yo @prague/fluid` instead.
 
 Now you're ready to <xref:build-a-component>!

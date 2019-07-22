@@ -4,8 +4,6 @@ uid: architecture
 
 # Architecture
 
-TODO-HACKATHON: add an architectural overview describing the client and server responsibilities
-
 ## Server
 
 Responsibilities of the server:

@@ -12,7 +12,7 @@ uid: yo-fluid
 
 ## Anatomy of the yo fluid scaffold
 
-TODO-HACKATHON: Add description of all the yo fluid files and what they do
+See <xref:yo-fluid-details>
 
 
 ## Yo fluid source
