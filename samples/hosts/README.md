@@ -1,3 +1,7 @@
+---
+uid: loaders
+---
+
 # Literate Prague Loader
 
 The Prague loader is all that is needed to load any Prague document. This example walks through all the steps to

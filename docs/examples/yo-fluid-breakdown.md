@@ -4,11 +4,11 @@ uid: yo-fluid-details
 
 # Yo Fluid Breakdown
 
-So you've used <xref:yo-fluid> to crate your first component! If you haven't done, head over to <xref:yo-prague>.
+So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
 ## Different Components
 
-<xref:yo-fluid> allows you to create two types of fluid components:
+<xref:yo-fluid> allows you to create two types of Fluid components:
 
 - react
 - vanillaJS
@@ -73,11 +73,11 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `SimpleComponentInstantiationFactory` from `@prague/aqueduct` provides helper functionality.
-`IComponentHTMLVisual` from `@prague/container-definitions` provides the interface for enabling rendering.
-`CounterValueType` and `SharedMap` from `@prague/map` are Distributed Data Structures.
+`PrimedComponent` and `SimpleComponentInstantiationFactory` from <xref:aqueduct> provides helper functionality.
+`IComponentHTMLVisual` from <xref:container-definitions> provides the interface for enabling rendering.
+`CounterValueType` and `SharedMap` from <xref:map> are Distributed Data Structures.
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
-`React` and `ReactDOM` are *only for react* and enable React use.
+`React` and `ReactDOM` are *only for React* and enable React use.
 
 ```typescript
 import {
@@ -380,6 +380,8 @@ export const ExampleFluidComponentInstantiationFactory = new SimpleComponentInst
 );
 ```
 
+<a name="index.ts" />
+
 ## `index.ts`
 
 In this file we define a registry of supported components. This is represented as a `Map<string,IComponentFactory>`. In
@@ -414,7 +416,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
 );
 ```
 
-Altogether the code looks like this:
+All together the code looks like this:
 
 ```typescript
 import {

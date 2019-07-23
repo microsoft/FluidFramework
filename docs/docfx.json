@@ -4,13 +4,21 @@
       {
         "files": [
           "**.md",
-          "**.yml"
+          "**.yml",
         ],
         "exclude": [
           "_site/**",
           "templates/**",
           "legacy/**",
         ]
+      },
+      {
+        "src": "../",
+        "files": [
+          "samples/hosts/README.md",
+          "packages/drivers/fluid-debugger/README.md",
+          ],
+        "exclude": ["**/node_modules/**"]
       }
     ],
     "resource": [
@@ -21,6 +29,13 @@
           "**.png",
           "**.jpg",
         ]
+      },
+      {
+        "src": "../",
+        "files": [
+          "packages/drivers/fluid-debugger/images/**.jpg",
+        ],
+        "exclude": ["**/node_modules/**"]
       }
     ],
     "dest": "_site",

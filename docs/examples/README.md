@@ -4,8 +4,11 @@ uid: examples
 
 # Examples
 
-You can find a number of examples in the Fluid repo, under the `samples/chaincode` path. The following is a list of good
-examples to start with.
+You can find a number of examples in the Fluid repo, under the
+[samples/chaincode](https://github.com/microsoft/Prague/tree/master/samples/chaincode)
+path. The following is a list of good examples to start with.
+
+Also see <xref:yo-fluid-details>.
 
 
 ## Clicker
