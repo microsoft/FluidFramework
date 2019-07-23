@@ -28,6 +28,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@prague/runtime-definitions";
+import { raiseConnectedEvent } from "@prague/utils";
 import { EventEmitter } from "events";
 
 /**
@@ -146,12 +147,7 @@ export class ComponentContext extends EventEmitter implements IComponentContext 
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
         this._componentRuntime.changeConnectionState(value, clientId);
-
-        if (value === ConnectionState.Connected) {
-            this.emit("connected", this.clientId);
-        } else {
-            this.emit("disconnected");
-        }
+        raiseConnectedEvent(this, value, clientId);
     }
 
     // Called after a snapshot to update the base ID

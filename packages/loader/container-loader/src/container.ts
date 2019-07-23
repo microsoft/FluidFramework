@@ -45,6 +45,7 @@ import {
     EventEmitterWithErrorHandling,
     flatten,
     PerformanceEvent,
+    raiseConnectedEvent,
     readAndParse,
 } from "@prague/utils";
 import * as assert from "assert";
@@ -846,11 +847,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.protocolHandler!.quorum.changeConnectionState(value, this.clientId!);
 
-        if (this.connectionState === ConnectionState.Connected) {
-            this.emit("connected", this.pendingClientId, version);
-        } else {
-            this.emit("disconnected");
-        }
+        raiseConnectedEvent(this, value, this.clientId!);
     }
 
     private submitMessage(type: MessageType, contents: any): number {

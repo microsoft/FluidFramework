@@ -34,7 +34,7 @@ import {
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
-import { ChildLogger, Deferred, readAndParse } from "@prague/utils";
+import { ChildLogger, Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -299,11 +299,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             }
         }
 
-        if (value === ConnectionState.Connected) {
-            this.emit("connected", clientId);
-        } else {
-            this.emit("disconnected", clientId);
-        }
+        raiseConnectedEvent(this, value, clientId);
     }
 
     public getQuorum(): IQuorum {
