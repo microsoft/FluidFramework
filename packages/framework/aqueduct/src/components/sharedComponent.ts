@@ -4,16 +4,16 @@
  */
 
 import {
-  IComponent,
-  IRequest,
-  IResponse,
-  ISharedComponent,
+    IComponent,
+    IRequest,
+    IResponse,
+    ISharedComponent,
 } from "@prague/container-definitions";
 import { IComponentForge } from "@prague/framework-definitions";
 import {
-  IComponentContext,
-  IComponentRouter,
-  IComponentRuntime,
+    IComponentContext,
+    IComponentRouter,
+    IComponentRuntime,
 } from "@prague/runtime-definitions";
 
 /**
@@ -22,162 +22,162 @@ import {
  */
 export abstract class SharedComponent implements ISharedComponent, IComponentForge, IComponentRouter {
 
-  public readonly url: string; // ISharedComponent
+    public readonly url: string; // ISharedComponent
 
-  private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent", "IComponentForge", "IComponentRouter"];
+    private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent", "IComponentForge", "IComponentRouter"];
 
-  private initializeP: Promise<void> | undefined;
+    private initializeP: Promise<void> | undefined;
 
-  protected constructor(
-    protected runtime: IComponentRuntime,
-    protected context: IComponentContext,
-    supportedInterfaces: string[],
-  ) {
-    // concat supported interfaces
-    this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
-    this.url = context.id;
-  }
-
-  // start IComponentForge
-
-  /**
-   * This should only be called before the component has attached. It allows to pass in props to do setup.
-   * Forge will be called after all the initialize steps.
-   */
-  public async forge(props?: any) { }
-
-  // end IComponentForge
-
-  // start IComponentRouter
-
-  /**
-   * Return this object if someone requests it directly
-   * We will return this object in three scenarios
-   *  1. the request url is a "/"
-   *  2. the request url is our url
-   *  3. the request url is empty
-   */
-  public async request(req: IRequest): Promise<IResponse> {
-    if (req.url === "/" || req.url === this.url || req.url === "") {
-        return {
-            mimeType: "prague/component",
-            status: 200,
-            value: this,
-        };
+    protected constructor(
+        protected runtime: IComponentRuntime,
+        protected context: IComponentContext,
+        supportedInterfaces: string[],
+    ) {
+        // concat supported interfaces
+        this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
+        this.url = context.id;
     }
 
-    return Promise.reject(`unknown request url: ${req.url}`);
-  }
+    // start IComponentForge
 
-  // end IComponentRouter
+    /**
+     * This should only be called before the component has attached. It allows to pass in props to do setup.
+     * Forge will be called after all the initialize steps.
+     */
+    public async forge(props?: any) { }
 
-  // start ISharedComponent
+    // end IComponentForge
 
-  /**
-   * Returns this object if interface supported
-   */
-  public query<T>(id: string): T | undefined {
+    // start IComponentRouter
 
-    // If they are requesting `IComponentForge` and it's not creation then return undefined.
-    if (id === "IComponentForge" && this.runtime.existing) {
-      return undefined;
+    /**
+     * Return this object if someone requests it directly
+     * We will return this object in three scenarios
+     *  1. the request url is a "/"
+     *  2. the request url is our url
+     *  3. the request url is empty
+     */
+    public async request(req: IRequest): Promise<IResponse> {
+        if (req.url === "/" || req.url === this.url || req.url === "") {
+            return {
+                mimeType: "prague/component",
+                status: 200,
+                value: this,
+            };
+        }
+
+        return Promise.reject(`unknown request url: ${req.url}`);
     }
 
-    return this.supportedInterfaces.indexOf(id) !== -1 ? (this as unknown) as T : undefined;
-  }
+    // end IComponentRouter
 
-  /**
-   * returns a list of all supported objects
-   */
-  public list(): string[] {
-    return this.supportedInterfaces;
-  }
+    // start ISharedComponent
 
-  // end ISharedComponent
+    /**
+     * Returns this object if interface supported
+     */
+    public query<T>(id: string): T | undefined {
 
-  /**
-   * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
-   * component being created supports IComponentForge
-   *
-   * @param id - unique component id for the new component
-   * @param pkg - package name for the new component
-   * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
-   */
-  protected async createAndAttachComponent(id: string, pkg: string, props?: any): Promise<IComponent> {
-    const runtime = await this.context.createComponent(id, pkg);
-    const response = await runtime.request({url: "/"});
-    const component = await this.isComponentResponse(response);
+        // If they are requesting `IComponentForge` and it's not creation then return undefined.
+        if (id === "IComponentForge" && this.runtime.existing) {
+            return undefined;
+        }
 
-    const forge = component.query<IComponentForge>("IComponentForge");
-    if (forge) {
-      await forge.forge(props);
+        return this.supportedInterfaces.indexOf(id) !== -1 ? (this as unknown) as T : undefined;
     }
 
-    runtime.attach();
-
-    return component;
-  }
-
-  /**
-   * Gets the component of a given id if any
-   * @param id - component id
-   */
-  protected async getComponent(id: string): Promise<IComponent> {
-    const response = await this.context.hostRuntime.request({ url: `/${id}` });
-    return this.isComponentResponse(response);
-  }
-
-  /**
-   * Called the first time the root component is initialized
-   */
-  protected async create(): Promise<void> { }
-
-  /**
-   * Called every time but the first time the component is initialized
-   */
-  protected async existing(): Promise<void> { }
-
-  /**
-   * Called every time the root component is initialized
-   */
-  protected async opened(): Promise<void> { }
-
-  /**
-   * Allow inheritors to plugin to an initialize flow
-   * We guarantee that this part of the code will only happen once
-   * TODO: add logging via debug
-   */
-  protected async initialize(): Promise<void> {
-    if (!this.initializeP) {
-      this.initializeP = this.initializeInternal();
+    /**
+     * returns a list of all supported objects
+     */
+    public list(): string[] {
+        return this.supportedInterfaces;
     }
 
-    await this.initializeP;
+    // end ISharedComponent
 
-    return;
-  }
+    /**
+     * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
+     * component being created supports IComponentForge
+     *
+     * @param id - unique component id for the new component
+     * @param pkg - package name for the new component
+     * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
+     */
+    protected async createAndAttachComponent(id: string, pkg: string, props?: any): Promise<IComponent> {
+        const runtime = await this.context.createComponent(id, pkg);
+        const response = await runtime.request({ url: "/" });
+        const component = await this.isComponentResponse(response);
 
-  /**
-   * Given a request response will return a component if a component was in the response.
-   */
-  private async isComponentResponse(response: IResponse): Promise<IComponent> {
-    if (response.mimeType === "prague/component") {
-      return response.value as IComponent;
+        const forge = component.query<IComponentForge>("IComponentForge");
+        if (forge) {
+            await forge.forge(props);
+        }
+
+        runtime.attach();
+
+        return component;
     }
 
-    return Promise.reject("response does not contain prague component");
-  }
-
-  private async initializeInternal(): Promise<void> {
-    // allow the inheriting class to override creation based on the lifetime
-    if (this.runtime.existing) {
-      await this.existing();
-    } else {
-      await this.create();
+    /**
+     * Gets the component of a given id if any
+     * @param id - component id
+     */
+    protected async getComponent(id: string): Promise<IComponent> {
+        const response = await this.context.hostRuntime.request({ url: `/${id}` });
+        return this.isComponentResponse(response);
     }
 
-    await this.opened();
+    /**
+     * Called the first time the root component is initialized
+     */
+    protected async create(): Promise<void> { }
 
-    return;
-  }
+    /**
+     * Called every time but the first time the component is initialized
+     */
+    protected async existing(): Promise<void> { }
+
+    /**
+     * Called every time the root component is initialized
+     */
+    protected async opened(): Promise<void> { }
+
+    /**
+     * Allow inheritors to plugin to an initialize flow
+     * We guarantee that this part of the code will only happen once
+     * TODO: add logging via debug
+     */
+    protected async initialize(): Promise<void> {
+        if (!this.initializeP) {
+            this.initializeP = this.initializeInternal();
+        }
+
+        await this.initializeP;
+
+        return;
+    }
+
+    /**
+     * Given a request response will return a component if a component was in the response.
+     */
+    private async isComponentResponse(response: IResponse): Promise<IComponent> {
+        if (response.mimeType === "prague/component") {
+            return response.value as IComponent;
+        }
+
+        return Promise.reject("response does not contain prague component");
+    }
+
+    private async initializeInternal(): Promise<void> {
+        // allow the inheriting class to override creation based on the lifetime
+        if (this.runtime.existing) {
+            await this.existing();
+        } else {
+            await this.create();
+        }
+
+        await this.opened();
+
+        return;
+    }
 }
