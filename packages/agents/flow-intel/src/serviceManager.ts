@@ -4,7 +4,6 @@
  */
 
 import { FlowDocument } from "@chaincode/webflow";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
@@ -39,7 +38,7 @@ export class IntelligentServicesManager {
     }
 
     public process() {
-        this.document.on("sequenceDelta", (msg: ISequencedDocumentMessage) => {
+        this.document.on("sequenceDelta", () => {
             if (!this.intelInvoked) {
 
                 // And then run plugin insights rate limited
