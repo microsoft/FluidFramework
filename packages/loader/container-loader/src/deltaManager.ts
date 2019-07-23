@@ -221,12 +221,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
+    public attachOpHandler(
+            minSequenceNumber: number,
+            sequenceNumber: number,
+            handler: IDeltaHandlerStrategy,
+            resume: boolean) {
         debug("Attached op handler", sequenceNumber);
 
-        // The MSN starts at the base the manager is initialized to
         this.baseSequenceNumber = sequenceNumber;
-        this.minSequenceNumber = sequenceNumber;
+        this.minSequenceNumber = minSequenceNumber;
         this.lastQueuedSequenceNumber = sequenceNumber;
 
         // we will use same check in other places to make sure all the seq number above are set properly.
@@ -660,7 +663,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     private processMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void): void {
-        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         const startTime = Date.now();
 
         if (this.connection && this.connection.details.clientId === message.clientId) {
@@ -690,7 +692,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
 
         // Watch the minimum sequence number and be ready to update as needed
+        assert(this.minSequenceNumber <= message.minimumSequenceNumber);
         this.minSequenceNumber = message.minimumSequenceNumber;
+
+        assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
 
         this.handler!.process(
