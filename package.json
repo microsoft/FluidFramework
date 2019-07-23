@@ -16,7 +16,7 @@
     "publish-local": "lerna run publish-local --stream",
     "rush": "node ./common/scripts/install-run-rush.js",
     "rush:build": "npm run rush -- build",
-    "rush:repair": "cp .npmrc common/config/rush/ && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update -- --purge --recheck",
+    "rush:repair": "rm common/config/rush/pnpm-lock.yaml && cp .npmrc common/config/rush/ && perl ./common/scripts/update-rush-json.pl > ./rush.json && npm run rush:update -- --purge --recheck",
     "rush:install": "npm run rush -- install",
     "rush:rebuild": "npm run rush -- rebuild",
     "rush:update": "npm run rush -- update",
