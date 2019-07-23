@@ -5517,8 +5517,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // Work around a race condition with multiple shared strings trying to create the interval
         // collections at the same time
         if (this.collabDocument.existing) {
-            const intervalCollections = this.sharedString.getIntervalCollections();
-            await Promise.all([intervalCollections.wait("bookmarks"), intervalCollections.wait("comments")]);
+            await Promise.all([
+                this.sharedString.waitSharedIntervalCollection("bookmarks"),
+                this.sharedString.waitSharedIntervalCollection("comments"),
+            ]);
         }
 
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
@@ -5561,10 +5563,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
         this.addCalendarMap();
-        const intervalMap = this.sharedString.intervalCollections;
-        intervalMap.on("valueChanged", (delta: types.IValueChanged) => {
+
+        this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);
         });
+
         // this.testWordInfo();
     }
 

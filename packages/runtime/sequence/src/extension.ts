@@ -24,7 +24,7 @@ export class SharedStringExtension implements ISharedObjectExtension {
         services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedString = new SharedString(document, id, services);
+        const sharedString = new SharedString(document, id);
         await sharedString.load(minimumSequenceNumber, headerOrigin, services);
         return sharedString;
     }
@@ -49,7 +49,7 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
         services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedObjectSequence<object>(document, id, services);
+        const sharedSeq = new SharedObjectSequence<object>(document, id);
         await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
         return sharedSeq;
     }
@@ -74,7 +74,7 @@ export class SharedNumberSequenceExtension implements ISharedObjectExtension {
         services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedObject> {
 
-        const sharedSeq = new SharedNumberSequence(document, id, services);
+        const sharedSeq = new SharedNumberSequence(document, id);
         await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
         return sharedSeq;
     }

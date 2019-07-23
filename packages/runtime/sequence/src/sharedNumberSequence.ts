@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedNumberSequenceExtension } from "./extension";
 import { SharedSequence } from "./sharedSequence";
 
@@ -29,11 +29,8 @@ export class SharedNumberSequence extends SharedSequence<number> {
         return new SharedNumberSequenceExtension();
     }
 
-    constructor(
-        document: IComponentRuntime,
-        public id: string,
-        services?: ISharedObjectServices) {
-        super(document, id, SharedNumberSequenceExtension.Type, services);
+    constructor(document: IComponentRuntime, public id: string) {
+        super(document, id, SharedNumberSequenceExtension.Type);
     }
 
     public getRange(start: number, end?: number) {

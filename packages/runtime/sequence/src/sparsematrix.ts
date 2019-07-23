@@ -207,12 +207,8 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         return new SparseMatrixExtension();
     }
 
-    constructor(
-        document: IComponentRuntime,
-        public id: string,
-        services?: ISharedObjectServices,
-    ) {
-        super(document, id, SparseMatrixExtension.Type, services);
+    constructor(document: IComponentRuntime, public id: string) {
+        super(document, id, SparseMatrixExtension.Type);
     }
 
     // "Replace" ops currently trigger an assert in 'BaseSegment.ack()'
@@ -399,7 +395,7 @@ export class SparseMatrixExtension implements ISharedObjectExtension {
         services: ISharedObjectServices,
         headerOrigin: string,
     ): Promise<ISharedObject> {
-        const sharedObject = new SparseMatrix(document, id, services);
+        const sharedObject = new SparseMatrix(document, id);
         await sharedObject.load(minimumSequenceNumber, headerOrigin, services);
         return sharedObject;
     }

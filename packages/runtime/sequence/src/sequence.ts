@@ -10,15 +10,14 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import {
-    ISharedMap,
     IValueChanged,
+    IValueType,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
     IComponentRuntime,
     IObjectStorageService,
-    ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
@@ -33,13 +32,23 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
-export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
+const valueTypes: Array<IValueType<any>> = [
+    new SharedStringIntervalCollectionValueType(),
+    new SharedIntervalCollectionValueType(),
+];
 
+const intervalCollectionMapPath = "intervalCollections/";
+
+function getIntervalCollectionPath(label: string): string {
+    return `${intervalCollectionMapPath}${label}`;
+}
+
+export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
+
     public client: MergeTree.Client;
-    public intervalCollections: ISharedMap;
     protected isLoaded = false;
     protected collabStarted = false;
     protected pendingMinSequenceNumber: number = 0;
@@ -51,9 +60,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         document: IComponentRuntime,
         public id: string,
         extensionType: string,
-        services?: ISharedObjectServices) {
-
+    ) {
         super(id, document, extensionType);
+
+        for (const valueType of valueTypes) {
+            this.registerValueType(valueType);
+        }
+
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
             this.segmentFromSpec.bind(this),
@@ -263,37 +276,27 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         }
     }
 
-    public getIntervalCollections(): ISharedMap {
-        return this.intervalCollections;
+    public async waitSharedIntervalCollection<TInterval extends ISerializableInterval>(
+        label: string,
+    ): Promise<SharedIntervalCollection<TInterval>> {
+        const translatedLabel = getIntervalCollectionPath(label);
+        return this.wait<SharedIntervalCollection<TInterval>>(translatedLabel);
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getSharedIntervalCollection(label: string): SharedIntervalCollection<SharedStringInterval> {
-        if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection<SharedStringInterval>>(
-                label,
-                undefined,
-                SharedStringIntervalCollectionValueType.Name);
-        }
-
-        const sharedCollection =
-            this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(label);
-        return sharedCollection;
+        return this.getSharedIntervalCollectionInternal<SharedStringInterval>(
+            label,
+            SharedStringIntervalCollectionValueType.Name);
     }
 
     // TODO: fix race condition on creation by putting type on every operation
-    public getGenericSharedIntervalCollection<TInterval extends ISerializableInterval>(label: string):
-        SharedIntervalCollection<TInterval> {
-        if (!this.intervalCollections.has(label)) {
-            this.intervalCollections.set<SharedIntervalCollection<TInterval>>(
-                label,
-                undefined,
-                SharedIntervalCollectionValueType.Name);
-        }
-
-        const sharedCollection =
-            this.intervalCollections.get<SharedIntervalCollection<TInterval>>(label);
-        return sharedCollection;
+    public getGenericSharedIntervalCollection<TInterval extends ISerializableInterval>(
+        label: string,
+    ): SharedIntervalCollection<TInterval> {
+        return this.getSharedIntervalCollectionInternal<TInterval>(
+            label,
+            SharedIntervalCollectionValueType.Name);
     }
 
     public sendNACKed() {
@@ -361,19 +364,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const header = await storage.read("header");
         assert(header);
 
-        this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage)
-            .then(
-                () => {
-                    this.loadFinished();
-                },
-                (error) => {
-                    this.loadFinished(error);
-                });
+        try {
+            await this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage);
+            this.loadFinished();
+        } catch (error) {
+            this.loadFinished(error);
+        }
     }
 
     protected initializeLocalCore() {
-        const intervalCollections = SharedMap.create(this.runtime);
-        this.set("intervalCollections", intervalCollections);
         assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
         this.loadFinished();
     }
@@ -439,10 +438,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return;
     }
 
-    protected readyContent(): Promise<void> {
-        return this.loaded;
-    }
-
     protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
         const segToSpec = this.segmentFromSpec.bind(this);
         return segSpecs.map((spec) => {
@@ -461,6 +456,23 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         });
 
         super.didAttach();
+    }
+
+    private getSharedIntervalCollectionInternal<TInterval extends ISerializableInterval>(
+        label: string,
+        type: string,
+    ): SharedIntervalCollection<TInterval> {
+        const translatedLabel = getIntervalCollectionPath(label);
+
+        if (!this.has(translatedLabel)) {
+            this.set(
+                translatedLabel,
+                undefined,
+                type);
+        }
+
+        const sharedCollection = this.get<SharedIntervalCollection<TInterval>>(translatedLabel);
+        return sharedCollection;
     }
 
     private processMinSequenceNumberChanged(value: number) {
@@ -602,29 +614,25 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private initializeIntervalCollections() {
-        this.intervalCollections = this.get<ISharedMap>("intervalCollections");
+        const intervalCollections = Array.from(this.keys())
+            .filter((key) => key.indexOf(intervalCollectionMapPath) === 0);
 
-        // when testing and using mock runtime, intervalCollections would be null.
-        if (this.intervalCollections) {
-            // Ensure intervalCollections has registered the ValueTypes that SharedSegmentSequence depends on
-            this.intervalCollections.registerValueType(new SharedStringIntervalCollectionValueType());
-            this.intervalCollections.registerValueType(new SharedIntervalCollectionValueType());
-
-            // Listen and initialize new SharedIntervalCollections
-            this.intervalCollections.on("valueChanged", (ev: IValueChanged) => {
-                const intervalCollection =
-                    this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
-                if (!intervalCollection.attached) {
-                    intervalCollection.attach(this.client, ev.key);
-                }
-            });
-
-            // Initialize existing SharedIntervalCollections
-            for (const key of this.intervalCollections.keys()) {
-                const intervalCollection =
-                    this.intervalCollections.get<SharedIntervalCollection<SharedStringInterval>>(key);
-                intervalCollection.attach(this.client, key);
+        // Listen and initialize new SharedIntervalCollections
+        this.on("valueChanged", (ev: IValueChanged) => {
+            if (ev.key.indexOf(intervalCollectionMapPath) !== 0) {
+                return;
             }
+
+            const intervalCollection = this.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
+            if (!intervalCollection.attached) {
+                intervalCollection.attach(this.client, ev.key);
+            }
+        });
+
+        // Initialize existing SharedIntervalCollections
+        for (const key of intervalCollections) {
+            const intervalCollection = this.get<SharedIntervalCollection<SharedStringInterval>>(key);
+            intervalCollection.attach(this.client, key);
         }
     }
 

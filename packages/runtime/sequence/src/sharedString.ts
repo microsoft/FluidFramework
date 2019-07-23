@@ -4,10 +4,7 @@
  */
 
 import * as MergeTree from "@prague/merge-tree";
-import {
-    IComponentRuntime,
-    ISharedObjectServices,
-} from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import {
     SharedStringExtension,
 } from "./extension";
@@ -41,12 +38,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
-    constructor(
-        document: IComponentRuntime,
-        public id: string,
-        services?: ISharedObjectServices) {
-
-        super(document, id, SharedStringExtension.Type, services);
+    constructor(document: IComponentRuntime, public id: string) {
+        super(document, id, SharedStringExtension.Type);
         this.mergeTreeTextHelper = new MergeTree.MergeTreeTextHelper(this.client.mergeTree);
     }
 

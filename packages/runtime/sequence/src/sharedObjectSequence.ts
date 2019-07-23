@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedObjectSequenceExtension } from "./extension";
 import { SharedSequence } from "./sharedSequence";
 
@@ -29,11 +29,8 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
         return new SharedObjectSequenceExtension();
     }
 
-    constructor(
-        document: IComponentRuntime,
-        public id: string,
-        services?: ISharedObjectServices) {
-        super(document, id, SharedObjectSequenceExtension.Type, services);
+    constructor(document: IComponentRuntime, public id: string) {
+        super(document, id, SharedObjectSequenceExtension.Type);
     }
 
     public getRange(start: number, end?: number) {
