@@ -4,5 +4,8 @@
  */
 
 import * as registerDebug from "debug";
+import { pkgName, pkgVersion } from "./packageVersion";
 
 export const debug = registerDebug("prague:container-loader");
+
+debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

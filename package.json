@@ -2,12 +2,13 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "npm run policy-check && npm run build:compile && npm run tslint && npm run build:docs",
+    "build": "npm run policy-check && npm run build:genver && npm run build:compile && npm run tslint && npm run build:docs",
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel && npm run build:gendocs",
     "build:gendocs": "api-documenter yaml -i packages/_api-extractor-temp/doc-models -o docs/api",
+    "build:genver": "lerna run build:genver --stream --parallel",
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
-    "build:full": "npm run build:full:compile && npm run tslint && npm run build:docs",
+    "build:full": "npm run build:genver && npm run build:full:compile && npm run tslint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs",
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
@@ -43,7 +44,7 @@
     "stop:full": "cd server/routerlicious && npm run stop:full",
     "policy-check": "cd tools/repo-policy-check && npm run policy-check",
     "policy-check:full": "cd tools/repo-policy-check && npm install && npm run policy-check",
-    "bump-version": "lerna version minor --no-push --no-git-tag-version"
+    "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:genver"
   },
   "devDependencies": {
     "@microsoft/api-documenter": "^7.2.1",

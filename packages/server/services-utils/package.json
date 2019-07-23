@@ -6,10 +6,11 @@
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"

@@ -4,5 +4,7 @@
  */
 
 import * as registerDebug from "debug";
+import { pkgName, pkgVersion } from "./packageVersion";
 
 export const debug = registerDebug("prague:utils");
+debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

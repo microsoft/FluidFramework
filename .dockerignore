@@ -5,6 +5,7 @@
 !packages/**
 !server/routerlicious
 !docs/**
+!tools/build-server-resources/**
 **/node_modules
 **/dist
 **/lib

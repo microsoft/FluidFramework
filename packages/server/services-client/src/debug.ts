@@ -4,6 +4,7 @@
  */
 
 import * as registerDebug from "debug";
+import { pkgName, pkgVersion } from "./packageVersion";
 
-/* tslint:disable:no-unsafe-any */
 export const debug = registerDebug("prague:services-client");
+debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

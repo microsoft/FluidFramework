@@ -13,6 +13,9 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# Remove the npmrc following the build
+RUN rm -f .npmrc
+
 # Expose the port the app runs under
 EXPOSE 3000
 

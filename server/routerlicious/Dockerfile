@@ -22,6 +22,7 @@ WORKDIR /usr/src/server
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY *.json ./
 COPY .npmrc .
+COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/agents/flow-intel/package*.json packages/agents/flow-intel/
 COPY packages/agents/intelligence-runner/package*.json packages/agents/intelligence-runner/
@@ -128,6 +129,11 @@ RUN npm install --unsafe-perm
 # And now copy over our actual code and build
 COPY .gitignore .
 COPY packages/ packages/
+
+# Set the version number
+ARG VERSION_BUILDNUMBER=0
+RUN echo $VERSION_BUILDNUMBER
+RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
 RUN npm run build:full
 
 # Partial Build Target for publishing
@@ -135,13 +141,6 @@ FROM base AS publish
 
 # Webpack components for publishing
 RUN npm run webpack
-
-# Initialize a base repo for Lerna
-RUN git init
-RUN git config --global user.email "praguertdev@microsoft.com"
-RUN git config --global user.name "Prague build server"
-RUN git add .
-RUN git commit -m "Base commit for Lerna"
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
