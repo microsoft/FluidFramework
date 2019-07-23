@@ -45,11 +45,20 @@ export class WebFlowHost extends Component {
         const videosP = this.openCollection("video-players");
         const imagesP = this.openCollection("images");
 
-        const div = await this.platform.queryInterface<Element>("div");
+        const hostDiv = await this.platform.queryInterface<HTMLDivElement>("div");
+        const flowDiv = document.createElement("div");
+        const insightsDiv = document.createElement("div");
+        hostDiv.style.display = "flex";
+        flowDiv.style.flexGrow = "1";
+        insightsDiv.innerText = "Insights";
+        insightsDiv.style.backgroundColor = "whitesmoke";
+        insightsDiv.style.display = "none";
+        hostDiv.append(flowDiv, insightsDiv);
+
         const scheduler = new Scheduler();
         const host = new HostView();
         host.attach(
-            div, {
+            flowDiv, {
                 scheduler,
                 context: this.context,
                 doc: await docP,
