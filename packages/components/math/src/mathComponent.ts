@@ -61,6 +61,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         "IComponentLayout", "IComponentCursor", "IComponentHTMLRender", "IComponentHTMLView"];
 
     public cursorActive = false;
+    public cursorElement: HTMLElement;
     // IComponentLayout
     public canInline = true;
     public containerElement: HTMLElement;
@@ -194,6 +195,62 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         }) as EventListener);
     }
 
+    public buildAlignedAsDiv(mathLines: string[], elm: HTMLElement) {
+        let count = 1;
+        for (const line of mathLines) {
+            const lineDiv = document.createElement("div");
+            elm.appendChild(lineDiv);
+            const eqIndex = line.indexOf("=");
+            if (eqIndex >= 0) {
+                const preEq = line.substring(0, eqIndex);
+                const postEq = line.substring(eqIndex + 1);
+                const preEqElm = document.createElement("span");
+                preEqElm.style.width = "35%";
+                Katex.render(preEq, preEqElm,
+                    { throwOnError: false, displayMode: true });
+
+                const eqElm = document.createElement("span");
+                eqElm.style.width = "10%";
+                Katex.render("=", eqElm,
+                    { throwOnError: false, displayMode: true });
+                const postEqElm = document.createElement("span");
+                postEqElm.style.width = "35%";
+                Katex.render(postEq, postEqElm,
+                    { throwOnError: false, displayMode: true });
+                lineDiv.appendChild(preEqElm);
+                lineDiv.appendChild(eqElm);
+                lineDiv.appendChild(postEqElm);
+            } else {
+                const eqElm = document.createElement("span");
+                eqElm.style.width = "80%";
+                Katex.render("=", eqElm,
+                    { throwOnError: false, displayMode: true });
+                lineDiv.appendChild(eqElm);
+            }
+            const tagElm = document.createElement("span");
+            tagElm.style.width = "20%";
+            Katex.render(`\\tag{${count++}}{}`, tagElm,
+                { throwOnError: false, displayMode: true });
+            lineDiv.appendChild(tagElm);
+            count++;
+        }
+    }
+
+    public buildAligned(mathLines: string[]) {
+        let mathBuffer = "\\begin{darray}{rcllcr} \n";
+        let count = 1;
+        for (let line of mathLines) {
+            if (line.indexOf("=") >= 0) {
+                line = line.replace("=", "& = &");
+            } else {
+                line = `& ${line} &`;
+            }
+            mathBuffer += `${line} & & \\hspace{20ex} & \\textrm{(${count++})} \\\\ \n`;
+        }
+        mathBuffer += "\\end{darray}";
+        return mathBuffer;
+    }
+
     public buildTree(elm: HTMLElement, display?: string) {
         if (this.containerElement !== elm) {
             this.containerElement = elm;
@@ -225,10 +282,10 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                     mathBuffer.substring(this.mathCursor);
                 mathBuffer = MathExpr.boxEmptyParam(mathBuffer);
             }
-            mathMarker.mathViewBuffer = mathBuffer;
             Katex.render(mathBuffer, rootElement,
                 { throwOnError: false });
         } else {
+            const useDarray = true;
             rootElement = document.createElement("div");
             if (this.cursorActive) {
                 // showCursor
@@ -238,26 +295,20 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                 mathBuffer = MathExpr.boxEmptyParam(mathBuffer);
             }
             const mathLines = mathBuffer.split("\n");
-            mathBuffer = "\\begin{array}{rcllr} \n";
-            let count = 1;
-            for (let line of mathLines) {
-                if (line.indexOf("=") >= 0) {
-                    line = line.replace("=", "& = &");
-                } else {
-                    line = `& ${line} &`;
-                }
-                mathBuffer += `${line} & & \\small \\textrm{(${count++})} \\\\ \n`;
+            if (useDarray) {
+                mathBuffer = this.buildAligned(mathLines);
+                Katex.render(mathBuffer, rootElement,
+                    { throwOnError: false, displayMode: true });
+            } else {
+                this.buildAlignedAsDiv(mathLines, rootElement);
             }
-            mathBuffer += "\\end{array}";
-            mathMarker.mathViewBuffer = mathBuffer;
-            Katex.render(mathBuffer, rootElement,
-                { throwOnError: false, displayMode: true });
         }
         if (this.cursorActive) {
             const cursorElement = ClientUI.controls.findFirstMatch(rootElement, (cursor: HTMLElement) => {
                 return cursor.style && (cursor.style.color === MathExpr.cursorColor);
             });
             if (cursorElement) {
+                this.cursorElement = cursorElement;
                 cursorElement.classList.add("blinking");
             }
         }
@@ -632,9 +683,9 @@ export async function instantiateComponent(context: IComponentContext): Promise<
         new Sequence.SharedIntervalCollectionValueType(),
     ];
 
-    // tslint:disable-next-line:no-require-imports no-submodule-imports
+    // tslint:disable:no-require-imports no-submodule-imports
     require("katex/dist/katex.min.css");
-
+    require("./index.css");
     const mapExtension = SharedMap.getFactory(mapValueTypes);
     const sharedStringExtension = Sequence.SharedString.getFactory();
 

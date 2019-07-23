@@ -5,6 +5,7 @@
 
 import { ServicePlatform } from "@prague/app-component";
 import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../../document";
@@ -77,9 +78,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
             const slot = document.createElement(tag);
             state.root.appendChild(slot);
             state.slot = slot;
-
             layout.doc.getComponent(marker).then((component: IComponent) => {
-                // TODO included for back compat - can remove once we migrate to 0.5
                 const visual = (component as IComponent).query<IComponentHTMLVisual>("IComponentHTMLVisual");
                 if (visual) {
                     if (visual.addView) {
@@ -87,11 +86,15 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                         // add view options here
                         // where do we remove the view when finished?
                         view.render(slot);
-                        state.view = view;
+                        // change context to enable this
+                        // state.view = view;
                     } else {
                         visual.render(slot);
                     }
-                } else if ("attach" in component) {
+                    CaretUtil.caretEnter(slot as Element, Direction.right, Rect.empty);
+                    slot.focus();
+                // TODO included for back compat - can remove once we migrate to 0.5
+            } else if ("attach" in component) {
                     const legacyComponent = component as { attach(platform: ServicePlatform) };
                     legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
                 }
@@ -110,9 +113,6 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
     }
 
     public end(state: IInclusionState, layout: Layout) {
-        if (state.view) {
-            state.view.remove();
-        }
         layout.popNode();
     }
 }
