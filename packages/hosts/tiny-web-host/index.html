@@ -13,7 +13,7 @@
             id='clientSecret'> </input></div>
     <p>The "SPO only" fields are used with the tenant spo or spo-df.</p>
     <button id='go' onclick='go()'>go</button>
-    <!-- <button id='go' onclick='go(true)'>goIFrame</button> -->
+    <button id='go' onclick='go(true)'>goIFrame</button>
 
     <div id='container'></div>
     <script>
@@ -61,7 +61,17 @@
             loadPragueScript.src = "dist/main.bundle.js";
             loadPragueScript.onload = () => {
                 const runScript = document.createElement('script');
-                runScript.text = `
+                if (useIframe) {
+                    runScript.text = `
+            tinyWebLoader.loadIFramedPragueComponent(
+                    "${document.getElementById('link').value}",
+                    () => {"${document.getElementById('token').value}"},
+                    document.getElementById('prague-component'),
+                    "${document.getElementById('clientId').value}",
+                    "${document.getElementById('clientSecret').value}",
+                    );`;
+                } else {
+                    runScript.text = `
             tinyWebLoader.loadPragueComponent(
                     "${document.getElementById('link').value}",
                     () => {"${document.getElementById('token').value}"},
@@ -69,6 +79,7 @@
                     "${document.getElementById('clientId').value}",
                     "${document.getElementById('clientSecret').value}",
                     );`;
+                }
                 framedoc.body.appendChild(runScript);
             }
 

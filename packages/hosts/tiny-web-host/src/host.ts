@@ -8,6 +8,9 @@ import * as UrlParse from "url-parse";
 import { resolveUrl } from "./urlResolver";
 import { auth } from "./utils";
 
+// tslint:disable-next-line: no-var-requires no-require-imports
+const packageJson = require("../package.json");
+
 const npm = "https://pragueauspkn-3873244262.azureedge.net";
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
@@ -48,6 +51,79 @@ export async function loadPragueComponent(
         throw new Error("Non-Compatible Url.");
     }
     return componentP;
+}
+
+/**
+ * Create an IFrame for loading Prague Components.
+ *
+ * @param url - Url of the Prague component to be loaded
+ * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
+ * @param div - The div to load the component into
+ * @param clientId - The SPO clientId.
+ * @param secret - The SPO clientSecret.
+ * @param libraryName - if loaded from React, this should be "reactLoader"
+ */
+export async function loadIFramedPragueComponent(
+    url: string,
+    getToken: () => Promise<string>,
+    div: HTMLDivElement,
+    clientId?: string,
+    secret?: string,
+    libraryName: string = "tinyWebLoader"): Promise<any> {
+
+    let scriptUrl: string;
+    // main.bundle.js refers to the output of webpacking this file.
+    // tslint:disable-next-line: no-unsafe-any
+    if (packageJson.version.split(".")[2] === "0") {
+        console.log("Ends in 0, so we'll use the local bundle");
+        scriptUrl = "dist/main.bundle.js";
+    } else {
+        // tslint:disable-next-line: max-line-length no-unsafe-any
+        scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@prague/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
+    }
+
+    const iframe = document.createElement("iframe");
+    iframe.id = "containerid";
+
+    iframe.srcdoc = `
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+    <script type="text/javascript" src=${scriptUrl}></script>
+    </head>
+
+    <body>
+        <div id="componentDiv"></div>
+        <script>
+                console.log("Welcome to the IFrame");
+                function start(url, token, appId) {
+                    ${libraryName}.loadPragueComponent(
+                        url,
+                        () => { "return token"},
+                        document.getElementById("componentDiv"),
+                        "clientId",
+                        "clientSecret");
+                }
+
+                window.addEventListener("message", (message) => {
+                    console.log(message);
+                    start(message.data.url, message.data.token, message.data.appId);
+                });
+            </script>
+    </body>
+    </html>  `;
+
+    div.appendChild(iframe);
+    iframe.onload = async () => {
+        iframe.contentWindow.postMessage({
+            appId: "app Id",
+            token: await getToken(),
+            url,
+        }, "*");
+    };
+
+    return;
 }
 
 async function startWrapper(

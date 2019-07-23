@@ -16,7 +16,7 @@
             id='clientSecret'> </input></div>
     <p>The "SPO only" fields are used with the tenant spo or spo-df.</p>
     <button id='go' onclick='go()'>go</button>
-    <!-- <button id='go' onclick='go(true)'>goIFrame</button> -->
+    <button id='go' onclick='go(true)'>goIFrame</button>
 
     <div id='container'></div>
     <script>
@@ -80,6 +80,7 @@
                             url: "${document.getElementById('link').value}",
                             getToken: () => {"${document.getElementById('token').value}"},
                             appId: "reactLoader",
+                            iframe: ${useIframe}
                         },
                         null
                     ),

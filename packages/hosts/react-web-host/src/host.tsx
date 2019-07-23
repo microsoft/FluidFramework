@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { loadPragueComponent } from "@prague/tiny-web-host";
+import { loadIFramedPragueComponent, loadPragueComponent } from "@prague/tiny-web-host";
 import * as React from "react";
 
-export { isPragueURL, isSpoUrl } from "@prague/tiny-web-host";
+export { isPragueURL, isSpoUrl, loadPragueComponent } from "@prague/tiny-web-host";
 
 export interface ILoaderProps {
 
   clientId?: string;
 
   clientSecret?: string;
+
+  iframe?: boolean;
 
   /**
    * URL of the Prague component
@@ -39,14 +41,27 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
   }
 
   public async componentDidMount() {
-    loadPragueComponent(
-      this.props.url,
-      this.props.getToken,
-      this.divRef.current,
-      this.props.appId,
-      this.props.clientId ? this.props.clientId : "",
-      this.props.clientSecret ? this.props.clientSecret : "",
-    );
+
+    if (this.props.iframe) {
+       loadIFramedPragueComponent(
+        this.props.url,
+        this.props.getToken,
+        this.divRef.current,
+        // this.props.appId,
+        this.props.clientId ? this.props.clientId : "",
+        this.props.clientSecret ? this.props.clientSecret : "",
+        "reactLoader",
+       );
+    } else {
+      loadPragueComponent(
+        this.props.url,
+        this.props.getToken,
+        this.divRef.current,
+        this.props.appId,
+        this.props.clientId ? this.props.clientId : "",
+        this.props.clientSecret ? this.props.clientSecret : "",
+      );
+    }
   }
 
   public render() {
