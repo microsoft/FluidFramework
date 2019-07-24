@@ -11,6 +11,10 @@
       "projectFolder": "packages/agents/flow-intel/"
     },
     {
+      "packageName": "@chaincode/flow-intel-viewer",
+      "projectFolder": "packages/agents/flow-intel-viewer/"
+    },
+    {
       "packageName": "@prague/intelligence-runner",
       "projectFolder": "packages/agents/intelligence-runner/"
     },
