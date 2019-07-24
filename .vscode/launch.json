@@ -148,6 +148,15 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "MathFarm",
+            "sourceMaps": true,
+            "outFiles": [ "${workspaceFolder}/packages/components/math/dist/test/*.js" ],
+            "protocol": "inspector",
+            "program": "${workspaceFolder}/packages/components/math/dist/test/testFarm.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Farm",
             "sourceMaps": true,
             "outFiles": [ "${workspaceFolder}/packages/runtime/sequence/dist/test/*.js" ],

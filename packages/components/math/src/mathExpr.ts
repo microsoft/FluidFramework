@@ -453,6 +453,7 @@ export class MathCommandToken extends MathSymbolToken {
     // the tokens starting each parameter
     public paramStarts: MathToken[];
     public isModifier?: boolean;
+    public symbolModified?: MathSymbolToken;
 
     constructor(type: MathTokenType, start: number, end: number,
         public cmdInfo?: IMathCommand) {
@@ -487,6 +488,7 @@ export function transformInputCode(c: number) {
             case CharacterCodes._:
                 return "_{}";
             case CharacterCodes.cr:
+                // AF: restrict to top-level (pass into this function whether top-level)
                 return "\n";
             default:
         }
@@ -609,6 +611,7 @@ function lexCharStream(charStream: ICharStream, tokens: MathToken[],
             } else {
                 symTok.superCmd = curTok;
             }
+            curTok.symbolModified = symTok;
         }
     }
 
@@ -645,12 +648,17 @@ function lexCharStream(charStream: ICharStream, tokens: MathToken[],
 
     let c = charStreamPeek(charStream);
     while (c !== eoc) {
+        // single character variables (unless preceded by '?')
         if (isVariableChar(c)) {
             const start = charStream.index;
-            const vartext = lexId(charStream);
-            const vartok = new MathToken(MathTokenType.Variable,
+            charStreamAdvance(charStream);
+            const vartok = new MathSymbolToken(MathTokenType.Variable,
                 start, charStream.index);
-            vartok.text = vartext;
+            vartok.text = charStreamSubstring(start, charStream);
+            if (charStreamPeek(charStream) === CharacterCodes.colon) {
+                // it's a pattern variable!
+                vartok.type = MathTokenType.PatternVariable;
+            }
             tokens.push(vartok);
         } else if (isDecimalDigit(c)) {
             tokens.push(lexNumber());
@@ -792,7 +800,6 @@ interface ITokenStream {
     tokens: MathToken[];
     index: number;
     end: number;
-    tailId?: string;
 }
 
 function tokStreamPeek(tokStream: ITokenStream) {
@@ -827,13 +834,15 @@ function tokStreamGet(tokStream: ITokenStream, advance = true): MathToken {
     }
 }
 
-function tokStreamCreateFromRange(text: string, tokens: MathToken[], start: number, end: number,
-    tailId?: string) {
-    return { text, tokens, index: start, end, tailId };
+function tokStreamCreateFromRange(text: string, tokens: MathToken[], start: number, end: number) {
+    return { text, tokens, index: start, end };
 }
 
-function tokStreamCreate(text: string, tokens: MathToken[], tailId?: string) {
-    return tokStreamCreateFromRange(text, tokens, 0, Nope, tailId);
+function tokStreamCreate(text: string, tokens: MathToken[], filter = true) {
+    if (filter) {
+        tokens = tokens.filter((v) => v.type !== MathTokenType.Space);
+    }
+    return tokStreamCreateFromRange(text, tokens, 0, Nope);
 }
 
 export enum ExprType {
@@ -1183,7 +1192,8 @@ function matchS(p: string, expr: IExpr, env?: IEnvironment): boolean {
 
 function parse(s: string): IExpr {
     const tokens = lexCharStream({ chars: s, index: 0 }, [], []);
-    return parseExpr(tokStreamCreate(s, tokens));
+    const parserContext: IParserContext = {};
+    return parseExpr(tokStreamCreate(s, tokens), parserContext);
 }
 
 const diagMatch = false;
@@ -1191,13 +1201,13 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
     if (diagMatch) {
         const texP = exprToTex(pattern);
         const texE = exprToTexParens(expr);
-        WScript.Echo("matching " + texP + " vs " + texE);
+        console.log("matching " + texP + " vs " + texE);
     }
     let matched = false;
     if (isConstant(pattern)) {
         matched = Constants.matchConstant(pattern, expr);
         if ((!matched) && diagMatch) {
-            WScript.Echo("constant match failed");
+            console.log("constant match failed");
         }
         return matched;
     }
@@ -1206,7 +1216,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
             const pvar = pattern as IPatternVar;
             matched = bind(env, pvar.text, pvar.pvarType, expr);
             if ((!matched) && diagMatch) {
-                WScript.Echo("bind failed");
+                console.log("bind failed");
             }
             return matched;
         }
@@ -1214,7 +1224,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
             if (literal) {
                 if (expr.type !== ExprType.VARIABLE) {
                     if (diagMatch) {
-                        WScript.Echo("literal variable match failed with expr type " + ExprType[expr.type]);
+                        console.log("literal variable match failed with expr type " + ExprType[expr.type]);
                     }
                     return false;
                 } else {
@@ -1222,7 +1232,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
                     const vexpr = expr as IVariable;
                     matched = (vpat.text === vexpr.text);
                     if ((!matched) && diagMatch) {
-                        WScript.Echo("literal variable match failed (2)");
+                        console.log("literal variable match failed (2)");
                     }
                     if (matched && vpat.sub) {
                         if (vexpr.sub) {
@@ -1237,7 +1247,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
             } else {
                 matched = bind(env, (pattern as IVariable).text, PatternVarType.Any, expr);
                 if ((!matched) && diagMatch) {
-                    WScript.Echo("bind failed");
+                    console.log("bind failed");
                 }
                 return matched;
             }
@@ -1248,7 +1258,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
                 const eunex = expr as IUnop;
                 if (punex.op !== eunex.op) {
                     if (diagMatch) {
-                        WScript.Echo("unop match failed");
+                        console.log("unop match failed");
                     }
                     return false;
                 } else {
@@ -1268,7 +1278,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
                 const ebinex = expr as IBinop;
                 if (pbinex.op !== ebinex.op) {
                     if (diagMatch) {
-                        WScript.Echo("binop match failed");
+                        console.log("binop match failed");
                     }
                     return false;
                 } else {
@@ -1281,7 +1291,7 @@ function match(pattern: IExpr, expr: IExpr, env?: IEnvironment, literal = false)
         default:
     }
     if (diagMatch) {
-        WScript.Echo("type mismatch " + ExprType[pattern.type] + " vs " + ExprType[expr.type]);
+        console.log("type mismatch " + ExprType[pattern.type] + " vs " + ExprType[expr.type]);
     }
     return false;
 }
@@ -1394,7 +1404,7 @@ function walk(expr: IExpr, pre: (e: IExpr) => boolean, post?: (e: IExpr) => void
                 }
             }
             default:
-                console.log(`walk encountered expr type ${expr.type}`);
+            // console.log(`walk encountered expr type ${ExprType[expr.type]}`);
         }
         if (post) {
             post(expr);
@@ -1406,7 +1416,7 @@ function extractTermAndDegree(term: IBinop, negate: boolean, v: IVariable) {
     if (diagAC) {
         const tex = exprToTexParens(term);
         // tslint:disable-next-line: restrict-plus-operands
-        WScript.Echo("extract term with negate " + negate + ": " + tex);
+        console.log("extract term with negate " + negate + ": " + tex);
     }
     let constPart: IExpr;
     let symbolPart: IExpr;
@@ -1449,7 +1459,7 @@ function extractTermAndDegree(term: IBinop, negate: boolean, v: IVariable) {
                     }
                 }
             } else {
-                WScript.Echo("need a variable as lhs of exponent");
+                console.log("need a variable as lhs of exponent");
             }
             return false;
         }
@@ -1514,7 +1524,7 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
     if (diagAC) {
         const tex = exprToTexParens(expr);
         // tslint:disable-next-line: restrict-plus-operands
-        WScript.Echo("accum coeffs with negate " + negate + ": " + tex);
+        console.log("accum coeffs with negate " + negate + ": " + tex);
     }
 
     if (isConstant(expr)) {
@@ -1563,20 +1573,20 @@ function accumCoefficients(expr: IExpr, v: IVariable, poly: ISplitTerm[], negate
                                 degree = td.degree;
                                 term = td.splitTerm;
                             } else {
-                                WScript.Echo("error: non-integer exponent in accum coeffs");
+                                console.log("error: non-integer exponent in accum coeffs");
                             }
                         } else {
-                            WScript.Echo("error: complex lhs of exponent in accum coeffs");
+                            console.log("error: complex lhs of exponent in accum coeffs");
                         }
                         break;
                     }
                     default:
-                        WScript.Echo("unexpected operator " + Operator[binex.op]);
+                        console.log("unexpected operator " + Operator[binex.op]);
                 }
                 break;
             }
             default:
-                WScript.Echo("unexpected expr type " + ExprType[expr.type]);
+                console.log("unexpected expr type " + ExprType[expr.type]);
         }
     }
     if (poly[degree]) {
@@ -1634,7 +1644,7 @@ function extractCoefficients(expr: IExpr, v: IVariable) {
 export function solve(eqn: IExpr, v: IVariable): IExpr {
     const norm = normalize(eqn);
     if (!isSumOfProducts(norm)) {
-        return undefined;
+        return norm;
     }
     const poly = extractCoefficients(norm, v);
     if (poly[0]) {
@@ -1690,7 +1700,7 @@ function subst(e: IExpr, env: IEnvironment) {
             };
         }
         default:
-            console.log(`unrecognized expr type ${e.type}`);
+        // console.log(`unrecognized expr type ${e.type}`);
     }
     return e;
 }
@@ -1732,7 +1742,7 @@ function buildIfMatch(pats: ITransformString[], e: IExpr, seedEnv?: () => IEnvir
                 if (bifMatchDiag) {
                     const builtTex = exprToTex(built);
                     const etex = exprToTex(e);
-                    WScript.Echo("applied " + pats[i].pattern + " to " + etex + " yielding " + builtTex);
+                    console.log("applied " + pats[i].pattern + " to " + etex + " yielding " + builtTex);
                 }
                 return built;
             }
@@ -1801,7 +1811,7 @@ export function divrl(env: IEnvironment) {
         return true;
     }
 }
-
+// const | var | -factor | var^integer
 function isFactor(expr: IExpr) {
     if ((expr.type === ExprType.VARIABLE) || isConstant(expr)) {
         return true;
@@ -1818,6 +1828,7 @@ function isFactor(expr: IExpr) {
     return false;
 }
 
+// ab | -a | factor
 function isTerm(e: IExpr): boolean {
     if (e.type === ExprType.BINOP) {
         const binex = e as IBinop;
@@ -1835,8 +1846,11 @@ function isSumOfProducts(e: IExpr): boolean {
     switch (e.type) {
         case ExprType.BINOP: {
             const binex = e as IBinop;
-            if ((binex.op === Operator.ADD) || (binex.op === Operator.SUB) || (binex.op === Operator.EQ)) {
-                return isSumOfProducts(binex.operand1) && (isTerm(binex.operand2));
+            if (binex.op === Operator.EQ) {
+                return isSumOfProducts(binex.operand1) && isSumOfProducts(binex.operand2);
+            }
+            if ((binex.op === Operator.ADD) || (binex.op === Operator.SUB)) {
+                return isSumOfProducts(binex.operand1) && (isSumOfProducts(binex.operand2));
             } else if (binex.op === Operator.MUL) {
                 return isTerm(binex);
             } else if (binex.op === Operator.EXP) {
@@ -1844,7 +1858,7 @@ function isSumOfProducts(e: IExpr): boolean {
             }
         }
         case ExprType.UNOP: {
-            return isTerm(e);
+            return isSumOfProducts(e);
         }
         default:
             return isFactor(e);
@@ -1859,7 +1873,7 @@ function simplifyExpr(expr: IExpr): IExpr {
         delta = false;
         if (diagB) {
             const tex = exprToTexParens(expr);
-            WScript.Echo("simplifying " + tex);
+            console.log("simplifying " + tex);
         }
         let operand1: IExpr;
         let operand2: IExpr;
@@ -1947,13 +1961,13 @@ function simplifyExpr(expr: IExpr): IExpr {
                 if (result) {
                     if (diagB) {
                         // tslint:disable-next-line: restrict-plus-operands
-                        WScript.Echo("match " + info.index + ": " + info.pat);
+                        console.log("match " + info.index + ": " + info.pat);
                     }
                     delta = true;
                     expr = result;
                 } else {
                     if (diagB) {
-                        WScript.Echo("no match");
+                        console.log("no match");
                     }
                     operand1 = simplifyExpr(binex.operand1);
                     operand2 = simplifyExpr(binex.operand2);
@@ -1964,8 +1978,11 @@ function simplifyExpr(expr: IExpr): IExpr {
                     }
                 }
                 break;
+            case ExprType.CALL:
+            case ExprType.ERROR:
+                break;
             default:
-                console.log(`unrecognized expr type ${expr.type}`);
+                console.log(`simplify: unrecognized expr type ${ExprType[expr.type]}`);
         }
     }
     return expr;
@@ -2058,16 +2075,21 @@ function getPvarType(tokStream: ITokenStream): PatternVarType {
     return PatternVarType.Any;
 }
 
-function parseModExpr(tokStream: ITokenStream, modTok: MathCommandToken) {
-    return parseCall(tokStream, modTok);
+interface IParserContext {
+    prevVar?: IVariable;
 }
-function tryModExpr(tokStream: ITokenStream, callExpr: ICall, callTok: MathCommandToken) {
+
+function parseModExpr(tokStream: ITokenStream, ctxt: IParserContext, modTok: MathCommandToken) {
+    return parseCall(tokStream, ctxt, modTok);
+}
+function tryModExpr(tokStream: ITokenStream, ctxt: IParserContext,
+    callExpr: ICall, callTok: MathCommandToken) {
     const tok = tokStreamPeek(tokStream);
     if (tok.type === MathTokenType.Command) {
         const cmdTok = tok as MathCommandToken;
         if (cmdTok.isModifier) {
             tokStreamAdvance(tokStream);
-            const modExpr = parseModExpr(tokStream, cmdTok);
+            const modExpr = parseModExpr(tokStream, ctxt, cmdTok);
             if (cmdTok === callTok.subCmd) {
                 callExpr.sub = modExpr;
             } else {
@@ -2079,18 +2101,19 @@ function tryModExpr(tokStream: ITokenStream, callExpr: ICall, callTok: MathComma
     return false;
 }
 
-function parseCall(tokStream: ITokenStream, callTok: MathCommandToken): ICall {
+function parseCall(tokStream: ITokenStream, ctxt: IParserContext,
+    callTok: MathCommandToken): ICall {
     const callExpr: ICall = {
         type: ExprType.CALL,
         name: callTok.cmdInfo.key,
         params: [],
     };
-    if (tryModExpr(tokStream, callExpr, callTok)) {
-        tryModExpr(tokStream, callExpr, callTok);
+    if (tryModExpr(tokStream, ctxt, callExpr, callTok)) {
+        tryModExpr(tokStream, ctxt, callExpr, callTok);
     }
     if (callTok.cmdInfo.arity > 0) {
         for (let i = 0; i < callTok.cmdInfo.arity; i++) {
-            callExpr.params[i] = parseExpr(tokStream);
+            callExpr.params[i] = parseExpr(tokStream, ctxt);
             const finishTok = tokStreamGet(tokStream);
             if ((finishTok.type !== MathTokenType.MidCommand) && (finishTok.type !== MathTokenType.EndCommand)) {
                 console.log(`unexpected token of type ${MathTokenType[finishTok.type]} ends param expr`);
@@ -2100,12 +2123,12 @@ function parseCall(tokStream: ITokenStream, callTok: MathCommandToken): ICall {
     return callExpr;
 }
 
-function parseTupleTail(expr: IExpr, tokStream: ITokenStream): IExpr {
+function parseTupleTail(expr: IExpr, tokStream: ITokenStream, ctxt: IParserContext): IExpr {
     const elements = [expr];
     let tok: MathToken;
 
     do {
-        elements.push(parseExpr(tokStream));
+        elements.push(parseExpr(tokStream, ctxt));
         tok = tokStreamGet(tokStream);
     }
     while (tok.type === MathTokenType.COMMA);
@@ -2121,17 +2144,17 @@ function parseTupleTail(expr: IExpr, tokStream: ITokenStream): IExpr {
     }
 }
 
-function parsePrimary(tokStream: ITokenStream): IExpr {
+function parsePrimary(tokStream: ITokenStream, ctxt: IParserContext): IExpr {
     let tok = tokStreamGet(tokStream);
     let expr: IExpr;
 
     switch (tok.type) {
         case MathTokenType.OPAREN:
-            expr = parseExpr(tokStream);
+            expr = parseExpr(tokStream, ctxt);
             tok = tokStreamGet(tokStream);
             if (tok.type !== MathTokenType.CPAREN) {
                 if (tok.type === MathTokenType.COMMA) {
-                    return parseTupleTail(expr, tokStream);
+                    return parseTupleTail(expr, tokStream, ctxt);
                 } else if (tok.type === MathTokenType.EOI) {
                     if (expr.pendingParens) {
                         expr.pendingParens += "(";
@@ -2147,17 +2170,28 @@ function parsePrimary(tokStream: ITokenStream): IExpr {
                 expr.parenthesized = true;
                 return (expr);
             }
-        case MathTokenType.Command:
-            return parseCall(tokStream, tok as MathCommandToken);
+        case MathTokenType.Command: {
+            const cmdTok = tok as MathCommandToken;
+            const callExpr = parseCall(tokStream, ctxt, cmdTok);
+            if (cmdTok.isModifier && ctxt.prevVar) {
+                ctxt.prevVar.sub = callExpr;
+                ctxt.prevVar = undefined;
+            }
+            return callExpr;
+        }
         case MathTokenType.INT:
             return { type: ExprType.INTEGER, value: parseInt(tok.text, 10), minChar: tok.start };
         case MathTokenType.REAL:
             return { type: ExprType.REAL, value: parseFloat(tok.text), minChar: tok.start };
-        case MathTokenType.Variable:
-            return {
-                type: ExprType.VARIABLE, text: (tok as MathSymbolToken).text,
+        case MathTokenType.Variable: {
+            const symTok = tok as MathSymbolToken;
+            const vexpr: IVariable = {
+                type: ExprType.VARIABLE, text: symTok.text,
                 minChar: tok.start,
             };
+            ctxt.prevVar = vexpr;
+            return vexpr;
+        }
         case MathTokenType.PatternVariable: {
             const pvarType = getPvarType(tokStream);
             return {
@@ -2170,7 +2204,8 @@ function parsePrimary(tokStream: ITokenStream): IExpr {
     }
 }
 
-function parseExpr(tokStream: ITokenStream, prevPrecedence = TokenPrecedence.NONE): IExpr {
+function parseExpr(tokStream: ITokenStream, ctxt: IParserContext,
+    prevPrecedence = TokenPrecedence.NONE): IExpr {
     let tok = tokStreamPeek(tokStream);
     let usub = false;
     if (tok.type === MathTokenType.SUB) {
@@ -2178,7 +2213,7 @@ function parseExpr(tokStream: ITokenStream, prevPrecedence = TokenPrecedence.NON
         tokStreamAdvance(tokStream);
         usub = true;
     }
-    let left = parsePrimary(tokStream);
+    let left = parsePrimary(tokStream, ctxt);
     if (usub) {
         if (isConstant(left)) {
             left = Constants.negate(left as IConstant);
@@ -2223,7 +2258,7 @@ function parseExpr(tokStream: ITokenStream, prevPrecedence = TokenPrecedence.NON
             if (realOpToken) {
                 tokStreamAdvance(tokStream);
             }
-            const right = parseExpr(tokStream, precedence);
+            const right = parseExpr(tokStream, ctxt, precedence);
             const binex: IBinop = { type: ExprType.BINOP, op, operand1: left, operand2: right };
             left = binex;
         } else {
@@ -2232,4 +2267,209 @@ function parseExpr(tokStream: ITokenStream, prevPrecedence = TokenPrecedence.NON
         tok = tokStreamPeek(tokStream);
     }
     return left;
+}
+
+function parseEqn(tokStream: ITokenStream): IExpr {
+    let ctxt: IParserContext = {};
+    const left = parseExpr(tokStream, ctxt, TokenPrecedence.REL);
+    const tok = tokStreamGet(tokStream);
+    if (tok.type === MathTokenType.Equals) {
+        ctxt = {};
+        const right = parseExpr(tokStream, ctxt, TokenPrecedence.IMPLIES);
+        const binex: IBinop = {
+            type: ExprType.BINOP, op: Operator.EQ, operand1: left,
+            operand2: right,
+        };
+        return binex;
+    }
+}
+
+export function testEqn(s: string, norm = false, vsolve?: IVariable) {
+    console.log("trying " + s + " ...");
+    const tokStream = tokStreamCreate(s, lexMath(s));
+    let e = parseEqn(tokStream);
+    if (e) {
+        console.log(`which is ${exprToTexParens(e)}`);
+        if (norm) {
+            e = normalize(e);
+            if (vsolve) {
+                e = solve(e, vsolve);
+            }
+        }
+        if (e) {
+            const tex = exprToTex(e, false);
+            console.log(tex);
+        } else if (vsolve) {
+            console.log("no solution for " + vsolve.text);
+        }
+    } else {
+        if (vsolve) {
+            console.log("no solution for " + vsolve.text);
+        }
+    }
+}
+function getLine(s: string, tokenIndex: number, tokens: MathToken[]) {
+    let start = 0;
+    let end = s.length;
+    for (let i = tokenIndex; i < tokens.length; i++) {
+        if (tokens[i].type === MathTokenType.Newline) {
+            end = tokens[i].start;
+            break;
+        }
+    }
+    for (let i = tokenIndex - 1; i >= 0; i--) {
+        if (tokens[i].type === MathTokenType.Newline) {
+            start = tokens[i].start + 1;
+            break;
+        }
+    }
+    const line = s.substring(start, end);
+    return line;
+}
+export function testExprLine(s: string, tokenIndex: number, tokens: MathToken[]) {
+    const xvar: IVariable = { text: "x", type: ExprType.VARIABLE };
+    const line = getLine(s, tokenIndex, tokens);
+    testEqn(line, true, xvar);
+}
+
+function equivalent(e: IExpr, soln: IExpr, v: IVariable) {
+    if ((e.type !== ExprType.BINOP) || ((e as IBinop).op !== Operator.EQ)) {
+        return false;
+    }
+    e = simplifyExpr(e);
+    e = solve(e, v);
+    const solnEqn = soln as IBinop;
+    const eqn = e as IBinop;
+    if (eqn &&
+        match(solnEqn.operand1, eqn.operand1, {}, true) &&
+        match(solnEqn.operand2, eqn.operand2, {}, true)) {
+        return true;
+    } else if (eqn &&
+        match(solnEqn.operand1, eqn.operand2, {}, true) &&
+        match(solnEqn.operand2, eqn.operand1, {}, true)) {
+        return true;
+    }
+    return false;
+}
+
+export function matchSolution(line: string, varName: string, varExpr: string) {
+    const e = parse(line);
+    const v: IVariable = { text: varName, type: ExprType.VARIABLE };
+    const soln = parse(varExpr);
+    return equivalent(e, soln, v);
+}
+
+export function testExpr(s: string) {
+    console.log(`trying ${s} ...`);
+    const tokStream = tokStreamCreate(s, lexMath(s));
+    const ctxt: IParserContext = {};
+    const e = parseExpr(tokStream, ctxt);
+    const tex = exprToTex(e);
+    console.log(tex);
+}
+
+export function testNorm() {
+    testEqn("3/(2a+1)=4/(a-1)", true);
+    testEqn("(5--1)/(2a+1-3)=(1--2)/(a-1)", true);
+    testEqn("(-5--1)/(2a+1--3)=(1--2)/(a-1)", true);
+    testEqn("5--1=0", true);
+    testEqn("(a-b)/(c-d)=(x-y)/(w-z)", true);
+    testEqn("3(x+1)=0", true);
+    testEqn("3(x+y)=0", true);
+    testEqn("(a+b)(x+1)=0", true);
+    testEqn("3(x-1)=0", true);
+    testEqn("3(x-y)=0", true);
+    testEqn("(a+b)(x-1)=0", true);
+    testEqn("(5+2)(x+1)=0", true);
+    testEqn("(5+2)(x-1)=0", true);
+    testEqn("(a-b)(c-d)=0", true);
+}
+
+export function testSolve() {
+    const a = { type: ExprType.VARIABLE, text: "a" };
+    const x = { type: ExprType.VARIABLE, text: "x" };
+    // testEqn("x+x+5x-3=2x-2", true, x);
+    // testEqn("x-3+5x+x=2x-1-1",true, x);
+    testEqn("x-d-3+c-yx+zx=2x-2", true, x);
+    testEqn("6-6a=4a+8", true, a);
+    testEqn("4a+16=14a-14", true, a);
+    testEqn("4a-16=14a-14", true, a);
+    testEqn("2a+1=2a-1", true, a);
+    testEqn("3/(2a+1)=4/(a-1)", true, a);
+    testEqn("(5--1)/(2a+1-3)=(1--2)/(a-1)", true, a);
+    testEqn("(-5--1)/(2a+1-3)=(1--2)/(a-1)", true, a);
+    testEqn("3xy-5=0", true, x);
+    testEqn("x3-5=0", true, x);
+    testEqn("3yx-5=0", true, x);
+    testEqn("3yx=0", true, x);
+    testEqn("x+x+5x=2x-2", true, x);
+    testEqn("x+x+5x-3=2x-2", true, x);
+}
+
+function testLCDPair(a1: number, b1: number, a2: number, b2: number) {
+    const rr = Constants.lcd({ type: ExprType.RATIONAL, a: a1, b: b1 },
+        { type: ExprType.RATIONAL, a: a2, b: b2 });
+    let tex = exprToTex(rr.r1);
+    console.log(tex);
+    tex = exprToTex(rr.r2);
+    console.log(tex);
+}
+
+export function testLCD() {
+    testLCDPair(2, 3, 5, 12);
+    testLCDPair(1, 5, 0, 1);
+}
+
+export function testMatch() {
+    let env: IEnvironment = {};
+    let eout: IExpr;
+    let tex: string;
+
+    let e = parse("(6-6a)+(-4a)");
+    if (!matchS("a+-bc", e, env)) {
+        console.log("hmm...");
+    }
+
+    e = parse("2y-(3x-7)");
+    env = {};
+
+    if (matchS("a-(b-c)", e, env)) {
+        eout = buildExpr("a+c-b", env);
+        tex = exprToTex(eout);
+        console.log(tex);
+    } else {
+        console.log("hmmm...");
+    }
+    e = parse("x4");
+    env = {};
+    if (matchS("?v:var?c:const", e, env)) {
+        eout = buildExpr("?c?v", env);
+        tex = exprToTex(eout);
+        console.log(tex);
+    } else {
+        console.log("(1) hmmm...");
+    }
+    e = parse("ac-ad-(bc-bd)");
+    env = {};
+    if (matchS("a-(b-c)", e, env)) {
+        eout = buildExpr("a+c-b", env);
+        tex = exprToTex(eout);
+        console.log(tex);
+    } else {
+        console.log("(2) hmmm...");
+    }
+
+    // e = parse("1x");
+    e = parse("(3)(1)");
+    env = {};
+    const result = buildIfMatch([
+        { pattern: "1a", template: "a" },
+        { pattern: "a1", template: "a" }], e);
+
+    if (result) {
+        tex = exprToTex(result);
+        console.log(tex);
+    } else {
+        console.log("(3) hmmm...");
+    }
 }

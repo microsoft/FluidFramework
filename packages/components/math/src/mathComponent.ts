@@ -236,16 +236,22 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         }
     }
 
-    public buildAligned(mathLines: string[]) {
+    public buildAligned(mathLines: string[], checks: boolean[]) {
         let mathBuffer = "\\begin{darray}{rcllcr} \n";
         let count = 1;
-        for (let line of mathLines) {
+        // tslint:disable-next-line:prefer-for-of
+        for (let i = 0; i < mathLines.length; i++) {
+            let line = mathLines[i];
             if (line.indexOf("=") >= 0) {
                 line = line.replace("=", "& = &");
             } else {
                 line = `& ${line} &`;
             }
-            mathBuffer += `${line} & & \\hspace{20ex} & \\textrm{(${count++})} \\\\ \n`;
+            let rightContext = "\\hspace{20ex}";
+            if (checks[i]) {
+                rightContext += "\\textcolor{#008000}{\\checkmark}";
+            }
+            mathBuffer += `${line} & & ${rightContext} & \\textrm{(${count++})} \\\\ \n`;
         }
         mathBuffer += "\\end{darray}";
         return mathBuffer;
@@ -286,7 +292,24 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
                 { throwOnError: false });
         } else {
             const useDarray = true;
+            const checkSoln = true;
+            const checks = [] as boolean[];
             rootElement = document.createElement("div");
+            const cleanMathLines = mathBuffer.split("\n");
+            for (let i = 0; i < cleanMathLines.length; i++) {
+                const cleanLine = cleanMathLines[i];
+                if (checkSoln) {
+                    try {
+                        checks[i] = MathExpr.matchSolution(cleanLine, this.instance.solnVar,
+                            this.instance.solnText);
+                    } catch (e) {
+                        console.log(`match soln: ${cleanLine}`);
+                        checks[i] = false;
+                    }
+                } else {
+                    checks[i] = false;
+                }
+            }
             if (this.cursorActive) {
                 // showCursor
                 mathBuffer = mathBuffer.substring(0, this.mathCursor) +
@@ -296,7 +319,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
             }
             const mathLines = mathBuffer.split("\n");
             if (useDarray) {
-                mathBuffer = this.buildAligned(mathLines);
+                mathBuffer = this.buildAligned(mathLines, checks);
                 Katex.render(mathBuffer, rootElement,
                     { throwOnError: false, displayMode: true });
             } else {
@@ -363,16 +386,26 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         }
     }
 
+    public specialCommand(cmd: string) {
+        console.log(`special command ${cmd}`);
+        if (cmd.startsWith("solution ")) {
+            this.instance.solnText = cmd.substring(9);
+        } else if (cmd.startsWith("svar ")) {
+            this.instance.solnVar = cmd.substring(5);
+        }
+    }
+
     public onKeypress(e: KeyboardEvent) {
         if (e.charCode === ClientUI.controls.CharacterCodes.backslash) {
             if (this.searchMenuHost) {
                 this.searchMenuHost.showSearchMenu(MathExpr.mathCmdTree, false, true,
                     (s, cmd) => {
-                        let text = `\\${s}`;
                         if (cmd) {
-                            text = (cmd as MathExpr.IMathCommand).texString;
+                            const text = (cmd as MathExpr.IMathCommand).texString;
+                            this.insertText(text);
+                        } else {
+                            this.specialCommand(s);
                         }
-                        this.insertText(text);
                     });
             }
         } else {
@@ -405,6 +438,8 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
     public views: MathView[];
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
+    public solnText = "x=0";
+    public solnVar = "x";
     private defaultView: MathView;
 
     constructor(
