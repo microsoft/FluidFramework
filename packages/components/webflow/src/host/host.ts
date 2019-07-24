@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICommand, KeyCode, Scheduler, Template, View } from "@prague/flow-util";
-import { IComponentContext } from "@prague/runtime-definitions";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/container-definitions";
+import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
-
-// tslint:disable-next-line:no-empty-interface
-interface IHostConfig {
-    context: IComponentContext;
-    scheduler: Scheduler;
-    doc: FlowDocument;
-}
 
 const template = new Template(
     { tag: "div", props: { className: styles.host }, children: [
@@ -27,86 +20,90 @@ const template = new Template(
         { tag: "div", ref: "search", props: { type: "text", className: styles.search }},
     ]});
 
-export class WebflowHost extends View<IHostConfig> {
-    private state?: {
-        searchMenu: SearchMenuView;
-        previouslyFocused?: HTMLOrSVGElement;
-    };
+export class WebflowView implements IComponentHTMLView {
+    private searchMenu?: SearchMenuView;
+    private previouslyFocused?: HTMLOrSVGElement;
+    private root: Element;
 
-    protected onAttach(init: Readonly<IHostConfig>) {
-        const root = template.clone();
-        const slot = template.get(root, "slot") as HTMLElement;
+    constructor(private readonly docP: Promise<FlowDocument>) {}
 
-        const { doc } = init;
+    // #region IComponentHTMLView
+    public remove(): void {
+        if (this.root) {
+            this.root.remove();
+            this.root = undefined;
+        }
 
-        // tslint:disable-next-line:no-unused-expression
-        const editor = new Editor(doc, slot);
-
-        const searchMenu = new SearchMenuView();
-
-        const hasSelection = () => {
-            const { start, end } = editor.selection;
-            return start < end;
-        };
-
-        const insertTags = (tags: Tag[]) => {
-            const selection = editor.selection;
-            init.doc.insertTags(tags, selection.start, selection.end);
-        };
-
-        const setFormat = (tag: Tag) => {
-            const { end } = editor.selection;
-
-            // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
-            // format of that marker.  This looks unnatural to the user, since the caret is still at the end of
-            // the text on the previous line, hence the '- 1'.
-            init.doc.setFormat(end - 1, tag);
-        };
-
-        const toggleSelection = (className: string) => {
-            const { start, end } = editor.selection;
-            init.doc.toggleCssClass(start, end, className);
-        };
-
-        searchMenu.attach(template.get(root, "search"), {
-            commands: [
-                { name: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); }},
-                { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                { name: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); }},
-                { name: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); }},
-                { name: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); }},
-                { name: "h4", enabled: () => true, exec: () => { setFormat(Tag.h4); }},
-                { name: "h5", enabled: () => true, exec: () => { setFormat(Tag.h5); }},
-                { name: "h6", enabled: () => true, exec: () => { setFormat(Tag.h6); }},
-                { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
-                { name: "p",  enabled: () => true, exec: () => { setFormat(Tag.p); }},
-                { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
-            ],
-            onComplete: this.onComplete,
-         });
-
-        this.onDom(root, "keydown", this.onKeyDown);
-
-        this.state = { searchMenu };
-
-        return root;
+        if (this.searchMenu) {
+            this.searchMenu.detach();
+            this.searchMenu = undefined;
+        }
     }
 
-    protected onUpdate(): void {
-        // do nothing;
+    public render(elm: HTMLElement, options: IComponentHTMLOptions): void {
+        this.root = template.clone();
+
+        this.docP.then((doc) => {
+            const slot = template.get(this.root, "slot") as HTMLElement;
+            const editor = new Editor(doc, slot);
+
+            this.searchMenu = new SearchMenuView();
+
+            const hasSelection = () => {
+                const { start, end } = editor.selection;
+                return start < end;
+            };
+
+            const insertTags = (tags: Tag[]) => {
+                const selection = editor.selection;
+                doc.insertTags(tags, selection.start, selection.end);
+            };
+
+            const setFormat = (tag: Tag) => {
+                const { end } = editor.selection;
+
+                // Note that calling 'setFormat(..)' with the position of a paragraph marker will change the block
+                // format of that marker.  This looks unnatural to the user, since the caret is still at the end of
+                // the text on the previous line, hence the '- 1'.
+                doc.setFormat(end - 1, tag);
+            };
+
+            const toggleSelection = (className: string) => {
+                const { start, end } = editor.selection;
+                doc.toggleCssClass(start, end, className);
+            };
+
+            this.searchMenu.attach(template.get(this.root, "search"), {
+                commands: [
+                    { name: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); }},
+                    { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
+                    { name: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); }},
+                    { name: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); }},
+                    { name: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); }},
+                    { name: "h4", enabled: () => true, exec: () => { setFormat(Tag.h4); }},
+                    { name: "h5", enabled: () => true, exec: () => { setFormat(Tag.h5); }},
+                    { name: "h6", enabled: () => true, exec: () => { setFormat(Tag.h6); }},
+                    { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                    { name: "p",  enabled: () => true, exec: () => { setFormat(Tag.p); }},
+                    { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
+                ],
+                onComplete: this.onComplete,
+            });
+
+            this.root.addEventListener("keydown", this.onKeyDown as EventListener);
+        });
+
+        elm.appendChild(this.root);
     }
 
-    protected onDetach(): void {
-        // tslint:disable-next-line:no-this-assignment
-        const { state } = this;
-        state.searchMenu.detach();
-        this.state = undefined;
-    }
+    public query<T>(): T { throw new Error("Method not implemented."); }
+    public list(): string[] { throw new Error("Method not implemented."); }
+    // #endregion IComponentHTMLView
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
         if (e.ctrlKey && e.code === KeyCode.keyM) {
-            this.state.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
-            this.state.searchMenu.show();
+            this.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
+            this.searchMenu.show();
         }
     }
 
@@ -116,6 +113,7 @@ export class WebflowHost extends View<IHostConfig> {
             command.exec();
         }
 
-        this.state.previouslyFocused.focus();
+        this.previouslyFocused.focus();
+        this.previouslyFocused = undefined;
     }
 }

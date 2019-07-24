@@ -34,8 +34,8 @@
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
     "dev": "npm run build:esnext -- --watch",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
-    "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "test-disabled": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
+    "test:coverage-disabled": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\""

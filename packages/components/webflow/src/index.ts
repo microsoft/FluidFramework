@@ -5,7 +5,7 @@
 
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 
-export { FlowDocument } from "./document";
+export { FlowDocument, flowDocumentFactory } from "./document";
 export { Editor } from "./editor";
 export { Tag } from "./util/tag";
 

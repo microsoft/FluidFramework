@@ -3,19 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
+import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { FlowDocument } from "./document";
-import { FlowEditor } from "./editor";
-import { WebFlow } from "./host";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { FlowDocument, flowDocumentFactory } from "./document";
+import { WebFlow, webFlowFactory } from "./host";
 
+export const fluidExport = new SimpleModuleInstantiationFactory(
+    WebFlow.type,
+    new Map([
+        [WebFlow.type, Promise.resolve(webFlowFactory)],
+        [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+    ]),
+);
+
+// Included for back compat - can remove in 0.7 once fluidExport is default
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return Component.instantiateRuntime(
-        context,
-        WebFlow.type,
-        new Map([
-            [WebFlow.type, Promise.resolve(Component.createComponentFactory(WebFlow))],
-            [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
-            [FlowEditor.type, Promise.resolve(Component.createComponentFactory(FlowEditor))],
-        ]));
+      return fluidExport.instantiateRuntime(context);
+}
+
+// Included for back compat - can remove in 0.7 once fluidExport is default
+export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    return fluidExport.instantiateComponent(context);
 }

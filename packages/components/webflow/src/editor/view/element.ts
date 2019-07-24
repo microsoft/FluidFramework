@@ -78,7 +78,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
             const slot = document.createElement(tag);
             state.root.appendChild(slot);
             state.slot = slot;
-            layout.doc.getComponent(marker).then((component: IComponent) => {
+            layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 const visual = (component as IComponent).query<IComponentHTMLVisual>("IComponentHTMLVisual");
                 if (visual) {
                     if (visual.addView) {

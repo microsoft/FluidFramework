@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions } from "@prague/container-definitions";
 import { randomId, TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
@@ -25,7 +25,8 @@ import {
     reservedTileLabelsKey,
     TextSegment,
 } from "@prague/merge-tree";
-import { SharedString, SharedStringExtension } from "@prague/sequence";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { SequenceDeltaEvent, SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
@@ -121,7 +122,7 @@ const accumAsLeafAction = {
 //       See: https://github.com/microsoft/Prague/issues/2408
 const endOfTextSegment = undefined as unknown as BaseSegment;
 
-export class FlowDocument extends Component {
+export class FlowDocument extends PrimedComponent {
     private get sharedString() { return this.maybeSharedString; }
     private get mergeTree() { return this.maybeMergeTree; }
     private get clientId() { return this.maybeClientId; }
@@ -144,14 +145,11 @@ export class FlowDocument extends Component {
     private maybeMergeTree?: MergeTree;
     private maybeClientId?: number;
 
-    constructor() {
-        super([
-            [MapExtension.Type, new MapExtension()],
-            [SharedStringExtension.Type, new SharedStringExtension()],
-        ]);
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, []);
     }
 
-    public async getComponent(marker: Marker) {
+    public async getComponentFromMarker(marker: Marker) {
         const url = marker.properties.url as string;
 
         const response = await this.context.hostRuntime.request({ url });
@@ -410,7 +408,19 @@ export class FlowDocument extends Component {
         return this.sharedString.getText(start, end);
     }
 
+    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this {
+        this.maybeSharedString.on("sequenceDelta", listener);
+        return this;
+    }
+
+    public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this {
+        this.maybeSharedString.off("sequenceDelta", listener);
+        return this;
+    }
+
     protected async create() {
+        await super.create();
+
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
@@ -420,8 +430,9 @@ export class FlowDocument extends Component {
     }
 
     protected async opened() {
+        await super.opened();
+
         this.maybeSharedString = await this.root.wait<SharedString>("text");
-        this.maybeSharedString.on("sequenceDelta", (...args) => { this.emit("sequenceDelta", ...args); });
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();
         this.maybeMergeTree = client.mergeTree;
@@ -454,3 +465,5 @@ export class FlowDocument extends Component {
         }
     }
 }
+
+export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new MapExtension(), new SharedStringExtension()]);

@@ -5,25 +5,43 @@
 
 import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowDocument } from "@chaincode/webflow";
-import { Component } from "@prague/app-component";
-import { IComponent } from "@prague/container-definitions";
-import { Scheduler } from "@prague/flow-util";
-import { SharedMap } from "@prague/map";
-import { IComponentCollection } from "@prague/runtime-definitions";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { MapExtension, SharedMap } from "@prague/map";
+import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { HostView  } from "./host";
 import { importDoc } from "./template";
 
 const insightsMapId = "insights";
 
-export class WebFlowHost extends Component {
+export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow-host";
 
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, ["IComponentHTMLVisual"]);
+    }
+
+    public addView(scope?: IComponent): IComponentHTMLView {
+        return new HostView(
+            this.context,
+            this.getComponent<FlowDocument>(this.docId),
+            this.openCollection("math"),
+            this.openCollection("video-players"),
+            this.openCollection("images"));
+    }
+
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        this.addView().render(elm, options);
+    }
+
     protected async create() {
+        await super.create();
+
         await Promise.all([
-            this.runtime.createAndAttachComponent(this.docId, FlowDocument.type),
-            this.runtime.createAndAttachComponent("math", "@chaincode/math"),
-            this.runtime.createAndAttachComponent("video-players", "@chaincode/video-players"),
-            this.runtime.createAndAttachComponent("images", "@chaincode/image-collection"),
+            this.createAndAttachComponent(this.docId, FlowDocument.type),
+            this.createAndAttachComponent("math", "@chaincode/math"),
+            this.createAndAttachComponent("video-players", "@chaincode/video-players"),
+            this.createAndAttachComponent("images", "@chaincode/image-collection"),
         ]);
 
         const insights = SharedMap.create(this.runtime, insightsMapId);
@@ -32,45 +50,17 @@ export class WebFlowHost extends Component {
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
-            importDoc(
-                this.openComponent(this.docId, /* wait: */ true),
-                template,
-            );
+            importDoc(this.getComponent(this.docId), template);
         }
     }
 
     protected async opened() {
-        const docP = this.openComponent<FlowDocument>(this.docId, /* wait: */ true);
-        const mathP = this.openCollection("math");
-        const videosP = this.openCollection("video-players");
-        const imagesP = this.openCollection("images");
+        await super.opened();
 
-        const hostDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-        const flowDiv = document.createElement("div");
-        const insightsDiv = document.createElement("div");
-        hostDiv.style.display = "flex";
-        flowDiv.style.flexGrow = "1";
-        insightsDiv.innerText = "Insights";
-        insightsDiv.style.backgroundColor = "whitesmoke";
-        insightsDiv.style.display = "none";
-        hostDiv.append(flowDiv, insightsDiv);
-
-        const scheduler = new Scheduler();
-        const host = new HostView();
-        host.attach(
-            flowDiv, {
-                scheduler,
-                context: this.context,
-                doc: await docP,
-                math: await mathP,
-                videos: await videosP,
-                images: await imagesP,
-            });
-
-        this.listenForLeaderEvent(docP);
+        this.listenForLeaderEvent(this.getComponent(this.docId));
     }
 
-    private get docId() { return `${this.id}-doc`; }
+    private get docId() { return `${this.runtime.id}-doc`; }
 
     private async openCollection(id: string): Promise<IComponentCollection> {
         const runtime = await this.context.getComponentRuntime(id, true);
@@ -104,3 +94,5 @@ export class WebFlowHost extends Component {
         textAnalyzer.run(flowDocument, insightsMap);
     }
 }
+
+export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new MapExtension()]);

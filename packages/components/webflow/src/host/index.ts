@@ -3,40 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
-import { Scheduler } from "@prague/flow-util";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { MapExtension } from "@prague/map";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
-import { WebflowHost as WebflowHost } from "./host";
+import { WebflowView } from "./host";
 import { importDoc } from "./template";
 
-export class WebFlow extends Component {
+export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow";
 
-    protected async create() {
-        await Promise.all([
-            this.runtime.createAndAttachComponent(this.docId, FlowDocument.type),
-        ]);
+    public constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, ["IComponentHTMLVisual"]);
+    }
 
+    // #region IComponentHTMLVisual
+    public addView?(scope?: IComponent): IComponentHTMLView {
+        return new WebflowView(this.getComponent<FlowDocument>(this.docId));
+    }
+
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        const view = this.addView();
+        view.render(elm, options);
+    }
+    // #endregion IComponentHTMLVisual
+
+    protected async create() {
+        await super.create();
+
+        const docP = this.createAndAttachComponent<FlowDocument>(this.docId, FlowDocument.type);
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {
-            importDoc(
-                this.openComponent(this.docId, /* wait: */ true),
-                template,
-            );
+            importDoc(docP, template);
         }
     }
 
-    protected async opened() {
-        const docP = this.openComponent<FlowDocument>(this.docId, /* wait: */ true);
-        const div = await this.platform.queryInterface<Element>("div");
-
-        const scheduler = new Scheduler();
-        const host = new WebflowHost();
-        host.attach(
-            div,
-            { scheduler, doc: await docP, context: this.context });
-    }
-
-    private get docId() { return `${this.id}-doc`; }
+    private get docId() { return `${this.runtime.id}-doc`; }
 }
+
+export const webFlowFactory = new SharedComponentFactory(WebFlow, [new MapExtension()]);

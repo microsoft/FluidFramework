@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./primedComponent";
-export * from "./sharedComponent";
+export { PrimedComponent } from "./primedComponent";
+export { SharedComponent } from "./sharedComponent";

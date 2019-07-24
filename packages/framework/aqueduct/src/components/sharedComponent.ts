@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponent,
+    IComponentLoadable,
     IRequest,
     IResponse,
     ISharedComponent,
@@ -17,28 +17,29 @@ import {
 } from "@prague/runtime-definitions";
 
 /**
+ * Do not export from module: For internal use by SharedComponentFactory.
+ */
+export const initializeKey = Symbol();
+
+/**
  * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 export abstract class SharedComponent implements ISharedComponent, IComponentForge, IComponentRouter {
-
-    public readonly url: string; // ISharedComponent
-
-    private readonly supportedInterfaces = ["IComponent", "IComponentLoadable", "ISharedComponent", "IComponentForge", "IComponentRouter"];
+    private readonly supportedInterfaces = ["IComponentLoadable", "IComponentForge", "IComponentRouter"];
 
     private initializeP: Promise<void> | undefined;
 
     protected constructor(
-        protected runtime: IComponentRuntime,
-        protected context: IComponentContext,
+        protected readonly runtime: IComponentRuntime,
+        protected readonly context: IComponentContext,
         supportedInterfaces: string[],
     ) {
         // concat supported interfaces
         this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
-        this.url = context.id;
     }
 
-    // start IComponentForge
+    // #region IComponentForge
 
     /**
      * This should only be called before the component has attached. It allows to pass in props to do setup.
@@ -46,9 +47,9 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      */
     public async forge(props?: any) { }
 
-    // end IComponentForge
+    // #endregion IComponentForge
 
-    // start IComponentRouter
+    // #region IComponentRouter
 
     /**
      * Return this object if someone requests it directly
@@ -69,15 +70,14 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
         return Promise.reject(`unknown request url: ${req.url}`);
     }
 
-    // end IComponentRouter
+    // #endregion IComponentRouter
 
-    // start ISharedComponent
+    // #region ISharedComponent
 
     /**
      * Returns this object if interface supported
      */
     public query<T>(id: string): T | undefined {
-
         // If they are requesting `IComponentForge` and it's not creation then return undefined.
         if (id === "IComponentForge" && this.runtime.existing) {
             return undefined;
@@ -93,7 +93,23 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
         return this.supportedInterfaces;
     }
 
-    // end ISharedComponent
+    public get url() { return this.context.id; }
+
+    // #endregion ISharedComponent
+
+    /**
+     * Calls existing, create, and opened().  Caller is responsible for ensuring this is only invoked once.
+     */
+    public async [initializeKey]() {
+        // allow the inheriting class to override creation based on the lifetime
+        if (this.runtime.existing) {
+            await this.existing();
+        } else {
+            await this.create();
+        }
+
+        await this.opened();
+    }
 
     /**
      * Calls create, initialize, and attach on a new component. Optional props will be passed in if the
@@ -103,10 +119,9 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
      */
-    protected async createAndAttachComponent(id: string, pkg: string, props?: any): Promise<IComponent> {
+    protected async createAndAttachComponent<T extends IComponentLoadable>(id: string, pkg: string, props?: any): Promise<T> {
         const runtime = await this.context.createComponent(id, pkg);
-        const response = await runtime.request({ url: "/" });
-        const component = await this.isComponentResponse(response);
+        const component = await this.asComponent<T>(runtime.request({ url: "/" }));
 
         const forge = component.query<IComponentForge>("IComponentForge");
         if (forge) {
@@ -122,9 +137,8 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      * Gets the component of a given id if any
      * @param id - component id
      */
-    protected async getComponent(id: string): Promise<IComponent> {
-        const response = await this.context.hostRuntime.request({ url: `/${id}` });
-        return this.isComponentResponse(response);
+    protected async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        return this.asComponent(this.context.hostRuntime.request({ url: `/${id}` }));
     }
 
     /**
@@ -149,35 +163,22 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      */
     protected async initialize(): Promise<void> {
         if (!this.initializeP) {
-            this.initializeP = this.initializeInternal();
+            this.initializeP = this[initializeKey]();
         }
 
         await this.initializeP;
-
-        return;
     }
 
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    private async isComponentResponse(response: IResponse): Promise<IComponent> {
-        if (response.mimeType === "prague/component") {
-            return response.value as IComponent;
+    private async asComponent<T extends IComponentLoadable>(response: Promise<IResponse>): Promise<T> {
+        const result = await response;
+
+        if (result.status === 200 && result.mimeType === "prague/component") {
+            return result.value as T;
         }
 
         return Promise.reject("response does not contain prague component");
-    }
-
-    private async initializeInternal(): Promise<void> {
-        // allow the inheriting class to override creation based on the lifetime
-        if (this.runtime.existing) {
-            await this.existing();
-        } else {
-            await this.create();
-        }
-
-        await this.opened();
-
-        return;
     }
 }
