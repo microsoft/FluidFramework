@@ -18,7 +18,7 @@ import { EventEmitter } from "events";
 import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
-export const MaxBatchDeltas = 2000;
+const MaxBatchDeltas = 2000;
 
 export class ReplayControllerStatic extends ReplayController {
     private static readonly DelayInterval = 50;
@@ -47,7 +47,7 @@ export class ReplayControllerStatic extends ReplayController {
     }
 
     public initStorage(storage: IDocumentStorageService) {
-        return Promise.resolve();
+        return Promise.resolve(true);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
