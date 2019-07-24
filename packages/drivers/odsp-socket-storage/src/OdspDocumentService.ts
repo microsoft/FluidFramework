@@ -24,12 +24,22 @@ export class OdspDocumentService implements api.IDocumentService {
     private readonly joinSessionP: SinglePromise<ISocketStorageDiscovery> | undefined;
     private tokenProvider: TokenProvider;
 
+    /**
+     * @param appId - app id used for telemetry for network requests
+     * @param storageFetchWrapper - if not provided FetchWrapper will be used
+     * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+     * @param socketStorageDiscovery - the initial JoinSession response
+     * @param snapshotP - optional promise to prefetched latest snapshot. It will query the
+     * server if the promise is not provide. If the promise resolves to null,
+     * it will assume that there are no snapshot on the server and skip the query
+     * @param joinSession - function to invoke to re-run JoinSession
+     */
     constructor(
         private readonly appId: string,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private socketStorageDiscovery: ISocketStorageDiscovery,
-        private readonly snapshot?: Promise<IOdspSnapshot | undefined>,
+        private readonly snapshotP?: Promise<IOdspSnapshot | undefined>,
         joinSession?: () => Promise<ISocketStorageDiscovery>,
     ) {
         this.attemptedDeltaStreamConnection = false;
@@ -49,12 +59,17 @@ export class OdspDocumentService implements api.IDocumentService {
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         let blobs: resources.IBlob[] | undefined;
         let trees: resources.ITree[] | undefined;
-        let latestSha: string | undefined;
-        const snapshot = await this.snapshot;
-        if (snapshot) {
-            trees = snapshot.trees;
-            latestSha = snapshot.sha;
-            blobs = snapshot.blobs;
+        let latestSha: string | null | undefined;
+        if (this.snapshotP) {
+            const snapshot = await this.snapshotP;
+            if (snapshot) {
+                trees = snapshot.trees;
+                latestSha = snapshot.sha;
+                blobs = snapshot.blobs;
+            } else {
+                // Use null to indicate latest snapshot doesn't not exist
+                latestSha = null;
+            }
         }
 
         return new OdspDocumentStorageService(
@@ -83,7 +98,7 @@ export class OdspDocumentService implements api.IDocumentService {
      * @returns returns the document delta storage service for sharepoint driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        const snapshot = await this.snapshot;
+        const snapshot = await this.snapshotP;
         const ops = snapshot ? snapshot.ops || [] : undefined;
 
         return new DocumentDeltaStorageService(

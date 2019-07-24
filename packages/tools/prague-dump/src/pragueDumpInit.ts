@@ -7,6 +7,7 @@
 import { IDocumentService } from "@prague/container-definitions";
 import * as odsp from "@prague/odsp-socket-storage";
 import {
+    getDriveItemByFileId,
     getODSPFluidResolvedUrl,
     IClientConfig,
     IODSPTokens,
@@ -134,15 +135,27 @@ async function joinODSPSession(
     }
 }
 
-async function initializeODSPCore(server: string, drive: string, item: string) {
-    if (!process.env.login__microsoft__clientId || !process.env.login__microsoft__secret) {
-        return Promise.reject("ODSP clientId/secret must be set as environment variables. " +
-            "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
-    }
+function getClientConfig() {
     const clientConfig: IClientConfig = {
-        clientId: process.env.login__microsoft__clientId,
-        clientSecret: process.env.login__microsoft__secret,
+        get clientId() {
+            if (!process.env.login__microsoft__clientId) {
+                throw new Error("ODSP clientId/secret must be set as environment variables. " +
+                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+            }
+            return process.env.login__microsoft__clientId;
+        },
+        get clientSecret() {
+            if (!process.env.login__microsoft__secret) {
+                throw new Error("ODSP clientId/secret must be set as environment variables. " +
+                    "Please run the script at https://github.com/microsoft/Prague/tree/master/tools/getkeys");
+            }
+            return process.env.login__microsoft__secret;
+        },
     };
+    return clientConfig;
+}
+
+async function initializeODSPCore(server: string, drive: string, item: string, clientConfig: IClientConfig) {
     connectionInfo = {
         server,
         drive,
@@ -172,23 +185,66 @@ async function initializeOfficeODSP(searchParams: URLSearchParams) {
     }
     const url = new URL(site);
     const server = url.host;
-    return initializeODSPCore(server, drive, item);
+    return initializeODSPCore(server, drive, item, getClientConfig());
+}
+
+async function resolveDriveItemByFileId(
+    server: string,
+    account: string,
+    docId: string,
+    clientConfig: IClientConfig,
+    forceTokenRefresh = false) {
+
+    const odspTokens = await getODSPTokens(server, clientConfig, forceTokenRefresh);
+    try {
+        const oldAccessToken = odspTokens.accessToken;
+        const driveItem = await getDriveItemByFileId(server, account, docId, clientConfig, odspTokens);
+        if (oldAccessToken !== odspTokens.accessToken) {
+            await saveAccessToken(server, odspTokens);
+        }
+        return driveItem;
+    } catch (e) {
+        const parsedBody = JSON.parse(e.data);
+        if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
+            return resolveDriveItemByFileId(server, account, docId, clientConfig, true);
+        }
+        const responseMsg = JSON.stringify(parsedBody.error, undefined, 2);
+        return Promise.reject(`Fail to connect to ODSP server\nError Response:\n${responseMsg}`);
+    }
+}
+
+async function initializeODSPHosted(server: string, account: string, docId: string, clientConfig: IClientConfig) {
+    const driveItem = await resolveDriveItemByFileId(server, account, docId, clientConfig);
+    return initializeODSPCore(server, driveItem.drive, driveItem.item, clientConfig);
 }
 
 async function initializeODSP(
     server: string,
-    pathname: string) {
+    pathname: string,
+    searchParams: URLSearchParams) {
 
-    const odspMatch = pathname.match(
+    const clientConfig = getClientConfig();
+
+    // Sharepoint hosted URL
+    const sourceDoc = searchParams.get("sourcedoc");
+    if (sourceDoc) {
+        const hostedMatch = pathname.match(/\/personal\/([^\/]*)\//);
+        if (hostedMatch !== null) {
+            return initializeODSPHosted(server, hostedMatch[1], sourceDoc, clientConfig);
+        }
+    }
+
+    // Joinsession like URL
+    const joinSessionMatch = pathname.match(
         /(.*)\/_api\/v2.1\/drives\/([^\/]*)\/items\/([^\/]*)(.*)/);
 
-    if (odspMatch === null) {
+    if (joinSessionMatch === null) {
         return Promise.reject("Unable to parse ODSP URL path");
     }
-    const drive = odspMatch[2];
-    const item = odspMatch[3];
+    const drive = joinSessionMatch[2];
+    const item = joinSessionMatch[3];
 
-    return initializeODSPCore(server, drive, item);
+    return initializeODSPCore(server, drive, item, clientConfig);
 }
 
 async function initializeR11s(server: string, pathname: string) {
@@ -274,7 +330,7 @@ export async function pragueDumpInit() {
         if (officeServers.indexOf(server) !== -1) {
             return initializeOfficeODSP(url.searchParams);
         } else if (odspServers.indexOf(server) !== -1) {
-            return initializeODSP(server, url.pathname);
+            return initializeODSP(server, url.pathname, url.searchParams);
         } else if (r11sServers.indexOf(server) !== -1) {
             return initializeR11s(server, url.pathname);
         } else if (server === "localhost" && url.port === "3000") {

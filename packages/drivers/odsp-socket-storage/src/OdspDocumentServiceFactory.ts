@@ -26,7 +26,9 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
     /**
      * @param appId - app id used for telemetry for network requests
-     * @param snapshot - snapshot
+     * @param snapshot - optional promise to prefetched latest snapshot. It will query the
+     * server if the promise is not provide. If the promise resolves to null,
+     * it will assume that there are no snapshot on the server and skip the query
      * @param socketStorageDiscovery - the initial JoinSession response
      * @param joinSession - function to invoke to re-run JoinSession
      * @param storageFetchWrapper - if not provided FetchWrapper will be used

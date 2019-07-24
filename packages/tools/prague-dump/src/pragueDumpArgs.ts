@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {URL} from "url";
+import { URL } from "url";
 
 export let dumpMessages = false;
 export let dumpMessageStats = false;
@@ -17,7 +17,7 @@ export let dumpTotalStats = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
-export let paramSave: string| undefined;
+export let paramSave: string | undefined;
 export const messageTypeFilter = new Set<string>();
 
 export let paramURL: string | undefined;
@@ -90,10 +90,10 @@ export function parseArguments() {
                 paramJWT = parseStrArg(i++, "jwt token");
                 break;
             case "--snapshotVersionIndex":
-                paramSnapshotVersionIndex = parseIntArg(i++, "version index");
+                paramSnapshotVersionIndex = parseIntArg(i++, "version index", true);
                 break;
             case "--numSnapshotVersions":
-                paramNumSnapshotVersions = parseIntArg(i++, "number of versions");
+                paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
                 break;
             case "--saveDir":
                 paramSave = parseStrArg(i++, "save data path");
@@ -131,7 +131,7 @@ function parseStrArg(i: number, name: string) {
     }
     return process.argv[i + 1];
 }
-function parseIntArg(i: number, name: string) {
+function parseIntArg(i: number, name: string, allowZero: boolean) {
     if (i + 1 >= process.argv.length) {
         console.error(`ERROR: Missing ${name}`);
         printUsage();
@@ -139,7 +139,7 @@ function parseIntArg(i: number, name: string) {
     }
     const numStr = process.argv[i + 1];
     const paramNumber = parseInt(numStr, 10);
-    if (isNaN(paramNumber) || paramNumber <= 0) {
+    if (isNaN(paramNumber) || (allowZero ? paramNumber < 0 : paramNumber <= 0)) {
         console.error(`ERROR: Invalid ${name} ${numStr}`);
         printUsage();
         process.exit(-1);

@@ -26,7 +26,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         queryParams: { [key: string]: string },
         private readonly documentId: string,
         private readonly snapshotUrl: string | undefined,
-        private readonly latestSha: string | undefined,
+        private readonly latestSha: string | null | undefined,
         trees: resources.ITree[] | undefined,
         blobs: resources.IBlob[] | undefined,
         private readonly fetchWrapper: IFetchWrapper,
@@ -103,10 +103,19 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
         let id: string;
         if (!version || !version.id) {
-            if (!this.latestSha) {
+            // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
+            if (this.latestSha === null) {
                 return null;
             }
-            id = this.latestSha;
+            if (this.latestSha === undefined) {
+                const versions = await this.getVersions(null, 1);
+                if (!versions || versions.length === 0) {
+                    return null;
+                }
+                id = versions[0].id;
+            } else {
+                id = this.latestSha;
+            }
         } else {
             id = version.id;
         }
@@ -140,17 +149,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid === this.documentId) {
             if (count === 1) {
-                // If app does not provide latest snapshot, do not bother asking SPO - this adds substantially to load time
-                if (!this.latestSha) {
+                // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
+                if (this.latestSha === null) {
                     return [];
                 }
-                const cachedTree = this.treesCache.get(this.latestSha);
-                if (cachedTree) {
-                    return [{ id: cachedTree.sha, treeId: undefined! }];
+                if (this.latestSha !== undefined) {
+                    const cachedTree = this.treesCache.get(this.latestSha);
+                    if (cachedTree) {
+                        return [{ id: cachedTree.sha, treeId: undefined! }];
+                    }
                 }
             }
-            // We should not be getting here - that's likely a perf hit for the apps!
-            console.error("getVersions() is likely causing perf issues");
         } else {
             // PragueDump & FluidDebugger tools use empty sting to query for versions
             // In such case we need to make a call against SPO to give full picture to the tool, no matter if we have

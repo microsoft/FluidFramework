@@ -16,29 +16,9 @@ export interface IClientConfig {
     clientSecret: string;
 }
 
-function getRequestHandler(resolve, reject) {
-    return (error, response, body) => {
-        if (error) {
-            console.error(`ERROR: request error\n${JSON.stringify(error, undefined, 2)}`);
-            reject(error);
-            return;
-        }
-        resolve({ status: response.statusCode, data: body });
-    };
-}
-
-async function postAsync(uri: string, token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        // console.log(`POST: ${uri}`);
-        request.post(uri, { auth: { bearer: token } }, getRequestHandler(resolve, reject));
-    });
-}
-
-async function putAsync(uri: string, token: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-        // console.log(`PUT: ${uri}`);
-        request.put(uri, { auth: { bearer: token } }, getRequestHandler(resolve, reject));
-    });
+export interface IODSPDriveItem {
+    drive: string;
+    item: string;
 }
 
 function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, lastRefreshToken: string) {
@@ -84,6 +64,80 @@ async function refreshAccessToken(server: string, clientConfig: IClientConfig, t
     return odspTokens;
 }
 
+async function requestWithRefresh(
+    server: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+    requestCallback: (token: string) => Promise<any>): Promise<any> {
+
+    const result = await requestCallback(tokens.accessToken);
+    if (result.status !== 401) {
+        return result;
+    }
+    // Unauthorized, try to refresh the token
+    const odspTokens = await refreshAccessToken(server, clientConfig, tokens);
+    return requestCallback(odspTokens.accessToken);
+}
+
+function getRequestHandler(resolve, reject) {
+    return (error, response, body) => {
+        if (error) {
+            console.error(`ERROR: request error\n${JSON.stringify(error, undefined, 2)}`);
+            reject(error);
+            return;
+        }
+        const result = { status: response.statusCode, data: body };
+        // console.log(JSON.stringify(result, undefined, 2));
+        resolve(result);
+    };
+}
+
+async function getAsync(
+    server: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+    url: string,
+    headers?: any): Promise<any> {
+
+    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
+        return new Promise((resolve, reject) => {
+            // console.log(`GET: ${url}`);
+            request.get({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
+        });
+    });
+}
+
+async function postAsync(
+    server: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens,
+    url: string,
+    headers?: any): Promise<any> {
+
+    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
+        return new Promise((resolve, reject) => {
+            // console.log(`GET: ${url}`);
+            request.post({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
+        });
+    });
+}
+
+async function putAsync(
+    server: string,
+    clientConfig:
+        IClientConfig,
+    tokens: IODSPTokens,
+    url: string,
+    headers?: any): Promise<any> {
+
+    return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
+        return new Promise((resolve, reject) => {
+            // console.log(`GET: ${url}`);
+            request.put({ url, headers, auth: { bearer: token } }, getRequestHandler(resolve, reject));
+        });
+    });
+}
+
 export async function getODSPFluidResolvedUrl(
     server: string,
     path: string,
@@ -93,13 +147,9 @@ export async function getODSPFluidResolvedUrl(
 
     const baseUri = `https://${server}/_api/v2.1/${path}`;
     const joinSessionUri = `${baseUri}/opStream/joinSession`;
-    let joinSessionResult = await postAsync(joinSessionUri, tokens.accessToken);
 
-    if (joinSessionResult.status === 401) {
-        // Unauthorized, try to refresh the token
-        const odspTokens = await refreshAccessToken(server, clientConfig, tokens);
-        joinSessionResult = await postAsync(joinSessionUri, odspTokens.accessToken);
-    }
+    let joinSessionResult = await postAsync(server, clientConfig, tokens, joinSessionUri);
+
     if (joinSessionResult.status === 308) {
         // Redirects
         // TODO: reject for now
@@ -111,12 +161,12 @@ export async function getODSPFluidResolvedUrl(
         }
         // Try to create it
         const contentUri = `${baseUri}/content`;
-        const createResult = await putAsync(contentUri, tokens.accessToken);
+        const createResult = await putAsync(server, clientConfig, tokens, contentUri);
         if (createResult.status !== 201) {
             return Promise.reject(createResult);
         }
 
-        joinSessionResult = await postAsync(joinSessionUri, tokens.accessToken);
+        joinSessionResult = await postAsync(server, clientConfig, tokens, joinSessionUri);
         if (joinSessionResult.status !== 200) {
             return Promise.reject(joinSessionResult);
         }
@@ -133,4 +183,43 @@ export async function getODSPFluidResolvedUrl(
         url: `prague-odsp://${server}/` +
             `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}`,
     };
+}
+
+export async function getDriveItemByFileId(
+    server: string,
+    account: string,
+    uid: string,
+    clientConfig: IClientConfig,
+    tokens: IODSPTokens): Promise<IODSPDriveItem> {
+
+    const getFileByIdUrl = `https://${server}/personal/${account}/_api/web/GetFileById('${uid}')`;
+    const getFileByIdResult = await getAsync(server, clientConfig, tokens,
+        getFileByIdUrl, { accept: "application/json" });
+
+    if (getFileByIdResult.status !== 200) {
+        return Promise.reject(getFileByIdResult);
+    }
+    const parsedBody = JSON.parse(getFileByIdResult.data);
+    const path = parsedBody.ServerRelativeUrl;
+    const documentPathMatch = path.match(/\/personal\/(.*)\/Documents\/(.*)/);
+    if (documentPathMatch === null) {
+        return Promise.reject(getFileByIdResult);
+    }
+
+    if (documentPathMatch[1] !== account) {
+        return Promise.reject(getFileByIdResult);
+    }
+
+    const fileName = documentPathMatch[2];
+    if (!fileName) {
+        return Promise.reject(getFileByIdResult);
+    }
+
+    const getDriveItemUrl = `https://${server}/personal/${account}/_api/v2.1/drive/root:/${fileName}`;
+    const getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
+    if (getDriveItemResult.status !== 200) {
+        return Promise.reject(getDriveItemResult);
+    }
+    const parsedDriveItemBody = JSON.parse(getDriveItemResult.data);
+    return { drive: parsedDriveItemBody.parentReference.driveId, item: parsedDriveItemBody.id };
 }
