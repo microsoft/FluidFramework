@@ -25,7 +25,7 @@ export interface ILoaderProps {
 
 /**
  * Entry point for loading a routerlicious component against wu2
- * TODO: clean this up so that it get's rid of all the fluff from the vanilla-loader
+ * TODO: clean this up so that it get's rid of all the fluff from the tiny-web-host
  * @param div div element for th component to be rendered in
  * @param documentId the id for the local component to connect to
  */ 

@@ -1,5 +1,5 @@
 # This package is deprecated
-Please use [@prague/vanilla-loader](../../../tools/vanilla-prague-loader) instead
+Please use [@prague/tiny-web-host](../hosts/tiny-web-host) instead
 
 https://github.com/microsoft/Prague/issues/1653
 

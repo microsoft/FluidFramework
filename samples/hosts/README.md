@@ -9,7 +9,7 @@ create, initialize, and then make use of the loader. And does so in a literate p
 more detail on each line of the code.
 
 There are other packages which provide simple APIs to make use of the loader. For example @prague/app-datastore or
-@prague/react-loader. These may be better starting options when integrating the loader into your own code. But this
+@prague/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
 example will show all the steps needed to create and use the Prague loader. And it still comes in under 200 lines
 of code.
 
