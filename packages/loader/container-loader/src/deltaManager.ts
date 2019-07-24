@@ -521,13 +521,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.reconnectOnError("Reconnecting on error", connection);
                 });
 
+                // Notify of the connection
+                // WARNING: This has to happen before processInitialMessages() call below.
+                // If not, we may not update Constainer.pendingClientId in time before seeing our own join session op.
+                this.emit("connect", connection.details);
+
                 this.processInitialMessages(
                     connection.details.initialMessages,
                     connection.details.initialContents,
                     connection.details.initialSignals);
 
-                // Notify of the connection
-                this.emit("connect", connection.details);
             },
             (error) => {
                 // Log error once - we get too many errors in logs when we are offline,
