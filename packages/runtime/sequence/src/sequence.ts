@@ -544,7 +544,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         // Apply all pending messages
         for (const message of messages) {
-            this.processMessage(message);
+            this.processContent(message);
         }
     }
 

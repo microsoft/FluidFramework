@@ -768,6 +768,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             // the document to load
             const handlerAttachedP = attributesP.then((attributes) => {
                 this._deltaManager!.attachOpHandler(
+                    attributes.minimumSequenceNumber,
                     attributes.sequenceNumber,
                     {
                         process: (message, callback) => {
@@ -784,6 +785,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         } else {
             const handlerAttachedP = attributesP.then((attributes) => {
                 this._deltaManager!.attachOpHandler(
+                    attributes.minimumSequenceNumber,
                     attributes.sequenceNumber,
                     {
                         process: (message) => {

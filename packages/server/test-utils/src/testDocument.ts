@@ -100,7 +100,11 @@ export class TestDeltaManager
         throw new Error("Method not implemented.");
     }
 
-    public attachOpHandler(sequenceNumber: number, handler: IDeltaHandlerStrategy, resume: boolean) {
+    public attachOpHandler(
+            minSequenceNumber: number,
+            sequenceNumber: number,
+            handler: IDeltaHandlerStrategy,
+            resume: boolean) {
         throw new Error("Method not implemented.");
     }
 
