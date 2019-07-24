@@ -25,6 +25,7 @@ COPY .npmrc .
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
 
 COPY packages/agents/flow-intel/package*.json packages/agents/flow-intel/
+COPY packages/agents/flow-intel-viewer/package*.json packages/agents/flow-intel-viewer/
 COPY packages/agents/intelligence-runner/package*.json packages/agents/intelligence-runner/
 COPY packages/agents/snapshotter/package*.json packages/agents/snapshotter/
 COPY packages/agents/spellchecker/package*.json packages/agents/spellchecker/
