@@ -25,6 +25,7 @@ import {
     ITree,
     MessageType,
 } from "@prague/container-definitions";
+import { raiseConnectedEvent } from "@prague/utils";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
@@ -177,11 +178,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
         this.runtime!.changeConnectionState(value, clientId, version);
-        if (value === ConnectionState.Connected) {
-            this.emit("connected", this.clientId);
-        } else {
-            this.emit("disconnected");
-        }
+        raiseConnectedEvent(this, value, clientId);
     }
 
     public async stop(): Promise<ITree | null> {

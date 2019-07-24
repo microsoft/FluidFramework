@@ -45,6 +45,7 @@ import {
     EventEmitterWithErrorHandling,
     flatten,
     PerformanceEvent,
+    raiseConnectedEvent,
     readAndParse,
 } from "@prague/utils";
 import * as assert from "assert";
@@ -217,7 +218,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     public on(event: "connected" | "contextChanged", listener: (clientId: string) => void): this;
-    public on(event: "disconnected", listener: () => void): this;
+    public on(event: "disconnected" | "joining", listener: () => void): this;
     public on(event: "error", listener: (error: any) => void): this;
     public on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
     public on(event: "pong" | "processTime", listener: (latency: number) => void): this;
@@ -846,11 +847,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.protocolHandler!.quorum.changeConnectionState(value, this.clientId!);
 
-        if (this.connectionState === ConnectionState.Connected) {
-            this.emit("connected", this.pendingClientId, version);
-        } else {
-            this.emit("disconnected");
-        }
+        raiseConnectedEvent(this, value, this.clientId!);
     }
 
     private submitMessage(type: MessageType, contents: any): number {

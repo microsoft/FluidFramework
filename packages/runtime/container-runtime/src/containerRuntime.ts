@@ -41,7 +41,7 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, Deferred, flatten, isSystemType, readAndParse } from "@prague/utils";
+import { buildHierarchy, Deferred, flatten, isSystemType, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { ComponentContext } from "./componentContext";
@@ -537,9 +537,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.leaderElector.changeConnectionState(value, clientId);
         }
 
-        if (value === ConnectionState.Connected) {
-            this.emit("connected", this.clientId);
+        raiseConnectedEvent(this, value, clientId);
 
+        if (value === ConnectionState.Connected) {
             if (this.proposeLeadershipOnConnection) {
                 this.proposeLeadership();
             }
@@ -549,7 +549,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 this.summaryManager.setConnected(clientId);
             }
         } else {
-            this.emit("disconnected");
             this.summaryManager.setDisconnected();
         }
     }
