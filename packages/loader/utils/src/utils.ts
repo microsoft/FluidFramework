@@ -27,7 +27,7 @@ export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionStat
     if (state === ConnectionState.Connected) {
         emitter.emit("connected", clientId);
     } else if (state === ConnectionState.Connecting) {
-        emitter.emit("connecting", clientId);
+        emitter.emit("joining");
     } else {
         emitter.emit("disconnected");
     }
