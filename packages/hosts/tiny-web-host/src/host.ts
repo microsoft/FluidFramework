@@ -83,6 +83,7 @@ export async function loadIFramedPragueComponent(
     }
 
     const iframe = document.createElement("iframe");
+    iframe.frameBorder = "0";
     iframe.id = "containerid";
 
     iframe.srcdoc = `
@@ -106,6 +107,7 @@ export async function loadIFramedPragueComponent(
                         "clientSecret");
                 }
 
+                document.body.style.margin = '0';
                 window.addEventListener("message", (message) => {
                     console.log(message);
                     start(message.data.url, message.data.token, message.data.appId);
@@ -113,6 +115,12 @@ export async function loadIFramedPragueComponent(
             </script>
     </body>
     </html>  `;
+
+    // For the moment, rely on where this iframe is being loaded to determine how to render this component.
+    // We may want to add a mode where we try to restrict the size of the component to just be big enough
+    // to host the component contents.
+    iframe.style.height = "100%";
+    iframe.style.width = "100%";
 
     div.appendChild(iframe);
     iframe.onload = async () => {
