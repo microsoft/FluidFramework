@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export * from "./fileDeltaStorageService";
 export * from "./fileDocumentService";
 export * from "./fileDocumentServiceFactory";
-export * from "./fileDeltaStorageService";
-export * from "./fileDocumentStorageService";
 export * from "./fileDocumentDeltaConnection";
+export * from "./fileDocumentStorageService";

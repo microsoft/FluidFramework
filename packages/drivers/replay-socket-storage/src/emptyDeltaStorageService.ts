@@ -5,7 +5,7 @@
 
 import * as api from "@prague/container-definitions";
 
-export class ReplayDeltaStorageService implements api.IDocumentDeltaStorageService {
+export class EmptyDeltaStorageService implements api.IDocumentDeltaStorageService {
 
     /**
      * Returns ops from the list of ops generated till now.

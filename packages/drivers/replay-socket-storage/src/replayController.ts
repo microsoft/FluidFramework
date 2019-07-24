@@ -8,7 +8,7 @@ import * as api from "@prague/container-definitions";
 /**
  * Partial implementation of IDocumentStorageService
  */
-export abstract class ReplayStorageService implements api.IDocumentStorageService {
+export abstract class ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
     public abstract getVersions(versionId: string, count: number): Promise<api.IVersion[]>;
     public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     public abstract read(blobId: string): Promise<string>;
@@ -46,7 +46,7 @@ export abstract class ReplayStorageService implements api.IDocumentStorageServic
  * It controls where we start (snapshot, local file, no snapshots)
  * As well as dispatch of ops
  */
-export abstract class ReplayController extends ReplayStorageService {
+export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     /**
      * Initialize reply controller
      * @param storage - real document storage

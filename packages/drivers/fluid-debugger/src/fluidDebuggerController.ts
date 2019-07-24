@@ -11,11 +11,11 @@ import {
     IVersion,
 } from "@prague/container-definitions";
 import {
-    FileStorage,
+    FileSnapshotReader,
     IFileSnapshot,
     OpStorage,
+    ReadDocumentStorageServiceBase,
     ReplayController,
-    ReplayStorageService,
     SnapshotStorage,
 } from "@prague/replay-socket-storage";
 import { Deferred, readAndParse } from "@prague/utils";
@@ -31,7 +31,7 @@ const MaxBatchDeltas = 2000;
  */
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
-            createUi: debuggerUIFactory): DebugReplayController | undefined {
+            createUi: debuggerUIFactory): DebugReplayController | null {
         if (localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
@@ -39,7 +39,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 return controller;
             }
         }
-        return undefined;
+        return null;
     }
 
     protected static readonly WindowClosedSeq = -1; // seq# to indicate that user closed window
@@ -67,7 +67,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected stepsToPlay: number = 0;
     protected lastOpReached = false;
 
-    protected storage?: ReplayStorageService;
+    protected storage?: ReadDocumentStorageServiceBase;
 
     public connectToUi(ui: IDebuggerUI): void {
         this.ui = ui;
@@ -130,7 +130,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                     this.resolveStorage(
                         `Playing ${file.name} file`,
                         Number.MAX_SAFE_INTEGER,
-                        new FileStorage(json));
+                        new FileSnapshotReader(json));
                 } catch (error) {
                     alert(`Error parsing file: ${error}`);
                     return;
@@ -276,7 +276,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
     }
 
-    protected resolveStorage(versionInfo: string, seq: number, storage: ReplayStorageService) {
+    protected resolveStorage(versionInfo: string, seq: number, storage: ReadDocumentStorageServiceBase) {
         assert(!this.storage);
         assert(storage);
         this.storage = storage;

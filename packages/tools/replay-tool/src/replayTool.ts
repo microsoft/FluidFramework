@@ -4,7 +4,6 @@
  */
 
 import { playMessagesFromFileStorage } from "./replayMessages";
-import { initializeFileDocumentService } from "./replayToolInit";
 
 export let replayTool: ReplayTool;
 
@@ -31,7 +30,7 @@ export class ReplayTool {
     public to: number = Number.MAX_SAFE_INTEGER;
     public takeSnapshot = false;
     public snapFreq: number;
-    public version: string;
+    public version?: string;
 
     constructor() {
         this.parseArguments();
@@ -118,12 +117,13 @@ export class ReplayTool {
 
 async function replayToolMain() {
     replayTool = new ReplayTool();
-    const documentServiceFactory = await initializeFileDocumentService(replayTool.inDirName);
-    await playMessagesFromFileStorage(replayTool, documentServiceFactory);
+    await playMessagesFromFileStorage(replayTool);
 }
 
 replayToolMain()
-    .catch((error: string) => console.log(`ERROR: ${error}`))
+    .catch((error: string) => {
+        console.log(`ERROR: ${error}`);
+    })
     .finally(() => {
         process.exit(0);
     });

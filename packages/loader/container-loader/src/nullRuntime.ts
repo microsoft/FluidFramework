@@ -31,7 +31,7 @@ class NullRuntime implements IRuntime {
         return Promise.resolve(null);
     }
 
-    public summarize(): Promise<ISummaryTree> {
+    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
         return Promise.resolve({
             tree: {},
             type: SummaryType.Tree,

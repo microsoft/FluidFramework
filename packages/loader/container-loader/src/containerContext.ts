@@ -171,16 +171,16 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return ContainerContext.supportedInterfaces;
     }
 
-    public async snapshot(tagMessage: string): Promise<ITree | null> {
-        return this.runtime!.snapshot(tagMessage);
+    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null> {
+        return this.runtime!.snapshot(tagMessage, generateFullTreeNoOptimizations);
     }
 
-    public summarize(): Promise<ISummaryTree> {
+    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
         if (!this.canSummarize) {
             return Promise.reject("Runtime does not support summaries");
         }
 
-        return this.runtime!.summarize();
+        return this.runtime!.summarize(generateFullTreeNoOptimizations);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
@@ -189,7 +189,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async stop(): Promise<ITree | null> {
-        const snapshot = await this.runtime!.snapshot("");
+        const snapshot = await this.runtime!.snapshot("", false /*generageFullTreeNoOptimizations*/);
         await this.runtime!.stop();
 
         return snapshot;

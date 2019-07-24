@@ -4,8 +4,8 @@
  */
 
 import * as api from "@prague/container-definitions";
+import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReplayController } from "./replayController";
-import { ReplayDeltaStorageService } from "./replayDeltaStorageService";
 import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
 
 /**
@@ -18,16 +18,21 @@ export class ReplayDocumentService implements api.IDocumentService {
             documentService: api.IDocumentService,
             controller: ReplayController): Promise<api.IDocumentService> {
         const storage = await documentService.connectToStorage();
+
         const useController = await controller.initStorage(storage);
-        if (useController) {
-            return new ReplayDocumentService(documentService, controller);
-        } else {
+        if (!useController) {
             return documentService;
         }
+
+        const deltaConnection = ReplayDocumentDeltaConnection.create(
+            await documentService.connectToDeltaStorage(),
+            controller);
+        return new ReplayDocumentService(controller, deltaConnection);
     }
 
-    constructor(private readonly documentService: api.IDocumentService,
-                private readonly controller: ReplayController) {
+    constructor(
+            private readonly controller: api.IDocumentStorageService,
+            private readonly deltaStorage: api.IDocumentDeltaConnection) {
     }
 
     /**
@@ -43,7 +48,7 @@ export class ReplayDocumentService implements api.IDocumentService {
      * @returns returns the dummy document delta storage service for replay driver.
      */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
-        return new ReplayDeltaStorageService();
+        return new EmptyDeltaStorageService();
     }
 
     /**
@@ -53,10 +58,7 @@ export class ReplayDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service which replay ops from --from to --to arguments.
      */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        const documentStorageService = await this.documentService.connectToDeltaStorage();
-        return ReplayDocumentDeltaConnection.create(
-            documentStorageService,
-            this.controller);
+        return this.deltaStorage;
     }
 
     public async branch(): Promise<string> {

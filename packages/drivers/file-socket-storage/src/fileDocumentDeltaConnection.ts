@@ -128,7 +128,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         documentDeltaStorageService: FileDeltaStorageService,
         deltaConnection: ReplayFileDeltaConnection,
     ) {
-        this.replayer =  new Replayer(
+        this.replayer = new Replayer(
             deltaConnection,
             documentDeltaStorageService);
     }

@@ -60,7 +60,7 @@ __FluidDebugger.createFluidDebugger()__ is an example of binding logic & UI impl
 
 There are useful stand-alone implementations of __IDocumentStorageService__ interface are provided as part of debugger: 
 
-1. __FileStorage__ - file based storage. It reads content from file (snapshot.json) and expects __IFileSnapshot__ format, uses content of such file to serve document requests. 
+1. __FileSnapshotReader__ - file based storage. It reads content from file (snapshot.json) and expects __IFileSnapshot__ format, uses content of such file to serve document requests. 
 2. __SnapshotStorage__ - storage based on particular snapshot (in real storage). Requires snapshots' root ISnapshotTree to be provided at construction time. 
 3. __OpStorage__ - op-based storage (i.e. it rejects all requests for snapshots / trees). 
 

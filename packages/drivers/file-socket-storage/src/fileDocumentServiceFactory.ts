@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
-import * as fs from "fs";
+import {
+    IDocumentService,
+    IDocumentServiceFactory,
+    IDocumentStorageService,
+    IResolvedUrl,
+} from "@prague/container-definitions";
+import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 
 /**
@@ -13,7 +18,10 @@ import { FileDocumentService } from "./fileDocumentService";
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
-    constructor(private readonly path: string) {}
+    constructor(
+            private readonly storage: IDocumentStorageService,
+            private readonly deltaStorage: FileDeltaStorageService) {
+    }
 
     /**
      * Creates the file document service if the path exists.
@@ -22,10 +30,6 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
      * @returns file document service.
      */
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
-        if (fs.existsSync(this.path)) {
-            return new FileDocumentService(this.path);
-        } else {
-            return Promise.reject("File does not exist");
-        }
+        return new FileDocumentService(this.storage, this.deltaStorage);
     }
 }

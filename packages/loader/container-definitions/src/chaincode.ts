@@ -137,12 +137,12 @@ export interface IRuntime extends IComponent {
     /**
      * Snapshots the runtime
      */
-    snapshot(tagMessage: string): Promise<ITree | null>;
+    snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null>;
 
     /**
      * Returns a summary of the runtime at the current sequence number
      */
-    summarize(): Promise<ISummaryTree>;
+    summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree>;
 
     /**
      * Notifies the runtime of a change in the connection state

@@ -4,7 +4,7 @@
  */
 
 import * as api from "@prague/container-definitions";
-import { IFileSnapshot  } from "@prague/replay-socket-storage";
+import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@prague/replay-socket-storage";
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import * as fs from "fs";
@@ -22,18 +22,11 @@ const FileStorageVersionTreeIdUnused = "baad";
 /**
  * Document storage service for the file driver.
  */
-export class FileDocumentStorageService implements api.IDocumentStorageService  {
+export class PragueDumpReader extends ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
+    protected docTree: api.ISnapshotTree | null = null;
 
-    private versionName?: string;
-    private latestTree: api.ISnapshotTree | null = null;
-
-    private readonly commits: {[key: string]: api.ITree} = {};
-    private readonly blobs = new Map<string, string>();
-
-    constructor(private readonly path: string) {}
-
-    public get repositoryUrl(): string {
-        throw new Error("Not implemented.");
+    constructor(private readonly path: string, private readonly versionName?: string) {
+        super();
     }
 
     /**
@@ -47,13 +40,16 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
         let filename: string;
         let rootTree = false;
         if (!version || version.id === "latest") {
-            if (!version || this.latestTree) {
-                return this.latestTree;
+            if (this.docTree) {
+                return this.docTree;
+            }
+            if (this.versionName === undefined) {
+                return null;
             }
             rootTree = true;
             filename = `${this.path}/${this.versionName}/tree.json`;
         } else {
-            filename = version.id;
+            filename = `${this.path}/${this.versionName}/${version.id}.json`;
         }
 
         if (!fs.existsSync(filename)) {
@@ -63,8 +59,9 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
         const data = fs.readFileSync(filename);
         const tree = JSON.parse(data.toString("utf-8"));
         if (rootTree) {
-            this.latestTree = tree;
+            this.docTree = tree;
         }
+        // Fill in this.commit right here?
         return tree;
     }
 
@@ -74,44 +71,21 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
      * @param count - Number of versions to be returned.
      */
     public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
-        if (versionId === FileStorageDocumentName || versionId === this.versionName) {
-            // if we started with some snapshot and already loaded it, OR we already saved some snapshot,
-            // then we have a tree! Return it.
-            // Otherwise we started with ops - return empty set.
-            if (this.latestTree) {
+        if (versionId === FileStorageDocumentName) {
+            if (this.docTree || this.versionName !== undefined) {
                 return [{id: "latest", treeId: FileStorageVersionTreeId}];
             }
-            // If we have no tree, then we started with no snapshot, and did not produce one yet.
-            assert(versionId === FileStorageDocumentName);
-        } else if (this.commits[versionId] !== undefined) {
-            // PrefetchDocumentStorageService likes to prefetch everything!
-            // Skip, as Container does not really need it.
-            throw new Error("Not supporting commit loading");
-        } else if (this.versionName === undefined) {
-            // Some commit is requested for the first time. That can only mean - we are loading from snapshot.
-            assert(!this.latestTree);
-            const fileName = `${this.path}/${versionId}/tree.json`;
-            if (fs.existsSync(fileName)) {
-                this.versionName = versionId;
-                return [{id: "latest", treeId: FileStorageVersionTreeId}];
-            }
-            console.error(`Unknown version: ${versionId}`);
-        } else {
-            // We loaded from shapshot - search for date there.
-            assert(this.latestTree);
-            const fileName = `${this.path}/${this.versionName}/${versionId}.json`;
-            if (fs.existsSync(fileName)) {
-                // Ideally we return something that satisfies that rule:
-                // GetVersions(versionId, 1).id === versionId
-                // But it does not matter as these ids do not persist
-                return [{
-                    id: fileName,
-                    treeId: FileStorageVersionTreeId,
-                }];
-            }
-            console.error(`Can't find ${fileName} version!"`);
+            // Started with ops - return empty set.
+            return [];
+        } else if (this.versionName !== undefined) {
+            // We loaded from snapshot - search for commit there.
+            assert(this.docTree);
+            return [{
+                id: versionId,
+                treeId: FileStorageVersionTreeId,
+            }];
         }
-        return [];
+        throw new Error(`Unknown version: ${versionId}`);
     }
 
     /**
@@ -126,44 +100,65 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
                 return data;
             }
         }
+        throw new Error(`Can't find blob ${sha}`);
+    }
+}
 
-        // Prefetcher reads all the blobs (after first snapshot is created).
-        // Throw exception, as it should not matter.
-        const blob = this.blobs.get(sha);
-        if (blob === undefined) {
-            throw new Error(`Can't find blob ${sha}`);
+export interface ISnapshotWriterStorage {
+    onCommitHandler(componentName: string, tree: api.ITree): void;
+    onSnapshotHandler(snapshot: IFileSnapshot): void;
+}
+
+export type ReaderConstructor = new (...args: any[]) => api.IDocumentStorageService;
+// tslint:disable-next-line:max-func-body-length
+export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
+    return class extends Base implements ISnapshotWriterStorage {
+        // Note: if variable name has same name as in base class, it overrides it!
+        public readonly blobsWriter = new Map<string, string>();
+        public readonly commitsWriter: {[key: string]: api.ITree} = {};
+        public latestWriterTree?: api.ISnapshotTree;
+        public savedSnapshot = false;
+
+        public onCommitHandler(componentName: string, tree: api.ITree): void {
+            throw new Error("onCommitHandler is not setup! Please provide your handler!");
         }
-        return blob;
-    }
+        public onSnapshotHandler(snapshot: IFileSnapshot): void {
+            throw new Error("onSnapshotHandler is not setup! Please provide your handler!");
+        }
 
-    public async getContent(version: api.IVersion, path: string): Promise<string> {
-        return Promise.reject("Should never get here");
-    }
+        public async read(sha: string): Promise<string> {
+            const blob = this.blobsWriter.get(sha);
+            if (blob !== undefined) {
+                return blob;
+            }
+            return super.read(sha);
+        }
 
-    public async write(
-        tree: api.ITree,
-        parents: string[],
-        message: string,
-        ref: string,
-    ): Promise<api.IVersion> {
-            const messages = message.split(";");
-            let outDirName: string = "output";
-            let lastOp: string = "";
+        public async getVersions(versionId: string, count: number): Promise<api.IVersion[]> {
+            // If we already saved document, that means we are getting here because of snapshot generation.
+            // Not returning tree ensures that ContainerRuntime.snapshot() would regenerate subtrees for
+            // each unchanged component.
+            // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
+            // when latest is requested.
+            if (this.savedSnapshot) {
+                return [];
+            }
 
-            // Note: part of the string is generated by playMessagesFromFileStorage()
-            messages.forEach((singleMessage) => {
-                const index = singleMessage.indexOf(":");
-                const key = index > 0 ? singleMessage.substr(0, index) : "";
-                const value = index > 0 ? singleMessage.substr(index + 1) : "";
-                if (key === "OutputDirectoryName") {
-                    outDirName = value ? value : "output";
-                } else if (key === "OP") {
-                    lastOp = value;
-                }
-            });
+            if (this.commitsWriter[versionId] !== undefined) {
+                // PrefetchDocumentStorageService likes to prefetch everything!
+                // Skip, as Container does not really need it.
+                throw new Error("Not supporting commit loading");
+            }
+            return super.getVersions(versionId, count);
+        }
 
+        public async write(
+                tree: api.ITree,
+                parents: string[],
+                message: string,
+                ref: string): Promise<api.IVersion> {
             let componentName = ref ? ref : "container";
-            // tslint:disable-next-line: strict-boolean-expressions
+            // tslint:disable-next-line:strict-boolean-expressions
             if (tree && tree.entries) {
                 tree.entries.forEach((entry) => {
                     if (entry.path === ".component" && entry.type === api.TreeEntry[api.TreeEntry.Blob]) {
@@ -177,112 +172,111 @@ export class FileDocumentStorageService implements api.IDocumentStorageService  
             }
 
             const commitName = `commit_${componentName}`;
-            const commit: api.IVersion = {
-                id: commitName,
-                treeId: FileStorageVersionTreeIdUnused,
-            };
 
-            fs.mkdirSync(outDirName, { recursive: true });
+            // Sort entries for easier diffing
+            this.sortCommit(tree);
 
             if (ref) {
-                this.commits[commitName] = tree;
+                if (tree.id !== undefined) {
+                    assert(tree.id === FileStorageVersionTreeIdUnused);
+                    delete tree.id;
+                }
+                this.commitsWriter[commitName] = tree;
             } else {
+                this.savedSnapshot = true;
+
                 // Rebuild latest tree - runtime will ask for it when generating next snapshot to write out
                 // non-changed commits for components
-                await this.writeOutFullSnapshot(tree, outDirName);
+                await this.writeOutFullSnapshot(tree);
 
                 // Prep for the future - refresh latest tree, as it's requests on next snapshot generation.
                 // Do not care about blobs (at least for now), as blobs are not written out (need follow up)
-                const flattened = flatten(tree.entries, this.blobs);
-                this.latestTree = buildHierarchy(flattened);
+                const flattened = flatten(tree.entries, this.blobsWriter);
+                this.latestWriterTree = buildHierarchy(flattened);
 
-                // Do not reset this.commits - runtime will reference same commits in future snapshots
+                // Do not reset this.commitsWriter - runtime will reference same commits in future snapshots
                 // if component did not change in between two snapshots.
-                // We can optimize here by filtering commits based on contents of this.latestTree.commits
+                // We can optimize here by filtering commits based on contents of this.docTree.commits
             }
 
-            console.log(`Writing snapshot for ${componentName} after OP number ${lastOp}`);
-            componentName = componentName.replace("/", "_");
-            fs.writeFileSync(
-                `${outDirName}/${componentName}.json`,
-                JSON.stringify(tree, undefined, 2),
-                {encoding: "utf-8"});
-            return commit;
-    }
+            this.onCommitHandler(componentName, tree);
+            return {
+                id: commitName,
+                treeId: FileStorageVersionTreeIdUnused,
+            };
+        }
 
-    public uploadSummary(commit: api.ISummaryTree): Promise<api.ISummaryHandle> {
-        return Promise.reject("Not implemented.");
-    }
-
-    public downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        return Promise.reject("Not implemented.");
-    }
-
-    public async createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
-        return Promise.reject("Not implemented.");
-    }
-
-    public getRawUrl(sha: string): string {
-        throw new Error("Not implemented.");
-    }
-
-    private async writeOutFullSnapshot(tree: api.ITree, outDirName: string) {
-        for (const entry of tree.entries) {
-            if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
-                const commitId = entry.value as string;
-                let commit = this.commits[commitId];
-                if (commit === undefined) {
-                    // Read from disk any commits that were referenced in original snapshot
-                    const version = await this.getVersions(commitId, 1);
-                    if (version.length > 0) {
-                        const commitTree = await this.getSnapshotTree(version[0]);
-                        if (commitTree) {
-                            commit = this.commits[commitId] = await this.buildTree(commitTree);
-                            this.commits[commitId] = commit;
-                        }
-                    }
+        public async writeOutFullSnapshot(tree: api.ITree) {
+            for (const entry of tree.entries) {
+                if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
+                    const commitId = entry.value as string;
+                    let commit = this.commitsWriter[commitId];
                     if (commit === undefined) {
-                        console.error(`Can't resolve commit ${commitId}`);
+                        // Read from disk any commits that were referenced in original snapshot
+                        const version = await this.getVersions(commitId, 1);
+                        if (version.length > 0) {
+                            const commitTree = await this.getSnapshotTree(version[0]);
+                            if (commitTree) {
+                                commit = await this.buildTree(commitTree);
+                                this.sortCommit(commit);
+                                this.commitsWriter[commitId] = commit;
+                            }
+                        }
+                        if (commit === undefined) {
+                            console.error(`Can't resolve commit ${commitId}`);
+                        }
                     }
                 }
             }
+
+            // Sort keys. This does not guarantees that JSON.stringify() would produce sorted result,
+            // but in practice it does.
+            const commits: {[key: string]: api.ITree} = {};
+            for (const key of Object.keys(this.commitsWriter).sort()) {
+                commits[key] = this.commitsWriter[key];
+            }
+
+            const fileSnapshot: IFileSnapshot = {tree, commits};
+            this.onSnapshotHandler(fileSnapshot);
         }
 
-        const fileSnapshot: IFileSnapshot = {tree, commits: this.commits};
-        fs.writeFileSync(
-            `${outDirName}/snapshot.json`,
-            JSON.stringify(fileSnapshot, undefined, 2),
-            { encoding: "utf-8" });
-    }
-
-    private async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {
-        const tree: api.ITree = {id: snapshotTree.id, entries: []};
-
-        for (const subTreeId of Object.keys(snapshotTree.trees)) {
-            const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
-            tree.entries.push({
-                mode: api.FileMode.Directory,
-                path: subTreeId,
-                type: api.TreeEntry[api.TreeEntry.Tree],
-                value: subTree,
+        public sortCommit(tree: api.ITree) {
+            tree.entries.sort((a, b) => {
+                return a.path.localeCompare(b.path);
             });
         }
 
-        for (const blobName of Object.keys(snapshotTree.blobs)) {
-            const contents = await this.read(snapshotTree.blobs[blobName]);
-            const blob: api.IBlob = {
-                contents: Buffer.from(contents, "base64").toString("utf-8"), // decode for readability
-                encoding: "utf-8",
-            };
-            tree.entries.push({
-                mode: api.FileMode.File,
-                path: blobName,
-                type: api.TreeEntry[api.TreeEntry.Blob],
-                value: blob,
-            });
-        }
+        public async buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree> {
+            const tree: api.ITree = {id: snapshotTree.id, entries: []};
 
-        assert(Object.keys(snapshotTree.commits).length === 0);
-        return tree;
-    }
+            for (const subTreeId of Object.keys(snapshotTree.trees)) {
+                const subTree = await this.buildTree(snapshotTree.trees[subTreeId]);
+                tree.entries.push({
+                    mode: api.FileMode.Directory,
+                    path: subTreeId,
+                    type: api.TreeEntry[api.TreeEntry.Tree],
+                    value: subTree,
+                });
+            }
+
+            for (const blobName of Object.keys(snapshotTree.blobs)) {
+                const contents = await this.read(snapshotTree.blobs[blobName]);
+                const blob: api.IBlob = {
+                    contents: Buffer.from(contents, "base64").toString("utf-8"), // decode for readability
+                    encoding: "utf-8",
+                };
+                tree.entries.push({
+                    mode: api.FileMode.File,
+                    path: blobName,
+                    type: api.TreeEntry[api.TreeEntry.Blob],
+                    value: blob,
+                });
+            }
+
+            assert(Object.keys(snapshotTree.commits).length === 0);
+            return tree;
+        }
+    };
 }
+
+export const PragueDumpReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(PragueDumpReader);

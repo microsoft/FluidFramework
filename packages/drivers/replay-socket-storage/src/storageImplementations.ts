@@ -4,14 +4,21 @@
  */
 
 import {
+    IClient,
+    IDocumentDeltaConnection,
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentServiceFactory,
     IDocumentStorageService,
+    IResolvedUrl,
     ISnapshotTree,
     ITree,
     IVersion,
 } from "@prague/container-definitions";
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
-import { ReplayStorageService } from "./replayController";
+import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
+import { ReadDocumentStorageServiceBase } from "./replayController";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file
@@ -21,20 +28,20 @@ export interface IFileSnapshot {
     commits: {[key: string]: ITree};
 }
 
-export class FileStorage extends ReplayStorageService {
+export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // IVersion.treeId used to communicate between getVersions() & getSnapshotTree() calls to indicate IVersion is ours.
     private static readonly FileStorageVersionTreeId = "FileStorageTreeId";
 
     protected docId?: string;
-    protected tree: ISnapshotTree;
-    protected blobs = new Map<string, string>();
-    protected commits: {[key: string]: ITree} = {};
+    protected docTree: ISnapshotTree;
+    protected readonly blobs = new Map<string, string>();
+    protected readonly commits: {[key: string]: ITree} = {};
 
     public constructor(json: IFileSnapshot) {
         super();
         this.commits = json.commits;
         const flattened = flatten(json.tree.entries, this.blobs);
-        this.tree = buildHierarchy(flattened);
+        this.docTree = buildHierarchy(flattened);
     }
 
     public async getVersions(
@@ -46,25 +53,25 @@ export class FileStorage extends ReplayStorageService {
         }
 
         if (this.commits[versionId] !== undefined) {
-            return [{id: versionId, treeId: FileStorage.FileStorageVersionTreeId}];
+            return [{id: versionId, treeId: FileSnapshotReader.FileStorageVersionTreeId}];
         }
         throw new Error(`Unknown version ID: ${versionId}`);
     }
 
     public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
-        if (versionRequested && versionRequested.id !== "latest") {
-            if (versionRequested.treeId !== FileStorage.FileStorageVersionTreeId) {
-                throw new Error(`Unknown version id: ${versionRequested}`);
-            }
-            const tree = this.commits[versionRequested.id];
-            if (tree === undefined) {
-                throw new Error(`Can't find version ${versionRequested.id}`);
-            }
-
-            const flattened = flatten(tree.entries, this.blobs);
-            return buildHierarchy(flattened);
+        if (!versionRequested || versionRequested.id === "latest") {
+            return this.docTree;
         }
-        return this.tree;
+        if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
+            throw new Error(`Unknown version id: ${versionRequested}`);
+        }
+        const tree = this.commits[versionRequested.id];
+        if (tree === undefined) {
+            throw new Error(`Can't find version ${versionRequested.id}`);
+        }
+
+        const flattened = flatten(tree.entries, this.blobs);
+        return buildHierarchy(flattened);
     }
 
     public async read(blobId: string): Promise<string> {
@@ -76,14 +83,14 @@ export class FileStorage extends ReplayStorageService {
     }
 }
 
-export class SnapshotStorage extends ReplayStorageService {
+export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     protected docId?: string;
 
     constructor(
             protected readonly storage: IDocumentStorageService,
-            protected readonly tree: ISnapshotTree | null) {
+            protected readonly docTree: ISnapshotTree | null) {
         super();
-        assert(this.tree);
+        assert(this.docTree);
     }
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
@@ -99,7 +106,7 @@ export class SnapshotStorage extends ReplayStorageService {
             return this.storage.getSnapshotTree(versionRequested);
         }
 
-        return this.tree;
+        return this.docTree;
     }
 
     public read(blobId: string): Promise<string> {
@@ -107,7 +114,7 @@ export class SnapshotStorage extends ReplayStorageService {
     }
 }
 
-export class OpStorage extends ReplayStorageService {
+export class OpStorage extends ReadDocumentStorageServiceBase {
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         return [];
     }
@@ -118,5 +125,39 @@ export class OpStorage extends ReplayStorageService {
 
     public async read(blobId: string): Promise<string> {
         throw new Error(`Unknown blob ID: ${blobId}`);
+    }
+}
+
+export class StaticStorageDocumentService implements IDocumentService {
+    constructor(private readonly storage: IDocumentStorageService) {}
+
+    public async connectToStorage(): Promise<IDocumentStorageService> {
+        return this.storage;
+    }
+
+    public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
+        return new EmptyDeltaStorageService();
+    }
+
+    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+        // We have no delta stream, so make it not return forever...
+        // tslint:disable-next-line:promise-must-complete
+        return new Promise(() => {});
+    }
+
+    public async branch(): Promise<string> {
+        return Promise.reject("Invalid operation");
+    }
+
+    public getErrorTrackingService() {
+        return null;
+    }
+}
+
+export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
+    public constructor(protected readonly storage: IDocumentStorageService) {}
+
+    public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
+        return new StaticStorageDocumentService(this.storage);
     }
 }

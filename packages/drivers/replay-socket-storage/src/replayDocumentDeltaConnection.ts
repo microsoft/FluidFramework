@@ -182,9 +182,9 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
      * Creates a new delta connection and mimics the delta connection to replay ops on it.
      * @param documentService - The document service to be used to get underlying endpoints.
      */
-    public static async create(
+    public static create(
         documentStorageService: IDocumentDeltaStorageService,
-        controller: ReplayController): Promise<IDocumentDeltaConnection> {
+        controller: ReplayController): IDocumentDeltaConnection {
 
         const connection: messages.IConnected = {
             claims: ReplayDocumentDeltaConnection.claims,

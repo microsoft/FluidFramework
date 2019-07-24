@@ -396,7 +396,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     /**
      * Returns a summary of the runtime at the current sequence number
      */
-    public async summarize(): Promise<ISummaryTree> {
+    public async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
         const result: ISummaryTree = {
             tree: {},
             type: SummaryType.Tree,
@@ -414,7 +414,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                     type: SummaryType.Handle,
                 };
             } else {
-                const tree = this.convertToSummaryTree(componentSnapshot);
+                const tree = this.convertToSummaryTree(componentSnapshot, generateFullTreeNoOptimizations);
                 result.tree[componentId] = tree;
             }
         }
@@ -433,9 +433,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      * Notifies this object to take the snapshot of the container.
      * @param tagMessage - Message to supply to storage service for writing the snapshot.
      */
-    public async snapshot(tagMessage: string): Promise<ITree> {
+    public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree> {
         // Pull in the prior version and snapshot tree to store against
-        const lastVersion = await this.storage.getVersions(this.id, 1);
+        const lastVersion = generateFullTreeNoOptimizations ? [] : await this.storage.getVersions(this.id, 1);
         const tree = lastVersion.length > 0
             ? await this.storage.getSnapshotTree(lastVersion[0])
             : { blobs: {}, commits: {}, trees: {} };
@@ -449,19 +449,19 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         for (const [componentId, componentSnapshot] of componentEntries) {
             // If ID exists then previous commit is still valid
             const commit = tree.commits[componentId];
-            if (componentSnapshot.id && !commit) {
-                this.logger.sendErrorEvent({
-                    componentId,
-                    eventName: "MissingCommit",
-                    id: componentSnapshot.id,
-                });
-            }
-            if (componentSnapshot.id && commit) {
+            if (componentSnapshot.id && commit && !generateFullTreeNoOptimizations) {
                 componentVersionsP.push(Promise.resolve({
                     id: componentId,
                     version: commit,
                 }));
             } else {
+                if (componentSnapshot.id && !commit && !generateFullTreeNoOptimizations) {
+                    this.logger.sendErrorEvent({
+                        componentId,
+                        eventName: "MissingCommit",
+                        id: componentSnapshot.id,
+                    });
+                }
                 const parent = commit ? [commit] : [];
                 const componentVersionP = this.storage
                     .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
@@ -477,6 +477,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Add in module references to the component snapshots
         const componentVersions = await Promise.all(componentVersionsP);
+
+        // Sort for better diffing of snapshots (in replay tool, used to find bugs in snapshotting logic)
+        if (generateFullTreeNoOptimizations) {
+            componentVersions.sort((a, b) => {
+                return a.id.localeCompare(b.id);
+            });
+        }
+
         let gitModules = "";
         for (const componentVersion of componentVersions) {
             root.entries.push({
@@ -836,8 +844,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.emit(dirty ? "dirtyDocument" : "savedDocument");
     }
 
-    private convertToSummaryTree(snapshot: ITree): SummaryTree {
-        if (snapshot.id) {
+    private convertToSummaryTree(snapshot: ITree, generateFullTreeNoOptimizations?: boolean): SummaryTree {
+        if (snapshot.id && !generateFullTreeNoOptimizations) {
             return {
                 handle: snapshot.id,
                 handleType: SummaryType.Tree,
@@ -862,11 +870,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                         break;
 
                     case TreeEntry[TreeEntry.Tree]:
-                        value = this.convertToSummaryTree(entry.value as ITree);
+                        value = this.convertToSummaryTree(entry.value as ITree, generateFullTreeNoOptimizations);
                         break;
 
                     case TreeEntry[TreeEntry.Commit]:
-                        value = this.convertToSummaryTree(entry.value as ITree);
+                        value = this.convertToSummaryTree(entry.value as ITree, generateFullTreeNoOptimizations);
                         break;
 
                     default:
