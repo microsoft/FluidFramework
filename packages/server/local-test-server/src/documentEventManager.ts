@@ -6,12 +6,21 @@
 import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
+/**
+ * Document delta event which must at least provide access
+ * to the delta manager.
+ */
 export interface IDocumentDeltaEvent {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
+/**
+ * Class with access to the delta connection server that can handle document delta events.
+ */
 export class DocumentDeltaEventManager {
-
+    /**
+     * Yields control in the JavaScript event loop.
+     */
     public static async yieldEventLoop(): Promise<void> {
         await new Promise<void>((resolve) => {
             // tslint:disable-next-line no-string-based-set-timeout
@@ -27,20 +36,33 @@ export class DocumentDeltaEventManager {
     /*
     * Is processing being deterministically controlled, or are changes allowed to flow freely?
     */
-    public get isProcessingControlled() {
+    public get isProcessingControlled(): boolean {
         return this.isNormalProcessingPaused;
     }
 
+    /**
+     * @param testDeltaConnectionServer - instance of delta connection server
+     */
     public constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) { }
 
+    /**
+     * Registers a collection of document delta events by adding them to
+     * the local collection.
+     * @param docs - array of document delta events to register
+     */
     public registerDocuments(...docs: IDocumentDeltaEvent[]) {
         docs.forEach((doc) => {
             this.documents.add(doc);
         });
     }
 
+    /**
+     * Processes a collection of document delta events by pausing their
+     * delta managers, validating them, resuming them, and yielding them
+     * while they have work.
+     * @param docs - array of document delta events to process
+     */
     public async process(...docs: IDocumentDeltaEvent[]): Promise<void> {
-
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
             await Promise.all([doc.deltaManager.inbound.resume(), doc.deltaManager.outbound.resume()]);
@@ -50,8 +72,13 @@ export class DocumentDeltaEventManager {
             (doc) => !doc.deltaManager.inbound.idle || !doc.deltaManager.outbound.idle);
     }
 
+    /**
+     * Processes a collection of incoming document delta events by pausing their
+     * delta managers, validating them, resuming their inbound only, and yielding them
+     * while they have work.
+     * @param docs - incoming document delta events to process
+     */
     public async processIncoming(...docs: IDocumentDeltaEvent[]): Promise<void> {
-
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
             await doc.deltaManager.inbound.resume();
@@ -61,8 +88,13 @@ export class DocumentDeltaEventManager {
             (doc) => !doc.deltaManager.inbound.idle);
     }
 
+    /**
+     * Processes a collection of outgoing document delta events by pausing their
+     * delta managers, validating them, resuming their outbound only, and yielding them
+     * while they have work.
+     * @param docs - outgoing document delta events to process
+     */
     public async processOutgoing(...docs: IDocumentDeltaEvent[]): Promise<void> {
-
         const documents = await this.pauseAndValidateDocs(...docs);
         for (const doc of documents) {
             await doc.deltaManager.outbound.resume();

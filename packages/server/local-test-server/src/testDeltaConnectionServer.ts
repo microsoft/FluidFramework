@@ -45,6 +45,9 @@ import * as semver from "semver";
 
 const protocolVersion = "^0.1.0";
 
+/**
+ * Items needed for handling deltas.
+ */
 export interface ITestDeltaConnectionServer {
     webSocketServer: IWebSocketServer;
     databaseManager: IDatabaseManager;
@@ -52,18 +55,33 @@ export interface ITestDeltaConnectionServer {
     hasPendingWork(): Promise<boolean>;
 }
 
+/**
+ * Implementation of order manager for testing.
+ */
 class TestOrderManager implements IOrdererManager {
     private readonly orderersP = new Array<Promise<IOrderer>>();
 
+    /**
+     * @param orderer - instance of in-memory orderer for the manager to provide
+     */
     constructor(private orderer: LocalOrderManager) {
     }
 
+    /**
+     * Returns the op orderer for the given tenant ID and document ID
+     * using the local in-memory orderer manager instance.
+     * @param tenantId - ID of tenant
+     * @param documentId - ID of document
+     */
     public getOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
         const p = this.orderer.get(tenantId, documentId);
         this.orderersP.push(p);
         return p;
     }
 
+    /**
+     * Returns true if there are any received ops that are not yet ordered.
+     */
     public async hasPendingWork(): Promise<boolean> {
         return Promise.all(this.orderersP).then((orderers) => {
             for (const orderer of orderers) {
@@ -77,7 +95,13 @@ class TestOrderManager implements IOrdererManager {
     }
 }
 
+/**
+ * Implementation of delta connection server for testing.
+ */
 export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
+    /**
+     * Creates and returns a delta connection server for testing.
+     */
     public static create(): ITestDeltaConnectionServer {
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
@@ -137,11 +161,22 @@ export class TestDeltaConnectionServer implements ITestDeltaConnectionServer {
         public databaseManager: IDatabaseManager,
         private testOrdererManager: TestOrderManager) { }
 
+    /**
+     * Returns true if there are any received ops that are not yet ordered.
+     */
     public async hasPendingWork(): Promise<boolean> {
         return this.testOrdererManager.hasPendingWork();
     }
 }
 
+/**
+ * Registers listeners to web socket server events for handling connection,
+ * ops, and signals.
+ * @param webSocketServer - web socket server to listen to
+ * @param orderManager - instance of op ordering manager
+ * @param tenantManager - instance of tenant manager
+ * @param contentCollection - collection of any op content
+ */
 // Forked from io.ts in alfred, which has service dependencies and cannot run in a browser.
 // Further simplifications are likely possible.
 // tslint:disable:no-unsafe-any

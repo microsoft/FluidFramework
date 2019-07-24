@@ -17,6 +17,9 @@ import {
 } from ".";
 
 // tslint:disable:array-type
+/**
+ * Basic component implementation for testing.
+ */
 class TestRootComponent extends Component {
     public static readonly type = "@chaincode/test-root-component";
 
@@ -27,42 +30,79 @@ class TestRootComponent extends Component {
         ]);
     }
 
+    /**
+     * Creates and attaches a new component using the current component runtime
+     * and component context.
+     * @param id - id for the new component
+     * @param type - type for the new component
+     */
     public async createComponent(id: string, type: string): Promise<IComponentRuntime> {
         return this.runtime.createAndAttachComponent(id, type);
     }
 
-    // tslint:disable-next-line: no-unnecessary-override
+    /**
+     * Opens the component with the given ID.
+     * @param id - id of component to open
+     * @param wait - true to wait for it to open
+     * @param services - optional key-value pairs of services to provide
+     */
+    // tslint:disable-next-line:no-unnecessary-override
     public openComponent<T extends Component>(
         id: string,
         wait: boolean,
         services?: [string, Promise<any>][],
-    ) {
+    ): Promise<T> {
         return super.openComponent<T>(id, wait, services);
     }
 
-    public createType<T extends ISharedObject>(id: string, type: string) {
+    /**
+     * Creates a channel and returns the instance as a shared object.
+     * This will add the instance to the root map.
+     * @param id - id of channel for new shared object
+     * @param type - channel extension type
+     */
+    public createType<T extends ISharedObject>(id: string, type: string): T {
         const instance = this.runtime.createChannel(id, type) as T;
         this.root.set(id, instance);
         return instance;
     }
 
-    public async getType<T extends ISharedObject>(id: string) {
+    /**
+     * Gets and waits for the shared object with the given ID from the root map.
+     * @param id - ID of shared object
+     */
+    public async getType<T extends ISharedObject>(id: string): Promise<T> {
         return this.root.wait(id) as Promise<T>;
     }
 
+    /**
+     * Gets and waits for the data with the given fence ID from the root map.
+     * @param fenceId - fence ID of data
+     */
     public async waitFor(fenceId: number) {
         const key = `fence-${fenceId}`;
         await this.root.wait(key);
     }
 
+    /**
+     * Sets a true value in the root map for the given fence ID.
+     * @param fenceId - fence ID to mark
+     */
     public mark(fenceId: number) {
         this.root.set(`fence-${fenceId}`, true);
     }
 
+    /**
+     * Removes the fence data from the root map for the given fence ID.
+     * @param fenceId - fence ID to unmark
+     */
     public unmark(fenceId: number) {
         this.root.delete(`fence-${fenceId}`);
     }
 
+    /**
+     * Simply returns this component runtime.
+     */
     public getDocumentDeltaEvent(): IDocumentDeltaEvent  {
         return this.runtime;
     }
@@ -79,7 +119,15 @@ class TestRootComponent extends Component {
 
 let lastFence = 0;
 
+/**
+ * Basic implementation of a host application for testing.
+ */
 export class TestHost {
+    /**
+     * Syncs an array of hosts together by marking their fence ID, waiting for that
+     * fence ID from all other hosts, and then unmarking it.
+     * @param hosts - array of hosts to sync
+     */
     public static async sync(...hosts: TestHost[]) {
         for (const host of hosts) {
             const fence = await host.mark();
@@ -101,6 +149,10 @@ export class TestHost {
 
     private components: Component[] = [];
 
+    /**
+     * @param componentRegistry - array of key-value pairs of components available to the host
+     * @param deltaConnectionServer - delta connection server for the ops
+     */
     constructor(
         private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
         deltaConnectionServer?: ITestDeltaConnectionServer,
@@ -136,7 +188,11 @@ export class TestHost {
             .catch((reason) => { throw new Error(`${reason}`); });
     }
 
-    public clone() {
+    /**
+     * Creates and returns a new instance of a host with the same
+     * component registry and delta connection server instance.
+     */
+    public clone(): TestHost {
         return new TestHost(
             this.componentRegistry,
             this.deltaConnectionServer);
@@ -188,21 +244,36 @@ export class TestHost {
         return component;
     }
 
+    /**
+     * Creates and returns a new shared object in the root component.
+     * @param id - ID of new shared object
+     * @param type - type of new shared object
+     */
     public async createType<T extends ISharedObject>(id: string, type: string): Promise<T> {
         const root = await this.root;
         return root.createType<T>(id, type);
     }
 
+    /**
+     * Gets and waits for the shared object with the given ID from the root component.
+     * @param id - ID of shared object
+     */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
         const root = await this.root;
         return root.getType<T>(id);
     }
 
-    public async getDocumentDeltaEvent() {
+    /**
+     * Simply returns the root component's component runtime.
+     */
+    public async getDocumentDeltaEvent(): Promise<IDocumentDeltaEvent> {
         const root = await this.root;
         return root.getDocumentDeltaEvent();
     }
 
+    /**
+     * Closes the delta connection server's web socket.
+     */
     public async close() {
         await this.deltaConnectionServer.webSocketServer.close();
     }

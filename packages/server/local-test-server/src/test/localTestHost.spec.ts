@@ -10,6 +10,9 @@ import { SharedString, SharedStringExtension } from "@prague/sequence";
 import * as assert from "assert";
 import { DocumentDeltaEventManager, TestHost } from "..";
 
+/**
+ * Implementation of counter component for testing.
+ */
 export class TestComponent extends Component {
     public static readonly type = "@chaincode/test-component";
     private counter: Counter;
@@ -21,8 +24,14 @@ export class TestComponent extends Component {
         super([[MapExtension.Type, new MapExtension(mapValueTypes)]]);
     }
 
+    /**
+     * Gets the current counter value.
+     */
     public get value(): number { return this.counter.value; }
 
+    /**
+     * Increments the counter value by 1.
+     */
     public increment() {
         this.counter.increment(1);
     }

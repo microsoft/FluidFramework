@@ -14,10 +14,20 @@ import { parse } from "url";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 import { createTestDocumentService } from "./testDocumentService";
 
+/**
+ * Implementation of document service factory for testing.
+ */
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
-
+    /**
+     * @param testDeltaConnectionServer - delta connection server for ops
+     */
     constructor(private testDeltaConnectionServer: ITestDeltaConnectionServer) {}
 
+    /**
+     * Creates and returns a document service for testing using the given resolved
+     * URL for the tenant ID, document ID, and token.
+     * @param resolvedUrl - resolved URL of document
+     */
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (resolvedUrl.type !== "prague") {
             // tslint:disable-next-line:max-line-length

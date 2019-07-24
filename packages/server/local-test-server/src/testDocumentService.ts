@@ -8,6 +8,13 @@ import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { TestDeltaStorageService, TestDocumentDeltaConnection, TestDocumentStorageService } from "@prague/test-utils";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
+/**
+ * Creates and returns a document service for testing.
+ * @param testDeltaConnectionServer - delta connection server for ops
+ * @param tokenProvider - token provider with a single token
+ * @param tenantId - ID of tenant
+ * @param documentId - ID of document
+ */
 export function createTestDocumentService(
     testDeltaConnectionServer: ITestDeltaConnectionServer,
     tokenProvider: socketStorage.TokenProvider,
@@ -16,7 +23,16 @@ export function createTestDocumentService(
         return new TestDocumentService(testDeltaConnectionServer, tokenProvider, tenantId, documentId);
 }
 
+/**
+ * Basic implementation of a document service for testing.
+ */
 export class TestDocumentService implements api.IDocumentService {
+    /**
+     * @param testDeltaConnectionServer - delta connection server for ops
+     * @param tokenProvider - token provider with a single token
+     * @param tenantId - ID of tenant
+     * @param documentId - ID of document
+     */
     constructor(
         private testDeltaConnectionServer: ITestDeltaConnectionServer,
         private tokenProvider: socketStorage.TokenProvider,
@@ -24,10 +40,16 @@ export class TestDocumentService implements api.IDocumentService {
         private documentId: string,
     ) {}
 
+    /**
+     * Creates and returns a document storage service for testing.
+     */
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
         return new TestDocumentStorageService();
     }
 
+    /**
+     * Creates and returns a delta storage service for testing.
+     */
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         return new TestDeltaStorageService(
             this.tenantId,
@@ -35,6 +57,10 @@ export class TestDocumentService implements api.IDocumentService {
             this.testDeltaConnectionServer.databaseManager);
     }
 
+    /**
+     * Creates and returns a delta stream for testing.
+     * @param client - client data
+     */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
         // socketStorage.DocumentDeltaStorageService?
         return TestDocumentDeltaConnection.create(
@@ -45,11 +71,17 @@ export class TestDocumentService implements api.IDocumentService {
             this.testDeltaConnectionServer.webSocketServer);
     }
 
+    /**
+     * Returns null
+     */
     public async branch(): Promise<string> {
         return null;
     }
 
-    public getErrorTrackingService() {
+    /**
+     * Returns null
+     */
+    public getErrorTrackingService(): any {
         return null;
     }
 }
