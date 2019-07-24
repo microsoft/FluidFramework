@@ -60,8 +60,6 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
         }
 
         let currentScore: number = counter.value;
-        // console.log(`High score is ${highScore} by ${teamName}`);
-        // console.log(`Checking ${key}'s score: ${value}`)
         if (currentScore !== initialScore) {
           tied = false;
         }

@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { RootComponent as ComponentWithMap } from '@prague/aqueduct';
+import { PrimedComponent, SimpleComponentInstantiationFactory, SimpleModuleInstantiationFactory } from '@prague/aqueduct';
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/container-definitions';
-import { CounterValueType } from '@prague/map';
+import { CounterValueType, SharedMap } from '@prague/map';
 import { IComponentContext, IComponentRuntime } from '@prague/runtime-definitions';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { FactoryBase } from './factoryBase';
 import { TeamScore } from './teamScore';
 import { WinnerText } from './winnerText';
 
-export class Scoreboard extends ComponentWithMap implements IComponentHTMLVisual {
+export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual {
   public static supportedInterfaces = [
     'IComponentLoadable', // via ISharedComponent, which is implemented by RootComponent
     'IComponentHTMLVisual',
     'IComponentHTMLRender'
   ];
+  public static readonly componentName = "Scoreboard";
 
   /**
   * Setup the distributed data structures; called once when the component is created (NOT initialized)
@@ -72,12 +72,27 @@ export class Scoreboard extends ComponentWithMap implements IComponentHTMLVisual
   }
 }
 
-export class ScoreboardComponentFactory extends FactoryBase {
-  constructor() {
-    super("Scoreboard", Scoreboard.load);
-    let reg = new Map([["Scoreboard", Promise.resolve(this)]]);
-    this.initializeRegistry(reg);
-  }
-}
+/**
+ * This is where we define the Distributed Data Structures this component uses
+ */
+const ScoreboardComponentInstantiationFactory = new SimpleComponentInstantiationFactory(
+  [
+    SharedMap.getFactory([new CounterValueType()]),
+  ],
+  Scoreboard.load
+);
 
-export const fluidExport = new ScoreboardComponentFactory();
+/**
+ * This does setup for the Container. The SimpleModuleInstantiationFactory also enables dynamic loading in the
+ * EmbeddedComponentLoader.
+ *
+ * There are two important things here:
+ * 1. Default Component name
+ * 2. Map of string to factory for all components
+ */
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  Scoreboard.componentName,
+  new Map([
+    [Scoreboard.componentName, Promise.resolve(ScoreboardComponentInstantiationFactory)],
+  ]),
+);

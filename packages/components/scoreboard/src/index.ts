@@ -7,7 +7,6 @@
 import '../node_modules/@fortawesome/fontawesome-free/js/all.min.js';
 import './styles.scss';
 
-export * from "./factoryBase";
 export * from "./scoreboard";
 export * from "./teamScore";
 export * from "./winnerText";
