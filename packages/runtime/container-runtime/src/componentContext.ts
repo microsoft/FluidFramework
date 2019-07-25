@@ -387,6 +387,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly snapshotValue: ISnapshotTree | string,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
+        private readonly type?: string,
     ) {
         super(
             runtime,
@@ -413,15 +414,22 @@ export class RemotedComponentContext extends ComponentContext {
                 tree = this.snapshotValue;
             }
 
-            // Need to rip through snapshot and use that to populate extraBlobs
-            const { pkg } = await readAndParse<{ pkg: string }>(
-                this.storage,
-                tree.blobs[".component"]);
+            if (tree === null || tree.blobs[".component"] === undefined) {
+                this.details = {
+                    pkg: this.type,
+                    snapshot: tree,
+                };
+            } else {
+                // Need to rip through snapshot and use that to populate extraBlobs
+                const { pkg } = await readAndParse<{ pkg: string }>(
+                    this.storage,
+                    tree.blobs[".component"]);
 
-            this.details = {
-                pkg,
-                snapshot: tree,
-            };
+                this.details = {
+                    pkg,
+                    snapshot: tree,
+                };
+            }
         }
 
         return this.details;
