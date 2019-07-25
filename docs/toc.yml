@@ -7,6 +7,9 @@
 - name: Architecture
   href: architecture/
   topicHref: architecture/README.md
+- name: Tools
+  href: tools/
+  topicUid: tools
 - name: Advanced Topics
   href: advanced/
   topicHref: advanced/README.md

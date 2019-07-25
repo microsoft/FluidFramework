@@ -1,6 +1,4 @@
 - name: Advanced Topics
   href: README.md
-- name: Debugging
-  href: ../../packages/drivers/fluid-debugger/README.md
 - name: Writing a Distributed Data Structure
   href: writing-dds.md

@@ -189,9 +189,10 @@ public static async load(runtime: IComponentRuntime, context: IComponentContext)
 `render(div: HTMLElement)` is the implementation of `IComponentHTMLVisual`. The caller provides an `HTMLElement` that the
 Component can use to render into. Every time `render(...)` is called we should return a new view.
 
-> Note: This is the point where React and vanillaJS differ.
+> [!NOTE]
+> This is the point where React and vanillaJS differ.
 
-#### React Implementation
+#### [React Implementation](#tab/tabid-1)
 
 The first thing we do is get our `"clicks"` counter, created in `create()`.
 
@@ -258,7 +259,7 @@ public render(div: HTMLElement) {
 }
 ```
 
-#### VanillaJS Implementation
+#### [VanillaJS Implementation](#tab/tabid-2)
 
 The VanillaJS implementation is similar in many ways to the React version. There is more
 code because ReactDOM provides a lot of the inner element setup.
@@ -341,6 +342,8 @@ protected createComponentDom(host: HTMLElement) {
   host.appendChild(counterButton);
 }
 ```
+
+*******
 
 ### Component Instantiation
 

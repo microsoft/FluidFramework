@@ -17,6 +17,8 @@
         "files": [
           "samples/hosts/README.md",
           "packages/drivers/fluid-debugger/README.md",
+          "packages/tools/prague-dump/README.md",
+          "packages/tools/replay-tool/README.md",
           ],
         "exclude": ["**/node_modules/**"]
       }

@@ -1,6 +1,11 @@
 > [!CAUTION]
 > This documentation is a work in progress.
 
+
+> [!TIP]
+> The URL to this documentation is <https://aka.ms/fluid>.
+
+
 # Fluid
 
 Welcome to Fluid!
