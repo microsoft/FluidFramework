@@ -191,7 +191,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const tokenProvider = await this.getTokenProvider(refresh);
             // fetch the latest snapshot versions for the document
             const versionsResponse = await this.getter
-                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions${count}`, blobid, {
+                .get<IDocumentStorageGetVersionsResponse>(`${this.snapshotUrl}/versions?count=${count}`, blobid, {
                     Authorization: `Bearer ${(tokenProvider as TokenProvider).storageToken}`,
                 })
                 .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
