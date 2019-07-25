@@ -571,7 +571,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         connection.close();
 
         // Reconnection is only enabled for browser clients.
-        if (this.clientType !== Browser || !this.reconnect) {
+        if (this.clientType !== Browser || !this.reconnect || this.closed) {
             this._inbound.systemPause();
             this._inbound.clear();
             this._inboundSignal.systemPause();
