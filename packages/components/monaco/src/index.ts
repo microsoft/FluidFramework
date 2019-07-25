@@ -10,7 +10,7 @@ import {
     DistributedSetValueType,
     SharedMap,
 } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { MonacoRunner } from "./chaincode";
 
@@ -19,7 +19,7 @@ import { MonacoRunner } from "./chaincode";
  * the runtime.
  * @param context The ComponentContext to associate with the ComponentRuntime
  */
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
 
     // Map value types to register as defaults
@@ -41,15 +41,17 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.load(context, modules);
-    const runnerP = MonacoRunner.load(runtime, context);
+    ComponentRuntime.load(
+        context,
+        modules,
+        (runtime) => {
+            const runnerP = MonacoRunner.load(runtime, context);
 
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const runner = await runnerP;
-        return request.url && request.url !== "/"
-            ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
-            : { status: 200, mimeType: "prague/component", value: runner };
-    });
-
-    return runtime;
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                const runner = await runnerP;
+                return request.url && request.url !== "/"
+                    ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
+                    : { status: 200, mimeType: "prague/component", value: runner };
+            });
+        });
 }

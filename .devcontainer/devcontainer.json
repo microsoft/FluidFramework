@@ -15,6 +15,7 @@
 	"runArgs": ["-u", "node"],
 
 	"extensions": [
-		"dbaeumer.vscode-eslint"
+		"dbaeumer.vscode-eslint",
+		"ms-vscode.vscode-typescript-tslint-plugin"
 	]
 }

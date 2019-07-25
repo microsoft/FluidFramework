@@ -24,9 +24,9 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     IComponentContext,
-    IComponentRuntime,
     ITask,
-    ITaskManager } from "@prague/runtime-definitions";
+    ITaskManager,
+} from "@prague/runtime-definitions";
 import {
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
@@ -241,7 +241,7 @@ class TaskScheduler {
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
 
     // Map value types to register as defaults
@@ -267,14 +267,15 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(objectSequenceExtension.type, objectSequenceExtension);
     modules.set(numberSequenceExtension.type, numberSequenceExtension);
 
-    const runtime = await ComponentRuntime.load(context, modules);
-    const runnerP = SharedTextRunner.load(runtime, context);
-
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        debug(`request(url=${request.url})`);
-        const runner = await runnerP;
-        return runner.request(request);
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        modules,
+        (runtime) => {
+            const runnerP = SharedTextRunner.load(runtime, context);
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                debug(`request(url=${request.url})`);
+                const runner = await runnerP;
+                return runner.request(request);
+            });
+        });
 }

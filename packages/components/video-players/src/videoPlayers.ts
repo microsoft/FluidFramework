@@ -264,17 +264,19 @@ export class VideoPlayerCollection extends EventEmitter implements
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     const dataTypes = new Map<string, ISharedObjectExtension>();
     const mapExtension = SharedMap.getFactory();
     dataTypes.set(mapExtension.type, mapExtension);
 
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const progressCollection = await progressCollectionP;
-        return progressCollection.request(request);
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        dataTypes,
+        (runtime) => {
+            const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                const progressCollection = await progressCollectionP;
+                return progressCollection.request(request);
+            });
+        });
 }

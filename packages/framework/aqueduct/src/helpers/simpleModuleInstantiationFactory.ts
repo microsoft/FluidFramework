@@ -6,9 +6,7 @@ import {
     IComponent, IContainerContext, IRuntime, IRuntimeFactory,
 } from "@prague/container-definitions";
 import { IComponentRegistry } from "@prague/container-runtime";
-import {
-    IComponentContext, IComponentFactory, IComponentRuntime,
-} from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
@@ -44,9 +42,14 @@ export class SimpleModuleInstantiationFactory implements
         return this.registry.get(name);
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-        const factory = await this.get(this.defaultComponentName);
-        return factory.instantiateComponent(context);
+    public instantiateComponent(context: IComponentContext): void {
+        this.get(this.defaultComponentName).then(
+            (factory) => {
+                factory.instantiateComponent(context);
+            },
+            (error) => {
+                context.error(error);
+            });
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {

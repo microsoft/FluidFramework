@@ -249,7 +249,7 @@ class ProgressBarsFactory implements IComponent, IComponentFactory {
         return ProgressBarsFactory.interfaces;
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         // Map value types to register as defaults
         const mapValueTypes = [
             new DistributedSetValueType(),
@@ -260,19 +260,21 @@ class ProgressBarsFactory implements IComponent, IComponentFactory {
         const mapExtension = SharedMap.getFactory(mapValueTypes);
         dataTypes.set(mapExtension.type, mapExtension);
 
-        const runtime = await ComponentRuntime.load(context, dataTypes);
-        const progressCollectionP = ProgressCollection.load(runtime, context);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const progressCollection = await progressCollectionP;
-            return progressCollection.request(request);
-        });
-
-        return runtime;
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const progressCollectionP = ProgressCollection.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const progressCollection = await progressCollectionP;
+                    return progressCollection.request(request);
+                });
+            });
     }
 }
 
 export const fluidExport = new ProgressBarsFactory();
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+    fluidExport.instantiateComponent(context);
 }

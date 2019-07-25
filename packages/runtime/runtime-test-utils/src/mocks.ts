@@ -26,7 +26,7 @@ import {
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { IHistorian } from "@prague/services-client";
-import { DebugLogger } from "@prague/utils";
+import { DebugLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
@@ -124,6 +124,11 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly loader: ILoader;
     public readonly logger: ITelemetryLogger = DebugLogger.create("prague:MockRuntime");
     public services: ISharedObjectServices;
+    private readonly activeDeferred = new Deferred<void>();
+
+    public get active(): Promise<void> {
+        return this.activeDeferred.promise;
+    }
 
     public get connectionState(): ConnectionState {
         return ConnectionState.Connected;
@@ -142,6 +147,14 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
 
     public attach(): void {
         return;
+    }
+
+    public query<T>(id: string): T {
+        return undefined;
+    }
+
+    public list(): string[] {
+        return [];
     }
 
     public getQuorum(): IQuorum {
@@ -202,8 +215,12 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
         return null;
     }
 
-    public snapshotInternal(): ITreeEntry[] {
-        return null;
+    public async snapshotInternal(): Promise<ITreeEntry[]> {
+        return [];
+    }
+
+    public getAttachSnapshot(): ITreeEntry[] {
+        return [];
     }
 
     public async waitAttached(): Promise<void> {

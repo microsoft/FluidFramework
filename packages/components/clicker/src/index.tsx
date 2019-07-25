@@ -131,6 +131,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 }
 
 // Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-  return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+  fluidExport.instantiateComponent(context);
 }

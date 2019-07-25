@@ -8,7 +8,7 @@ import { FlowDocument, flowDocumentFactory } from "@chaincode/webflow";
 import { Component } from "@prague/app-component";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import { WebFlowHost, webFlowHostFactory } from "./host";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
@@ -47,6 +47,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 }
 
 // Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+    fluidExport.instantiateComponent(context);
 }

@@ -709,7 +709,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     // Map value types to register as defaults
     const mapValueTypes = [
         new DistributedSetValueType(),
@@ -728,12 +728,14 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     dataTypes.set(mapExtension.type, mapExtension);
     dataTypes.set(sharedStringExtension.type, sharedStringExtension);
 
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const mathCollectionP = MathCollection.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const mathCollection = await mathCollectionP;
-        return mathCollection.request(request);
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        dataTypes,
+        (runtime) => {
+            const mathCollectionP = MathCollection.load(runtime, context);
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                const mathCollection = await mathCollectionP;
+                return mathCollection.request(request);
+            });
+        });
 }

@@ -6,7 +6,7 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IComponent, IRequest } from "@prague/container-definitions";
 import { SharedMap } from "@prague/map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { PinpointRunner } from "./runner";
 
 class PinpointMapsFactory implements IComponent, IComponentFactory {
@@ -20,29 +20,30 @@ class PinpointMapsFactory implements IComponent, IComponentFactory {
         return PinpointMapsFactory.interfaces;
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         const modules = new Map<string, any>();
 
         // Create channel extensions
         const mapExtension = SharedMap.getFactory();
         modules.set(mapExtension.type, mapExtension);
 
-        const runtime = await ComponentRuntime.load(context, modules);
-        const runnerP = PinpointRunner.load(runtime, context);
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const runner = await runnerP;
-            return request.url && request.url !== "/"
-                ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
-                : { status: 200, mimeType: "prague/component", value: runner };
-        });
-
-        return runtime;
+        ComponentRuntime.load(
+            context,
+            modules,
+            (runtime) => {
+                const runnerP = PinpointRunner.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const runner = await runnerP;
+                    return request.url && request.url !== "/"
+                        ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
+                        : { status: 200, mimeType: "prague/component", value: runner };
+                });
+            });
     }
 }
 
 export const fluidExport = new PinpointMapsFactory();
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+    fluidExport.instantiateComponent(context);
 }

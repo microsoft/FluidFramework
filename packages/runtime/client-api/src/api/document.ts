@@ -29,9 +29,6 @@ import { debug } from "./debug";
 // tslint:disable-next-line:no-var-requires no-require-imports no-unsafe-any
 const apiVersion = require("../../package.json").version;
 
-const rootMapId = "root";
-const insightsMapId = "insights";
-
 // Registered services to use when loading a document
 let defaultDocumentServiceFactory: IDocumentServiceFactory;
 
@@ -231,6 +228,34 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
     debug(`Code is ${quorum.get("code2")}`);
 }
 
+function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
+    const responseP = loader.request({ url });
+
+    responseP.then(
+        (response) => {
+            if (response.status !== 200 || response.mimeType !== "prague/component") {
+                return;
+            }
+
+            // Check if the component is viewable
+            deferred.resolve(response.value);
+        },
+        (error) => {
+            debug(`Request failure: ${url}}]`);
+        });
+}
+
+async function requestDocument(loader: Loader, container: Container, uri: string) {
+    const deferred = new Deferred<Document>();
+
+    attach(loader, uri, deferred);
+    container.on("contextChanged", (value) => {
+        attach(loader, uri, deferred);
+    });
+
+    return deferred.promise;
+}
+
 /**
  * Loads a specific version (commit) of the shared object
  */
@@ -241,16 +266,7 @@ export async function load(
     serviceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
 ): Promise<Document> {
-
-    // const classicPlatform = new PlatformFactory();
-    const runDeferred = new Deferred<{ runtime: ComponentRuntime; context: IComponentContext }>();
-    const codeLoader = new CodeLoader(
-        async (r, c) => {
-            debug("Code loaded and resolved");
-            runDeferred.resolve({ runtime: r, context: c });
-            return null;
-        },
-        runtimeOptions);
+    const codeLoader = new CodeLoader(runtimeOptions);
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
@@ -258,28 +274,8 @@ export async function load(
     const container = await loader.resolve({ url });
 
     if (!container.existing) {
-        initializeChaincode(container, `@prague/client-api@${apiVersion}`)
-            .catch((error) => {
-                container.emit("error", error);
-            });
+        await initializeChaincode(container, `@prague/client-api@${apiVersion}`);
     }
 
-    // Wait for loader to start us
-    const { runtime, context } = await runDeferred.promise;
-    await runtime.waitAttached();
-
-    // Initialize core data structures
-    let root: ISharedMap;
-    if (!runtime.existing) {
-        root = SharedMap.create(runtime, rootMapId);
-        root.register();
-
-        const insights = SharedMap.create(runtime, insightsMapId);
-        root.set(insightsMapId, insights);
-    } else {
-        root = await runtime.getChannel(rootMapId) as ISharedMap;
-    }
-
-    // Return the document
-    return new Document(runtime, context, root);
+    return requestDocument(loader, container, url);
 }

@@ -414,20 +414,21 @@ export class TaskManager implements ITaskManager {
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-
+export function instantiateComponent(context: IComponentContext): void {
     const mapExtension = SharedMap.getFactory();
     const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
     const dataTypes = new Map<string, ISharedObjectExtension>();
     dataTypes.set(mapExtension.type, mapExtension);
     dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
 
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const taskManagerP = TaskManager.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const taskManager = await taskManagerP;
-        return taskManager.request(request);
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        dataTypes,
+        (runtime) => {
+            const taskManagerP = TaskManager.load(runtime, context);
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                const taskManager = await taskManagerP;
+                return taskManager.request(request);
+            });
+        });
 }

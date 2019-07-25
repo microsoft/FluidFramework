@@ -20,17 +20,16 @@ import * as map from "@prague/map";
 import {
     IComponentContext,
     IComponentFactory,
-    IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
-import { debug } from "./debug";
+import { Document } from "./document";
+
+const rootMapId = "root";
+const insightsMapId = "insights";
 
 class Chaincode implements IComponent, IComponentFactory {
     public static supportedInterfaces = ["IComponentFactory"];
-
-    constructor(private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>) {
-    }
 
     public query(id: string): any {
         return Chaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -40,7 +39,7 @@ class Chaincode implements IComponent, IComponentFactory {
         return Chaincode.supportedInterfaces;
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         // Map value types to register as defaults
         const mapValueTypes = [
             new map.DistributedSetValueType(),
@@ -76,14 +75,37 @@ class Chaincode implements IComponent, IComponentFactory {
         modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
         modules.set(directoryExtension.type, directoryExtension);
 
-        const component = await ComponentRuntime.load(context, modules);
+        ComponentRuntime.load(
+            context,
+            modules,
+            (runtime) => {
+                // Initialize core data structures
+                let root: map.ISharedMap;
+                if (!runtime.existing) {
+                    root = map.SharedMap.create(runtime, rootMapId);
+                    root.register();
 
-        this.runFn(component, context).catch(
-            (error) => {
-                context.error(error);
+                    const insights = map.SharedMap.create(runtime, insightsMapId);
+                    root.set(insightsMapId, insights);
+                }
+
+                // Create the underlying Document
+                async function createDocument() {
+                    root = await runtime.getChannel(rootMapId) as map.ISharedMap;
+                    return new Document(runtime, context, root);
+                }
+                const documentP = createDocument();
+
+                // And then return it from requests
+                runtime.registerRequestHandler(async (request) => {
+                    const document = await documentP;
+                    return {
+                        mimeType: "prague/component",
+                        status: 200,
+                        value: document,
+                    };
+                });
             });
-
-        return component;
     }
 }
 
@@ -100,10 +122,7 @@ class BackCompatLoader implements IComponentRegistry {
 export class ChaincodeFactory implements IComponent, IRuntimeFactory {
     public static supportedInterfaces = ["IRuntimeFactory"];
 
-    constructor(
-        private readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
-        private readonly runtimeOptions: IContainerRuntimeOptions,
-    ) {
+    constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
     }
 
     public query(id: string): any {
@@ -115,7 +134,7 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const chaincode = new Chaincode(this.runFn);
+        const chaincode = new Chaincode();
         const registry = new BackCompatLoader(chaincode);
 
         const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler, this.runtimeOptions);
@@ -123,12 +142,12 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             runtime.createComponent("root", "@prague/client-api")
-            .then((componentRuntime) => {
-                componentRuntime.attach();
-            })
-            .catch((error) => {
-                context.error(error);
-            });
+                .then((componentRuntime) => {
+                    componentRuntime.attach();
+                })
+                .catch((error) => {
+                    context.error(error);
+                });
         }
 
         if (!this.runtimeOptions.generateSummaries) {
@@ -144,23 +163,14 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
      */
     private createRequestHandler(runtime: ContainerRuntime) {
         return async (request: IRequest) => {
-            debug(request.url);
-            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                ? request.url.substr(1)
-                : request.url;
-            const trailingSlash = requestUrl.indexOf("/");
+            const trimmed = request.url
+                .substr(1)
+                .substr(0, request.url.indexOf("/", 1) === -1 ? request.url.length : request.url.indexOf("/"));
 
-            const componentId = requestUrl
-                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                : "text";
+            const componentId = trimmed ? trimmed : "root";
+
             const component = await runtime.getComponentRuntime(componentId, true);
-
-            // If there is a trailing slash forward to the component. Otherwise handle directly.
-            if (trailingSlash === -1) {
-                return { status: 200, mimeType: "prague/component", value: component };
-            } else {
-                return component.request({ url: requestUrl.substr(trailingSlash) });
-            }
+            return component.request({ url: trimmed.substr(1 + trimmed.length) });
         };
     }
 }
@@ -168,11 +178,8 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
 export class CodeLoader implements ICodeLoader {
     private readonly factory: IRuntimeFactory;
 
-    constructor(
-        readonly runFn: (runtime: ComponentRuntime, context: IComponentContext) => Promise<void>,
-        runtimeOptions: IContainerRuntimeOptions,
-    ) {
-        this.factory = new ChaincodeFactory(runFn, runtimeOptions);
+    constructor(runtimeOptions: IContainerRuntimeOptions) {
+        this.factory = new ChaincodeFactory(runtimeOptions);
     }
 
     public async load<T>(source: string): Promise<T> {

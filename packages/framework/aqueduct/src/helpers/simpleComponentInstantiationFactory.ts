@@ -45,7 +45,7 @@ export class SimpleComponentInstantiationFactory implements IComponent, ICompone
     /**
      * This is where we do component setup.
      */
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         // Create a map of all the supported Distributed Data Structures
         const dataTypes = new Map<string, ISharedObjectExtension>();
         this.sharedObjects.forEach((sharedObject) => {
@@ -54,19 +54,20 @@ export class SimpleComponentInstantiationFactory implements IComponent, ICompone
 
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
-        const runtime = await ComponentRuntime.load(context, dataTypes);
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                // Create a new instance of our component
+                const componentP = this.entryPoint(runtime, context);
 
-        // Create a new instance of our component
-        const componentP = this.entryPoint(runtime, context);
-
-        // This will get called anytime a request({url: string}) call is made to the container
-        // where the url is our unique component id.
-        // We leverage this to return our instance of the component.
-        runtime.registerRequestHandler(async (request: IRequest) => {
-        const component = await componentP;
-        return component.request(request);
-        });
-
-        return runtime;
+                // This will get called anytime a request({url: string}) call is made to the container
+                // where the url is our unique component id.
+                // We leverage this to return our instance of the component.
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const component = await componentP;
+                    return component.request(request);
+                });
+            });
     }
 }

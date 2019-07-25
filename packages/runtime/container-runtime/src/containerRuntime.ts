@@ -17,6 +17,7 @@ import {
     IDocumentMessage,
     IDocumentStorageService,
     ILoader,
+    IMessageScheduler,
     IQuorum,
     IRequest,
     IResponse,
@@ -45,7 +46,11 @@ import {
 import { buildHierarchy, Deferred, flatten, isSystemType, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
-import { ComponentContext } from "./componentContext";
+import {
+    ComponentContext,
+    LocalComponentContext,
+    RemotedComponentContext,
+} from "./componentContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
@@ -98,59 +103,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
         const componentRegistry = new WrappedComponentRegistry(registry);
-        const runtime = new ContainerRuntime(context, componentRegistry, runtimeOptions);
+
+        const chunkId = context.baseSnapshot.blobs[".chunks"];
+        const chunks = chunkId
+            ? await readAndParse<Array<[string, string[]]>>(context.storage, chunkId)
+            : [];
+
+        const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
         runtime.requestHandler = createRequestHandler(runtime);
 
-        const components = new Map<string, ISnapshotTree>();
-        if (context.baseSnapshot.trees[".protocol"]) {
-            Object.keys(context.baseSnapshot.trees).forEach((value) => {
-                if (value !== ".protocol") {
-                    const tree = context.baseSnapshot.trees[value];
-                    components.set(value, tree);
-                }
-            });
-        } else {
-            const snapshotTreesP = Object.keys(context.baseSnapshot.commits).map(async (key) => {
-                const moduleId = context.baseSnapshot.commits[key];
-                const commit = (await context.storage.getVersions(moduleId, 1))[0];
-                const moduleTree = await context.storage.getSnapshotTree(commit);
-                return { id: key, tree: moduleTree };
-            });
-
-            const snapshotTree = await Promise.all(snapshotTreesP);
-            for (const value of snapshotTree) {
-                components.set(value.id, value.tree);
-            }
-        }
-
-        const componentsP = new Array<Promise<void>>();
-        for (const [componentId, snapshot] of components) {
-            const componentP = runtime.loadComponent(componentId, snapshot);
-            componentsP.push(componentP);
-        }
-
-        async function getChunks() {
-            const chunkId = context.baseSnapshot.blobs[".chunks"];
-            if (!chunkId) {
-                return;
-            }
-
-            const chunks = await readAndParse<Array<[string, string[]]>>(context.storage, chunkId);
-            for (const chunk of chunks) {
-                runtime.chunkMap.set(chunk[0], chunk[1]);
-            }
-        }
-        const chunksP = getChunks();
-
         // Create all internal components in first load.
-        const internalComponentsP = new Array<Promise<void>>();
         if (!context.existing) {
-            internalComponentsP.push(
-                runtime.createComponent("_scheduler", "_scheduler")
-                    .then((componentRuntime) => componentRuntime.attach()));
+            await runtime.createComponent("_scheduler", "_scheduler")
+                .then((componentRuntime) => componentRuntime.attach());
         }
-
-        await Promise.all([...componentsP, chunksP, ...internalComponentsP]);
 
         return runtime;
     }
@@ -255,18 +221,23 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     // Components tracked by the Domain
-    private readonly componentContexts = new Map<string, ComponentContext>();
-    private readonly componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
     private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
+    private readonly scheduler: IMessageScheduler;
     private proposeLeadershipOnConnection = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
     // Local copy of incomplete received chunks.
-    private readonly chunkMap = new Map<string, string[]>();
+    private readonly chunkMap: Map<string, string[]>;
+
+    // Attached and loaded context proxies
+    private readonly contexts = new Map<string, ComponentContext>();
+    // List of pending contexts (for the case where a client knows a component will exist and is waiting
+    // on its creation). This is a superset of contexts.
+    private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
      // Local copy of sent but unacknowledged chunks.
     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
@@ -274,9 +245,47 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
+        readonly chunks: Array<[string, string[]]>,
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();
+
+        this.chunkMap = new Map<string, string[]>(chunks);
+
+        // Extract components stored inside the snapshot
+        const components = new Map<string, ISnapshotTree | string>();
+        if (context.baseSnapshot.trees[".protocol"]) {
+            Object.keys(context.baseSnapshot.trees).forEach((value) => {
+                if (value !== ".protocol") {
+                    const tree = context.baseSnapshot.trees[value];
+                    components.set(value, tree);
+                }
+            });
+        } else {
+            Object.keys(context.baseSnapshot.commits).forEach((key) => {
+                const moduleId = context.baseSnapshot.commits[key];
+                components.set(key, moduleId);
+            });
+        }
+
+        // Create a context for each of them
+        for (const [key, value] of components) {
+            const componentContext = new RemotedComponentContext(key, value, this, this.storage);
+            const deferred = new Deferred<ComponentContext>();
+            deferred.resolve(componentContext);
+
+            this.contexts.set(key, componentContext);
+            this.contextsDeferred.set(key, deferred);
+        }
+
+        // TODO uncomment once prepare is removed
+        // this.scheduler = context.query ? context.query<IMessageScheduler>("IMessageScheduler") : undefined;
+        // if (this.scheduler) {
+        //     this.scheduler.deltaManager.inbound.on("push", (value) => {
+        //         debug("push", value);
+        //     });
+        // }
+
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
@@ -329,39 +338,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     /**
-     * Loads a component from a snapshot.
-     * @param id - Id for the component.
-     * @param snapshotTree - The snapshot tree from where we get the component to load.
-     * @param extraBlobs - Extra blobs if any to be read for creating the snapshoot.
-     */
-    public async loadComponent(
-        id: string,
-        snapshotTree: ISnapshotTree,
-    ): Promise<void> {
-        // Need to rip through snapshot and use that to populate extraBlobs
-        const details = await readAndParse<{ pkg: string }>(this.storage, snapshotTree.blobs[".component"]);
-
-        // Create and store the unstarted component
-        const component = new ComponentContext(
-            this,
-            details.pkg,
-            id,
-            true,
-            this.storage,
-            snapshotTree,
-            (cr: IComponentRuntime) => this.attachComponent(cr));
-        this.componentContexts.set(id, component);
-
-        // Create a promise that will resolve to the started component
-        const deferred = new Deferred<ComponentContext>();
-        this.componentContextsDeferred.set(id, deferred);
-
-        await component.start();
-
-        deferred.resolve(component);
-    }
-
-    /**
      * Returns the component factory for a particular package.
      * @param name - Name of the package.
      */
@@ -403,21 +379,20 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         };
 
         // Iterate over each component and ask it to snapshot
-        const componentEntries = new Map<string, ITree>();
-        this.componentContexts.forEach((component, key) => componentEntries.set(key, component.snapshot()));
+        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
+            const snapshot = await value.snapshot();
 
-        for (const [componentId, componentSnapshot] of componentEntries) {
-            if (componentSnapshot.id) {
-                result.tree[componentId] = {
-                    handle: componentSnapshot.id,
+            if (snapshot.id) {
+                result.tree[key] = {
+                    handle: snapshot.id,
                     handleType: SummaryType.Tree,
                     type: SummaryType.Handle,
                 };
             } else {
-                const tree = this.convertToSummaryTree(componentSnapshot, generateFullTreeNoOptimizations);
-                result.tree[componentId] = tree;
+                const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
+                result.tree[key] = tree;
             }
-        }
+        }));
 
         if (this.chunkMap.size > 0) {
             result.tree[".chunks"] = {
@@ -441,37 +416,35 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             : { blobs: {}, commits: {}, trees: {} };
 
         // Iterate over each component and ask it to snapshot
-        const componentEntries = new Map<string, ITree>();
-        this.componentContexts.forEach((component, key) => componentEntries.set(key, component.snapshot()));
+        const componentVersionsP = Array.from(this.contexts).map(async ([componentId, value]) => {
+            const snapshot = await value.snapshot();
 
-        // Use base tree to know previous component snapshot and then snapshot each component
-        const componentVersionsP = new Array<Promise<{ id: string, version: string }>>();
-        for (const [componentId, componentSnapshot] of componentEntries) {
             // If ID exists then previous commit is still valid
-            const commit = tree.commits[componentId];
-            if (componentSnapshot.id && commit && !generateFullTreeNoOptimizations) {
-                componentVersionsP.push(Promise.resolve({
+            const commit = tree.commits[componentId] as string;
+            if (snapshot.id && commit && !generateFullTreeNoOptimizations) {
+                return {
                     id: componentId,
                     version: commit,
-                }));
+                };
             } else {
-                if (componentSnapshot.id && !commit && !generateFullTreeNoOptimizations) {
+                if (snapshot.id && !commit && !generateFullTreeNoOptimizations) {
                     this.logger.sendErrorEvent({
                         componentId,
                         eventName: "MissingCommit",
-                        id: componentSnapshot.id,
+                        id: snapshot.id,
                     });
                 }
                 const parent = commit ? [commit] : [];
-                const componentVersionP = this.storage
-                    .write(componentSnapshot, parent, `${componentId} commit ${tagMessage}`, componentId)
-                    .then((version) => {
-                        this.componentContexts.get(componentId).updateBaseId(version.treeId);
-                        return { id: componentId, version: version.id };
-                    });
-                componentVersionsP.push(componentVersionP);
+                const version = await this.storage
+                    .write(snapshot, parent, `${componentId} commit ${tagMessage}`, componentId);
+                value.updateBaseId(version.treeId);
+
+                return {
+                    id: componentId,
+                    version: version.id,
+                };
             }
-        }
+        });
 
         const root: ITree = { entries: [], id: null };
 
@@ -549,7 +522,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.sendUnackedChunks();
         }
 
-        for (const [, componentContext] of this.componentContexts) {
+        for (const [, componentContext] of this.contexts) {
             componentContext.changeConnectionState(value, clientId);
         }
 
@@ -578,9 +551,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             case MessageType.Operation:
                 return this.prepareOperation(message, local);
 
-            case MessageType.Attach:
-                return this.prepareAttach(message, local);
-
+            // TODO migrate to process once prepare is removed
             case MessageType.ChunkedOp:
                 const chunkComplete = this.prepareRemoteChunkedMessage(message);
                 if (!chunkComplete) {
@@ -602,13 +573,41 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        this.verifyNotClosed();
+
+        let remotedComponentContext: RemotedComponentContext;
+
+        // Old prepare part
+        switch (message.type) {
+            case MessageType.Attach:
+                // the local object has already been attached
+                if (local) {
+                    break;
+                }
+
+                const attachMessage = message.contents as IAttachMessage;
+                const flatBlobs = new Map<string, string>();
+                let snapshotTree: ISnapshotTree = null;
+                if (attachMessage.snapshot) {
+                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
+                    snapshotTree = buildHierarchy(flattened);
+                }
+
+                remotedComponentContext = new RemotedComponentContext(
+                    attachMessage.id,
+                    snapshotTree,
+                    this,
+                    new DocumentStorageServiceProxy(this.storage, flatBlobs));
+
+                break;
+
+            default:
+        }
+
+        // Process part
         switch (message.type) {
             case MessageType.Operation:
                 this.processOperation(message, local, context);
-                break;
-
-            case MessageType.Attach:
-                this.processAttach(message, local, context as ComponentContext);
                 break;
 
             default:
@@ -620,64 +619,97 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.lastMinSequenceNumber = message.minimumSequenceNumber;
             this.updateMinSequenceNumber(message.minimumSequenceNumber);
         }
-    }
 
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        // Post-process part
         switch (message.type) {
             case MessageType.Attach:
-                return this.postProcessAttach(message, local, context as ComponentContext);
+                const attachMessage = message.contents as IAttachMessage;
+
+                // If a non-local operation then go and create the object - otherwise mark it as officially attached.
+                if (local) {
+                    assert(this.pendingAttach.has(attachMessage.id));
+                    this.pendingAttach.delete(attachMessage.id);
+                } else {
+                    // Resolve pending gets and store off any new ones
+                    if (this.contextsDeferred.has(attachMessage.id)) {
+                        this.contextsDeferred.get(attachMessage.id).resolve(remotedComponentContext);
+                    } else {
+                        const deferred = new Deferred<ComponentContext>();
+                        deferred.resolve(remotedComponentContext);
+                        this.contextsDeferred.set(attachMessage.id, deferred);
+                    }
+                    this.contexts.set(attachMessage.id, remotedComponentContext);
+
+                    // equivalent of nextTick() - Prefetch once all current ops have completed
+                    // tslint:disable-next-line:no-floating-promises
+                    Promise.resolve().then(() => remotedComponentContext.realize());
+                }
+
             default:
         }
     }
 
+    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        if (this.scheduler) {
+            return Promise.reject("Scheduler assumes only process");
+        }
+
+        return;
+    }
+
     public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as IEnvelope;
-        const component = this.componentContexts.get(envelope.address);
-        assert(component);
-        const innerContent = envelope.contents as { content: any, type: string };
+        const context = this.contexts.get(envelope.address);
+        assert(context);
 
+        const innerContent = envelope.contents as { content: any, type: string };
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
             content: innerContent.content,
             type: innerContent.type,
         };
-        component.processSignal(transformed, local);
+
+        context.processSignal(transformed, local);
     }
 
     public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        if (!this.componentContextsDeferred.has(id)) {
+        if (!this.contextsDeferred.has(id)) {
             if (!wait) {
                 return Promise.reject(`Process ${id} does not exist`);
             }
 
             // Add in a deferred that will resolve once the process ID arrives
-            this.componentContextsDeferred.set(id, new Deferred<ComponentContext>());
+            this.contextsDeferred.set(id, new Deferred<ComponentContext>());
         }
 
-        const componentContext = await this.componentContextsDeferred.get(id).promise;
-        return componentContext.componentRuntime;
+        const componentContext = await this.contextsDeferred.get(id).promise;
+        return componentContext.realize();
     }
 
     public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        const componentContext = new ComponentContext(
-            this,
-            pkg,
+        // ... kb Creates the proxy here - which is sync. It has this attachComponent thing
+        // but that's sort of odd because the runtime is already bound??
+        const context = new LocalComponentContext(
             id,
-            false,
+            pkg,
+            this,
             this.storage,
-            null,
             (cr: IComponentRuntime) => this.attachComponent(cr));
+
+        // ... kb and then we store off the reference to it locally. It is technically not yet
+        // attached
 
         // Store off the component
         const deferred = new Deferred<ComponentContext>();
-        this.componentContextsDeferred.set(id, deferred);
-        this.componentContexts.set(id, componentContext);
+        this.contextsDeferred.set(id, deferred);
+        this.contexts.set(id, context);
 
-        return componentContext.start();
+        // ... and then getComponentRuntimeThing actually starts it up - maybe I do just call it start???
+        return context.realize();
     }
 
     public getQuorum(): IQuorum {
@@ -727,25 +759,17 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private attachComponent(componentRuntime: IComponentRuntime): void {
         this.verifyNotClosed();
 
-        const componentContext = this.componentContexts.get(componentRuntime.id);
+        const context = this.contexts.get(componentRuntime.id);
+        const message = context.generateAttachMessage();
 
-        // Generate and send the Attach message. This may include ownership
-        const message: IAttachMessage = {
-            id: componentRuntime.id,
-            snapshot: {
-                entries: componentRuntime.snapshotInternal(),
-                id: null,
-            },
-            type: componentContext.pkg,
-        };
         this.pendingAttach.set(componentRuntime.id, message);
         if (this.connected) {
             this.submit(MessageType.Attach, message);
         }
 
         // Resolve the deferred so other local components can access it.
-        const deferred = this.componentContextsDeferred.get(componentRuntime.id);
-        deferred.resolve(componentContext);
+        const deferred = this.contextsDeferred.get(componentRuntime.id);
+        deferred.resolve(context);
     }
 
     private async generateSummary(): Promise<void> {
@@ -951,8 +975,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         const envelope = message.contents as IEnvelope;
-        const component = this.componentContexts.get(envelope.address);
-        assert(component);
+        const context = this.contexts.get(envelope.address);
+        assert(context);
         const innerContents = envelope.contents as { content: any, type: string };
 
         const transformed: ISequencedDocumentMessage = {
@@ -968,13 +992,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             type: innerContents.type,
         };
 
-        return component.prepare(transformed, local);
+        return context.prepare(transformed, local);
     }
 
     private processOperation(message: ISequencedDocumentMessage, local: boolean, context: any) {
         const envelope = message.contents as IEnvelope;
-        const component = this.componentContexts.get(envelope.address);
-        assert(component);
+        const componentContext = this.contexts.get(envelope.address);
+        assert(componentContext);
         const innerContents = envelope.contents as { content: any, type: string };
 
         const transformed: ISequencedDocumentMessage = {
@@ -990,69 +1014,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             type: innerContents.type,
         };
 
-        component.process(transformed, local, context);
-    }
-
-    private async prepareAttach(message: ISequencedDocumentMessage, local: boolean): Promise<ComponentContext> {
-        this.verifyNotClosed();
-
-        // the local object has already been attached
-        if (local) {
-            return;
-        }
-
-        const attachMessage = message.contents as IAttachMessage;
-        let snapshotTree: ISnapshotTree = null;
-        const flatBlobs = new Map<string, string>();
-        if (attachMessage.snapshot) {
-            const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-            snapshotTree = buildHierarchy(flattened);
-        }
-
-        const storage = new DocumentStorageServiceProxy(this.storage, flatBlobs);
-        const component = new ComponentContext(
-            this,
-            attachMessage.type,
-            attachMessage.id,
-            true,
-            storage,
-            snapshotTree,
-            (cr: IComponentRuntime) => this.attachComponent(cr));
-
-        return component;
-    }
-
-    private processAttach(message: ISequencedDocumentMessage, local: boolean, context: ComponentContext): void {
-        this.verifyNotClosed();
-        debug("processAttach");
-    }
-
-    private async postProcessAttach(
-        message: ISequencedDocumentMessage,
-        local: boolean,
-        context: ComponentContext,
-    ): Promise<void> {
-        const attachMessage = message.contents as IAttachMessage;
-
-        // If a non-local operation then go and create the object - otherwise mark it as officially attached.
-        if (local) {
-            assert(this.pendingAttach.has(attachMessage.id));
-            this.pendingAttach.delete(attachMessage.id);
-        } else {
-            this.componentContexts.set(attachMessage.id, context);
-
-            // Fully start the component
-            await context.start();
-
-            // Resolve pending gets and store off any new ones
-            if (this.componentContextsDeferred.has(attachMessage.id)) {
-                this.componentContextsDeferred.get(attachMessage.id).resolve(context);
-            } else {
-                const deferred = new Deferred<ComponentContext>();
-                deferred.resolve(context);
-                this.componentContextsDeferred.set(attachMessage.id, deferred);
-            }
-        }
+        componentContext.process(transformed, local, context);
     }
 
     private startLeaderElection() {
@@ -1067,8 +1029,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             debug(`New leader elected: ${clientId}`);
             if (this.leader) {
                 this.emit("leader", clientId);
-                for (const [, component] of this.componentContexts) {
-                    component.updateLeader(clientId);
+                for (const [, context] of this.contexts) {
+                    context.updateLeader(clientId);
                 }
                 this.runTaskAnalyzer();
             }

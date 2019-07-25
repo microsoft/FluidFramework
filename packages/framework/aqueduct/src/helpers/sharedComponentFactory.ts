@@ -40,20 +40,21 @@ export class SharedComponentFactory implements IComponent, IComponentFactory  {
     /**
      * This is where we do component setup.
      */
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         // Create a new runtime for our component
         // The runtime is what Fluid uses to create DDS' and route to your component
-        const runtime = await ComponentRuntime.load(context, this.registry);
+        ComponentRuntime.load(
+            context,
+            this.registry,
+            (runtime) => {
+                // Create a new instance of our component
+                const instance = new this.ctor(runtime, context);
+                const initializedP = instance[initializeKey]();
 
-        // Create a new instance of our component
-        const instance = new this.ctor(runtime, context);
-        const initializedP = instance[initializeKey]();
-
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            await initializedP;
-            return instance.request(request);
-        });
-
-        return runtime;
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    await initializedP;
+                    return instance.request(request);
+                });
+            });
     }
 }

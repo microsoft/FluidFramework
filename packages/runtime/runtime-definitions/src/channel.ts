@@ -5,11 +5,12 @@
 
 import {
     ConnectionState,
+    IComponent,
     ISequencedDocumentMessage,
     ITree,
 } from "@prague/container-definitions";
 
-export interface IChannel {
+export interface IChannel extends IComponent {
     /**
      * A readonly identifier for the shared object
      */

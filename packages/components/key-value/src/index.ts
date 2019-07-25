@@ -108,19 +108,21 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
         return KeyValueFactoryComponent.supportedInterfaces;
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectExtension>();
         const mapExtension = SharedMap.getFactory();
         dataTypes.set(mapExtension.type, mapExtension);
 
-        const runtime = await ComponentRuntime.load(context, dataTypes);
-        const keyValueP = KeyValue.load(runtime);
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const keyValue = await keyValueP;
-            return keyValue.request(request);
-        });
-
-        return runtime;
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const keyValueP = KeyValue.load(runtime);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const keyValue = await keyValueP;
+                    return keyValue.request(request);
+                });
+            });
     }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
@@ -167,6 +169,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 }
 
 // TODO included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-    return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+    fluidExport.instantiateComponent(context);
 }

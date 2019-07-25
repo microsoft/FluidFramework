@@ -1,5 +1,37 @@
 # 0.7 Breaking Changes
 
+`ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the
+method which is called with the runtime as an argument once the runtime is loaded and ready. This method will be
+called prior to resolving any requests for the component. Because of this clients should make sure to register all
+request handlers prior to returning from the callback.
+
+To convert modify
+
+```typescript
+const runtime = await ComponentRuntime.load(context, dataTypes);
+const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+runtime.registerRequestHandler(async (request: IRequest) => {
+    const progressCollection = await progressCollectionP;
+    return progressCollection.request(request);
+});
+```
+
+to
+
+```typescript
+ComponentRuntime.load(
+    context,
+    dataTypes,
+    (runtime) => {
+        const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+        runtime.registerRequestHandler(async (request: IRequest) => {
+            const progressCollection = await progressCollectionP;
+            return progressCollection.request(request);
+        });
+    });
+```
+
+`instantiateComponent` is now a void return type.
 
 # 0.6 Breaking Changes
 

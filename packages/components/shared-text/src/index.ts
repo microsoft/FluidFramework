@@ -9,7 +9,7 @@ import "./publicpath";
 
 import { IComponent, IContainerContext, IRequest, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";
@@ -83,7 +83,7 @@ class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRunt
         return SharedTextFactoryComponent.supportedInterfaces;
     }
 
-    public async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public instantiateComponent(context: IComponentContext): void {
         return sharedTextComponent.instantiateComponent(context);
     }
 
@@ -176,6 +176,6 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 }
 
 // TODO included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
-  return fluidExport.instantiateComponent(context);
+export function instantiateComponent(context: IComponentContext): void {
+  fluidExport.instantiateComponent(context);
 }

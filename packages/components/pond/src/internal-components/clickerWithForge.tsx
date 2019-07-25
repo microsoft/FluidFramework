@@ -98,7 +98,7 @@ export class ClickerWithForge extends PrimedComponent implements IComponentHTMLV
     /**
      * This is where we do component setup.
      */
-    public static async instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+    public static instantiateComponent(context: IComponentContext): void {
         // Register default map value types (Register the DDS we care about)
         // We need to register the Map and the Counter so we can create a root and a counter on that root
         const mapValueTypes = [
@@ -111,20 +111,21 @@ export class ClickerWithForge extends PrimedComponent implements IComponentHTMLV
         dataTypes.set(mapExtension.type, mapExtension);
 
         // Create a new runtime for our component
-        const runtime = await ComponentRuntime.load(context, dataTypes);
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                // Create a new instance of our component
+                const counterNewP = ClickerWithForge.load(runtime, context);
 
-        // Create a new instance of our component
-        const counterNewP = ClickerWithForge.load(runtime, context);
-
-        // Add a handler for the request() on our runtime to send it to our component
-        // This will define how requests to the runtime object we just created gets handled
-        // Here we want to simply defer those requests to our component
-        runtime.registerRequestHandler(async (request: IRequest) => {
-            const counter = await counterNewP;
-            return counter.request(request);
-        });
-
-        return runtime;
+                // Add a handler for the request() on our runtime to send it to our component
+                // This will define how requests to the runtime object we just created gets handled
+                // Here we want to simply defer those requests to our component
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const counter = await counterNewP;
+                    return counter.request(request);
+                });
+            });
     }
 }
 

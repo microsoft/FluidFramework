@@ -12,7 +12,7 @@ import {
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
 import { ISharedMap, MapExtension, SharedMap } from "@prague/map";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -178,7 +178,7 @@ export abstract class Component extends EventEmitter {
         const value = {
             instantiateComponent: (context: IComponentContext) => {
                 const component = new ctor();
-                return component.initialize(context);
+                component.initialize(context);
             },
             list: () => supportedInterfaces,
             query: (id: string) => (supportedInterfaces.indexOf(id) !== -1 ? value : undefined) as any,
@@ -280,25 +280,28 @@ export abstract class Component extends EventEmitter {
     /**
      * Fully initializes the component and returns the component runtime
      */
-    private async initialize(context: IComponentContext): Promise<IComponentRuntime> {
+    private initialize(context: IComponentContext): void {
         debug(`${this.dbgName}.instantiateComponent()`);
         this._context = context;
 
         // Instantiation of underlying data model for the component
         debug(`${this.dbgName}.LoadFromSnapshot() - begin`);
-        this._runtime = await ComponentRuntime.load(context, new Map(this[typeToFactorySym]));
-        debug(`${this.dbgName}.LoadFromSnapshot() - end`);
+        ComponentRuntime.load(
+            context,
+            new Map(this[typeToFactorySym]),
+            (runtime) => {
+                debug(`${this.dbgName}.LoadFromSnapshot() - end`);
+                this._runtime = runtime;
 
-        // Load the app specific code. We do not await on it because it is not needed to begin inbounding operations.
-        // The promise is awaited on when URL request are made against the component.
-        this._runtime.registerRequestHandler(async (request: IRequest) => {
-            debug(`request(url=${request.url})`);
-            return request.url !== "" && request.url !== "/"
-                ? this.request(request)
-                : { status: 200, mimeType: "prague/component", value: this };
-        });
-
-        return this._runtime;
+                // Load the app specific code. We do not await on it because it is not needed to begin inbounding
+                // operations. The promise is awaited on when URL request are made against the component.
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    debug(`request(url=${request.url})`);
+                    return request.url !== "" && request.url !== "/"
+                        ? this.request(request)
+                        : { status: 200, mimeType: "prague/component", value: this };
+                });
+            });
     }
 
     /**

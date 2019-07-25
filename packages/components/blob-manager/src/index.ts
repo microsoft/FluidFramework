@@ -6,7 +6,7 @@
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IBlobManager, IDocumentStorageService, IGenericBlob, IRequest } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 
 // const blobMetaData = this.blobManager!.getBlobMetadata();
 // entries[".blobs"] = {
@@ -115,7 +115,7 @@ export class BlobManager implements IBlobManager {
 /**
  * Instantiates a new chaincode component
  */
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
 
     // Create channel extensions
@@ -123,11 +123,12 @@ export async function instantiateComponent(context: IComponentContext): Promise<
     modules.set(MapExtension.Type, mapExtension);
 
     // TODO custom blob specific runtime
-    const runtime = await ComponentRuntime.load(context, modules);
-
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        modules,
+        (runtime) => {
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
+            });
+        });
 }

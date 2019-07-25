@@ -29,7 +29,7 @@ import { IChannel } from "./channel";
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponentRouter {
+export interface IComponentRuntime extends EventEmitter, IComponent, IComponentRouter {
     readonly options: any;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -84,7 +84,12 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     /**
      * Generates a snapshot of the given component
      */
-    snapshotInternal(): ITreeEntry[];
+    snapshotInternal(): Promise<ITreeEntry[]>;
+
+    /**
+     * Retrieves the snapshot used as part of the initial snapshot message
+     */
+    getAttachSnapshot(): ITreeEntry[];
 
     /**
      * Called to attach the runtime to the container
@@ -174,7 +179,7 @@ export interface IComponentRouter {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export interface IComponentContext extends EventEmitter {
+export interface IComponentContext extends EventEmitter, IComponent {
     readonly documentId: string;
     readonly id: string;
     readonly existing: boolean;
@@ -235,6 +240,11 @@ export interface IComponentContext extends EventEmitter {
      * @param request - Request.
      */
     request(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Binds a runtime to the context.
+     */
+    bindRuntime(componentRuntime: IComponentRuntime): Promise<void>;
 
     /**
      * Attaches the runtime to the conatiner
@@ -313,10 +323,10 @@ export interface IHostRuntime extends IRuntime {
  */
 export interface IComponentFactory {
     /**
-     * Generates runtime for the component from the component context.
+     * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Conext for the component.
      */
-    instantiateComponent(context: IComponentContext): Promise<IComponentRuntime>;
+    instantiateComponent(context: IComponentContext): void;
 }
 
 // following are common conventions

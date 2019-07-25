@@ -189,9 +189,7 @@ async function load(
         new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
     const host = { resolver };
 
-    const codeLoader = new API.CodeLoader(
-        async (r, c) => {},
-        { generateSummaries: false });
+    const codeLoader = new API.CodeLoader({ generateSummaries: false });
 
     const options: object = {
         blockUpdateMarkers: true,

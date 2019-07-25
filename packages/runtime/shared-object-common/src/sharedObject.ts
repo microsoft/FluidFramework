@@ -29,6 +29,7 @@ import { ValueType } from "./valueType";
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
+    public static supportedInterfaces = ["ISharedObject", "IChannel"];
 
     /**
      *
@@ -123,6 +124,21 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             type: ValueType[ValueType.Shared],
             value: this.id,
         };
+    }
+
+    /**
+     * Queries for the interface with the given id
+     * @param id - Interface ID
+     */
+    public query(id: string): any {
+        return SharedObject.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    /**
+     * Lists all interfaces supported by the object
+     */
+    public list(): string[] {
+        return SharedObject.supportedInterfaces;
     }
 
     /**

@@ -75,7 +75,7 @@ export class CollectionManager extends EventEmitter {
     }
 }
 
-export async function instantiateComponent(context: IComponentContext): Promise<IComponentRuntime> {
+export function instantiateComponent(context: IComponentContext): void {
     // Map value types to register as defaults
     const mapValueTypes = [
         new DistributedSetValueType(),
@@ -87,12 +87,14 @@ export async function instantiateComponent(context: IComponentContext): Promise<
 
     dataTypes.set(mapExtension.type, mapExtension);
 
-    const runtime = await ComponentRuntime.load(context, dataTypes);
-    const progressCollectionP = CollectionManager.load(runtime, context);
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const progressCollection = await progressCollectionP;
-        return progressCollection.request(request);
-    });
-
-    return runtime;
+    ComponentRuntime.load(
+        context,
+        dataTypes,
+        (runtime) => {
+            const progressCollectionP = CollectionManager.load(runtime, context);
+            runtime.registerRequestHandler(async (request: IRequest) => {
+                const progressCollection = await progressCollectionP;
+                return progressCollection.request(request);
+            });
+        });
 }
