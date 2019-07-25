@@ -46,10 +46,8 @@ export class IntelligentServicesManager {
                     async () => {
                         // Run the shared services
                         const text = this.document.getText();
-                        console.log(text);
                         const setInsightsP = this.services.map(async (service) => {
                             const result = await service.run(text);
-                            console.log(JSON.stringify(result));
                             if (result.entities) {
                                 this.processEntities(result);
                             }
@@ -84,8 +82,9 @@ export class IntelligentServicesManager {
                         } else if (entity.type === "Person") {
                             classType = "entity-person";
                         }
+                        // Disable style change temporarily.
                         if (classType !== "") {
-                            this.document.addCssClass(start, end, classType);
+                            // this.document.addCssClass(start, end, classType);
                         }
                     }
                 }

@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLVisual } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {
   private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
 
+  private insightFound = false;
   constructor(private readonly insights: ISharedMap) {
   }
 
@@ -20,8 +21,17 @@ export class FlowIntelViewer implements IComponentHTMLVisual {
       return FlowIntelViewer.supportedInterfaces;
   }
 
+  public addView(scope?: IComponent): IComponentHTMLView {
+    return new FlowIntelViewer(this.insights);
+  }
+
+  public remove(): void {
+  }
+
   public render(div: HTMLElement) {
-    this.renderCore(div);
+    if (this.insights.get("TextAnalytics")) {
+      this.renderCore(div);
+    }
     this.insights.on("valueChanged", (changed) => {
       if (changed.key === "TextAnalytics") {
         this.renderCore(div);
@@ -31,6 +41,10 @@ export class FlowIntelViewer implements IComponentHTMLVisual {
   }
 
   private renderCore(div: HTMLElement) {
+    if (!this.insightFound) {
+      (div as HTMLDivElement).style.display = "initial";
+      this.insightFound = true;
+    }
     const textInsights = this.insights.get("TextAnalytics");
     const html = `
     <ul>

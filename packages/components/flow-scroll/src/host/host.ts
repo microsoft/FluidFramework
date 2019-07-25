@@ -5,7 +5,7 @@
 import * as SearchMenu from "@chaincode/search-menu";
 
 import { Editor, FlowDocument, Tag } from "@chaincode/webflow";
-import { IComponentHTMLView, ISharedComponent } from "@prague/container-definitions";
+import { IComponentHTMLView, IComponentHTMLVisual, ISharedComponent } from "@prague/container-definitions";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { TST } from "@prague/merge-tree";
 import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
@@ -33,6 +33,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
         private readonly imagesP: Promise<IComponentCollection>,
+        private readonly intelViewer: IComponentHTMLVisual,
     ) {}
 
     // #region IComponentHTMLView
@@ -47,8 +48,10 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
         elm.style.display = "flex";
-        flowDiv.style.flexGrow = "1";
-        insightsDiv.innerText = "Insights";
+        flowDiv.style.flexGrow = "4";
+        insightsDiv.style.flexGrow = "1";
+        insightsDiv.style.minWidth = "25%";
+        insightsDiv.style.maxWidth = "25%";
         insightsDiv.style.backgroundColor = "whitesmoke";
         insightsDiv.style.display = "none";
         elm.append(flowDiv, insightsDiv);
@@ -135,6 +138,8 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         });
 
         flowDiv.appendChild(this.viewport);
+        const intelRenderable = this.intelViewer.addView();
+        intelRenderable.render(insightsDiv);
     }
 
     public query(id: string): any {

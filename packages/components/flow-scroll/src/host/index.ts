@@ -4,6 +4,7 @@
  */
 
 import { TextAnalyzer } from "@chaincode/flow-intel";
+import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
 import { FlowDocument } from "@chaincode/webflow";
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
@@ -17,6 +18,7 @@ const insightsMapId = "insights";
 export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow-host";
 
+    private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context, ["IComponentHTMLVisual"]);
     }
@@ -27,7 +29,8 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
             this.getComponent<FlowDocument>(this.docId),
             this.openCollection("math"),
             this.openCollection("video-players"),
-            this.openCollection("images"));
+            this.openCollection("images"),
+            this.intelViewer);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -56,8 +59,9 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     protected async opened() {
         await super.opened();
-
-        this.listenForLeaderEvent(this.getComponent(this.docId));
+        const insights = await this.root.wait(insightsMapId) as SharedMap;
+        this.intelViewer = new FlowIntelViewer(insights);
+        this.runIntel(this.getComponent(this.docId));
     }
 
     private get docId() { return `${this.runtime.id}-doc`; }
@@ -76,7 +80,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     // TODO (mdaumi): Temporary way to schedule intelligent agents. This will be turned
     // into agent-scheduler + webworker.
-    private listenForLeaderEvent(docP: Promise<FlowDocument>) {
+    private runIntel(docP: Promise<FlowDocument>) {
         if (this.context.leader) {
             this.runTextAnalyzer(docP);
         } else {
@@ -93,6 +97,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         const textAnalyzer = new TextAnalyzer();
         textAnalyzer.run(flowDocument, insightsMap);
     }
+
 }
 
 export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new MapExtension()]);
