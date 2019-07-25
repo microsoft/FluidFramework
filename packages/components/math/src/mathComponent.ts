@@ -510,8 +510,10 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
         const mathText = this.collection.getText(this);
         mathMarker.mathTokens = MathExpr.lexMath(mathText);
         mathMarker.mathText = mathText;
-        for (const view of this.views) {
-            view.remoteEdit(pos, len, isInsert);
+        if (this.views) {
+            for (const view of this.views) {
+                view.remoteEdit(pos, len, isInsert);
+            }
         }
     }
 
