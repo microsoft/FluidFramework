@@ -1,10 +1,6 @@
----
-uid: debugging
----
+# Fluid Debugger #
 
-# Fluid-Debugger #
-
-Fluid Debugger is useful tool to replay file history. This can be useful as learning tool, as well as tool to investigate corruption or performance issues. It provides read-only document and ability to start with a particular snapshot (or no snapshot at all), and play ops one by one, or in big batches.
+Fluid Debugger is useful tool to replay file history. This can be useful as learning tool, as well as tool to investigate corruption or performance issues, or as content recovery tool. It provides read-only document and ability to start with a particular snapshot (or no snapshot at all), and play ops one by one, or in big batches.
 
 Fluid Debugger works as an adapter on top of any document storage. In other words, it can be integrated into any app using any storage endpoint (like SPO or Routerlicious) with minimal changes to application and can be used to replay history with full app code running, thus helping investigating bugs in any layer of application stack 
 
@@ -17,6 +13,7 @@ In order to use it, these changes are required:
     * Or, If you have IDocumentServiceFactory, wrap it with __FluidDebugger.createFromServiceFactory()__ call
 2. In Dev Tools console, do 
     > __localStorage.FluidDebugger = 1__
+    >> Fluid app has UI toggle for it  - Settings | debbuger = on
 3. Once you refresh page, look for blocked (by browser) pop-up window notification. Enable pop-ups for your app. 
 
 ## How to disable it ##
@@ -37,10 +34,9 @@ Once debugger starts, you have the following choices on first screen:
 
 3. Use a particular snapshot to start with (use dropdown). You will see a selection of snapshots (with cryptic names) as well as starting sequence number for each of them in dropdown, sorted (with latest at the top). Please note that dropdown is populated asynchronously - there is progress text on the page noting that. 
 
-4. Use snapshot stored on disk (snapshot.json), produced by replay tool. This option is useful if you want to validate that generation and loading of snapshot (from set of ops) does not introduce a bug. This is useful, given there is no other way to generate snapshot at particular point in time in the past. Notes:  
-
-Currently you can't play ops on top of snapshot in this mode (though this is feature that can be added later). 
-You can load snapshot from a different file (given above). As long as it's for same application, it does not matter if same file or storage endpoint is used to start an app. 
+4. Use snapshot stored on disk (_"snapshot.json"_), produced by [replay tool](../../tools/replay-tool/README.md). This option is useful if you want to validate that generation and loading of snapshot (from set of ops) does not introduce a bug. This is useful, given there is no other way to generate snapshot at particular point in time in the past. Notes:  
+    - Currently you can't play ops on top of snapshot in this mode (to be added in the future). 
+    - You can load snapshot from a different file (given above). As long as it's for same application, it does not matter if same file or storage endpoint is used to start an app. 
 
 ### Playing ops ###
 
@@ -51,6 +47,8 @@ If you chose storage snapshot (not snapshot from file) or no snapshot, you are p
 Please note that playback is asynchronous, so even though Debugger UI might have acknowledged that ops where played out (and you can select next batch), application might be still in the process of processing previous batch. 
 
 ## Internals, or useful piece to use in other workflows ##
+
+Debugger consists of three mostly independent from each other pieces - UI, Controller & Storage layer. One can substitute UI and/or controller with alternative representation pretty easily, thus build different tool (like document recovery tool).
 
 __IDebuggerController__ is an interface that controls replay logic, but not UI. An implementation of this interface is provided: __DebugReplayController__
 

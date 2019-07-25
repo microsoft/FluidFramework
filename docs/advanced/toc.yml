@@ -1,6 +1,6 @@
 - name: Advanced Topics
   href: README.md
 - name: Debugging
-  topicUid: debugging
+  href: ../../packages/drivers/fluid-debugger/README.md
 - name: Writing a Distributed Data Structure
   href: writing-dds.md
