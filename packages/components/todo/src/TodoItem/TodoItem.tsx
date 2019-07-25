@@ -6,10 +6,12 @@
 import { ClickerName } from "@chaincode/clicker";
 
 import {
-  EmbeddedReactComponentFactory,
-  IComponentReactViewable,
   PrimedComponent,
 } from "@prague/aqueduct";
+import {
+  EmbeddedReactComponentFactory,
+  IComponentReactViewable,
+} from "@prague/aqueduct-react";
 import {
   ISharedCell,
   SharedCell,

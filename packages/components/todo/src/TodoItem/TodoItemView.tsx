@@ -6,7 +6,7 @@
 import {
     CollaborativeCheckbox,
     CollaborativeInput,
-} from "@prague/aqueduct";
+} from "@prague/aqueduct-react";
 import { ISharedCell } from "@prague/cell";
 import { Counter } from "@prague/map";
 import { SharedString } from "@prague/sequence";

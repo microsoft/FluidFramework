@@ -44,6 +44,7 @@
     "@chaincode/clicker": "^0.7.0",
     "@prague/app-component": "^0.7.0",
     "@prague/aqueduct": "^0.7.0",
+    "@prague/aqueduct-react": "^0.7.0",
     "@prague/build-common": "^0.7.0",
     "@prague/cell": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",

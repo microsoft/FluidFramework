@@ -15,6 +15,8 @@
         "prefer-method-signature": false,
         "prefer-type-cast": false,
         "use-simple-attributes": false,
-        "strict-boolean-expressions": false
+        "strict-boolean-expressions": false,
+        "react-a11y-input-elements": false
+
     }
 }

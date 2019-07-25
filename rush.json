@@ -175,6 +175,10 @@
       "projectFolder": "packages/framework/aqueduct/"
     },
     {
+      "packageName": "@prague/aqueduct-react",
+      "projectFolder": "packages/framework/aqueduct-react/"
+    },
+    {
       "packageName": "@prague/framework-definitions",
       "projectFolder": "packages/framework/framework-definitions/"
     },

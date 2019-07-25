@@ -4,10 +4,12 @@
  */
 
 import {
-  EmbeddedReactComponentFactory,
-  IComponentReactViewable,
   PrimedComponent,
 } from "@prague/aqueduct";
+import {
+  EmbeddedReactComponentFactory,
+  IComponentReactViewable,
+} from "@prague/aqueduct-react";
 import {
   ISharedCell,
   SharedCell,

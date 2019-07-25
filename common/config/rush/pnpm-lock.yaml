@@ -12,6 +12,7 @@ dependencies:
   '@rush-temp/app-datastore': 'file:projects/app-datastore.tgz'
   '@rush-temp/app-ui': 'file:projects/app-ui.tgz'
   '@rush-temp/aqueduct': 'file:projects/aqueduct.tgz'
+  '@rush-temp/aqueduct-react': 'file:projects/aqueduct-react.tgz'
   '@rush-temp/base-host': 'file:projects/base-host.tgz'
   '@rush-temp/blob-manager': 'file:projects/blob-manager.tgz'
   '@rush-temp/build-common': 'file:projects/build-common.tgz_tslint@5.18.0+typescript@3.4.5'
@@ -405,18 +406,18 @@ packages:
     dev: false
     resolution:
       integrity: sha512-s63F9nJioLqOlW3UkyMd+BYhXt44YuaFm/VV0VwuteqjYwRrObkU7ra9pY4wAJR3oXi8hJrMcrcJdO/HH33vtw==
-  /@component/agent-scheduler/0.6.9462:
+  /@component/agent-scheduler/0.6.9609:
     dependencies:
-      '@prague/component-runtime': 0.6.9462
-      '@prague/consensus-register-collection': 0.6.9462
-      '@prague/container-definitions': 0.6.9462
-      '@prague/map': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
+      '@prague/component-runtime': 0.6.9609
+      '@prague/consensus-register-collection': 0.6.9609
+      '@prague/container-definitions': 0.6.9609
+      '@prague/map': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-moKv5m90+fLLJ8nUeUX9/HKGxaD9D/q0UsZwQC9L0LQ8qLyVjH6rdreKXbPrzijHCUsVyMQ5UBegIIX+E8RCUQ==
+      integrity: sha512-Djs3L2E3JozzXItrS3F/PEJVM6tecDxbcwN9H2cQA3Y7S9fP6Rs034BkGmwruP4mZiMb7iJrGD2md7++WepdjQ==
   /@hapi/address/2.0.0:
     dev: false
     resolution:
@@ -425,10 +426,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-HOJ20Kc93DkDVvjwHyHawPwPkX44sIrbXazAUDiUXaY2R9JwQGo2PhFfnQtdrsIe4igjG2fPgMra7NYw7qhy0A==
-  /@hapi/hoek/8.0.2:
+  /@hapi/hoek/8.1.0:
     dev: false
     resolution:
-      integrity: sha512-O6o6mrV4P65vVccxymuruucb+GhP2zl9NLCG8OdoFRS8BEGw3vwpPp20wpAtpbQQxz1CEUtmxJGgWhjq1XA3qw==
+      integrity: sha512-b1J4jxYnW+n6lC91V6Pqg9imP9BZq0HNCeM+3sbXg05rQsE9cGYrKFpZjyztVesGmNRE6R+QaEoWGATeIiUVjA==
   /@hapi/joi/15.1.0:
     dependencies:
       '@hapi/address': 2.0.0
@@ -444,7 +445,7 @@ packages:
       integrity: sha512-JOfdekTXnJexfE8PyhZFyHvHjt81rBFSAbTIRAhF2vv/2Y1JzoKsGqxH/GpZJoF7aEfYok8JVcAHmSz1gkBieA==
   /@hapi/topo/3.1.2:
     dependencies:
-      '@hapi/hoek': 8.0.2
+      '@hapi/hoek': 8.1.0
     dev: false
     resolution:
       integrity: sha512-r+aumOqJ5QbD6aLPJWqVjMAPsx5pZKz+F5yPqXZ/WWG9JTtHbQqlzrJoknJ0iJxLj9vlXtmpSdjlkszseeG8OA==
@@ -525,65 +526,65 @@ packages:
     dev: false
     resolution:
       integrity: sha512-PhoNfqGQoXUMOOs89mDcakyKWrEYRBferd23YiVh4iJshmRb4HOuZcmKGxfQE+MxXp9HwyjastP7dJXcUEdHUQ==
-  /@prague/app-component/0.6.9462:
+  /@prague/app-component/0.6.9609:
     dependencies:
-      '@prague/cell': 0.6.9462
-      '@prague/component-runtime': 0.6.9462
-      '@prague/container-definitions': 0.6.9462
-      '@prague/container-runtime': 0.6.9462
-      '@prague/map': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/sequence': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
-      '@prague/stream': 0.6.9462
+      '@prague/cell': 0.6.9609
+      '@prague/component-runtime': 0.6.9609
+      '@prague/container-definitions': 0.6.9609
+      '@prague/container-runtime': 0.6.9609
+      '@prague/map': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/sequence': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
+      '@prague/stream': 0.6.9609
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-llYJVxqWqbpnjs/AVYMs3RPJWB0IMGtpIUf7Z16By0F70PhKC/JYccQvWm6QigDGeBwR+A8lo7TfPReEGm7y/Q==
-  /@prague/cell/0.6.9462:
+      integrity: sha512-xifUfX4LPLd3cT67TZ55NlfbEuD0/mXnllb1Qvu85wL5YRWzR5GfH8fm0mbg5CW6db8LCX+w5+Gu5jX3HzOZ2g==
+  /@prague/cell/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
       debug: 4.1.1
       lodash: 4.17.15
     dev: false
     resolution:
-      integrity: sha512-xQuhBaXbHs9IQb4hloGeJIuKy028Ggjc8fuNwtDI5iApWKBb/335uNldN952YsmY4q5bh0QBV9p6lOKKpaLXhA==
-  /@prague/component-runtime/0.6.9462:
+      integrity: sha512-bJhsJt57qm0KZifCh49Bn2kDfjTL0ipJrclN1/zXQqzcGscgTpVK/qcv86c758rz1CFFRD29L0aJ4/+MHVr6TA==
+  /@prague/component-runtime/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
+      '@prague/utils': 0.6.9609
       async: 2.6.3
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-RdWVA7s+D1eDxAajuIo25wPa5WH3++zK9K8LtKdo6H9dzaWGiebYOerFkeZEeDaJidR9XMxbUWX0TgqJO4OOkA==
-  /@prague/consensus-register-collection/0.6.9462:
+      integrity: sha512-/u3oPlVkj9JbH2ndjm+xWVqzdMBHnGGj/SZq0cfvaegUMq4Yk2nIyISUB6GrWsJRgVbMaMptF8mIIOUMzEKg4w==
+  /@prague/consensus-register-collection/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-TGcnSTWukm2XL9Cf2rvLqrfg18KlT8AtyDQyrPBorpOQlx1Ko4JBGjPVeydhauQeYcjEZzQT5eyRGIr1MYLHdw==
-  /@prague/container-definitions/0.6.9462:
+      integrity: sha512-4JYaOqro6dzcmjJNPexwfw2zv99SmBGDXnVVQ9dPkD/SojtDKhMqjMwXWzA6Apa6ZDJFXa4pzQUpQmQAnXfnJQ==
+  /@prague/container-definitions/0.6.9609:
     dependencies:
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-ZUp/Qw+RM/u8D5I9xnE31IvrkFEFlDtJOIfXZgOjVjMnItKjUcZl0zXYXSjGDIKrt234ChiZDACQO/Bvn9cbtQ==
-  /@prague/container-loader/0.6.9462:
+      integrity: sha512-dbrWvO2GcSNWG18ReyHHoeh+aINs9ohKCVFqFRNR5yQPTT6OmU/PdXAbFn77bffwuiULVktzoncasgfa8lW/LA==
+  /@prague/container-loader/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/double-ended-queue': 2.1.1
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
@@ -591,13 +592,13 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-c6ls9CWxJKZrcePQpmaeRrY8J9AXkN5FkYb7dddvs1whQNBbgp+llg5REhGcky/tLXXqjqmLVySLMmSiERsgFg==
-  /@prague/container-runtime/0.6.9462:
+      integrity: sha512-9jt+fWc1DVSGCpQ9VcnFmKHFLs3L+vsO5spMeIBDhcAAaoUXllHWel0aAnQJvxuNLT1yM6ObgqXjLPYbHE5VOA==
+  /@prague/container-runtime/0.6.9609:
     dependencies:
-      '@component/agent-scheduler': 0.6.9462
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@component/agent-scheduler': 0.6.9609
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
@@ -609,53 +610,53 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-uYKxR3nAnyrZMem1fJXrE+jeUTiZY4d1UgxvtZbhSUz55IkWY9eV95Cknr/7RPNgeIEnEHcZZricjGtW3uVa9g==
-  /@prague/gitresources/0.6.9462:
+      integrity: sha512-MoT+Mg85ogFNmWqSj8o9mw8CXHVDbAE3f7BTfdMuAn3kq1p2CX7X6tER+Wy2td0cLtb4y/CwpvyfxRLm0m9eMA==
+  /@prague/gitresources/0.6.9609:
     dev: false
     resolution:
-      integrity: sha512-g2hcnOnRU1dQUPbWlEBXgji9xO2c7csRWTjSApMguvcaTejGfKO+Bb0dR1xUQumB/fInNEnQoGcO+jj2afeGhQ==
-  /@prague/loader-web/0.6.9462:
+      integrity: sha512-upxMcQxkmoiMJU6AxJMk+0EbeHBA9nE86JwgpLQQ8lzuaoStxCjEd3bb37cyepeKy6laoEZxGqCra0ziZCow6Q==
+  /@prague/loader-web/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
       '@types/node': 10.14.13
       chalk: 2.4.2
       isomorphic-fetch: 2.2.1
       source-map-loader: 0.2.4
     dev: false
     resolution:
-      integrity: sha512-IXVFFxbtfMOogi3+X9I9dNKld4+OOy0dGpT4GjVVyLKDJxOoc/j6rBDCYtqQrowV9fYsrMVgRyWb5uscE/xV1Q==
-  /@prague/map/0.6.9462:
+      integrity: sha512-lQfV+MFT5MOK/k/vx4EsAg1c4EHkfHMUQIQ/Gtt7EuDayH0Z6g9Y2AUmHFQ6fKSemiBKJ1bBotKf93jvAfpdfA==
+  /@prague/map/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
       debug: 4.1.1
       lodash: 4.17.15
     dev: false
     resolution:
-      integrity: sha512-x9PtQcM7BhLHkk9KU02Y8E49jLXLmLmXnG1LVhqkRZcEAyNkX9jkqbwIDH+jYPmObMH8ZqNv5HzzX6aBiMgw0A==
-  /@prague/merge-tree/0.6.9462:
+      integrity: sha512-+56PlbEngWTqJDheINcbtuogw+MgoHoGsHCMkkbu6aAYbt+UpiTzoyTuqG3XXEgkjYoz7jMpaBDeAr5ENW9OgA==
+  /@prague/merge-tree/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
+      '@prague/utils': 0.6.9609
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-7u24P6WQcbbNCVFrVPOdXBVsUmqw1NVjMIHY6S83DWvkkHzeyoZyBmaY9DYzfbNN/tskMtkXJ/j2Zm+ZtDjxkQ==
+      integrity: sha512-7bNOERm9Vmdqkf8cd1bVfHeuwLV6p6RgPD9XqB+YFfiq7SdzbFpRLz0DXTr9JYn3b4H4WRFQ5Vhe7aLqvZkoig==
   /@prague/prague-dev-server/3.6.1_webpack@4.37.0:
     dependencies:
-      '@prague/app-component': 0.6.9462
-      '@prague/container-definitions': 0.6.9462
-      '@prague/container-loader': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/loader-web': 0.6.9462
-      '@prague/map': 0.6.9462
-      '@prague/routerlicious-host': 0.6.9462
-      '@prague/routerlicious-socket-storage': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
+      '@prague/app-component': 0.6.9609
+      '@prague/container-definitions': 0.6.9609
+      '@prague/container-loader': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/loader-web': 0.6.9609
+      '@prague/map': 0.6.9609
+      '@prague/routerlicious-host': 0.6.9609
+      '@prague/routerlicious-socket-storage': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
       ansi-html: 0.0.7
       axios: 0.18.1
       bonjour: 3.5.0
@@ -699,24 +700,24 @@ packages:
       webpack: ^4.0.0
     resolution:
       integrity: sha512-L1R29yk7tfWOsyVhgQmRSj3uffD2H+mnL1xUtMPFkSJaWyNq8+Uci88Juy/9ZXqbDt4Cyl3w0zw6ACmhXUA6Nw==
-  /@prague/routerlicious-host/0.6.9462:
+  /@prague/routerlicious-host/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/debug': 0.0.31
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-I56eBXewAZhYB7nyOK+kTGRe9vnSUfKVN0aeROnlykqnySl0kcMcMsbJuT032F9AyoWvwoFDUcKk05WiE617RQ==
-  /@prague/routerlicious-socket-storage/0.6.9462:
+      integrity: sha512-xcxA0vOA0c4vSkYt2/KVpGNIVWUtM1Qk2Bl7BLyisvOUcVMHD9jv3oKoszginZBWKJ6Q3wBsGuWHHSypThO0OQ==
+  /@prague/routerlicious-socket-storage/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/services-client': 0.6.9462
-      '@prague/socket-storage-shared': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/services-client': 0.6.9609
+      '@prague/socket-storage-shared': 0.6.9609
+      '@prague/utils': 0.6.9609
       axios: 0.18.1
       debug: 4.1.1
       isomorphic-ws: 4.0.1_ws@6.2.1
@@ -725,46 +726,46 @@ packages:
       ws: 6.2.1
     dev: false
     resolution:
-      integrity: sha512-gN9ExKuO5gsp7lZbQevT2uHyiOVG9c7ZG5SV1o9wKrOoIvJpjr+W5+VxrZSbqA4uIrsYLs/YNQgLveo1qoEqFg==
-  /@prague/runtime-definitions/0.6.9462:
+      integrity: sha512-MI+flJTCUVTtp9viECVLcdhm+4sBFMXoYFhV2GanKs2qaKk1F17I3TnVFg4frf/aOtSCLvuc1J+3+iAj8pnP3w==
+  /@prague/runtime-definitions/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/node': 10.14.13
     dev: false
     resolution:
-      integrity: sha512-iwc+kNHRKGyGKFd4GQLeey2s/dEWhqMO5rR+j4U0Tulju6+iLaZxgSXCAe6ch30kLld+rdviCeMnrV00smpCnA==
-  /@prague/sequence/0.6.9462:
+      integrity: sha512-IkSaIZTHa+3CfFwn0vL1knY5UNk7PJAQ8dx/YMdcza3pEz08Nn1EPC6cDUSDHOUjqce0mjx/JaHmFi0qul5fIQ==
+  /@prague/sequence/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/map': 0.6.9462
-      '@prague/merge-tree': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/map': 0.6.9609
+      '@prague/merge-tree': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/uuid': 3.4.5
       lodash: 4.17.15
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-w4GaBXEB+uJ60vl1cueFzZZwFQmxP0GwvFuyPYIGb48eVJdUkT80Hj4aU2FKRcoAU5OLJq/a/JobSYD9JotI4A==
-  /@prague/services-client/0.6.9462:
+      integrity: sha512-FjcKOcKxHsw6nPRETW9Taov8CzcE6aYVMWOPxscBbhmisudBnog5qUM1Cx61a4aFOwpzFRjlMOhSGsQqbtz83A==
+  /@prague/services-client/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/node': 10.14.13
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-Vzx3lMv7UJxTev5XggOd8HM/BWCGRMN/7qcyo+VRQA0UjDmfvsZsRIcHqnSvxWkU0l5btlu+7r0EIXvHY7TbbA==
-  /@prague/shared-object-common/0.6.9462:
+      integrity: sha512-jzxTRVyySHxeuz/d4FnqBJ4PSe6qfP+h1uxIHDsgM/AeEK+PKquQualdMDUDy2w1iQlWytxgUSGkV0HH1wZBBA==
+  /@prague/shared-object-common/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/utils': 0.6.9609
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
       '@types/node': 10.14.13
@@ -772,40 +773,40 @@ packages:
       double-ended-queue: 2.1.0-0
     dev: false
     resolution:
-      integrity: sha512-jtS0sV3TEP5LJ4+eVC0kUp7xiKWzKECcZyVS0QTtuiC7lL3znX131C6ReeQAPCaw0mG7FCjinNvznMO41YkCJQ==
-  /@prague/socket-storage-shared/0.6.9462:
+      integrity: sha512-bPjtV+yQ9iqzXYpaEx/yTSMkI4lCTSpsixSCVOYryZFoWy9vO2b+i/xcV3pg+1W29kLlUYHJeCSSpOv/5+KGbg==
+  /@prague/socket-storage-shared/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/utils': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/utils': 0.6.9609
       debug: 4.1.1
       socket.io-client: 2.2.0
     dev: false
     resolution:
-      integrity: sha512-pc3MdS8K8paiC4UsY32xStaD47l8/T8yXuj+mT47IS5Tfct1o5VMQU+BZnS2zsvFGaf5kSYqkQOokX+zsOl2sg==
-  /@prague/stream/0.6.9462:
+      integrity: sha512-9ZVKN0pVmcq1iB4lVliXZIjxErbhBtmVI1LykE0sG6MEeE7pOrhrGyEbZAGUIT2qUXTWLNmoVlIpAXAB2TelhQ==
+  /@prague/stream/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/map': 0.6.9462
-      '@prague/runtime-definitions': 0.6.9462
-      '@prague/shared-object-common': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/map': 0.6.9609
+      '@prague/runtime-definitions': 0.6.9609
+      '@prague/shared-object-common': 0.6.9609
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.5
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-hfubPSHb8jui9RO+XWePi1fpnSLlLnFBSQlK0w/b72lWOhrrE7gRxoMH88S2f5XbId32z4M+cktA04owr81W3w==
-  /@prague/utils/0.6.9462:
+      integrity: sha512-jDdVVjc+wUqyZfSuOmCI2vv4uuKB7UsphX5Uvk1rW1vhAvYbURzFeSVKK+WokYDJzMelayMAsb6ETk5KWVl/8g==
+  /@prague/utils/0.6.9609:
     dependencies:
-      '@prague/container-definitions': 0.6.9462
-      '@prague/gitresources': 0.6.9462
+      '@prague/container-definitions': 0.6.9609
+      '@prague/gitresources': 0.6.9609
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
       sha.js: 2.4.11
     dev: false
     resolution:
-      integrity: sha512-HKHGUHXZtUIaatlMDwgEk/H6cHAdkuJOQPzw7SQYpccYwO+cV4zU6lh1jyAVkrAedKM5R//GBRm+vBew7KmVkg==
+      integrity: sha512-bFpEoVMCVbeO7tnvG+/TLDGr94yNj/uvxHUHxUogRd1kMvmv6/WS39zl2aExo2VW4sZ99BNxAwOPIKDnQXS3Og==
   /@shellscape/koa-send/4.1.3:
     dependencies:
       debug: 2.6.9
@@ -8200,7 +8201,7 @@ packages:
   /parse-headers/2.0.2:
     dependencies:
       for-each: 0.3.3
-      string.prototype.trim: 1.1.2
+      string.prototype.trim: 1.2.0
     dev: false
     resolution:
       integrity: sha512-/LypJhzFmyBIDYP9aDVgeyEb5sQfbfY5mnDq4hVhlQ69js87wXfmEI5V3xI6vvXasqebp0oCytYFLxsBVfCzSg==
@@ -10059,7 +10060,7 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-vafcv6KjVZKSgz06oM/H6GDBrAtz8vdhQakGjFIvNrHA6y3HCF1CInLy+QLq8dTJPQ1b+KDUqDFctkdRW44e1w==
-  /string.prototype.trim/1.1.2:
+  /string.prototype.trim/1.2.0:
     dependencies:
       define-properties: 1.1.3
       es-abstract: 1.13.0
@@ -10068,7 +10069,7 @@ packages:
     engines:
       node: '>= 0.4'
     resolution:
-      integrity: sha1-0E3iyJ4Tf019IG8Ia17S+ua+jOo=
+      integrity: sha512-9EIjYD/WdlvLpn987+ctkLf0FfvBefOCuiEr2henD8X+7jfwPnyvTdmW8OJhj5p+M0/96mBdynLWkxUr+rHlpg==
   /string_decoder/0.10.31:
     dev: false
     resolution:
@@ -11880,7 +11881,7 @@ packages:
       integrity: sha512-tm3mSGfe3Yfcdg7QPfGHlMKHl0BBCaZXhcnt8w4LxFyyY6Y5Jb/zu0RHl6Zgvu723u9B4UfyHEQyVtTKCFh4Jw==
       tarball: 'file:projects/app-ui.tgz'
     version: 0.0.0
-  'file:projects/aqueduct.tgz':
+  'file:projects/aqueduct-react.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@types/node': 10.14.13
@@ -11892,9 +11893,23 @@ packages:
       tslint: 5.18.0_typescript@3.4.5
       typescript: 3.4.5
     dev: false
+    name: '@rush-temp/aqueduct-react'
+    resolution:
+      integrity: sha512-pHsJNbQF1rNCu+ffZRDsPM0Xzk3Zck8jeu1F4HSRuRt6wTpFI5TIdCw58y/nSDOX1T2dNCuBFTl97ycb3544eA==
+      tarball: 'file:projects/aqueduct-react.tgz'
+    version: 0.0.0
+  'file:projects/aqueduct.tgz':
+    dependencies:
+      '@microsoft/api-extractor': 7.3.4
+      '@types/node': 10.14.13
+      concurrently: 4.1.1
+      rimraf: 2.6.3
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+    dev: false
     name: '@rush-temp/aqueduct'
     resolution:
-      integrity: sha512-nsuPXXBHYjLUboUSM1Lb+9QU5IloQFIbWTasZQHlQqYSe2Hdp+e4HcO93EE5UTt+TTCxtRgyOMVkbB+v0Qpkzw==
+      integrity: sha512-AVAax7fnqJ3YcUHgkkeTPCwp/xycSJ7W8D7XuB9wjYKVbviPaVZXoRXpZ2pJb6ewHL9Yis5GVpPd0bTaTigtEw==
       tarball: 'file:projects/aqueduct.tgz'
     version: 0.0.0
   'file:projects/base-host.tgz':
@@ -12353,7 +12368,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-scroll'
     resolution:
-      integrity: sha512-zTgSUkEcB9AhwxmnArdrU2Z2LYep7WZgGf88sgVYXfm3mnU2/zWN4gMQ8EIZbEt4Wyj6uC3taRwSlivlhfBgtA==
+      integrity: sha512-qxhv4Qa+sbRNqENhOeY+F2+zk+7cX24rSaN5Zou0E13QJAoGKfqzqWgHPrKyO9Qc3aZByzJ7WSXoVjaWCoVJ+Q==
       tarball: 'file:projects/flow-scroll.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -13025,7 +13040,7 @@ packages:
     dev: false
     name: '@rush-temp/replay-tool'
     resolution:
-      integrity: sha512-4ajzgeTPTL2hLKCj5vRXcWAS1636JIUVaQSTzGKC2TWs8Ks8Mck24z2gNkYxrioQRPluQcYV0/iKLv9uVue+lg==
+      integrity: sha512-jDRdcySs7PQCjroNsE/PobPp3lR9ICQhWc6GzF+3da6yfwOU/N4PqwkR8IWWeCQKQDwDHk5TmADwjGmgvN67uw==
       tarball: 'file:projects/replay-tool.tgz'
     version: 0.0.0
   'file:projects/routerlicious-host.tgz':
@@ -13592,7 +13607,7 @@ packages:
     dev: false
     name: '@rush-temp/todo'
     resolution:
-      integrity: sha512-8440br9wsZOjF+4BD+k1nncXEywIvywy0GXFRunx7CmknxoV1XCtTRCATrmRQt9L6pccsPtkUnTzwNR7GA+Xow==
+      integrity: sha512-/PneyZ+koSZ1zLNbeT5wLAGwul7+bwu5uuQGhIHfjGLsBl/mttuVnYKV/APrtoVMZreT1eNHtRu1MiW82nKawQ==
       tarball: 'file:projects/todo.tgz'
     version: 0.0.0
   'file:projects/tools-core.tgz':
@@ -13723,6 +13738,7 @@ specifiers:
   '@rush-temp/app-datastore': 'file:./projects/app-datastore.tgz'
   '@rush-temp/app-ui': 'file:./projects/app-ui.tgz'
   '@rush-temp/aqueduct': 'file:./projects/aqueduct.tgz'
+  '@rush-temp/aqueduct-react': 'file:./projects/aqueduct-react.tgz'
   '@rush-temp/base-host': 'file:./projects/base-host.tgz'
   '@rush-temp/blob-manager': 'file:./projects/blob-manager.tgz'
   '@rush-temp/build-common': 'file:./projects/build-common.tgz'

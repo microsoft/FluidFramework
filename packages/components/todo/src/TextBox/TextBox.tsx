@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 import {
-  CollaborativeTextArea,
-  IComponentReactViewable,
   PrimedComponent,
 } from "@prague/aqueduct";
+import {
+  CollaborativeTextArea,
+  IComponentReactViewable,
+} from "@prague/aqueduct-react";
 import {
   IComponentHTMLVisual,
 } from "@prague/container-definitions";

@@ -5,7 +5,7 @@
 
 import {
     CollaborativeInput,
-} from "@prague/aqueduct";
+} from "@prague/aqueduct-react";
 import { ISharedCell } from "@prague/cell";
 import { ISharedMap } from "@prague/map";
 import { SharedString } from "@prague/sequence";
