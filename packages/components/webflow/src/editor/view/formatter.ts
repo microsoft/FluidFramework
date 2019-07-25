@@ -32,12 +32,12 @@ export abstract class Formatter<TState extends IFormatterState> {
     public toString() { return this.constructor.name; }
 
     protected pushTag(layout: Layout, tag: Tag, existing?: Element) {
-        if (existing && existing.tagName !== tag) {
-            existing.remove();
-            existing = null;
-        }
+        // Reuse the existing element if possible, otherwise create a new one.  Note that
+        // 'layout.pushNode(..)' will clean up the old node if needed.
+        existing = existing && existing.tagName === tag
+            ? existing
+            : document.createElement(tag);
 
-        existing = existing || document.createElement(tag);
         layout.pushNode(existing);
         return existing;
     }
