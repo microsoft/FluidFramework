@@ -4,11 +4,10 @@
  */
 
 // tslint:disable:binary-expression-operand-order
-import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
 import { Marker, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
-import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../src/document";
+import { DocSegmentKind, FlowDocument, flowDocumentFactory, getDocSegmentKind } from "../src/document";
 
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
@@ -20,10 +19,10 @@ describe("FlowDocument", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
+            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndOpenComponent("fd", FlowDocument.type);
+        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
     });
 
     after(async () => {

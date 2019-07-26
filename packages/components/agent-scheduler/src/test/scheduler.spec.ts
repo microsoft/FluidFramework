@@ -36,7 +36,7 @@ describe("AgentScheduler", () => {
         after(async () => { await host.close(); });
 
         async function createScheduler() {
-            return host.createAndOpenComponent("scheduler", AgentSchedulerType);
+            return host.createAndAttachComponent("scheduler", AgentSchedulerType);
         }
 
         let scheduler: AgentScheduler;
@@ -102,8 +102,8 @@ describe("AgentScheduler", () => {
                 [AgentSchedulerType, Promise.resolve(Component.createComponentFactory(AgentScheduler))],
             ]);
             host2 = host1.clone();
-            scheduler1 = await host1.createAndOpenComponent("scheduler", AgentSchedulerType);
-            scheduler2 = await host2.openComponent("scheduler");
+            scheduler1 = await host1.createAndAttachComponent("scheduler", AgentSchedulerType);
+            scheduler2 = await host2.waitComponent("scheduler");
         });
 
         afterEach(async () => {

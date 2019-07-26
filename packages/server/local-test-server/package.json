@@ -44,6 +44,7 @@
     "@chaincode/table-document": "^0.7.0",
     "@prague/app-component": "^0.7.0",
     "@prague/app-datastore": "^0.7.0",
+    "@prague/aqueduct": "^0.7.0",
     "@prague/cell": "^0.7.0",
     "@prague/client-api": "^0.7.0",
     "@prague/consensus-ordered-collection": "^0.7.0",

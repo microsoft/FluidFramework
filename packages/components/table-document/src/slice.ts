@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
-import { MapExtension } from "@prague/map";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { IComponentForge } from "@prague/framework-definitions";
+import { SharedMap } from "@prague/map";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { UnboxedOper } from "@prague/sequence";
-import { CellRange, parseRange } from "./cellrange";
+import { CellRange } from "./cellrange";
 import { ConfigKey } from "./configKey";
 import { TableDocument } from "./document";
 import { ITable } from "./table";
@@ -21,7 +23,16 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends Component implements ITable {
+export class TableSlice extends PrimedComponent implements IComponentForge, ITable {
+    public static getFactory() { return TableSlice.factory; }
+
+    private static readonly factory = new SharedComponentFactory(
+        TableSlice,
+        [
+            SharedMap.getFactory(),
+        ],
+    );
+
     public get name() { return this.root.get(ConfigKey.name); }
     public set name(value: string) { this.root.set(ConfigKey.name, value); }
     public get values() { return this.maybeValues!; }
@@ -33,8 +44,20 @@ export class TableSlice extends Component implements ITable {
     private maybeDoc?: TableDocument;
     private maybeValues?: CellRange;
 
-    constructor() {
-        super([[MapExtension.Type, new MapExtension()]]);
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, ["IComponentForge"]);
+    }
+
+    public async forge(props?: any) {
+        if (!props) {
+            return Promise.reject();
+        }
+        const maybeConfig = props!;
+        this.root.set(ConfigKey.docId, maybeConfig.docId);
+        this.root.set(ConfigKey.name, maybeConfig.name);
+        await this.ensureDoc();
+        this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
+        return this.finishInitialize();
     }
 
     public evaluateCell(row: number, col: number) {
@@ -94,22 +117,13 @@ export class TableSlice extends Component implements ITable {
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async create() {
-        try {
-            const maybeConfig = await this.platform.queryInterface<ITableSliceConfig>("config");
-            this.root.set(ConfigKey.docId, maybeConfig.docId);
-            this.root.set(ConfigKey.name, maybeConfig.name);
-            await this.ensureDoc();
-            this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
-        } catch {
-            await this.showConfigDlg();
-        }
+    protected async existing() {
+        super.existing();
+        await this.ensureDoc();
+        return this.finishInitialize();
     }
 
-    protected async opened() {
-        await this.connected;
-
-        await this.ensureDoc();
+    protected async finishInitialize() {
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
@@ -119,7 +133,7 @@ export class TableSlice extends Component implements ITable {
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
-            this.maybeDoc = await this.openComponent(docId, true);
+            this.maybeDoc = await this.waitComponent(docId);
         }
     }
 
@@ -141,26 +155,6 @@ export class TableSlice extends Component implements ITable {
         if (col !== undefined && col < range.col || col >= (range.col + range.numCols)) {
             throw new Error("Unable to access specified column from this slice.");
         }
-    }
-
-    private async showConfigDlg() {
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-
-        const { ConfigView } = await import(/* webpackPreload: true */ "./config");
-        const configView = new ConfigView(this.runtime, this.root);
-        maybeDiv.appendChild(configView.root);
-        await configView.done;
-
-        while (maybeDiv.lastChild) {
-            maybeDiv.lastChild.remove();
-        }
-
-        await this.ensureDoc();
-
-        // Note: <input> pattern validation ensures that parsing will succeed.
-        const { minCol, minRow, maxCol, maxRow } = parseRange(this.root.get(ConfigKey.valuesText));
-
-        this.createValuesRange(minCol, minRow, maxCol, maxRow);
     }
 
     private readonly emitOp = (...args: any[]) => {

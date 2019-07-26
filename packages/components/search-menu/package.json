@@ -36,7 +36,6 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",
     "@prague/container-definitions": "^0.7.0",
     "@prague/framework-definitions": "^0.7.0",

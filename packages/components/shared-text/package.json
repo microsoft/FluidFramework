@@ -51,7 +51,6 @@
     "@chaincode/pinpoint-editor": "^0.7.0",
     "@chaincode/progress-bars": "^0.7.0",
     "@chaincode/video-players": "^0.7.0",
-    "@prague/app-component": "^0.7.0",
     "@prague/app-ui": "^0.7.0",
     "@prague/cell": "^0.7.0",
     "@prague/client-api": "^0.7.0",

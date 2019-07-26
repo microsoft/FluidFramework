@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocumentType } from "@chaincode/table-document";
-import { ComponentRuntime } from "@prague/component-runtime";
 import { Template } from "@prague/flow-util";
 import { ISharedMap } from "@prague/map";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigKeys } from "./configKeys";
 
 const template = new Template({
@@ -71,21 +70,25 @@ export class ConfigView {
     public readonly root = template.clone();
 
     public readonly done: Promise<void>;
-    private readonly caption    = template.get(this.root, "captionTitle") as HTMLElement;
-    private readonly idBox      = template.get(this.root, "idBox") as HTMLInputElement;
-    private readonly serverBox  = template.get(this.root, "serverBox") as HTMLInputElement;
-    private readonly userBox    = template.get(this.root, "userBox") as HTMLInputElement;
-    // private readonly colsBox    = template.get(this.root, "colsBox") as HTMLInputElement;
-    // private readonly rowsBox    = template.get(this.root, "rowsBox") as HTMLInputElement;
-    private readonly okButton   = template.get(this.root, "okButton") as HTMLButtonElement;
+    private readonly caption        = template.get(this.root, "captionTitle") as HTMLElement;
+    private readonly idBox          = template.get(this.root, "idBox") as HTMLInputElement;
+    private readonly serverBox      = template.get(this.root, "serverBox") as HTMLInputElement;
+    private readonly userBox        = template.get(this.root, "userBox") as HTMLInputElement;
+    // private readonly colsBox       = template.get(this.root, "colsBox") as HTMLInputElement;
+    // private readonly rowsBox       = template.get(this.root, "rowsBox") as HTMLInputElement;
+    private readonly okButton       = template.get(this.root, "okButton") as HTMLButtonElement;
     private readonly createButton   = template.get(this.root, "createButton") as HTMLButtonElement;
 
-    constructor(private readonly host: ComponentRuntime, private readonly map: ISharedMap) {
+    constructor(
+        private readonly host: IComponentRuntime,
+        private readonly map: ISharedMap,
+        private readonly createCallback: (id: string) => Promise<void>) {
+
         this.caption.innerText = `Table View ${this.host.id}`;
 
         this.done = new Promise<void>((accept) => {
-            this.createButton.addEventListener("click", () => {
-                this.host.createAndAttachComponent(this.idBox.value, TableDocumentType);
+            this.createButton.addEventListener("click", async () => {
+                await this.createCallback(this.idBox.value);
                 this.map.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });

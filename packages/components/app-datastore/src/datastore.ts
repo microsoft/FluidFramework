@@ -15,7 +15,6 @@ import {
 import { Container, Loader } from "@prague/container-loader";
 import { WebLoader } from "@prague/loader-web";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { EventEmitter } from "events";
 import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
 
@@ -149,7 +148,6 @@ export class DataStore {
         componentId: string,
         chaincodePackage: string,
         path: string,
-        services?: ReadonlyArray<[string, Promise<any>]>,
     ): Promise<T> {
         debug(`DataStore.open("${componentId}", "${chaincodePackage}")`);
 
@@ -176,8 +174,6 @@ export class DataStore {
         const container = await loader.resolve({ url: baseUrl });
         debug(`resolved baseUrl = ${baseUrl}`);
 
-        const platformIn = new HostPlatform(services);
-
         let acceptResultOut: (value: T) => void;
         // tslint:disable-next-line:promise-must-complete
         const resultOut = new Promise<T>((accept) => { acceptResultOut = accept; });
@@ -185,9 +181,9 @@ export class DataStore {
         debug(`attaching url = ${url}`);
         container.on("contextChanged", async () => {
             debug(`contextChanged url=${url}`);
-            await attach(loader, url, platformIn, acceptResultOut);
+            await attach(loader, url, acceptResultOut);
         });
-        await attach(loader, url, platformIn, acceptResultOut);
+        await attach(loader, url, acceptResultOut);
         debug(`attached url = ${url}`);
 
         // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
@@ -229,7 +225,6 @@ async function initializeChaincode(container: Container, pkg: string): Promise<v
 async function attach<T>(
     loader: Loader,
     url: string,
-    platformIn: HostPlatform,
     resultOut: (out: T) => void,
 ) {
     debug(`loader.request(url=${url})`);
@@ -244,34 +239,10 @@ async function attach<T>(
     debug(`loader.request(url=${url}) -> ${mimeType}`);
     switch (mimeType) {
         case "prague/component":
-            const componentRuntime = response.value as { attach(platform: HostPlatform): Promise<HostPlatform> };
-            const platformOut = await componentRuntime.attach(platformIn);
-            resultOut(await platformOut.queryInterface("component"));
-            break;
         case "prague/dataType":
             resultOut(response.value as T);
             break;
         default:
             debug(`Unhandled mimeType ${mimeType}`);
-    }
-}
-
-class HostPlatform extends EventEmitter {
-    private readonly services: Map<string, Promise<any>>;
-
-    constructor(services?: ReadonlyArray<[string, Promise<any>]>) {
-        super();
-        this.services = new Map(services);
-    }
-
-    public queryInterface<T>(id: string): Promise<T> {
-        debug(`HostPlatform.queryInterface(${id})`);
-        const service = this.services.get(id) as (Promise<T> | undefined);
-        return service || Promise.reject(`Unknown id: ${id}`);
-    }
-
-    public async detach() {
-        debug(`HostPlatform.detach()`);
-        return;
     }
 }

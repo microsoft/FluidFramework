@@ -13,10 +13,9 @@ window.performance.measure = window.performance.measure || (() => {});
 import "mocha";
 
 // tslint:disable:binary-expression-operand-order
-import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";
-import { FlowDocument } from "../src/document";
+import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { Layout } from "../src/editor";
 
 interface ISnapshotNode {
@@ -50,10 +49,10 @@ describe.skip("Layout", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
+            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndOpenComponent("fd", FlowDocument.type);
+        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
         root = document.createElement("span");
     });
 

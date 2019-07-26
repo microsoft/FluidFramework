@@ -15,6 +15,7 @@ import {
     IComponentRouter,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 
 /**
  * Do not export from module: For internal use by SharedComponentFactory.
@@ -25,16 +26,20 @@ export const initializeKey = Symbol();
  * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent implements ISharedComponent, IComponentForge, IComponentRouter {
+export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
     private readonly supportedInterfaces = ["IComponentLoadable", "IComponentForge", "IComponentRouter"];
 
     private initializeP: Promise<void> | undefined;
+
+    public get id() { return this.runtime.id; }
 
     protected constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
         supportedInterfaces: string[],
     ) {
+        super();
+
         // concat supported interfaces
         this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
     }
@@ -120,15 +125,15 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
      */
     protected async createAndAttachComponent<T extends IComponentLoadable>(id: string, pkg: string, props?: any): Promise<T> {
-        const runtime = await this.context.createComponent(id, pkg);
-        const component = await this.asComponent<T>(runtime.request({ url: "/" }));
+        const componentRuntime = await this.context.createComponent(id, pkg);
+        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
 
         const forge = component.query<IComponentForge>("IComponentForge");
         if (forge) {
             await forge.forge(props);
         }
 
-        runtime.attach();
+        componentRuntime.attach();
 
         return component;
     }
@@ -139,6 +144,15 @@ export abstract class SharedComponent implements ISharedComponent, IComponentFor
      */
     protected async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
         return this.asComponent(this.context.hostRuntime.request({ url: `/${id}` }));
+    }
+
+    /**
+     * Wait and gets the component of a given id
+     * @param id - component id
+     */
+    protected async waitComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        const componentRuntime = await this.context.getComponentRuntime(id, true);
+        return this.asComponent(componentRuntime.request({ url: "/" }));
     }
 
     /**

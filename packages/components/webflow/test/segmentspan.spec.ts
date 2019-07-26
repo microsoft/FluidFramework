@@ -4,11 +4,10 @@
  */
 
 // tslint:disable:binary-expression-operand-order
-import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
 import { TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
-import { FlowDocument, SegmentSpan } from "../src/document";
+import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
 
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
@@ -19,10 +18,10 @@ describe("SegmentSpan", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(Component.createComponentFactory(FlowDocument))],
+            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndOpenComponent("fd", FlowDocument.type);
+        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
     });
 
     after(async () => {

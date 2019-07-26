@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocument } from "@chaincode/table-document";
-import { Component } from "@prague/app-component";
+import { TableDocument, TableDocumentType } from "@chaincode/table-document";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import {
+    IComponentHTMLOptions,
+    IComponentHTMLVisual,
+} from "@prague/container-definitions";
 import { Template } from "@prague/flow-util";
-import { MapExtension } from "@prague/map";
+import { SharedMap } from "@prague/map";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
 import { GridView } from "./grid";
@@ -15,70 +20,91 @@ import * as styles from "./index.css";
 const template = new Template({
     tag: "div",
     children: [
-        { tag: "button", ref: "addRow", props: { textContent: "R+" }},
-        { tag: "button", ref: "addCol", props: { textContent: "C+" }},
-        { tag: "button", ref: "addRows", props: { textContent: "R++" }},
-        { tag: "button", ref: "addCols", props: { textContent: "C++" }},
-        { tag: "div", ref: "grid", props: { className: styles.grid }},
+        { tag: "button", ref: "addRow", props: { textContent: "R+" } },
+        { tag: "button", ref: "addCol", props: { textContent: "C+" } },
+        { tag: "button", ref: "addRows", props: { textContent: "R++" } },
+        { tag: "button", ref: "addCols", props: { textContent: "C++" } },
+        { tag: "div", ref: "grid", props: { className: styles.grid } },
     ],
 });
 
-export class TableView extends Component {
-    constructor() {
-        super([[MapExtension.Type, new MapExtension()]]);
+export class TableView extends PrimedComponent implements IComponentHTMLVisual {
+    public static getFactory() { return TableView.factory; }
+
+    private static readonly factory = new SharedComponentFactory(
+        TableView,
+        [
+            SharedMap.getFactory(),
+        ],
+    );
+
+    private configView: ConfigView | undefined;
+    private rootElement: Element | undefined;
+
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, []);
     }
 
-    public async opened() {
-        await this.connected;
-
-        const maybeDiv = await this.platform.queryInterface<HTMLElement>("div");
-        if (!maybeDiv) {
-            throw new Error("No <div> provided");
-        }
-
-        {
-            const docId = await this.root.get(ConfigKeys.docId);
-            if (!docId) {
-                const configView = new ConfigView(this.runtime, this.root);
-                maybeDiv.appendChild(configView.root);
-                await configView.done;
-                while (maybeDiv.lastChild) {
-                    maybeDiv.lastChild.remove();
-                }
-            }
-        }
-
-        if (maybeDiv) {
-            // tslint:disable-next-line:no-shadowed-variable
-            const docId = await this.root.get(ConfigKeys.docId);
-            const doc = await this.openComponent<TableDocument>(docId, true);
-            const root = template.clone();
-            const grid = template.get(root, "grid");
-            grid.appendChild(new GridView(doc).root);
-
-            const addRowBtn = template.get(root, "addRow");
-            addRowBtn.addEventListener("click", () => {
-                doc.insertRows(doc.numRows, 1);
-            });
-
-            const addRowsBtn = template.get(root, "addRows");
-            addRowsBtn.addEventListener("click", () => {
-                doc.insertRows(doc.numRows, 10 /* 1048576 */);
-            });
-
-            const addColBtn = template.get(root, "addCol");
-            addColBtn.addEventListener("click", () => {
-                doc.insertCols(doc.numCols, 1);
-            });
-
-            const addColsBtn = template.get(root, "addCols");
-            addColsBtn.addEventListener("click", () => {
-                doc.insertCols(doc.numCols, 10 /*16384*/);
-            });
-
-            maybeDiv.appendChild(root);
+    // #region IComponentHTMLVisual
+    public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+        if (this.configView) {
+            elm.appendChild(this.configView.root);
+        } else {
+            elm.appendChild(this.rootElement);
         }
     }
+    // #endregion IComponentHTMLVisual
 
-    protected async create() { /* do nothing */ }
+    protected async create() {
+        this.configView = new ConfigView(this.runtime, this.root,
+            async (id: string) => {
+                await this.createAndAttachComponent(id, TableDocumentType);
+            });
+
+        // Start the config work flow
+        // tslint:disable-next-line: no-floating-promises
+        this.runConfig();
+    }
+
+    protected async opened() {
+        await this.createRootElement();
+    }
+
+    private async runConfig() {
+        await this.configView.done;
+        await this.createRootElement();
+        this.configView.root.replaceWith(this.rootElement);
+        this.configView = undefined;
+        return;
+    }
+
+    private async createRootElement() {
+        const docId = await this.root.wait<string>(ConfigKeys.docId);
+        const doc = await this.waitComponent<TableDocument>(docId);
+        const root = template.clone();
+        const grid = template.get(root, "grid");
+        grid.appendChild(new GridView(doc).root);
+
+        const addRowBtn = template.get(root, "addRow");
+        addRowBtn.addEventListener("click", () => {
+            doc.insertRows(doc.numRows, 1);
+        });
+
+        const addRowsBtn = template.get(root, "addRows");
+        addRowsBtn.addEventListener("click", () => {
+            doc.insertRows(doc.numRows, 10 /* 1048576 */);
+        });
+
+        const addColBtn = template.get(root, "addCol");
+        addColBtn.addEventListener("click", () => {
+            doc.insertCols(doc.numCols, 1);
+        });
+
+        const addColsBtn = template.get(root, "addCols");
+        addColsBtn.addEventListener("click", () => {
+            doc.insertCols(doc.numCols, 10 /*16384*/);
+        });
+
+        this.rootElement = root;
+    }
 }

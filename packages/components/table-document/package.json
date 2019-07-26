@@ -37,18 +37,20 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.7.0",
+    "@prague/aqueduct": "^0.7.0",
     "@prague/client-ui": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",
     "@prague/container-definitions": "^0.7.0",
     "@prague/container-runtime": "^0.7.0",
     "@prague/flow-util": "^0.7.0",
+    "@prague/framework-definitions": "^0.7.0",
     "@prague/map": "^0.7.0",
     "@prague/merge-tree": "^0.7.0",
     "@prague/runtime-definitions": "^0.7.0",
     "@prague/sequence": "^0.7.0",
     "@prague/shared-object-common": "^0.7.0",
-    "@tiny-calc/nano": "^0.0.8199"
+    "@tiny-calc/nano": "^0.0.8199",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@prague/build-common": "^0.7.0",

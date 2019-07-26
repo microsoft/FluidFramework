@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
 import { TestHost } from "@prague/local-test-server";
 import "mocha";
 import {
@@ -20,9 +19,9 @@ describe("TableDocument", () => {
     before(() => {
         host = new TestHost([
             [TableDocumentType, import("@chaincode/table-document").then(
-                (m) => Component.createComponentFactory(m.TableDocument))],
+                (m) => m.TableDocument.getFactory())],
             [TableSliceType, import("@chaincode/table-document").then(
-                (m) => Component.createComponentFactory(m.TableSlice))],
+                (m) => m.TableSlice.getFactory())],
         ]);
     });
     
@@ -35,7 +34,7 @@ describe("TableDocument", () => {
     }
     
     async function createTable() {
-        return await host.createAndOpenComponent(makeId("Table-Document"), TableDocumentType);
+        return await host.createAndAttachComponent(makeId("Table-Document"), TableDocumentType);
     }
 
     let table: TableDocument;    

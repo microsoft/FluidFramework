@@ -57,7 +57,6 @@
     "@chaincode/table-view": "^0.7.0",
     "@chaincode/video-players": "^0.7.0",
     "@chaincode/webflow": "^0.7.0",
-    "@prague/app-component": "^0.7.0",
     "@prague/aqueduct": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",
     "@prague/container-definitions": "^0.7.0",

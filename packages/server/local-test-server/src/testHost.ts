@@ -5,8 +5,11 @@
 
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedStringExtension, SparseMatrixExtension } from "@prague/sequence";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { IComponentLoadable } from "@prague/container-definitions";
+import { SharedMap } from "@prague/map";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
+import { SharedString, SparseMatrix } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
 import {
     IDocumentDeltaEvent,
@@ -20,39 +23,38 @@ import {
 /**
  * Basic component implementation for testing.
  */
-class TestRootComponent extends Component {
+class TestRootComponent extends PrimedComponent {
+    /**
+     * Type name of the component for the IComponentRegistryLookup
+     */
     public static readonly type = "@chaincode/test-root-component";
 
-    constructor() {
-        super([
-            [SharedStringExtension.Type, new SharedStringExtension()],
-            [SparseMatrixExtension.Type, new SparseMatrixExtension()],
-        ]);
+    /**
+     * Get the factory for the IComponentRegistry
+     */
+    public static getFactory() { return TestRootComponent.factory; }
+
+    private static readonly factory = new SharedComponentFactory(
+        TestRootComponent,
+        [
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+            SparseMatrix.getFactory(),
+        ],
+    );
+
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+        super(runtime, context, []);
     }
 
-    /**
-     * Creates and attaches a new component using the current component runtime
-     * and component context.
-     * @param id - id for the new component
-     * @param type - type for the new component
-     */
-    public async createComponent(id: string, type: string): Promise<IComponentRuntime> {
-        return this.runtime.createAndAttachComponent(id, type);
+    // tslint:disable-next-line: no-unnecessary-override
+    public async createAndAttachComponent<T extends IComponentLoadable>(id: string, type: string): Promise<T> {
+        return super.createAndAttachComponent<T>(id, type);
     }
 
-    /**
-     * Opens the component with the given ID.
-     * @param id - id of component to open
-     * @param wait - true to wait for it to open
-     * @param services - optional key-value pairs of services to provide
-     */
-    // tslint:disable-next-line:no-unnecessary-override
-    public openComponent<T extends Component>(
-        id: string,
-        wait: boolean,
-        services?: [string, Promise<any>][],
-    ): Promise<T> {
-        return super.openComponent<T>(id, wait, services);
+    // tslint:disable-next-line: no-unnecessary-override
+    public async waitComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        return super.waitComponent<T>(id);
     }
 
     /**
@@ -108,11 +110,12 @@ class TestRootComponent extends Component {
     }
 
     protected async create(): Promise<void> {
+        await super.create();
         this.root.set("ready", true);
     }
 
     protected async opened(): Promise<void> {
-        await this.connected;
+        await super.opened();
         await this.root.wait("ready");
     }
 }
@@ -147,8 +150,6 @@ export class TestHost {
     // tslint:disable-next-line:promise-must-complete
     private root = new Promise<TestRootComponent>((accept) => { this.rootResolver = accept; });
 
-    private components: Component[] = [];
-
     /**
      * @param componentRegistry - array of key-value pairs of components available to the host
      * @param deltaConnectionServer - delta connection server for the ops
@@ -173,7 +174,7 @@ export class TestHost {
                                 TestRootComponent.type,
                                 // tslint:disable:no-function-expression
                                 // tslint:disable:only-arrow-functions
-                                Promise.resolve(Component.createComponentFactory(TestRootComponent)),
+                                Promise.resolve(TestRootComponent.getFactory()),
                             ],
                         ]))),
                 }],
@@ -205,43 +206,25 @@ export class TestHost {
      * @param services component services for query interface
      * @returns Component object
      */
-    public async createAndOpenComponent<T extends Component>(
+    public async createAndAttachComponent<T extends IComponentLoadable>(
         id: string,
         type: string,
         services?: [string, Promise<any>][],
     ): Promise<T> {
-        await this.createComponent(id, type);
-        return this.openComponent<T>(id, services);
-    }
-
-    /**
-     * Runs createAndAttachComponent on the underlying runtime
-     * @param id component Id
-     * @param type component type
-     * @returns ComponentRuntime for the created component
-     */
-    public async createComponent(
-        id: string,
-        type: string,
-    ): Promise<IComponentRuntime> {
         const root = await this.root;
-        return root.createComponent(id, type);
+        return root.createAndAttachComponent<T>(id, type);
     }
 
     /**
-     * Runs openComponent on the underlying runtime
+     * Wait and get the compoent witht he id.
      * @param id component Id
-     * @param services component services for query interface
      * @returns Component object
      */
-    public async openComponent<T extends Component>(
+    public async waitComponent<T extends IComponentLoadable>(
         id: string,
-        services?: [string, Promise<any>][],
     ): Promise<T> {
         const root = await this.root;
-        const component = await root.openComponent<T>(id, /* wait: */ true, services);
-        this.components.push(component);
-        return component;
+        return root.waitComponent<T>(id);
     }
 
     /**

@@ -40,7 +40,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@prague/app-component": "^0.7.0",
     "@prague/aqueduct": "^0.7.0",
     "@prague/build-common": "^0.7.0",
     "@prague/component-runtime": "^0.7.0",

@@ -3,24 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
-// tslint:disable-next-line:no-submodule-imports
-import { CounterValueType, MapExtension } from "@prague/map";
+import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { CounterValueType, SharedMap } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
     LocalReference,
     PropertySet,
 } from "@prague/merge-tree";
+import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedIntervalCollectionValueType,
     SharedNumberSequence,
-    SharedNumberSequenceExtension,
     SharedStringIntervalCollectionValueType,
     SparseMatrix,
-    SparseMatrixExtension,
     UnboxedOper,
 } from "@prague/sequence";
 import * as assert from "assert";
@@ -37,7 +35,22 @@ export const loadCellSym = Symbol("TableDocument.loadCell");
 export const storeCellSym = Symbol("TableDocument.storeCell");
 export const cellSym = Symbol("TableDocument.cell");
 
-export class TableDocument extends Component implements ITable {
+export class TableDocument extends PrimedComponent implements ITable {
+    public static getFactory() { return TableDocument.factory; }
+
+    private static readonly factory = new SharedComponentFactory(
+        TableDocument,
+        [
+            SharedMap.getFactory([
+                new CounterValueType(),
+                new SharedStringIntervalCollectionValueType(),
+                new SharedIntervalCollectionValueType(),
+            ]),
+            SparseMatrix.getFactory(),
+            SharedNumberSequence.getFactory(),
+        ],
+    );
+
     public  get numCols()    { return this.maybeCols!.client.getLength(); }
     public  get numRows()    { return this.matrix.numRows; }
 
@@ -49,16 +62,8 @@ export class TableDocument extends Component implements ITable {
     private maybeMatrix?: SparseMatrix;
     private maybeWorkbook?: ISheetlet;
 
-    constructor() {
-        super([
-            [MapExtension.Type, new MapExtension([
-                new CounterValueType(),
-                new SharedStringIntervalCollectionValueType(),
-                new SharedIntervalCollectionValueType(),
-            ])],
-            [SparseMatrixExtension.Type, new SparseMatrixExtension()],
-            [SharedNumberSequenceExtension.Type, new SharedNumberSequenceExtension()],
-        ]);
+    constructor(runtime: IComponentRuntime, context: IComponentContext) {
+       super(runtime, context, []);
     }
 
     public evaluateCell(row: number, col: number) {
@@ -92,11 +97,8 @@ export class TableDocument extends Component implements ITable {
     }
 
     public async createSlice(sliceId: string, name: string, minRow: number, minCol: number, maxRow: number, maxCol: number): Promise<ITable> {
-        await this.runtime.createAndAttachComponent(sliceId, TableSliceType);
-        return this.openComponent<TableSlice>(
-            sliceId,
-            true,
-            [["config", Promise.resolve({ docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol })]]);
+        return super.createAndAttachComponent<TableSlice>(sliceId, TableSliceType,
+            { docId: this.runtime.id, name, minRow, minCol, maxRow, maxCol });
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
@@ -151,6 +153,7 @@ export class TableDocument extends Component implements ITable {
     }
 
     protected async create() {
+        super.create();
         const rows = SharedNumberSequence.create(this.runtime, "rows");
         this.root.set("rows", rows);
 
@@ -165,7 +168,6 @@ export class TableDocument extends Component implements ITable {
         this.maybeMatrix = await this.root.wait<SparseMatrix>("matrix");
         this.maybeRows = await this.root.wait<SharedNumberSequence>("rows");
         this.maybeCols = await this.root.wait<SharedNumberSequence>("cols");
-        await this.connected;
 
         this.matrix.on("op", (op, local, target) => {
             if (!local) {

@@ -5,7 +5,6 @@
 
 import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
 import { FlowDocument, flowDocumentFactory } from "@chaincode/webflow";
-import { Component } from "@prague/app-component";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 import { IComponentContext } from "@prague/runtime-definitions";
@@ -21,10 +20,10 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         ["@chaincode/math", import("@chaincode/math").then((m) => m.fluidExport)],
         // Bootstrap CSS definitions conflict with flow-scroll
         // ["@chaincode/progress-bars", import("@chaincode/progress-bars")],
-        [TableDocumentType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableDocument))],
-        [TableSliceType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableSlice))],
-        ["@chaincode/chart-view", import("@chaincode/chart-view").then((m) => Component.createComponentFactory(m.ChartView))],
-        ["@chaincode/table-view", import("@chaincode/table-view").then((m) => Component.createComponentFactory(m.TableView))],
+        [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument.getFactory())],
+        [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice.getFactory())],
+        ["@chaincode/chart-view", import("@chaincode/chart-view").then((m) => m.ChartView.getFactory())],
+        ["@chaincode/table-view", import("@chaincode/table-view").then((m) => m.TableView.getFactory())],
         ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts")],
         ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players")],
         ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection")],
