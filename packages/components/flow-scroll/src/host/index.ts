@@ -7,9 +7,20 @@ import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
 import { FlowDocument } from "@chaincode/webflow";
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+    IRequest,
+    IResponse } from "@prague/container-definitions";
 import { MapExtension, SharedMap } from "@prague/map";
-import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import {
+    IComponentCollection,
+    IComponentContext,
+    IComponentRuntime,
+    ITask,
+    ITaskManager } from "@prague/runtime-definitions";
 import { HostView  } from "./host";
 import { importDoc } from "./template";
 
@@ -18,9 +29,18 @@ const insightsMapId = "insights";
 export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow-host";
 
+    private taskManager: ITaskManager;
     private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context, ["IComponentHTMLVisual"]);
+    }
+
+    public async request(request: IRequest): Promise<IResponse> {
+        if (request.url.startsWith(this.taskManager.url)) {
+            return this.taskManager.request(request);
+        } else {
+            return super.request(request);
+        }
     }
 
     public addView(scope?: IComponent): IComponentHTMLView {
@@ -59,9 +79,21 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     protected async opened() {
         await super.opened();
+
+        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
+        this.taskManager = (schedulerResponse.value as IComponent).query<ITaskManager>("ITaskManager");
+
         const insights = await this.root.wait(insightsMapId) as SharedMap;
         this.intelViewer = new FlowIntelViewer(insights);
-        this.runIntel(this.getComponent(this.docId));
+
+        const flowDocument = await this.getComponent<FlowDocument>(this.docId);
+        const taskScheduler = new TaskScheduler(
+            this.taskManager,
+            this.url,
+            flowDocument,
+            insights,
+        );
+        taskScheduler.start();
     }
 
     private get docId() { return `${this.runtime.id}-doc`; }
@@ -77,27 +109,29 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         const component = request.value as IComponent;
         return component.query<IComponentCollection>("IComponentCollection");
     }
+}
 
-    // TODO (mdaumi): Temporary way to schedule intelligent agents. This will be turned
-    // into agent-scheduler + webworker.
-    private runIntel(docP: Promise<FlowDocument>) {
-        if (this.context.leader) {
-            this.runTextAnalyzer(docP);
-        } else {
-            this.runtime.on("leader", (clientId) => {
-                this.runTextAnalyzer(docP);
-            });
-        }
+class TaskScheduler {
+    constructor(
+        private readonly taskManager: ITaskManager,
+        private readonly componentUrl: string,
+        private readonly flowDocument: FlowDocument,
+        private readonly insightsMap: SharedMap,
+    ) {
+
     }
 
-    private async runTextAnalyzer(docP: Promise<FlowDocument>) {
-        const flowDocument = await docP;
-        await this.root.wait(insightsMapId);
-        const insightsMap = this.root.get(insightsMapId);
-        const textAnalyzer = new TextAnalyzer();
-        textAnalyzer.run(flowDocument, insightsMap);
+    public start() {
+        const intelTask: ITask = {
+            id: "intel",
+            instance: new TextAnalyzer(this.flowDocument, this.insightsMap),
+        };
+        this.taskManager.pick(this.componentUrl, intelTask).then(() => {
+            console.log(`Picked text analyzer`);
+        }, (err) => {
+            console.log(err);
+        });
     }
-
 }
 
 export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new MapExtension()]);

@@ -4,17 +4,17 @@
  */
 
 import { FlowDocument } from "@chaincode/webflow";
-import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
+import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { IntelRunner } from "./intelRunner";
 
-export interface ITextAnalyzer {
-    run(document: FlowDocument, insightsMap: ISharedMap): void;
-}
+export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
 
-export class TextAnalyzer implements IComponent, IComponentRouter, ITextAnalyzer {
+    public static supportedInterfaces = ["IComponentRunnable"];
 
-    public static supportedInterfaces = ["ITextAnalyzer"];
+    constructor(
+        private readonly document: FlowDocument,
+        private readonly insightsMap: ISharedMap) {}
 
     public query(id: string): any {
         return TextAnalyzer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -24,11 +24,9 @@ export class TextAnalyzer implements IComponent, IComponentRouter, ITextAnalyzer
         return TextAnalyzer.supportedInterfaces;
     }
 
-    public run(document: FlowDocument, insightsMap: ISharedMap) {
-        const intelRunner = new IntelRunner(document, insightsMap);
-        intelRunner.start().catch((err) => {
-            console.log(err);
-        });
+    public async run() {
+        const intelRunner = new IntelRunner(this.document, this.insightsMap);
+        return intelRunner.start();
     }
 
     public async request(request: IRequest): Promise<IResponse> {

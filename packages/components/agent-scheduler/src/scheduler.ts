@@ -401,6 +401,7 @@ export class TaskManager implements ITaskManager {
     }
 
     public async pick(componentUrl: string, ...tasks: ITask[]) {
+        const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
         const configuration = this.context.hostRuntime.query<IComponentConfiguration>("IComponentConfiguration");
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
@@ -408,7 +409,7 @@ export class TaskManager implements ITaskManager {
         const registersP: Array<Promise<void>> = [];
         for (const task of tasks) {
             this.taskMap.set(task.id, task.instance);
-            registersP.push(this.scheduler.pick(`${componentUrl}${this.url}/${task.id}`));
+            registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
         }
         await Promise.all(registersP);
     }
