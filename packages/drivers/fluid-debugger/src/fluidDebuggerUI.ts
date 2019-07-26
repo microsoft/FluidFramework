@@ -94,6 +94,7 @@ export class DebuggerUI {
     protected text2?: HTMLDivElement;
     protected text3?: HTMLDivElement;
     protected lastOpText?: HTMLDivElement;
+    protected wasVersionSelected = false;
 
     protected documentClosed = false;
 
@@ -140,6 +141,7 @@ export class DebuggerUI {
     }
 
     public versionSelected(VersionInfo: string) {
+        this.wasVersionSelected = true;
         this.selector = undefined;
 
         const doc = this.debuggerWindow.document;
@@ -184,7 +186,9 @@ export class DebuggerUI {
     }
 
     public updateVersionText(text: string) {
-        this.versionText.textContent = text;
+        if (!this.wasVersionSelected) {
+            this.versionText.textContent = text;
+        }
     }
 
     public updateLastOpText(text: string) {

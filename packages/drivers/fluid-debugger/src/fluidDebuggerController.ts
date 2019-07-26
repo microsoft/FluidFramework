@@ -183,9 +183,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 });
             }
         });
-        await prevRequest;
 
-        this.ui.updateVersionText("");
+        // Don't wait for stuff to populate.
+        // tslint:disable-next-line:no-floating-promises
+        prevRequest.then(() => {
+            this.ui.updateVersionText("");
+        });
 
         const useController = await this.startSeqDeferred.promise !== DebugReplayController.WindowClosedSeq;
         assert((this.storage !== undefined) === useController);
