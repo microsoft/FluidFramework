@@ -16,6 +16,8 @@ export interface ILoaderProps {
 
   iframe?: boolean;
 
+  libraryName?: string;
+
   /**
    * URL of the Prague component
    */
@@ -50,7 +52,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
         // this.props.appId,
         this.props.clientId ? this.props.clientId : "",
         this.props.clientSecret ? this.props.clientSecret : "",
-        "reactLoader",
+        this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
        );
     } else {
       loadPragueComponent(
