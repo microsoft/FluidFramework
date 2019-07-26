@@ -9,6 +9,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
 } from "@prague/container-definitions";
 import * as core from "@prague/services-core";
@@ -152,6 +153,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get version(): string {
         return testProtocolVersion;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.details.serviceConfiguration;
     }
 
     constructor(

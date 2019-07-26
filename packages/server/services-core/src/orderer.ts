@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage } from "@prague/container-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
 import { IWebSocket } from "./http";
 
 /**
@@ -38,6 +38,8 @@ export interface IOrdererConnection {
     readonly parentBranch: string;
 
     readonly maxMessageSize: number;
+
+    readonly serviceConfiguration: IServiceConfiguration;
 
     order(message: IDocumentMessage): void;
 

@@ -25,6 +25,7 @@ import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";
 import { OrdererManager } from "../../alfred/runnerFactory";
+import { DefaultServiceConfiguration } from "../../alfred/utils";
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -61,7 +62,11 @@ describe("Routerlicious", () => {
                         databaseManager,
                         testTenantManager,
                         producer);
-                    const kafkaOrderer = new KafkaOrdererFactory(producer, testStorage, 1024 * 1024);
+                    const kafkaOrderer = new KafkaOrdererFactory(
+                        producer,
+                        testStorage,
+                        1024 * 1024,
+                        DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
 
                     webSocketServer = new TestWebSocketServer();

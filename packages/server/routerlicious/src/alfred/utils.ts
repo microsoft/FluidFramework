@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@prague/container-definitions";
+import { IServiceConfiguration, IUser } from "@prague/container-definitions";
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
 import { generateToken } from "@prague/services-core";
 import * as _ from "lodash";
@@ -52,3 +52,13 @@ export interface IAlfredUser extends IUser {
     displayName: string;
     name: string;
 }
+
+export const DefaultServiceConfiguration: IServiceConfiguration = {
+    blockSize: 64436,
+    maxMessageSize:  16 * 1024,
+    summary: {
+        idleTime: 5000,
+        maxOps: 1000,
+        maxTime: 5000 * 12,
+    },
+};

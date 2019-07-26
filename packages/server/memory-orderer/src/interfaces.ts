@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage } from "@prague/container-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
 import { IOrderer } from "@prague/services-core";
 import { EventEmitter } from "events";
 
@@ -43,6 +43,7 @@ export interface IConnectedMessage {
     existing: boolean;
     parentBranch: string;
     maxMessageSize: number;
+    serviceConfiguration: IServiceConfiguration;
 }
 
 export interface INodeMessage {

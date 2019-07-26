@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
+import { IServiceConfiguration } from "./deltas";
 import { IResolvedUrl } from "./loader";
 import {
     IContentMessage,
@@ -236,6 +237,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * Signals sent during the connection
      */
     initialSignals?: ISignalMessage[];
+
+    /**
+     * Configuration details provided by the service
+     */
+    serviceConfiguration: IServiceConfiguration;
 
     /**
      * Submit a new message to the server

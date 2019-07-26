@@ -9,6 +9,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
 } from "@prague/container-definitions";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";
@@ -93,6 +94,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details!.initialSignals;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.details!.serviceConfiguration;
     }
 
     constructor(tenantId: string, public documentId: string, token: string, client: IClient, urlStr: string) {

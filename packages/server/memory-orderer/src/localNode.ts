@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage } from "@prague/container-definitions";
+import { IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -29,6 +29,16 @@ import { Socket } from "./socket";
 
 // Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
 // Rather than creating one per? I'm in some ways on this path.
+
+const DefaultServiceConfiguration: IServiceConfiguration = {
+    blockSize: 64436,
+    maxMessageSize:  16 * 1024,
+    summary: {
+        idleTime: 5000,
+        maxOps: 1000,
+        maxTime: 5000 * 12,
+    },
+};
 
 class RemoteSubscriber implements ISubscriber {
     public id = uuid();
@@ -191,6 +201,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                             existing: connection.existing,
                             maxMessageSize: this.maxMessageSize,
                             parentBranch: connection.parentBranch,
+                            serviceConfiguration: DefaultServiceConfiguration,
                         };
                         socket.send({ cid: message.cid, type: "connected", payload: connected });
 

@@ -9,6 +9,7 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     IDocumentSystemMessage,
+    IServiceConfiguration,
     MessageType,
 } from "@prague/container-definitions";
 import { ProtocolOpHandler } from "@prague/container-loader";
@@ -62,6 +63,16 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
+};
+
+const DefaultServiceConfiguration: IServiceConfiguration = {
+    blockSize: 64436,
+    maxMessageSize:  16 * 1024,
+    summary: {
+        idleTime: 5000,
+        maxOps: 1000,
+        maxTime: 5000 * 12,
+    },
 };
 
 class WebSocketSubscriber implements ISubscriber {
@@ -171,8 +182,9 @@ class LocalOrdererConnection implements IOrdererConnection {
         public readonly documentId: string,
         public readonly clientId: string,
         private client: IClient,
-        public readonly maxMessageSize: number) {
-
+        public readonly maxMessageSize: number,
+        public readonly serviceConfiguration: IServiceConfiguration,
+    ) {
         this.parentBranch = document.parent ? document.parent.documentId : null;
 
         // Subscribe to the message channels
@@ -301,8 +313,9 @@ export class LocalOrderer implements IOrderer {
         foremanContext: IContext = new LocalContext(),
         scribeContext: IContext = new LocalContext(),
         deliContext: IContext = new LocalContext(),
-        clientTimeout: number = ClientSequenceTimeout) {
-
+        clientTimeout: number = ClientSequenceTimeout,
+        serviceConfiguration = DefaultServiceConfiguration,
+    ) {
         const [details, documentCollection, deltasCollection, scribeDeltasCollection] = await Promise.all([
             storage.getOrCreateDocument(tenantId, documentId),
             databaseManager.getDocumentCollection(),
@@ -338,7 +351,8 @@ export class LocalOrderer implements IOrderer {
             deliContext,
             clientTimeout,
             protocolHead,
-            messages);
+            messages,
+            serviceConfiguration);
     }
 
     private socketPublisher: LocalSocketPublisher;
@@ -375,6 +389,7 @@ export class LocalOrderer implements IOrderer {
         clientTimeout: number,
         protocolHead: number,
         scribeMessages: ISequencedOperationMessage[],
+        private serviceConfiguration: IServiceConfiguration,
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
@@ -470,7 +485,8 @@ export class LocalOrderer implements IOrderer {
             this.documentId,
             clientId,
             client,
-            this.maxMessageSize);
+            this.maxMessageSize,
+            this.serviceConfiguration);
 
         // document is now existing regardless of the original value
         this.existing = true;

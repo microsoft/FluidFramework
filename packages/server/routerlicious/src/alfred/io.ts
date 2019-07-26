@@ -20,6 +20,7 @@ import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as semver from "semver";
 import * as winston from "winston";
+import { DefaultServiceConfiguration } from "./utils";
 
 // Sanitize the receeived op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -128,6 +129,7 @@ export function register(
                     existing: connection.existing,
                     maxMessageSize: connection.maxMessageSize,
                     parentBranch: connection.parentBranch,
+                    serviceConfiguration: connection.serviceConfiguration,
                     supportedVersions: protocolVersions,
                     version,
                 };
@@ -141,6 +143,7 @@ export function register(
                     existing: true, // Readonly client can only open an existing document.
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     parentBranch: null, // Does not matter for now.
+                    serviceConfiguration: DefaultServiceConfiguration,
                     supportedVersions: protocolVersions,
                     version,
                 };

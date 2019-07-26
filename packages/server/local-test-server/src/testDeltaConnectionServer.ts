@@ -238,6 +238,7 @@ export function register(
                     existing: connection.existing,
                     maxMessageSize: connection.maxMessageSize,
                     parentBranch: connection.parentBranch,
+                    serviceConfiguration: connection.serviceConfiguration,
                     supportedVersions: [protocolVersion],
                     version,
                 };
@@ -251,6 +252,15 @@ export function register(
                     existing: true, // Readonly client can only open an existing document.
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     parentBranch: null, // Does not matter for now.
+                    serviceConfiguration: {
+                        blockSize: 64436,
+                        maxMessageSize:  16 * 1024,
+                        summary: {
+                            idleTime: 5000,
+                            maxOps: 1000,
+                            maxTime: 5000 * 12,
+                        },
+                    },
                     supportedVersions: [protocolVersion],
                     version,
                 };

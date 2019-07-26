@@ -6,6 +6,32 @@
 import { EventEmitter } from "events";
 import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType } from "./protocol";
 
+/**
+ * key value store of service configuration properties provided as part of connection
+ */
+export interface IServiceConfiguration {
+    [key: string]: any;
+
+    // Max message size the server will accept before requiring chunking
+    maxMessageSize: number;
+
+    // Server defined ideal block size for storing snapshots
+    blockSize: number;
+
+    // Summary algorithm configuration
+    // A summary will occur either if
+    // * idleTime(ms) have passed without activity with pending ops to summarize
+    // * maxTime(ms) have passed without activity with pending ops to summarize
+    // * maxOps are waiting to summarize
+    summary: {
+        idleTime: number;
+
+        maxTime: number;
+
+        maxOps: number;
+    };
+}
+
 export interface IConnectionDetails {
     clientId: string;
     existing: boolean;
@@ -15,6 +41,7 @@ export interface IConnectionDetails {
     initialContents?: IContentMessage[];
     initialSignals?: ISignalMessage[];
     maxMessageSize: number;
+    serviceConfiguration: IServiceConfiguration;
 }
 
 /**

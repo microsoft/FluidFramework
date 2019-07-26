@@ -8,7 +8,9 @@ import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
-    MessageType } from "@prague/container-definitions";
+    IServiceConfiguration,
+    MessageType,
+} from "@prague/container-definitions";
 import * as core from "@prague/services-core";
 import * as _ from "lodash";
 
@@ -21,7 +23,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         documentId: string,
         client: IClient,
         maxMessageSize: number,
-        clientId: string): Promise<KafkaOrdererConnection> {
+        clientId: string,
+        serviceConfiguration: IServiceConfiguration,
+    ): Promise<KafkaOrdererConnection> {
         // Create the connection
         return new KafkaOrdererConnection(
             existing,
@@ -31,7 +35,8 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             documentId,
             clientId,
             client,
-            maxMessageSize);
+            maxMessageSize,
+            serviceConfiguration);
     }
 
     public get parentBranch(): string {
@@ -50,8 +55,9 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         public readonly documentId: string,
         public readonly clientId: string,
         private client: IClient,
-        public readonly maxMessageSize: number) {
-
+        public readonly maxMessageSize: number,
+        public readonly serviceConfiguration: IServiceConfiguration,
+    ) {
         this._parentBranch = document.parent ? document.parent.documentId : null;
 
         const clientDetail: IClientJoin = {
@@ -138,10 +144,11 @@ export class KafkaOrderer implements core.IOrderer {
         producer: core.IProducer,
         tenantId: string,
         documentId: string,
-        maxMessageSize: number): Promise<KafkaOrderer> {
-
+        maxMessageSize: number,
+        serviceConfiguration: IServiceConfiguration,
+    ): Promise<KafkaOrderer> {
         const details = await storage.getOrCreateDocument(tenantId, documentId);
-        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize);
+        return new KafkaOrderer(details, producer, tenantId, documentId, maxMessageSize, serviceConfiguration);
     }
 
     private existing: boolean;
@@ -151,7 +158,9 @@ export class KafkaOrderer implements core.IOrderer {
         private producer: core.IProducer,
         private tenantId: string,
         private documentId: string,
-        private maxMessageSize: number) {
+        private maxMessageSize: number,
+        private serviceConfiguration: IServiceConfiguration,
+    ) {
         this.existing = details.existing;
     }
 
@@ -168,7 +177,8 @@ export class KafkaOrderer implements core.IOrderer {
             this.documentId,
             client,
             this.maxMessageSize,
-            clientId);
+            clientId,
+            this.serviceConfiguration);
 
         // document is now existing regardless of the original value
         this.existing = true;
@@ -187,7 +197,9 @@ export class KafkaOrdererFactory {
     constructor(
         private producer: core.IProducer,
         private storage: core.IDocumentStorage,
-        private maxMessageSize: number) {
+        private maxMessageSize: number,
+        private serviceConfiguration: IServiceConfiguration,
+    ) {
     }
 
     public async create(tenantId: string, documentId: string): Promise<core.IOrderer> {
@@ -198,7 +210,8 @@ export class KafkaOrdererFactory {
                 this.producer,
                 tenantId,
                 documentId,
-                this.maxMessageSize);
+                this.maxMessageSize,
+                this.serviceConfiguration);
             this.ordererMap.set(fullId, orderer);
         }
 

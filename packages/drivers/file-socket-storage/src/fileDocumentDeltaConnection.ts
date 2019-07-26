@@ -8,6 +8,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
 } from "@prague/container-definitions";
@@ -107,6 +108,15 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             initialSignals: [],
             maxMessageSize: ReplayMaxMessageSize,
             parentBranch: null,
+            serviceConfiguration: {
+                blockSize: 64436,
+                maxMessageSize:  16 * 1024,
+                summary: {
+                    idleTime: 5000,
+                    maxOps: 1000,
+                    maxTime: 5000 * 12,
+                },
+            },
             supportedVersions: [fileProtocolVersion],
             user: null,
             version: fileProtocolVersion,
@@ -165,6 +175,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get initialSignals(): ISignalMessage[] | undefined {
         return this.details.initialSignals;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.details.serviceConfiguration;
     }
 
     public readonly maxMessageSize = ReplayMaxMessageSize;

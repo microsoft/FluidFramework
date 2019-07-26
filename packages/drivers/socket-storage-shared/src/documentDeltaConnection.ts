@@ -9,6 +9,7 @@ import {
     IDocumentDeltaConnection,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
 } from "@prague/container-definitions";
 import { BatchManager } from "@prague/utils";
@@ -200,6 +201,13 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get version(): string {
         return this.details.version;
+    }
+
+    /**
+     * Configuration details provided by the service
+     */
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.details.serviceConfiguration;
     }
 
     /**

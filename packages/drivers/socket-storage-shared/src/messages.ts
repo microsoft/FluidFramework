@@ -7,8 +7,10 @@ import {
     IClient,
     IContentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
-    ITokenClaims } from "@prague/container-definitions";
+    ITokenClaims,
+} from "@prague/container-definitions";
 
 /**
  * Message sent to connect to the given document
@@ -93,6 +95,11 @@ export interface IConnected {
      * List of protocol versions supported by the server
      */
     supportedVersions: string[];
+
+    /**
+     * Configuration details provided by the service
+     */
+    serviceConfiguration: IServiceConfiguration;
 }
 
 /**
