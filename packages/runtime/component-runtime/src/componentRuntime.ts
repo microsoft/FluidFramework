@@ -465,7 +465,9 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             type: channel.type,
         };
         this.pendingAttach.set(channel.id, message);
-        this.submit(MessageType.Attach, message);
+        if (this.connected) {
+            this.submit(MessageType.Attach, message);
+        }
 
         return this.getAndAttachChannelServices(channel);
     }
