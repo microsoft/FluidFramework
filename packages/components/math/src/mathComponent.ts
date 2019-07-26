@@ -391,8 +391,10 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
         console.log(`special command ${cmd}`);
         if (cmd.startsWith("solution ")) {
             this.instance.solnText = cmd.substring(9);
-        } else if (cmd.startsWith("svar ")) {
-            this.instance.solnVar = cmd.substring(5);
+            const v = MathExpr.extractFirstVar(this.instance.solnText);
+            if (v) {
+                this.instance.solnVar = v.text;
+            }
         }
     }
 

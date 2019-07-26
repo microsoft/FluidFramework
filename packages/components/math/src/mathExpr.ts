@@ -356,7 +356,9 @@ export function mathTokFwd(tokIndex: number, tokens: MathToken[]) {
     const toklen = tokens.length;
     tokIndex++;
     while (tokIndex < toklen) {
-        if (tokens[tokIndex].type === MathTokenType.Space) {
+        if ((tokens[tokIndex].type === MathTokenType.Space) ||
+            ((tokens[tokIndex].type === MathTokenType.Command) &&
+                ((tokens[tokIndex] as MathCommandToken).isModifier))) {
             tokIndex++;
         } else {
             break;
@@ -395,6 +397,8 @@ export function bksp(mathMarker: IMathMarker, mc: IMathCursor) {
             (prevTok.cmdInfo.arity > 0)) {
             const prevCommandTok = prevTok as MathCommandToken;
             return { start: prevTok.start, end: prevCommandTok.endTok.end };
+        } else if ((prevTok.isSymbol) && (hasSymbolModifiers(prevTok as MathSymbolToken))) {
+            return { start: prevTok.start, end: furthestModifierEnd(prevTok as MathSymbolToken) };
         } else {
             return { start: prevTok.start, end: prevTok.end };
         }
@@ -408,7 +412,9 @@ export function mathTokRev(tokIndex: number, tokens: MathToken[]) {
     }
     while (tokIndex >= 0) {
         const tok = tokens[tokIndex];
-        if (tok.type === MathTokenType.Space) {
+        if ((tok.type === MathTokenType.Space) ||
+            ((tok.type === MathTokenType.Command) &&
+                ((tok as MathCommandToken).isModifier))) {
             tokIndex--;
         } else {
             break;
@@ -438,10 +444,27 @@ export class MathSymbolToken extends MathToken {
     public subCmd?: MathCommandToken;
     public superCmd?: MathCommandToken;
     public isSymbol = true;
+    public isModifier?: boolean;
 
     constructor(type: MathTokenType, start: number, end: number,
         public cmdInfo?: IMathCommand) {
         super(type, start, end, cmdInfo);
+    }
+}
+
+function hasSymbolModifiers(symTok: MathSymbolToken) {
+    return symTok.subCmd || symTok.superCmd;
+}
+
+function furthestModifierEnd(symTok: MathSymbolToken) {
+    if (symTok.subCmd) {
+        if (symTok.superCmd) {
+            return Math.max(symTok.subCmd.endTok.end, symTok.superCmd.endTok.end);
+        } else {
+            return symTok.subCmd.endTok.end;
+        }
+    } else {
+        return symTok.superCmd.endTok.end;
     }
 }
 
@@ -452,7 +475,6 @@ export class MathCommandToken extends MathSymbolToken {
     public endTok?: MathToken;
     // the tokens starting each parameter
     public paramStarts: MathToken[];
-    public isModifier?: boolean;
     public symbolModified?: MathSymbolToken;
 
     constructor(type: MathTokenType, start: number, end: number,
@@ -579,6 +601,7 @@ function lexCommand(tokens: MathToken[], charStream: ICharStream, cmdStack: Math
         tok.paramRefRemaining = cmd.arity;
         cmdStack.push(tok);
     }
+    return tok;
 }
 
 export function lexSpace(tokens: MathToken[], charStream: ICharStream) {
@@ -598,14 +621,14 @@ export function lexSpace(tokens: MathToken[], charStream: ICharStream) {
 // tslint:disable:max-func-body-length
 function lexCharStream(charStream: ICharStream, tokens: MathToken[],
     cmdStack: MathCommandToken[]) {
+    let prevSymTok: MathSymbolToken;
 
     function modSymTok(curTok: MathCommandToken, isSub = true) {
-        let prevTok: MathToken;
-        if (tokens.length > 0) {
-            prevTok = tokens[tokens.length - 1];
-        }
-        if (prevTok && (prevTok.isSymbol)) {
-            const symTok = prevTok as MathSymbolToken;
+        if (prevSymTok) {
+            let symTok = prevSymTok;
+            if (prevSymTok.isModifier) {
+                symTok = (symTok as MathCommandToken).symbolModified;
+            }
             if (isSub) {
                 symTok.subCmd = curTok;
             } else {
@@ -654,6 +677,7 @@ function lexCharStream(charStream: ICharStream, tokens: MathToken[],
             charStreamAdvance(charStream);
             const vartok = new MathSymbolToken(MathTokenType.Variable,
                 start, charStream.index);
+            prevSymTok = vartok;
             vartok.text = charStreamSubstring(start, charStream);
             if (charStreamPeek(charStream) === CharacterCodes.colon) {
                 // it's a pattern variable!
@@ -665,7 +689,11 @@ function lexCharStream(charStream: ICharStream, tokens: MathToken[],
         } else {
             switch (c) {
                 case CharacterCodes.backslash:
-                    lexCommand(tokens, charStream, cmdStack);
+                    const cmdTok = lexCommand(tokens, charStream, cmdStack);
+                    if ((cmdTok.type === MathTokenType.Variable) ||
+                        (cmdTok.cmdInfo && (cmdTok.cmdInfo.arity === 0))) {
+                        prevSymTok = cmdTok;
+                    }
                     break;
                 case CharacterCodes.equals:
                     tokens.push(lexEq());
@@ -1332,6 +1360,20 @@ function applyBinop(binex: IBinop): IExpr {
         // rational
         return Constants.rationalOp(binex.op, c1 as IRational, c2 as IRational);
     }
+}
+
+export function extractFirstVar(s: string) {
+    const expr = parse(s);
+    let v: IVariable;
+    walk(expr, (e) => {
+        if (e.type === ExprType.VARIABLE) {
+            if (!v) {
+                v = e as IVariable;
+            }
+        }
+        return true;
+    });
+    return v;
 }
 
 // assume left and right sides linear in v
