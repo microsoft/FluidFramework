@@ -9,6 +9,7 @@ import {
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
+    IScribe,
     ITenantManager,
 } from "@prague/services-core";
 
@@ -99,12 +100,12 @@ export class TestDocumentStorage implements IDocumentStorage {
                 forks: [],
                 logOffset: undefined,
                 parent: null,
-                scribe: {
+                scribe: JSON.stringify({
                     logOffset: -1,
                     minimumSequenceNumber: -1,
                     protocolState: undefined,
                     sequenceNumber: -1,
-                },
+                } as IScribe),
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
             });

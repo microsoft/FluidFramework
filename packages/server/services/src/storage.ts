@@ -11,12 +11,21 @@ import {
     IForkOperation,
     IProducer,
     IRawOperationMessage,
+    IScribe,
     RawOperationType,
 } from "@prague/services-core";
 import { IDatabaseManager, IDocumentDetails, IDocumentStorage, ITenantManager } from "@prague/services-core";
 import * as moniker from "moniker";
 
 const StartingSequenceNumber = 0;
+// disabling so can tag inline but keep strong typing
+// tslint:disable-next-line:no-object-literal-type-assertion
+const DefaultScribe = JSON.stringify({
+    logOffset: -1,
+    minimumSequenceNumber: -1,
+    protocolState: undefined,
+    sequenceNumber: -1,
+} as IScribe);
 
 export class DocumentStorage implements IDocumentStorage {
     constructor(
@@ -165,12 +174,7 @@ export class DocumentStorage implements IDocumentStorage {
                     sequenceNumber,
                     tenantId,
                 },
-                scribe: {
-                    logOffset: -1,
-                    minimumSequenceNumber: -1,
-                    protocolState: undefined,
-                    sequenceNumber: -1,
-                },
+                scribe: DefaultScribe,
                 sequenceNumber,
                 tenantId,
             });
@@ -212,12 +216,7 @@ export class DocumentStorage implements IDocumentStorage {
                 forks: [],
                 logOffset: undefined,
                 parent: null,
-                scribe: {
-                    logOffset: -1,
-                    minimumSequenceNumber: -1,
-                    protocolState: undefined,
-                    sequenceNumber: -1,
-                },
+                scribe: DefaultScribe,
                 sequenceNumber: StartingSequenceNumber,
                 tenantId,
             });

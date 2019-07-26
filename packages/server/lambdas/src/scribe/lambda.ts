@@ -54,7 +54,9 @@ export class ScribeLambda extends SequencedLambda {
         context: IContext,
         private documentCollection: ICollection<IDocument>,
         private messageCollection: ICollection<ISequencedOperationMessage>,
-        private document: IDocument,
+        private tenantId: string,
+        private documentId: string,
+        scribe: IScribe,
         private storage: IGitManager,
         private producer: IProducer,
         private protocolHandler: ProtocolOpHandler,
@@ -63,8 +65,7 @@ export class ScribeLambda extends SequencedLambda {
     ) {
         super(context);
 
-        // For back compat with pre-scribe documents we need to check for the scribe metadata
-        this.lastOffset = document.scribe ? document.scribe.logOffset : 0;
+        this.lastOffset = scribe.logOffset;
         this.pendingMessages.push(...messages.map((message) => message.operation));
     }
 
@@ -113,7 +114,7 @@ export class ScribeLambda extends SequencedLambda {
                 }
             }
         } catch (e) {
-            winston.error(`${this.document.tenantId}/${this.document.documentId}`, e);
+            winston.error(`${this.tenantId}/${this.documentId}`, e);
         }
 
         this.checkpoint(message.offset);
@@ -206,20 +207,22 @@ export class ScribeLambda extends SequencedLambda {
         // Write out the full state first that we require
         await this.documentCollection.update(
             {
-                documentId: this.document.documentId,
-                tenantId: this.document.tenantId,
+                documentId: this.documentId,
+                tenantId: this.tenantId,
             },
             {
-                scribe: checkpoint,
+                // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
+                // given some data is user generated.
+                scribe: JSON.stringify(checkpoint),
             },
             null);
 
         // And then delete messagse we no longer will reference
         await this.messageCollection
             .deleteMany({
-                "documentId": this.document.documentId,
+                "documentId": this.documentId,
                 "operation.sequenceNumber": { $lte : checkpoint.protocolState.sequenceNumber },
-                "tenantId": this.document.tenantId,
+                "tenantId": this.tenantId,
             });
     }
 
@@ -246,7 +249,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // The summary must reference the existing summary to be valid. This guards against accidental sends of
         // two summaries at the same time. In this case the first one wins.
-        const existingRef = await this.storage.getRef(encodeURIComponent(this.document.documentId));
+        const existingRef = await this.storage.getRef(encodeURIComponent(this.documentId));
 
         if (content.head) {
             if (!existingRef || existingRef.object.sha !== content.head) {
@@ -268,7 +271,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // At this point the summary op and its data are all valid and we can perform the write to history
         const documentAttributes: IDocumentAttributes = {
-            branch: this.document.documentId,
+            branch: this.documentId,
             minimumSequenceNumber,
             sequenceNumber,
         };
@@ -355,9 +358,9 @@ export class ScribeLambda extends SequencedLambda {
         const commit = await this.storage.createCommit(commitParams);
 
         if (existingRef) {
-            await this.storage.upsertRef(this.document.documentId, commit.sha);
+            await this.storage.upsertRef(this.documentId, commit.sha);
         } else {
-            await this.storage.createRef(this.document.documentId, commit.sha);
+            await this.storage.createRef(this.documentId, commit.sha);
         }
 
         await this.sendSummaryAck(commit.sha, sequenceNumber, summarySequenceNumber);
@@ -395,16 +398,16 @@ export class ScribeLambda extends SequencedLambda {
     private sendToDeli(operation: IDocumentMessage): Promise<any> {
         const message: IRawOperationMessage = {
             clientId: null,
-            documentId: this.document.documentId,
+            documentId: this.documentId,
             operation,
-            tenantId: this.document.tenantId,
+            tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
         };
 
         return this.producer.send(
             message,
-            this.document.tenantId,
-            this.document.documentId);
+            this.tenantId,
+            this.documentId);
     }
 }

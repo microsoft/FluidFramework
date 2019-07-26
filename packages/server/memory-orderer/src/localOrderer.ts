@@ -399,7 +399,9 @@ export class LocalOrderer implements IOrderer {
 
         if (gitManager) {
             // Scribe lambda
-            const scribe = details.value.scribe ? details.value.scribe : DefaultScribe;
+            const scribe = details.value.scribe
+                ? typeof details.value.scribe === "string" ? JSON.parse(details.value.scribe) : details.value.scribe
+                : DefaultScribe;
             const lastState = scribe.protocolState
                 ? scribe.protocolState
                 : { members: [], proposals: [], values: []};
@@ -417,7 +419,9 @@ export class LocalOrderer implements IOrderer {
                 this.scribeContext,
                 documentCollection,
                 scribeMessagesCollection,
-                details.value,
+                scribe.tenantId,
+                scribe.documentId,
+                scribe,
                 gitManager,
                 this.alfredToDeliKafka,
                 protocolHandler,

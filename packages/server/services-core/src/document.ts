@@ -106,5 +106,5 @@ export interface IDocument {
     logOffset: number;
 
     // Scribe tracked summary context
-    scribe: IScribe;
+    scribe: string;
 }
