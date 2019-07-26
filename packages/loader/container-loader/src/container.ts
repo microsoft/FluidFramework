@@ -26,6 +26,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
+    IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
@@ -127,6 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private readonly _id: string;
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
+    private _serviceConfiguration: IServiceConfiguration | undefined;
     // tslint:enable:variable-name
 
     private context: ContainerContext | undefined;
@@ -148,6 +150,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
+    }
+
+    /**
+     * Service configuration details. If running in offline mode will be undefined otherwise will contain service
+     * configuration details returned as part of the initial connection.
+     */
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
+        return this._serviceConfiguration;
     }
 
     /**
@@ -485,8 +495,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
                 } else {
                     const details = await connectResult.detailsP;
+
                     this._existing = details!.existing;
                     this._parentBranch = details!.parentBranch;
+                    this._serviceConfiguration = details!.serviceConfiguration;
 
                     perfEvent.reportProgress({stage: "AfterSocketConnect"});
                 }

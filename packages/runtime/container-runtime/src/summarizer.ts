@@ -7,6 +7,7 @@ import {
     IComponent,
     IComponentLoadable,
     ISequencedDocumentMessage,
+    ISummaryConfiguration,
     MessageType,
 } from "@prague/container-definitions";
 import { Deferred } from "@prague/utils";
@@ -50,9 +51,7 @@ export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
     constructor(
         public readonly url: string,
         private readonly runtime: ContainerRuntime,
-        private readonly idleTime: number,
-        private readonly maxTimeWithoutSnapshot: number,
-        private readonly maxOpCountWithoutSnapshot: number,
+        private readonly configuration: ISummaryConfiguration,
         private readonly generateSummary: () => Promise<void>,
     ) {
         this.runtime.on("disconnected", () => {
@@ -133,8 +132,8 @@ export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
             return {
                 message: "",
                 required: false,
-                shouldSnapshot: (timeSinceLastSnapshot > this.maxTimeWithoutSnapshot) ||
-                                (opCountSinceLastSnapshot > this.maxOpCountWithoutSnapshot),
+                shouldSnapshot: (timeSinceLastSnapshot > this.configuration.maxTime) ||
+                                (opCountSinceLastSnapshot > this.configuration.maxOps),
             };
         }
     }
@@ -154,6 +153,6 @@ export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
                 debug("Snapshotting due to being idle");
                 this.summarize(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
             },
-            this.idleTime);
+            this.configuration.idleTime);
     }
 }

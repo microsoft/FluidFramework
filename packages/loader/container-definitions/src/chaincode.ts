@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
 import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
-import { IDeltaManager } from "./deltas";
+import { IDeltaManager, IServiceConfiguration } from "./deltas";
 import { ICodeLoader, ILoader, IRequest, IResponse } from "./loader";
 import { ITelemetryLogger } from "./logger";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
@@ -205,6 +205,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly loader: ILoader;
     readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;
+    readonly serviceConfiguration: IServiceConfiguration | undefined;
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }

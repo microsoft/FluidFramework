@@ -117,7 +117,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     }
 
     public get maxMessageSize(): number {
-        return this.connection!.details.maxMessageSize || DefaultChunkSize;
+        return this.connection!.details.serviceConfiguration
+            ? this.connection!.details.serviceConfiguration.maxMessageSize
+            : this.connection!.details.maxMessageSize || DefaultChunkSize;
     }
 
     public get version(): string {

@@ -6,6 +6,19 @@
 import { EventEmitter } from "events";
 import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType } from "./protocol";
 
+// Summary algorithm configuration
+// A summary will occur either if
+// * idleTime(ms) have passed without activity with pending ops to summarize
+// * maxTime(ms) have passed without activity with pending ops to summarize
+// * maxOps are waiting to summarize
+export interface ISummaryConfiguration {
+    idleTime: number;
+
+    maxTime: number;
+
+    maxOps: number;
+}
+
 /**
  * key value store of service configuration properties provided as part of connection
  */
@@ -18,18 +31,7 @@ export interface IServiceConfiguration {
     // Server defined ideal block size for storing snapshots
     blockSize: number;
 
-    // Summary algorithm configuration
-    // A summary will occur either if
-    // * idleTime(ms) have passed without activity with pending ops to summarize
-    // * maxTime(ms) have passed without activity with pending ops to summarize
-    // * maxOps are waiting to summarize
-    summary: {
-        idleTime: number;
-
-        maxTime: number;
-
-        maxOps: number;
-    };
+    summary: ISummaryConfiguration;
 }
 
 export interface IConnectionDetails {

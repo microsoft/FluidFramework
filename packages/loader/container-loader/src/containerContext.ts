@@ -19,6 +19,7 @@ import {
     IRuntime,
     IRuntimeFactory,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
@@ -114,6 +115,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     public get canSummarize(): boolean {
         return "summarize" in this.runtime!;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration | undefined {
+        return this.container.serviceConfiguration;
     }
 
     // tslint:disable-next-line:no-unsafe-any
