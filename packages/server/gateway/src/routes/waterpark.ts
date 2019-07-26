@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails, IPraguePackage } from "@prague/container-definitions";
+import { IPraguePackage } from "@prague/container-definitions";
 import { extractDetails, WebLoader } from "@prague/loader-web";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
@@ -20,6 +20,8 @@ import { getConfig } from "../utils";
 import { defaultPartials } from "./partials";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkgJson = require("../../package.json") as IPraguePackage;
+const defaultChaincode =
+    `@chaincode/externalcomponentloader@${pkgJson.version.endsWith(".0") ? "^" : ""}${pkgJson.version}`;
 
 export function create(
     config: Provider,
@@ -31,13 +33,17 @@ export function create(
     const jwtKey = config.get("gateway:key");
     const webLoader = new WebLoader(config.get(config.get("worker:npm")));
 
-    /**
-     * Loading of a specific fluid document.
-     */
-    router.get("/:id?", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
-        if (!request.params.id) {
-            return response.status(302).redirect(`${request.baseUrl}/${moniker.choose()}`);
+    router.get("/", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
+        let redirect = `${request.baseUrl}/${moniker.choose()}`;
+        if (request.query.chaincode) {
+            redirect += `?chaincode=${request.query.chaincode}`;
         }
+        return response.status(302).redirect(redirect);
+    });
+
+    router.get("/:id*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
+
+        const chaincode = request.query.chaincode ? request.query.chaincode : defaultChaincode;
         const start = Date.now();
 
         const jwtToken = jwt.sign(
@@ -61,12 +67,10 @@ export function create(
                 return webLoader.resolve(fullTree.code);
             }
 
-            const chaincode: string = `@chaincode/externalcomponentloader@^${pkgJson.version}`;
             const cdn = request.query.cdn ? request.query.cdn : config.get("worker:npm");
 
-            let codeDetails: IFluidCodeDetails;
             const details = extractDetails(chaincode);
-            codeDetails = {
+            const codeDetails = {
                 config: {
                     [`@${details.scope}:cdn`]: cdn,
                 },
@@ -105,7 +109,7 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-            resolved.url += `?chaincode=@chaincode/externalcomponentloader@^${pkgJson.version}`;
+            resolved.url += `?chaincode=${chaincode}`;
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
             timings.push(Date.now() - start);

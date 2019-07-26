@@ -71,7 +71,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             dataList.id = uuid();
             ExternalComponentLoader.defaultComponents.forEach((url) => {
                 const option = document.createElement("option");
-                option.value = `${url}@^${pkg.version}`;
+                option.value = `${url}@${pkg.version}`;
                 dataList.append(option);
             });
 
