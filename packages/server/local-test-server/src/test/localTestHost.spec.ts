@@ -108,7 +108,7 @@ describe("TestHost", () => {
             await host2.close();
         });
 
-        it.skip("late open / early close", async () => {
+        it("late open / early close", async () => {
             const host1 = new TestHost(testComponents);
             const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
 

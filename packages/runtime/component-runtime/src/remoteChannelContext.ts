@@ -143,6 +143,9 @@ export class RemoteChannelContext implements IChannelContext {
         this.pending = undefined;
         this.isLoaded = true;
 
+        // Because have some await between we created the service and here, the connection state might have changed
+        // and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
+        this.connection.setConnectionState(this.componentContext.connectionState);
         return this.channel;
     }
 }

@@ -401,6 +401,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     private setConnectionState(state: ConnectionState) {
+        if (this._state === state) {
+            // Not changing state, nothing the same.
+            return;
+        }
+
         // Should I change the state at the end? So that we *can't* send new stuff before we send old?
         this._state = state;
 
