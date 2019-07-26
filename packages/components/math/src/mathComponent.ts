@@ -30,6 +30,7 @@ import {
     IComponentCollection,
     IComponentContext,
     IComponentCursor,
+    IComponentFactory,
     IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -711,7 +712,18 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
+export class MathFactoryComponent implements IComponentFactory {
+    public static supportedInterfaces = [ "IComponentFactory"];
+
+    public query(id: string): any {
+        return MathFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return MathFactoryComponent.supportedInterfaces;
+    }
+
+    public instantiateComponent(context: IComponentContext): void {
     // Map value types to register as defaults
     const mapValueTypes = [
         new DistributedSetValueType(),
@@ -740,4 +752,7 @@ export function instantiateComponent(context: IComponentContext): void {
                 return mathCollection.request(request);
             });
         });
+    }
 }
+
+export const fluidExport: IComponentFactory = new MathFactoryComponent();

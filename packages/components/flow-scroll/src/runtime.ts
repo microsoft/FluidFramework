@@ -18,7 +18,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [WebFlowHost.type, Promise.resolve(webFlowHostFactory)],
 
         // Demo components
-        ["@chaincode/math", import("@chaincode/math")],
+        ["@chaincode/math", import("@chaincode/math").then((m) => m.fluidExport)],
         // Bootstrap CSS definitions conflict with flow-scroll
         // ["@chaincode/progress-bars", import("@chaincode/progress-bars")],
         [TableDocumentType, import("@chaincode/table-document").then((m) => Component.createComponentFactory(m.TableDocument))],

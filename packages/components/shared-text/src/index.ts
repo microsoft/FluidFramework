@@ -53,7 +53,7 @@ class MyRegistry implements IComponentRegistry {
         if (name === "@chaincode/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@chaincode/math") {
-            return math;
+            return math.then((m) => m.fluidExport);
         } else if (name === "@chaincode/charts") {
             return charts;
         } else if (name === "@chaincode/progress-bars") {
