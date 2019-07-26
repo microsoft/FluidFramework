@@ -192,7 +192,7 @@ export async function getDriveItemByFileId(
     clientConfig: IClientConfig,
     tokens: IODSPTokens): Promise<IODSPDriveItem> {
 
-    const getFileByIdUrl = `https://${server}/personal/${account}/_api/web/GetFileById('${uid}')`;
+    const getFileByIdUrl = `https://${server}/${account}/_api/web/GetFileById('${uid}')`;
     const getFileByIdResult = await getAsync(server, clientConfig, tokens,
         getFileByIdUrl, { accept: "application/json" });
 
@@ -201,21 +201,21 @@ export async function getDriveItemByFileId(
     }
     const parsedBody = JSON.parse(getFileByIdResult.data);
     const path = parsedBody.ServerRelativeUrl;
-    const documentPathMatch = path.match(/\/personal\/(.*)\/Documents\/(.*)/);
+    const documentPathMatch = path.match(/\/(personal|teams)\/(.*)\/(Shared )?Documents\/(.*)/i);
     if (documentPathMatch === null) {
         return Promise.reject(getFileByIdResult);
     }
 
-    if (documentPathMatch[1] !== account) {
+    if (`${documentPathMatch[1]}/${documentPathMatch[2]}`.toLowerCase() !== account.toLowerCase()) {
         return Promise.reject(getFileByIdResult);
     }
 
-    const fileName = documentPathMatch[2];
+    const fileName = documentPathMatch[4];
     if (!fileName) {
         return Promise.reject(getFileByIdResult);
     }
 
-    const getDriveItemUrl = `https://${server}/personal/${account}/_api/v2.1/drive/root:/${fileName}`;
+    const getDriveItemUrl = `https://${server}/${account}/_api/v2.1/drive/root:/${fileName}`;
     const getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
     if (getDriveItemResult.status !== 200) {
         return Promise.reject(getDriveItemResult);

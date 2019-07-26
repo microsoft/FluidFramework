@@ -228,9 +228,9 @@ async function initializeODSP(
     // Sharepoint hosted URL
     const sourceDoc = searchParams.get("sourcedoc");
     if (sourceDoc) {
-        const hostedMatch = pathname.match(/\/personal\/([^\/]*)\//);
+        const hostedMatch = pathname.match(/\/(personal|teams)\/([^\/]*)\//i);
         if (hostedMatch !== null) {
-            return initializeODSPHosted(server, hostedMatch[1], sourceDoc, clientConfig);
+            return initializeODSPHosted(server, `${hostedMatch[1]}/${hostedMatch[2]}`, sourceDoc, clientConfig);
         }
     }
 
