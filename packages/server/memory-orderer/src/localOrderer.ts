@@ -217,20 +217,24 @@ class LocalOrdererConnection implements IOrdererConnection {
         };
 
         // Submit on next tick to sequence behind connect response
-        this.submitRawOperation(message);
+        this.submitRawOperation([message]);
     }
 
-    public order(message: IDocumentMessage): void {
-        const rawMessage: IRawOperationMessage = {
-            clientId: this.clientId,
-            documentId: this.documentId,
-            operation: message,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
+    public order(messages: IDocumentMessage[]): void {
+        const rawMessages = messages.map((message) => {
+            const rawMessage: IRawOperationMessage = {
+                clientId: this.clientId,
+                documentId: this.documentId,
+                operation: message,
+                tenantId: this.tenantId,
+                timestamp: Date.now(),
+                type: RawOperationType,
+            };
 
-        this.submitRawOperation(rawMessage);
+            return rawMessage;
+        });
+
+        this.submitRawOperation(rawMessages);
     }
 
     public disconnect() {
@@ -250,34 +254,36 @@ class LocalOrdererConnection implements IOrdererConnection {
             timestamp: Date.now(),
             type: RawOperationType,
         };
-        this.submitRawOperation(message);
+        this.submitRawOperation([message]);
 
         // Todo: We probably don't need this either.
         this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
         this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
     }
 
-    private submitRawOperation(message: IRawOperationMessage) {
+    private submitRawOperation(messages: IRawOperationMessage[]) {
         // Add trace
-        const operation = message.operation as IDocumentMessage;
-        if (operation && operation.traces) {
-            operation.traces.push(
-                {
-                    action: "start",
-                    service: "alfred",
-                    timestamp: now(),
-                });
-        }
+        messages.forEach((message) => {
+            const operation = message.operation as IDocumentMessage;
+            if (operation && operation.traces) {
+                operation.traces.push(
+                    {
+                        action: "start",
+                        service: "alfred",
+                        timestamp: now(),
+                    });
+            }
+        });
 
         const boxcar: IBoxcarMessage = {
-            contents: [message],
+            contents: messages,
             documentId: this.documentId,
             tenantId: this.tenantId,
             type: BoxcarType,
         };
 
         // Submits the message.
-        this.producer.send(boxcar, this.tenantId, this.documentId);
+        this.producer.send([boxcar], this.tenantId, this.documentId);
     }
 }
 
@@ -538,19 +544,21 @@ class InMemoryKafka extends EventEmitter implements IProducer {
         super();
     }
 
-    public async send(message: any, topic: string): Promise<any> {
-        const kafkaMessage: IKafkaMessage = {
-            highWaterOffset: this.offset,
-            key: topic,
-            offset: this.offset,
-            partition: 0,
-            topic,
-            value: JSON.stringify(message),
-        };
+    public async send(messages: object[], topic: string): Promise<any> {
+        messages.forEach((message) => {
+            const kafkaMessage: IKafkaMessage = {
+                highWaterOffset: this.offset,
+                key: topic,
+                offset: this.offset,
+                partition: 0,
+                topic,
+                value: JSON.stringify(message),
+            };
 
-        this.offset++;
+            this.offset++;
 
-        this.emit("message", kafkaMessage);
+            this.emit("message", kafkaMessage);
+        });
     }
 
     public close(): Promise<void> {

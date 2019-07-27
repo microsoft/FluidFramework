@@ -260,6 +260,6 @@ export class DocumentStorage implements IDocumentStorage {
             type: RawOperationType,
         };
 
-        await producer.send(integrateMessage, tenantId, id);
+        await producer.send([integrateMessage], tenantId, id);
     }
 }

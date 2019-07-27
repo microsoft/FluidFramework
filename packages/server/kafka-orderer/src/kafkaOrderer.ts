@@ -83,20 +83,24 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             type: core.RawOperationType,
         };
 
-        this.submitRawOperation(message);
+        this.submitRawOperation([message]);
     }
 
-    public order(message: IDocumentMessage): void {
-        const rawMessage: core.IRawOperationMessage = {
-            clientId: this.clientId,
-            documentId: this.documentId,
-            operation: message,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: core.RawOperationType,
-        };
+    public order(messages: IDocumentMessage[]): void {
+        const rawMessages = messages.map((message) => {
+            const rawMessage: core.IRawOperationMessage = {
+                clientId: this.clientId,
+                documentId: this.documentId,
+                operation: message,
+                tenantId: this.tenantId,
+                timestamp: Date.now(),
+                type: core.RawOperationType,
+            };
 
-        this.submitRawOperation(rawMessage);
+            return rawMessage;
+        });
+
+        this.submitRawOperation(rawMessages);
     }
 
     public disconnect() {
@@ -117,24 +121,26 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             type: core.RawOperationType,
         };
 
-        this.submitRawOperation(message);
+        this.submitRawOperation([message]);
     }
 
-    private submitRawOperation(message: core.IRawOperationMessage) {
+    private submitRawOperation(messages: core.IRawOperationMessage[]) {
         // Add trace
-        const operation = message.operation as IDocumentMessage;
-        if (operation && operation.traces === undefined) {
-            operation.traces = [];
-        } else if (operation && operation.traces && operation.traces.length > 1) {
-            operation.traces.push(
-                {
-                    action: "end",
-                    service: "alfred",
-                    timestamp: Date.now(),
-                });
-        }
+        messages.forEach((message) => {
+            const operation = message.operation as IDocumentMessage;
+            if (operation && operation.traces === undefined) {
+                operation.traces = [];
+            } else if (operation && operation.traces && operation.traces.length > 1) {
+                operation.traces.push(
+                    {
+                        action: "end",
+                        service: "alfred",
+                        timestamp: Date.now(),
+                    });
+            }
+        });
 
-        this.producer.send(message, this.tenantId, this.documentId);
+        this.producer.send(messages, this.tenantId, this.documentId);
     }
 }
 

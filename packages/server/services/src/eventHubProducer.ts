@@ -32,7 +32,7 @@ export class EventHubProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    public send(message: any, tenantId: string, documentId: string): Promise<any> {
+    public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
         // Get the list of boxcars for the given key
@@ -42,7 +42,9 @@ export class EventHubProducer implements IProducer {
         const boxcar = this.messages.get(key);
 
         // Add the message to the boxcar
-        boxcar.messages.push({ body: message });
+        messages.forEach((message) => {
+            boxcar.messages.push({ body: message });
+        });
 
         // If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
         // request a send

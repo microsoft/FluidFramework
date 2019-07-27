@@ -288,14 +288,8 @@ export function register(
             }
 
             const connection = connectionsMap.get(clientId);
-            for (const message of messages) {
-                if (message.type === RoundTrip) {
-                    // do nothing
-                } else {
-                    // need to sanitize message?
-                    connection.order(message);
-                }
-            }
+            const filtered = messages.filter((message) => message.type !== RoundTrip);
+            connection.order(filtered);
 
             response(null);
         });

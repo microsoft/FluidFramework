@@ -41,7 +41,7 @@ export class KafkaNodeProducer implements IProducer {
     /**
      * Sends the provided message to Kafka
      */
-    public send(message: object, tenantId: string, documentId: string): Promise<any> {
+    public send(messages: object[], tenantId: string, documentId: string): Promise<any> {
         const key = `${tenantId}/${documentId}`;
 
         // Get the list of boxcars for the given key
@@ -51,13 +51,13 @@ export class KafkaNodeProducer implements IProducer {
         const boxcars = this.messages.get(key);
 
         // Create a new boxcar if necessary (will only happen when not connected)
-        if (boxcars[boxcars.length - 1].messages.length >= MaxBatchSize) {
+        if (boxcars[boxcars.length - 1].messages.length + messages.length >= MaxBatchSize) {
             boxcars.push(new PendingBoxcar(tenantId, documentId));
         }
 
         // Add the message to the boxcar
         const boxcar = boxcars[boxcars.length - 1];
-        boxcar.messages.push(message);
+        boxcar.messages.push(...messages);
 
         // If adding a new message to the boxcar filled it up, and we are connected, then send immediately. Otherwise
         // request a send

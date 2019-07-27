@@ -221,7 +221,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         const orderMessage = message.payload as IDocumentMessage;
                         const connection = this.connectionMap.get(message.cid);
                         assert(connection);
-                        connection.order(orderMessage);
+                        connection.order([orderMessage]);
                         break;
                     }
                 }

@@ -43,8 +43,8 @@ class ProxySocketConnection implements IOrdererConnection {
         private details: IConnectedMessage) {
     }
 
-    public order(message: IDocumentMessage): void {
-        this.node.send(this.cid, "order", message);
+    public order(messages: IDocumentMessage[]): void {
+        this.node.send(this.cid, "order", messages);
     }
 
     public disconnect(): void {

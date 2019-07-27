@@ -68,7 +68,7 @@ export interface IProducer {
     /**
      * Sends the message to kafka
      */
-    send(message: object, tenantId: string, documentId: string): Promise<any>;
+    send(messages: object[], tenantId: string, documentId: string): Promise<any>;
 
     /**
      * Closes the underlying connection

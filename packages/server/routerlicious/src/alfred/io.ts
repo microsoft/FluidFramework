@@ -165,30 +165,42 @@ export function register(
         });
 
         // Message sent when a new operation is submitted to the router
-        socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
-            // TODO validate message size within bounds
+        socket.on(
+            "submitOp",
+            (clientId: string, messages: IDocumentMessage[], response) => {
+                // TODO validate message size within bounds
 
-            // Verify the user has an orderer connection.
-            if (!connectionsMap.has(clientId)) {
-                return response("Invalid client ID or readonly client", null);
-            }
-
-            const connection = connectionsMap.get(clientId);
-
-            for (const message of messages) {
-                if (message.type === api.RoundTrip) {
-                    // End of tracking. Write traces.
-                    metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                        (error) => {
-                            winston.error(error.stack);
-                        });
-                } else {
-                    connection.order(sanitizeMessage(message));
+                // Verify the user has an orderer connection.
+                if (!connectionsMap.has(clientId)) {
+                    return response("Invalid client ID or readonly client", null);
                 }
-            }
 
-            response(null);
-        });
+                const connection = connectionsMap.get(clientId);
+                const sanitized = messages
+                    .filter((message) => {
+                        if (message.type === api.RoundTrip) {
+                            // End of tracking. Write traces.
+                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                                (error) => {
+                                    winston.error(error.stack);
+                                });
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    })
+                    .map((message) => sanitizeMessage(message));
+
+                if (sanitized.length > 0) {
+                    connection.order(sanitized);
+                }
+
+                // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
+                // removed in 0.9
+                if (response) {
+                    response(null);
+                }
+            });
 
         // Message sent when a new splitted operation is submitted to the router
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {
@@ -212,15 +224,16 @@ export function register(
                 tenantId: connection.tenantId,
             };
 
-            contentCollection.insertOne(dbMessage).then(() => {
-                socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
-                return response(null);
-            }, (error) => {
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return response("Could not write to DB", null);
-                }
-            });
+            contentCollection.insertOne(dbMessage).then(
+                () => {
+                    socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
+                    return response(null);
+                }, (error) => {
+                    if (error.code !== 11000) {
+                        // Needs to be a full rejection here
+                        return response("Could not write to DB", null);
+                    }
+                });
         });
 
         // Message sent when a new signal is submitted to the router
@@ -241,7 +254,11 @@ export function register(
                 socket.emitToRoom(roomId, "signal", signalMessage);
             }
 
-            response(null);
+            // A response callback used to be used to verify the send. Newer drivers do not use this. Will be removed
+            // in 0.9
+            if (response) {
+                response(null);
+            }
         });
 
         socket.on("disconnect", () => {

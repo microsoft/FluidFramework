@@ -41,7 +41,11 @@ export interface IOrdererConnection {
 
     readonly serviceConfiguration: IServiceConfiguration;
 
-    order(message: IDocumentMessage): void;
+    /**
+     * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially
+     * so long as their total size fits under the maxMessageSize.
+     */
+    order(message: IDocumentMessage[]): void;
 
     disconnect(): void;
 }

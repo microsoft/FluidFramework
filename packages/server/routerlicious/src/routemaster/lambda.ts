@@ -112,6 +112,6 @@ export class RouteMasterLambda extends SequencedLambda {
             type: core.RawOperationType,
         };
 
-        return this.producer.send(rawMessage, message.tenantId, forkId);
+        return this.producer.send([rawMessage], message.tenantId, forkId);
     }
 }

@@ -406,7 +406,7 @@ export class ScribeLambda extends SequencedLambda {
         };
 
         return this.producer.send(
-            message,
+            [message],
             this.tenantId,
             this.documentId);
     }

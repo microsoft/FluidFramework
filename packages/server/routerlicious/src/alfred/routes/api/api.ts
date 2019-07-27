@@ -96,12 +96,12 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     };
 
     const joinMessage = craftClientJoinMessage(tenantId, documentId, clientDetail);
-    producer.send(joinMessage, tenantId, documentId);
+    producer.send([joinMessage], tenantId, documentId);
 }
 
 function sendLeave(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
     const leaveMessage = craftClientLeaveMessage(tenantId, documentId, clientId);
-    producer.send(leaveMessage, tenantId, documentId);
+    producer.send([leaveMessage], tenantId, documentId);
 }
 
 function sendOp(
@@ -120,7 +120,7 @@ function sendOp(
             clientId,
             JSON.stringify(content),
             clientSequenceNumber++);
-        producer.send(opMessage, tenantId, documentId);
+        producer.send([opMessage], tenantId, documentId);
     }
 }
 

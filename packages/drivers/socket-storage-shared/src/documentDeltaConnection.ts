@@ -250,19 +250,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
 
         this.submitManager = new BatchManager<IDocumentMessage | any>(
             (submitType, work) => {
-                this.socket.emit(
-                    submitType,
-                    this.details.clientId,
-                    work,
-                    (error) => {
-                        // A truthy value indicates error - otherwise success - of the message send
-                        // This behavior is not required and likely can be removed (although is a breaking protocol
-                        // change) for a performance gain. Socket.IO internally needs to track the callback
-                        // given the remote server will be 'invoking' it.
-                        if (error) {
-                            this.emit("error", error);
-                        }
-                    });
+                this.socket.emit(submitType, this.details.clientId, work);
             });
     }
 

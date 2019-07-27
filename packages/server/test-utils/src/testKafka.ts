@@ -96,8 +96,10 @@ export class TestProducer implements core.IProducer {
     constructor(private kafka: TestKafka) {
     }
 
-    public send(message: object, key: string): Promise<any> {
-        this.kafka.addMessage(message, key);
+    public send(messages: object[], key: string): Promise<any> {
+        for (const message of messages) {
+            this.kafka.addMessage(message, key);
+        }
         return Promise.resolve();
     }
 
