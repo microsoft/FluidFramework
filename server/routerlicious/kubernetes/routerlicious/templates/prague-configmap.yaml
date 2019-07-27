@@ -175,12 +175,8 @@ data:
         },
         "worker": {
             "intelligence": {
-                "resume": {
-                },
                 "textAnalytics": {
                     "key": "{{ .Values.worker.intelligence.textAnalytics.key }}"
-                },
-                "nativeTextAnalytics": {
                 },
                 "translation": {
                     "key": "{{ .Values.worker.intelligence.translation.key }}"

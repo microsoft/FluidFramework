@@ -127,12 +127,8 @@ data:
         },
         "worker": {
             "intelligence": {
-                "resume": {
-                },
                 "textAnalytics": {
                     "key": ""
-                },
-                "nativeTextAnalytics": {
                 },
                 "translation": {
                     "key": ""
