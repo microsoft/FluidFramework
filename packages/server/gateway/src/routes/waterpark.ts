@@ -53,6 +53,7 @@ export function create(
             jwtKey);
 
         const documentId = request.params.id;
+        const path = request.params[0];
         const tenantId = appTenants[0].id;
         const [resolvedP, fullTreeP] =
             resolveUrl(config, alfred, appTenants, tenantId, documentId, request);
@@ -63,6 +64,10 @@ export function create(
             config.get("error:track"));
 
         const pkgP = fullTreeP.then((fullTree) => {
+            if (path) {
+                return;
+            }
+
             if (fullTree && fullTree.code) {
                 return webLoader.resolve(fullTree.code);
             }
@@ -109,7 +114,11 @@ export function create(
 
         Promise.all([resolvedP, fullTreeP, pkgP, scriptsP, timingsP])
             .then(([resolved, fullTree, pkg, scripts, timings]) => {
-            resolved.url += `?chaincode=${chaincode}`;
+            if (!pkg) {
+                resolved.url += `${path}`;
+            } else {
+                resolved.url += `?chaincode=${chaincode}`;
+            }
             winston.info(`render ${tenantId}/${documentId} +${Date.now() - start}`);
 
             timings.push(Date.now() - start);

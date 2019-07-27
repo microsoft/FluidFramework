@@ -29,7 +29,7 @@ interface s {
 }
 
 export class TodoItemView extends React.Component<p, s> {
-    private readonly baseUrl = `${window.location.origin}/${window.location.pathname.split("/")[1]}`;
+    private readonly baseUrl = `${window.location.origin}${window.location.pathname}`;
     private readonly buttonStyle = {
         height: "25px",
         marginLeft: "2px",
