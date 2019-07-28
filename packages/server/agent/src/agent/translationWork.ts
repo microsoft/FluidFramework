@@ -43,13 +43,12 @@ export class TranslationWork extends BaseWork implements IWork {
 
         if (sharedString && insightsMap) {
             await insightsMap.wait(sharedString.id);
-            const translator = new Translator();
-            translator.run(
+            const translator = new Translator(
                 sharedString,
                 insightsMap,
                 this.config.get("intelligence:translation:key"));
+            return translator.run();
         }
-
     }
 
     public async stop(): Promise<void> {
