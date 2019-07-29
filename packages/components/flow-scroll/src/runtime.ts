@@ -26,7 +26,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         ["@chaincode/table-view", import("@chaincode/table-view").then((m) => m.TableView.getFactory())],
         ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts")],
         ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players")],
-        ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection")],
+        ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection").then((m) => m.fluidExport)],
         // pinpoint editor's SASS loading of resources causes trouble
         // If I can change webpack to do this then things are ok
         // {

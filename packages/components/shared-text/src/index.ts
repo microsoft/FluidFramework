@@ -61,7 +61,7 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@chaincode/video-players") {
             return videoPlayers;
         } else if (name === "@chaincode/image-collection") {
-            return images;
+            return images.then((i) => i.fluidExport);
         } else if (name === "@chaincode/monaco") {
             return monaco;
         } else if (name === "@chaincode/pinpoint-editor") {

@@ -18,6 +18,7 @@ import { ISharedMap, MapExtension } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
+    IComponentFactory,
     IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -164,18 +165,32 @@ export class ImageCollection extends EventEmitter implements
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(MapExtension.Type, new MapExtension());
+export class ImageCollectionFactoryComponent implements IComponentFactory {
+    public static supportedInterfaces = [ "IComponentFactory"];
 
-    ComponentRuntime.load(
-        context,
-        dataTypes,
-        (runtime) => {
-            const progressCollectionP = ImageCollection.load(runtime, context);
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                const progressCollection = await progressCollectionP;
-                return progressCollection.request(request);
+    public query(id: string): any {
+        return ImageCollectionFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return ImageCollectionFactoryComponent.supportedInterfaces;
+    }
+
+    public instantiateComponent(context: IComponentContext): void {
+        const dataTypes = new Map<string, ISharedObjectExtension>();
+        dataTypes.set(MapExtension.Type, new MapExtension());
+
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const progressCollectionP = ImageCollection.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const progressCollection = await progressCollectionP;
+                    return progressCollection.request(request);
+                });
             });
-        });
+    }
 }
+
+export const fluidExport: IComponentFactory = new ImageCollectionFactoryComponent();
