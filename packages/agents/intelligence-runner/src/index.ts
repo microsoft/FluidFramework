@@ -14,7 +14,8 @@ export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRun
 
     constructor(
         private readonly sharedString: Sequence.SharedString,
-        private readonly insightsMap: ISharedMap) {}
+        private readonly insightsMap: ISharedMap,
+        private readonly apiKey: string) {}
 
     public query(id: string): any {
         return TextAnalyzer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -25,7 +26,10 @@ export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRun
     }
 
     public async run() {
-        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap);
+        if (!this.apiKey || this.apiKey.length === 0) {
+            return Promise.reject("No intel key provided.");
+        }
+        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap, this.apiKey);
         return intelRunner.start();
     }
 

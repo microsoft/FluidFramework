@@ -179,23 +179,27 @@ export class WorkManager extends EventEmitter implements IWorkManager {
 
         if (!this.documentMap.has(fullId) && worker) {
             this.documentMap.set(fullId, worker);
-            await this.applyWork(fullId, workType, worker);
+            this.applyWork(fullId, workType, worker);
         }
     }
 
-    private async applyWork(fullId: string, workType: string, worker: IWork) {
-        await worker.start(workType);
-        debug(`Started work ${workType} for document ${fullId}`);
-        // Register existing intel agents to this document
-        if (workType === "intel") {
-            this.registerAgentsToNewDocument(fullId);
-        }
-        // Listen for errors and future stop events.
-        worker.on("error", (error) => {
-            this.events.emit("error", error);
-        });
-        worker.on("stop", (ev: IDocumentTaskInfo) => {
-            this.events.emit("stop", ev);
+    private applyWork(fullId: string, workType: string, worker: IWork) {
+        const startP = worker.start(workType);
+        startP.then(() => {
+            debug(`Started work ${workType} for document ${fullId}`);
+            // Register existing intel agents to this document
+            if (workType === "intel") {
+                this.registerAgentsToNewDocument(fullId);
+            }
+            // Listen for errors and future stop events.
+            worker.on("error", (error) => {
+                this.events.emit("error", error);
+            });
+            worker.on("stop", (ev: IDocumentTaskInfo) => {
+                this.events.emit("stop", ev);
+            });
+        }, (err) => {
+            debug(err);
         });
     }
 

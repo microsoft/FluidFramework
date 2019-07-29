@@ -122,9 +122,10 @@ class TaskScheduler {
     }
 
     public start() {
+        const apiKey = "c8b60dc5e49849ce903d7d29a2dce550";
         const intelTask: ITask = {
             id: "intel",
-            instance: new TextAnalyzer(this.flowDocument, this.insightsMap),
+            instance: new TextAnalyzer(this.flowDocument, this.insightsMap, apiKey),
         };
         this.taskManager.pick(this.componentUrl, intelTask).then(() => {
             console.log(`Picked text analyzer`);

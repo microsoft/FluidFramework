@@ -67,28 +67,32 @@ async function performTask(
     config: any) {
     switch (task) {
         case "snapshot":
-            const snapshotWork  = new SnapshotWork(
+            const snapshotWorkP  = new SnapshotWork(
                 alfred,
                 docId,
                 tenantId,
                 host,
                 config,
                 api.getDefaultDocumentServiceFactory());
-            await snapshotWork.start(task);
+            snapshotWorkP.start(task).catch((err) => {
+                console.log(err);
+            });
             break;
         case "intel":
-            const intelWork  = new IntelWork(
+            const intelWorkP  = new IntelWork(
                 alfred,
                 docId,
                 tenantId,
                 host,
                 config,
                 api.getDefaultDocumentServiceFactory());
-            await intelWork.start(task);
+            intelWorkP.start(task).catch((err) => {
+                console.log(err);
+            });
             break;
         case "spell":
             loadDictionary(config.serverUrl).then(async (dictionary) => {
-                const spellWork = new SpellcheckerWork(
+                const spellWorkP = new SpellcheckerWork(
                     alfred,
                     docId,
                     tenantId,
@@ -97,20 +101,24 @@ async function performTask(
                     dictionary,
                     api.getDefaultDocumentServiceFactory(),
                 );
-                await spellWork.start(task);
+                spellWorkP.start(task).catch((err) => {
+                    console.log(err);
+                });
             }, (err) => {
                 debug(err);
             });
             break;
         case "translation":
-            const translationWork = new TranslationWork(
+            const translationWorkP = new TranslationWork(
                 alfred,
                 docId,
                 tenantId,
                 host,
                 config,
                 api.getDefaultDocumentServiceFactory());
-            await translationWork.start(task);
+            translationWorkP.start(task).catch((err) => {
+                    console.log(err);
+            });
             break;
         case "chaincode":
             throw new Error(`Not implemented yet: ${task}`);
