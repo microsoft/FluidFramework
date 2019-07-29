@@ -82,9 +82,16 @@ export async function loadIFramedPragueComponent(
         scriptUrl = `https://pragueauspkn-3873244262.azureedge.net/@prague/tiny-web-host@${packageJson.version}/dist/main.bundle.js`;
     }
 
+    // As per IComponentHTMLRender, if the div has a size already, the render is expected to fill the space
+    // it has been given. If not, the render should grow based on its own content.
+    const divRect = div.getBoundingClientRect();
+    const expandToGivenSize = divRect.height && divRect.width;
+
     const iframe = document.createElement("iframe");
     iframe.frameBorder = "0";
     iframe.id = "containerid";
+
+    const componentDivStyle = expandToGivenSize ? `style="position:absolute; top:0; left:0; bottom:0; right:0;"` : "";
 
     iframe.srcdoc = `
     <!DOCTYPE html>
@@ -95,7 +102,7 @@ export async function loadIFramedPragueComponent(
     </head>
 
     <body>
-        <div id="componentDiv"></div>
+        <div id="componentDiv" ${componentDivStyle}></div>
         <script>
                 console.log("Welcome to the IFrame");
                 function start(url, token, appId) {
@@ -116,11 +123,10 @@ export async function loadIFramedPragueComponent(
     </body>
     </html>  `;
 
-    // For the moment, rely on where this iframe is being loaded to determine how to render this component.
-    // We may want to add a mode where we try to restrict the size of the component to just be big enough
-    // to host the component contents.
-    iframe.style.height = "100%";
-    iframe.style.width = "100%";
+    if (expandToGivenSize) {
+        iframe.style.height = "100%";
+        iframe.style.width = "100%";
+    }
 
     div.appendChild(iframe);
     iframe.onload = async () => {
