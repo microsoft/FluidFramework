@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@prague/gitresources": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
     "@prague/services": "^0.7.0",
     "@prague/services-core": "^0.7.0",
     "@prague/services-utils": "^0.7.0",

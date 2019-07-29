@@ -19,7 +19,6 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/container-definitions": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
     "@prague/services-core": "^0.7.0",
     "@prague/utils": "^0.7.0",
     "bytes": "^3.0.0",

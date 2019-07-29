@@ -25,7 +25,6 @@
     "@prague/loader-web": "^0.7.0",
     "@prague/routerlicious-host": "^0.7.0",
     "@prague/routerlicious-socket-storage": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.4.0"
   },
