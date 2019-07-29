@@ -38,7 +38,9 @@ export const pkgVersion = "${pkg.version}";
 // Only update the file if it has changed.
 if (fs.existsSync(outFile)) {
     const orig = fs.readFileSync(outFile, { encoding: "utf-8"});
-    if (orig === output) {
+    const orig_nocrlf = orig.replace(/(\r\n|\n|\r)/gm, "");
+    const output_nocrlf = output.replace(/(\r\n|\n|\r)/gm, "");
+    if (orig_nocrlf === output_nocrlf) {
         console.log(`${outFile} unchanged.`);
 
         // Done! Exit!
