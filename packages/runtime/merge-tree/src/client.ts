@@ -176,7 +176,7 @@ export class Client {
     public insertSiblingSegment(leftSibling: ISegment, segment: ISegment): ops.IMergeTreeInsertMsg {
         // generate the op for the expected position of the new sibling segment
         let opPos =
-            this.mergeTree.getOffset(leftSibling, this.getCurrentSeq(), this.getClientId());
+            this.mergeTree.getPosition(leftSibling, this.getCurrentSeq(), this.getClientId());
         // only add the length if the segment isn't removed
         if (!leftSibling.removedSeq) {
             opPos += leftSibling.cachedLength;
@@ -243,7 +243,7 @@ export class Client {
     }
 
     public getOffset(segment: ISegment): number {
-        return this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
+        return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
 
     /**
@@ -682,7 +682,7 @@ export class Client {
                 return undefined;
             }
 
-            const segmentOffset = this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
+            const segmentOffset = this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
 
             // if removed we only need to send a remove op
             // if inserted, we only need to send insert, as that will contain props
@@ -886,7 +886,7 @@ export class Client {
         let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
         let seg = segoff.segment;
         if (seg) {
-            posStart = this.mergeTree.getOffset(seg, segWindow.currentSeq, segWindow.clientId);
+            posStart = this.mergeTree.getPosition(seg, segWindow.currentSeq, segWindow.clientId);
             posAfterEnd = posStart + seg.cachedLength;
         }
         return { posStart, posAfterEnd };

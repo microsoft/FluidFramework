@@ -182,7 +182,7 @@ class Speller {
             for (const pg of this.pendingMarkers) {
                 let offset = 0;
                 if (pg.tile) {
-                    offset = this.sharedString.client.mergeTree.getOffset(pg.tile, MergeTree.UniversalSequenceNumber,
+                    offset = this.sharedString.client.mergeTree.getPosition(pg.tile, MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
                 const endMarker = this.sharedString.findTile(offset + 1, "pg", false);

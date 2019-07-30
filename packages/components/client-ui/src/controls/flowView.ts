@@ -1371,7 +1371,7 @@ function renderTable(
 
     const flowView = layoutInfo.flowView;
     const mergeTree = flowView.client.mergeTree;
-    const tablePos = mergeTree.getOffset(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
+    const tablePos = mergeTree.getPosition(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
     let tableView = table.table;
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
@@ -1566,7 +1566,7 @@ function renderTree(
     } as ILayoutContext;
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const outerTable = startingPosStack.table.items[0];
-        const outerTablePos = flowView.client.mergeTree.getOffset(outerTable as MergeTree.Marker,
+        const outerTablePos = flowView.client.mergeTree.getPosition(outerTable as MergeTree.Marker,
             MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
@@ -2307,7 +2307,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 if (flowView.bookmarks) {
                     let computedEnd = lineEnd;
                     if (!computedEnd) {
-                        computedEnd = client.mergeTree.getOffset(endPGMarker, client.getCurrentSeq(),
+                        computedEnd = client.mergeTree.getPosition(endPGMarker, client.getCurrentSeq(),
                             client.getClientId());
                     }
                     showBookmarks(layoutContext.flowView, lineStart,
@@ -3096,7 +3096,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
 }
 
 function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) {
-    return flowView.client.mergeTree.getOffset(localRef.segment, MergeTree.UniversalSequenceNumber,
+    return flowView.client.mergeTree.getPosition(localRef.segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId()) + localRef.offset;
 }
 
@@ -3116,7 +3116,7 @@ export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet,
 }
 
 function getOffset(flowView: FlowView, segment: MergeTree.ISegment) {
-    return flowView.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
+    return flowView.client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
 }
 
@@ -4679,16 +4679,16 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     toCell = tableView.nextcell(cell.cell);
                 }
                 if (toCell) {
-                    const offset = this.client.mergeTree.getOffset(toCell.marker,
+                    const offset = this.client.mergeTree.getPosition(toCell.marker,
                         MergeTree.UniversalSequenceNumber, this.client.getClientId());
                     this.cursor.pos = offset + 1;
                 } else {
                     if (shift) {
-                        const offset = this.client.mergeTree.getOffset(tableView.tableMarker,
+                        const offset = this.client.mergeTree.getPosition(tableView.tableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
                         this.cursor.pos = offset - 1;
                     } else {
-                        const endOffset = this.client.mergeTree.getOffset(tableView.endTableMarker,
+                        const endOffset = this.client.mergeTree.getPosition(tableView.endTableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
                         this.cursor.pos = endOffset + 1;
                     }

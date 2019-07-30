@@ -549,7 +549,7 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
 }
 
 function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
-    return client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber, client.getClientId());
+    return client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber, client.getClientId());
 }
 
 const endIdPrefix = "end-";

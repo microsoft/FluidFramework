@@ -101,7 +101,7 @@ export class LocalReference implements ReferencePosition {
 
     toPosition(mergeTree: MergeTree, refSeq: number, clientId: number) {
         if (this.segment) {
-            return this.offset + mergeTree.getOffset(this.segment, refSeq, clientId);
+            return this.offset + mergeTree.getPosition(this.segment, refSeq, clientId);
         } else {
             return LocalReference.DetachedPosition;
         }
@@ -1741,7 +1741,7 @@ export class MergeTree {
         if (((fromSeq < toSeq) || (toClientId === this.collabWindow.clientId)) && pos < this.getLength(fromSeq, fromClientId)) {
             if (toSeq <= this.collabWindow.currentSeq) {
                 let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
-                let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
+                let toPos = this.getPosition(segoff.segment, toSeq, toClientId);
                 let ret = toPos + segoff.offset;
                 assert(ret !== undefined);
                 return ret;
@@ -1758,7 +1758,7 @@ export class MergeTree {
         let recordRange = (segment: ISegment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
             if (this.nodeLength(segment, toSeq, toClientId) > 0) {
-                let offset = this.getOffset(segment, toSeq, toClientId);
+                let offset = this.getPosition(segment, toSeq, toClientId);
                 if (segStart < 0) {
                     segStart = 0;
                 }
@@ -1781,7 +1781,7 @@ export class MergeTree {
         return this.blockLength(this.root, refSeq, clientId);
     }
 
-    getOffset(node: MergeNode, refSeq: number, clientId: number) {
+    getPosition(node: MergeNode, refSeq: number, clientId: number) {
         let totalOffset = 0;
         let parent = node.parent;
         let prevParent: IMergeBlock;
@@ -1958,7 +1958,7 @@ export class MergeTree {
         refSeq = UniversalSequenceNumber, clientId = this.collabWindow.clientId) {
         let seg = refPos.getSegment();
         let offset = refPos.getOffset();
-        return offset + this.getOffset(seg, refSeq, clientId);
+        return offset + this.getPosition(seg, refSeq, clientId);
     }
 
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
@@ -2011,7 +2011,7 @@ export class MergeTree {
             let pos: number;
             if (searchInfo.tile.isLeaf()) {
                 let marker = <Marker>searchInfo.tile;
-                pos = this.getOffset(marker, UniversalSequenceNumber, clientId);
+                pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
             } else {
                 let localRef = <LocalReference>searchInfo.tile;
                 pos = localRef.toPosition(this, UniversalSequenceNumber, clientId);
@@ -2172,7 +2172,7 @@ export class MergeTree {
             marker = <Marker>this.getSegmentFromId(relativePos.id);
         }
         if (marker) {
-            pos = this.getOffset(marker, refseq, clientId);
+            pos = this.getPosition(marker, refseq, clientId);
             if (!relativePos.before) {
                 pos += marker.cachedLength;
                 if (relativePos.offset !== undefined) {

@@ -272,7 +272,7 @@ export function mergeTreeTest1() {
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
     mergeTree.map({ leaf: printTextSegment }, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
     let segoff = mergeTree.getContainingSegment(4, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId);
-    log(mergeTree.getOffset(segoff.segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
+    log(mergeTree.getPosition(segoff.segment, MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
     log(new MergeTree.MergeTreeTextHelper(mergeTree).getText(MergeTree.UniversalSequenceNumber, MergeTree.LocalClientId));
     log(mergeTree.toString());
     TestPack().firstTest();
@@ -1591,7 +1591,7 @@ export class DocumentTree {
                     let id = prevChild.id;
                     let endId = "end-" + id;
                     let endRowMarker = <MergeTree.Marker>client.mergeTree.getSegmentFromId(endId);
-                    let endRowPos = client.mergeTree.getOffset(endRowMarker, MergeTree.UniversalSequenceNumber,
+                    let endRowPos = client.mergeTree.getPosition(endRowMarker, MergeTree.UniversalSequenceNumber,
                         client.getClientId());
                     prevPos = endRowPos;
                 }

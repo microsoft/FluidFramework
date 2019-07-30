@@ -196,7 +196,7 @@ class SequenceUndoRedo implements IRevertable {
                     case MergeTreeDeltaType.INSERT:
                         if (!sg.removedSeq) {
                             const start =
-                                mergeTree.getOffset(
+                                mergeTree.getPosition(
                                     sg,
                                     mergeTree.collabWindow.currentSeq,
                                     mergeTree.collabWindow.clientId);
@@ -224,7 +224,7 @@ class SequenceUndoRedo implements IRevertable {
                     case MergeTreeDeltaType.ANNOTATE:
                         if (!sg.removedSeq) {
                             const start =
-                                mergeTree.getOffset(
+                                mergeTree.getPosition(
                                     sg,
                                     mergeTree.collabWindow.currentSeq,
                                     mergeTree.collabWindow.clientId);

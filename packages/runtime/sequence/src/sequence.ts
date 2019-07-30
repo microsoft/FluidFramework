@@ -234,7 +234,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public localRefToPos(localRef: MergeTree.LocalReference) {
         if (localRef.segment) {
-            return localRef.offset + this.client.mergeTree.getOffset(localRef.segment,
+            return localRef.offset + this.client.mergeTree.getPosition(localRef.segment,
                 this.client.getCurrentSeq(), this.client.getClientId());
         } else {
             return -1;
@@ -263,7 +263,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         if (segmentInfo && segmentInfo.segment) {
 
-            const segmentPosition = this.client.mergeTree.getOffset(
+            const segmentPosition = this.client.mergeTree.getPosition(
                 segmentInfo.segment,
                 this.client.getCurrentSeq(),
                 this.client.getClientId());

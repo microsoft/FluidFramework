@@ -34,7 +34,7 @@ let rowIdSuffix = 0;
 let columnIdSuffix = 0;
 
 function getOffset(sharedString: SharedString, segment: MergeTree.ISegment) {
-    return sharedString.client.mergeTree.getOffset(segment, MergeTree.UniversalSequenceNumber,
+    return sharedString.client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber,
         sharedString.client.getClientId());
 }
 
@@ -226,8 +226,8 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
                 const mergeTree = sharedString.client.mergeTree;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
                     sharedString.removeRange(
-                        mergeTree.getOffset(cell.marker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId),
-                        mergeTree.getOffset(cell.endMarker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId));
+                        mergeTree.getPosition(cell.marker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId),
+                        mergeTree.getPosition(cell.endMarker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId));
                 });
             }
         }
@@ -594,7 +594,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                         cellMarker.cell.minContentWidth = tableMarker.table.minContentWidth;
                     }
                     let endTableMarker = tableMarker.table.endTableMarker;
-                    nextPos = mergeTree.getOffset(
+                    nextPos = mergeTree.getPosition(
                         endTableMarker, MergeTree.UniversalSequenceNumber, sharedString.client.getClientId());
                     nextPos += endTableMarker.cachedLength;
                 } else {

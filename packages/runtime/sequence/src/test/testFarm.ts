@@ -1826,7 +1826,7 @@ export class DocumentTree {
                     let id = prevChild.id;
                     let endId = "end-" + id;
                     let endRowMarker = <MergeTree.Marker>client.mergeTree.getSegmentFromId(endId);
-                    let endRowPos = client.mergeTree.getOffset(endRowMarker, MergeTree.UniversalSequenceNumber,
+                    let endRowPos = client.mergeTree.getPosition(endRowMarker, MergeTree.UniversalSequenceNumber,
                         client.getClientId());
                     prevPos = endRowPos;
                 }

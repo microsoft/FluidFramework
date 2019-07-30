@@ -16,6 +16,9 @@ The `pos` and `text` arguments of `sharedString.insertText()` have been switched
 public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ```
 
+## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
+`mergeTree.getOffset()` has been renamed to `getPosition()` to more accurately reflect its functionality.
+
 # 0.7 Breaking Changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the
