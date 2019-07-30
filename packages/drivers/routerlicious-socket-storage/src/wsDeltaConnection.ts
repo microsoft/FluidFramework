@@ -61,7 +61,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
     }
 
     private readonly socket: ws;
-    private readonly submitManager: BatchManager<IDocumentMessage>;
+    private readonly submitManager: BatchManager<IDocumentMessage[]>;
     private details: IConnected | undefined;
 
     public get clientId(): string {
@@ -142,7 +142,7 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
             this.details = connectedMessage;
         });
 
-        this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
+        this.submitManager = new BatchManager<IDocumentMessage[]>((submitType, work) => {
             this.sendMessage(JSON.stringify([submitType, this.details!.clientId, work]));
         });
     }
@@ -150,8 +150,8 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: IDocumentMessage): void {
-        this.submitManager.add("submitOp", message);
+    public submit(messages: IDocumentMessage[]): void {
+        this.submitManager.add("submitOp", messages);
     }
 
     /**
@@ -162,9 +162,9 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
         this.submitManager.add("submitSignal", message);
     }
 
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, message]), (error) => {
+            this.socket.send(JSON.stringify(["submitContent", this.details!.clientId, messages]), (error) => {
                 if (error) {
                     this.emit("error", error);
                     reject(error);

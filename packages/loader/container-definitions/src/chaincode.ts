@@ -197,7 +197,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly branch: string;
     readonly minimumSequenceNumber: number | undefined;
     readonly baseSnapshot: ISnapshotTree | null;
-    readonly submitFn: (type: MessageType, contents: any) => number;
+    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
     readonly closeFn: () => void;
@@ -206,6 +206,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly codeLoader: ICodeLoader;
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
+    readonly version: string;
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }

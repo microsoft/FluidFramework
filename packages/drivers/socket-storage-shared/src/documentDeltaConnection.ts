@@ -158,7 +158,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         return deltaConnection;
     }
 
-    private readonly submitManager: BatchManager<IDocumentMessage>;
+    private readonly submitManager: BatchManager<IDocumentMessage[]>;
 
     /**
      * Get the ID of the client who is sending the message
@@ -248,7 +248,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
         public details: IConnected) {
         super();
 
-        this.submitManager = new BatchManager<IDocumentMessage | any>(
+        this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => {
                 this.socket.emit(submitType, this.details.clientId, work);
             });
@@ -279,17 +279,8 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @param message - delta operation to submit
      */
-    public submit(message: IDocumentMessage): void {
-        this.submitManager.add("submitOp", message);
-    }
-
-    /**
-     * Submits a new signal to the server
-     *
-     * @param message - signal to submit
-     */
-    public submitSignal(message: IDocumentMessage): void {
-        this.submitManager.add("submitSignal", message);
+    public submit(messages: IDocumentMessage[]): void {
+        this.submitManager.add("submitOp", messages);
     }
 
     /**
@@ -297,12 +288,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      *
      * @param message - message to submit
      */
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(
                 "submitContent",
                 this.details.clientId,
-                message,
+                messages,
                 (error) => {
                     if (error) {
                         reject();
@@ -311,6 +302,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     }
                 });
         });
+    }
+
+    /**
+     * Submits a new signal to the server
+     *
+     * @param message - signal to submit
+     */
+    public submitSignal(message: IDocumentMessage): void {
+        this.submitManager.add("submitSignal", [message]);
     }
 
     /**

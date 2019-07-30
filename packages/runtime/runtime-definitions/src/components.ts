@@ -254,6 +254,22 @@ export interface IComponentContext extends EventEmitter, IComponent {
 }
 
 /**
+ * Runtime flush mode handling
+ */
+export enum FlushMode {
+    /**
+     * In automatic flush mode the runtime will immediatley send all operations to the driver layer.
+     */
+    Automatic,
+
+    /**
+     * When in manual flush mode the runtime will buffer operations in the current turn and send them as a single
+     * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
+     */
+    Manual,
+}
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
 export interface IHostRuntime extends IRuntime {
@@ -273,6 +289,7 @@ export interface IHostRuntime extends IRuntime {
     readonly minimumSequenceNumber: number;
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
+    readonly flushMode: FlushMode;
     readonly submitFn: (type: MessageType, contents: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly snapshotFn: (message: string) => Promise<void>;
@@ -303,6 +320,9 @@ export interface IHostRuntime extends IRuntime {
      */
     getPackage(name: string): Promise<IComponentFactory>;
 
+    /**
+     * Used to raise an unrecoverable error on the runtime.
+     */
     error(err: any): void;
 
     /**
@@ -316,6 +336,22 @@ export interface IHostRuntime extends IRuntime {
      * either were not sent out to delta stream or were not yet acknowledged.
      */
     isDocumentDirty(): boolean;
+
+    /**
+     * Sets the flush mode for operations on the document.
+     */
+    setFlushMode(mode: FlushMode): void;
+
+    /**
+     * Flushes any ops currently being batched to the loader
+     */
+    flush(): void;
+
+    /**
+     * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
+     * sequentially. Total size of all messages must be less than maxOpSize.
+     */
+    orderSequentially(callback: () => void): void;
 }
 
 /**

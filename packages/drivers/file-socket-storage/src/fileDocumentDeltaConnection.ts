@@ -189,11 +189,11 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
         super();
     }
 
-    public submit(message: IDocumentMessage): void {
+    public submit(documentMessages: IDocumentMessage[]): void {
         debug("dropping the outbound message");
     }
 
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
+    public async submitAsync(documentMessages: IDocumentMessage[]): Promise<void> {
         debug("dropping the outbound message and wait for response");
     }
 

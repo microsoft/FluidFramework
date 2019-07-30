@@ -14,8 +14,7 @@
     "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p",
-    "tsc": "tsc"
+    "post-deploy": "getUrl -p"
   },
   "dependencies": {
     "@prague/aqueduct": "^0.7.0",

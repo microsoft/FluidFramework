@@ -104,6 +104,9 @@ export interface IDocumentMessage {
     // The contents of the message
     contents: any;
 
+    // App provided metadata about the operation
+    metadata?: any;
+
     // Traces related to the packet.
     traces?: ITrace[];
 }

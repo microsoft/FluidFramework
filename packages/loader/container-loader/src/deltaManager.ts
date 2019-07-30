@@ -49,6 +49,8 @@ const DefaultContentBufferSize = 10;
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+    public static supportedInterfaces = ["IDeltaSender"];
+
     public readonly clientType: string;
 
     private pending: ISequencedDocumentMessage[] = [];
@@ -74,7 +76,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
-    private readonly _outbound: DeltaQueue<IDocumentMessage>;
+    private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
     // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails> | undefined | null;
@@ -88,6 +90,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
+    private messageBuffer = new Array<IDocumentMessage>();
+
     private pongCount: number = 0;
     private socketLatency = 0;
 
@@ -96,15 +100,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private connectRepeatCount = 0;
     private connectStartTime = 0;
 
-    public get inbound(): IDeltaQueue<ISequencedDocumentMessage | undefined> {
+    public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
 
-    public get outbound(): IDeltaQueue<IDocumentMessage | undefined> {
+    public get outbound(): IDeltaQueue<IDocumentMessage[]> {
         return this._outbound;
     }
 
-    public get inboundSignal(): IDeltaQueue<ISignalMessage | undefined> {
+    public get inboundSignal(): IDeltaQueue<ISignalMessage> {
         return this._inboundSignal;
     }
 
@@ -173,27 +177,30 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             this.emit("error", error);
         });
 
-        // Outbound message queue
-        this._outbound = new DeltaQueue<IDocumentMessage>(
-            (message, callback: (error?) => void) => {
-                if (this.shouldSplit(message!.contents as string)) {
-                    debug(`Splitting content from envelope.`);
-                    this.connection!.submitAsync(message!).then(
-                        () => {
-                            this.contentCache.set({
-                                clientId: this.connection!.details.clientId,
-                                clientSequenceNumber: message!.clientSequenceNumber,
-                                contents: message!.contents as string,
+        // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
+        // within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
+        this._outbound = new DeltaQueue<IDocumentMessage[]>(
+            (messages, callback: (error?) => void) => {
+                if (this.shouldSplit(messages)) {
+                    messages.forEach((message) => {
+                        debug(`Splitting content from envelope.`);
+                        this.connection!.submitAsync([message]).then(
+                            () => {
+                                this.contentCache.set({
+                                    clientId: this.connection!.details.clientId,
+                                    clientSequenceNumber: message!.clientSequenceNumber,
+                                    contents: message!.contents as string,
+                                });
+                                message!.contents = undefined;
+                                this.connection!.submit([message]);
+                                callback();
+                            },
+                            (error) => {
+                                callback(error);
                             });
-                            message!.contents = undefined;
-                            this.connection!.submit(message);
-                            callback();
-                        },
-                        (error) => {
-                            callback(error);
-                        });
+                    });
                 } else {
-                    this.connection!.submit(message);
+                    this.connection!.submit(messages);
                     callback();
                 }
             });
@@ -218,6 +225,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound.pause();
         this._outbound.pause();
         this._inboundSignal.pause();
+    }
+
+    public query<T>(id: string): any {
+        return DeltaManager.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return DeltaManager.supportedInterfaces;
     }
 
     /**
@@ -271,7 +286,20 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         return this.connecting.promise;
     }
 
-    public submit(type: MessageType, contents: string | null): number {
+    public flush() {
+        if (this.messageBuffer.length === 0) {
+            return;
+        }
+
+        this._outbound.push(this.messageBuffer);
+        this.messageBuffer = [];
+    }
+
+    public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
+        // TODO need to fail if gets too large
+        // const serializedContent = JSON.stringify(this.messageBuffer);
+        // const maxOpSize = this.context.deltaManager.maxMessageSize;
+
         // Start adding trace for the op.
         const traces: ITrace[] = [
             {
@@ -280,22 +308,28 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 timestamp: Date.now(),
             }];
 
-        const coreMessage: IDocumentMessage = {
+        const message: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
-            contents,
+            contents: JSON.stringify(contents),
+            metadata,
             referenceSequenceNumber: this.baseSequenceNumber,
             traces,
             type,
         };
 
-        const message = this.createOutboundMessage(type, coreMessage);
+        const outbound = this.createOutboundMessage(type, message);
         this.readonly = false;
-
-        this.emit("submitOp", message);
         this.stopSequenceNumberUpdate();
-        this._outbound.push(message);
+        this.emit("submitOp", message);
 
-        return message.clientSequenceNumber;
+        if (!batch) {
+            this.flush();
+            this._outbound.push([outbound]);
+        } else {
+            this.messageBuffer.push(outbound);
+        }
+
+        return outbound.clientSequenceNumber;
     }
 
     public submitSignal(content: any) {
@@ -421,7 +455,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         }
     }
 
-    private shouldSplit(contents: string | null | undefined): boolean {
+    private shouldSplit(contents: IDocumentMessage[]): boolean {
         // Disabling message splitting - there is no compelling reason to use it.
         // Container.submitMessage should chunk messages properly.
         // Content can still be 2x size of maxMessageSize due to character escaping.

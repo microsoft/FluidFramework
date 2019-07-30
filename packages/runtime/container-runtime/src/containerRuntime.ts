@@ -14,10 +14,11 @@ import {
     IComponentConfiguration,
     IContainerContext,
     IDeltaManager,
+    IDeltaSender,
     IDocumentMessage,
     IDocumentStorageService,
     ILoader,
-    IMessageScheduler,
+    // IMessageScheduler,
     IQuorum,
     IRequest,
     IResponse,
@@ -36,6 +37,7 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import {
+    FlushMode,
     IAttachMessage,
     IComponentFactory,
     IComponentRuntime,
@@ -201,6 +203,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.context.configuration;
     }
 
+    public get flushMode(): FlushMode {
+        return this._flushMode;
+    }
+
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
 
@@ -209,6 +215,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     // back-compat: version decides between loading document and chaincode.
     private version: string;
+
+    // tslint:disable:variable-name
+    private _flushMode = FlushMode.Automatic;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -233,7 +242,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
-    private readonly scheduler: IMessageScheduler;
+    private readonly deltaSender: IDeltaSender | undefined;
+    // private readonly scheduler: IMessageScheduler;
     private proposeLeadershipOnConnection = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
@@ -247,7 +257,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
      // Local copy of sent but unacknowledged chunks.
-    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
+     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -285,13 +295,14 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.contextsDeferred.set(key, deferred);
         }
 
-        // TODO uncomment once prepare is removed
         // this.scheduler = context.query ? context.query<IMessageScheduler>("IMessageScheduler") : undefined;
         // if (this.scheduler) {
         //     this.scheduler.deltaManager.inbound.on("push", (value) => {
         //         debug("push", value);
         //     });
         // }
+
+        this.deltaSender = this.deltaManager.query ? this.deltaManager.query("IDeltaSender") : undefined;
 
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
@@ -660,9 +671,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        if (this.scheduler) {
-            return Promise.reject("Scheduler assumes only process");
-        }
+        // Add back once process is removed
+        // if (this.scheduler) {
+        //     return Promise.reject("Scheduler assumes only process");
+        // }
 
         return;
     }
@@ -696,6 +708,48 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         const componentContext = await this.contextsDeferred.get(id).promise;
         return componentContext.realize();
+    }
+
+    public setFlushMode(mode: FlushMode): void {
+        if (mode === this._flushMode) {
+            return;
+        }
+
+        // If switching to manual mode add a warning trace indicating the underlying loader does not support
+        // this feature yet. Can remove in 0.9.
+        if (!this.deltaSender && mode === FlushMode.Manual) {
+            debug("DeltaManager does not yet support flush modes - ");
+        }
+
+        // Flush any pending batches if switching back to automatic
+        if (mode === FlushMode.Automatic) {
+            this.flush();
+        }
+
+        this._flushMode = mode;
+    }
+
+    public flush(): void {
+        if (!this.deltaSender) {
+            debug("DeltaManager does not yet support flush modes");
+            return;
+        }
+
+        return this.deltaSender.flush();
+    }
+
+    public orderSequentially(callback: () => void): void {
+        const savedFlushMode = this.flushMode;
+
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            callback();
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        } catch (error) {
+            this.error(error);
+        }
     }
 
     public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
@@ -946,7 +1000,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // there will be a lot of escape characters that can make it up to 2x bigger!
         // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
         if (serializedContent.length <= maxOpSize) {
-            clientSequenceNumber = this.context.submitFn(type, content);
+            clientSequenceNumber = this.context.submitFn(
+                type,
+                content,
+                this._flushMode === FlushMode.Manual,
+                undefined);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             this.unackedChunkedMessages.set(clientSequenceNumber,
@@ -972,7 +1030,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            clientSequenceNumber = this.context.submitFn(MessageType.ChunkedOp, chunkedOp);
+            clientSequenceNumber = this.context.submitFn(MessageType.ChunkedOp, chunkedOp, false);
         }
         return clientSequenceNumber;
     }

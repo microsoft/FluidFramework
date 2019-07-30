@@ -70,6 +70,8 @@ interface IConnectResult {
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class Container extends EventEmitterWithErrorHandling implements IContainer {
+    public static version = "^0.1.0";
+
     /**
      * Load container.
      *
@@ -123,7 +125,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // tslint:disable:variable-name
     private _version: string | undefined;
     private _clientId: string | undefined;
-    private _deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> | undefined;
+    private _deltaManager: DeltaManager | undefined;
     private _existing: boolean | undefined;
     private readonly _id: string;
     private _parentBranch: string | undefined | null;
@@ -521,7 +523,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     (type, contents) => this.submitMessage(type, contents),
                     (message) => this.submitSignal(message),
                     (message) => this.snapshot(message),
-                    () => this.close());
+                    () => this.close(),
+                    Container.version);
                 this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
                 loader.resolveContainer(this);
 
@@ -682,7 +685,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             (type, contents) => this.submitMessage(type, contents),
             (message) => this.submitSignal(message),
             (message) => this.snapshot(message),
-            () => this.close());
+            () => this.close(),
+            Container.version);
         this.context = newContext;
         loader.resolveContainer(this);
 
@@ -870,11 +874,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return -1;
         }
 
-        // TODO it may be better not to stringify in this case and have the storage layer do this
-        const serializedContent = JSON.stringify(contents);
-        const clientSequenceNumber = this._deltaManager!.submit(type, serializedContent);
-
-        return clientSequenceNumber;
+        return this._deltaManager!.submit(type, contents);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {

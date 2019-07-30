@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IComponent } from "./components";
 import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType } from "./protocol";
 
 // Summary algorithm configuration
@@ -62,15 +63,29 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
-export interface IDeltaManager<T, U> extends EventEmitter {
+export interface IDeltaSender extends IComponent {
+    /**
+     * Submits the given delta returning the client sequence number for the message. Contents is the actual
+     * contents of the message. appData is optional metadata that can be attached to the op by the app.
+     *
+     * If batch is set to true then the submit will be batched - and as a result guaranteed to be ordered sequentially
+     * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
+     * op is submitted.
+     */
+    submit(type: MessageType, contents: any, batch: boolean, appData: any): number;
+
+    flush(): void;
+}
+
+export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender {
     // The queue of inbound delta messages
-    inbound: IDeltaQueue<T | undefined>;
+    inbound: IDeltaQueue<T>;
 
     // the queue of outbound delta messages
-    outbound: IDeltaQueue<U | undefined>;
+    outbound: IDeltaQueue<U[]>;
 
     // The queue of inbound delta signals
-    inboundSignal: IDeltaQueue<ISignalMessage | undefined>;
+    inboundSignal: IDeltaQueue<ISignalMessage>;
 
     // The current minimum sequence number
     minimumSequenceNumber: number;
@@ -105,8 +120,6 @@ export interface IDeltaManager<T, U> extends EventEmitter {
         sequenceNumber: number,
         handler: IDeltaHandlerStrategy,
         resume: boolean);
-
-    submit(type: MessageType, contents: string): number;
 
     submitSignal(content: any): void;
 }

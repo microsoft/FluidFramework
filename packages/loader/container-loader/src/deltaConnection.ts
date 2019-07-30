@@ -101,14 +101,12 @@ export class DeltaConnection extends EventEmitter {
         this.removeAllListeners();
     }
 
-    public submit(message: IDocumentMessage | undefined): void {
-        if (message !== undefined) {
-            this.connection.submit(message);
-        }
+    public submit(messages: IDocumentMessage[]): void {
+        this.connection.submit(messages);
     }
 
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
-        return this.connection.submitAsync(message);
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
+        return this.connection.submitAsync(messages);
     }
 
     public submitSignal(message: any): void {

@@ -269,11 +269,11 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         super();
     }
 
-    public submit(message: IDocumentMessage): void {
+    public submit(documentMessage: IDocumentMessage[]): void {
         debug("dropping the outbound message");
     }
 
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
+    public async submitAsync(documentMessage: IDocumentMessage[]): Promise<void> {
         debug("dropping the outbound message and wait for response");
     }
 

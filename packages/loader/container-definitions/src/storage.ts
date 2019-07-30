@@ -246,13 +246,13 @@ export interface IDocumentDeltaConnection extends EventEmitter {
     /**
      * Submit a new message to the server
      */
-    submit(message: IDocumentMessage): void;
+    submit(messages: IDocumentMessage[]): void;
 
     /**
      * Async version of the regular submit function.
      */
     // TODO why the need for two of these?
-    submitAsync(message: IDocumentMessage): Promise<void>;
+    submitAsync(message: IDocumentMessage[]): Promise<void>;
 
     /**
      * Submit a new signal to the server

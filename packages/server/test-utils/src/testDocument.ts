@@ -64,6 +64,9 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
 export class TestDeltaManager
     extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+
+    public static supportedInterfaces = ["IDeltaSender"];
+
     public referenceSequenceNumber: number;
 
     public maxMessageSize: number;
@@ -72,13 +75,21 @@ export class TestDeltaManager
 
     public inbound = new TestDeltaQueue<ISequencedDocumentMessage>();
 
-    public outbound = new TestDeltaQueue<IDocumentMessage>();
+    public outbound = new TestDeltaQueue<IDocumentMessage[]>();
 
     public inboundSignal = new TestDeltaQueue<ISignalMessage>();
 
     public clientType = "Browser";
 
     public version = "^0.1.0";
+
+    public query<T>(id: string): any {
+        return TestDeltaManager.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return TestDeltaManager.supportedInterfaces;
+    }
 
     public enableReadonlyMode() {
         return;
@@ -101,10 +112,18 @@ export class TestDeltaManager
     }
 
     public attachOpHandler(
-            minSequenceNumber: number,
-            sequenceNumber: number,
-            handler: IDeltaHandlerStrategy,
-            resume: boolean) {
+        minSequenceNumber: number,
+        sequenceNumber: number,
+        handler: IDeltaHandlerStrategy,
+        resume: boolean,
+    ) {
+        throw new Error("Method not implemented.");
+    }
+
+    /**
+     * Flushes any ops currently being batched to the loader
+     */
+    public flush(): void {
         throw new Error("Method not implemented.");
     }
 

@@ -49,10 +49,11 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         loader: ILoader,
         storage: IDocumentStorageService | null | undefined,
         errorFn: (err: any) => void,
-        submitFn: (type: MessageType, contents: any) => number,
+        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         snapshotFn: (message: string) => Promise<void>,
         closeFn: () => void,                        // When would the context ever close?
+        version: string,
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
@@ -69,7 +70,8 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
             submitFn,
             submitSignalFn,
             snapshotFn,
-            closeFn);
+            closeFn,
+            version);
         await context.load();
 
         return context;
@@ -152,10 +154,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
         private readonly errorFn: (err: any) => void,
-        public readonly submitFn: (type: MessageType, contents: any) => number,
+        // tslint:disable-next-line:max-line-length
+        public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly snapshotFn: (message: string) => Promise<void>,
         public readonly closeFn: () => void,
+        public readonly version: string,
     ) {
         super();
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;

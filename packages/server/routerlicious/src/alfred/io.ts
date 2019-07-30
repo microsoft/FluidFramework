@@ -167,7 +167,7 @@ export function register(
         // Message sent when a new operation is submitted to the router
         socket.on(
             "submitOp",
-            (clientId: string, messages: IDocumentMessage[], response) => {
+            (clientId: string, messageBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
                 // TODO validate message size within bounds
 
                 // Verify the user has an orderer connection.
@@ -176,24 +176,28 @@ export function register(
                 }
 
                 const connection = connectionsMap.get(clientId);
-                const sanitized = messages
-                    .filter((message) => {
-                        if (message.type === api.RoundTrip) {
-                            // End of tracking. Write traces.
-                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                (error) => {
-                                    winston.error(error.stack);
-                                });
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    })
-                    .map((message) => sanitizeMessage(message));
 
-                if (sanitized.length > 0) {
-                    connection.order(sanitized);
-                }
+                messageBatches.forEach((messageBatch) => {
+                    const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
+                    const sanitized = messages
+                        .filter((message) => {
+                            if (message.type === api.RoundTrip) {
+                                // End of tracking. Write traces.
+                                metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                                    (error) => {
+                                        winston.error(error.stack);
+                                    });
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        })
+                        .map((message) => sanitizeMessage(message));
+
+                    if (sanitized.length > 0) {
+                        connection.order(sanitized);
+                    }
+                });
 
                 // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
                 // removed in 0.9
@@ -237,29 +241,35 @@ export function register(
         });
 
         // Message sent when a new signal is submitted to the router
-        socket.on("submitSignal", (clientId: string, contents: any[], response) => {
-            // Verify the user has an orderer connection and subscription to the room.
-            if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
-                return response("Invalid client ID or readonly client", null);
-            }
+        socket.on(
+            "submitSignal",
+            (clientId: string, contentBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
+                // Verify the user has an orderer connection and subscription to the room.
+                if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
+                    return response("Invalid client ID or readonly client", null);
+                }
 
-            const roomId = roomMap.get(clientId);
+                const roomId = roomMap.get(clientId);
 
-            for (const content of contents) {
-                const signalMessage: ISignalMessage = {
-                    clientId,
-                    content,
-                };
+                contentBatches.forEach((contentBatche) => {
+                    const contents = Array.isArray(contentBatche) ? contentBatche : [contentBatche];
 
-                socket.emitToRoom(roomId, "signal", signalMessage);
-            }
+                    for (const content of contents) {
+                        const signalMessage: ISignalMessage = {
+                            clientId,
+                            content,
+                        };
 
-            // A response callback used to be used to verify the send. Newer drivers do not use this. Will be removed
-            // in 0.9
-            if (response) {
-                response(null);
-            }
-        });
+                        socket.emitToRoom(roomId, "signal", signalMessage);
+                    }
+                });
+
+                // A response callback used to be used to verify the send. Newer drivers do not use this.
+                // Will be removed in 0.9
+                if (response) {
+                    response(null);
+                }
+            });
 
         socket.on("disconnect", () => {
             // Send notification messages for all client IDs in the connection map

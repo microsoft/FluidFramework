@@ -281,18 +281,32 @@ export function register(
         });
 
         // Message sent when a new operation is submitted to the router
-        socket.on("submitOp", (clientId: string, messages: IDocumentMessage[], response) => {
-            // Verify the user has connected on this object id
-            if (!connectionsMap.has(clientId)) {
-                return response("Invalid client ID", null);
-            }
+        socket.on(
+            "submitOp",
+            (clientId: string, messageBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
+                // Verify the user has connected on this object id
+                if (!connectionsMap.has(clientId)) {
+                    return response("Invalid client ID", null);
+                }
 
-            const connection = connectionsMap.get(clientId);
-            const filtered = messages.filter((message) => message.type !== RoundTrip);
-            connection.order(filtered);
+                const connection = connectionsMap.get(clientId);
 
-            response(null);
-        });
+                messageBatches.forEach((messageBatch) => {
+                    const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
+                    const filtered = messages
+                        .filter((message) => message.type !== RoundTrip);
+
+                    if (filtered.length > 0) {
+                        connection.order(filtered);
+                    }
+                });
+
+                // A response callback used to be used to verify the send. Newer drivers do not use this. Will be
+                // removed in 0.9
+                if (response) {
+                    response(null);
+                }
+            });
 
         // Message sent when a new splitted operation is submitted to the router
         socket.on("submitContent", (clientId: string, message: IDocumentMessage, response) => {

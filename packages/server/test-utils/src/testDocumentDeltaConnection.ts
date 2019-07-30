@@ -121,7 +121,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     }
 
     private emitter = new EventEmitter();
-    private submitManager: BatchManager<IDocumentMessage>;
+    private submitManager: BatchManager<IDocumentMessage[]>;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -165,7 +165,7 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         public details: IConnected) {
         super();
 
-        this.submitManager = new BatchManager<IDocumentMessage>((submitType, work) => {
+        this.submitManager = new BatchManager<IDocumentMessage[]>((submitType, work) => {
             this.socket.emit(
                 submitType,
                 this.details.clientId,
@@ -198,8 +198,8 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
     /**
      * Submits a new delta operation to the server
      */
-    public submit(message: IDocumentMessage): void {
-        this.submitManager.add("submitOp", message);
+    public submit(messages: IDocumentMessage[]): void {
+        this.submitManager.add("submitOp", messages);
         this.submitManager.drain();
     }
 
@@ -212,12 +212,12 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
         this.submitManager.drain();
     }
 
-    public async submitAsync(message: IDocumentMessage): Promise<void> {
+    public async submitAsync(messages: IDocumentMessage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.socket.emit(
                 "submitContent",
                 this.details.clientId,
-                message,
+                messages,
                 (error) => {
                     if (error) {
                         reject();
