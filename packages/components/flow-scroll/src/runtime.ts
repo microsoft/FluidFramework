@@ -24,10 +24,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice.getFactory())],
         ["@chaincode/chart-view", import("@chaincode/chart-view").then((m) => m.ChartView.getFactory())],
         ["@chaincode/table-view", import("@chaincode/table-view").then((m) => m.TableView.getFactory())],
-        ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts").then((f) => {
-            // TODO: Return FuildExport
-            return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };
-        })],
+        ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts").then((m) => m.fluidExport)],
         ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players").then((f) => {
             // TODO: Return FuildExport
             return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };

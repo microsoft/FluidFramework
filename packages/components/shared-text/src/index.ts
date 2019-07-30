@@ -59,23 +59,20 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@chaincode/math") {
             return math.then((m) => m.fluidExport);
         } else if (name === "@chaincode/charts") {
-            return charts.then((f) => {
-                // TODO: Return FuildExport
-                return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };
-            });
+            return charts.then((m) => m.fluidExport);
         } else if (name === "@chaincode/progress-bars") {
-            return progressBars.then((f) => f.fluidExport);
+            return progressBars.then((m) => m.fluidExport);
         } else if (name === "@chaincode/video-players") {
-            return videoPlayers.then((f) => {
+            return videoPlayers.then((m) => {
                 // TODO: Return FuildExport
-                return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };
+                return { instantiateComponent: m.instantiateComponent, IComponentFactory: undefined };
             });
         } else if (name === "@chaincode/image-collection") {
-            return images.then((i) => i.fluidExport);
+            return images.then((m) => m.fluidExport);
         } else if (name === "@chaincode/monaco") {
             return monaco.then((m) => m.fluidExport);
         } else if (name === "@chaincode/pinpoint-editor") {
-            return pinpoint.then((f) => f.fluidExport);
+            return pinpoint.then((m) => m.fluidExport);
         } else {
             return this.context.codeLoader.load<IComponentFactory>(name);
         }
