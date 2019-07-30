@@ -18,9 +18,12 @@
     "tslint": "tslint --project tsconfig.json --format verbose",
     "start": "prague-dev-server --config webpack.config.js --package package.json --component --live",
     "start:local": "prague-dev-server --config webpack.config.js --package package.json --component",
-    "webpack": "webpack --config webpack.config.js"
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\"",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com"
   },
   "dependencies": {
+    "@prague/aqueduct": "^0.8.0",
     "@prague/component-runtime": "^0.8.0",
     "@prague/container-definitions": "^0.8.0",
     "@prague/map": "^0.8.0",
@@ -39,6 +42,7 @@
   "devDependencies": {
     "@prague/build-common": "^0.8.0",
     "@prague/prague-dev-server": "~3.6.0",
+    "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
     "loader-utils": "^1.1.0",
@@ -54,7 +58,8 @@
     "url-loader": "^1.1.1",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.14"
+    "webpack-dev-server": "^3.1.14",
+    "webpack-merge": "^4.1.2"
   },
   "prague": {
     "browser": {

@@ -4,13 +4,11 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
+import { PrimedComponent } from "@prague/aqueduct";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
-    IComponentLoadable,
-    ISharedComponent,
 } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
@@ -24,9 +22,7 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
-import { EventEmitter } from "events";
 import * as monaco from "monaco-editor";
-import { Document } from "./document";
 
 /**
  * Compilation options for Monaco to use on Typescript
@@ -69,16 +65,14 @@ const defaultCompilerOptions = {
 /**
  * Component for using the Monaco text editor.
  */
-export class MonacoRunner extends EventEmitter implements
-    ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
+export class MonacoRunner extends PrimedComponent implements
+    IComponentHTMLVisual, IComponentLayout {
 
     /**
      * Interfaces supported by this component.
      */
     public static supportedInterfaces = [
         "IComponentHTMLVisual",
-        "IComponentHTMLRender",
-        "IComponentLoadable",
         "IComponentLayout",
     ];
 
@@ -88,7 +82,7 @@ export class MonacoRunner extends EventEmitter implements
      * @param context Not used
      */
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
-        const runner = new MonacoRunner(runtime);
+        const runner = new MonacoRunner(runtime, context, MonacoRunner.supportedInterfaces);
         await runner.initialize();
 
         return runner;
@@ -122,41 +116,6 @@ export class MonacoRunner extends EventEmitter implements
      */
     private codeEditor: monaco.editor.IStandaloneCodeEditor;
 
-    /**
-     * Root map for the Document.
-     */
-    private rootView: ISharedMap;
-
-    /**
-     * Get the id of the component within the document.
-     */
-    public get url(): string {
-        return this.runtime.id;
-    }
-
-    /**
-     * Create a new MonacoRunner with the given runtime.
-     * @param runtime The runtime for the MonacoRunner
-     */
-    constructor(private runtime: IComponentRuntime) {
-        super();
-    }
-
-    /**
-     * Returns this if the given interface id is in the list of supported interfaces.
-     * @param id The requested interface id
-     */
-    public query(id: string): any {
-        return MonacoRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    /**
-     * Get a list the supported interfaces.
-     */
-    public list(): string[] {
-        return MonacoRunner.supportedInterfaces;
-    }
-
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
@@ -170,6 +129,17 @@ export class MonacoRunner extends EventEmitter implements
                 elm.appendChild(this.mapHost);
             }
         }
+    }
+
+    /**
+     * Creates the SharedString and inserts some sample text. create() is called only once
+     * per component.
+     */
+    protected async create(): Promise<void> {
+        super.create();
+        const codeString = SharedString.create(this.runtime);
+        codeString.insertText('console.log("Hello, world!");', 0);
+        this.root.set("text", codeString);
     }
 
     /**
@@ -201,8 +171,7 @@ export class MonacoRunner extends EventEmitter implements
         hostWrapper.appendChild(inputDiv);
         // hostWrapper.appendChild(outputDiv);
 
-        const root = await this.rootView;
-        const text = await root.wait<SharedString>("text");
+        const text = await this.root.wait<SharedString>("text");
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {
@@ -278,21 +247,6 @@ export class MonacoRunner extends EventEmitter implements
                 ignoreModelContentChanges = false;
             }
         });
-    }
-
-    /**
-     * Loads the document.  If this is the first time, creates the SharedString
-     * and inserts some sample text.
-     */
-    private async initialize(): Promise<void> {
-        const collabDoc = await Document.load(this.runtime);
-        this.rootView = await collabDoc.getRoot();
-
-        if (!this.runtime.existing) {
-            const codeString = collabDoc.createString();
-            codeString.insertText('console.log("Hello, world!");', 0);
-            this.rootView.set("text", codeString);
-        }
     }
 
     /**
