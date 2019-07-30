@@ -132,6 +132,9 @@ data:
                 },
                 "translation": {
                     "key": ""
+                },
+                "pinpointEditor": {
+                    "key": ""
                 }
             },
             "alfredUrl": "http://{{ template "jarvis.fullname" . }}",
