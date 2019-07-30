@@ -147,7 +147,7 @@ export class SharedStringTranslator {
 
                     const props: any = {};
                     props[`translation-${language}`] = translation;
-                    this.sharedString.annotateRange(props, pos, pos + 1);
+                    this.sharedString.annotateRange(pos, pos + 1, props);
                 }
             }
         }

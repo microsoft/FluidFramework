@@ -3112,7 +3112,7 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
 export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
     const start = getOffset(flowView, marker);
     const end = start + marker.cachedLength;
-    flowView.sharedString.annotateRange(props, start, end);
+    flowView.sharedString.annotateRange(start, end, props);
 }
 
 function getOffset(flowView: FlowView, segment: MergeTree.ISegment) {
@@ -4640,10 +4640,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
             if (listStatus) {
                 const remainingLabels = curLabels.filter((l) => l !== "list");
-                this.sharedString.annotateRange({
-                    [MergeTree.reservedTileLabelsKey]: remainingLabels,
-                    series: null,
-                }, tileInfo.pos, tileInfo.pos + 1);
+                this.sharedString.annotateRange(
+                    tileInfo.pos, tileInfo.pos + 1, {
+                        [MergeTree.reservedTileLabelsKey]: remainingLabels,
+                        series: null,
+                });
             } else {
                 const augLabels = curLabels.slice();
                 augLabels.push("list");
@@ -4651,11 +4652,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 if (tile.properties && tile.properties.indentLevel) {
                     indentLevel = tile.properties.indentLevel;
                 }
-                this.sharedString.annotateRange({
-                    [MergeTree.reservedTileLabelsKey]: augLabels,
-                    indentLevel,
-                    listKind,
-                }, tileInfo.pos, tileInfo.pos + 1);
+                this.sharedString.annotateRange(
+                    tileInfo.pos, tileInfo.pos + 1, {
+                        [MergeTree.reservedTileLabelsKey]: augLabels,
+                        indentLevel,
+                        listKind,
+                });
             }
             tile.listCache = undefined;
         }
@@ -4719,9 +4721,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const props = tile.properties;
             this.undoRedoManager.closeCurrentOperation();
             if (props && props.blockquote) {
-                this.sharedString.annotateRange({ blockquote: false }, tileInfo.pos, tileInfo.pos + 1);
+                this.sharedString.annotateRange(tileInfo.pos, tileInfo.pos + 1, { blockquote: false });
             } else {
-                this.sharedString.annotateRange({ blockquote: true }, tileInfo.pos, tileInfo.pos + 1);
+                this.sharedString.annotateRange(tileInfo.pos, tileInfo.pos + 1, { blockquote: true });
             }
             this.undoRedoManager.closeCurrentOperation();
         }
@@ -4751,11 +4753,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.undoRedoManager.closeCurrentOperation();
         if (sel) {
             this.clearSelection(false);
-            this.sharedString.annotateRange(props, sel.start, sel.end);
+            this.sharedString.annotateRange(sel.start, sel.end, props);
         } else {
             const wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
             if (wordRange) {
-                this.sharedString.annotateRange(props, wordRange.wordStart, wordRange.wordEnd);
+                this.sharedString.annotateRange(wordRange.wordStart, wordRange.wordEnd, props);
             }
         }
         this.undoRedoManager.closeCurrentOperation();
@@ -4818,9 +4820,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.sharedString.client.getClientId(), undefined, start, end);
         this.undoRedoManager.closeCurrentOperation();
         if (someSet) {
-            this.sharedString.annotateRange({ [name]: valueOff }, start, end);
+            this.sharedString.annotateRange(start, end, { [name]: valueOff });
         } else {
-            this.sharedString.annotateRange({ [name]: valueOn }, start, end);
+            this.sharedString.annotateRange(start, end, { [name]: valueOn });
         }
         this.undoRedoManager.closeCurrentOperation();
     }
@@ -5309,8 +5311,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const tileInfo = findTile(this, this.cursor.pos, "pg", false);
         if (tileInfo) {
             const pgMarker = tileInfo.tile as Paragraph.IParagraphMarker;
-            this.sharedString.annotateRange(props, tileInfo.pos,
-                pgMarker.cachedLength + tileInfo.pos);
+            this.sharedString.annotateRange(tileInfo.pos,
+                pgMarker.cachedLength + tileInfo.pos, props);
             Paragraph.clearContentCaches(pgMarker);
         }
     }
@@ -5669,7 +5671,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
         // TODO: place in group op
         // old marker gets new props
-        this.sharedString.annotateRange(newProps, pgPos, pgPos + 1, { name: "rewrite" });
+        this.sharedString.annotateRange(pgPos, pgPos + 1, newProps, { name: "rewrite" });
         // new marker gets existing props
         this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
         this.undoRedoManager.closeCurrentOperation();
@@ -5812,11 +5814,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         tile.listCache = undefined;
         this.undoRedoManager.closeCurrentOperation();
         if (decrease && tile.properties.indentLevel > 0) {
-            this.sharedString.annotateRange({ indentLevel: -1 },
-                pos, pos + 1, { name: "incr", defaultValue: 1, minValue: 0 });
+            this.sharedString.annotateRange(pos, pos + 1,
+                { indentLevel: -1 }, { name: "incr", defaultValue: 1, minValue: 0 });
         } else if (!decrease) {
-            this.sharedString.annotateRange({ indentLevel: 1 }, pos, pos + 1,
-                { name: "incr", defaultValue: 0 });
+            this.sharedString.annotateRange(pos, pos + 1,
+                { indentLevel: 1 }, { name: "incr", defaultValue: 0 });
         }
         this.undoRedoManager.closeCurrentOperation();
     }

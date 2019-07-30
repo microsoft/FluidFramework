@@ -96,7 +96,7 @@ describe("SharedString", () => {
             await deltaConnectionFactory.processMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
-            sharedString.annotateRange({ foo: "bar" }, 0, sharedString.getLength());
+            sharedString.annotateRange(0, sharedString.getLength(), { foo: "bar" });
             await deltaConnectionFactory.processMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
@@ -108,7 +108,7 @@ describe("SharedString", () => {
             await deltaConnectionFactory.processMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
-            sharedString.annotateRange({ foo: "bar" }, 0, sharedString.getLength());
+            sharedString.annotateRange(0, sharedString.getLength(), { foo: "bar" });
             sharedString.sendNACKed();
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.
@@ -119,7 +119,7 @@ describe("SharedString", () => {
         });
 
         it("nacked insertSegment and annotateRange", async () => {
-            sharedString.annotateRange({ foo: "bar" }, 0, sharedString.getLength());
+            sharedString.annotateRange(0, sharedString.getLength(), { foo: "bar" });
             sharedString.sendNACKed();
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.

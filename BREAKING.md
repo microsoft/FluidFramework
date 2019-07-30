@@ -1,11 +1,20 @@
 # 0.8 Breaking Changes
 
+## `sequence.annotateRange()` argument order changed
+The `start` and `end` arguments of `sequence.annotateRange()` have been changed to the first two arguments to make the codebase more consistent. The new function signature is as below:
+```typescript
+public annotateRange(
+        start: number,
+        end: number,
+        props: MergeTree.PropertySet,
+        combiningOp?: MergeTree.ICombiningOp) {
+```
+
 ## `sharedString.insertText()` argument order changed
 The `pos` and `text` arguments of `sharedString.insertText()` have been switched to make it more consistent with other sharedString methods. The new function signature is as below:
 ```typescript
 public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ```
-
 
 # 0.7 Breaking Changes
 

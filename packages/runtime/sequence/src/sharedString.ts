@@ -154,7 +154,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         const ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
             this.client.getClientId());
         ranges.map((range: MergeTree.IIntegerRange) => {
-            this.annotateRange(props, range.start, range.end);
+            this.annotateRange(range.start, range.end, props);
         });
     }
     /**

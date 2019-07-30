@@ -102,7 +102,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public annotateRows(startRow: number, endRow: number, properties: PropertySet, op?: ICombiningOp) {
-        this.maybeRows.annotateRange(properties, startRow, endRow, op);
+        this.maybeRows.annotateRange(startRow, endRow, properties, op);
     }
 
     public getRowProperties(row: number): PropertySet {
@@ -113,7 +113,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
-        this.maybeCols.annotateRange(properties, startCol, endCol, op);
+        this.maybeCols.annotateRange(startCol, endCol, properties, op);
     }
 
     public getColProperties(col: number): PropertySet {

@@ -110,7 +110,7 @@ class Speller {
                         if (this.verbose) {
                             console.log(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
                         }
-                        this.sharedString.annotateRange({ textError: textErrorInfo }, startPG + start, startPG + end);
+                        this.sharedString.annotateRange(startPG + start, startPG + end, { textError: textErrorInfo });
                     }
                 }
             } while (result);
@@ -277,13 +277,13 @@ class Speller {
                             }
                             console.log(buf);
                         }
-                        this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
+                        this.sharedString.annotateRange(start, end, { textError: textErrorInfo });
                     }
                     else {
                         if (this.verbose) {
                             console.log(`spell ok (${start}, ${end}): ${words.substring(result.index, re.lastIndex)}`);
                         }
-                        this.sharedString.annotateRange({ textError: null }, start, end);
+                        this.sharedString.annotateRange(start, end, { textError: null });
                     }
                 }
             }

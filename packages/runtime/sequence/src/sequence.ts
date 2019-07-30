@@ -192,9 +192,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
      *
      */
     public annotateRange(
-        props: MergeTree.PropertySet,
         start: number,
         end: number,
+        props: MergeTree.PropertySet,
         combiningOp?: MergeTree.ICombiningOp) {
 
         const annotateOp =

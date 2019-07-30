@@ -427,8 +427,7 @@ export function getListCacheInfo(
                     } else {
                         series = [0, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6];
                     }
-                    sharedString.annotateRange({ series },
-                        tilePos, tilePos + 1);
+                    sharedString.annotateRange(tilePos, tilePos + 1, { series });
                     convertToListHead(tile);
                 }
             }

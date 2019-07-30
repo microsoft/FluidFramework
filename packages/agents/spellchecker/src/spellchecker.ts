@@ -55,7 +55,7 @@ class Speller {
                         if (this.verbose) {
                             console.log(`spell (${startPG + start}, ${startPG + end}): ${textErrorInfo.text}`);
                         }
-                        this.sharedString.annotateRange({ textError: textErrorInfo }, startPG + start, startPG + end);
+                        this.sharedString.annotateRange(startPG + start, startPG + end, { textError: textErrorInfo });
                     }
                 }
             } while (result);
@@ -223,7 +223,7 @@ class Speller {
                 const candidate = result[0];
                 if (this.spellingError(candidate.toLocaleLowerCase())) {
                     if (start > runningStart) {
-                        this.sharedString.annotateRange({ textError: null }, runningStart, start);
+                        this.sharedString.annotateRange(runningStart, start, { textError: null });
                     }
                     const textErrorInfo = this.makeTextErrorInfo(candidate);
                     if (this.verbose) {
@@ -234,14 +234,14 @@ class Speller {
                         }
                         console.log(buf);
                     }
-                    this.sharedString.annotateRange({ textError: textErrorInfo }, start, end);
+                    this.sharedString.annotateRange(start, end, { textError: textErrorInfo });
                     runningStart = end;
                 }
             }
         }
         while (result);
         if (endPos > runningStart) {
-            this.sharedString.annotateRange({ textError: null }, runningStart, endPos);
+            this.sharedString.annotateRange(runningStart, endPos, { textError: null });
         }
     }
 }

@@ -58,7 +58,7 @@ export function* generateStrings() {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
-       sharedString.annotateRange({bold: true}, i, i + 10);
+       sharedString.annotateRange(i, i + 10, {bold: true});
     }
 
     yield sharedString;

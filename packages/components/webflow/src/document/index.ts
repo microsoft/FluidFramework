@@ -339,7 +339,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public annotate(start: number, end: number, props: PropertySet) {
-        this.sharedString.annotateRange(props, start, end);
+        this.sharedString.annotateRange(start, end, props);
     }
 
     public addCssClass(start: number, end: number, ...classNames: string[]) {
