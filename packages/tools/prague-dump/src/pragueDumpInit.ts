@@ -247,6 +247,19 @@ async function initializeODSP(
     return initializeODSPCore(server, drive, item, clientConfig);
 }
 
+async function initializeFluidOffice(server: string, pathname: string) {
+    const driveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)/);
+
+    if (driveItemMatch === null) {
+        return Promise.reject("Unable to parse fluid.office.com URL path");
+    }
+
+    const drive = driveItemMatch[1];
+    const item = driveItemMatch[2];
+    // TODO: Assume df server now
+    return initializeODSPCore("microsoft.sharepoint-df.com", drive, item, getClientConfig());
+}
+
 async function initializeR11s(server: string, pathname: string) {
     const path = pathname.split("/");
     const tenantId = path[2];
@@ -310,6 +323,10 @@ const officeServers = [
     "ncuprodprv.www.office.com",
 ];
 
+const fluidOfficeServers = [
+    "dev.fluid.office.com",
+];
+
 const odspServers = [
     "microsoft-my.sharepoint-df.com",
     "microsoft-my.sharepoint.com",
@@ -333,6 +350,8 @@ export async function pragueDumpInit() {
             return initializeODSP(server, url.pathname, url.searchParams);
         } else if (r11sServers.indexOf(server) !== -1) {
             return initializeR11s(server, url.pathname);
+        } else if (fluidOfficeServers.indexOf(server) !== -1) {
+            return initializeFluidOffice(server, url.pathname);
         } else if (server === "localhost" && url.port === "3000") {
             return initializeR11sLocalhost(url.pathname);
         }
