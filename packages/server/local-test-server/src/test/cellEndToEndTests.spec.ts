@@ -195,6 +195,23 @@ describe("Cell", () => {
         verifyCellEmpty(true, true, true);
     });
 
+    it("registers data if data is a shared object", async () => {
+        const detachedCell1: ISharedCell = user1Document.createCell();
+        const detachedCell2: ISharedCell = user1Document.createCell();
+        const cellValue = "cell cell cell cell";
+        detachedCell2.set(cellValue);
+        detachedCell1.set(detachedCell2);
+        assert(!detachedCell2.isRegistered());
+
+        root1Cell.set(detachedCell1);
+        assert(detachedCell2.isRegistered());
+
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        // tslint:disable:no-unsafe-any
+        verifyCellValue(root2Cell.get().get(), cellValue, 2);
+        verifyCellValue(root3Cell.get().get(), cellValue, 3);
+    });
+
     afterEach(async () => {
         await Promise.all([
             user1Document.close(),

@@ -222,7 +222,9 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * Process the cell value on register
      */
     protected registerCore() {
-        return;
+        if (SharedObject.is(this.data)) {
+            this.data.register();
+        }
     }
 
     /**
