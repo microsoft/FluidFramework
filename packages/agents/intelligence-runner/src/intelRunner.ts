@@ -8,6 +8,10 @@ import * as Sequence from "@prague/sequence";
 import { resumeAnalytics, textAnalytics } from "./analytics" ;
 import { IntelligentServicesManager } from "./serviceManager";
 
+export interface ITokenConfig {
+    key: string;
+}
+
 const resumeAnalyticsConfig = {
     deviceId: "",
     host: "",
@@ -22,16 +26,13 @@ export class IntelRunner {
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly apiKey: string) {
+        private readonly config: ITokenConfig) {
     }
 
     public async start(): Promise<void> {
-        const textAnalyticsConfig = {
-            key: this.apiKey,
-        };
         await this.insightsMap.wait(this.sharedString.id);
         this.intelligenceManager = new IntelligentServicesManager(this.sharedString, this.insightsMap);
-        this.intelligenceManager.registerService(textAnalytics.factory.create(textAnalyticsConfig));
+        this.intelligenceManager.registerService(textAnalytics.factory.create(this.config));
         this.intelligenceManager.registerService(resumeAnalytics.factory.create(resumeAnalyticsConfig));
         this.intelligenceManager.process();
     }

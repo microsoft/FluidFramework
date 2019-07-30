@@ -49,7 +49,7 @@ export class IntelWork extends BaseWork implements IWork {
                 const textAnalyzer = new TextAnalyzer(
                     sharedString,
                     insightsMap,
-                    this.config.get("intelligence:textAnalytics:key"));
+                    this.config.get("intelligence:textAnalytics"));
                 return textAnalyzer.run();
             }
         }

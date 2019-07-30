@@ -166,7 +166,7 @@ export class ChatContainer extends React.Component<IChatContainerProps, IChatCon
       const message = op.contents as IMessage;
       if (!message.translated && !message.content.startsWith(transPrefix)) {
         // tslint:disable max-line-length
-        translate("75ed7b5c411649eb895e03dae6a6f873", message.language, [...this.toLanguages], [message.content]).then((val) => {
+        translate("api_key", message.language, [...this.toLanguages], [message.content]).then((val) => {
           if (val) {
             for (const languageTranslations of val) {
               const language = languageTranslations[0];

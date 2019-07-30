@@ -46,7 +46,7 @@ export class TranslationWork extends BaseWork implements IWork {
             const translator = new Translator(
                 sharedString,
                 insightsMap,
-                this.config.get("intelligence:translation:key"));
+                this.config.get("intelligence:translation"));
             return translator.run();
         }
     }

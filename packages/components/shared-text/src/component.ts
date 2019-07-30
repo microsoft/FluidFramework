@@ -11,6 +11,7 @@ import {
     IComponent,
     IComponentHTMLVisual,
     IComponentLoadable,
+    IComponentTokenProvider,
     IRequest,
     IResponse } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
@@ -209,6 +210,7 @@ export class SharedTextRunner extends EventEmitter implements
         });
 
         const taskScheduler = new TaskScheduler(
+            this.context,
             this.taskManager,
             this.url,
             this.sharedString,
@@ -220,6 +222,7 @@ export class SharedTextRunner extends EventEmitter implements
 
 class TaskScheduler {
     constructor(
+        private componentContext: IComponentContext,
         private taskManager: ITaskManager,
         private componentUrl: string,
         private sharedString: SharedString,
@@ -229,10 +232,11 @@ class TaskScheduler {
     }
 
     public start() {
-        const apiKey = "c8b60dc5e49849ce903d7d29a2dce550";
+        const hostTokens = this.componentContext.hostRuntime.query<IComponentTokenProvider>("IComponentTokenProvider");
+        const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         const intelTask: ITask = {
             id: "intel",
-            instance: new TextAnalyzer(this.sharedString, this.insightsMap, apiKey),
+            instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),
         };
         this.taskManager.pick(this.componentUrl, intelTask).then(() => {
             console.log(`Picked intel task`);

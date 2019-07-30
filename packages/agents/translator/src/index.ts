@@ -8,6 +8,10 @@ import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { SharedStringTranslator } from "./sharedStringTranslator";
 
+interface ITokenConfig {
+    key: string;
+}
+
 export class Translator implements IComponent, IComponentRouter, IComponentRunnable {
 
     public static supportedInterfaces = ["IComponentRunnable"];
@@ -15,7 +19,7 @@ export class Translator implements IComponent, IComponentRouter, IComponentRunna
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly apiKey: string) {}
+        private readonly config: ITokenConfig) {}
 
     public query(id: string): any {
         return Translator.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -26,10 +30,10 @@ export class Translator implements IComponent, IComponentRouter, IComponentRunna
     }
 
     public async run() {
-        if (!this.apiKey || this.apiKey.length === 0) {
+        if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {
             return Promise.reject("No translation key provided.");
         }
-        const translator = new SharedStringTranslator(this.insightsMap, this.sharedString, this.apiKey);
+        const translator = new SharedStringTranslator(this.insightsMap, this.sharedString, this.config.key);
         return translator.start();
     }
 

@@ -8,6 +8,10 @@ import { ISharedMap } from "@prague/map";
 import { resumeAnalytics, textAnalytics } from "./analytics" ;
 import { IntelligentServicesManager } from "./serviceManager";
 
+export interface ITokenConfig {
+    key: string;
+}
+
 const resumeAnalyticsConfig = {
     deviceId: "routerlicious",
     host: "",
@@ -22,15 +26,12 @@ export class IntelRunner {
     constructor(
         private readonly document: FlowDocument,
         private readonly insightsMap: ISharedMap,
-        private readonly apiKey: string) {
+        private readonly config: ITokenConfig) {
     }
 
     public async start(): Promise<void> {
-        const textAnalyticsConfig = {
-            key: this.apiKey,
-        };
         this.intelligenceManager = new IntelligentServicesManager(this.document, this.insightsMap);
-        this.intelligenceManager.registerService(textAnalytics.factory.create(textAnalyticsConfig));
+        this.intelligenceManager.registerService(textAnalytics.factory.create(this.config));
         this.intelligenceManager.registerService(resumeAnalytics.factory.create(resumeAnalyticsConfig));
         this.intelligenceManager.process();
     }

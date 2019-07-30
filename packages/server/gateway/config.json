@@ -59,10 +59,10 @@
     "worker": {
         "intelligence": {
             "textAnalytics": {
-                "key": "c8b60dc5e49849ce903d7d29a2dce550"
+                "key": ""
             },
             "translation": {
-                "key": "75ed7b5c411649eb895e03dae6a6f873"
+                "key": ""
             }
         },
         "alfredUrl": "http://alfred:3000",

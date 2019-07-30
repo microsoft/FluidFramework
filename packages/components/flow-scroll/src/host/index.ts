@@ -12,6 +12,7 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
+    IComponentTokenProvider,
     IRequest,
     IResponse } from "@prague/container-definitions";
 import { MapExtension, SharedMap } from "@prague/map";
@@ -88,6 +89,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
         const flowDocument = await this.getComponent<FlowDocument>(this.docId);
         const taskScheduler = new TaskScheduler(
+            this.context,
             this.taskManager,
             this.url,
             flowDocument,
@@ -113,6 +115,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
 class TaskScheduler {
     constructor(
+        private readonly componentContext: IComponentContext,
         private readonly taskManager: ITaskManager,
         private readonly componentUrl: string,
         private readonly flowDocument: FlowDocument,
@@ -122,10 +125,11 @@ class TaskScheduler {
     }
 
     public start() {
-        const apiKey = "c8b60dc5e49849ce903d7d29a2dce550";
+        const hostTokens = this.componentContext.hostRuntime.query<IComponentTokenProvider>("IComponentTokenProvider");
+        const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         const intelTask: ITask = {
             id: "intel",
-            instance: new TextAnalyzer(this.flowDocument, this.insightsMap, apiKey),
+            instance: new TextAnalyzer(this.flowDocument, this.insightsMap, intelTokens),
         };
         this.taskManager.pick(this.componentUrl, intelTask).then(() => {
             console.log(`Picked text analyzer`);

@@ -6,7 +6,7 @@
 import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
-import { IntelRunner } from "./intelRunner";
+import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
 
@@ -15,7 +15,7 @@ export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRun
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
-        private readonly apiKey: string) {}
+        private readonly config: ITokenConfig) {}
 
     public query(id: string): any {
         return TextAnalyzer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -26,10 +26,10 @@ export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRun
     }
 
     public async run() {
-        if (!this.apiKey || this.apiKey.length === 0) {
+        if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {
             return Promise.reject("No intel key provided.");
         }
-        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap, this.apiKey);
+        const intelRunner = new IntelRunner(this.sharedString, this.insightsMap, this.config);
         return intelRunner.start();
     }
 
