@@ -11,7 +11,6 @@ import {
     IBlob,
     IBlobManager,
     IChunkedOp,
-    IComponentConfiguration,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
@@ -97,7 +96,7 @@ export interface IContainerRuntimeOptions {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
-    public static supportedInterfaces = ["IComponentConfiguration"];
+    public static supportedInterfaces = ["IComponentConfiguration", "IComponentTokenProvider"];
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -197,10 +196,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
     public get loader(): ILoader {
         return this.context.loader;
-    }
-
-    public get configuration(): IComponentConfiguration {
-        return this.context.configuration;
     }
 
     public get flushMode(): FlushMode {
@@ -349,6 +344,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public query(id: string): any {
         if (id === "IComponentConfiguration") {
             return this.context.configuration;
+        } else if (id === "IComponentTokenProvider") {
+            // tslint:disable-next-line:no-unsafe-any
+            const intelligence = this.options && this.options.config ? this.options.config.intelligence : undefined;
+            return {
+                intelligence,
+            };
         }
         return undefined;
     }

@@ -215,6 +215,10 @@ export interface IComponentConfiguration {
     canReconnect: boolean;
 }
 
+export interface IComponentTokenProvider {
+    intelligence: { [service: string]: any };
+}
+
 export interface IFluidModule {
     fluidExport: IComponent;
 }

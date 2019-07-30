@@ -135,6 +135,7 @@ export async function start(
     scriptIds: string[],
     npm: string,
     jwt: string,
+    config: any,
     div?: HTMLDivElement,
 ): Promise<void> {
     const errorService = new DefaultErrorTracking();
@@ -169,7 +170,10 @@ export async function start(
         { resolver },
         documentServiceFactory,
         codeLoader,
-        { blockUpdateMarkers: true });
+        {
+            blockUpdateMarkers: true,
+            config,
+         });
     const container = await loader.resolve({ url });
 
     lastLoaded = container;

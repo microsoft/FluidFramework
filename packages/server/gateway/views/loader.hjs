@@ -30,6 +30,7 @@
         var resolved = {{{ resolved }}};
         var jwt = "{{ jwt }}";
         var npm = "{{ npm }}";
+        var config = {{{ config }}};
 
         {{#scripts}}
         var scriptIds = [
@@ -49,7 +50,8 @@
             chaincode,
             scriptIds,
             npm,
-            jwt);
+            jwt,
+            config);
     </script>
 </body>
 </html>
