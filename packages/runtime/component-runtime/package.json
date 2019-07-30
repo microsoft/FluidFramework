@@ -1,6 +1,6 @@
 {
   "name": "@prague/component-runtime",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Prague component API",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -23,7 +23,7 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.7.0",
+    "@prague/build-common": "^0.8.0",
     "@types/async": "^2.0.50",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",
@@ -39,11 +39,11 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.7.0",
-    "@prague/gitresources": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
-    "@prague/shared-object-common": "^0.7.0",
-    "@prague/utils": "^0.7.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/gitresources": "^0.8.0",
+    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/shared-object-common": "^0.8.0",
+    "@prague/utils": "^0.8.0",
     "async": "^2.6.1",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",

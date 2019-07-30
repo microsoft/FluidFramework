@@ -1,3 +1,5 @@
+# 0.8 Breaking Changes
+
 # 0.7 Breaking Changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the
@@ -103,17 +105,17 @@ Renamed the sharepoint driver files and class names in odsp-socket-storage. Dele
 
 ## attach() on IChannel/ISharedObject is now register()
 
-We always assumed that if you had a channel you were in a state that they could be attached. This is no longer true because of the Separate Create and Attach Component work (See below). Channels are tied to component runtime and if the runtime is not attached but you try to attach the channel bad things happen.  
+We always assumed that if you had a channel you were in a state that they could be attached. This is no longer true because of the Separate Create and Attach Component work (See below). Channels are tied to component runtime and if the runtime is not attached but you try to attach the channel bad things happen.
 
 The `register()` call, instead of simply attaching, will register a channel with the underlying component runtime. If the runtime is already attached it will attach the channel. If the runtime is not attached it will queue the channel to be attached when the runtime is attached.
 
 ## Separate Create and Attach Component
 
-There used to be only one method to add a component that was called `createAndAttachComponent`. The logic lived on the `ContainerRuntime` and the method was piped through the `IComponentContext` and also lived on the `ComponentRuntime`.  
+There used to be only one method to add a component that was called `createAndAttachComponent`. The logic lived on the `ContainerRuntime` and the method was piped through the `IComponentContext` and also lived on the `ComponentRuntime`.
 
 Now the `ContainerRuntime` consists of a `createComponent(id: string, pkg: string)` method. `createComponent` will produce and return a new `ComponentRuntime` based on the `id` and `pkg` provided. Creating a ComponentRuntime requires calling the `instantiateComponent` function on your factory. This code will be executed before returning the new `ComponentRuntime` object.
 
-To attach a `ComponentRuntime` you need to call `attach()` on the `ComponentRuntime` directly. The framework guarantees that any channels `registered()`on the runtime when attach is called will be snapshotted and sent as a part of the original Attach OP (see above).  
+To attach a `ComponentRuntime` you need to call `attach()` on the `ComponentRuntime` directly. The framework guarantees that any channels `registered()`on the runtime when attach is called will be snapshotted and sent as a part of the original Attach OP (see above).
 
 For compatibility there is still a `createAndAttachComponent` method on the `ComponentRuntime`. This method simply calls `createComponent` then calls `attach()` right away on that new component before returning.
 

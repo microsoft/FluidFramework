@@ -1,6 +1,6 @@
 {
   "name": "@prague/generator-fluid",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A yeoman project generator for fluid chaincode",
   "main": "app/index.js",
   "scripts": {

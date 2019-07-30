@@ -17,18 +17,18 @@
     "post-deploy": "getUrl -p"
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.7.0",
-    "@prague/component-runtime": "^0.7.0",
-    "@prague/container-definitions": "^0.7.0",
-    "@prague/map": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
-    "@prague/shared-object-common": "^0.7.0",
+    "@prague/aqueduct": "^0.8.0",
+    "@prague/component-runtime": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/map": "^0.8.0",
+    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/shared-object-common": "^0.8.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
-    "@prague/build-common": "^0.7.0",
+    "@prague/build-common": "^0.8.0",
     "@prague/prague-dev-server": "~3.6.0",
     "@prague/url-generator": "^1.0.7860",
     "@types/node": "^10.12.12",

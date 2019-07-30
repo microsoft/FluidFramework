@@ -1,6 +1,6 @@
 {
   "name": "@prague/sequence",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -44,10 +44,10 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.7.0",
-    "@prague/gitresources": "^0.7.0",
-    "@prague/runtime-test-utils": "^0.7.0",
-    "@prague/services-client": "^0.7.0",
+    "@prague/build-common": "^0.8.0",
+    "@prague/gitresources": "^0.8.0",
+    "@prague/runtime-test-utils": "^0.8.0",
+    "@prague/services-client": "^0.8.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^5.2.5",
     "@types/random-js": "^1.0.31",
@@ -64,12 +64,12 @@
     "xmldoc": "^1.1.2"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.7.0",
-    "@prague/map": "^0.7.0",
-    "@prague/merge-tree": "^0.7.0",
-    "@prague/runtime-definitions": "^0.7.0",
-    "@prague/shared-object-common": "^0.7.0",
-    "@prague/utils": "^0.7.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/map": "^0.8.0",
+    "@prague/merge-tree": "^0.8.0",
+    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/shared-object-common": "^0.8.0",
+    "@prague/utils": "^0.8.0",
     "@types/uuid": "^3.4.4",
     "lodash": "^4.17.11",
     "uuid": "^3.3.2"

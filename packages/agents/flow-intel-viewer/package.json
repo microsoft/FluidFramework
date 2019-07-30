@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/flow-intel-viewer",
   "description": "Chaincode for viewing insights in flow-scroll",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -40,9 +40,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@prague/build-common": "^0.7.0",
-    "@prague/container-definitions": "^0.7.0",
-    "@prague/map": "^0.7.0"
+    "@prague/build-common": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/map": "^0.8.0"
   },
   "devDependencies": {
     "@prague/prague-dev-server": "~3.6.0",
