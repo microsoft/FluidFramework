@@ -206,7 +206,7 @@ export class FlowDocument extends PrimedComponent {
 
     public insertText(position: number, text: string) {
         debug(`insertText(${position},"${text}")`);
-        this.sharedString.insertText(text, position);
+        this.sharedString.insertText(position, text);
     }
 
     public replaceWithText(start: number, end: number, text: string) {

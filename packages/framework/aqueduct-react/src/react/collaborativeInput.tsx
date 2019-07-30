@@ -84,7 +84,7 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
         const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
         if (insertedText) {
             if (changeRangeLength === 0) {
-                this.props.sharedString.insertText(insertedText, this.state.selectionStart);
+                this.props.sharedString.insertText(this.state.selectionStart, insertedText);
             } else {
                 this.props.sharedString.replaceText(this.state.selectionStart, this.state.selectionEnd, insertedText);
             }

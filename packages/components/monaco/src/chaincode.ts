@@ -143,7 +143,7 @@ export class MonacoRunner extends PrimedComponent implements
     protected async create(): Promise<void> {
         super.create();
         const codeString = SharedString.create(this.runtime);
-        codeString.insertText('console.log("Hello, world!");', 0);
+        codeString.insertText(0, 'console.log("Hello, world!");');
         this.root.set("text", codeString);
     }
 
@@ -230,7 +230,7 @@ export class MonacoRunner extends PrimedComponent implements
             for (const change of e.changes) {
                 if (change.text) {
                     if (change.rangeLength === 0) {
-                        text.insertText(change.text, change.rangeOffset);
+                        text.insertText(change.rangeOffset, change.text);
                     } else {
                         text.replaceText(change.rangeOffset, change.rangeOffset + change.rangeLength, change.text);
                     }

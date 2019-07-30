@@ -68,7 +68,7 @@ exports.setup = async function(docId, text, time, startMarker) {
                 [MergeTree.reservedTileLabelsKey]: ["pg"] 
             });
         } else {
-            ss.insertText(char, position);
+            ss.insertText(position, char);
         }
         position++;
     }), time);

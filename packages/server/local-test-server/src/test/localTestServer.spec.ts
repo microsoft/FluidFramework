@@ -76,8 +76,8 @@ describe("LocalTestServer", () => {
 
       await documentDeltaEventManager.pauseProcessing();
 
-      user1SharedString.insertText("A", 0);
-      user2SharedString.insertText("C", 0);
+      user1SharedString.insertText(0, "A");
+      user2SharedString.insertText(0, "C");
       assert.equal(user1ReceivedMsgCount, 0, "User1 received message count is incorrect");
       assert.equal(user2ReceivedMsgCount, 0, "User2 received message count is incorrect");
 
@@ -93,7 +93,7 @@ describe("LocalTestServer", () => {
       assert.equal(user1ReceivedMsgCount, 1, "User1 received message count is incorrect");
       assert.equal(user2ReceivedMsgCount, 1, "User2 received message count is incorrect");
 
-      user1SharedString.insertText("B", 0);
+      user1SharedString.insertText(0, "B");
       await documentDeltaEventManager.process(user1Document, user2Document);
 
       assert.equal(user1SharedString.getText(), user2SharedString.getText());

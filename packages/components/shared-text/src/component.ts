@@ -128,7 +128,7 @@ export class SharedTextRunner extends EventEmitter implements
             const segments = MergeTree.loadSegments(starterText, 0, true);
             for (const segment of segments) {
                 if (MergeTree.TextSegment.is(segment)) {
-                    newString.insertText(segment.text, newString.client.getLength(),
+                    newString.insertText(newString.client.getLength(), segment.text,
                     segment.properties);
                 } else {
                     // assume marker

@@ -53,7 +53,7 @@ describe("SharedInterval", () => {
         beforeEach(async () => {
             host = new TestHost([]);
             sharedString = await host.createType("text", SharedStringExtension.Type);
-            sharedString.insertText("012", 0);
+            sharedString.insertText(0, "012");
             intervals = await sharedString.getSharedIntervalCollection("intervals").getView();
         });
 
@@ -64,7 +64,7 @@ describe("SharedInterval", () => {
         it("replace all is included", async () => {
             // Temporarily, append a padding character to the initial string to work around #1761:
             // (See: https://github.com/Microsoft/Prague/issues/1761)
-            sharedString.insertText(".", 3);
+            sharedString.insertText(3, ".");
 
             intervals.add(0, 3, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 3 }]);
@@ -96,12 +96,12 @@ describe("SharedInterval", () => {
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
-            sharedString.insertText(".", 0);
+            sharedString.insertText(0, ".");
             assertIntervals([{ start: 1, end: 3 }]);
         });
 
         it("replace first is included", async () => {
-            sharedString.insertText("012", 0);
+            sharedString.insertText(0, "012");
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
@@ -110,7 +110,7 @@ describe("SharedInterval", () => {
         });
 
         it("replace last is included", async () => {
-            sharedString.insertText("012", 0);
+            sharedString.insertText(0, "012");
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
@@ -122,7 +122,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
-            sharedString.insertText(".", 2);
+            sharedString.insertText(2, ".");
             assertIntervals([{ start: 0, end: 3 }]);
         });
 
@@ -130,7 +130,7 @@ describe("SharedInterval", () => {
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
-            sharedString.insertText(".", 3);
+            sharedString.insertText(3, ".");
             assertIntervals([{ start: 0, end: 2 }]);
         });
 
@@ -146,7 +146,7 @@ describe("SharedInterval", () => {
         // https://github.com/microsoft/Prague/issues/2479
         //
         it("repeated replacement", async () => {
-            sharedString.insertText("012", 0);
+            sharedString.insertText(0, "012");
             intervals.add(0, 2, IntervalType.SlideOnRemove);
             assertIntervals([{ start: 0, end: 2 }]);
 
@@ -171,7 +171,7 @@ describe("SharedInterval", () => {
         it("propagates", async () => {
             const host1 = new TestHost([]);
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringExtension.Type);
-            sharedString1.insertText("0123456789", 0);
+            sharedString1.insertText(0, "0123456789");
             const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
@@ -186,7 +186,7 @@ describe("SharedInterval", () => {
             sharedString2.removeRange(4, 5);
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
 
-            sharedString2.insertText("x", 4);
+            sharedString2.insertText(4, "x");
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
             await TestHost.sync(host1, host2);

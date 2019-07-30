@@ -567,7 +567,7 @@ export async function typeChunk(
                     }
                     metrics.typingProgress = readPosition / chunk.length;
                 } else {
-                    a.ss.insertText(char, pos);
+                    a.ss.insertText(pos, char);
                     readPosition++;
                 }
             });

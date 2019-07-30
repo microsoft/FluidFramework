@@ -179,8 +179,8 @@ describe("TestHost", () => {
                 assert.strictEqual(text1.client.mergeTree.root.cachedLength, 0);
                 assert.strictEqual(text2.client.mergeTree.root.cachedLength, 0);
 
-                text1.insertText("1", 0);
-                text2.insertText("2", 0);
+                text1.insertText(0, "1");
+                text2.insertText(0, "2");
                 await TestHost.sync(host1, host2);
 
                 assert.strictEqual(text1.client.mergeTree.root.cachedLength, 2);

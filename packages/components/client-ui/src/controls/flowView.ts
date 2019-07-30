@@ -2697,7 +2697,7 @@ function makeSegSpan(
                             const itemElm = ev.target as HTMLElement;
                             const text = itemElm.innerText.trim();
                             context.sharedString.removeText(span.textErrorRun.start, span.textErrorRun.end);
-                            context.sharedString.insertText(text, span.textErrorRun.start);
+                            context.sharedString.insertText(span.textErrorRun.start, text);
                             context.hostSearchMenu(span.textErrorRun.start);
                         }
                         function selectItem(ev: MouseEvent) {
@@ -3360,7 +3360,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         //       for 2018/Oct demo.
         window["insertComponent"] = this.insertComponent.bind(this);
         window["insertText"] = (text: string) => {
-            this.sharedString.insertText(text, this.cursor.pos);
+            this.sharedString.insertText(this.cursor.pos, text);
         };
 
         // Expose the ability to invalidate the current layout when a component's width/height changes.
@@ -4534,7 +4534,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     if (this.getMathViewMarker()) {
                         this.mathComponentViewKeypress(e);
                     } else {
-                        this.sharedString.insertText(String.fromCharCode(code), pos);
+                        this.sharedString.insertText(pos, String.fromCharCode(code));
                         if (code === CharacterCodes.space) {
                             this.undoRedoManager.closeCurrentOperation();
                         }
@@ -4879,7 +4879,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const sel = this.cursor.getSelection();
         if (sel) {
             const commentStory = this.collabDocument.createString();
-            commentStory.insertText("a comment...", 0);
+            commentStory.insertText(0, "a comment...");
             commentStory.register();
             this.comments.add(
                 sel.start,

@@ -1,5 +1,12 @@
 # 0.8 Breaking Changes
 
+## `sharedString.insertText()` argument order changed
+The `pos` and `text` arguments of `sharedString.insertText()` have been switched to make it more consistent with other sharedString methods. The new function signature is as below:
+```typescript
+public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
+```
+
+
 # 0.7 Breaking Changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the

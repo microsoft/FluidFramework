@@ -17,7 +17,7 @@ export class FiddleApp extends Document {
     // Set the initial app text
     if (!this.runtime.existing) {
       const codeString = this.createString();
-      codeString.insertText(getInitialCode(), 0);
+      codeString.insertText(0, getInitialCode());
       this.root.set("text", codeString);
 
       this.root.set("documentId", randomId())

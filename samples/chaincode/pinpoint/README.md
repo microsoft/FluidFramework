@@ -63,7 +63,7 @@ text.on("op", (msg) => {
 
 ...
 
-text.insertText(insertText, insertPosition);
+text.insertText(insertPosition, insertText);
 ```
 
 A document is a collection of collaborative objects accessible from a root map. Every collaborative object has

@@ -662,7 +662,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     public insertText(text: string, instanceId: string, offset: number) {
         const instance = this.getInstance(instanceId);
         const pos = this.getStartPos(instance) + offset;
-        this.combinedMathText.insertText(text, pos);
+        this.combinedMathText.insertText(pos, text);
         instance.postInsert();
     }
 

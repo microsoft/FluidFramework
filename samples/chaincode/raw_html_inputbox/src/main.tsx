@@ -82,7 +82,7 @@ export class Raw_html_inputbox extends PrimedComponent implements IComponentHTML
     inputElement.type = "text";
     inputElement.value = inputBoxString.getText();
     inputElement.oninput = (e) => {
-      inputBoxString.insertText((e.target as any).value, 0)
+      inputBoxString.insertText(0, (e.target as any).value)
     };
     host.appendChild(inputElement);
   }

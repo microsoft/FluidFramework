@@ -21,7 +21,7 @@ export class Rooster extends Document {
   protected async create() {
     this.root.set("clicks", 0, CounterValueType.Name);
     const contentString = this.createString();
-    contentString.insertText("0123456789", 0);
+    contentString.insertText(0, "0123456789");
     this.root.set("contentString", contentString);
   }
 

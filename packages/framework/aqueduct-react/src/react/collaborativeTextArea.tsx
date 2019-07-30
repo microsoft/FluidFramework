@@ -159,7 +159,7 @@ export class CollaborativeTextArea extends React.Component<IProps, IState> {
             const insertedText = newText.substring(this.state.selectionStart, newPosition);
             const changeRangeLength = this.state.selectionEnd - this.state.selectionStart;
             if (changeRangeLength === 0) {
-                this.props.sharedString.insertText(insertedText, this.state.selectionStart);
+                this.props.sharedString.insertText(this.state.selectionStart, insertedText);
             } else {
                 this.props.sharedString.replaceText(this.state.selectionStart, this.state.selectionEnd, insertedText);
             }

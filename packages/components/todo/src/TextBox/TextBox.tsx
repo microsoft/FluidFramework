@@ -75,7 +75,7 @@ export class TextBox extends PrimedComponent
 
     // Set our text cell to the initial value.
     const text = this.root.get<SharedString>("text");
-    text.insertText(newItemText, 0);
+    text.insertText(0, newItemText);
   }
 
   // end IComponentForge

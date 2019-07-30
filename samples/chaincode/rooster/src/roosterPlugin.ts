@@ -92,7 +92,7 @@ export class CollabPlugin implements EditorPlugin {
         // Not needed because the editor inserts anyway
         // this.editor.insertContent(event.data);
         const pos = this.getPosition()
-        this.contentString.insertText(event.data, pos.start - 1); // 1 vs 0 base
+        this.contentString.insertText(pos.start - 1, event.data); // 1 vs 0 base
     }
 
     private handleDelete(event: FormatInputEvent) {

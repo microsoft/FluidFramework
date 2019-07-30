@@ -196,7 +196,7 @@ async function loadDocument(
         for (const segment of segments) {
             if (segment.getType() === MergeTree.SegmentType.Text) {
                 const textSegment = segment as MergeTree.TextSegment;
-                newString.insertText(textSegment.text, newString.client.getLength(),
+                newString.insertText(newString.client.getLength(), textSegment.text,
                     textSegment.properties);
             } else {
                 // assume marker

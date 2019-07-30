@@ -75,7 +75,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     this.root.set(this.titleId, cell);
 
     const text = SharedString.create(this.runtime);
-    text.insertText("Title", 0);
+    text.insertText(0, "Title");
     this.root.set("sharedString-title", text);
   }
 

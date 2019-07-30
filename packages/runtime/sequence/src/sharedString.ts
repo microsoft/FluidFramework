@@ -118,7 +118,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
      * @param text - The text to insert
      * @param props - The properties of text
      */
-    public insertText(text: string, pos: number, props?: MergeTree.PropertySet) {
+    public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
         if (props) {
             segment.addProperties(props);

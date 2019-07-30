@@ -54,8 +54,8 @@ describe("SharedString Snapshot Version", () => {
             }
 
             for (let j = 0; j < sharedString.getLength(); j += 50) {
-                sharedString.insertText("NEWTEXT", j);
-                testString.insertText("NEWTEXT", j);
+                sharedString.insertText(j, "NEWTEXT");
+                testString.insertText(j, "NEWTEXT");
             }
 
             assert(sharedString.getLength() === testString.getLength(), message);

@@ -35,7 +35,7 @@ describe("SharedString", () => {
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             for (let i = 0; i < insertCount; i++) {
-                sharedString.insertText("hello", i);
+                sharedString.insertText(i, "hello");
                 assert.equal(sharedString.client.mergeTree.pendingSegments.count(), i + 1);
             }
         });
