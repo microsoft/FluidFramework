@@ -58,6 +58,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     return clicker;
   }
 
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
   // start IComponentHTMLVisual
 
   /**

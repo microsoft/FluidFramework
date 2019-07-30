@@ -212,6 +212,7 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
 }
 
 export interface IComponentConfiguration {
+    readonly IComponentConfiguration: IComponentConfiguration;
     canReconnect: boolean;
 }
 
@@ -227,8 +228,16 @@ export interface IFluidModule {
  * Exported module definition
  */
 export interface IRuntimeFactory {
+    readonly IRuntimeFactory: IRuntimeFactory;
     /**
      * Instantiates a new chaincode container
      */
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+}
+
+declare module "./components" {
+    export interface IComponent {
+        readonly IRuntimeFactory?: IRuntimeFactory;
+        readonly IComponentConfiguration?: IComponentConfiguration;
+    }
 }

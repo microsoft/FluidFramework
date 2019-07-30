@@ -36,6 +36,9 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         super(runtime, context, ["IComponentHTMLVisual"]);
     }
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     public async request(request: IRequest): Promise<IResponse> {
         if (request.url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
@@ -82,7 +85,10 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         await super.opened();
 
         const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
-        this.taskManager = (schedulerResponse.value as IComponent).query<ITaskManager>("ITaskManager");
+        const component = schedulerResponse.value as IComponent;
+        this.taskManager = component.ITaskManager ?
+            component.ITaskManager :
+            component.query<ITaskManager>("ITaskManager");
 
         const insights = await this.root.wait(insightsMapId) as SharedMap;
         this.intelViewer = new FlowIntelViewer(insights);
@@ -109,7 +115,8 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         }
 
         const component = request.value as IComponent;
-        return component.query<IComponentCollection>("IComponentCollection");
+        return component.IComponentCollection ?
+            component.IComponentCollection : component.query<IComponentCollection>("IComponentCollection");
     }
 }
 

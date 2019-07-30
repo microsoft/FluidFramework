@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { instantiateComponent } from "./scheduler";
+export { AgentSchedulerFactory } from "./scheduler";

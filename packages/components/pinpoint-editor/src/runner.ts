@@ -325,6 +325,11 @@ export class PinpointRunner extends EventEmitter implements
         return runner;
     }
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentLayout() { return this; }
+
     public get url(): string {
         return this.runtime.id;
     }

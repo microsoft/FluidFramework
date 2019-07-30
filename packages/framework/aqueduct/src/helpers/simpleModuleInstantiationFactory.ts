@@ -5,7 +5,7 @@
 import {
     IComponent, IContainerContext, IRuntime, IRuntimeFactory,
 } from "@prague/container-definitions";
-import { IComponentRegistry } from "@prague/container-runtime";
+import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
@@ -27,8 +27,12 @@ export class SimpleModuleInstantiationFactory implements
 
     constructor(
         private readonly defaultComponentName: string,
-        private readonly registry: IComponentRegistry) {
+        private readonly registry: ComponentRegistryTypes) {
     }
+
+    public get IComponentFactory() { return this; }
+    public get IComponentRegistry() { return this; }
+    public get IRuntimeFactory() { return this; }
 
     public query(id: string): any {
         return SimpleModuleInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -38,12 +42,16 @@ export class SimpleModuleInstantiationFactory implements
         return SimpleModuleInstantiationFactory.supportedInterfaces;
     }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public get(name: string): Promise<IComponentFactory> | undefined  {
         return this.registry.get(name);
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        this.get(this.defaultComponentName).then(
+        const factoryP = this.get(this.defaultComponentName);
+        if (factoryP === undefined) {
+            throw new Error(`No component factory for ${this.defaultComponentName}`);
+        }
+        factoryP.then(
             (factory) => {
                 factory.instantiateComponent(context);
             },

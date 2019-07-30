@@ -12,6 +12,7 @@ import { PinpointRunner } from "./runner";
 class PinpointMapsFactory implements IComponent, IComponentFactory {
     public static interfaces = ["IComponentFactory"];
 
+    public get IComponentFactory() { return this; }
     public query(id: string): any {
         return PinpointMapsFactory.interfaces.indexOf(id) !== -1 ? exports : undefined;
     }

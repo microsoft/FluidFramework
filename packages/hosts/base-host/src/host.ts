@@ -53,9 +53,12 @@ async function attach(loader: Loader, url: string, host: Host) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = "query" in component
-        ? component.query<IComponentHTMLVisual>("IComponentHTMLVisual")
-        : undefined;
+    const viewable =
+        component.IComponentHTMLVisual ?
+            component.IComponentHTMLVisual :
+            "query" in component
+                ? component.query<IComponentHTMLVisual>("IComponentHTMLVisual")
+                : undefined;
     if (viewable) {
         let renderable = viewable as IComponentHTMLRender;
         if (viewable.addView) {

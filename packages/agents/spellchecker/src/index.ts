@@ -10,12 +10,22 @@ import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
 export interface ISpellChecker {
+    readonly ISpellChecker: ISpellChecker;
     run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>): void;
+}
+
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        ISpellChecker?: ISpellChecker;
+    }
 }
 
 export class SpellChecker implements IComponent, IComponentRouter, ISpellChecker {
 
     public static supportedInterfaces = ["ISpellChecker"];
+
+    public get IComponentRouter() { return this; }
+    public get ISpellChecker() { return this; }
 
     public query(id: string): any {
         return SpellChecker.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;

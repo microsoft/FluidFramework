@@ -38,6 +38,9 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
         ],
     );
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     private configView: ConfigView | undefined;
     private rootElement: Element | undefined;
 

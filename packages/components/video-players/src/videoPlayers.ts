@@ -89,6 +89,12 @@ export class VideoPlayer implements
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentRouter() { return this; }
+    public get IComponentLayout() { return this; }
+    public get IComponentHTMLRender() { return this; }
+    public get IComponentLoadable() { return this; }
+
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
     public minimumWidth?: number;
@@ -169,6 +175,10 @@ export class VideoPlayerCollection extends EventEmitter implements
 
         return collection;
     }
+
+    public get IComponentRouter() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentCollection() { return this; }
 
     public url: string;
 

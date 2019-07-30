@@ -18,6 +18,9 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
         super(runtime, context, ["IComponentHTMLVisual"]);
     }
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     // #region IComponentHTMLVisual
     public addView?(scope?: IComponent): IComponentHTMLView {
         return new WebflowView(this.getComponent<FlowDocument>(this.docId));

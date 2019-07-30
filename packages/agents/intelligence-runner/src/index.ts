@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse,
+} from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
@@ -11,6 +17,9 @@ import { IntelRunner, ITokenConfig } from "./intelRunner";
 export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
 
     public static supportedInterfaces = ["IComponentRunnable"];
+
+    public get IComponentRouter() { return this; }
+    public get IComponentRunnable() { return this; }
 
     constructor(
         private readonly sharedString: Sequence.SharedString,

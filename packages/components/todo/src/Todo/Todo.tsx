@@ -52,6 +52,10 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   private readonly innerCellIds = "innerCellIds";
   private readonly titleId = "title";
 
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentReactViewable() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
   /**
    * Do setup work here
    */

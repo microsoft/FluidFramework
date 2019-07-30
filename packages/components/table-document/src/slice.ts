@@ -33,6 +33,8 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
         ],
     );
 
+    public get IComponentForge() { return this; }
+
     public get name() { return this.root.get(ConfigKey.name); }
     public set name(value: string) { this.root.set(ConfigKey.name, value); }
     public get values() { return this.maybeValues!; }

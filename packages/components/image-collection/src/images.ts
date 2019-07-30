@@ -34,6 +34,12 @@ export class ImageComponent implements
         "IComponentRouter",
         "IComponentHTMLRender"];
 
+    public get IComponentLoadable() { return this; }
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentRouter() { return this; }
+    public get IComponentHTMLRender() { return this; }
+    public get IComponentLayout() { return this; }
+
     // Video def has a preferred aspect ratio
     public aspectRatio?: number;
     public minimumWidthBlock?: number;
@@ -81,6 +87,10 @@ export class ImageCollection extends EventEmitter implements
 
         return collection;
     }
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentCollection() { return this; }
+    public get IComponentRouter() { return this; }
 
     public url: string;
 
@@ -167,6 +177,8 @@ export class ImageCollection extends EventEmitter implements
 
 export class ImageCollectionFactoryComponent implements IComponentFactory {
     public static supportedInterfaces = [ "IComponentFactory"];
+
+    public get IComponentFactory() { return this; }
 
     public query(id: string): any {
         return ImageCollectionFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;

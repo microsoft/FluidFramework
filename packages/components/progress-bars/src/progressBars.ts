@@ -12,6 +12,7 @@ import {
     IRequest,
     IResponse,
     ISharedComponent,
+
 } from "@prague/container-definitions";
 import {
     CounterValueType,
@@ -37,6 +38,9 @@ class ProgressBarView implements IComponentHTMLView {
 
     constructor(private bar: ProgressBar) {
     }
+
+    public get IComponentHTMLView() { return this; }
+    public get IComponentHTMLRender() { return this; }
 
     public query(id: string): any {
         return ProgressBarView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -86,6 +90,7 @@ class ProgressBarView implements IComponentHTMLView {
 
 // The "model" side of a progress bar
 export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, IComponentRouter {
+
     public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLVisual",
     "IComponentHTMLRender", "IComponentRouter"];
     private views = new Set<ProgressBarView>();
@@ -97,6 +102,11 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, ICom
         private keyId: string,
         private collection: ProgressCollection) {
     }
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+    public get IComponentRouter() { return this; }
 
     public query(id: string): any {
         return ProgressBar.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
@@ -154,6 +164,9 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
 
         return collection;
     }
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentRouter() { return this; }
 
     public url: string;
 
@@ -240,6 +253,8 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
 
 class ProgressBarsFactory implements IComponent, IComponentFactory {
     public static interfaces = ["IComponentFactory"];
+
+    public get IComponentFactory() { return this; }
 
     public query(id: string): any {
         return ProgressBarsFactory.interfaces.indexOf(id) !== -1 ? exports : undefined;

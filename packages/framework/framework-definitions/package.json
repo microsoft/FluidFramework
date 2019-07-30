@@ -19,6 +19,9 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/container-definitions": "^0.8.0"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
     "@prague/build-common": "^0.8.0",

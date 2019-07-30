@@ -166,6 +166,7 @@ export class TestHost {
             "http://test-storage-url.test",
             new TestLoader([
                 [TestRootComponent.type, {
+                    IRuntimeFactory: undefined,
                     instantiateRuntime: (context) => Component.instantiateRuntime(
                         context,
                         TestRootComponent.type,

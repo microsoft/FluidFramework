@@ -7,6 +7,8 @@ import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/co
 import { ISharedMap } from "@prague/map";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
   private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
 
   private insightFound = false;

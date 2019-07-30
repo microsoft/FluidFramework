@@ -26,10 +26,23 @@ import {
 import { EventEmitter } from "events";
 import { IChannel } from "./channel";
 
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        readonly IComponentFactory?: IComponentFactory;
+        readonly IComponentCollection?: IComponentCollection;
+        readonly IComponentLayout?: IComponentLayout;
+        readonly IComponentCursor?: IComponentCursor;
+        readonly IComponentKeyHandlers?: IComponentKeyHandlers;
+    }
+}
+
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
 export interface IComponentRuntime extends EventEmitter, IComponent, IComponentRouter {
+
+    readonly IComponentRouter: IComponentRouter;
+
     readonly options: any;
 
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -173,6 +186,7 @@ export interface IComponentRuntime extends EventEmitter, IComponent, IComponentR
 }
 
 export interface IComponentRouter {
+    readonly IComponentRouter: IComponentRouter;
     request(req: IRequest): Promise<IResponse>;
 }
 
@@ -358,6 +372,7 @@ export interface IHostRuntime extends IRuntime {
  * The interface implemented by a component module.
  */
 export interface IComponentFactory {
+    readonly IComponentFactory: IComponentFactory;
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Conext for the component.
@@ -372,6 +387,7 @@ export interface IComponentFactory {
  * components in the collection would be like-typed.
  */
 export interface IComponentCollection extends IComponent {
+    readonly IComponentCollection: IComponentCollection;
     create<TOpt = object>(options?: TOpt): IComponent;
     remove(instance: IComponent): void;
     // need iteration
@@ -381,6 +397,7 @@ export interface IComponentCollection extends IComponent {
  * Provide information about component preferences for layout.
  */
 export interface IComponentLayout extends IComponent {
+    readonly IComponentLayout: IComponentLayout;
     aspectRatio?: number;
     minimumWidth?: number;
     minimumHeight?: number;
@@ -404,6 +421,7 @@ export enum ComponentCursorDirection {
 }
 
 export interface IComponentCursor extends IComponent {
+    readonly IComponentCursor: IComponentCursor;
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
     // returns true if cursor leaves the component
@@ -413,6 +431,7 @@ export interface IComponentCursor extends IComponent {
 
 // used when another component will forward keyboard events to this component
 export interface IComponentKeyHandlers extends IComponent {
+    readonly IComponentKeyHandlers: IComponentKeyHandlers;
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;
 }

@@ -32,6 +32,9 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     private initializeP: Promise<void> | undefined;
 
     public get id() { return this.runtime.id; }
+    public get IComponentRouter() { return this; }
+    public get IComponentForge() { return this; }
+    public get IComponentLoadable() { return this; }
 
     protected constructor(
         protected readonly runtime: IComponentRuntime,
@@ -128,7 +131,7 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
         const componentRuntime = await this.context.createComponent(id, pkg);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
 
-        const forge = component.query<IComponentForge>("IComponentForge");
+        const forge = component.IComponentForge ? component.IComponentForge : component.query<IComponentForge>("IComponentForge");
         if (forge) {
             await forge.forge(props);
         }

@@ -21,6 +21,10 @@ const template = new Template(
     ]});
 
 export class WebflowView implements IComponentHTMLView {
+
+    public get IComponentHTMLView() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     private searchMenu?: SearchMenuView;
     private previouslyFocused?: HTMLOrSVGElement;
     private root: Element;

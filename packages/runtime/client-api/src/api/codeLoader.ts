@@ -31,6 +31,8 @@ const insightsMapId = "insights";
 class Chaincode implements IComponent, IComponentFactory {
     public static supportedInterfaces = ["IComponentFactory"];
 
+    public get IComponentFactory() { return this; }
+
     public query(id: string): any {
         return Chaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }
@@ -113,6 +115,8 @@ class BackCompatLoader implements IComponentRegistry {
     constructor(private readonly chaincode: Chaincode) {
     }
 
+    public get IComponentRegistry() { return this; }
+
     public async get(name: string): Promise<IComponentFactory> {
         // Back compat loader simply returns a kitchen sink component with all the data types
         return Promise.resolve(this.chaincode);
@@ -124,6 +128,8 @@ export class ChaincodeFactory implements IComponent, IRuntimeFactory {
 
     constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
     }
+
+    public get IRuntimeFactory() { return this; }
 
     public query(id: string): any {
         return ChaincodeFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;

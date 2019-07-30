@@ -20,6 +20,9 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   ];
   public static readonly componentName = "Scoreboard";
 
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
   /**
   * Setup the distributed data structures; called once when the component is created (NOT initialized)
   */

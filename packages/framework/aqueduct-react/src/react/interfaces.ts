@@ -6,6 +6,13 @@
  /**
   * If something is react viewable then render can simply return a JSX Element
   */
- export interface IComponentReactViewable {
+export interface IComponentReactViewable {
+    readonly IComponentReactViewable: IComponentReactViewable;
     createJSXElement(props?: {}): JSX.Element;
+}
+
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        readonly IComponentReactViewable?: IComponentReactViewable;
+    }
 }

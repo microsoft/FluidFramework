@@ -88,6 +88,11 @@ export class MonacoRunner extends PrimedComponent implements
         return runner;
     }
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentLayout() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     /**
      * The chart probably has a preferred aspect ratio - but it can also fill any bounds
      */

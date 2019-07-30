@@ -34,6 +34,8 @@ export class SimpleComponentInstantiationFactory implements IComponent, ICompone
     ) {
     }
 
+    public get IComponentFactory() { return this; }
+
     public query(id: string): any {
         return SimpleComponentInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

@@ -29,7 +29,14 @@ interface IOpSnapshotDetails {
     required: boolean;
 }
 
-export interface ISummarizer extends IComponent {
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        readonly ISummarizer?: ISummarizer;
+    }
+}
+
+export interface ISummarizer {
+    readonly ISummarizer: ISummarizer;
     /**
      * Runs the summarizer on behalf of another clientId. In this case it will only run so long as the given
      * clientId is the elected summarizer and will stop once it is not.
@@ -39,6 +46,9 @@ export interface ISummarizer extends IComponent {
 
 export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
     public static supportedInterfaces = ["IComponentLoadable", "ISummarizer"];
+
+    public get ISummarizer() { return this; }
+    public get IComponentLoadable() { return this; }
 
     // Use the current time on initialization since we will be loading off a snapshot
     private lastSnapshotTime: number = Date.now();

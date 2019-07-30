@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as agentScheduler from "@component/agent-scheduler";
+import { AgentSchedulerFactory } from "@component/agent-scheduler";
 import {
     Browser,
     ConnectionState,
@@ -60,8 +60,17 @@ import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        readonly IComponentRegistry?: IComponentRegistry;
+    }
+}
+
+export type ComponentRegistryTypes = IComponentRegistry | {get(name: string): Promise<IComponentFactory> | undefined};
+
 export interface IComponentRegistry {
-    get(name: string): Promise<IComponentFactory>;
+    readonly IComponentRegistry: IComponentRegistry;
+    get(name: string): Promise<IComponentFactory> | undefined;
 }
 
 interface IBufferedChunk {
@@ -106,7 +115,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      */
     public static async load(
         context: IContainerContext,
-        registry: IComponentRegistry,
+        registry: ComponentRegistryTypes,
         createRequestHandler?: (runtime: ContainerRuntime) => ((request: IRequest) => Promise<IResponse>),
         runtimeOptions?: IContainerRuntimeOptions,
     ): Promise<ContainerRuntime> {
@@ -1174,12 +1183,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
 // Wraps the provided list of packages and augments with some system level services.
 class WrappedComponentRegistry implements IComponentRegistry {
-    constructor(private readonly registry: IComponentRegistry) {
+
+    private readonly agentScheduler: AgentSchedulerFactory;
+
+    constructor(private readonly registry: ComponentRegistryTypes) {
+        this.agentScheduler = new AgentSchedulerFactory();
     }
+
+    public get IComponentRegistry() { return this; }
 
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "_scheduler") {
-            return agentScheduler;
+            return this.agentScheduler;
         } else {
             return this.registry.get(name);
         }

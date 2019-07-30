@@ -111,6 +111,8 @@ class MockDeltaConnection implements IDeltaConnection {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockRuntime extends EventEmitter implements IComponentRuntime {
+
+    public get IComponentRouter() { return this; }
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;

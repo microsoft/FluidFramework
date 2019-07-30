@@ -13,7 +13,7 @@ import {
     IComponentLoadable,
     IComponentTokenProvider,
     IRequest,
-    IResponse } from "@prague/container-definitions";
+    IResponse} from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -62,6 +62,10 @@ export class SharedTextRunner extends EventEmitter implements
 
         return runner;
     }
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
 
     public readonly url = "/text";
     private sharedString: SharedString;
@@ -180,7 +184,10 @@ export class SharedTextRunner extends EventEmitter implements
 
         const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
         const schedulerComponent = schedulerResponse.value as IComponent;
-        this.taskManager = schedulerComponent.query<ITaskManager>("ITaskManager");
+        this.taskManager =
+        schedulerComponent.ITaskManager ?
+            schedulerComponent.ITaskManager :
+            schedulerComponent.query<ITaskManager>("ITaskManager");
 
         const options = parse(window.location.search.substr(1));
         addTranslation(

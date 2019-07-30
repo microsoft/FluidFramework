@@ -17,6 +17,9 @@ export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRun
         private readonly insightsMap: ISharedMap,
         private readonly config: ITokenConfig) {}
 
+    public get IComponentRouter() { return this; }
+    public get IComponentRunnable() { return this; }
+
     public query(id: string): any {
         return TextAnalyzer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

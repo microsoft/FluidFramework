@@ -8,7 +8,7 @@ import {
     IRequest,
     IRuntime,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
+import { ComponentRegistryTypes, ContainerRuntime } from "@prague/container-runtime";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -19,7 +19,7 @@ export class SimpleContainerRuntimeFactory {
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: IComponentRegistry,
+        registry: ComponentRegistryTypes,
         generateSummaries: boolean = false,
     ): Promise<IRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);

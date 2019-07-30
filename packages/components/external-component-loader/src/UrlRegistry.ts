@@ -4,7 +4,7 @@
  */
 // tslint:disable: no-console
 import { IComponent, IFluidPackage, IPraguePackage } from "@prague/container-definitions";
-import { IComponentRegistry } from "@prague/container-runtime";
+import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 
@@ -16,7 +16,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     private readonly urlRegistryMap = new Map<string, Promise<IComponentFactory>>();
     // tslint:disable-next-line: prefer-array-literal
-    private readonly subRegistries: Array<Promise<IComponentRegistry>> = [];
+    private readonly subRegistries: Array<Promise<ComponentRegistryTypes>> = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
@@ -39,6 +39,8 @@ export class UrlRegistry implements IComponentRegistry {
         this.loadingEntrypoints = window[loadingEntrypointsKey] as Map<string, Promise<unknown>>;
     }
 
+    public get IComponentRegistry() { return this; }
+
     public async get(name: string): Promise<IComponentFactory> {
 
         if (!this.urlRegistryMap.has(name)
@@ -60,8 +62,10 @@ export class UrlRegistry implements IComponentRegistry {
 
             this.subRegistries.push(entryPointPromise.then((entrypoint) => {
                 const fluidExport: IComponent = entrypoint.fluidExport;
-                if (fluidExport !== undefined && fluidExport.query !== undefined) {
-                    const registry = fluidExport.query<IComponentRegistry>("IComponentRegistry");
+                if (fluidExport !== undefined) {
+                    const registry = fluidExport.IComponentRegistry ?
+                        fluidExport.IComponentRegistry :
+                        fluidExport.query<IComponentRegistry>("IComponentRegistry");
                     if (registry !== undefined) {
                         return registry;
                     }
@@ -74,7 +78,9 @@ export class UrlRegistry implements IComponentRegistry {
                 let componentFactory = entrypoint as IComponentFactory;
 
                 if (fluidExport !== undefined && fluidExport.query !== undefined) {
-                    const exportFactory = fluidExport.query<IComponentFactory>("IComponentFactory");
+                    const exportFactory = fluidExport.IComponentFactory ?
+                        fluidExport.IComponentFactory :
+                        fluidExport.query<IComponentFactory>("IComponentFactory");
                     if (exportFactory !== undefined) {
                         componentFactory = exportFactory;
                     }

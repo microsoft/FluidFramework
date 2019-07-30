@@ -76,6 +76,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
             });
     }
 
+    public get IComponentRouter() { return this; }
+
     public get connectionState(): ConnectionState {
         return this.componentContext.connectionState;
     }

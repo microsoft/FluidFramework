@@ -42,6 +42,9 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   public clicker2Render: IComponentHTMLRender;
   public clicker3Render: IComponentHTMLRender;
 
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
   protected async existing() {
     await super.existing();
     await this.setupSubComponents();
@@ -71,9 +74,14 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
   async setupSubComponents() {
     const clicker2 = await this.getComponent("clicker");
-    this.clicker2Render = clicker2.query<IComponentHTMLRender>("IComponentHTMLRender");
+    this.clicker2Render = clicker2.IComponentHTMLRender ?
+      clicker2.IComponentHTMLRender :
+      clicker2.query<IComponentHTMLRender>("IComponentHTMLRender");
+
     const clicker3 = await this.getComponent("clicker");
-    this.clicker3Render = clicker3.query<IComponentHTMLRender>("IComponentHTMLRender");
+    this.clicker3Render = clicker3.IComponentHTMLRender ?
+      clicker3.IComponentHTMLRender :
+      clicker3.query<IComponentHTMLRender>("IComponentHTMLRender");
   }
 
   // start IComponentHTMLVisual
@@ -130,6 +138,8 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   PondName,
   new Map([
     [PondName, Promise.resolve(pondInstantiationFactory)],
-    [ClickerName, Promise.resolve({ instantiateComponent: Clicker.instantiateComponent })],
-    [ClickerWithForgeName, Promise.resolve({ instantiateComponent: ClickerWithForge.instantiateComponent })],
+    [ClickerName, Promise.resolve(
+      { instantiateComponent: Clicker.instantiateComponent, IComponentFactory: undefined })],
+    [ClickerWithForgeName, Promise.resolve(
+      { instantiateComponent: ClickerWithForge.instantiateComponent, IComponentFactory: undefined })],
   ]));

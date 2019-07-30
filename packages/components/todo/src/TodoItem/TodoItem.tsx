@@ -62,6 +62,10 @@ export class TodoItem extends PrimedComponent
     private static readonly supportedInterfaces =
       ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentReactViewable", "IComponentForge"];
 
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentReactViewable() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
   /**
    * Do creation work
    */

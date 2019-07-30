@@ -156,7 +156,10 @@ export class SummaryManager extends EventEmitter {
         }
 
         const rawComponent = response.value as IComponent;
-        const summarizer = rawComponent.query<ISummarizer>("ISummarizer");
+        const summarizer = rawComponent.ISummarizer ?
+            rawComponent.ISummarizer :
+            rawComponent.query<ISummarizer>("ISummarizer");
+
         if (!summarizer) {
             return Promise.reject<ISummarizer>("Component does not implement ISummarizer");
         }

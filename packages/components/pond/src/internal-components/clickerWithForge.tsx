@@ -39,6 +39,9 @@ export class ClickerWithForge extends PrimedComponent implements IComponentHTMLV
 
     private hasForged = false;
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     /**
      * Do setup work here
      */

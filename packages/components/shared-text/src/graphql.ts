@@ -18,6 +18,9 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
 
     public readonly id = "graphiql";
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     constructor(private realComponent: SharedTextRunner) {
         super();
     }

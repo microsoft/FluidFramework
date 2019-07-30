@@ -5,12 +5,17 @@
 
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
+    IComponent,
     IContainerContext,
     IRequest,
     IResponse,
     IRuntime,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
+import {
+    ComponentRegistryTypes,
+    ContainerRuntime,
+    IContainerRuntimeOptions,
+} from "@prague/container-runtime";
 import { ISharedMap, MapExtension, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { ISharedObjectExtension } from "@prague/shared-object-common";
@@ -117,7 +122,7 @@ export abstract class Component extends EventEmitter {
     public static async instantiateRuntime(
         context: IContainerContext,
         chaincode: string,
-        registry: IComponentRegistry,
+        registry: ComponentRegistryTypes,
         runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ): Promise<IRuntime> {
 
@@ -175,7 +180,7 @@ export abstract class Component extends EventEmitter {
      */
     public static createComponentFactory<T extends Component>(ctor: new () => T): IComponentFactory {
         const supportedInterfaces = ["IComponentFactory"];
-        const value = {
+        const value: Partial<IComponentFactory & IComponent> = {
             instantiateComponent: (context: IComponentContext) => {
                 const component = new ctor();
                 component.initialize(context);
@@ -183,8 +188,7 @@ export abstract class Component extends EventEmitter {
             list: () => supportedInterfaces,
             query: (id: string) => (supportedInterfaces.indexOf(id) !== -1 ? value : undefined) as any,
         };
-
-        return value;
+        return value as IComponentFactory;
     }
 
     private static readonly rootMapId = "root";

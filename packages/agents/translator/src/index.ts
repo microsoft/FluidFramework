@@ -21,6 +21,9 @@ export class Translator implements IComponent, IComponentRouter, IComponentRunna
         private readonly insightsMap: ISharedMap,
         private readonly config: ITokenConfig) {}
 
+    public get IComponentRouter() { return this; }
+    public get IComponentRunnable() { return this; }
+
     public query(id: string): any {
         return Translator.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

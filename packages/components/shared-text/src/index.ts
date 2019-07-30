@@ -7,7 +7,9 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IComponent, IContainerContext, IRequest, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
+import {
+    IComponent, IContainerContext, IRequest, IRuntime, IRuntimeFactory,
+} from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentContext } from "@prague/runtime-definitions";
 import { IComponentFactory } from "@prague/runtime-definitions";
@@ -49,23 +51,31 @@ class MyRegistry implements IComponentRegistry {
     constructor(private context: IContainerContext, private readonly sharedTextFactory: SharedTextFactoryComponent) {
     }
 
+    public get IComponentRegistry() {return this; }
+
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "@chaincode/shared-text") {
             return this.sharedTextFactory;
         } else if (name === "@chaincode/math") {
             return math.then((m) => m.fluidExport);
         } else if (name === "@chaincode/charts") {
-            return charts;
+            return charts.then((f) => {
+                // TODO: Return FuildExport
+                return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };
+            });
         } else if (name === "@chaincode/progress-bars") {
-            return progressBars;
+            return progressBars.then((f) => f.fluidExport);
         } else if (name === "@chaincode/video-players") {
-            return videoPlayers;
+            return videoPlayers.then((f) => {
+                // TODO: Return FuildExport
+                return { instantiateComponent: f.instantiateComponent, IComponentFactory: undefined };
+            });
         } else if (name === "@chaincode/image-collection") {
             return images.then((i) => i.fluidExport);
         } else if (name === "@chaincode/monaco") {
             return monaco.then((m) => m.fluidExport);
         } else if (name === "@chaincode/pinpoint-editor") {
-            return pinpoint;
+            return pinpoint.then((f) => f.fluidExport);
         } else {
             return this.context.codeLoader.load<IComponentFactory>(name);
         }
@@ -74,6 +84,9 @@ class MyRegistry implements IComponentRegistry {
 
 class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRuntimeFactory {
     public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
+
+    public get IComponentFactory() { return this; }
+    public get IRuntimeFactory() { return this; }
 
     public query(id: string): any {
         return SharedTextFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;

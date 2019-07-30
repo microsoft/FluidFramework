@@ -29,6 +29,8 @@ export class SharedComponentFactory implements IComponent, IComponentFactory  {
         this.registry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
 
+    public get IComponentFactory() { return this; }
+
     public query(id: string): any {
         return SharedComponentFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

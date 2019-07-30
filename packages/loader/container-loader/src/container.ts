@@ -729,7 +729,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const component = await componentP;
 
         if ("fluidExport" in component) {
-            const factory = component.fluidExport.query<IRuntimeFactory>("IRuntimeFactory");
+            const factory = component.fluidExport.IRuntimeFactory ?
+                component.fluidExport.IRuntimeFactory :
+                component.fluidExport.query<IRuntimeFactory>("IRuntimeFactory");
             return factory ? factory : Promise.reject(PackageNotFactoryError);
         }
 

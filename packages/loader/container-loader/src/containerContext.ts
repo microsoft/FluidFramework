@@ -129,9 +129,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public get configuration(): IComponentConfiguration {
-        return {
+        const config: Partial<IComponentConfiguration> = {
             canReconnect: this.container.canReconnect,
         };
+        return config as IComponentConfiguration;
     }
 
     // Back compat flag - can remove in 0.6

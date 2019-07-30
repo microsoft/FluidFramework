@@ -12,6 +12,8 @@ import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-
 class FlowScrollFactoryComponent implements IRuntimeFactory {
     public static supportedInterfaces = ["IRuntimeFactory"];
 
+    public get IRuntimeFactory() { return this; }
+
     public query(id: string): any {
         return FlowScrollFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

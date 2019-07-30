@@ -36,6 +36,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
     "IComponentRouter"];
 
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     /**
      * Do setup work here
      */

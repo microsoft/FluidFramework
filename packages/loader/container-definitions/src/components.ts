@@ -5,7 +5,13 @@
 
 import { IRequest, IResponse } from "./loader";
 
-export interface IComponent {
+export interface IComponent  {
+    readonly IComponentLoadable?: IComponentLoadable;
+    readonly IComponentRunnable?: IComponentRunnable;
+    readonly IComponentRouter?: IComponentRouter;
+    readonly IComponentHTMLRender?: IComponentHTMLRender;
+    readonly IComponentHTMLVisual?: IComponentHTMLVisual;
+
     /**
      * Queries for an interface of the given ID
      */
@@ -25,9 +31,11 @@ export interface IComponent {
 export interface IComponentLoadable extends IComponent {
     // absolute URL to the component within the document
     url: string;
+    readonly IComponentLoadable: IComponentLoadable;
 }
 
 export interface IComponentRunnable extends IComponent {
+    readonly IComponentRunnable: IComponentRunnable;
     run(): Promise<void>;
 }
 
@@ -35,12 +43,14 @@ export interface IComponentRunnable extends IComponent {
  * A shared component has a URL from which it can be referenced
  */
 export interface ISharedComponent extends IComponent, IComponentLoadable {
+    readonly IComponentLoadable: IComponentLoadable;
 }
 
 /**
  * Request routing
  */
 export interface IComponentRouter {
+    readonly IComponentRouter: IComponentRouter;
     request(request: IRequest): Promise<IResponse>;
 }
 
@@ -54,6 +64,7 @@ export interface IComponentRouter {
  * rendered component.
  */
 export interface IComponentHTMLRender extends IComponent {
+    readonly IComponentHTMLRender: IComponentHTMLRender;
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
 
@@ -66,5 +77,6 @@ export interface IComponentHTMLView extends IComponentHTMLRender {
 }
 
 export interface IComponentHTMLVisual extends IComponentHTMLRender {
+    readonly IComponentHTMLVisual: IComponentHTMLVisual;
     addView?(scope?: IComponent): IComponentHTMLView;
 }

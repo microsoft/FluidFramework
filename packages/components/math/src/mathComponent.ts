@@ -61,6 +61,11 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
     public static supportedInterfaces = [
         "IComponentLayout", "IComponentCursor", "IComponentHTMLRender", "IComponentHTMLView"];
 
+    public get IComponentHTMLView() { return this; }
+    public get IComponentHTMLRender() { return this; }
+    public get IComponentCursor() { return this; }
+    public get IComponentLayout() { return this; }
+
     public cursorActive = false;
     public cursorElement: HTMLElement;
     // IComponentLayout
@@ -74,7 +79,8 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     constructor(public instance: MathInstance, public scope?: IComponent) {
         if (scope) {
-            this.searchMenuHost = scope.query("ISearchMenuHost");
+            this.searchMenuHost = scope.ISearchMenuHost ?
+            scope.ISearchMenuHost : scope.query("ISearchMenuHost");
         }
         this.options = this.instance.options;
     }
@@ -438,6 +444,12 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
         "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLVisual",
         "IComponentHTMLRender",
     ];
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentRouter() { return this; }
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
+
     public views: MathView[];
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
@@ -555,6 +567,10 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
 
         return collection;
     }
+
+    public get IComponentLoadable() { return this; }
+    public get IComponentCollection() { return this; }
+    public get IComponentRouter() { return this; }
 
     public url: string;
 
@@ -717,6 +733,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
 export class MathFactoryComponent implements IComponentFactory {
     public static supportedInterfaces = [ "IComponentFactory"];
 
+    public get IComponentFactory() { return this; }
     public query(id: string): any {
         return MathFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

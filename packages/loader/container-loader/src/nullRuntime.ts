@@ -75,6 +75,8 @@ export class NullChaincode implements IRuntimeFactory {
         return new NullRuntime();
     }
 
+    public get IRuntimeFactory() { return this; }
+
     public query(id: string): any {
         return NullChaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
     }

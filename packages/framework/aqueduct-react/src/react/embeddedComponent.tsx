@@ -52,13 +52,20 @@ export class EmbeddedComponent extends React.Component<IProps, IState> {
         }
 
         // Query to see if the component supports IComponentReactViewable
-        const reactViewable = component.query<IComponentReactViewable>("IComponentReactViewable");
+        const reactViewable =
+            component.IComponentReactViewable ?
+                component.IComponentReactViewable :
+                component.query<IComponentReactViewable>("IComponentReactViewable");
         if (reactViewable) {
             this.setState({ element: <ReactEmbeddedComponent component={reactViewable}/>});
             return;
         }
 
-        const htmlVisual = component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+        const htmlVisual =
+            component.IComponentHTMLVisual ?
+                component.IComponentHTMLVisual :
+                component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+
         if (htmlVisual) {
             this.setState({ element: <HTMLEmbeddedComponent component={htmlVisual} />});
             return;

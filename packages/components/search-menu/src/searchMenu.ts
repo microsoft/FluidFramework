@@ -11,7 +11,15 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
+declare module "@prague/container-definitions" {
+    export interface IComponent {
+        readonly ISearchMenuClient?: ISearchMenuClient;
+        readonly ISearchMenuHost?: ISearchMenuHost;
+    }
+}
+
 export interface ISearchMenuHost {
+    readonly ISearchMenuHost: ISearchMenuHost;
     // TD switch to options structure
     showSearchMenu(
         cmdTree: MergeTree.TST<ISearchMenuCommand>,
@@ -22,6 +30,7 @@ export interface ISearchMenuHost {
 }
 
 export interface ISearchMenuClient {
+    readonly ISearchMenuClient: ISearchMenuClient;
     registerSearchMenuHost(host: ISearchMenuHost): void;
 }
 

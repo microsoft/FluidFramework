@@ -26,7 +26,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         return ucl;
     }
 
-    private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
+    private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 
     private static readonly defaultComponents = [
         "@chaincode/pinpoint-editor",
@@ -37,6 +37,8 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         "@chaincode/pond",
         "@chaincode/clicker",
     ];
+    public get IComponentHTMLVisual() { return this; }
+    public get IComponentHTMLRender() { return this; }
 
     private readonly urlToComponent = new Map<string, IComponent>();
     private savedElement: HTMLElement;
@@ -99,7 +101,9 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                     const component = this.urlToComponent.get(url);
                     if (component) {
                         const componentVisual =
-                            component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+                            component.IComponentHTMLVisual ?
+                                component.IComponentHTMLVisual :
+                                component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
                         if (componentVisual) {
                             const containerDiv = document.createElement("div");
                             mainDiv.appendChild(containerDiv);
@@ -214,12 +218,19 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                     }
                     const request = await cr.request({ url: "/" });
 
-                    let component = request.value as IComponentLoadable;
-                    const componentCollection = component.query<IComponentCollection>("IComponentCollection");
+                    let component = request.value as IComponent;
+                    const componentCollection =
+                        component.IComponentCollection ?
+                            component.IComponentCollection :
+                            component.query<IComponentCollection>("IComponentCollection");
                     if (componentCollection !== undefined) {
-                        component = componentCollection.create() as IComponentLoadable;
+                        component = componentCollection.create();
                     }
-                    seq.insert(seq.getLength(), [component.url]);
+                    const loadable = component.IComponentLoadable ?
+                        component.IComponentLoadable : component.query<IComponentLoadable>("IComponentLoadable");
+                    if (loadable) {
+                        seq.insert(seq.getLength(), [loadable.url]);
+                    }
                 })
                 .catch((e) => {
                     this.error = e;

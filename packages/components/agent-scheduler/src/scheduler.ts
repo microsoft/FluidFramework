@@ -16,6 +16,7 @@ import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IAgentScheduler,
     IComponentContext,
+    IComponentFactory,
     IComponentRuntime,
     ITask,
     ITaskManager,
@@ -53,6 +54,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
         return collection;
     }
+
+    public get IAgentScheduler() { return this; }
+    public get IComponentRouter() { return this; }
 
     // tslint:disable-next-line:variable-name private fields exposed via getters
     private _leader = false;
@@ -345,7 +349,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         const rawComponent = response.value as IComponent;
-        const agent = rawComponent.query<IComponentRunnable>("IComponentRunnable");
+        const agent = rawComponent.IComponentRunnable ?
+            rawComponent.IComponentRunnable :
+            rawComponent.query<IComponentRunnable>("IComponentRunnable");
         if (agent === undefined) {
             return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
@@ -363,6 +369,11 @@ export class TaskManager implements ITaskManager {
     }
 
     public url = "/_tasks";
+
+    public get IAgentScheduler() { return this.scheduler; }
+    public get IComponentLoadable() { return this; }
+    public get IComponentRouter() { return this; }
+    public get ITaskManager() { return this; }
 
     private readonly taskMap = new Map<string, IComponentRunnable>();
     constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
@@ -402,7 +413,10 @@ export class TaskManager implements ITaskManager {
 
     public async pick(componentUrl: string, ...tasks: ITask[]) {
         const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-        const configuration = this.context.hostRuntime.query<IComponentConfiguration>("IComponentConfiguration");
+        const configuration =
+            this.context.hostRuntime.IComponentConfiguration ?
+                this.context.hostRuntime.IComponentConfiguration :
+                this.context.hostRuntime.query<IComponentConfiguration>("IComponentConfiguration");
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }
@@ -415,21 +429,26 @@ export class TaskManager implements ITaskManager {
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
-    const mapExtension = SharedMap.getFactory();
-    const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(mapExtension.type, mapExtension);
-    dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
+export class AgentSchedulerFactory implements IComponentFactory {
 
-    ComponentRuntime.load(
-        context,
-        dataTypes,
-        (runtime) => {
-            const taskManagerP = TaskManager.load(runtime, context);
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                const taskManager = await taskManagerP;
-                return taskManager.request(request);
+    public get IComponentFactory() { return this; }
+
+    public instantiateComponent(context: IComponentContext): void {
+        const mapExtension = SharedMap.getFactory();
+        const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
+        const dataTypes = new Map<string, ISharedObjectExtension>();
+        dataTypes.set(mapExtension.type, mapExtension);
+        dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
+
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const taskManagerP = TaskManager.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const taskManager = await taskManagerP;
+                    return taskManager.request(request);
+                });
             });
-        });
+    }
 }

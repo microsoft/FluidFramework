@@ -11,6 +11,7 @@ import * as api from "@prague/client-api";
 import {
     IComponent,
     IComponentHTMLRender,
+    IComponentLoadable,
     IGenericBlob,
     ISequencedDocumentMessage,
     ISharedComponent,
@@ -85,6 +86,12 @@ interface IMathOptions {
 
 export interface IMathInstance extends ISharedComponent, IComponentHTMLRender, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
+    IComponentLoadable: IComponentLoadable;
+    IComponentHTMLRender: IComponentHTMLRender;
+    IComponentCursor: IComponentCursor;
+    IComponentKeyHandlers: IComponentKeyHandlers;
+    IComponentLayout: IComponentLayout;
+    ISearchMenuClient: SearchMenu.ISearchMenuClient;
     id: string;
     leafId: string;
 }
@@ -896,7 +903,10 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.query<IComponentHTMLRender>("IComponentHTMLRender");
+                                const viewable =
+                                component.IComponentHTMLRender ?
+                                    component.IComponentHTMLRender :
+                                    component.query<IComponentHTMLRender>("IComponentHTMLRender");
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2378,7 +2388,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             } else {
                 if (newBlock.instance) {
                     let wpct = 0.75;
-                    const layout = newBlock.instance.query<any>("IComponentLayout") as IComponentLayout;
+                    const layout = newBlock.instance.IComponentLayout;
                     if (layout && layout.requestedWidthPercentage) {
                         wpct = layout.requestedWidthPercentage;
                     }
@@ -2432,7 +2442,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // TODO below is a temporary workaround. Should every QI interface also implement
                                 // IComponent. Then you can go from IComponentHTMLRender to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.query<any>("IComponentHTMLRender") as IComponentHTMLRender;
+                                const viewable = component.IComponentHTMLRender ?
+                                        component.IComponentHTMLRender : component.query<IComponentHTMLRender>("IComponentHTMLRender");
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -3199,6 +3210,7 @@ export class PersistentComponent {
 
 export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost {
     public static docStartPosition = 0;
+    public get ISearchMenuHost() { return this; }
     public timeToImpression: number;
     public timeToLoad: number;
     public timeToEdit: number;
@@ -4914,7 +4926,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const mathOptions: IMathOptions = { display: inline ? "inline" : "block" };
             const mathInstance = this.math.getInstance(mathMarker.properties.leafId, mathOptions);
             mathMarker.instance = mathInstance;
-            if (mathInstance.query("ISearchMenuClient")) {
+            if (mathInstance.ISearchMenuClient
+                || mathInstance.query("ISearchMenuClient")) {
                 mathInstance.registerSearchMenuHost(this);
             }
         }
@@ -4949,7 +4962,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
-        const instance = collection.create() as ISharedComponent;
+        const instance = collection.create();
+        const loadable =
+            instance.IComponentLoadable ?
+            instance.IComponentLoadable : instance.query<IComponentLoadable>("IComponentLoadable");
 
         const props = {
             crefTest: {
@@ -4957,9 +4973,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: instance.url,
+                url: loadable.url,
             },
-            leafId: instance.url,
+            leafId: loadable.url,
         };
 
         if (!inline) {
@@ -5041,7 +5057,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
 
         const component = request.value as IComponent;
-        return component.query<IComponentCollection>("IComponentCollection");
+        return component.IComponentCollection ?
+            component.IComponentCollection :
+            component.query<IComponentCollection>("IComponentCollection");
     }
 
     // TODO openPlatform should be removed in favor of openCollection
