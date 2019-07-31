@@ -135,6 +135,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                             } else {
                                 componentDiv.style.height = `${this.root.get(`${url}-height`)}px`;
                             }
+                            this.renderSubComponentButton(url, containerDiv);
                             this.renderResize(url, containerDiv);
                         }
                     }
@@ -240,6 +241,24 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             input.style.backgroundColor = "#FEE";
         }
     }
+
+    private renderSubComponentButton(url: string, containerDiv: HTMLDivElement) {
+        const subComponentButtonDiv = document.createElement("button");
+        containerDiv.appendChild(subComponentButtonDiv);
+        subComponentButtonDiv.innerText = "↗";
+        subComponentButtonDiv.onclick = () => {
+            window.open(`${window.location.href}/${url}`, "_blank");
+        };
+        const subComponentButtonStyle = subComponentButtonDiv.style;
+        subComponentButtonStyle.height = "25px";
+        subComponentButtonStyle.width = "35px";
+        subComponentButtonStyle.textAlign = "center";
+        subComponentButtonStyle.border = "none";
+        subComponentButtonStyle.position = "absolute";
+        subComponentButtonStyle.top = "0px";
+        subComponentButtonStyle.right = "0px";
+    }
+
     private renderResize(url: string, containerDiv: HTMLDivElement) {
         const resizeDiv = document.createElement("div");
         containerDiv.appendChild(resizeDiv);
