@@ -12,7 +12,6 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
-    IComponentTokenProvider,
     IRequest,
     IResponse } from "@prague/component-core-interfaces";
 import { MapExtension, SharedMap } from "@prague/map";
@@ -33,7 +32,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     private taskManager: ITaskManager;
     private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, ["IComponentHTMLVisual"]);
+        super(runtime, context);
     }
 
     public get IComponentHTMLVisual() { return this; }
@@ -86,9 +85,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
         const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
         const component = schedulerResponse.value as IComponent;
-        this.taskManager = component.ITaskManager ?
-            component.ITaskManager :
-            component.query<ITaskManager>("ITaskManager");
+        this.taskManager = component.ITaskManager;
 
         const insights = await this.root.wait(insightsMapId) as SharedMap;
         this.intelViewer = new FlowIntelViewer(insights);
@@ -115,8 +112,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         }
 
         const component = request.value as IComponent;
-        return component.IComponentCollection ?
-            component.IComponentCollection : component.query<IComponentCollection>("IComponentCollection");
+        return component.IComponentCollection;
     }
 }
 
@@ -132,7 +128,7 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = this.componentContext.hostRuntime.query<IComponentTokenProvider>("IComponentTokenProvider");
+        const hostTokens = this.componentContext.hostRuntime.IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         const intelTask: ITask = {
             id: "intel",

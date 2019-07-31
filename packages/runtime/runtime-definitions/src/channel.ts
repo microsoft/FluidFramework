@@ -10,6 +10,12 @@ import {
     ITree,
 } from "@prague/container-definitions";
 
+declare module "@prague/container-definitions" {
+    interface IComponent {
+        readonly IChannel?: IChannel;
+    }
+}
+
 export interface IChannel extends IComponent {
     /**
      * A readonly identifier for the shared object
@@ -21,6 +27,8 @@ export interface IChannel extends IComponent {
     readonly type: string;
 
     readonly snapshotFormatVersion?: string;
+
+    readonly IChannel: IChannel;
 
     /**
      * Generates snapshot of the shared object.

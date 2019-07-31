@@ -9,18 +9,9 @@ import { ISharedMap } from "@prague/map";
 export class FlowIntelViewer implements IComponentHTMLVisual {
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter"];
 
   private insightFound = false;
   constructor(private readonly insights: ISharedMap) {
-  }
-
-  public query(id: string): any {
-    return FlowIntelViewer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-  }
-
-  public list(): string[] {
-      return FlowIntelViewer.supportedInterfaces;
   }
 
   public addView(scope?: IComponent): IComponentHTMLView {

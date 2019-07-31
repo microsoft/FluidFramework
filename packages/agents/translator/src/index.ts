@@ -20,8 +20,6 @@ interface ITokenConfig {
 
 export class Translator implements IComponent, IComponentRouter, IComponentRunnable {
 
-    public static supportedInterfaces = ["IComponentRunnable"];
-
     constructor(
         private readonly sharedString: Sequence.SharedString,
         private readonly insightsMap: ISharedMap,
@@ -29,14 +27,6 @@ export class Translator implements IComponent, IComponentRouter, IComponentRunna
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }
-
-    public query(id: string): any {
-        return Translator.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return Translator.supportedInterfaces;
-    }
 
     public async run() {
         if (this.config === undefined || this.config.key === undefined || this.config.key.length === 0) {

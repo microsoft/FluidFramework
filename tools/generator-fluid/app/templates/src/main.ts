@@ -23,10 +23,10 @@ import {
  * Clicker example using view interfaces and stock component classes.
  */
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
+
 
     /**
-   * Create is where you do setup for your component. This is only called once the first time your component 
+   * Create is where you do setup for your component. This is only called once the first time your component
    * is created. Anything that happens in create will happen before any other user will see the component.
    */
   protected async create() {
@@ -46,7 +46,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    * Using a static allows us to have async calls in class creation that you can't have in a constructor
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
-    const clicker = new Clicker(runtime, context, Clicker.supportedInterfaces);
+    const clicker = new Clicker(runtime, context);
     await clicker.initialize();
 
     return clicker;
@@ -61,7 +61,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     // Do initial setup off the provided div.
     this.createComponentDom(div);
 
-    // When the value of the counter is incremented we will reRender the 
+    // When the value of the counter is incremented we will reRender the
     // value in the counter span
     counter.on("incremented", () => {
       // Uncomment the block below to live update your title

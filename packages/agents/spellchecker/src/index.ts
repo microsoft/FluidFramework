@@ -22,18 +22,8 @@ declare module "@prague/component-core-interfaces" {
 
 export class SpellChecker implements IComponent, IComponentRouter, ISpellChecker {
 
-    public static supportedInterfaces = ["ISpellChecker"];
-
     public get IComponentRouter() { return this; }
     public get ISpellChecker() { return this; }
-
-    public query(id: string): any {
-        return SpellChecker.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SpellChecker.supportedInterfaces;
-    }
 
     public run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>) {
         this.runSpellchecker(sharedString, dictionary).catch((err) => {

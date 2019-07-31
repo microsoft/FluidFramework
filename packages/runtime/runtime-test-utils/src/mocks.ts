@@ -153,14 +153,6 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
         return;
     }
 
-    public query<T>(id: string): T {
-        return undefined;
-    }
-
-    public list(): string[] {
-        return [];
-    }
-
     public getQuorum(): IQuorum {
         return null;
     }

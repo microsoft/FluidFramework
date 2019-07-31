@@ -4,7 +4,7 @@
  */
 
 import { ServicePlatform } from "@prague/app-component";
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
@@ -79,9 +79,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
             state.root.appendChild(slot);
             state.slot = slot;
             layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
-                const visual = component.IComponentHTMLVisual ?
-                    component.IComponentHTMLVisual :
-                    component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+                const visual = component.IComponentHTMLVisual;
                 if (visual) {
                     if (visual.addView) {
                         const view = visual.addView(layout.scope);

@@ -4,6 +4,7 @@
  */
 
 import {
+    IComponentQueryableLegacy,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -731,9 +732,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const component = await componentP;
 
         if ("fluidExport" in component) {
-            const factory = component.fluidExport.IRuntimeFactory ?
-                component.fluidExport.IRuntimeFactory :
-                component.fluidExport.query<IRuntimeFactory>("IRuntimeFactory");
+            let factory: IRuntimeFactory | undefined;
+            if (component.fluidExport.IRuntimeFactory) {
+                factory = component.fluidExport.IRuntimeFactory;
+            } else {
+                const queryable = component.fluidExport as IComponentQueryableLegacy;
+                if (queryable.query) {
+                    factory = queryable.query<IRuntimeFactory>("IRuntimeFactory");
+                }
+            }
+
             return factory ? factory : Promise.reject(PackageNotFactoryError);
         }
 

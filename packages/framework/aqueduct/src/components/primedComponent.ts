@@ -30,9 +30,8 @@ export abstract class PrimedComponent extends SharedComponent {
     protected constructor(
         protected runtime: IComponentRuntime,
         protected context: IComponentContext,
-        supportedInterfaces: string[],
     ) {
-        super(runtime, context, supportedInterfaces);
+        super(runtime, context);
     }
 
     // start IComponentRouter

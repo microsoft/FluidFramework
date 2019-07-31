@@ -63,7 +63,15 @@ export interface IDeltaHandlerStrategy {
     processSignal: (message: ISignalMessage) => void;
 }
 
+declare module "@prague/component-core-interfaces" {
+    interface IComponent {
+        readonly IDeltaSender?: IDeltaSender;
+    }
+}
+
 export interface IDeltaSender extends IComponent {
+
+    readonly IDeltaSender: IDeltaSender;
     /**
      * Submits the given delta returning the client sequence number for the message. Contents is the actual
      * contents of the message. appData is optional metadata that can be attached to the op by the app.

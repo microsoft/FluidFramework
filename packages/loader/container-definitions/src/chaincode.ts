@@ -179,6 +179,7 @@ export interface IRuntime extends IComponent {
 }
 
 export interface IMessageScheduler extends IComponent {
+    readonly IMessageScheduler: IMessageScheduler;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
@@ -207,11 +208,13 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
+    readonly IMessageScheduler: IMessageScheduler;
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }
 
 export interface IComponentTokenProvider {
+    readonly IComponentTokenProvider: IComponentTokenProvider;
     intelligence: { [service: string]: any };
 }
 
@@ -234,5 +237,7 @@ declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IRuntimeFactory?: IRuntimeFactory;
         readonly IComponentConfiguration?: IComponentConfiguration;
+        readonly IMessageScheduler?: IMessageScheduler;
+        readonly IComponentTokenProvider?: IComponentTokenProvider;
     }
 }

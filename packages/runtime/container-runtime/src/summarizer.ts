@@ -47,7 +47,6 @@ export interface ISummarizer {
 }
 
 export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
-    public static supportedInterfaces = ["IComponentLoadable", "ISummarizer"];
 
     public get ISummarizer() { return this; }
     public get IComponentLoadable() { return this; }
@@ -69,14 +68,6 @@ export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
         this.runtime.on("disconnected", () => {
             this.runDeferred.resolve();
         });
-    }
-
-    public query(id: string): any {
-        return Summarizer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return Summarizer.supportedInterfaces;
     }
 
     public async run(onBehalfOf: string): Promise<void> {

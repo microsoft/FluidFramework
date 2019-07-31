@@ -43,8 +43,6 @@ declare module "@prague/component-core-interfaces" {
 
 export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
-    public static supportedInterfaces = ["IKeyValue"];
-
     public static async load(runtime: IComponentRuntime) {
         const kevValue = new KeyValue(runtime);
         await kevValue.initialize();
@@ -66,14 +64,6 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     public get(key: string): any {
         return this.root.get(key);
-    }
-
-    public query(id: string): any {
-        return KeyValue.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return KeyValue.supportedInterfaces;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -109,18 +99,9 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 }
 
 export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFactory {
-    public static supportedInterfaces = ["IRuntimeFactory", "IComponentFactory"];
 
     public get IRuntimeFactory() { return this; }
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return KeyValueFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return KeyValueFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectExtension>();

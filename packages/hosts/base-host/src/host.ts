@@ -6,7 +6,6 @@
 import {
     IComponent,
     IComponentHTMLRender,
-    IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import { IResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
@@ -53,12 +52,7 @@ async function attach(loader: Loader, url: string, host: Host) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable =
-        component.IComponentHTMLVisual ?
-            component.IComponentHTMLVisual :
-            "query" in component
-                ? component.query<IComponentHTMLVisual>("IComponentHTMLVisual")
-                : undefined;
+    const viewable = component.IComponentHTMLVisual;
     if (viewable) {
         let renderable = viewable as IComponentHTMLRender;
         if (viewable.addView) {
@@ -115,16 +109,8 @@ class LocalPlatform extends EventEmitter {
     }
 }
 
-class Host implements IComponent {
+class Host {
     constructor(public readonly div: HTMLElement) {
-    }
-
-    public query<T>(id: string): T {
-        return undefined;
-    }
-
-    public list(): string[] {
-        return [];
     }
 }
 

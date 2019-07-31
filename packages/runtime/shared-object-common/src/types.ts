@@ -6,6 +6,12 @@
 import { ITree } from "@prague/container-definitions";
 import { IChannel, ISharedObjectServices } from "@prague/runtime-definitions";
 
+declare module "@prague/container-definitions" {
+    interface IComponent {
+        readonly ISharedObject?: ISharedObject;
+    }
+}
+
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
@@ -19,6 +25,9 @@ export interface ISharedObject extends IChannel {
      * Marker to clearly identify the object as a shared object
      */
     __sharedObject__: boolean;
+
+    readonly ISharedObject: ISharedObject;
+    readonly IChannel: IChannel;
 
     /**
      * Attaches an event listener for the given event

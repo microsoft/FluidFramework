@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-console
-import { IComponent } from "@prague/component-core-interfaces";
+import { IComponent, IComponentQueryableLegacy } from "@prague/component-core-interfaces";
 import { IFluidPackage, IPraguePackage } from "@prague/container-definitions";
 import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentFactory } from "@prague/runtime-definitions";
@@ -64,11 +64,13 @@ export class UrlRegistry implements IComponentRegistry {
             this.subRegistries.push(entryPointPromise.then((entrypoint) => {
                 const fluidExport: IComponent = entrypoint.fluidExport;
                 if (fluidExport !== undefined) {
-                    const registry = fluidExport.IComponentRegistry ?
-                        fluidExport.IComponentRegistry :
-                        fluidExport.query<IComponentRegistry>("IComponentRegistry");
-                    if (registry !== undefined) {
-                        return registry;
+                    if (fluidExport.IComponentRegistry) {
+                        return fluidExport.IComponentRegistry;
+                    } else {
+                        const queryable = fluidExport as IComponentQueryableLegacy;
+                        if (queryable.query) {
+                            return queryable.query<IComponentRegistry>("IComponentRegistry");
+                        }
                     }
                 }
                 return undefined;
@@ -78,12 +80,14 @@ export class UrlRegistry implements IComponentRegistry {
                 const fluidExport: IComponent = entrypoint.fluidExport;
                 let componentFactory = entrypoint as IComponentFactory;
 
-                if (fluidExport !== undefined && fluidExport.query !== undefined) {
-                    const exportFactory = fluidExport.IComponentFactory ?
-                        fluidExport.IComponentFactory :
-                        fluidExport.query<IComponentFactory>("IComponentFactory");
-                    if (exportFactory !== undefined) {
-                        componentFactory = exportFactory;
+                if (fluidExport !== undefined) {
+                    if (fluidExport.IComponentFactory) {
+                        componentFactory = fluidExport.IComponentFactory;
+                    } else {
+                        const queryable = fluidExport as IComponentQueryableLegacy;
+                        if (queryable.query) {
+                            return queryable.query<IComponentFactory>("IComponentFactory");
+                        }
                     }
                 }
 

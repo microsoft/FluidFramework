@@ -80,12 +80,6 @@ interface IYouTubePlayer {
 
 export class VideoPlayer implements
     ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
-    public static supportedInterfaces = [
-        "IComponentLoadable",
-        "IComponentHTMLVisual",
-        "IComponentLayout",
-        "IComponentRouter",
-        "IComponentHTMLRender"];
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
@@ -111,14 +105,6 @@ export class VideoPlayer implements
         private youTubeApi: YouTubeAPI,
         private collection: VideoPlayerCollection,
     ) {
-    }
-
-    public query(id: string): any {
-        return VideoPlayer.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return VideoPlayer.supportedInterfaces;
     }
 
     public heightInLines() {
@@ -168,8 +154,6 @@ export class VideoPlayer implements
 export class VideoPlayerCollection extends EventEmitter implements
     ISharedComponent, IComponentRouter, IComponentCollection {
 
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter", "IComponentCollection"];
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new VideoPlayerCollection(runtime, context);
         await collection.initialize();
@@ -190,14 +174,6 @@ export class VideoPlayerCollection extends EventEmitter implements
         super();
 
         this.url = context.id;
-    }
-
-    public query(id: string): any {
-        return VideoPlayerCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return VideoPlayerCollection.supportedInterfaces;
     }
 
     public changeValue(key: string, newValue: number) {

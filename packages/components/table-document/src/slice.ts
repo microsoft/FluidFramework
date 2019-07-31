@@ -47,7 +47,7 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
     private maybeValues?: CellRange;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, ["IComponentForge"]);
+        super(runtime, context);
     }
 
     public async forge(props?: any) {

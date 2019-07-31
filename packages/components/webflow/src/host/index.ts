@@ -15,7 +15,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow";
 
     public constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, ["IComponentHTMLVisual"]);
+        super(runtime, context);
     }
 
     public get IComponentHTMLVisual() { return this; }

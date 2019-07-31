@@ -76,18 +76,9 @@ class MyRegistry implements IComponentRegistry {
 }
 
 class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRuntimeFactory {
-    public static supportedInterfaces = ["IComponentFactory", "IRuntimeFactory"];
 
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }
-
-    public query(id: string): any {
-        return SharedTextFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SharedTextFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         return sharedTextComponent.instantiateComponent(context);

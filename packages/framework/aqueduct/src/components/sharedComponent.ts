@@ -27,7 +27,6 @@ export const initializeKey = Symbol();
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
-    private readonly supportedInterfaces = ["IComponentLoadable", "IComponentForge", "IComponentRouter"];
 
     private initializeP: Promise<void> | undefined;
 
@@ -39,12 +38,8 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     protected constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
-        supportedInterfaces: string[],
     ) {
         super();
-
-        // concat supported interfaces
-        this.supportedInterfaces = [...supportedInterfaces, ...this.supportedInterfaces];
     }
 
     // #region IComponentForge
@@ -82,25 +77,6 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
 
     // #region ISharedComponent
 
-    /**
-     * Returns this object if interface supported
-     */
-    public query<T>(id: string): T | undefined {
-        // If they are requesting `IComponentForge` and it's not creation then return undefined.
-        if (id === "IComponentForge" && this.runtime.existing) {
-            return undefined;
-        }
-
-        return this.supportedInterfaces.indexOf(id) !== -1 ? (this as unknown) as T : undefined;
-    }
-
-    /**
-     * returns a list of all supported objects
-     */
-    public list(): string[] {
-        return this.supportedInterfaces;
-    }
-
     public get url() { return this.context.id; }
 
     // #endregion ISharedComponent
@@ -131,8 +107,9 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
         const componentRuntime = await this.context.createComponent(id, pkg);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
 
-        const forge = component.IComponentForge ? component.IComponentForge : component.query<IComponentForge>("IComponentForge");
-        if (forge) {
+        const forge = component.IComponentForge;
+
+        if (forge && !this.runtime.existing) {
             await forge.forge(props);
         }
 

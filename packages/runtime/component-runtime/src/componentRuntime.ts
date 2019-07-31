@@ -164,14 +164,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         }
     }
 
-    public query<T>(id: string): T {
-        return undefined;
-    }
-
-    public list(): string[] {
-        return [];
-    }
-
     public async createAndAttachComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         const newComponentRuntime = await this.componentContext.createComponent(id, pkg);
         newComponentRuntime.attach();

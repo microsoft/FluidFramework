@@ -6,11 +6,12 @@
 import { PrimedComponent } from "@prague/aqueduct";
 import {
   IComponent,
+  IComponentHTMLRender,
   IComponentHTMLVisual,
-  IComponentLoadable,
+  IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
 import { MergeTreeDeltaType } from "@prague/merge-tree";
-import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import {  IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";
 import * as uuid from "uuid";
 import { pkg } from ".";
@@ -20,13 +21,11 @@ import { pkg } from ".";
  */
 export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExternalComponentLoader> {
-        const ucl = new ExternalComponentLoader(runtime, context, ExternalComponentLoader.supportedInterfaces);
+        const ucl = new ExternalComponentLoader(runtime, context);
         await ucl.initialize();
 
         return ucl;
     }
-
-    private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 
     private static readonly defaultComponents = [
         "@chaincode/pinpoint-editor",
@@ -100,11 +99,12 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                 sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
                     if (component) {
-                        const componentVisual =
-                            component.IComponentHTMLVisual ?
-                                component.IComponentHTMLVisual :
-                                component.query<IComponentHTMLVisual>("IComponentHTMLVisual");
-                        if (componentVisual) {
+                        const queryable = component as IComponentQueryableLegacy;
+                        let renderable = component.IComponentHTMLRender;
+                        if (!renderable && queryable.query) {
+                            renderable = queryable.query<IComponentHTMLRender>("IComponentHTMLRender");
+                        }
+                        if (renderable) {
                             const containerDiv = document.createElement("div");
                             mainDiv.appendChild(containerDiv);
                             const style = containerDiv.style;
@@ -121,7 +121,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                             componentDiv.style.overflow = "hidden";
                             componentDiv.style.zIndex = "0";
                             componentDiv.style.position = "relative";
-                            componentVisual.render(
+                            renderable.render(
                                 componentDiv,
                                 {
                                     display: "block",
@@ -220,17 +220,12 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                     const request = await cr.request({ url: "/" });
 
                     let component = request.value as IComponent;
-                    const componentCollection =
-                        component.IComponentCollection ?
-                            component.IComponentCollection :
-                            component.query<IComponentCollection>("IComponentCollection");
-                    if (componentCollection !== undefined) {
-                        component = componentCollection.create();
+                    if (component.IComponentCollection !== undefined) {
+                        component = component.IComponentCollection.create();
                     }
-                    const loadable = component.IComponentLoadable ?
-                        component.IComponentLoadable : component.query<IComponentLoadable>("IComponentLoadable");
-                    if (loadable) {
-                        seq.insert(seq.getLength(), [loadable.url]);
+
+                    if (component.IComponentLoadable) {
+                        seq.insert(seq.getLength(), [component.IComponentLoadable.url]);
                     }
                 })
                 .catch((e) => {

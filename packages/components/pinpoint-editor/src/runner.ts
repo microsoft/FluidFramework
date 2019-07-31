@@ -311,13 +311,6 @@ pinpointTool.filter("html", ($sce) => {
 export class PinpointRunner extends EventEmitter implements
     ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
 
-    public static supportedInterfaces = [
-        "IComponentHTMLVisual",
-        "IComponentHTMLRender",
-        "IComponentLoadable",
-        "IComponentLayout",
-    ];
-
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
         const runner = new PinpointRunner(runtime);
         await runner.initialize();
@@ -349,14 +342,6 @@ export class PinpointRunner extends EventEmitter implements
 
     constructor(private runtime: IComponentRuntime) {
         super();
-    }
-
-    public query(id: string): any {
-        return PinpointRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return PinpointRunner.supportedInterfaces;
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {

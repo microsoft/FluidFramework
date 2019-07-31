@@ -39,8 +39,6 @@ export class TextBox extends PrimedComponent
     IComponentHTMLVisual,
     IComponentReactViewable,
     IComponentForge {
-    private static readonly supportedInterfaces =
-      ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentReactViewable", "IComponentForge"];
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -84,7 +82,7 @@ export class TextBox extends PrimedComponent
    * Having a static load function allows us to make async calls while creating our object.
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TextBox> {
-    const todoItem = new TextBox(runtime, context, TextBox.supportedInterfaces);
+    const todoItem = new TextBox(runtime, context);
     await todoItem.initialize();
 
     return todoItem;

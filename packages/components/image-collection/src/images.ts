@@ -27,13 +27,6 @@ import { EventEmitter } from "events";
 
 export class ImageComponent implements
     ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentHTMLRender, IComponentLayout {
-    public static supportedInterfaces = [
-        "IComponentLoadable",
-        "IComponentHTMLVisual",
-        "IComponentLayout",
-        "IComponentRouter",
-        "IComponentHTMLRender"];
-
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
@@ -48,14 +41,6 @@ export class ImageComponent implements
     public readonly preferInline = false;
 
     constructor(public imageUrl: string, public url: string) {
-    }
-
-    public query(id: string): any {
-        return ImageComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ImageComponent.supportedInterfaces;
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -75,11 +60,6 @@ export class ImageComponent implements
 
 export class ImageCollection extends EventEmitter implements
     ISharedComponent, IComponentRouter, IComponentCollection {
-
-    public static supportedInterfaces = [
-        "IComponentLoadable",
-        "IComponentRouter",
-        "IComponentCollection"];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ImageCollection(runtime, context);
@@ -101,14 +81,6 @@ export class ImageCollection extends EventEmitter implements
         super();
 
         this.url = context.id;
-    }
-
-    public query(id: string): any {
-        return ImageCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ImageCollection.supportedInterfaces;
     }
 
     public create(): ImageComponent {
@@ -176,17 +148,7 @@ export class ImageCollection extends EventEmitter implements
 }
 
 export class ImageCollectionFactoryComponent implements IComponentFactory {
-    public static supportedInterfaces = [ "IComponentFactory"];
-
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return ImageCollectionFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ImageCollectionFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         const dataTypes = new Map<string, ISharedObjectExtension>();

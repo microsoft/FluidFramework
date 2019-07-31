@@ -29,8 +29,6 @@ import { ValueType } from "./valueType";
  *  Base class from which all shared objects derive
  */
 export abstract class SharedObject extends EventEmitterWithErrorHandling implements ISharedObject {
-    public static supportedInterfaces = ["ISharedObject", "IChannel"];
-
     /**
      *
      * @param obj - The object to check if it is a SharedObject
@@ -54,6 +52,9 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     protected static getIdForCreate(id?: string): string {
         return id === undefined ? uuid() : id;
     }
+
+    public get ISharedObject() { return this; }
+    public get IChannel() { return this; }
 
     /**
      * Marker to clearly identify the object as a shared object
@@ -124,21 +125,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             type: ValueType[ValueType.Shared],
             value: this.id,
         };
-    }
-
-    /**
-     * Queries for the interface with the given id
-     * @param id - Interface ID
-     */
-    public query(id: string): any {
-        return SharedObject.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    /**
-     * Lists all interfaces supported by the object
-     */
-    public list(): string[] {
-        return SharedObject.supportedInterfaces;
     }
 
     /**

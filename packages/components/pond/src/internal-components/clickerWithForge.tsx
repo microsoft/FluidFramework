@@ -34,8 +34,6 @@ export const ClickerWithForgeName = `${pkg.name as string}-clickerWithForge`;
  * Basic Clicker example using new interfaces and stock component classes.
  */
 export class ClickerWithForge extends PrimedComponent implements IComponentHTMLVisual, IComponentForge {
-    private static readonly supportedInterfaces =
-        ["IComponentHTMLVisual", "IComponentHTMLRender", "IComponentRouter", "IComponentForge"];
 
     private hasForged = false;
 
@@ -77,7 +75,7 @@ export class ClickerWithForge extends PrimedComponent implements IComponentHTMLV
      * Using a static allows us to have async calls in class creation that you can't have in a constructor
      */
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ClickerWithForge> {
-        const clicker = new ClickerWithForge(runtime, context, ClickerWithForge.supportedInterfaces);
+        const clicker = new ClickerWithForge(runtime, context);
         await clicker.initialize();
 
         return clicker;

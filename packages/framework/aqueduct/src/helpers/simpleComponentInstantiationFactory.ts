@@ -26,7 +26,6 @@ import {
  * whenever the page loads.
  */
 export class SimpleComponentInstantiationFactory implements IComponent, IComponentFactory  {
-    public static supportedInterfaces = ["IComponentFactory"];
 
     constructor(
         private readonly sharedObjects: ISharedObjectExtension[],
@@ -35,14 +34,6 @@ export class SimpleComponentInstantiationFactory implements IComponent, ICompone
     }
 
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return SimpleComponentInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SimpleComponentInstantiationFactory.supportedInterfaces;
-    }
 
     /**
      * This is where we do component setup.

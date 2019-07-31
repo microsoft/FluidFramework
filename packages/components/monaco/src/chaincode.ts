@@ -69,20 +69,12 @@ export class MonacoRunner extends PrimedComponent implements
     IComponentHTMLVisual, IComponentLayout {
 
     /**
-     * Interfaces supported by this component.
-     */
-    public static supportedInterfaces = [
-        "IComponentHTMLVisual",
-        "IComponentLayout",
-    ];
-
-    /**
      * Get a new MonacoRunner with the given runtime.
      * @param runtime The runtime for the MonacoRunner
      * @param context Not used
      */
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<MonacoRunner> {
-        const runner = new MonacoRunner(runtime, context, MonacoRunner.supportedInterfaces);
+        const runner = new MonacoRunner(runtime, context);
         await runner.initialize();
 
         return runner;

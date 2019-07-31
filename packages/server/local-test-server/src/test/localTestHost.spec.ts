@@ -28,7 +28,7 @@ export class TestComponent extends PrimedComponent {
     private counter: Counter;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, []);
+        super(runtime, context);
     }
 
     /**

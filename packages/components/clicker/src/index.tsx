@@ -36,8 +36,6 @@ export const ClickerName = pkg.name as string;
  * Basic Clicker example using new interfaces and stock component classes.
  */
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
-  "IComponentRouter"];
 
   /**
    * Do setup work here
@@ -54,7 +52,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    * Using a static allows us to have async calls in class creation that you can't have in a constructor
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
-    const clicker = new Clicker(runtime, context, Clicker.supportedInterfaces);
+    const clicker = new Clicker(runtime, context);
     await clicker.initialize();
 
     return clicker;

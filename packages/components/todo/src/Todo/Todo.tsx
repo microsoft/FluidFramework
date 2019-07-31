@@ -45,8 +45,6 @@ export const TodoName = `${pkg.name as string}-todo`;
  * - List of todo items
  */
 export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender",
-  "IComponentReactViewable"];
 
   // DDS ids stored as variables to minimize simple string mistakes
   private readonly innerCellIds = "innerCellIds";
@@ -83,7 +81,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Having a static load function allows us to make async calls while creating our object.
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Todo> {
-    const todo = new Todo(runtime, context, Todo.supportedInterfaces);
+    const todo = new Todo(runtime, context);
     await todo.initialize();
 
     return todo;

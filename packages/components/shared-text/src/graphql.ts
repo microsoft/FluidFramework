@@ -14,8 +14,6 @@ import { GraphQLService } from "./database";
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
 export class GraphIQLView extends EventEmitter implements IComponent, IComponentHTMLVisual {
-    public static supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
-
     public readonly id = "graphiql";
 
     public get IComponentHTMLVisual() { return this; }
@@ -23,14 +21,6 @@ export class GraphIQLView extends EventEmitter implements IComponent, IComponent
 
     constructor(private realComponent: SharedTextRunner) {
         super();
-    }
-
-    public query(id: string): any {
-        return GraphIQLView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return GraphIQLView.supportedInterfaces;
     }
 
     public render(element: HTMLElement) {

@@ -35,10 +35,6 @@ import { BlobManager } from "./blobManager";
 import { Container } from "./container";
 
 export class ContainerContext extends EventEmitter implements IContainerContext {
-    public static supportedInterfaces = [
-        "IMessageScheduler",
-    ];
-
     public static async load(
         container: Container,
         codeLoader: ICodeLoader,
@@ -136,6 +132,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         };
         return config as IComponentConfiguration;
     }
+    public get IMessageScheduler() {
+        this.legacyMessaging = false;
+        return this;
+    }
 
     // Back compat flag - can remove in 0.6
     public legacyMessaging = true;
@@ -167,20 +167,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         super();
         this._minimumSequenceNumber = attributes.minimumSequenceNumber;
         this.logger = container.subLogger;
-    }
-
-    public query(id: string): any {
-        // Detect updated messaging and mark accordingly
-        if (id === "IMessageScheduler") {
-            this.legacyMessaging = false;
-            return this;
-        }
-
-        return ContainerContext.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ContainerContext.supportedInterfaces;
     }
 
     public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null> {

@@ -10,7 +10,6 @@ import {
     IComponent,
     IComponentHTMLVisual,
     IComponentLoadable,
-    IComponentTokenProvider,
     IRequest,
     IResponse } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
@@ -54,7 +53,6 @@ export class SharedTextRunner extends EventEmitter implements
     IComponent,
     IComponentHTMLVisual,
     IComponentLoadable {
-    public static supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
 
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
@@ -76,14 +74,6 @@ export class SharedTextRunner extends EventEmitter implements
 
     private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
         super();
-    }
-
-    public query(id: string): any {
-        return SharedTextRunner.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SharedTextRunner.supportedInterfaces;
     }
 
     public render(element: HTMLElement) {
@@ -184,10 +174,7 @@ export class SharedTextRunner extends EventEmitter implements
 
         const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
         const schedulerComponent = schedulerResponse.value as IComponent;
-        this.taskManager =
-        schedulerComponent.ITaskManager ?
-            schedulerComponent.ITaskManager :
-            schedulerComponent.query<ITaskManager>("ITaskManager");
+        this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));
         addTranslation(
@@ -239,7 +226,7 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = this.componentContext.hostRuntime.query<IComponentTokenProvider>("IComponentTokenProvider");
+        const hostTokens = this.componentContext.hostRuntime.IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         const intelTask: ITask = {
             id: "intel",

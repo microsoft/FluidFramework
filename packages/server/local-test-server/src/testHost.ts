@@ -45,7 +45,7 @@ class TestRootComponent extends PrimedComponent {
     );
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, []);
+        super(runtime, context);
     }
 
     // tslint:disable-next-line: no-unnecessary-override

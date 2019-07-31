@@ -45,7 +45,6 @@ interface ISnapshotDetails {
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export abstract class ComponentContext extends EventEmitter implements IComponentContext {
-    private static readonly supportedInterfaces = ["IComponentContext"];
 
     public get documentId(): string {
         return this._hostRuntime.id;
@@ -140,14 +139,6 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
     ) {
         super();
-    }
-
-    public query<T>(id: string): any {
-        return ComponentContext.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ComponentContext.supportedInterfaces;
     }
 
     public createComponent(id: string, pkg: string): Promise<IComponentRuntime> {

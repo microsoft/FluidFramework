@@ -25,8 +25,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
     public get IComponentHTMLRender() { return this; }
     public get IComponentHTMLView() { return this; }
 
-    public static supportedInterfaces = ["ISearchMenuHost"];
-
     private activeSearchBox?: SearchMenu.ISearchBox;
     private previouslyFocused?: HTMLOrSVGElement;
     private viewport: HTMLElement;
@@ -146,13 +144,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         intelRenderable.render(insightsDiv);
     }
 
-    public query(id: string): any {
-        return HostView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return HostView.supportedInterfaces;
-    }
     // #endregion IComponentHTMLView
 
     public showSearchMenu(

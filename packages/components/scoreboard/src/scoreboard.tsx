@@ -13,11 +13,6 @@ import { TeamScore } from './teamScore';
 import { WinnerText } from './winnerText';
 
 export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual {
-  public static supportedInterfaces = [
-    'IComponentLoadable', // via ISharedComponent, which is implemented by RootComponent
-    'IComponentHTMLVisual',
-    'IComponentHTMLRender'
-  ];
   public static readonly componentName = "Scoreboard";
 
   public get IComponentHTMLVisual() { return this; }
@@ -38,7 +33,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   * Using a static allows us to have async calls in class creation that you can't have in a constructor
   */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Scoreboard> {
-    const comp = new Scoreboard(runtime, context, Scoreboard.supportedInterfaces);
+    const comp = new Scoreboard(runtime, context);
     await comp.initialize();
 
     return comp;

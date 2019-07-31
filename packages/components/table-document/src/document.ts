@@ -63,7 +63,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     private maybeWorkbook?: ISheetlet;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-       super(runtime, context, []);
+       super(runtime, context);
     }
 
     public evaluateCell(row: number, col: number) {

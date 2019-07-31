@@ -37,6 +37,95 @@ The following interfaces have moved:
 `IRequest`
 `IResponse`
 
+## Query and List Removed From IComponent
+
+The query and list methods have been removed from IComponent and been replaced with strongly type properties.
+
+### Component Consumers
+Consumers should update their code as follows.
+
+Before:
+```typescript
+const thing = component.query<IComponentThing>('IComponentThing');
+```
+
+After:
+```typescript
+const thing = component.IComponentThing;
+```
+
+in both cases the consumer should check for undefined before using.
+
+### Component Implementors
+Component implementors no longer need to implement query, list, or supported interfaces. They now need to add a property for
+each interface they implement, or wish to expose. They will get compile time errors if they do not implement these properties for
+interfaces they implement.
+
+Before:
+```typescript
+class MyComponent implements IComponentThing {
+    private static readonly supportedInterfaces = ["IComponentThing"];
+
+    public query<T>(id: string): T{
+        if(this.list().indexOf(id) !== -1){
+            return this as T
+        }
+        return undefined;
+    }
+
+    public list(): string[]{
+        return MyComponent.supportedInterfaces;
+    }
+
+    public doThing(){
+       // ...
+    }
+}
+```
+After:
+```typescript
+class MyComponent implements IComponentThing {
+
+    public get IComponentThing() { return this; }
+
+    public doThing() {
+       // ...
+    }
+}
+```
+
+### Component Interface Implementors
+Component interface implementors must do the following so that their interfaces are exposed off IComponent for consumers,
+and so Component implementors get strong typing.
+
+ Before:
+```typescript
+export interface IComponentThing {
+    doThing(): void;
+}
+```
+After:
+```typescript
+export interface IComponentThing {
+    // This property will be implemented by component implementors
+    // to expose this interface
+    readonly IComponentThing: IComponentThing;
+    doThing(): void;
+}
+
+// This augments the IComponent interface, so that
+// all consumers who use your package will see your
+// interface optionally exposed on IComponent
+// You can find out more about module augmentation
+// and interface merging here:
+// https://www.typescriptlang.org/docs/handbook/declaration-merging.html
+declare module "@prague/component-core-interfaces" {
+    export interface IComponent {
+        IComponentThing?: IComponentThing;
+    }
+}
+```
+
 # 0.7 Breaking Changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the

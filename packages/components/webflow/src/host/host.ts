@@ -100,8 +100,6 @@ export class WebflowView implements IComponentHTMLView {
         elm.appendChild(this.root);
     }
 
-    public query<T>(): T { throw new Error("Method not implemented."); }
-    public list(): string[] { throw new Error("Method not implemented."); }
     // #endregion IComponentHTMLView
 
     private readonly onKeyDown = (e: KeyboardEvent) => {

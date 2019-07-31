@@ -31,7 +31,6 @@ import { EventEmitter } from "events";
 require("bootstrap/dist/css/bootstrap.min.css");
 
 class ProgressBarView implements IComponentHTMLView {
-    public static supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLView"];
 
     public parent: HTMLElement;
 
@@ -40,14 +39,6 @@ class ProgressBarView implements IComponentHTMLView {
 
     public get IComponentHTMLView() { return this; }
     public get IComponentHTMLRender() { return this; }
-
-    public query(id: string): any {
-        return ProgressBarView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ProgressBarView.supportedInterfaces;
-    }
 
     public remove() {
         this.bar.detach(this);
@@ -90,8 +81,6 @@ class ProgressBarView implements IComponentHTMLView {
 // The "model" side of a progress bar
 export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, IComponentRouter {
 
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentHTMLVisual",
-    "IComponentHTMLRender", "IComponentRouter"];
     private views = new Set<ProgressBarView>();
     private defaultView: ProgressBarView;
 
@@ -106,14 +95,6 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, ICom
     public get IComponentHTMLVisual() { return this; }
     public get IComponentHTMLRender() { return this; }
     public get IComponentRouter() { return this; }
-
-    public query(id: string): any {
-        return ProgressBar.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ProgressBar.supportedInterfaces;
-    }
 
     public render(elm: HTMLElement) {
         if (!this.defaultView) {
@@ -155,7 +136,6 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, ICom
 }
 
 export class ProgressCollection extends EventEmitter implements ISharedComponent, IComponentRouter {
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter"];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
@@ -176,14 +156,6 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
         super();
 
         this.url = context.id;
-    }
-
-    public query(id: string): any {
-        return ProgressCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ProgressCollection.supportedInterfaces;
     }
 
     public changeValue(key: string, newValue: number) {
@@ -251,17 +223,8 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
 }
 
 class ProgressBarsFactory implements IComponent, IComponentFactory {
-    public static interfaces = ["IComponentFactory"];
 
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return ProgressBarsFactory.interfaces.indexOf(id) !== -1 ? exports : undefined;
-    }
-
-    public list(): string[] {
-        return ProgressBarsFactory.interfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         // Map value types to register as defaults

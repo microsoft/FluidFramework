@@ -146,7 +146,7 @@ export class FlowDocument extends PrimedComponent {
     private maybeClientId?: number;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, []);
+        super(runtime, context);
     }
 
     public async getComponentFromMarker(marker: Marker) {

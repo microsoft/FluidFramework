@@ -42,7 +42,6 @@ interface IParsedUrl {
 // const protocolVersions = ["^0.2.0", "^0.1.0"];
 
 export class RelativeLoader extends EventEmitter implements ILoader {
-    public static supportedInterfaces = ["ILoader"];
 
     // Because the loader is passed to the container during construction we need to resolve the target container
     // after construction.
@@ -54,14 +53,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
      */
     constructor(private readonly loader: Loader, private readonly baseRequest: IRequest) {
         super();
-    }
-
-    public query(id: string): any {
-        return Loader.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return Loader.supportedInterfaces;
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -106,8 +97,6 @@ export class RelativeLoader extends EventEmitter implements ILoader {
  * Manages Fluid resource loading
  */
 export class Loader extends EventEmitter implements ILoader {
-    public static supportedInterfaces = ["ILoader"];
-
     private readonly containers = new Map<string, Promise<Container>>();
     private readonly resolveCache = new Map<string, IFluidResolvedUrl>();
 
@@ -131,14 +120,6 @@ export class Loader extends EventEmitter implements ILoader {
         if (!codeLoader) {
             throw new Error("An ICodeLoader must be provided");
         }
-    }
-
-    public query(id: string): any {
-        return Loader.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return Loader.supportedInterfaces;
     }
 
     public async resolve(request: IRequest): Promise<Container> {

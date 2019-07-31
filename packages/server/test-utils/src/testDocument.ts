@@ -65,8 +65,6 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 export class TestDeltaManager
     extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 
-    public static supportedInterfaces = ["IDeltaSender"];
-
     public referenceSequenceNumber: number;
 
     public maxMessageSize: number;
@@ -83,13 +81,7 @@ export class TestDeltaManager
 
     public version = "^0.1.0";
 
-    public query<T>(id: string): any {
-        return TestDeltaManager.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return TestDeltaManager.supportedInterfaces;
-    }
+    public get IDeltaSender() { return this; }
 
     public enableReadonlyMode() {
         return;

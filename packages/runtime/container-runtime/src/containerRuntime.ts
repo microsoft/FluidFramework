@@ -15,13 +15,14 @@ import {
     IBlob,
     IBlobManager,
     IChunkedOp,
+    IComponentTokenProvider,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
     IDocumentMessage,
     IDocumentStorageService,
-    ILoader,
     // IMessageScheduler,
+    ILoader,
     IQuorum,
     ISequencedDocumentMessage,
     ISignalMessage,
@@ -107,7 +108,7 @@ export interface IContainerRuntimeOptions {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
-    public static supportedInterfaces = ["IComponentConfiguration", "IComponentTokenProvider"];
+
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -262,8 +263,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     // on its creation). This is a superset of contexts.
     private readonly contextsDeferred = new Map<string, Deferred<ComponentContext>>();
 
-     // Local copy of sent but unacknowledged chunks.
-     private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
+    // Local copy of sent but unacknowledged chunks.
+    private readonly unackedChunkedMessages: Map<number, IBufferedChunk> = new Map<number, IBufferedChunk>();
 
     private constructor(
         private readonly context: IContainerContext,
@@ -307,8 +308,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         //         debug("push", value);
         //     });
         // }
-
-        this.deltaSender = this.deltaManager.query ? this.deltaManager.query("IDeltaSender") : undefined;
+        this.deltaSender = this.deltaManager;
 
         this.logger = context.logger;
         this.lastMinSequenceNumber = context.minimumSequenceNumber;
@@ -346,27 +346,25 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries);
         if (this.context.connectionState === ConnectionState.Connected) {
             // TODO can remove in 0.6 - legacy drivers may be missing version
-            if (this.context.deltaManager.version  && this.context.deltaManager.version.indexOf("^0.2") === 0) {
+            if (this.context.deltaManager.version && this.context.deltaManager.version.indexOf("^0.2") === 0) {
                 this.summaryManager.setConnected(this.context.clientId);
             }
         }
     }
+    public get IComponentTokenProvider() {
 
-    public query(id: string): any {
-        if (id === "IComponentConfiguration") {
-            return this.context.configuration;
-        } else if (id === "IComponentTokenProvider") {
-            // tslint:disable-next-line:no-unsafe-any
-            const intelligence = this.options && this.options.config ? this.options.config.intelligence : undefined;
-            return {
-                intelligence,
-            };
+        // tslint:disable-next-line: no-unsafe-any
+        if (this.options && this.options.config && this.options.config.intelligence) {
+            return  {
+                // tslint:disable-next-line: no-unsafe-any
+                intelligence: this.options.config.intelligence,
+            } as IComponentTokenProvider;
         }
         return undefined;
     }
 
-    public list(): string[] {
-        return ContainerRuntime.supportedInterfaces;
+    public get IComponentConfiguration() {
+        return this.context.configuration;
     }
 
     /**

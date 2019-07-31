@@ -36,8 +36,6 @@ export const PondName = pkg.name as string;
  * Basic Pond example using new interfaces and stock component classes.
  */
 export class Pond extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces =
-    ["IComponentHTMLRender", "IComponentHTMLVisual", "IComponentRouter"];
 
   public clicker2Render: IComponentHTMLRender;
   public clicker3Render: IComponentHTMLRender;
@@ -66,7 +64,7 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
    * Using a static allows us to have async calls in class creation that you can't have in a constructor
    */
   public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Pond> {
-    const clicker = new Pond(runtime, context, Pond.supportedInterfaces);
+    const clicker = new Pond(runtime, context);
     await clicker.initialize();
 
     return clicker;
@@ -74,14 +72,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
   async setupSubComponents() {
     const clicker2 = await this.getComponent("clicker");
-    this.clicker2Render = clicker2.IComponentHTMLRender ?
-      clicker2.IComponentHTMLRender :
-      clicker2.query<IComponentHTMLRender>("IComponentHTMLRender");
+    this.clicker2Render = clicker2.IComponentHTMLRender;
 
     const clicker3 = await this.getComponent("clicker");
-    this.clicker3Render = clicker3.IComponentHTMLRender ?
-      clicker3.IComponentHTMLRender :
-      clicker3.query<IComponentHTMLRender>("IComponentHTMLRender");
+    this.clicker3Render = clicker3.IComponentHTMLRender;
   }
 
   // start IComponentHTMLVisual

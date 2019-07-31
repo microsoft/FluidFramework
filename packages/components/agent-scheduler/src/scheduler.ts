@@ -5,7 +5,6 @@
 
 import {
     IComponent,
-    IComponentConfiguration,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -34,8 +33,6 @@ interface IChanged {
 const LeaderTaskId = "leader";
 
 class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent, IComponentRouter {
-
-    public static supportedInterfaces = ["IAgentScheduler"];
 
     public static async load(runtime: IComponentRuntime) {
         let root: ISharedMap;
@@ -74,14 +71,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         private readonly scheduler: IConsensusRegisterCollection<string | null>) {
 
         super();
-    }
-
-    public query(id: string): any {
-        return AgentScheduler.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return AgentScheduler.supportedInterfaces;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -350,9 +339,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         }
 
         const rawComponent = response.value as IComponent;
-        const agent = rawComponent.IComponentRunnable ?
-            rawComponent.IComponentRunnable :
-            rawComponent.query<IComponentRunnable>("IComponentRunnable");
+        const agent = rawComponent.IComponentRunnable;
         if (agent === undefined) {
             return Promise.reject<IComponentRunnable>("Component does not implement IComponentRunnable");
         }
@@ -362,7 +349,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 }
 
 export class TaskManager implements ITaskManager {
-    public static supportedInterfaces = ["IAgentScheduler", "ITaskManager"];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TaskManager> {
         const agentScheduler = await AgentScheduler.load(runtime);
@@ -379,18 +365,6 @@ export class TaskManager implements ITaskManager {
     private readonly taskMap = new Map<string, IComponentRunnable>();
     constructor(private readonly scheduler: IAgentScheduler, private readonly context: IComponentContext) {
 
-    }
-
-    public query(id: string): any {
-        if (TaskManager.supportedInterfaces.indexOf(id) !== -1) {
-            return id === "ITaskManager" ? this : this.scheduler;
-        } else {
-            return undefined;
-        }
-    }
-
-    public list(): string[] {
-        return AgentScheduler.supportedInterfaces;
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -414,10 +388,7 @@ export class TaskManager implements ITaskManager {
 
     public async pick(componentUrl: string, ...tasks: ITask[]) {
         const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-        const configuration =
-            this.context.hostRuntime.IComponentConfiguration ?
-                this.context.hostRuntime.IComponentConfiguration :
-                this.context.hostRuntime.query<IComponentConfiguration>("IComponentConfiguration");
+        const configuration = this.context.hostRuntime.IComponentConfiguration;
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }

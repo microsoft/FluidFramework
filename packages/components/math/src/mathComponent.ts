@@ -58,8 +58,6 @@ const cursorDirectionToDirection = {
 type IMathMarkerInst = MathExpr.IMathMarker;
 
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
-    public static supportedInterfaces = [
-        "IComponentLayout", "IComponentCursor", "IComponentHTMLRender", "IComponentHTMLView"];
 
     public get IComponentHTMLView() { return this; }
     public get IComponentHTMLRender() { return this; }
@@ -79,18 +77,9 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
     constructor(public instance: MathInstance, public scope?: IComponent) {
         if (scope) {
-            this.searchMenuHost = scope.ISearchMenuHost ?
-            scope.ISearchMenuHost : scope.query("ISearchMenuHost");
+            this.searchMenuHost = scope.ISearchMenuHost;
         }
         this.options = this.instance.options;
-    }
-
-    public query(id: string): any {
-        return MathView.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return MathView.supportedInterfaces;
     }
 
     // IComponentHTMLView
@@ -440,10 +429,6 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 export class MathInstance implements ISharedComponent, IComponentRouter,
     IComponentHTMLVisual, IComponentHTMLRender {
     public static defaultOptions: IMathOptions = { display: "inline" };
-    public static supportedInterfaces = [
-        "IComponentLoadable", "IComponentRouter", "IComponentCollection", "IComponentHTMLVisual",
-        "IComponentHTMLRender",
-    ];
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
@@ -501,14 +486,6 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
         this.collection.removeText(this, startPos, endPos);
     }
 
-    public query(id: string): any {
-        return MathInstance.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return MathInstance.supportedInterfaces;
-    }
-
     public async request(request: IRequest): Promise<IResponse> {
         return {
             mimeType: "prague/component",
@@ -558,8 +535,6 @@ const endIdPrefix = "end-";
 export interface IMathOptions extends IComponentHTMLOptions { }
 
 export class MathCollection implements ISharedComponent, IComponentCollection, IComponentRouter {
-    public static supportedInterfaces = ["IComponentLoadable", "IComponentRouter",
-        "IComponentCollection"];
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);
@@ -579,14 +554,6 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
 
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         this.url = context.id;
-    }
-
-    public query(id: string): any {
-        return MathCollection.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return MathCollection.supportedInterfaces;
     }
 
     public appendMathMarkers(instance: MathInstance, inCombinedText: boolean) {
@@ -731,16 +698,8 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
 }
 
 export class MathFactoryComponent implements IComponentFactory {
-    public static supportedInterfaces = [ "IComponentFactory"];
 
     public get IComponentFactory() { return this; }
-    public query(id: string): any {
-        return MathFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return MathFactoryComponent.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
     // Map value types to register as defaults

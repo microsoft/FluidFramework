@@ -21,14 +21,6 @@ import {
 class NullRuntime implements IRuntime {
     public ready: Promise<void> | undefined;
 
-    public query(id: string): any {
-        return undefined;
-    }
-
-    public list(): string[] {
-        return [];
-    }
-
     public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);
     }
@@ -71,19 +63,10 @@ class NullRuntime implements IRuntime {
 }
 
 export class NullChaincode implements IRuntimeFactory {
-    public static supportedInterfaces = ["IRuntimeFactory"];
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return new NullRuntime();
     }
 
     public get IRuntimeFactory() { return this; }
-
-    public query(id: string): any {
-        return NullChaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return NullChaincode.supportedInterfaces;
-    }
 }

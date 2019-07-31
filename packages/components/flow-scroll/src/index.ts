@@ -10,17 +10,7 @@ import "./publicpath";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 
 class FlowScrollFactoryComponent implements IRuntimeFactory {
-    public static supportedInterfaces = ["IRuntimeFactory"];
-
     public get IRuntimeFactory() { return this; }
-
-    public query(id: string): any {
-        return FlowScrollFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return FlowScrollFactoryComponent.supportedInterfaces;
-    }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");

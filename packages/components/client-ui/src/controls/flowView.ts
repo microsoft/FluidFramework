@@ -905,10 +905,7 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable =
-                                component.IComponentHTMLRender ?
-                                    component.IComponentHTMLRender :
-                                    component.query<IComponentHTMLRender>("IComponentHTMLRender");
+                                const viewable = component.IComponentHTMLRender;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2444,8 +2441,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                                 // TODO below is a temporary workaround. Should every QI interface also implement
                                 // IComponent. Then you can go from IComponentHTMLRender to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.IComponentHTMLRender ?
-                                        component.IComponentHTMLRender : component.query<IComponentHTMLRender>("IComponentHTMLRender");
+                                const viewable = component.IComponentHTMLRender;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -4930,8 +4926,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const mathOptions: IMathOptions = { display: inline ? "inline" : "block" };
             const mathInstance = this.math.getInstance(mathMarker.properties.leafId, mathOptions);
             mathMarker.instance = mathInstance;
-            if (mathInstance.ISearchMenuClient
-                || mathInstance.query("ISearchMenuClient")) {
+            if (mathInstance.ISearchMenuClient) {
                 mathInstance.registerSearchMenuHost(this);
             }
         }
@@ -4967,9 +4962,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
         const instance = collection.create();
-        const loadable =
-            instance.IComponentLoadable ?
-            instance.IComponentLoadable : instance.query<IComponentLoadable>("IComponentLoadable");
+        const loadable = instance.IComponentLoadable;
 
         const props = {
             crefTest: {
@@ -5061,9 +5054,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
 
         const component = request.value as IComponent;
-        return component.IComponentCollection ?
-            component.IComponentCollection :
-            component.query<IComponentCollection>("IComponentCollection");
+        return component.IComponentCollection;
     }
 
     // TODO openPlatform should be removed in favor of openCollection

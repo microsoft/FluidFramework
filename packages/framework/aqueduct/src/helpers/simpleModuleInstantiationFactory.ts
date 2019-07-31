@@ -24,8 +24,6 @@ export class SimpleModuleInstantiationFactory implements
     IRuntimeFactory,
     IComponentRegistry,
     IComponentFactory {
-    private static readonly supportedInterfaces =
-        ["IRuntimeFactory", "IComponentRegistry", "IComponentFactory"];
 
     constructor(
         private readonly defaultComponentName: string,
@@ -35,14 +33,6 @@ export class SimpleModuleInstantiationFactory implements
     public get IComponentFactory() { return this; }
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
-
-    public query(id: string): any {
-        return SimpleModuleInstantiationFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SimpleModuleInstantiationFactory.supportedInterfaces;
-    }
 
     public get(name: string): Promise<IComponentFactory> | undefined  {
         return this.registry.get(name);

@@ -19,7 +19,6 @@ import {
 import { initializeKey, SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponent, IComponentFactory  {
-    public static supportedInterfaces = ["IComponentFactory"];
     private readonly registry: ISharedObjectRegistry;
 
     constructor(
@@ -30,14 +29,6 @@ export class SharedComponentFactory implements IComponent, IComponentFactory  {
     }
 
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return SharedComponentFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return SharedComponentFactory.supportedInterfaces;
-    }
 
     /**
      * This is where we do component setup.

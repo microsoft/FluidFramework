@@ -45,7 +45,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     private rootElement: Element | undefined;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
-        super(runtime, context, []);
+        super(runtime, context);
     }
 
     // #region IComponentHTMLVisual

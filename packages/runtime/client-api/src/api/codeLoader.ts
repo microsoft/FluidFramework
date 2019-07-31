@@ -28,17 +28,7 @@ const rootMapId = "root";
 const insightsMapId = "insights";
 
 class Chaincode implements IComponent, IComponentFactory {
-    public static supportedInterfaces = ["IComponentFactory"];
-
     public get IComponentFactory() { return this; }
-
-    public query(id: string): any {
-        return Chaincode.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return Chaincode.supportedInterfaces;
-    }
 
     public instantiateComponent(context: IComponentContext): void {
         // Map value types to register as defaults
@@ -123,20 +113,11 @@ class BackCompatLoader implements IComponentRegistry {
 }
 
 export class ChaincodeFactory implements IComponent, IRuntimeFactory {
-    public static supportedInterfaces = ["IRuntimeFactory"];
 
     constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
     }
 
     public get IRuntimeFactory() { return this; }
-
-    public query(id: string): any {
-        return ChaincodeFactory.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
-    }
-
-    public list(): string[] {
-        return ChaincodeFactory.supportedInterfaces;
-    }
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const chaincode = new Chaincode();
