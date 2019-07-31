@@ -1182,11 +1182,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 }
 
 // Wraps the provided list of packages and augments with some system level services.
-class WrappedComponentRegistry implements IComponentRegistry {
+export class WrappedComponentRegistry implements IComponentRegistry {
 
     private readonly agentScheduler: AgentSchedulerFactory;
 
-    constructor(private readonly registry: ComponentRegistryTypes) {
+    constructor(private readonly registry: ComponentRegistryTypes,
+                private readonly extraRegistries?: Map<string, Promise<IComponentFactory>>) {
         this.agentScheduler = new AgentSchedulerFactory();
     }
 
@@ -1195,6 +1196,8 @@ class WrappedComponentRegistry implements IComponentRegistry {
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "_scheduler") {
             return this.agentScheduler;
+        } else if (this.extraRegistries && this.extraRegistries.has(name)) {
+            return this.extraRegistries.get(name);
         } else {
             return this.registry.get(name);
         }

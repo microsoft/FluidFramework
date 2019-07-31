@@ -7,6 +7,7 @@ import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponentLoadable } from "@prague/container-definitions";
+import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SparseMatrix } from "@prague/sequence";
@@ -155,11 +156,27 @@ export class TestHost {
      * @param deltaConnectionServer - delta connection server for the ops
      */
     constructor(
-        private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]>,
+        private readonly componentRegistry: ReadonlyArray<[string, Promise<IComponentFactory>]> | IComponentRegistry,
         deltaConnectionServer?: ITestDeltaConnectionServer,
     ) {
         this.deltaConnectionServer = deltaConnectionServer || TestDeltaConnectionServer.create();
 
+        let storeComponentRegistry: WrappedComponentRegistry | Map<string, Promise<IComponentFactory>>;
+        if (Array.isArray(componentRegistry)) {
+            storeComponentRegistry = new Map(componentRegistry.concat([
+                [
+                    TestRootComponent.type,
+                    // tslint:disable:no-function-expression
+                    // tslint:disable:only-arrow-functions
+                    Promise.resolve(TestRootComponent.getFactory()),
+                ],
+            ]));
+        } else {
+            const extraRegistryMap: Map<string, Promise<IComponentFactory>> =
+                new Map([[TestRootComponent.type, Promise.resolve(TestRootComponent.getFactory())]]);
+            storeComponentRegistry =
+                new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
+        }
         // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
         const store = new DataStore(
             "http://test-orderer-url.test",
@@ -170,14 +187,7 @@ export class TestHost {
                     instantiateRuntime: (context) => Component.instantiateRuntime(
                         context,
                         TestRootComponent.type,
-                        new Map(componentRegistry.concat([
-                            [
-                                TestRootComponent.type,
-                                // tslint:disable:no-function-expression
-                                // tslint:disable:only-arrow-functions
-                                Promise.resolve(TestRootComponent.getFactory()),
-                            ],
-                        ]))),
+                        storeComponentRegistry),
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
