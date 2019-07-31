@@ -16,6 +16,7 @@ import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
+    IComponentFactory,
     IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
@@ -274,19 +275,35 @@ export class VideoPlayerCollection extends EventEmitter implements
     }
 }
 
-export function instantiateComponent(context: IComponentContext): void {
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    const mapExtension = SharedMap.getFactory();
-    dataTypes.set(mapExtension.type, mapExtension);
+export class VideoPlayerFactoryComponent implements IComponentFactory {
+    public static supportedInterfaces = [ "IComponentFactory"];
 
-    ComponentRuntime.load(
-        context,
-        dataTypes,
-        (runtime) => {
-            const progressCollectionP = VideoPlayerCollection.load(runtime, context);
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                const progressCollection = await progressCollectionP;
-                return progressCollection.request(request);
+    public get IComponentFactory() { return this; }
+
+    public query(id: string): any {
+        return VideoPlayerFactoryComponent.supportedInterfaces.indexOf(id) !== -1 ? this : undefined;
+    }
+
+    public list(): string[] {
+        return VideoPlayerFactoryComponent.supportedInterfaces;
+    }
+
+    public instantiateComponent(context: IComponentContext): void {
+        const dataTypes = new Map<string, ISharedObjectExtension>();
+        const mapExtension = SharedMap.getFactory();
+        dataTypes.set(mapExtension.type, mapExtension);
+
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const progressCollectionP = VideoPlayerCollection.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const progressCollection = await progressCollectionP;
+                    return progressCollection.request(request);
+                });
             });
-        });
+    }
 }
+
+export const fluidExport: IComponentFactory = new VideoPlayerFactoryComponent();

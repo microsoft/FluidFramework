@@ -62,10 +62,7 @@ class MyRegistry implements IComponentRegistry {
         } else if (name === "@chaincode/progress-bars") {
             return progressBars.then((m) => m.fluidExport);
         } else if (name === "@chaincode/video-players") {
-            return videoPlayers.then((m) => {
-                // TODO: Return FuildExport
-                return { instantiateComponent: m.instantiateComponent, IComponentFactory: undefined };
-            });
+            return videoPlayers.then((m) => m.fluidExport);
         } else if (name === "@chaincode/image-collection") {
             return images.then((m) => m.fluidExport);
         } else if (name === "@chaincode/monaco") {
