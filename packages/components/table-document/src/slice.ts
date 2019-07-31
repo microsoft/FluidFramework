@@ -120,7 +120,7 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
     }
 
     protected async existing() {
-        super.existing();
+        await super.existing();
         await this.ensureDoc();
         return this.finishInitialize();
     }
