@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.8.0",
-    "@prague/prague-dev-server": "~3.6.0",
+    "@prague/prague-dev-server": "~3.7.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

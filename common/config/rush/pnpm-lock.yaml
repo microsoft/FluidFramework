@@ -5,7 +5,7 @@ dependencies:
   '@microsoft/api-extractor': 7.3.4
   '@ms/charts': 0.1.14
   '@ms/charts-extensions': 0.1.14
-  '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+  '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
   '@rush-temp/agent': 'file:projects/agent.tgz'
   '@rush-temp/agent-scheduler': 'file:projects/agent-scheduler.tgz'
   '@rush-temp/app-component': 'file:projects/app-component.tgz'
@@ -406,18 +406,18 @@ packages:
     dev: false
     resolution:
       integrity: sha512-s63F9nJioLqOlW3UkyMd+BYhXt44YuaFm/VV0VwuteqjYwRrObkU7ra9pY4wAJR3oXi8hJrMcrcJdO/HH33vtw==
-  /@component/agent-scheduler/0.6.9609:
+  /@component/agent-scheduler/0.7.9931:
     dependencies:
-      '@prague/component-runtime': 0.6.9609
-      '@prague/consensus-register-collection': 0.6.9609
-      '@prague/container-definitions': 0.6.9609
-      '@prague/map': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
+      '@prague/component-runtime': 0.7.9931
+      '@prague/consensus-register-collection': 0.7.9931
+      '@prague/container-definitions': 0.7.9931
+      '@prague/map': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-Djs3L2E3JozzXItrS3F/PEJVM6tecDxbcwN9H2cQA3Y7S9fP6Rs034BkGmwruP4mZiMb7iJrGD2md7++WepdjQ==
+      integrity: sha512-x9rlZqi2LAHmy+dWwRWMTU76gNLNXrKAx/7fJkSeeeh6Iv3Su+ZcjcoNB1uBkORSzD4wydd3WJvjEQM4DGaOYQ==
   /@hapi/address/2.0.0:
     dev: false
     resolution:
@@ -526,65 +526,65 @@ packages:
     dev: false
     resolution:
       integrity: sha512-PhoNfqGQoXUMOOs89mDcakyKWrEYRBferd23YiVh4iJshmRb4HOuZcmKGxfQE+MxXp9HwyjastP7dJXcUEdHUQ==
-  /@prague/app-component/0.6.9609:
+  /@prague/app-component/0.7.9931:
     dependencies:
-      '@prague/cell': 0.6.9609
-      '@prague/component-runtime': 0.6.9609
-      '@prague/container-definitions': 0.6.9609
-      '@prague/container-runtime': 0.6.9609
-      '@prague/map': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/sequence': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
-      '@prague/stream': 0.6.9609
+      '@prague/cell': 0.7.9931
+      '@prague/component-runtime': 0.7.9931
+      '@prague/container-definitions': 0.7.9931
+      '@prague/container-runtime': 0.7.9931
+      '@prague/map': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/sequence': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
+      '@prague/stream': 0.7.9931
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-xifUfX4LPLd3cT67TZ55NlfbEuD0/mXnllb1Qvu85wL5YRWzR5GfH8fm0mbg5CW6db8LCX+w5+Gu5jX3HzOZ2g==
-  /@prague/cell/0.6.9609:
+      integrity: sha512-plVrbh5iUjVmWPZq/lrz7f1BVifjTXcOYcvi+oRluVu8rI5VYXt1z+kB1KPg7dj7K1pzsKwmedqFJ69CE8oQKw==
+  /@prague/cell/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
       debug: 4.1.1
       lodash: 4.17.15
     dev: false
     resolution:
-      integrity: sha512-bJhsJt57qm0KZifCh49Bn2kDfjTL0ipJrclN1/zXQqzcGscgTpVK/qcv86c758rz1CFFRD29L0aJ4/+MHVr6TA==
-  /@prague/component-runtime/0.6.9609:
+      integrity: sha512-3QW2RTA5PvCpbdLrBm8FmKH+4eb1CG2iNQLeZ24+rWirVqMBWd/NtvNy43dHVOZg4fKJs1n/7O0pXz2WfBzyWg==
+  /@prague/component-runtime/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
+      '@prague/utils': 0.7.9931
       async: 2.6.3
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-/u3oPlVkj9JbH2ndjm+xWVqzdMBHnGGj/SZq0cfvaegUMq4Yk2nIyISUB6GrWsJRgVbMaMptF8mIIOUMzEKg4w==
-  /@prague/consensus-register-collection/0.6.9609:
+      integrity: sha512-smyEPmXnBiXc16XAECjBtooEUeYHgRaeQ+k/uuAic1GAoQIADk4BnO4gp/QM/EikbeF/pWvEWBKXyWd5ILTYeA==
+  /@prague/consensus-register-collection/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-4JYaOqro6dzcmjJNPexwfw2zv99SmBGDXnVVQ9dPkD/SojtDKhMqjMwXWzA6Apa6ZDJFXa4pzQUpQmQAnXfnJQ==
-  /@prague/container-definitions/0.6.9609:
+      integrity: sha512-ToFVrOzgT1knLhle8K9wyylNqboRKYDviykhiLrJK7+puXxjBz851yCm5/qSO9xBLwPN4EUq2iB8qH7ZDL7xyw==
+  /@prague/container-definitions/0.7.9931:
     dependencies:
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-dbrWvO2GcSNWG18ReyHHoeh+aINs9ohKCVFqFRNR5yQPTT6OmU/PdXAbFn77bffwuiULVktzoncasgfa8lW/LA==
-  /@prague/container-loader/0.6.9609:
+      integrity: sha512-f+nKXEHcKAMOdJMfLKq8gKKRkGU93MGJFnSVa3Ghx8ZCkBLFdQmiMbXGThIhCYsejgneRIUB1N2NZi8KdgAWOw==
+  /@prague/container-loader/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/double-ended-queue': 2.1.1
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
@@ -592,13 +592,13 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-9jt+fWc1DVSGCpQ9VcnFmKHFLs3L+vsO5spMeIBDhcAAaoUXllHWel0aAnQJvxuNLT1yM6ObgqXjLPYbHE5VOA==
-  /@prague/container-runtime/0.6.9609:
+      integrity: sha512-NF9miTMzt8kOly4nofSZYqSqiWiEZB7ogm4JqQSHU0Iz6Nuqmg3sAX55FVKFIA2yn0x1f/VoXEF6ClhdAZ1I2w==
+  /@prague/container-runtime/0.7.9931:
     dependencies:
-      '@component/agent-scheduler': 0.6.9609
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@component/agent-scheduler': 0.7.9931
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
@@ -610,53 +610,53 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-MoT+Mg85ogFNmWqSj8o9mw8CXHVDbAE3f7BTfdMuAn3kq1p2CX7X6tER+Wy2td0cLtb4y/CwpvyfxRLm0m9eMA==
-  /@prague/gitresources/0.6.9609:
+      integrity: sha512-udr3LTnRnMlJ5CcxcYcdCxfXldYED9SjPBGRhuNf6uw6zfemodN8WSiV0ZkciSGUSNiWAyS2lYMZbgarBVSzpQ==
+  /@prague/gitresources/0.7.9931:
     dev: false
     resolution:
-      integrity: sha512-upxMcQxkmoiMJU6AxJMk+0EbeHBA9nE86JwgpLQQ8lzuaoStxCjEd3bb37cyepeKy6laoEZxGqCra0ziZCow6Q==
-  /@prague/loader-web/0.6.9609:
+      integrity: sha512-i06mXEPYEF4SwR30463ZJzsgiVGLwlwkDq2qbRxEqNHhY/V2EClUrePzvuEHtiaC1r5DJXFvaLFNR9rJbyzbbQ==
+  /@prague/loader-web/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
       '@types/node': 10.14.13
       chalk: 2.4.2
       isomorphic-fetch: 2.2.1
       source-map-loader: 0.2.4
     dev: false
     resolution:
-      integrity: sha512-lQfV+MFT5MOK/k/vx4EsAg1c4EHkfHMUQIQ/Gtt7EuDayH0Z6g9Y2AUmHFQ6fKSemiBKJ1bBotKf93jvAfpdfA==
-  /@prague/map/0.6.9609:
+      integrity: sha512-d2gWAuOb8WYL4ZVZAc7MKm8kXZTyZnCJtQDGLjAZsMdpIt3RzqFkP0vkWn3oSnkHvxsqq04qK9HyRxljPWUVyg==
+  /@prague/map/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
       debug: 4.1.1
       lodash: 4.17.15
     dev: false
     resolution:
-      integrity: sha512-+56PlbEngWTqJDheINcbtuogw+MgoHoGsHCMkkbu6aAYbt+UpiTzoyTuqG3XXEgkjYoz7jMpaBDeAr5ENW9OgA==
-  /@prague/merge-tree/0.6.9609:
+      integrity: sha512-OeNy5+of0LVSJKxENWGrRN/Ts2wKSRBdmzZgJ9dKqz6QS0y53eL16jYuyXviksNNuTF23jb6O1iIaZomnadMyg==
+  /@prague/merge-tree/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
+      '@prague/utils': 0.7.9931
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-7bNOERm9Vmdqkf8cd1bVfHeuwLV6p6RgPD9XqB+YFfiq7SdzbFpRLz0DXTr9JYn3b4H4WRFQ5Vhe7aLqvZkoig==
-  /@prague/prague-dev-server/3.6.1_webpack@4.37.0:
+      integrity: sha512-WKLs+i9EMPDjGR2MvjfUrEW+r2Z3pGYd8dgHc0i/YcEIHxHS1huHNZdQ5c/p2NFVV7jR0aF+q/tT1qJL6PApgg==
+  /@prague/prague-dev-server/3.7.0_webpack@4.37.0:
     dependencies:
-      '@prague/app-component': 0.6.9609
-      '@prague/container-definitions': 0.6.9609
-      '@prague/container-loader': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/loader-web': 0.6.9609
-      '@prague/map': 0.6.9609
-      '@prague/routerlicious-host': 0.6.9609
-      '@prague/routerlicious-socket-storage': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
+      '@prague/app-component': 0.7.9931
+      '@prague/container-definitions': 0.7.9931
+      '@prague/container-loader': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/loader-web': 0.7.9931
+      '@prague/map': 0.7.9931
+      '@prague/routerlicious-host': 0.7.9931
+      '@prague/routerlicious-socket-storage': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
       ansi-html: 0.0.7
       axios: 0.18.1
       bonjour: 3.5.0
@@ -684,7 +684,7 @@ packages:
       serve-index: 1.9.1
       sockjs: 0.3.19
       sockjs-client: 1.3.0
-      spdy: 4.0.0
+      spdy: 4.0.1
       strip-ansi: 3.0.1
       supports-color: 6.1.0
       url: 0.11.0
@@ -699,25 +699,25 @@ packages:
     peerDependencies:
       webpack: ^4.0.0
     resolution:
-      integrity: sha512-L1R29yk7tfWOsyVhgQmRSj3uffD2H+mnL1xUtMPFkSJaWyNq8+Uci88Juy/9ZXqbDt4Cyl3w0zw6ACmhXUA6Nw==
-  /@prague/routerlicious-host/0.6.9609:
+      integrity: sha512-+EXvhvQYJObwsybTefHy63z870pmbK30Rmxrhh7MxHRHwRNXUn+vVD/t8etl9oG9b6vQ0MlAxXuKQOHDnKsnkQ==
+  /@prague/routerlicious-host/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/debug': 0.0.31
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-xcxA0vOA0c4vSkYt2/KVpGNIVWUtM1Qk2Bl7BLyisvOUcVMHD9jv3oKoszginZBWKJ6Q3wBsGuWHHSypThO0OQ==
-  /@prague/routerlicious-socket-storage/0.6.9609:
+      integrity: sha512-tE3eZpKmssw1+J/7YaW/cIAuEVCoqTV3wI2Htf9kXkK3k2IMZcJMI+i5FsrOMaXW06/8n37XZD6FOYx4BPYuNQ==
+  /@prague/routerlicious-socket-storage/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/services-client': 0.6.9609
-      '@prague/socket-storage-shared': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/services-client': 0.7.9931
+      '@prague/socket-storage-shared': 0.7.9931
+      '@prague/utils': 0.7.9931
       axios: 0.18.1
       debug: 4.1.1
       isomorphic-ws: 4.0.1_ws@6.2.1
@@ -726,46 +726,46 @@ packages:
       ws: 6.2.1
     dev: false
     resolution:
-      integrity: sha512-MI+flJTCUVTtp9viECVLcdhm+4sBFMXoYFhV2GanKs2qaKk1F17I3TnVFg4frf/aOtSCLvuc1J+3+iAj8pnP3w==
-  /@prague/runtime-definitions/0.6.9609:
+      integrity: sha512-LHuzBKhAy3Ke6TfMFqVOadiAyTRMn/IqDIH3HzneJmSt9tEBnesc4pILEts1QMjJCOMZPwApeZZdl/r5KlEZoA==
+  /@prague/runtime-definitions/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/node': 10.14.13
     dev: false
     resolution:
-      integrity: sha512-IkSaIZTHa+3CfFwn0vL1knY5UNk7PJAQ8dx/YMdcza3pEz08Nn1EPC6cDUSDHOUjqce0mjx/JaHmFi0qul5fIQ==
-  /@prague/sequence/0.6.9609:
+      integrity: sha512-E7lGSBTDr58dICh1B6UwzDOfZFocuPq25JestimGIu3XMJBjzsrDVS6+NAB9XuBjgmpmFdbdR/uAGBZCgL5aCQ==
+  /@prague/sequence/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/map': 0.6.9609
-      '@prague/merge-tree': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/map': 0.7.9931
+      '@prague/merge-tree': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/uuid': 3.4.5
       lodash: 4.17.15
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-FjcKOcKxHsw6nPRETW9Taov8CzcE6aYVMWOPxscBbhmisudBnog5qUM1Cx61a4aFOwpzFRjlMOhSGsQqbtz83A==
-  /@prague/services-client/0.6.9609:
+      integrity: sha512-4mUX8y1/vR9Pq1UvbziNrKYyjep/NaxjhyjWCpR27uCL0dZNTbAVaoimaeoPRWdQg2WYz38fe2bqjZFNazolqQ==
+  /@prague/services-client/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/node': 10.14.13
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-jzxTRVyySHxeuz/d4FnqBJ4PSe6qfP+h1uxIHDsgM/AeEK+PKquQualdMDUDy2w1iQlWytxgUSGkV0HH1wZBBA==
-  /@prague/shared-object-common/0.6.9609:
+      integrity: sha512-ORHKnKCDK/Yf9IRaO2ng6Wy/gzzPpT+1OydBifQ46Bz+jbosi2QowWDkLSyXI9MiRjLgIuII0o1wrUHr776ibg==
+  /@prague/shared-object-common/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/utils': 0.7.9931
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
       '@types/node': 10.14.13
@@ -773,40 +773,40 @@ packages:
       double-ended-queue: 2.1.0-0
     dev: false
     resolution:
-      integrity: sha512-bPjtV+yQ9iqzXYpaEx/yTSMkI4lCTSpsixSCVOYryZFoWy9vO2b+i/xcV3pg+1W29kLlUYHJeCSSpOv/5+KGbg==
-  /@prague/socket-storage-shared/0.6.9609:
+      integrity: sha512-CLSZSxlk97p7Z/SKt58+wR4tgVCT+Xohy7ypC13a1DstgSeyWNzgW+YmMjg8IRAEhZeHCTZaVN3HvBpTrtUcjA==
+  /@prague/socket-storage-shared/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/utils': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/utils': 0.7.9931
       debug: 4.1.1
       socket.io-client: 2.2.0
     dev: false
     resolution:
-      integrity: sha512-9ZVKN0pVmcq1iB4lVliXZIjxErbhBtmVI1LykE0sG6MEeE7pOrhrGyEbZAGUIT2qUXTWLNmoVlIpAXAB2TelhQ==
-  /@prague/stream/0.6.9609:
+      integrity: sha512-MIj+Rvx9qD2Q89/8+5d7LDa8oZ+1Q619sCrcR6PflUCFZO0dGSMDdiIiLc717CbiOGjaGYIqrOOjdLWdHDAseg==
+  /@prague/stream/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/map': 0.6.9609
-      '@prague/runtime-definitions': 0.6.9609
-      '@prague/shared-object-common': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/map': 0.7.9931
+      '@prague/runtime-definitions': 0.7.9931
+      '@prague/shared-object-common': 0.7.9931
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.5
       debug: 4.1.1
       uuid: 3.3.2
     dev: false
     resolution:
-      integrity: sha512-jDdVVjc+wUqyZfSuOmCI2vv4uuKB7UsphX5Uvk1rW1vhAvYbURzFeSVKK+WokYDJzMelayMAsb6ETk5KWVl/8g==
-  /@prague/utils/0.6.9609:
+      integrity: sha512-1al2/e1o/jE4lI8dO1NvoWvewg6XvfV1JcgpXmm3hpJEHDtG8XfF7ozDkkDgDTunoe7Ny27FjaunBAyIU2k/eA==
+  /@prague/utils/0.7.9931:
     dependencies:
-      '@prague/container-definitions': 0.6.9609
-      '@prague/gitresources': 0.6.9609
+      '@prague/container-definitions': 0.7.9931
+      '@prague/gitresources': 0.7.9931
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
       sha.js: 2.4.11
     dev: false
     resolution:
-      integrity: sha512-bFpEoVMCVbeO7tnvG+/TLDGr94yNj/uvxHUHxUogRd1kMvmv6/WS39zl2aExo2VW4sZ99BNxAwOPIKDnQXS3Og==
+      integrity: sha512-sSGb9AFt5prr1zVcGECNkQcx+q0S0MNQG9h5x6Z0Jjbk70GpSQcqcH8xMi3uyJzdX1cwHu7sypn2M/CbKRdqKg==
   /@shellscape/koa-send/4.1.3:
     dependencies:
       debug: 2.6.9
@@ -9902,6 +9902,18 @@ packages:
       npm: '>=6.0.0'
     resolution:
       integrity: sha512-ot0oEGT/PGUpzf/6uk4AWLqkq+irlqHXkrdbk51oWONh3bxQmBuljxPNl66zlRRcIJStWq0QkLUCPOPjgjvU0Q==
+  /spdy/4.0.1:
+    dependencies:
+      debug: 4.1.1
+      handle-thing: 2.0.0
+      http-deceiver: 1.2.7
+      select-hose: 2.0.0
+      spdy-transport: 3.0.0
+    dev: false
+    engines:
+      node: '>=6.0.0'
+    resolution:
+      integrity: sha512-HeZS3PBdMA+sZSu0qwpCxl3DeALD5ASx8pAX0jZdKXSpPWbQ6SYGnlg3BBmYLx5LtiZrmkAZfErCm2oECBcioA==
   /split-string/3.1.0:
     dependencies:
       extend-shallow: 3.0.2
@@ -12045,7 +12057,7 @@ packages:
     version: 0.0.0
   'file:projects/clicker.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       '@types/react': 16.8.23
       '@types/react-dom': 16.8.5
@@ -12062,7 +12074,7 @@ packages:
     dev: false
     name: '@rush-temp/clicker'
     resolution:
-      integrity: sha512-btHzLkEPFSfXT/eb3chfOo5707KZkd/FHA//jJlfkJtpAChUCqlXPybk490aaOJSCiiSpWVRFSQW8U1COTWA4A==
+      integrity: sha512-frSfvs7ancwuSC+poSYxi0vRPFsEfeBakMcbLRoQkUgQYHRM5zDUgg2014AaeXQVFEk5PPeWlXdvtQW/Mj1JeA==
       tarball: 'file:projects/clicker.tgz'
     version: 0.0.0
   'file:projects/client-api.tgz':
@@ -12266,7 +12278,7 @@ packages:
     version: 0.0.0
   'file:projects/externalcomponentloader.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       concurrently: 4.1.1
       rimraf: 2.6.3
@@ -12280,7 +12292,7 @@ packages:
     dev: false
     name: '@rush-temp/externalcomponentloader'
     resolution:
-      integrity: sha512-E0FmB4dJLzwnyTMyIl9XIJJx2ogxoDdcbQaBEKyqx/MySN1UjrCuAsvzJJMZLYeZe1KjPaXJxvHJjB32+tN+wQ==
+      integrity: sha512-tjLYQdw2APfnlZjpiyBPTdHKTmXiu4R0scLfVWrGIhiPiRqQv2vIFbFcXw5/DjX7onmYugPwfI9UlG8br50X+Q==
       tarball: 'file:projects/externalcomponentloader.tgz'
     version: 0.0.0
   'file:projects/file-socket-storage.tgz':
@@ -12301,7 +12313,7 @@ packages:
     version: 0.0.0
   'file:projects/flow-intel-viewer.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       concurrently: 4.1.1
       rimraf: 2.6.3
@@ -12314,7 +12326,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-intel-viewer'
     resolution:
-      integrity: sha512-Q/YeyjCPH+QmHO1bGtf4R8wqVkR9LQhnoMKinauO+aglWl5JGIdL8MFaJFHoEbbXZC97rdRavzVXvqU8jqtyCg==
+      integrity: sha512-ZWZrJKJvL2t5xmbN4ctJgdgxN1q9LbGgXp+L5TlHsqItnRP8Ifw4QZcxddxCWek0MrPf7gQwo23hY3e0jq4GKQ==
       tarball: 'file:projects/flow-intel-viewer.tgz'
     version: 0.0.0
   'file:projects/flow-intel.tgz':
@@ -12336,7 +12348,7 @@ packages:
     version: 0.0.0
   'file:projects/flow-scroll.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -12368,7 +12380,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-scroll'
     resolution:
-      integrity: sha512-YfzNDZmAQ3jLzcnpCiR1F3cUgtNNNzhUE1Jo732isd0fAVlwY0eTzjaiogj1u+4TSh8mFV05U+OxofS9vUBvIA==
+      integrity: sha512-JjMfqaZOUnmfdTWISTL3bnNC6X48x536v7ZlnRfE01yckQLcWPK9vvTYA3T+CjWzB7x20iqqMbUMw+Nmjq6rwg==
       tarball: 'file:projects/flow-scroll.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -12800,7 +12812,7 @@ packages:
     version: 0.0.0
   'file:projects/monaco.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
       '@types/node': 10.14.13
@@ -12829,7 +12841,7 @@ packages:
     dev: false
     name: '@rush-temp/monaco'
     resolution:
-      integrity: sha512-qseVRxFt3rAk4jag35DexIh46Unk+zYGzunqGwne8BGa/Hlehm/XFskuDZeFYfwATwTIQ+kbgYPeY4qdRfW4ZA==
+      integrity: sha512-gM9Fl3GSRpumL11RN8ww3OVVwRGBQKH7j2B3ylhAHd07dhHaaeX+y3At2+87EJPKeKHHSlMQ4MCExklRaKDnBg==
       tarball: 'file:projects/monaco.tgz'
     version: 0.0.0
   'file:projects/odsp-socket-storage.tgz':
@@ -12870,7 +12882,7 @@ packages:
     version: 0.0.0
   'file:projects/owned-map.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       '@types/react-dom': 16.8.5
       debug: 4.1.1
@@ -12887,13 +12899,13 @@ packages:
     dev: false
     name: '@rush-temp/owned-map'
     resolution:
-      integrity: sha512-55Mvf6fROpu2bTCrBdIoXdwu5X2COvc12iWniFtCIu6ZLygI2bWUpEk/O+Xk8rCsRmc5SqT0YKVjUaTSiBUu7Q==
+      integrity: sha512-IN1SS5EyPnQlrmFrsUjJQXbfafBbAoGgHBBSEpbO6mogzrx+32j9YgYwnAW8InB0MxyYy3VLnq1HTy+M0ZoM4Q==
       tarball: 'file:projects/owned-map.tgz'
     version: 0.0.0
   'file:projects/pinpoint-editor.tgz':
     dependencies:
       '@kurtb/pinpoint': 0.1.2
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/angular': 1.6.55
       '@types/angular-route': 1.7.0
       '@types/debug': 0.0.31
@@ -12927,12 +12939,12 @@ packages:
     dev: false
     name: '@rush-temp/pinpoint-editor'
     resolution:
-      integrity: sha512-KIPsDCItqqZOBZeRaOrWJL9TlGPOhgm1E6jlUgdyzdebEIae/cXm5G3wNcTJqhw01soz3vMcgpxQwMBpTMsciQ==
+      integrity: sha512-wfzQNfsRpZ18qpbHaBwOFU3ysj0DhHvDDr93gj0Omlwm9iVfX/WPMFFxHqKj70H7JgkFyB/r7aBFxmIIJecZ8Q==
       tarball: 'file:projects/pinpoint-editor.tgz'
     version: 0.0.0
   'file:projects/pond.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       '@types/react': 16.8.23
       '@types/react-dom': 16.8.5
@@ -12949,7 +12961,7 @@ packages:
     dev: false
     name: '@rush-temp/pond'
     resolution:
-      integrity: sha512-T6rupcWGCd9jjyMVM/JdCB+583K7pQiBeH6MJ1/JeDufiAu3E22+aE2QdIxwCv0cLsFmzkKjtRk7fBr588A+ZA==
+      integrity: sha512-Lx9Ek/Fbc9uglr5KgN2iJpJtQbk2ys2PAAyEJo63VcBGpc7PT6FumN/bOsEVarQSjP11Rmh/6CXMjSpRctuBgQ==
       tarball: 'file:projects/pond.tgz'
     version: 0.0.0
   'file:projects/prague-dump.tgz':
@@ -13386,7 +13398,7 @@ packages:
     version: 0.0.0
   'file:projects/shared-text.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/debug': 0.0.31
       '@types/graphql': 14.2.3
       '@types/node': 10.14.13
@@ -13427,7 +13439,7 @@ packages:
     dev: false
     name: '@rush-temp/shared-text'
     resolution:
-      integrity: sha512-j/YfgdAdN4mE6HiQ5YziHs1oeDwD8WAUNPocgXLB0ZKuL8aX1nTFweC18ATS4YL8xq7HlayrFt4VDo7Hh1xIFw==
+      integrity: sha512-GFlunh0EOBCC8X72qm6jnlZMWauHYxpYnUo4bYUBN8GQeAEpxPt3ozm4wlf0RmJNlsQHQtP59hERcR6VGlDO6w==
       tarball: 'file:projects/shared-text.tgz'
     version: 0.0.0
   'file:projects/snapshotter.tgz':
@@ -13592,7 +13604,7 @@ packages:
     version: 0.0.0
   'file:projects/todo.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/node': 10.14.13
       '@types/react': 16.8.23
       '@types/react-dom': 16.8.5
@@ -13610,7 +13622,7 @@ packages:
     dev: false
     name: '@rush-temp/todo'
     resolution:
-      integrity: sha512-TBiTA4adSem3qckxKTaq5fd+5dQW0A1AZxFxZD4Ft5U+U0prMIlDqia7ZrPcGhpo6e8o+OmLLFFqYBVWVMtI8Q==
+      integrity: sha512-KGLRdo05h+92uTqAY4Kgo5yRFuZd457XTANBKqTUQ/2mxWCKa+ljEQpwRm0Z3WXdfiYbSFrsCRBFoAWyAx1yJA==
       tarball: 'file:projects/todo.tgz'
     version: 0.0.0
   'file:projects/tools-core.tgz':
@@ -13693,7 +13705,7 @@ packages:
     version: 0.0.0
   'file:projects/webflow.tgz':
     dependencies:
-      '@prague/prague-dev-server': 3.6.1_webpack@4.37.0
+      '@prague/prague-dev-server': 3.7.0_webpack@4.37.0
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -13724,7 +13736,7 @@ packages:
     dev: false
     name: '@rush-temp/webflow'
     resolution:
-      integrity: sha512-imEuTJWsjshRvK31BNc+ECOx8w5CsuXZfVXbEmAuVXKx1EXFEub86pR+6vnzD2gCbq2V7rRJbYMiOa01DKGwtg==
+      integrity: sha512-oGuejXktYfIZu5LINpUNb28MRqLCIJlncjos0XMacFzJ1z2F7EUdIZoRr/3pgh2yLK4ZaVpT8LGgXElKtbjsbw==
       tarball: 'file:projects/webflow.tgz'
     version: 0.0.0
 registry: ''
@@ -13735,7 +13747,7 @@ specifiers:
   '@microsoft/api-extractor': ^7.1.6
   '@ms/charts': ^0.1.14
   '@ms/charts-extensions': ^0.1.14
-  '@prague/prague-dev-server': ~3.6.0
+  '@prague/prague-dev-server': ~3.7.0
   '@rush-temp/agent': 'file:./projects/agent.tgz'
   '@rush-temp/agent-scheduler': 'file:./projects/agent-scheduler.tgz'
   '@rush-temp/app-component': 'file:./projects/app-component.tgz'

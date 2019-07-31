@@ -29,7 +29,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
     "@prague/build-common": "^0.8.0",
-    "@prague/prague-dev-server": "~3.6.0",
+    "@prague/prague-dev-server": "~3.7.0",
     "@prague/url-generator": "^1.0.7860",
     "@types/node": "^10.12.12",
     "@types/react-dom": "^16.0.11",
