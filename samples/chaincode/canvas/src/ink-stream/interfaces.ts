@@ -51,13 +51,13 @@ export interface IColor {
  * Only one operation per delta is currently supported but it's expected this will expand to multiple in
  * the future.
  */
-export class Delta implements IDelta {
+export class InkDelta implements IDelta {
     /**
-     * Create a new Delta.
+     * Create a new InkDelta.
      *
      * @param operations - Operations to include in this delta (only one operation per delta is currently supported)
      */
-    constructor(public operations: IOperation[] = []) {
+    constructor(public operations: IInkOperation[] = []) {
     }
 
     /**
@@ -74,7 +74,7 @@ export class Delta implements IDelta {
      *
      * @param operation - The new operation
      */
-    public push(operation: IOperation) {
+    public push(operation: IInkOperation) {
         this.operations.push(operation);
     }
 
@@ -83,7 +83,7 @@ export class Delta implements IDelta {
      *
      * @param time - Time, in milliseconds, that the operation occurred on the originating device
      */
-    public clear(time: number = new Date().getTime()): Delta {
+    public clear(time: number = new Date().getTime()): InkDelta {
         const clear: IClearAction = { };
 
         this.operations.push({ clear, time });
@@ -103,7 +103,7 @@ export class Delta implements IDelta {
         point: IPoint,
         pressure: number,
         id: string = uuid(),
-        time: number = new Date().getTime()): Delta {
+        time: number = new Date().getTime()): InkDelta {
 
         const stylusUp: IStylusUpAction = {
             id,
@@ -132,7 +132,7 @@ export class Delta implements IDelta {
         pen: IPen,
         layer: number = 0,
         id: string = uuid(),
-        time: number = new Date().getTime()): Delta {
+        time: number = new Date().getTime()): InkDelta {
 
         const stylusDown: IStylusDownAction = {
             id,
@@ -159,7 +159,7 @@ export class Delta implements IDelta {
         point: IPoint,
         pressure: number,
         id: string = uuid(),
-        time: number = new Date().getTime()): Delta {
+        time: number = new Date().getTime()): InkDelta {
 
         const stylusMove: IStylusMoveAction = {
             id,
@@ -177,15 +177,15 @@ export class Delta implements IDelta {
  *
  * @param operation - The operation to get the action from
  */
-export function getActionType(operation: IOperation): ActionType {
+export function getInkActionType(operation: IInkOperation): InkActionType {
     if (operation.clear) {
-        return ActionType.Clear;
+        return InkActionType.Clear;
     } else if (operation.stylusDown) {
-        return ActionType.StylusDown;
+        return InkActionType.StylusDown;
     } else if (operation.stylusUp) {
-        return ActionType.StylusUp;
+        return InkActionType.StylusUp;
     } else if (operation.stylusMove) {
-        return ActionType.StylusMove;
+        return InkActionType.StylusMove;
     } else {
         throw new Error("Unknown action");
     }
@@ -196,7 +196,7 @@ export function getActionType(operation: IOperation): ActionType {
  *
  * @param operation - The operation to get the stylus action from
  */
-export function getStylusAction(operation: IOperation): IStylusAction {
+export function getStylusAction(operation: IInkOperation): IStylusAction {
     if (operation.stylusDown) {
         return operation.stylusDown;
     } else if (operation.stylusUp) {
@@ -213,14 +213,14 @@ export function getStylusAction(operation: IOperation): IStylusAction {
  *
  * @param operation - The operation to get the stylus ID from
  */
-export function getStylusId(operation: IOperation): string {
-    const type = getActionType(operation);
+export function getStylusId(operation: IInkOperation): string {
+    const type = getInkActionType(operation);
     switch (type) {
-        case ActionType.StylusDown:
+        case InkActionType.StylusDown:
             return operation.stylusDown.id;
-        case ActionType.StylusUp:
+        case InkActionType.StylusUp:
             return operation.stylusUp.id;
-        case ActionType.StylusMove:
+        case InkActionType.StylusMove:
             return operation.stylusMove.id;
         default:
             throw new Error("Non-stylus event");
@@ -269,7 +269,7 @@ export interface IPen {
 /**
  * Describes valid actions to insert in the stream.
  */
-export enum ActionType {
+export enum InkActionType {
     /**
      * Action of placing the stylus down on the canvas.
      */
@@ -292,7 +292,7 @@ export enum ActionType {
 }
 
 /**
- * Signals a clear action when populating an IOperation.clear.
+ * Signals a clear action when populating an IInkOperation.clear.
  */
 // tslint:disable-next-line:no-empty-interface
 export interface IClearAction {
@@ -320,7 +320,7 @@ export interface IStylusAction {
 }
 
 /**
- * Signals a down action when populating an IOperation.stylusDown.
+ * Signals a down action when populating an IInkOperation.stylusDown.
  *
  * Also contains information about the pen and layer that this stroke will be a member of.
  */
@@ -338,14 +338,14 @@ export interface IStylusDownAction extends IStylusAction {
 }
 
 /**
- * Signals an up action when populating an IOperation.stylusUp.
+ * Signals an up action when populating an IInkOperation.stylusUp.
  */
 // tslint:disable-next-line:no-empty-interface
 export interface IStylusUpAction extends IStylusAction {
 }
 
 /**
- * Signals a move action when populating an IOperation.stylusMove.
+ * Signals a move action when populating an IInkOperation.stylusMove.
  */
 // tslint:disable-next-line:no-empty-interface
 export interface IStylusMoveAction extends IStylusAction {
@@ -354,7 +354,7 @@ export interface IStylusMoveAction extends IStylusAction {
 /**
  * A single ink operation - should have only a single action member populated per instance.
  */
-export interface IOperation {
+export interface IInkOperation {
     /**
      * Time, in milliseconds, that the operation occurred on the originating device.
      */
@@ -396,7 +396,7 @@ export interface IInkLayer {
     /**
      * The operations contained within the layer.
      */
-    operations: IOperation[];
+    operations: IInkOperation[];
 }
 
 /**
@@ -406,5 +406,5 @@ export interface IDelta {
     /**
      * Operations to include in this delta (only one operation per delta is currently supported).
      */
-    operations: IOperation[];
+    operations: IInkOperation[];
 }

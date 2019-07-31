@@ -132,7 +132,7 @@ export class InkCanvas extends ui.Component {
             // Anchor and clear any current selection.
             const pt = new EventPoint(this.canvas, evt);
 
-            const delta = new types.Delta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            const delta = new types.InkDelta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
             this.currentStylusActionId = delta.operations[0].stylusDown.id;
             this.addAndDrawStroke(delta, true);
 
@@ -143,7 +143,7 @@ export class InkCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
             const pt = new EventPoint(this.canvas, evt);
-            const delta = new types.Delta().stylusMove(
+            const delta = new types.InkDelta().stylusMove(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -161,7 +161,7 @@ export class InkCanvas extends ui.Component {
             const pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
-            const delta = new types.Delta().stylusUp(
+            const delta = new types.InkDelta().stylusUp(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -206,7 +206,7 @@ export class InkCanvas extends ui.Component {
 
         const layers = this.model.getLayers();
         for (const layer of layers) {
-            let previous: types.IOperation = layer.operations[0];
+            let previous: types.IInkOperation = layer.operations[0];
             for (const operation of layer.operations) {
                 this.drawStroke(layer, operation, previous);
                 previous = operation;
@@ -216,9 +216,9 @@ export class InkCanvas extends ui.Component {
 
     private drawStroke(
         layer: types.IInkLayer,
-        current: types.IOperation,
-        previous: types.IOperation) {
-        const type = types.getActionType(current);
+        current: types.IInkOperation,
+        previous: types.IInkOperation) {
+        const type = types.getInkActionType(current);
         let shapes: IShape[];
 
         const currentAction = types.getStylusAction(current);
@@ -226,15 +226,15 @@ export class InkCanvas extends ui.Component {
         const pen = layer.operations[0].stylusDown.pen;
 
         switch (type) {
-            case types.ActionType.StylusDown:
+            case types.InkActionType.StylusDown:
                 shapes = this.getShapes(currentAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case types.ActionType.StylusMove:
+            case types.InkActionType.StylusMove:
                 shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
-            case types.ActionType.StylusUp:
+            case types.InkActionType.StylusUp:
                 shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
                 break;
 
@@ -260,8 +260,8 @@ export class InkCanvas extends ui.Component {
 
         let dirtyLayers: { [key: string]: any } = {};
         for (const operation of delta.operations) {
-            const type = types.getActionType(operation);
-            if (type === types.ActionType.Clear) {
+            const type = types.getInkActionType(operation);
+            if (type === types.InkActionType.Clear) {
                 this.clearCanvas();
                 this.lastLayerRenderOp = {};
                 dirtyLayers = {};

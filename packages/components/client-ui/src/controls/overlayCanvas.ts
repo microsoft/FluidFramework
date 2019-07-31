@@ -59,7 +59,7 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: stream.IOperation = null;
+    private lastOperation: stream.IInkOperation = null;
     private pen: stream.IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
@@ -82,25 +82,25 @@ export class DrawingContext {
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: stream.IOperation) {
-        const type = stream.getActionType(current);
+    public drawStroke(current: stream.IInkOperation) {
+        const type = stream.getInkActionType(current);
         let shapes: IShape[];
 
         const currentAction = stream.getStylusAction(current);
         const previousAction = stream.getStylusAction(this.lastOperation || current);
 
         switch (type) {
-            case stream.ActionType.StylusDown:
+            case stream.InkActionType.StylusDown:
                 this.pen = current.stylusDown.pen;
                 shapes = this.getShapes(currentAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case stream.ActionType.StylusMove:
+            case stream.InkActionType.StylusMove:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case stream.ActionType.StylusUp:
+            case stream.InkActionType.StylusUp:
                 assert(this.pen);
                 shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
                 break;
@@ -324,7 +324,11 @@ export class InkLayer extends Layer {
         super(size);
 
         // Listen for updates and re-render
-        this.model.on("op", (op) => {
+        this.model.on("op", (op, local) => {
+            if (local) {
+                return;
+            }
+
             const delta = op.contents as stream.IDelta;
             for (const operation of delta.operations) {
                 this.drawingContext.drawStroke(operation);
@@ -490,7 +494,7 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            const delta = new stream.Delta().stylusDown(
+            const delta = new stream.InkDelta().stylusDown(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
@@ -505,7 +509,7 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            const delta = new stream.Delta().stylusMove(
+            const delta = new stream.InkDelta().stylusMove(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -523,7 +527,7 @@ export class OverlayCanvas extends ui.Component {
             this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
-            const delta = new stream.Delta().stylusUp(
+            const delta = new stream.InkDelta().stylusUp(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);

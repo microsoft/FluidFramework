@@ -17,7 +17,7 @@ import {
 import { SharedObject } from "@prague/shared-object-common";
 import { StreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";
-import { ISnapshot, Snapshot } from "./snapshot";
+import { IInkSnapshot, InkSnapshot } from "./snapshot";
 
 /**
  * Filename where the snapshot is stored.
@@ -27,7 +27,7 @@ const snapshotFileName = "header";
 /**
  * An empty ISnapshot (used for initializing to empty).
  */
-const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
+const emptySnapshot: IInkSnapshot = { layers: [], layerIndex: {} };
 
 /**
  * Inking data structure.
@@ -56,7 +56,7 @@ export class Stream extends SharedObject implements IStream {
     /**
      * The current ink snapshot.
      */
-    private inkSnapshot: Snapshot = Snapshot.clone(emptySnapshot);
+    private inkSnapshot: InkSnapshot = InkSnapshot.clone(emptySnapshot);
 
     /**
      * Create a new Stream.
@@ -130,7 +130,7 @@ export class Stream extends SharedObject implements IStream {
 
         const header = await storage.read(snapshotFileName);
         /* tslint:disable:no-unsafe-any */
-        const snapshot: ISnapshot = header
+        const snapshot: IInkSnapshot = header
             ? JSON.parse(Buffer.from(header, "base64")
                 .toString("utf-8"))
             : emptySnapshot;
@@ -186,7 +186,7 @@ export class Stream extends SharedObject implements IStream {
      *
      * @param snapshot - The snapshot to initialize from
      */
-    private loadInkSnapshot(snapshot: ISnapshot) {
-        this.inkSnapshot = Snapshot.clone(snapshot);
+    private loadInkSnapshot(snapshot: IInkSnapshot) {
+        this.inkSnapshot = InkSnapshot.clone(snapshot);
     }
 }

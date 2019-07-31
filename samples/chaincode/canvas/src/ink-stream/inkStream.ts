@@ -18,7 +18,7 @@ import {
 import { BaseStream } from "./baseStream";
 import { InkStreamExtension } from "./extension";
 import { IDelta, IInkLayer, IStream } from "./interfaces";
-import { ISnapshot, Snapshot } from "./snapshot";
+import { IInkSnapshot, InkSnapshot } from "./snapshot";
 
 /**
  * Filename where the snapshot is stored.
@@ -26,9 +26,9 @@ import { ISnapshot, Snapshot } from "./snapshot";
 const snapshotFileName = "header";
 
 /**
- * An empty ISnapshot (used for initializing to empty).
+ * An empty IInkSnapshot (used for initializing to empty).
  */
-const emptySnapshot: ISnapshot = { layers: [], layerIndex: {} };
+const emptySnapshot: IInkSnapshot = { layers: [], layerIndex: {} };
 
 /**
  * Inking data structure.
@@ -57,7 +57,7 @@ export class InkStream extends BaseStream implements IStream {
     /**
      * The current ink snapshot.
      */
-    private inkSnapshot: Snapshot;
+    private inkSnapshot: InkSnapshot;
 
     /**
      * Create a new Stream.
@@ -101,18 +101,18 @@ export class InkStream extends BaseStream implements IStream {
         storage: IObjectStorageService,
     ): Promise<void> {
         const header = storage ? await storage.read(snapshotFileName) : undefined;
-        const data: ISnapshot = header
+        const data: IInkSnapshot = header
             ? JSON.parse(Buffer.from(header, "base64").toString("utf-8"))
             : emptySnapshot;
 
-        this.inkSnapshot = Snapshot.clone(data);
+        this.inkSnapshot = InkSnapshot.clone(data);
     }
 
     /**
      * Initialize with an empty ink snapshot
      */
     protected initializeLocalCore() {
-        this.inkSnapshot = Snapshot.clone(emptySnapshot);
+        this.inkSnapshot = InkSnapshot.clone(emptySnapshot);
     }
 
     /**

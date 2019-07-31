@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ActionType, getActionType, IDelta, IInkLayer, IOperation } from "./interfaces";
+import { InkActionType, getInkActionType, IDelta, IInkLayer, IInkOperation } from "./interfaces";
 
 /**
  * Ink snapshot interface.
  */
-export interface ISnapshot {
+export interface IInkSnapshot {
     /**
      * Collection of the layers in this snapshot.
      */
@@ -16,7 +16,7 @@ export interface ISnapshot {
 
     /**
      * Stores a mapping from the provided key to its index in layers. Since
-     * ISnapshot is serialized we need to use an index.
+     * IInkSnapshot is serialized we need to use an index.
      */
     layerIndex: { [key: string]: number };
 }
@@ -24,14 +24,14 @@ export interface ISnapshot {
 /**
  * Ink snapshot.
  */
-export class Snapshot implements ISnapshot {
+export class InkSnapshot implements IInkSnapshot {
     /**
      * Clone an existing snapshot to create a new one.
      *
      * @param snapshot - Existing snapshot to be cloned
      */
-    public static clone(snapshot: ISnapshot) {
-        return new Snapshot(snapshot.layers, snapshot.layerIndex);
+    public static clone(snapshot: IInkSnapshot) {
+        return new InkSnapshot(snapshot.layers, snapshot.layerIndex);
     }
 
     /**
@@ -59,20 +59,20 @@ export class Snapshot implements ISnapshot {
      *
      * @param operation - The operation to apply
      */
-    public applyOperation(operation: IOperation) {
-        const actionType = getActionType(operation);
+    public applyOperation(operation: IInkOperation) {
+        const actionType = getInkActionType(operation);
 
         switch (actionType) {
-            case ActionType.Clear:
+            case InkActionType.Clear:
                 this.processClearAction(operation);
                 break;
-            case ActionType.StylusUp:
+            case InkActionType.StylusUp:
                 this.processStylusUpAction(operation);
                 break;
-            case ActionType.StylusDown:
+            case InkActionType.StylusDown:
                 this.processStylusDownAction(operation);
                 break;
-            case ActionType.StylusMove:
+            case InkActionType.StylusMove:
                 this.processStylusMoveAction(operation);
                 break;
             default:
@@ -85,7 +85,7 @@ export class Snapshot implements ISnapshot {
      *
      * @param operation - The clear operation
      */
-    private processClearAction(operation: IOperation) {
+    private processClearAction(operation: IInkOperation) {
         this.layers = [];
         this.layerIndex = {};
     }
@@ -95,7 +95,7 @@ export class Snapshot implements ISnapshot {
      *
      * @param operation - The stylus up operation
      */
-    private processStylusUpAction(operation: IOperation) {
+    private processStylusUpAction(operation: IInkOperation) {
         // TODO - longer term on ink up - or possibly earlier - we can attempt to smooth the provided ink
         this.addOperationToLayer(operation.stylusUp.id, operation);
     }
@@ -105,7 +105,7 @@ export class Snapshot implements ISnapshot {
      *
      * @param operation - The stylus down operation
      */
-    private processStylusDownAction(operation: IOperation) {
+    private processStylusDownAction(operation: IInkOperation) {
         const layer = {
             id: operation.stylusDown.id,
             operations: [],
@@ -137,7 +137,7 @@ export class Snapshot implements ISnapshot {
      *
      * @param operation - The stylus move operation
      */
-    private processStylusMoveAction(operation: IOperation) {
+    private processStylusMoveAction(operation: IInkOperation) {
         this.addOperationToLayer(operation.stylusMove.id, operation);
     }
 
@@ -147,7 +147,7 @@ export class Snapshot implements ISnapshot {
      * @param id - The id of the layer the operation should be added to
      * @param operation - The operation to add
      */
-    private addOperationToLayer(id: string, operation: IOperation) {
+    private addOperationToLayer(id: string, operation: IInkOperation) {
         // TODO: Why is this operation sometimes undefined?
         if (this.layerIndex[id] !== undefined) {
             const layerIndex = this.layerIndex[id];
