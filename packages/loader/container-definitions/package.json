@@ -21,6 +21,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
+    "@prague/component-core-interfaces": "^0.8.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

@@ -4,9 +4,13 @@
  */
 
 import {
+    IComponentConfiguration,
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     ConnectionState,
     ICodeLoader,
-    IComponentConfiguration,
     IContainerContext,
     IDeltaManager,
     IDocumentAttributes,
@@ -14,8 +18,6 @@ import {
     IDocumentStorageService,
     ILoader,
     IQuorum,
-    IRequest,
-    IResponse,
     IRuntime,
     IRuntimeFactory,
     ISequencedDocumentMessage,

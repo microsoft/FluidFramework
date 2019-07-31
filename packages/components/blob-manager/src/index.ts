@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IBlobManager, IDocumentStorageService, IGenericBlob, IRequest } from "@prague/container-definitions";
+import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
 import { IComponentContext } from "@prague/runtime-definitions";
 

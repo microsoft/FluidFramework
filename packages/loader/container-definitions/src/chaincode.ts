@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IComponentConfiguration, IRequest, IResponse } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
-import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
 import { IDeltaManager, IServiceConfiguration } from "./deltas";
-import { ICodeLoader, ILoader, IRequest, IResponse } from "./loader";
+import { ICodeLoader, ILoader } from "./loader";
 import { ITelemetryLogger } from "./logger";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
 import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
@@ -211,11 +211,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     requestSnapshot(tagMessage: string): Promise<void>;
 }
 
-export interface IComponentConfiguration {
-    readonly IComponentConfiguration: IComponentConfiguration;
-    canReconnect: boolean;
-}
-
 export interface IComponentTokenProvider {
     intelligence: { [service: string]: any };
 }
@@ -235,7 +230,7 @@ export interface IRuntimeFactory {
     instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
 }
 
-declare module "./components" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IRuntimeFactory?: IRuntimeFactory;
         readonly IComponentConfiguration?: IComponentConfiguration;

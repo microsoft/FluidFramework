@@ -5,14 +5,14 @@
 
 import {
     IComponentLoadable,
+    IComponentRouter,
     IRequest,
     IResponse,
     ISharedComponent,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import { IComponentForge } from "@prague/framework-definitions";
 import {
     IComponentContext,
-    IComponentRouter,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { EventEmitter } from "events";

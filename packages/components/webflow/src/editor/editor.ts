@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/container-definitions";
+import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "@prague/flow-util";
 import { SequenceDeltaEvent } from "@prague/sequence";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
 import { PrimedComponent, SimpleComponentInstantiationFactory, SimpleModuleInstantiationFactory } from '@prague/aqueduct';
-import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/container-definitions';
 import { CounterValueType, SharedMap } from '@prague/map';
 import { IComponentContext, IComponentRuntime } from '@prague/runtime-definitions';
 import * as React from 'react';

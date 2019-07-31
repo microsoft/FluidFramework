@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";

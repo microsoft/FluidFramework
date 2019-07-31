@@ -19,6 +19,24 @@ public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
 `mergeTree.getOffset()` has been renamed to `getPosition()` to more accurately reflect its functionality.
 
+## IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
+
+The following interfaces have moved:
+
+`IComponent`
+`IComponentLoadable`
+`IComponentRunnable`
+`ISharedComponent`
+`IComponentConfiguration`
+`IComponentTokenProvider`
+`IComponentRouter`
+`IComponentHTMLRender`
+`IComponentHTMLVisual`
+`IComponentHTMLView`
+`IComponentHTMLOptions`
+`IRequest`
+`IResponse`
+
 # 0.7 Breaking Changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the

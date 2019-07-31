@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentRouter,
-    IContainerContext,
     IRequest,
     IResponse,
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
+import {
+    IContainerContext,
     IRuntime,
     IRuntimeFactory,
 } from "@prague/container-definitions";
@@ -33,7 +35,7 @@ export interface IKeyValue {
     get(key: string): any;
 }
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IKeyValue?: IKeyValue;
     }

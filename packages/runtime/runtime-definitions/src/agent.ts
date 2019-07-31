@@ -8,7 +8,7 @@ import {
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 
 export interface ITask {
     id: string;
@@ -72,7 +72,7 @@ export interface IAgentScheduler extends IComponent, IComponentRouter {
     on(event: "leader" | "picked" | "running", listener: (...args: any[]) => void): this;
 }
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IAgentScheduler?: IAgentScheduler;
         readonly ITaskManager?: ITaskManager;

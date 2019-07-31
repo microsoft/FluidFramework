@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { MapExtension } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";

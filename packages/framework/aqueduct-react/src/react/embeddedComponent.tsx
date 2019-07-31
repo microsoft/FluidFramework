@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual  } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import { IComponentReactViewable } from "./interfaces";
 

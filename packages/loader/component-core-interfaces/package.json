@@ -1,0 +1,37 @@
+{
+  "name": "@prague/component-core-interfaces",
+  "version": "0.8.0",
+  "description": "Prague component interfaces",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:docs": "api-extractor run --local",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "debug": "^4.1.1"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.1.6",
+    "@prague/build-common": "^0.8.0",
+    "@types/debug": "^0.0.31",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  },
+  "license": "MIT"
+}

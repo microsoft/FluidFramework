@@ -11,7 +11,7 @@ import * as domutils from "./domutils";
 import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly ISearchMenuClient?: ISearchMenuClient;
         readonly ISearchMenuHost?: ISearchMenuHost;

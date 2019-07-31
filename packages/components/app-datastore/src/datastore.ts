@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@prague/component-core-interfaces";
 import {
     ICodeLoader,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-    IRequest,
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,

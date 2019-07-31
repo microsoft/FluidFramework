@@ -4,14 +4,13 @@
  */
 
 import * as cell from "@prague/cell";
+import { IComponent, IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
 import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import {
     ICodeLoader,
-    IComponent,
     IContainerContext,
-    IRequest,
     IRuntime,
     IRuntimeFactory,
 } from "@prague/container-definitions";

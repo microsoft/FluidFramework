@@ -9,7 +9,7 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
     ISharedComponent,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import {
     IComponentContext,

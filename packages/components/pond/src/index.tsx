@@ -11,7 +11,7 @@ import {
 import {
   IComponentHTMLRender,
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
   CounterValueType,
   DistributedSetValueType,

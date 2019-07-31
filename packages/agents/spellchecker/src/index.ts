@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/container-definitions";
+import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/component-core-interfaces";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import { loadDictionary } from "./dictionaryLoader";
@@ -14,7 +14,7 @@ export interface ISpellChecker {
     run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>): void;
 }
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         ISpellChecker?: ISpellChecker;
     }

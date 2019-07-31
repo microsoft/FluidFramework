@@ -4,7 +4,13 @@
  */
 
 import { FlowDocument } from "@chaincode/webflow";
-import { IComponent, IComponentRouter, IComponentRunnable, IRequest, IResponse } from "@prague/container-definitions";
+import {
+    IComponent,
+    IComponentRouter,
+    IComponentRunnable,
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 

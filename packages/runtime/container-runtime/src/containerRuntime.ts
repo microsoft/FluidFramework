@@ -5,6 +5,10 @@
 
 import { AgentSchedulerFactory } from "@component/agent-scheduler";
 import {
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     Browser,
     ConnectionState,
     FileMode,
@@ -19,8 +23,6 @@ import {
     ILoader,
     // IMessageScheduler,
     IQuorum,
-    IRequest,
-    IResponse,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
@@ -60,7 +62,7 @@ import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IComponentRegistry?: IComponentRegistry;
     }

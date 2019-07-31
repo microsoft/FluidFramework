@@ -4,15 +4,17 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     ICodeLoader,
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IHost,
     ILoader,
-    IRequest,
     IResolvedUrl,
-    IResponse,
     ISequencedDocumentMessage,
     ITelemetryBaseLogger,
 } from "@prague/container-definitions";

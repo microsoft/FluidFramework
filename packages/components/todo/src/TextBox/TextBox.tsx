@@ -11,7 +11,7 @@ import {
 } from "@prague/aqueduct-react";
 import {
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
   IComponentForge,
 } from "@prague/framework-definitions";

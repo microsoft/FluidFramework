@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
-    IContainerContext,
     IRequest,
     IResponse,
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
+import {
+    IContainerContext,
     IRuntime,
 } from "@prague/container-definitions";
 import {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
-    IComponent,
     ISequencedDocumentMessage,
     ITree,
 } from "@prague/container-definitions";

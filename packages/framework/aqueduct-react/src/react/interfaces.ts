@@ -11,7 +11,7 @@ export interface IComponentReactViewable {
     createJSXElement(props?: {}): JSX.Element;
 }
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IComponentReactViewable?: IComponentReactViewable;
     }

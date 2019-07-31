@@ -5,7 +5,7 @@
 import * as SearchMenu from "@chaincode/search-menu";
 
 import { Editor, FlowDocument, Tag } from "@chaincode/webflow";
-import { IComponentHTMLView, IComponentHTMLVisual, ISharedComponent } from "@prague/container-definitions";
+import { IComponentHTMLView, IComponentHTMLVisual, ISharedComponent } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { TST } from "@prague/merge-tree";
 import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";

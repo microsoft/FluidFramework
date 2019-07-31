@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
-import { IComponent } from "./components";
 import { IContentMessage, ISequencedDocumentMessage, ISignalMessage, MessageType } from "./protocol";
 
 // Summary algorithm configuration

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // tslint:disable:align
-import { IComponent } from "@prague/container-definitions";
+import { IComponent } from "@prague/component-core-interfaces";
 import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, Marker, ReferenceType, reservedMarkerIdKey, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";

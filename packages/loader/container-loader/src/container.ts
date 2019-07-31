@@ -4,6 +4,10 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     ConnectionState,
     FileMode,
     IClient,
@@ -20,8 +24,6 @@ import {
     IFluidModule,
     IGenericBlob,
     IQuorum,
-    IRequest,
-    IResponse,
     IRuntimeFactory,
     ISequencedClient,
     ISequencedDocumentMessage,

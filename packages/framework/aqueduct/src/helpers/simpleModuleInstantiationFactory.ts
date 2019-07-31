@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { IComponent } from "@prague/component-core-interfaces";
 import {
-    IComponent, IContainerContext, IRuntime, IRuntimeFactory,
+    IContainerContext, IRuntime, IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
@@ -62,10 +64,10 @@ export class SimpleModuleInstantiationFactory implements
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         return SimpleContainerRuntimeFactory.instantiateRuntime(
-          context,
-          this.defaultComponentName,
-          this.registry,
-          true,
+            context,
+            this.defaultComponentName,
+            this.registry,
+            true,
         );
     }
 }

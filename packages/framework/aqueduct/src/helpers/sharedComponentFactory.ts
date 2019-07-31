@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime, ISharedObjectRegistry } from "@prague/component-runtime";
 import {
     IComponent,
     IRequest,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime, ISharedObjectRegistry } from "@prague/component-runtime";
 import {
     IComponentContext,
     IComponentFactory,

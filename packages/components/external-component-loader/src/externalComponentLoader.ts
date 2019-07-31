@@ -8,7 +8,7 @@ import {
   IComponent,
   IComponentHTMLVisual,
   IComponentLoadable,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import { MergeTreeDeltaType } from "@prague/merge-tree";
 import { IComponentCollection, IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";

@@ -6,6 +6,8 @@
 import {
     IComponent,
     IComponentLoadable,
+} from "@prague/component-core-interfaces";
+import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     MessageType,
@@ -29,7 +31,7 @@ interface IOpSnapshotDetails {
     required: boolean;
 }
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly ISummarizer?: ISummarizer;
     }

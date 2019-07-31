@@ -20,6 +20,7 @@ RUN chmod +x /tini
 WORKDIR /usr/src/server
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
+COPY LICENSE.txt .
 COPY *.json ./
 COPY .npmrc .
 COPY tools/build-server-resources/build-version.js tools/build-server-resources/
@@ -68,6 +69,7 @@ COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socke
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/
 COPY packages/framework/framework-definitions/package*.json packages/framework/framework-definitions/
+COPY packages/loader/component-core-interfaces/package*.json packages/loader/component-core-interfaces/
 COPY packages/loader/container-definitions/package*.json packages/loader/container-definitions/
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
@@ -129,7 +131,6 @@ EXPOSE 3000
 RUN npm install --unsafe-perm
 
 # And now copy over our actual code and build
-COPY .gitignore .
 COPY packages/ packages/
 
 # Set the version number

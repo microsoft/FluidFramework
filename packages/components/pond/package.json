@@ -42,8 +42,8 @@
   "dependencies": {
     "@prague/aqueduct": "^0.8.0",
     "@prague/build-common": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.8.0",
     "@prague/component-runtime": "^0.8.0",
-    "@prague/container-definitions": "^0.8.0",
     "@prague/framework-definitions": "^0.8.0",
     "@prague/map": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",

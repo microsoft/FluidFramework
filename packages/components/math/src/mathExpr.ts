@@ -5,7 +5,7 @@
 
 // tslint:disable:object-literal-sort-keys align prefer-template
 import * as SearchMenu from "@chaincode/search-menu";
-import { IComponent } from "@prague/container-definitions";
+import { IComponent } from "@prague/component-core-interfaces";
 import * as MergeTree from "@prague/merge-tree";
 import * as Katex from "katex";
 import { CharacterCodes } from "./characterCodes";

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IRequest, IResponse } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
-import { IComponent } from "./components";
 import { IQuorum } from "./consensus";
 import { IDeltaManager } from "./deltas";
 import { IDocumentMessage, ISequencedDocumentMessage } from "./protocol";
@@ -54,18 +54,6 @@ export interface IUrlResolver {
  */
 export interface IHost {
     resolver: IUrlResolver;
-}
-
-export interface IRequest {
-    url: string;
-    headers?: { [key: string]: any };
-}
-
-export interface IResponse {
-    mimeType: string;
-    status: number;
-    value: any;
-    headers?: { [key: string]: any };
 }
 
 export interface IContainer extends EventEmitter {

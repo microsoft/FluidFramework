@@ -10,6 +10,8 @@ import {
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
+} from "@prague/component-core-interfaces";
+import {
   IContainerContext,
   IRuntime,
 } from "@prague/container-definitions";

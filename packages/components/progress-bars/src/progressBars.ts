@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentHTMLView,
@@ -12,8 +11,8 @@ import {
     IRequest,
     IResponse,
     ISharedComponent,
-
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
 import {
     CounterValueType,
     DistributedSetValueType,

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IRequest } from "@prague/component-core-interfaces";
 import {
     IContainerContext,
-    IRequest,
     IRuntime,
 } from "@prague/container-definitions";
 import { ComponentRegistryTypes, ContainerRuntime } from "@prague/container-runtime";

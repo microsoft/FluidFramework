@@ -8,7 +8,7 @@ import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import { Template } from "@prague/flow-util";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";

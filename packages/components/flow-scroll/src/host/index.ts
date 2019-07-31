@@ -14,7 +14,7 @@ import {
     IComponentHTMLVisual,
     IComponentTokenProvider,
     IRequest,
-    IResponse } from "@prague/container-definitions";
+    IResponse } from "@prague/component-core-interfaces";
 import { MapExtension, SharedMap } from "@prague/map";
 import {
     IComponentCollection,

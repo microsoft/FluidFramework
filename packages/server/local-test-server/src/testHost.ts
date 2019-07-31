@@ -6,7 +6,7 @@
 import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponentLoadable } from "@prague/container-definitions";
+import { IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";

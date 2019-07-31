@@ -12,9 +12,11 @@ import {
     IComponent,
     IComponentHTMLRender,
     IComponentLoadable,
+    ISharedComponent,
+} from "@prague/component-core-interfaces";
+import {
     IGenericBlob,
     ISequencedDocumentMessage,
-    ISharedComponent,
     IUser,
 } from "@prague/container-definitions";
 import * as types from "@prague/map";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {

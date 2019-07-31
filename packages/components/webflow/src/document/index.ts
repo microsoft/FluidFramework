@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
 import { MapExtension } from "@prague/map";
 import {

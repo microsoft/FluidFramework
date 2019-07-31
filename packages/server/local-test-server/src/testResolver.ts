@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IRequest, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
+import {
+    IRequest,
+} from "@prague/component-core-interfaces";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
 import { generateToken } from "@prague/services-core";
 
 /**

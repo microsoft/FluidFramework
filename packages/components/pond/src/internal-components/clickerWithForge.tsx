@@ -4,11 +4,11 @@
  */
 
 import { PrimedComponent } from "@prague/aqueduct";
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponentHTMLVisual,
     IRequest,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { IComponentForge } from "@prague/framework-definitions";
 import {
     Counter,

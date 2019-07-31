@@ -8,7 +8,7 @@ import { PrimedComponent } from "@prague/aqueduct";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,

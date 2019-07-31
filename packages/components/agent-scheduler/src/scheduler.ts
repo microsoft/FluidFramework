@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import {
     IComponent,
     IComponentConfiguration,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
-    IResponse } from "@prague/container-definitions";
+    IResponse,
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
+import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@prague/consensus-register-collection";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IAgentScheduler,

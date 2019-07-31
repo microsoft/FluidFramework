@@ -5,6 +5,8 @@
 
 import {
     IRequest,
+} from "@prague/component-core-interfaces";
+import {
     IResolvedUrl,
     IUrlResolver,
 } from "@prague/container-definitions";

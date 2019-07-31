@@ -21,7 +21,7 @@
   "repository": "microsoft/prague",
   "license": "MIT",
   "dependencies": {
-    "@prague/container-definitions": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.8.0",
     "@prague/map": "^0.8.0",
     "@prague/sequence": "^0.8.0",
     "react": "^16.8.3"

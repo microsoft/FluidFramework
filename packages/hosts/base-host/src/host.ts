@@ -7,8 +7,8 @@ import {
     IComponent,
     IComponentHTMLRender,
     IComponentHTMLVisual,
-    IResolvedUrl,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { IResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";

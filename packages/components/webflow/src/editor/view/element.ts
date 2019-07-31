@@ -4,7 +4,7 @@
  */
 
 import { ServicePlatform } from "@prague/app-component";
-import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/container-definitions";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";

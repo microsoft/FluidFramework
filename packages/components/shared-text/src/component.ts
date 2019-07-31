@@ -6,14 +6,14 @@
 import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentTokenProvider,
     IRequest,
-    IResponse} from "@prague/container-definitions";
+    IResponse } from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {

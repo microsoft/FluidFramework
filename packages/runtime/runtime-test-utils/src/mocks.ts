@@ -4,14 +4,16 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     ConnectionState,
     IDeltaManager,
     IDocumentMessage,
     IGenericBlob,
     ILoader,
     IQuorum,
-    IRequest,
-    IResponse,
     ISequencedDocumentMessage,
     ITelemetryLogger,
     ITreeEntry,

@@ -9,7 +9,7 @@ import {
     IComponentRunnable,
     IRequest,
     IResponse,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";

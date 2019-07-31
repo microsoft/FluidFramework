@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "./loader";
+import { IComponentHTMLRender, IComponentHTMLVisual } from "./componentRender";
+import { IComponentRouter } from "./componentRouter";
 
 export interface IComponent  {
     readonly IComponentLoadable?: IComponentLoadable;
@@ -14,6 +15,8 @@ export interface IComponent  {
 
     /**
      * Queries for an interface of the given ID
+     *
+     *
      */
     query<T>(id: string): T | undefined;
 
@@ -46,37 +49,11 @@ export interface ISharedComponent extends IComponent, IComponentLoadable {
     readonly IComponentLoadable: IComponentLoadable;
 }
 
-/**
- * Request routing
- */
-export interface IComponentRouter {
-    readonly IComponentRouter: IComponentRouter;
-    request(request: IRequest): Promise<IResponse>;
+export interface IComponentConfiguration {
+    readonly IComponentConfiguration: IComponentConfiguration;
+    canReconnect: boolean;
 }
 
-// Following is what loosely-coupled hosts need to show a component
-
-/**
- * Render the component into an HTML element. In the case of Block display,
- * elm.getBoundingClientRect() defines the dimensions of the viewport in which
- * to render. Typically, this means that elm should already be placed into the DOM.
- * If elm has an empty client rect, then it is assumed that it will expand to hold the
- * rendered component.
- */
-export interface IComponentHTMLRender extends IComponent {
-    readonly IComponentHTMLRender: IComponentHTMLRender;
-    render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
-}
-
-export interface IComponentHTMLOptions {
-    display?: "block" | "inline";
-}
-
-export interface IComponentHTMLView extends IComponentHTMLRender {
-    remove(): void;
-}
-
-export interface IComponentHTMLVisual extends IComponentHTMLRender {
-    readonly IComponentHTMLVisual: IComponentHTMLVisual;
-    addView?(scope?: IComponent): IComponentHTMLView;
+export interface IComponentTokenProvider {
+    intelligence: { [service: string]: any };
 }

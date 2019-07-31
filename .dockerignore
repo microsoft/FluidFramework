@@ -1,7 +1,7 @@
 *
 !*.json
 !.npmrc
-!.gitignore
+!LICENSE.txt
 !packages/**
 !server/routerlicious
 !docs/**

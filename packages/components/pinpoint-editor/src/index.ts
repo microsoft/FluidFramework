@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IComponent, IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IComponent, IRequest } from "@prague/container-definitions";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { PinpointRunner } from "./runner";

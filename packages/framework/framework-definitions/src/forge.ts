@@ -4,9 +4,9 @@
  */
 import {
     IComponent,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IComponentForge?: IComponentForge;
     }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IRequest,
     IResponse,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
 import {
     CounterValueType,
     DistributedSetValueType,

@@ -4,10 +4,12 @@
  */
 
 import {
-    ConnectionState,
-    IContainerContext,
     IRequest,
     IResponse,
+} from "@prague/component-core-interfaces";
+import {
+    ConnectionState,
+    IContainerContext,
     IRuntime,
     IRuntimeFactory,
     ISequencedDocumentMessage,

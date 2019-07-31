@@ -4,6 +4,10 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
     ConnectionState,
     FileMode,
     IBlobManager,
@@ -12,8 +16,6 @@ import {
     IGenericBlob,
     ILoader,
     IQuorum,
-    IRequest,
-    IResponse,
     ISequencedDocumentMessage,
     ITelemetryLogger,
     ITreeEntry,

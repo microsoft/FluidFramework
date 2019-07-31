@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 // tslint:disable: no-console
-import { IComponent, IFluidPackage, IPraguePackage } from "@prague/container-definitions";
+import { IComponent } from "@prague/component-core-interfaces";
+import { IFluidPackage, IPraguePackage } from "@prague/container-definitions";
 import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/container-definitions";
+import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";

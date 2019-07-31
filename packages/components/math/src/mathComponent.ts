@@ -5,7 +5,6 @@
 
 import * as SearchMenu from "@chaincode/search-menu";
 import * as ClientUI from "@prague/client-ui";
-import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IComponent,
     IComponentHTMLOptions,
@@ -16,7 +15,8 @@ import {
     IRequest,
     IResponse,
     ISharedComponent,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
+import { ComponentRuntime } from "@prague/component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
     CounterValueType,

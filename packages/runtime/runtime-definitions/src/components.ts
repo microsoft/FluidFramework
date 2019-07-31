@@ -4,18 +4,20 @@
  */
 
 import {
-    ConnectionState,
-    IBlobManager,
     IComponent,
     IComponentRouter,
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
+import {
+    ConnectionState,
+    IBlobManager,
     IDeltaManager,
     IDocumentMessage,
     IDocumentStorageService,
     IGenericBlob,
     ILoader,
     IQuorum,
-    IRequest,
-    IResponse,
     IRuntime,
     ISequencedDocumentMessage,
     ISnapshotTree,
@@ -26,7 +28,7 @@ import {
 import { EventEmitter } from "events";
 import { IChannel } from "./channel";
 
-declare module "@prague/container-definitions" {
+declare module "@prague/component-core-interfaces" {
     export interface IComponent {
         readonly IComponentFactory?: IComponentFactory;
         readonly IComponentCollection?: IComponentCollection;
@@ -183,11 +185,6 @@ export interface IComponentRuntime extends EventEmitter, IComponent, IComponentR
      * Errors raised by distributed data structures
      */
     error(err: any): void;
-}
-
-export interface IComponentRouter {
-    readonly IComponentRouter: IComponentRouter;
-    request(req: IRequest): Promise<IResponse>;
 }
 
 /**

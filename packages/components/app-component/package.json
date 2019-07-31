@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@prague/cell": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.8.0",
     "@prague/component-runtime": "^0.8.0",
     "@prague/container-definitions": "^0.8.0",
     "@prague/container-runtime": "^0.8.0",
