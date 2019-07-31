@@ -20,6 +20,18 @@ import { IConnect, IConnected } from "./messages";
 const protocolVersions = ["^0.2.0", "^0.1.0"];
 
 /**
+ * Error raising for socket.io issues
+ */
+function createErrorObject(handler: string, error: any, critical = false) {
+    // Note: we assume error object is a string here.
+    // If it's not (and it's an object), we would not get its content.
+    // That is likely Ok, as it may contain PII that will get logged to telemetry,
+    // so we do not want it there.
+    const errorObj = new Error(`socket.io error: ${handler}: ${error}`);
+    return {...errorObj, critical};
+}
+
+/**
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection extends EventEmitter implements IDocumentDeltaConnection {
@@ -88,12 +100,12 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             // Listen for connection issues
             socket.on("connect_error", (error) => {
                 debug(`Socket connection error: [${error}]`);
-                reject(error);
+                reject(createErrorObject("connect_error", error));
             });
 
             // Listen for timeouts
             socket.on("connect_timeout", () => {
-                reject("Socket connection timed out");
+                reject(createErrorObject("connect_timeout", "Socket connection timed out"));
             });
 
             socket.on("connect_document_success", (response: IConnected) => {
@@ -141,12 +153,18 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                 resolve(response);
             });
 
+            socket.on("error", ((error) => {
+                // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
+                socket.disconnect();
+                reject(createErrorObject("error", error, error === "Invalid namespace"));
+            }));
+
             socket.on("connect_document_error", ((error) => {
                 // This is not an error for the socket - it's a protocol error.
                 // In this case we disconnect the socket and indicate that we were unable to create the
                 // DocumentDeltaConnection.
                 socket.disconnect();
-                reject(error);
+                reject(createErrorObject("connect_document_error", error));
             }));
 
             socket.emit("connect_document", connectMessage);

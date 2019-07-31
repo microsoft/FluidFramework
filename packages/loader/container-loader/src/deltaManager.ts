@@ -572,6 +572,16 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
             },
             (error) => {
+                // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
+                if (typeof error === "object" && error !== null && error.critical) {
+                    this.emit("error", error);
+                    if (this.connecting) {
+                        this.connecting.reject(error);
+                        this.connecting = null;
+                    }
+                    return;
+                }
+
                 // Log error once - we get too many errors in logs when we are offline,
                 // and unfortunately there is no way to detect that.
                 if (this.connectRepeatCount === 1) {
@@ -583,6 +593,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                         },
                         error);
                 }
+
                 const delayNext = Math.min(delay * 2, MaxReconnectDelay);
 
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext));
