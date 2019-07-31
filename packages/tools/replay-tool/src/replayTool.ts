@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { playMessagesFromFileStorage } from "./replayMessages";
-
-export let replayTool: ReplayTool;
+import { ReplayTool } from "./replayMessages";
 
 const optionsArray =
     [
@@ -15,22 +13,28 @@ const optionsArray =
         ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
         ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
                      "If not specified a directory will be created in current directory with name Output"],
-        ["--version <version>", "Load document from particualr snapshot.",
+        ["--version <version>", "Load document from particular snapshot.",
                      "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
+        ["--quiet", "Reduces amount of output."],
+        ["--stressTest", "Run stress tests."],
     ];
 
 /**
  * This is the main class used to take user input to replay ops for debugging purposes.
  */
-export class ReplayTool {
+export class ReplayArgs {
 
-    public inDirName: string;
+    public inDirName?: string;
     public outDirName: string = "output";
     public from: number = 0;
     public to: number = Number.MAX_SAFE_INTEGER;
     public takeSnapshot = false;
-    public snapFreq: number;
+    public snapFreq?: number;
     public version?: string;
+    public stressTest = false;
+    public verbose = true;
+    public createAllFiles = true;
+    public opsToSkip = 200;
 
     constructor() {
         this.parseArguments();
@@ -68,11 +72,23 @@ export class ReplayTool {
                     i += 1;
                     this.version = this.parseStrArg(i, "Snapshot Version");
                     break;
+                case "--quiet":
+                    this.verbose = false;
+                    break;
+                case "--stressTest":
+                    this.stressTest = true;
+                    this.verbose = false;
+                    this.createAllFiles = false;
+                    break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);
                     this.printUsage();
                     process.exit(-1);
             }
+        }
+
+        if (this.snapFreq !== undefined) {
+            this.opsToSkip = (Math.floor((this.opsToSkip - 1) / this.snapFreq) + 1) * this.snapFreq;
         }
     }
 
@@ -115,9 +131,9 @@ export class ReplayTool {
     }
 }
 
-async function replayToolMain() {
-    replayTool = new ReplayTool();
-    await playMessagesFromFileStorage(replayTool);
+function replayToolMain() {
+    const replayTool = new ReplayArgs();
+    return new ReplayTool(replayTool).Go();
 }
 
 replayToolMain()

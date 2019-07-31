@@ -32,7 +32,7 @@ const MaxBatchDeltas = 2000;
 export class DebugReplayController extends ReplayController implements IDebuggerController {
     public static create(
             createUi: debuggerUIFactory): DebugReplayController | null {
-        if (localStorage.FluidDebugger) {
+        if (typeof localStorage === "object" && localStorage !== null && localStorage.FluidDebugger) {
             const controller = new DebugReplayController();
             const ui = createUi(controller);
             if (ui) {

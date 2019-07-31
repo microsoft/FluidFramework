@@ -59,9 +59,7 @@ export class DebuggerUI {
                 typeof window !== "object" ||
                 window === null ||
                 typeof window.document !== "object" ||
-                window.document == null ||
-                typeof localStorage !== "object" ||
-                localStorage === null) {
+                window.document == null) {
             console.log("Can't create debugger window - not running in browser!");
             return null;
         }

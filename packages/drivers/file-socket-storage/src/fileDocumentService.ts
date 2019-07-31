@@ -5,7 +5,6 @@
 
 import * as api from "@prague/container-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
-import { ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
 
 /**
  * The DocumentService manages the different endpoints for connecting to
@@ -14,7 +13,8 @@ import { ReplayFileDeltaConnection } from "./fileDocumentDeltaConnection";
 export class FileDocumentService implements api.IDocumentService {
     constructor(
             private readonly storage: api.IDocumentStorageService,
-            private readonly deltaStorage: FileDeltaStorageService) {
+            private readonly deltaStorage: FileDeltaStorageService,
+            private readonly deltaConnection: api.IDocumentDeltaConnection) {
     }
 
     public async connectToStorage(): Promise<api.IDocumentStorageService> {
@@ -33,7 +33,7 @@ export class FileDocumentService implements api.IDocumentService {
      * @returns returns the delta stream service.
      */
     public async connectToDeltaStream(client: api.IClient): Promise<api.IDocumentDeltaConnection> {
-        return ReplayFileDeltaConnection.create(this.deltaStorage);
+        return this.deltaConnection;
     }
 
     public async branch(): Promise<string> {

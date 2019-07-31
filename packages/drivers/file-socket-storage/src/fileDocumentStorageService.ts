@@ -104,7 +104,7 @@ export class PragueDumpReader extends ReadDocumentStorageServiceBase implements 
     }
 }
 
-export interface ISnapshotWriterStorage {
+export interface ISnapshotWriterStorage extends api.IDocumentStorageService {
     onCommitHandler(componentName: string, tree: api.ITree): void;
     onSnapshotHandler(snapshot: IFileSnapshot): void;
 }
@@ -176,11 +176,14 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             // Sort entries for easier diffing
             this.sortCommit(tree);
 
+            // Remove "empty" tree IDs for easier comparison of snapshots
+            if (tree.id !== undefined && tree.id !== null) {
+                assert(tree.id === FileStorageVersionTreeIdUnused);
+                delete tree.id;
+            }
+            removeNullTreIds(tree);
+
             if (ref) {
-                if (tree.id !== undefined) {
-                    assert(tree.id === FileStorageVersionTreeIdUnused);
-                    delete tree.id;
-                }
                 this.commitsWriter[commitName] = tree;
             } else {
                 this.savedSnapshot = true;
@@ -277,6 +280,16 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             return tree;
         }
     };
+}
+
+function removeNullTreIds(tree: api.ITree) {
+    for (const node of tree.entries) {
+        if (node.type === api.TreeEntry[api.TreeEntry.Tree]) {
+            removeNullTreIds(node.value as api.ITree);
+        }
+    }
+    assert(tree.id === undefined || tree.id === null);
+    delete tree.id;
 }
 
 export const PragueDumpReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(PragueDumpReader);

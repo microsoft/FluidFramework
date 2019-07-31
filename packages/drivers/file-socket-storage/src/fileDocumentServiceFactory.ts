@@ -4,6 +4,7 @@
  */
 
 import {
+    IDocumentDeltaConnection,
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
@@ -20,7 +21,8 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
     constructor(
             private readonly storage: IDocumentStorageService,
-            private readonly deltaStorage: FileDeltaStorageService) {
+            private readonly deltaStorage: FileDeltaStorageService,
+            private readonly deltaConnection: IDocumentDeltaConnection) {
     }
 
     /**
@@ -30,6 +32,6 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
      * @returns file document service.
      */
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {
-        return new FileDocumentService(this.storage, this.deltaStorage);
+        return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
     }
 }
