@@ -20,7 +20,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.6.1",
+    "@prague/prague-dev-server": "~3.7.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
@@ -36,6 +36,16 @@
       "bundle": [
         "dist/main.bundle.js"
       ]
+    }
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
     }
   },
   "dependencies": {
