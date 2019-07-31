@@ -381,12 +381,15 @@ function compareSharedStringIntervalEnds(a: SharedStringInterval, b: SharedStrin
 
 class SharedStringIntervalCollectionFactory
     implements IValueFactory<SharedIntervalCollection<SharedStringInterval>> {
-    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[]): SharedIntervalCollection<SharedStringInterval> {
+    public load(
+        emitter: IValueOpEmitter,
+        raw: ISerializedInterval[] = [],
+    ): SharedIntervalCollection<SharedStringInterval> {
         const helpers: IIntervalHelpers<SharedStringInterval> = {
             compareEnds: compareSharedStringIntervalEnds,
             create: createSharedStringInterval,
         };
-        return new SharedIntervalCollection<SharedStringInterval>(helpers, true, emitter, raw || []);
+        return new SharedIntervalCollection<SharedStringInterval>(helpers, true, emitter, raw);
     }
 
     public store(value: SharedIntervalCollection<SharedStringInterval>): ISerializedInterval[] {
@@ -403,45 +406,42 @@ export class SharedStringIntervalCollectionValueType
     }
 
     public get factory(): IValueFactory<SharedIntervalCollection<SharedStringInterval>> {
-        return this._factory;
+        return SharedStringIntervalCollectionValueType._factory;
     }
 
     public get ops(): Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>> {
-        return this._ops;
+        return SharedStringIntervalCollectionValueType._ops;
     }
 
     // tslint:disable:variable-name
-    private readonly _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>>;
-    private readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>;
-    // tslint:enable:variable-name
+    private static readonly _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>> =
+        new SharedStringIntervalCollectionFactory();
+    private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>> =
+        new Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>(
+        [[
+            "add",
+            {
+                /* tslint:disable:promise-function-async */
+                prepare: (value, params, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
 
-    constructor() {
-        this._factory = new SharedStringIntervalCollectionFactory();
-        this._ops = new Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>(
-            [[
-                "add",
-                {
-                    /* tslint:disable:promise-function-async */
-                    prepare: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        /* tslint:disable:no-unsafe-any */
-                        return value.prepareAddInternal(params, local, op);
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, context, local, op);
-                    },
+                    /* tslint:disable:no-unsafe-any */
+                    return value.prepareAddInternal(params, local, op);
                 },
-            ]]);
-    }
+                process: (value, params, context, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
+
+                    value.addInternal(params, context, local, op);
+                },
+            },
+        ]]);
+    // tslint:enable:variable-name
 }
 
 function compareIntervalEnds(a: Interval, b: Interval) {
@@ -460,12 +460,12 @@ function createInterval(label: string, start: number, end: number, client: Merge
 
 class SharedIntervalCollectionFactory
     implements IValueFactory<SharedIntervalCollection<Interval>> {
-    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[]): SharedIntervalCollection<Interval> {
+    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[] = []): SharedIntervalCollection<Interval> {
         const helpers: IIntervalHelpers<Interval> = {
             compareEnds: compareIntervalEnds,
             create: createInterval,
         };
-        const collection = new SharedIntervalCollection<Interval>(helpers, false, emitter, raw || []);
+        const collection = new SharedIntervalCollection<Interval>(helpers, false, emitter, raw);
         collection.attach(undefined, "");
         return collection;
     }
@@ -484,43 +484,40 @@ export class SharedIntervalCollectionValueType
     }
 
     public get factory(): IValueFactory<SharedIntervalCollection<Interval>> {
-        return this._factory;
+        return SharedIntervalCollectionValueType._factory;
     }
 
     public get ops(): Map<string, IValueOperation<SharedIntervalCollection<Interval>>> {
-        return this._ops;
+        return SharedIntervalCollectionValueType._ops;
     }
 
     // tslint:disable:variable-name
-    private readonly _factory: IValueFactory<SharedIntervalCollection<Interval>>;
-    private readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>>;
-    // tslint:enable:variable-name
+    private static readonly _factory: IValueFactory<SharedIntervalCollection<Interval>> =
+        new SharedIntervalCollectionFactory();
+    private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>> =
+        new Map<string, IValueOperation<SharedIntervalCollection<Interval>>>(
+        [[
+            "add",
+            {
+                prepare: (value, params, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
 
-    constructor() {
-        this._factory = new SharedIntervalCollectionFactory();
-        this._ops = new Map<string, IValueOperation<SharedIntervalCollection<Interval>>>(
-            [[
-                "add",
-                {
-                    prepare: (value, params, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        return value.prepareAddInternal(params, local, op);
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.addInternal(params, context, local, op);
-                    },
+                    return value.prepareAddInternal(params, local, op);
                 },
-            ]]);
-    }
+                process: (value, params, context, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
+
+                    value.addInternal(params, context, local, op);
+                },
+            },
+        ]]);
+    // tslint:enable:variable-name
 }
 
 export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;

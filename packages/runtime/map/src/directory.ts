@@ -11,20 +11,77 @@ import {
     TreeEntry,
 } from "@prague/container-definitions";
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
+import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
 import { posix } from "path";
 import { debug } from "./debug";
 import {
     IDirectory,
     IDirectoryValueChanged,
-    ILocalViewElement,
+    ISerializableValue,
     ISharedDirectory,
+    IValueChanged,
     IValueOpEmitter,
-    IValueOperation,
     IValueType,
+    IValueTypeOperationValue,
 } from "./interfaces";
+import { ILocalValue, LocalValueMaker, ValueTypeLocalValue } from "./localValues";
 
 const snapshotFileName = "header";
+
+interface IDirectoryMessageHandler {
+    prepare(
+        op: IDirectoryOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): Promise<ILocalValue | void>;
+    process(
+        op: IDirectoryOperation,
+        context: ILocalValue,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): void;
+    submit(op: IDirectoryOperation): void;
+}
+
+interface IDirectoryValueTypeOperation {
+    type: "act";
+    key: string;
+    path: string;
+    value: IValueTypeOperationValue;
+}
+
+interface IDirectorySetOperation {
+    type: "set";
+    key: string;
+    path: string;
+    value: ISerializableValue;
+}
+
+interface IDirectoryDeleteOperation {
+    type: "delete";
+    key: string;
+    path: string;
+}
+
+type IDirectoryStorageOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
+
+interface IDirectoryClearOperation {
+    type: "clear";
+    path: string;
+}
+
+/**
+ * Description of a directory delta operation
+ */
+type IDirectoryOperation = IDirectoryStorageOperation | IDirectoryClearOperation;
+
+// Definines the in-memory object structure to be used for the conversion to/from serialized.
+// Directly used in JSON.stringify, direct result from JSON.parse
+// TODO: no export
+export interface IDirectoryDataObject {
+    storage?: {[key: string]: ISerializableValue};
+    subdirectories?: {[subdirName: string]: IDirectoryDataObject};
+}
 
 /**
  * The extension that defines the directory
@@ -60,71 +117,10 @@ export class DirectoryExtension {
         return directory;
     }
 
-    private registerValueTypes(directory: SharedDirectory) {
+    private registerValueTypes(directory: SharedDirectory): void {
         for (const type of this.defaultValueTypes) {
             directory.registerValueType(type);
         }
-    }
-}
-
-// Definines the in-memory object structure to be used for the conversion to/from serialized.
-// Directly used in JSON.stringify, direct result from JSON.parse
-// TODO: no export
-export interface IDirectoryDataObject {
-    storage?: {[key: string]: ITypeAnnotatedValue};
-    subdirectories?: {[subdirName: string]: IDirectoryDataObject};
-}
-
-// The remote-ready type and value (e.g. ready for serialization/deserialization via JSON.stringify/parse)
-export interface ITypeAnnotatedValue {
-    type: string;
-    value: any;
-}
-
-/**
- * Description of a directory delta operation
- */
-export interface IDirectoryOperation {
-    // the type of the Directory operation ("set"/"delete"/"clear")
-    type: string;
-    key?: string;
-    path: string;
-    value?: ITypeAnnotatedValue;
-}
-
-interface IDirectoryMessageHandler {
-    prepare(op: IDirectoryOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
-    process(
-        op: IDirectoryOperation,
-        context: ILocalViewElement,
-        local: boolean,
-        message: ISequencedDocumentMessage,
-    ): void;
-    submit(op: IDirectoryOperation);
-}
-
-class DirectoryValueOpEmitter implements IValueOpEmitter {
-    constructor(
-        private readonly type: string,
-        private readonly key: string,
-        private readonly path: string,
-        private readonly directory: SharedDirectory,
-    ) {}
-
-    public emit(operation: string, previousValue: any, params: any) {
-        const op: IDirectoryOperation = {
-            key: this.key,
-            path: this.path,
-            type: this.type,
-            value: {
-                type: operation,
-                value: params,
-            },
-        };
-
-        this.directory.submitDirectoryMessage(op);
-        const event: IDirectoryValueChanged = { key: this.key, path: this.path, previousValue };
-        this.directory.emit("valueChanged", event, true, null);
     }
 }
 
@@ -160,9 +156,12 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     public [Symbol.toStringTag]: string = "SharedDirectory";
+    /**
+     * @internal
+     */
+    public readonly localValueMaker: LocalValueMaker;
 
     private readonly root: SubDirectory = new SubDirectory(this, posix.sep);
-    private readonly valueTypes: Map<string, IValueType<any>> = new Map();
     private readonly messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
 
     /**
@@ -177,6 +176,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         runtime: IComponentRuntime,
     ) {
         super(id, runtime, DirectoryExtension.Type);
+        this.localValueMaker = new LocalValueMaker(runtime, this);
         this.setMessageHandlers();
     }
 
@@ -209,11 +209,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         this.root.forEach(callback);
     }
 
-    public [Symbol.iterator](): IterableIterator<[string, ILocalViewElement]> {
+    public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.root[Symbol.iterator]();
     }
 
-    public entries(): IterableIterator<[string, ILocalViewElement]> {
+    public entries(): IterableIterator<[string, any]> {
         return this.root.entries();
     }
 
@@ -221,7 +221,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.keys();
     }
 
-    public values(): IterableIterator<ILocalViewElement> {
+    public values(): IterableIterator<any> {
         return this.root.values();
     }
 
@@ -230,19 +230,16 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * when loaded using populate().
      */
     public serialize(): string {
-        const objectForm: IDirectoryDataObject = {};
+        const serializableDirectoryData: IDirectoryDataObject = {};
 
         // Map SubDirectories that need serializing to the corresponding data objects they will occupy
         const subdirsToSerialize = new Map<SubDirectory, IDirectoryDataObject>();
-        subdirsToSerialize.set(this.root, objectForm);
+        subdirsToSerialize.set(this.root, serializableDirectoryData);
 
         for (const [currentSubDir, currentSubDirObject] of subdirsToSerialize) {
-            for (const [key, value] of currentSubDir.entries()) {
-                if (!currentSubDirObject.storage) {
-                    currentSubDirObject.storage = {};
-                }
-                // this is a spill-style translation layer that turns the real value into a remote value
-                currentSubDirObject.storage[key] = this.convertToRemote(value);
+            const subDirStorage = currentSubDir.getSerializableStorage();
+            if (subDirStorage) {
+                currentSubDirObject.storage = subDirStorage;
             }
 
             for (const [subdirName, subdir] of currentSubDir.subdirectoriesIterator()) {
@@ -254,7 +251,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             }
         }
 
-        return JSON.stringify(objectForm);
+        return JSON.stringify(serializableDirectoryData);
     }
 
     // TODO: make private
@@ -275,14 +272,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             }
 
             if (currentSubDirObject.storage) {
-                for (const [key, remoteValue] of Object.entries(currentSubDirObject.storage)) {
-                    // this is a fill-style promise that will get pushed into the localValuesP array
-                    const populateP = this.convertFromRemote(
+                for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
+                    const populateP = this.makeLocal(
                                           key,
                                           currentSubDir.absolutePath,
-                                          remoteValue,
+                                          serializable,
                                       )
-                                      .then((local) => currentSubDir.setKey(key, local.localValue, local.localType));
+                                      .then((localValue) => currentSubDir.set(key, localValue.value, localValue.type));
                     localValuesP.push(populateP);
                 }
             }
@@ -293,42 +289,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get a SubDirectory within the directory, in order to use relative paths from that location.
-     * @param path - Path of the SubDirectory to get, relative to the root
+     * @param path - path of the SubDirectory to get, relative to the root
      */
     public getWorkingDirectory(path: string): SubDirectory {
-        return this.getSubDirectoryAtPath(path);
-    }
-
-    /**
-     * Gets the SubDirectory at the given path, creating it and any intermediate SubDirectories if needed.
-     * @param path - the path of the SubDirectory to ensure
-     */
-    public ensureSubDirectoryAtPath(path: string): SubDirectory {
-        const absolutePath = this.makeAbsolute(path);
-        if (absolutePath === posix.sep) {
-            return this.root;
-        }
-
-        const subdirs = absolutePath.substr(1).split(posix.sep);
-        let currentSubDir = this.root;
-        let currentPath = posix.sep;
-        for (const subdir of subdirs) {
-            currentPath += subdir;
-            const nextSubDir = currentSubDir.getSubDirectory(subdir);
-            if (nextSubDir) {
-                currentSubDir = nextSubDir;
-            } else {
-                currentSubDir = currentSubDir.setSubDirectory(subdir, new SubDirectory(this, currentPath));
-            }
-        }
-        return currentSubDir;
-    }
-
-    /**
-     * Retrieves the SubDirectory at the given path.
-     * @param path - the path to the SubDirectory
-     */
-    public getSubDirectoryAtPath(path: string): SubDirectory {
         const absolutePath = this.makeAbsolute(path);
         if (absolutePath === posix.sep) {
             return this.root;
@@ -351,11 +314,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @param path - the path to the SubDirectory containing the key
      */
     public getKeyAtPath<T = any>(key: string, path: string): T {
-        const subdir = this.getSubDirectoryAtPath(path);
+        const subdir = this.getWorkingDirectory(path);
         if (!subdir) {
             return undefined;
         }
-        return subdir.getKey<T>(key);
+        return subdir.get<T>(key);
     }
 
     /**
@@ -366,13 +329,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      */
     public setKeyAtPath<T = any>(key: string, value: T, path: string, type?: string): this {
         this.ensureSubDirectoryAtPath(path)
-            .setKey(key, value, type);
+            .set(key, value, type);
         return this;
-    }
-
-    public deleteKeyAtPath(key: string, path: string): boolean {
-        return this.getSubDirectoryAtPath(path)
-                   .deleteKey(key);
     }
 
     public snapshot(): ITree {
@@ -393,6 +351,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return tree;
     }
 
+    /**
+     * Submits an operation
+     * @param op - op to submit
+     * @internal
+     */
     public submitDirectoryMessage(op: IDirectoryOperation): number {
         return this.submitLocalMessage(op);
     }
@@ -401,71 +364,30 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * Registers a new value type on the directory
      */
     public registerValueType<T>(type: IValueType<T>) {
-        this.valueTypes.set(type.name, type);
-
-        function getOpHandler(op: IDirectoryOperation): IValueOperation<T> {
-            const handler = type.ops.get(op.value.type);
-            if (!handler) {
-                throw new Error("Unknown type message");
-            }
-
-            return handler;
-        }
-
-        // This wraps the IValueOperations (from within the passed IValueType) into an IDirectoryMessageHandler.
-        // Doing so allows the directory to handle unfamiliar messages from the registered value types --
-        // first by retrieving the specified item and then by applying the provided handlers.
-        const valueTypeMessageHandler: IDirectoryMessageHandler = {
-            prepare: async (op, local, message) => {
-                const handler = getOpHandler(op);
-                const value = this.getKeyAtPath<T>(op.key, op.path);
-                return handler.prepare(value, op.value.value, local, message);
-            },
-
-            process: (op, context, local, message) => {
-                const handler = getOpHandler(op);
-                const previousValue = this.getKeyAtPath<T>(op.key, op.path);
-                handler.process(previousValue, op.value.value, context, local, message);
-                const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
-                this.emit("valueChanged", event, local, message);
-            },
-
-            submit: (op) => {
-                this.submitLocalMessage(op);
-            },
-        };
-
-        this.messageHandlers.set(type.name, valueTypeMessageHandler);
+        this.localValueMaker.registerValueType(type);
     }
 
-    // TODO: make private
-    public prepareOperationValue<T = any>(key: string, path: string, value: T, type?: string) {
-        let operationValue: ITypeAnnotatedValue;
-        // assumption is that if type is passed, it's a value type
-        if (type && type !== ValueType[ValueType.Shared] && type !== ValueType[ValueType.Plain]) {
-            const valueType = this.getValueType(type);
-            if (!valueType) {
-                throw new Error(`Unknown type '${type}' specified`);
-            }
-
-            // set operationValue first with the raw value params prior to doing the load
-            operationValue = {
-                type,
-                value,
+    // TODO make private
+    public makeDirectoryValueOpEmitter(
+        key: string,
+        path: string,
+    ): IValueOpEmitter {
+        const emit = (opName: string, previousValue: any, params: any) => {
+            const op: IDirectoryValueTypeOperation = {
+                key,
+                path,
+                type: "act",
+                value: {
+                    opName,
+                    value: params,
+                },
             };
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = valueType.factory.load(new DirectoryValueOpEmitter(type, key, path, this), value) as T;
-        } else {
-            const valueType = SharedObject.is(value)
-                ? ValueType[ValueType.Shared]
-                : ValueType[ValueType.Plain];
-            operationValue = this.convertToRemote({ localType: valueType, localValue: value });
-        }
-        return { operationValue, localValue : value };
-    }
 
-    public submitMessage(op: IDirectoryOperation): number {
-        return this.submitLocalMessage(op);
+            this.submitDirectoryMessage(op);
+            const event: IDirectoryValueChanged = { key, path, previousValue };
+            this.emit("valueChanged", event, true, null);
+        };
+        return { emit };
     }
 
     /**
@@ -520,9 +442,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         subdirsToRegisterFrom.push(this.root);
 
         for (const currentSubDir of subdirsToRegisterFrom) {
-            for (const [, value] of currentSubDir.entries()) {
-                if (SharedObject.is(value.localValue)) {
-                    value.localValue.register();
+            for (const value of currentSubDir.values()) {
+                if (SharedObject.is(value)) {
+                    value.register();
                 }
             }
 
@@ -544,12 +466,12 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return Promise.reject();
     }
 
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             if (this.messageHandlers.has(op.type)) {
                 this.messageHandlers.get(op.type)
-                    .process(op, context as ILocalViewElement, local, message);
+                    .process(op, context as ILocalValue, local, message);
             }
         }
     }
@@ -563,97 +485,68 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Converts from the format we use in-memory (ILocalViewElement) to the format we can use in serialization
-     * (ITypeAnnotatedValue).  As a side-effect, it will register shared objects -- but maybe that's not
-     * necessary (can we guarantee it's already registered?).
-     * @param localElement - local element to convert, in its in-memory format
+     * Gets the SubDirectory at the given path, creating it and any intermediate SubDirectories if needed.
+     * @param path - the path of the SubDirectory to ensure
      */
-    private convertToRemote(localElement: ILocalViewElement): ITypeAnnotatedValue {
-        if (localElement.localType === ValueType[ValueType.Shared]) {
-            const distributedObject = localElement.localValue as ISharedObject;
-
-            // If the directory is already registered then register the sharedObject
-            // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
-            // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
-            // (like attaching)
-            if (this.isRegistered()) {
-                distributedObject.register();
-            }
-            return {
-                type: ValueType[ValueType.Shared],
-                value: distributedObject.id,
-            };
-        } else if (this.valueTypes.has(localElement.localType)) {
-            const valueType = this.valueTypes.get(localElement.localType);
-            return {
-                type: localElement.localType,
-                value: valueType.factory.store(localElement.localValue),
-            };
-        } else {
-            return {
-                type: ValueType[ValueType.Plain],
-                value: localElement.localValue,
-            };
+    private ensureSubDirectoryAtPath(path: string): SubDirectory {
+        const absolutePath = this.makeAbsolute(path);
+        if (absolutePath === posix.sep) {
+            return this.root;
         }
+
+        const subdirs = absolutePath.substr(1).split(posix.sep);
+        let currentSubDir = this.root;
+        let currentPath = posix.sep;
+        for (const subdir of subdirs) {
+            currentPath += subdir;
+            const nextSubDir = currentSubDir.getSubDirectory(subdir);
+            if (nextSubDir) {
+                currentSubDir = nextSubDir;
+            } else {
+                currentSubDir = currentSubDir.setSubDirectory(subdir, new SubDirectory(this, currentPath));
+            }
+        }
+        return currentSubDir;
     }
 
     /**
-     * The remote ITypeAnnotatedValue we're receiving (either as a result of a snapshot load or an incoming set op)
+     * The remote ISerializableValue we're receiving (either as a result of a snapshot load or an incoming set op)
      * will have the information we need to create a real object, but will not be the real object yet.  For example,
-     * we might know it's a map and the ID but not have the actual map or its data yet.  convertFromRemote's job
+     * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
      * is to convert that information into a real object for local usage.
      * @param key - key of element being converted
      * @param path - path of element being converted
-     * @param remote - remote type-annotated value to convert into a real object
+     * @param serializable - the remote information that we can convert into a real object
      */
-    private async convertFromRemote(
+    private async makeLocal(
         key: string,
         path: string,
-        remote: ITypeAnnotatedValue,
-    ): Promise<ILocalViewElement> {
-        let translatedValue: any;
-        if (remote.type === ValueType[ValueType.Shared]) {
-            // even though this is getting an IChannel, should be a SharedObject since set() will only mark as Shared
-            // if SharedObject.is() within prepareOperationValue.
-            const distributedObject = await this.runtime.getChannel(remote.value as string);
-            translatedValue = distributedObject;
-        } else if (remote.type === ValueType[ValueType.Plain]) {
-            translatedValue = remote.value;
-        } else if (this.valueTypes.has(remote.type)) {
-            const valueType = this.valueTypes.get(remote.type);
-            translatedValue = valueType.factory.load(
-                new DirectoryValueOpEmitter(remote.type, key, path, this),
-                remote.value,
-            );
+        serializable: ISerializableValue,
+    ): Promise<ILocalValue> {
+        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
+            return this.localValueMaker.fromSerializable(serializable);
         } else {
-            return Promise.reject(`Unknown value type "${remote.type}"`);
+            return this.localValueMaker.fromSerializable(
+                serializable,
+                this.makeDirectoryValueOpEmitter(key, path),
+            );
         }
-
-        return {
-            localType: remote.type,
-            localValue: translatedValue,
-        };
-    }
-
-    private getValueType(type: string) {
-        return this.valueTypes.get(type);
     }
 
     private setMessageHandlers() {
         const defaultPrepare = (op: IDirectoryOperation, local: boolean) => Promise.resolve();
-        // tslint:disable:no-backbone-get-set-outside-model
         this.messageHandlers.set(
             "clear",
             {
                 prepare: defaultPrepare,
-                process: (op, context, local, message) => {
-                    const subdir = this.getSubDirectoryAtPath(op.path);
+                process: (op: IDirectoryClearOperation, context, local, message) => {
+                    const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
                         subdir.processClearMessage(op, context, local, message);
                     }
                 },
-                submit: (op) => {
-                    const subdir = this.getSubDirectoryAtPath(op.path);
+                submit: (op: IDirectoryClearOperation) => {
+                    const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
                         subdir.submitClearMessage(op);
                     }
@@ -663,14 +556,14 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "delete",
             {
                 prepare: defaultPrepare,
-                process: (op, context, local, message) => {
-                    const subdir = this.getSubDirectoryAtPath(op.path);
+                process: (op: IDirectoryDeleteOperation, context, local, message) => {
+                    const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
                         subdir.processDeleteMessage(op, context, local, message);
                     }
                 },
-                submit: (op) => {
-                    const subdir = this.getSubDirectoryAtPath(op.path);
+                submit: (op: IDirectoryDeleteOperation) => {
+                    const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
                         subdir.submitStorageMessage(op);
                     }
@@ -679,18 +572,44 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         this.messageHandlers.set(
             "set",
             {
-                prepare: (op, local) => {
-                    return local ? Promise.resolve(null) : this.convertFromRemote(op.key, op.path, op.value);
+                prepare: (op: IDirectorySetOperation, local) => {
+                    return local ? Promise.resolve(null) : this.makeLocal(op.key, op.path, op.value);
                 },
-                process: (op, context, local, message) => {
+                process: (op: IDirectorySetOperation, context, local, message) => {
                     const subdir = this.ensureSubDirectoryAtPath(op.path);
                     subdir.processSetMessage(op, context, local, message);
                 },
-                submit: (op) => {
-                    const subdir = this.getSubDirectoryAtPath(op.path);
+                submit: (op: IDirectorySetOperation) => {
+                    const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
                         subdir.submitStorageMessage(op);
                     }
+                },
+            });
+
+        // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
+        // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
+        // stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
+        // watching for manipulations of that item.
+        this.messageHandlers.set(
+            "act",
+            {
+                prepare: async (op: IDirectoryValueTypeOperation, local, message) => {
+                    const localValue = this.getKeyAtPath<ValueTypeLocalValue>(op.key, op.path);
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    const value = localValue.value;
+                    return handler.prepare(value, op.value.value, local, message);
+                },
+                process: (op: IDirectoryValueTypeOperation, context, local, message) => {
+                    const localValue = this.getKeyAtPath<ValueTypeLocalValue>(op.key, op.path);
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    const previousValue = localValue.value;
+                    handler.process(previousValue, op.value.value, context, local, message);
+                    const event: IValueChanged = { key: op.key, previousValue };
+                    this.emit("valueChanged", event, local, message);
+                },
+                submit: (op) => {
+                    this.submitDirectoryMessage(op);
                 },
             });
     }
@@ -702,7 +621,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 export class SubDirectory implements IDirectory {
     public [Symbol.toStringTag]: string = "SubDirectory";
 
-    private readonly storage: Map<string, ILocalViewElement> = new Map();
+    private readonly storage: Map<string, ILocalValue> = new Map();
     private readonly subdirectories: Map<string, SubDirectory> = new Map();
     private readonly pendingKeys: Map<string, number> = new Map();
     private pendingClearClientSequenceNumber: number = -1;
@@ -720,14 +639,6 @@ export class SubDirectory implements IDirectory {
      * @param key - the key to check
      */
     public has(key: string): boolean {
-        return this.hasKey(key);
-    }
-
-    /**
-     * Checks whether the given key exists in this SubDirectory.
-     * @param key - the key to check
-     */
-    public hasKey(key: string): boolean {
         return this.storage.has(key);
     }
 
@@ -744,19 +655,11 @@ export class SubDirectory implements IDirectory {
      * @param key - the key to retrieve
      */
     public get<T = any>(key: string): T {
-        return this.getKey<T>(key);
-    }
-
-    /**
-     * Retrieves the given key from within this SubDirectory.
-     * @param key - the key to retrieve
-     */
-    public getKey<T = any>(key: string): T {
         if (!this.storage.has(key)) {
             return undefined;
         }
 
-        return this.storage.get(key).localValue as T;
+        return this.storage.get(key).value as T;
     }
 
     /**
@@ -777,46 +680,44 @@ export class SubDirectory implements IDirectory {
     }
 
     /**
-     * Retrieves the given key from the given path relative to this SubDirectory.
-     * @param path - the path to the SubDirectory containing the key
-     */
-    public getSubDirectoryAtPath(path: string): SubDirectory {
-        return this.directory.getSubDirectoryAtPath(this.makeAbsolute(path));
-    }
-
-    /**
-     * Sets the given value at the given relative path, as referenced from this SubDirectory.
-     * @param path - relative path
-     * @param value - value to set
-     * @param type - value type
-     */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        this.setKey(key, value, type);
-        return this;
-    }
-
-    /**
      * Sets the given key to the given value within this SubDirectory.
      * @param key - the key to set
      * @param value - the value to set the key to
+     * @param type - value type
      */
-    public setKey<T = any>(key: string, value: T, type?: string): this {
-        const values = this.directory.prepareOperationValue(key, this.absolutePath, value, type);
-        const op: IDirectoryOperation = {
+    public set<T = any>(key: string, value: T, type?: string): this {
+        let localValue: ILocalValue;
+        let serializableValue: ISerializableValue;
+
+        if (type && type !== ValueType[ValueType.Plain] && type !== ValueType[ValueType.Shared]) {
+            // value is actually initialization params in the value type case
+            localValue = this.directory.localValueMaker.makeValueType(
+                type,
+                this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
+                value,
+            );
+
+            // This is a special form of serialized valuetype only used for set, containing info for initialization.
+            // After initialization, the serialized form will need to come from the .store of the value type's factory.
+            serializableValue = { type, value };
+        } else {
+            localValue = this.directory.localValueMaker.fromInMemory(value);
+            serializableValue = localValue.makeSerializable();
+        }
+
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
+
+        const op: IDirectoryStorageOperation = {
             key,
             path: this.absolutePath,
             type: "set",
-            value: values.operationValue,
+            value: serializableValue,
         };
-
-        this.setCore(
-            op.key,
-            {
-                localType: values.operationValue.type,
-                localValue: values.localValue,
-            },
-            true,
-            null);
         this.submitStorageMessage(op);
         return this;
     }
@@ -857,7 +758,7 @@ export class SubDirectory implements IDirectory {
      * @param key - the key to delete
      */
     public deleteKey(key: string): boolean {
-        const op: IDirectoryOperation = {
+        const op: IDirectoryDeleteOperation = {
             key,
             path: this.absolutePath,
             type: "delete",
@@ -878,23 +779,11 @@ export class SubDirectory implements IDirectory {
         return this.subdirectories.delete(subdirName);
     }
 
-    public deleteKeyAtPath(key: string, path: string): boolean {
-        return this.getSubDirectoryAtPath(path)
-                   .deleteKey(key);
-    }
-
     /**
      * Deletes all keys from within this SubDirectory.
      */
     public clear(): void {
-        this.clearKeys();
-    }
-
-    /**
-     * Deletes all keys from within this SubDirectory.
-     */
-    public clearKeys(): void {
-        const op: IDirectoryOperation = {
+        const op: IDirectoryClearOperation = {
             path: this.absolutePath,
             type: "clear",
         };
@@ -917,8 +806,8 @@ export class SubDirectory implements IDirectory {
      * @param callback - callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.storage.forEach((value, key, map) => {
-            callback(value.localValue, key, map);
+        this.storage.forEach((localValue, key, map) => {
+            callback(localValue.value, key, map);
         });
     }
 
@@ -932,8 +821,23 @@ export class SubDirectory implements IDirectory {
     /**
      * Get an iterator over the entries under this SubDirectory.
      */
-    public entries(): IterableIterator<[string, ILocalViewElement]> {
-        return this.storage.entries();
+    public entries(): IterableIterator<[string, any]> {
+        const localEntriesIterator = this.storage.entries();
+        const iterator = {
+            next(): IteratorResult<[string, any]> {
+                const nextVal = localEntriesIterator.next();
+                if (nextVal.done) {
+                    return { value: undefined, done: true };
+                } else {
+                    // unpack the stored value
+                    return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
+                }
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 
     /**
@@ -953,14 +857,29 @@ export class SubDirectory implements IDirectory {
     /**
      * Get an iterator over the values under this Subdirectory.
      */
-    public values(): IterableIterator<ILocalViewElement> {
-        return this.storage.values();
+    public values(): IterableIterator<any> {
+        const localValuesIterator = this.storage.values();
+        const iterator = {
+            next(): IteratorResult<any> {
+                const nextVal = localValuesIterator.next();
+                if (nextVal.done) {
+                    return { value: undefined, done: true };
+                } else {
+                    // unpack the stored value
+                    return { value: nextVal.value.value, done: false };
+                }
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 
     /**
      * Get an iterator over the entries under this Subdirectory.
      */
-    public [Symbol.iterator](): IterableIterator<[string, ILocalViewElement]> {
+    public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
     }
 
@@ -969,12 +888,15 @@ export class SubDirectory implements IDirectory {
      * @param path - Path of the SubDirectory to get, relative to this SubDirectory
      */
     public getWorkingDirectory(path: string): SubDirectory {
-        return this.getSubDirectoryAtPath(path);
+        return this.directory.getWorkingDirectory(this.makeAbsolute(path));
     }
 
+    /**
+     * @internal
+     */
     public processClearMessage(
-        op: IDirectoryOperation,
-        context: ILocalViewElement,
+        op: IDirectoryClearOperation,
+        context: ILocalValue,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
@@ -988,9 +910,12 @@ export class SubDirectory implements IDirectory {
         this.directory.emit("clear", local, op);
     }
 
+    /**
+     * @internal
+     */
     public processDeleteMessage(
-        op: IDirectoryOperation,
-        context: ILocalViewElement,
+        op: IDirectoryDeleteOperation,
+        context: ILocalValue,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
@@ -1000,9 +925,12 @@ export class SubDirectory implements IDirectory {
         this.deleteCore(op.key, local, message);
     }
 
+    /**
+     * @internal
+     */
     public processSetMessage(
-        op: IDirectoryOperation,
-        context: ILocalViewElement,
+        op: IDirectorySetOperation,
+        context: ILocalValue,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): void {
@@ -1012,18 +940,38 @@ export class SubDirectory implements IDirectory {
         this.setCore(op.key, context, local, message);
     }
 
-    public submitClearMessage(op: IDirectoryOperation): void {
-        const clientSequenceNumber = this.directory.submitMessage(op);
+    /**
+     * @internal
+     */
+    public submitClearMessage(op: IDirectoryClearOperation): void {
+        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingClearClientSequenceNumber = clientSequenceNumber;
         }
     }
 
-    public submitStorageMessage(op: IDirectoryOperation): void {
-        const clientSequenceNumber = this.directory.submitMessage(op);
+    /**
+     * @internal
+     */
+    public submitStorageMessage(op: IDirectoryStorageOperation): void {
+        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingKeys.set(op.key, clientSequenceNumber);
         }
+    }
+
+    /**
+     * @internal
+     */
+    public getSerializableStorage(): {[key: string]: ISerializableValue} {
+        if (this.storage.size === 0) {
+            return undefined;
+        }
+        const serializedStorage: {[key: string]: ISerializableValue} = {};
+        for (const [key, localValue] of this.storage) {
+            serializedStorage[key] = localValue.makeSerializable();
+        }
+        return serializedStorage;
     }
 
     /**
@@ -1035,7 +983,7 @@ export class SubDirectory implements IDirectory {
     }
 
     private needProcessStorageOperations(
-        op: IDirectoryOperation,
+        op: IDirectoryStorageOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): boolean {
@@ -1063,7 +1011,7 @@ export class SubDirectory implements IDirectory {
     private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
-        const temp = new Map<string, ILocalViewElement>();
+        const temp = new Map<string, ILocalValue>();
         pendingKeys.forEach((value, key, map) => {
             temp.set(key, this.storage.get(key));
         });
@@ -1088,7 +1036,7 @@ export class SubDirectory implements IDirectory {
         return successfullyRemoved;
     }
 
-    private setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedDocumentMessage) {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
         this.storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };

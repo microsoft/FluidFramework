@@ -421,7 +421,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.processMessage(message);
     }
 
-    protected attachContent() {
+    protected registerContent() {
         this.client.startCollaboration(this.runtime.clientId, 0);
         this.collabStarted = true;
     }

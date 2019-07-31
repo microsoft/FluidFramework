@@ -38,23 +38,6 @@ describe("Routerlicious", () => {
             });
         });
 
-        describe("copyMap", () => {
-            it("Should copy all values in the MapView into the map", async () => {
-                const from = testMap;
-                from.set("lebron", "james");
-                from.set("dwayne", "wade");
-                from.set("kevin", "love");
-
-                const to = new Map();
-                map.copyMap(from, to);
-
-                for (const key of from.keys()) {
-                    assert.ok(to.has(key));
-                    assert.equal(from.get(key), to.get(key));
-                }
-            });
-        });
-
         describe("eventsMap", () => {
             it("listeners should listen to fired map events", async () => {
                 const dummyMap = testMap;

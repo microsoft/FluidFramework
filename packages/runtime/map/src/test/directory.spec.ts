@@ -69,9 +69,8 @@ describe("Routerlicious", () => {
             testDirectory.set("testKey", "testValue4");
             testDirectory.set("testKey2", "testValue5");
             testDirectory.delete("testKey2");
-            testDirectory.deleteKeyAtPath("testKey2", "foo");
             assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), "testValue");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), undefined);
+            assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), "testValue2");
             assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), "testValue3");
             assert.equal(testDirectory.get("testKey"), "testValue4");
             assert.equal(testDirectory.get("testKey2"), undefined);
@@ -91,7 +90,12 @@ describe("Routerlicious", () => {
         });
 
         describe(".serialize", () => {
-            it("Should serialize the directory as a JSON object", () => {
+            it("Should serialize an empty directory as a JSON object", () => {
+                const serialized = testDirectory.serialize();
+                assert.equal(serialized, "{}");
+            });
+
+            it("Should serialize a directory without subdirectories as a JSON object", () => {
                 testDirectory.set("first", "second");
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
@@ -99,18 +103,24 @@ describe("Routerlicious", () => {
                 testDirectory.set("object", subMap);
 
                 const serialized = testDirectory.serialize();
-                const parsed = JSON.parse(serialized) as IDirectoryDataObject;
+                // tslint:disable-next-line:max-line-length
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}}}`;
+                assert.equal(serialized, expected);
+            });
 
-                testDirectory.forEach((value, key) => {
-                    const type = parsed.storage[key].type;
-                    if (type === "Plain") {
-                        assert.equal(parsed.storage[key].type, "Plain");
-                        assert.equal(parsed.storage[key].value, value);
-                    } else {
-                        assert.equal(parsed.storage[key].type, "Shared");
-                        assert.equal(parsed.storage[key].value, subMap.id);
-                    }
-                });
+            it("Should serialize a directory with subdirectories as a JSON object", () => {
+                testDirectory.set("first", "second");
+                testDirectory.set("third", "fourth");
+                testDirectory.set("fifth", "sixth");
+                const subMap = mapExtension.create(null, "subMap");
+                testDirectory.set("object", subMap);
+                testDirectory.setKeyAtPath("deepKey1", "deepValue1", "nested");
+                testDirectory.setKeyAtPath("deepKey2", "deepValue2", "nested/nested2/nested3");
+
+                const serialized = testDirectory.serialize();
+                // tslint:disable-next-line:max-line-length
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+                assert.equal(serialized, expected);
             });
         });
 
@@ -206,14 +216,14 @@ describe("Routerlicious", () => {
                 testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
                 testDirectory.set("testKey", "testValue4");
                 testDirectory.set("testKey2", "testValue5");
-                const testSubdir = testDirectory.getWorkingDirectory("/foo");
-                testSubdir.delete("testKey2");
-                testSubdir.deleteKeyAtPath("testKey", "..");
-                testSubdir.deleteKeyAtPath("testKey3", "../bar");
+                const testSubdirFoo = testDirectory.getWorkingDirectory("/foo");
+                testSubdirFoo.delete("testKey2");
+                const testSubdirBar = testDirectory.getWorkingDirectory("/bar");
+                testSubdirBar.delete("testKey3");
                 assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), "testValue");
                 assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), undefined);
                 assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), undefined);
-                assert.equal(testDirectory.get("testKey"), undefined);
+                assert.equal(testDirectory.get("testKey"), "testValue4");
                 assert.equal(testDirectory.get("testKey2"), "testValue5");
             });
 
@@ -223,18 +233,19 @@ describe("Routerlicious", () => {
                 testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
                 testDirectory.set("testKey", "testValue4");
                 testDirectory.set("testKey2", "testValue5");
-                const testSubdir = testDirectory.getWorkingDirectory("/foo");
-                assert.equal(testSubdir.size, 2);
-                testSubdir.delete("testKey2");
-                assert.equal(testSubdir.size, 1);
-                testSubdir.deleteKeyAtPath("testKey", "..");
-                assert.equal(testSubdir.size, 1);
-                testSubdir.deleteKeyAtPath("testKey3", "../bar");
-                assert.equal(testSubdir.size, 1);
+                const testSubdirFoo = testDirectory.getWorkingDirectory("/foo");
+                assert.equal(testSubdirFoo.size, 2);
+                testSubdirFoo.delete("testKey2");
+                assert.equal(testSubdirFoo.size, 1);
+                testDirectory.delete("testKey");
+                assert.equal(testSubdirFoo.size, 1);
+                const testSubdirBar = testDirectory.getWorkingDirectory("/bar");
+                testSubdirBar.delete("testKey3");
+                assert.equal(testSubdirFoo.size, 1);
                 testDirectory.clear();
-                assert.equal(testSubdir.size, 1);
-                testSubdir.clear();
-                assert.equal(testSubdir.size, 0);
+                assert.equal(testSubdirFoo.size, 1);
+                testSubdirFoo.clear();
+                assert.equal(testSubdirFoo.size, 0);
             });
 
             it("Can get a subdirectory from a subdirectory", () => {
@@ -284,21 +295,21 @@ describe("Routerlicious", () => {
                 testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
 
                 const testSubdir1 = testDirectory.getWorkingDirectory("/foo");
-                const testSubdir1Iterator: IterableIterator<map.ILocalViewElement> = testSubdir1.values();
+                const testSubdir1Iterator = testSubdir1.values();
                 const testSubdir1Result1 = testSubdir1Iterator.next();
-                assert.equal(testSubdir1Result1.value.localValue, "testValue");
+                assert.equal(testSubdir1Result1.value, "testValue");
                 assert.equal(testSubdir1Result1.done, false);
                 const testSubdir1Result2 = testSubdir1Iterator.next();
-                assert.equal(testSubdir1Result2.value.localValue, "testValue2");
+                assert.equal(testSubdir1Result2.value, "testValue2");
                 assert.equal(testSubdir1Result2.done, false);
                 const testSubdir1Result3 = testSubdir1Iterator.next();
                 assert.equal(testSubdir1Result3.value, undefined);
                 assert.equal(testSubdir1Result3.done, true);
 
                 const testSubdir2 = testDirectory.getWorkingDirectory("/bar");
-                const testSubdir2Iterator: IterableIterator<map.ILocalViewElement> = testSubdir2.values();
+                const testSubdir2Iterator = testSubdir2.values();
                 const testSubdir2Result1 = testSubdir2Iterator.next();
-                assert.equal(testSubdir2Result1.value.localValue, "testValue3");
+                assert.equal(testSubdir2Result1.value, "testValue3");
                 assert.equal(testSubdir2Result1.done, false);
                 const testSubdir2Result2 = testSubdir2Iterator.next();
                 assert.equal(testSubdir2Result2.value, undefined);
@@ -312,14 +323,14 @@ describe("Routerlicious", () => {
                 testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
 
                 const testSubdir1 = testDirectory.getWorkingDirectory("/foo");
-                const testSubdir1Iterator: IterableIterator<[string, map.ILocalViewElement]> = testSubdir1.entries();
+                const testSubdir1Iterator = testSubdir1.entries();
                 const testSubdir1Result1 = testSubdir1Iterator.next();
                 assert.equal(testSubdir1Result1.value[0], "testKey");
-                assert.equal(testSubdir1Result1.value[1].localValue, "testValue");
+                assert.equal(testSubdir1Result1.value[1], "testValue");
                 assert.equal(testSubdir1Result1.done, false);
                 const testSubdir1Result2 = testSubdir1Iterator.next();
                 assert.equal(testSubdir1Result2.value[0], "testKey2");
-                assert.equal(testSubdir1Result2.value[1].localValue, "testValue2");
+                assert.equal(testSubdir1Result2.value[1], "testValue2");
                 assert.equal(testSubdir1Result2.done, false);
                 const testSubdir1Result3 = testSubdir1Iterator.next();
                 assert.equal(testSubdir1Result3.value, undefined);

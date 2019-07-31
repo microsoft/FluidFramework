@@ -15,28 +15,24 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
+import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import {
-    ILocalViewElement,
+    ISerializableValue,
     ISharedMap,
     IValueChanged,
     IValueOpEmitter,
-    IValueOperation,
     IValueType,
+    IValueTypeOperationValue,
 } from "./interfaces";
+import {
+    ILocalValue,
+    LocalValueMaker,
+    ValueTypeLocalValue,
+} from "./localValues";
 
 const snapshotFileName = "header";
 const contentPath = "content";
-
-/**
- * Copies all values from the provided SharedMap to the given Map
- */
-export function copyMap(from: ISharedMap, to: Map<string, any>) {
-    from.forEach((value, key) => {
-        to.set(key, value);
-    });
-}
 
 class ContentObjectStorage implements IObjectStorageService {
     constructor(private readonly storage: IObjectStorageService) {
@@ -44,81 +40,50 @@ class ContentObjectStorage implements IObjectStorageService {
 
     /* tslint:disable:promise-function-async */
     public read(path: string): Promise<string> {
-        return this.storage.read(`content/${path}`);
-    }
-}
-
-class MapValueOpEmitter implements IValueOpEmitter {
-    constructor(private readonly type: string, private readonly key: string, private readonly map: SharedMap) {
-    }
-
-    public emit(operation: string, previousValue: any, params: any) {
-        const op: IMapOperation = {
-            key: this.key,
-            type: this.type,
-            value: {
-                type: operation,
-                value: params,
-            },
-        };
-
-        this.map.submitMapMessage(op);
-        const event: IValueChanged = { key: this.key, previousValue };
-        this.map.emit("valueChanged", event, true, null);
+        return this.storage.read(`${contentPath}/${path}`);
     }
 }
 
 interface IMapMessageHandler {
-    prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
-    process(op: IMapOperation, context: ILocalViewElement, local: boolean, message: ISequencedDocumentMessage): void;
-    submit(op: IMapOperation);
+    prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<ILocalValue | void>;
+    process(op: IMapOperation, context: ILocalValue, local: boolean, message: ISequencedDocumentMessage): void;
+    submit(op: IMapOperation): void;
+}
+
+interface IMapValueTypeOperation {
+    type: "act";
+    key: string;
+    value: IValueTypeOperationValue;
+}
+
+interface IMapSetOperation {
+    type: "set";
+    key: string;
+    value: ISerializableValue;
+}
+
+interface IMapDeleteOperation {
+    type: "delete";
+    key: string;
+}
+
+type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
+
+interface IMapClearOperation {
+    type: "clear";
 }
 
 /**
  * Description of a map delta operation
  */
-interface IMapOperation {
-    /**
-     * The type of the Map operation ("set"/"get"/"clear")
-     */
-    type: string;
-    key?: string;
-    value?: IMapValue;
-}
-
-/**
- * All _ready-for-serialization_ values stored in the SharedMap are secretly this type.  This allows us to use
- * IMapValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
- * Note that the in-memory equivalent of IMapValue is ILocalViewElement (similarly holding a type, but with
- * the _deserialized_value instead).
- * If it's Plain, then it's taken at face value as a JS object but it better be something that can survive a
- * JSON.stringify/parse roundtrip or it won't work.  E.g. a URL object will just get stringified to a URL string
- * and not rehydrate as a URL object on the other side.
- * If it's Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.
- * If it's a value type then it must be amongst the types registered via registerValueType or we won't know how
- * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
- */
-interface IMapValue {
-    /**
-     * The type of the value (ValueType.Plain, ValueType.Shared, or one of our registered .valueTypes).
-     */
-    type: string;
-
-    /**
-     * The remote-ready version of the actual value.  If type is Plain, then it's just whatever JS object.
-     * If Shared, it's a string ID for a SharedObject. If one of our registered valueTypes, then it's some raw
-     * format that data structure can understand and do something with.
-     */
-    value: any;
-}
+type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse
  */
 interface IMapDataObject {
-    [key: string]: IMapValue;
+    [key: string]: ISerializableValue;
 }
 
 /**
@@ -187,11 +152,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedMap";
-    private readonly data = new Map<string, ILocalViewElement>();
-    private readonly valueTypes = new Map<string, IValueType<any>>();
+    private readonly data = new Map<string, ILocalValue>();
     private readonly messageHandlers: Map<string, IMapMessageHandler> = new Map();
     private readonly pendingKeys: Map<string, number> = new Map();
     private pendingClearClientSequenceNumber: number = -1;
+    private readonly localValueMaker: LocalValueMaker;
 
     /**
      * Constructs a new shared map. If the object is non-local an id and service interfaces will
@@ -200,8 +165,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        type = MapExtension.Type) {
+        type = MapExtension.Type,
+    ) {
         super(id, runtime, type);
+        this.localValueMaker = new LocalValueMaker(runtime, this);
         this.setMessageHandlers();
     }
 
@@ -209,19 +176,46 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return this.data.keys();
     }
 
-    // TODO: entries and values will have incorrect content until
-    // map contains plain values and meta-data is segregated into
-    // separate map
-    public entries() {
-        return this.data.entries();
+    public entries(): IterableIterator<[string, any]> {
+        const localEntriesIterator = this.data.entries();
+        const iterator = {
+            next(): IteratorResult<[string, any]> {
+                const nextVal = localEntriesIterator.next();
+                if (nextVal.done) {
+                    return { value: undefined, done: true };
+                } else {
+                    // unpack the stored value
+                    return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
+                }
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 
-    public values() {
-        return this.data.values();
+    public values(): IterableIterator<any> {
+        const localValuesIterator = this.data.values();
+        const iterator = {
+            next(): IteratorResult<any> {
+                const nextVal = localValuesIterator.next();
+                if (nextVal.done) {
+                    return { value: undefined, done: true };
+                } else {
+                    // unpack the stored value
+                    return { value: nextVal.value.value, done: false };
+                }
+            },
+            [Symbol.iterator]() {
+                return this;
+            },
+        };
+        return iterator;
     }
 
-    public [Symbol.iterator]() {
-        return this.data[Symbol.iterator]();
+    public [Symbol.iterator](): IterableIterator<[string, any]> {
+        return this.entries();
     }
 
     public get size() {
@@ -230,8 +224,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     // TODO: fix to pass-through when meta-data moved to separate map
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void) {
-        this.data.forEach((value, key, m) => {
-            callbackFn(value.localValue, key, m);
+        this.data.forEach((localValue, key, m) => {
+            callbackFn(localValue.value, key, m);
         });
     }
 
@@ -244,15 +238,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
 
         // Let's stash the *type* of the object on the key
-        const value = this.data.get(key);
+        const localValue = this.data.get(key);
 
-        return value.localValue as T;
+        return localValue.value as T;
     }
 
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this.has(key)) {
-            /* tslint:disable:no-object-literal-type-assertion */
             return this.get<T>(key);
         }
 
@@ -276,25 +269,36 @@ export class SharedMap extends SharedObject implements ISharedMap {
     /**
      * Public set API.  Type must be passed if setting a value type.
      * @param key - key to set
-     * @param value - value to set
+     * @param value - value to set (or initialization params if value type)
      * @param type - type getting set (if value type)
      */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        const values = this.prepareOperationValue(key, value, type);
-        const op: IMapOperation = {
-            key,
-            type: "set",
-            value: values.operationValue,
-        };
+    public set(key: string, value: any, type?: string): this {
+        let localValue: ILocalValue;
+        let serializableValue: ISerializableValue;
+        if (type) {
+            // value is actually initialization params in the value type case
+            localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), value);
+
+            // This is a special form of serialized valuetype only used for set, containing info for initialization.
+            // After initialization, the serialized form will need to come from the .store of the value type's factory.
+            serializableValue = { type, value };
+        } else {
+            localValue = this.localValueMaker.fromInMemory(value);
+            serializableValue = localValue.makeSerializable();
+        }
 
         this.setCore(
-            op.key,
-            {
-                localType: values.operationValue.type,
-                localValue: values.localValue,
-            },
+            key,
+            localValue,
             true,
-            null);
+            null,
+        );
+
+        const op: IMapSetOperation = {
+            key,
+            type: "set",
+            value: serializableValue,
+        };
         this.submitMapKeyMessage(op);
         return this;
     }
@@ -304,7 +308,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * @param key - key to delete
      */
     public delete(key: string): boolean {
-        const op: IMapOperation = {
+        const op: IMapDeleteOperation = {
             key,
             type: "delete",
         };
@@ -318,7 +322,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * Public clear API.
      */
     public clear(): void {
-        const op: IMapOperation = {
+        const op: IMapClearOperation = {
             type: "clear",
         };
 
@@ -357,53 +361,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * Public only because of MapValueOpEmitter
-     * Expose the function to send an operation message.
-     * @internal
-     */
-    public submitMapMessage(op: any): number {
-        return this.submitLocalMessage(op);
-    }
-
-    /**
      * Registers a new value type on the map
      */
     public registerValueType<T>(type: IValueType<T>) {
-        this.valueTypes.set(type.name, type);
-
-        function getOpHandler(op: IMapOperation): IValueOperation<T> {
-            const handler = type.ops.get(op.value.type);
-            if (!handler) {
-                throw new Error("Unknown type message");
-            }
-
-            return handler;
-        }
-
-        // This wraps the IValueOperations (from within the passed IValueType) into an IMapMessageHandler.
-        // Doing so allows the map to handle unfamiliar messages from the registered value types --
-        // first by retrieving the specified item and then by applying the provided handlers.
-        const valueTypeMessageHandler: IMapMessageHandler = {
-            prepare: async (op, local, message) => {
-                const handler = getOpHandler(op);
-                const value = this.get<T>(op.key);
-                return handler.prepare(value, op.value.value, local, message);
-            },
-
-            process: (op, context, local, message) => {
-                const handler = getOpHandler(op);
-                const previousValue = this.get<T>(op.key);
-                handler.process(previousValue, op.value.value, context, local, message);
-                const event: IValueChanged = { key: op.key, previousValue };
-                this.emit("valueChanged", event, local, message);
-            },
-
-            submit: (op) => {
-                this.submitLocalMessage(op);
-            },
-        };
-
-        this.messageHandlers.set(type.name, valueTypeMessageHandler);
+        this.localValueMaker.registerValueType(type);
     }
 
     /**
@@ -428,11 +389,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * Serializes the shared map to a JSON string
      */
     public serialize(): string {
-        const serialized: IMapDataObject = {};
-        this.data.forEach((value, key) => {
-            serialized[key] = this.spill(value);
+        const serializableMapData: IMapDataObject = {};
+        this.data.forEach((localValue, key) => {
+            serializableMapData[key] = localValue.makeSerializable();
         });
-        return JSON.stringify(serialized);
+        return JSON.stringify(serializableMapData);
     }
 
     protected onDisconnect() {
@@ -508,7 +469,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             const op: IMapOperation = message.contents as IMapOperation;
             if (this.messageHandlers.has(op.type)) {
                 this.messageHandlers.get(op.type)
-                    .process(op, context as ILocalViewElement, local, message);
+                    .process(op, context as ILocalValue, local, message);
                 handled = true;
             }
         }
@@ -519,15 +480,19 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected registerCore() {
-        this.attachAll();
+        for (const value of this.data.values()) {
+            if (SharedObject.is(value)) {
+                value.register();
+            }
+        }
 
-        this.attachContent();
+        this.registerContent();
     }
 
     // The following three methods enable derived classes to provide custom content that is stored
     // with the map
 
-    protected attachContent() {
+    protected registerContent() {
         return;
     }
 
@@ -565,13 +530,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     private async populate(data: IMapDataObject): Promise<void> {
-        const localValuesP = new Array<Promise<{ key: string, value: ILocalViewElement }>>();
+        const localValuesP = new Array<Promise<{ key: string, value: ILocalValue }>>();
 
-        // tslint:disable-next-line:forin
-        for (const key in data) {
-            const value = data[key];
-            const localValueP = this.fill(key, value)
-                .then((filledValue) => ({ key, value: filledValue }));
+        for (const [key, serializable] of Object.entries(data)) {
+            const localValueP = this.makeLocal(key, serializable)
+                .then((localValue) => ({ key, value: localValue }));
             localValuesP.push(localValueP);
         }
 
@@ -581,15 +544,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
     }
 
-    private attachAll() {
-        for (const [, value] of this.data) {
-            if (SharedObject.is(value.localValue)) {
-                value.localValue.register();
-            }
-        }
-    }
-
-    private setCore(key: string, value: ILocalViewElement, local: boolean, op: ISequencedDocumentMessage) {
+    private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
@@ -614,7 +569,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
-        const temp = new Map<string, ILocalViewElement>();
+        const temp = new Map<string, ILocalValue>();
         pendingKeys.forEach((value, key, map) => {
             temp.set(key, this.data.get(key));
         });
@@ -630,71 +585,30 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * The remote IMapValue we're receiving (either as a result of a load or an incoming set op) will have the
-     * information we need to create a real object, but will not be the real object yet.  For example, we might
-     * know it's a map and the ID but not have the actual map or its data yet.  Fill's job is to convert that
-     * information into a real object for local usage.
-     * @param key - the key that the caller intends to store the filled value into (used for ops later).  But
-     * doesn't actually store the filled value into that key.  So better not lie!
-     * @param remote - the remote information that we can convert into a real object
+     * The remote ISerializableValue we're receiving (either as a result of a load or an incoming set op) will
+     * have the information we need to create a real object, but will not be the real object yet.  For example,
+     * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
+     * job is to convert that information into a real object for local usage.
+     * @param key - the key that the caller intends to store the local value into (used for ops later).  But
+     * doesn't actually store the local value into that key.  So better not lie!
+     * @param serializable - the remote information that we can convert into a real object
      */
-    private async fill(key: string, remote: IMapValue): Promise<ILocalViewElement> {
-        let translatedValue: any;
-        if (remote.type === ValueType[ValueType.Shared]) {
-            // even though this is getting an IChannel, should be a SharedObject since set() will only mark as Shared
-            // if SharedObject.is() within prepareOperationValue.
-            translatedValue = await this.runtime.getChannel(remote.value as string);
-        } else if (remote.type === ValueType[ValueType.Plain]) {
-            translatedValue = remote.value;
-        } else if (this.hasValueType(remote.type)) {
-            const valueType = this.getValueType(remote.type);
-            translatedValue = valueType.factory.load(new MapValueOpEmitter(remote.type, key, this), remote.value);
+    private async makeLocal(key: string, serializable: ISerializableValue): Promise<ILocalValue> {
+        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
+            return this.localValueMaker.fromSerializable(serializable);
         } else {
-            return Promise.reject(`Unknown value type "${remote.type}"`);
-        }
-
-        return {
-            localType: remote.type,
-            localValue: translatedValue,
-        };
-    }
-
-    /**
-     * Converts from the format we use in-memory (ILocalViewElement) to the format we can use in serialization
-     * (IMapValue).  As a side-effect, it will register shared objects -- but maybe that's not necessary (can
-     * we guarantee it's already registered?).
-     * @param local - the item to convert, in its in-memory format
-     */
-    private spill(local: ILocalViewElement): IMapValue {
-        if (local.localType === ValueType[ValueType.Shared]) {
-            const distributedObject = local.localValue as ISharedObject;
-
-            // If the map is already registered then register the sharedObject
-            // This feels slightly out of place here since it has a side effect. But is part of spilling a document.
-            // Not sure if there is some kind of prep call to separate the op creation from things needed to make it
-            // (like attaching)
-            if (this.isRegistered()) {
-                distributedObject.register();
-            }
-            return {
-                type: ValueType[ValueType.Shared],
-                value: distributedObject.id,
-            };
-        } else if (this.hasValueType(local.localType)) {
-            const valueType = this.getValueType(local.localType);
-            return {
-                type: local.localType,
-                value: valueType.factory.store(local.localValue),
-            };
-        } else {
-            return {
-                type: ValueType[ValueType.Plain],
-                value: local.localValue,
-            };
+            return this.localValueMaker.fromSerializable(
+                serializable,
+                this.makeMapValueOpEmitter(key),
+            );
         }
     }
 
-    private needProcessKeyOperations(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): boolean {
+    private needProcessKeyOperations(
+        op: IMapKeyOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): boolean {
         if (this.pendingClearClientSequenceNumber !== -1) {
             // If I have a NACK clear, we can ignore all ops.
             return false;
@@ -718,12 +632,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     private setMessageHandlers() {
         const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
-        // tslint:disable:no-backbone-get-set-outside-model
         this.messageHandlers.set(
             "clear",
             {
                 prepare: defaultPrepare,
-                process: (op, context, local, message) => {
+                process: (op: IMapClearOperation, context, local, message) => {
                     if (local) {
                         if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
                             this.pendingClearClientSequenceNumber = -1;
@@ -736,7 +649,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     }
                     this.clearCore(local, message);
                 },
-                submit: (op) => {
+                submit: (op: IMapClearOperation) => {
                     this.submitMapClearMessage(op);
                 },
             });
@@ -744,77 +657,94 @@ export class SharedMap extends SharedObject implements ISharedMap {
             "delete",
             {
                 prepare: defaultPrepare,
-                process: (op, context, local, message) => {
+                process: (op: IMapDeleteOperation, context, local, message) => {
                     if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
                     this.deleteCore(op.key, local, message);
                 },
-                submit: (op) => {
+                submit: (op: IMapDeleteOperation) => {
                     this.submitMapKeyMessage(op);
                 },
             });
         this.messageHandlers.set(
             "set",
             {
-                prepare: (op, local) => {
-                    return local ? Promise.resolve(null) : this.fill(op.key, op.value);
+                prepare: (op: IMapSetOperation, local) => {
+                    return local ? Promise.resolve(null) : this.makeLocal(op.key, op.value);
                 },
-                process: (op, context, local, message) => {
+                process: (op: IMapSetOperation, context, local, message) => {
                     if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
                     this.setCore(op.key, context, local, message);
                 },
-                submit: (op) => {
+                submit: (op: IMapSetOperation) => {
                     this.submitMapKeyMessage(op);
+                },
+            });
+
+        // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
+        // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
+        // stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
+        // watching for manipulations of that item.
+        this.messageHandlers.set(
+            "act",
+            {
+                prepare: async (op: IMapValueTypeOperation, local, message) => {
+                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    const value = localValue.value;
+                    return handler.prepare(value, op.value.value, local, message);
+                },
+                process: (op: IMapValueTypeOperation, context, local, message) => {
+                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    const handler = localValue.getOpHandler(op.value.opName);
+                    const previousValue = localValue.value;
+                    handler.process(previousValue, op.value.value, context, local, message);
+                    const event: IValueChanged = { key: op.key, previousValue };
+                    this.emit("valueChanged", event, local, message);
+                },
+                submit: (op) => {
+                    this.submitLocalMessage(op);
                 },
             });
     }
 
-    private prepareOperationValue<T = any>(key: string, value: T, type?: string) {
-        let operationValue: IMapValue;
-        if (type) {
-            const valueType = this.getValueType(type);
-            if (!valueType) {
-                throw new Error(`Unknown type '${type}' specified`);
-            }
-
-            // set operationValue first with the raw value params prior to doing the load
-            operationValue = {
-                type,
-                value,
-            };
-            // tslint:disable-next-line:no-parameter-reassignment
-            value = valueType.factory.load(new MapValueOpEmitter(type, key, this), value) as T;
-        } else {
-            const valueType = SharedObject.is(value)
-                ? ValueType[ValueType.Shared]
-                : ValueType[ValueType.Plain];
-            operationValue = this.spill({ localType: valueType, localValue: value });
-        }
-        return { operationValue, localValue : value };
+    private submitMapMessage(op: IMapOperation): number {
+        return this.submitLocalMessage(op);
     }
 
-    private submitMapClearMessage(op: IMapOperation): void {
+    private submitMapClearMessage(op: IMapClearOperation): void {
         const clientSequenceNumber = this.submitMapMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingClearClientSequenceNumber = clientSequenceNumber;
         }
     }
 
-    private submitMapKeyMessage(op: IMapOperation): void {
+    private submitMapKeyMessage(op: IMapKeyOperation): void {
         const clientSequenceNumber = this.submitMapMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingKeys.set(op.key, clientSequenceNumber);
         }
     }
 
-    private hasValueType(type: string): boolean {
-        return this.valueTypes.has(type);
-    }
+    private makeMapValueOpEmitter(key: string): IValueOpEmitter {
+        const emit = (opName: string, previousValue: any, params: any) => {
+            const op: IMapValueTypeOperation = {
+                key,
+                type: "act",
+                value: {
+                    opName,
+                    value: params,
+                },
+            };
+            this.submitMapMessage(op);
 
-    private getValueType(type: string) {
-        return this.valueTypes.get(type);
+            const event: IValueChanged = { key, previousValue };
+            this.emit("valueChanged", event, true, null);
+        };
+
+        return { emit };
     }
 }

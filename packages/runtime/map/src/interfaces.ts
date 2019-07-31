@@ -23,7 +23,7 @@ export interface IValueChanged {
 }
 
 export interface IValueOpEmitter {
-    emit(name: string, previousValue: any, params: any);
+    emit(opName: string, previousValue: any, params: any);
 }
 
 /**
@@ -71,9 +71,9 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-export interface IMapRegistry {
+export interface IValueTypeSupporter {
     /**
-     * Registers a new operation on the map
+     * Registers a value type to support
      */
     registerValueType<T>(type: IValueType<T>);
 }
@@ -103,7 +103,7 @@ export interface IDirectory extends Map<string, any> {
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedObject, IDirectory {
+export interface ISharedDirectory extends ISharedObject, IValueTypeSupporter, IDirectory {
 }
 
 /**
@@ -116,7 +116,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, IMapRegistry, Map<string, any> {
+export interface ISharedMap extends ISharedObject, IValueTypeSupporter, Map<string, any> {
     /**
      * Retrieves the given key from the map
      */
@@ -147,10 +147,37 @@ export interface ISharedMap extends ISharedObject, IMapRegistry, Map<string, any
                                         target: this) => void): this;
 }
 
-export interface ILocalViewElement {
-    // The type of local value
-    localType: string;
+/**
+ * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
+ * ISerializableValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
+ * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
+ * the _in-memory representatation_ of the value instead).  An ISerializableValue is what gets passed to
+ * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
+ * and ops (set).
+ * If type is Plain, then it's taken at face value as a JS object but it better be something that can survive a
+ * JSON.stringify/parse roundtrip or it won't work.  E.g. a URL object will just get stringified to a URL string
+ * and not rehydrate as a URL object on the other side.
+ * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
+ * channel ID.
+ * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
+ * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
+ */
+export interface ISerializableValue {
+    type: string;
+    value: any;
+}
 
-    // The actual local value
-    localValue: any;
+/**
+ * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  The type on the op itself
+ * will describe the type of ValueType, so the value on the op instead carries a more-complex object to describe
+ * specificially what that ValueType is doing.  IValueTypeOperationValue is that more complex object.  The type on it
+ * is the ValueType-specific operation (e.g. "increment" on Counter) and the value is whatever params the
+ * ValueType needs to complete that operation.
+ * Similar to ISerializableValue, it is serializable via JSON.stringify/parse but differs in that it has no
+ * equivalency with an in-memory value - rather it just describes an operation to be applied to an already-in-memory
+ * value.
+ */
+export interface IValueTypeOperationValue {
+    opName: string;
+    value: any;
 }

@@ -289,7 +289,8 @@ describe("Directory", () => {
             root2Directory.setKeyAtPath("testKey1", "testValue1", "testSubDir1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
-            root3Directory.deleteKeyAtPath("testKey1", "testSubDir1");
+            const subDir1 = root3Directory.getWorkingDirectory("testSubDir1");
+            subDir1.delete("testKey1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", undefined);
         });

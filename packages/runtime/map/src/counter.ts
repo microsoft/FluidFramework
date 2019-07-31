@@ -7,9 +7,8 @@ import { EventEmitter } from "events";
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 
 export class CounterFactory implements IValueFactory<Counter> {
-    public load(emitter: IValueOpEmitter, raw: number): Counter {
-        // tslint:disable-next-line:strict-boolean-expressions
-        return new Counter(emitter, raw || 0);
+    public load(emitter: IValueOpEmitter, raw: number = 0): Counter {
+        return new Counter(emitter, raw);
     }
 
     public store(value: Counter): number {
@@ -54,36 +53,31 @@ export class CounterValueType implements IValueType<Counter> {
     }
 
     public get factory(): IValueFactory<Counter> {
-        return this._factory;
+        return CounterValueType._factory;
     }
 
     public get ops(): Map<string, IValueOperation<Counter>> {
-        return this._ops;
+        return CounterValueType._ops;
     }
 
     // tslint:disable:variable-name
-    private readonly _factory: IValueFactory<Counter>;
-    private readonly _ops: Map<string, IValueOperation<Counter>>;
-    // tslint:enable:variable-name
-
-    constructor() {
-        this._factory = new CounterFactory();
-        this._ops = new Map<string, IValueOperation<Counter>>(
-            [[
-                "increment",
-                {
-                    prepare: (value, params: number, local, op) => {
-                        return Promise.resolve();
-                    },
-                    process: (value, params: number, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.increment(params, false);
-                    },
+    private static readonly _factory: IValueFactory<Counter> = new CounterFactory();
+    private static readonly _ops: Map<string, IValueOperation<Counter>> = new Map<string, IValueOperation<Counter>>(
+        [[
+            "increment",
+            {
+                prepare: (value, params: number, local, op) => {
+                    return Promise.resolve();
                 },
-            ]]);
-    }
+                process: (value, params: number, context, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
+
+                    value.increment(params, false);
+                },
+            },
+        ]]);
+    // tslint:enable:variable-name
 }

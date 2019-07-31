@@ -6,8 +6,8 @@
 import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 
 export class DistributedSetFactory<T> implements IValueFactory<DistributedSet<T>> {
-    public load(emitter: IValueOpEmitter, raw: any[]): DistributedSet<T> {
-        return new DistributedSet<any>(emitter, raw || []);
+    public load(emitter: IValueOpEmitter, raw: any[] = []): DistributedSet<T> {
+        return new DistributedSet<any>(emitter, raw);
     }
 
     public store(value: DistributedSet<T>): any[] {
@@ -69,52 +69,48 @@ export class DistributedSetValueType implements IValueType<DistributedSet<any>> 
     }
 
     public get factory(): IValueFactory<DistributedSet<any>> {
-        return this._factory;
+        return DistributedSetValueType._factory;
     }
 
     public get ops(): Map<string, IValueOperation<DistributedSet<any>>> {
-        return this._ops;
+        return DistributedSetValueType._ops;
     }
 
     // tslint:disable:variable-name
-    private readonly _factory: IValueFactory<DistributedSet<any>>;
-    private readonly _ops: Map<string, IValueOperation<DistributedSet<any>>>;
+    private static readonly _factory: IValueFactory<DistributedSet<any>> = new DistributedSetFactory();
+    private static readonly _ops: Map<string, IValueOperation<DistributedSet<any>>> =
+        new Map<string, IValueOperation<DistributedSet<any>>>(
+        [[
+            "add",
+            {
+                prepare: async (value, params, local, op) => {
+                    return;
+                },
+                process: (value, params, context, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
+
+                    value.add(params, false);
+                },
+            },
+        ],
+        [
+            "delete",
+            {
+                prepare: async (value, params, local, op) => {
+                    return;
+                },
+                process: (value, params, context, local, op) => {
+                    // Local ops were applied when the message was created
+                    if (local) {
+                        return;
+                    }
+
+                    value.delete(params, false);
+                },
+            },
+        ]]);
     // tslint:enable:variable-name
-
-    constructor() {
-        this._factory = new DistributedSetFactory();
-        this._ops = new Map<string, IValueOperation<DistributedSet<any>>>(
-            [[
-                "add",
-                {
-                    prepare: async (value, params, local, op) => {
-                        return;
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.add(params, false);
-                    },
-                },
-            ],
-            [
-                "delete",
-                {
-                    prepare: async (value, params, local, op) => {
-                        return;
-                    },
-                    process: (value, params, context, local, op) => {
-                        // Local ops were applied when the message was created
-                        if (local) {
-                            return;
-                        }
-
-                        value.delete(params, false);
-                    },
-                },
-            ]]);
-    }
 }
