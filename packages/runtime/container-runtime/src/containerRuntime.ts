@@ -559,7 +559,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
 
         if (this.leaderElector) {
-            this.leaderElector.changeConnectionState(value, clientId);
+            this.leaderElector.changeConnectionState(value);
         }
 
         raiseConnectedEvent(this, value, clientId);
@@ -1104,7 +1104,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     private initLeaderElection() {
-        this.leaderElector = new LeaderElector(this.getQuorum(), this.clientId);
+        this.leaderElector = new LeaderElector(this.getQuorum(), this.connected);
         this.leaderElector.on("newLeader", (clientId: string) => {
             debug(`New leader elected: ${clientId}`);
             if (this.leader) {
@@ -1139,7 +1139,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
         this.proposeLeadershipOnConnection = false;
 
-        this.leaderElector.proposeLeadership().then(() => {
+        this.leaderElector.proposeLeadership(this.clientId).then(() => {
             debug(`Leadership proposal accepted for ${this.clientId}`);
         }, (err) => {
             debug(`Leadership proposal rejected ${err}`);
