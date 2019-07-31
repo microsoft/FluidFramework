@@ -531,8 +531,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             // TODO currently only assumes two levels of branching
             const branchId = originBranch === this.runtime.documentId ? 0 : 1;
             this.collabStarted = true;
+
+            // Do not use minimumSequenceNumber - it's from the "future" in case compoennt is delay loaded.
+            // We need the one used when snapshot was created! That's chunk.chunkSequenceNumber
             this.client.startCollaboration(
-                this.runtime.clientId, minimumSequenceNumber, branchId);
+                this.runtime.clientId, chunk.chunkSequenceNumber, branchId);
         }
         return chunk;
     }
