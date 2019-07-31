@@ -17,6 +17,8 @@ export let dumpTotalStats = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 
+export let paramForceRefreshToken = false;
+
 export let paramSave: string | undefined;
 export const messageTypeFilter = new Set<string>();
 
@@ -29,6 +31,7 @@ const optionsArray =
         ["--dump:snapshotVersion", "dump a list of snapshot version"],
         ["--dump:snapshotTree", "dump the snapshot trees"],
         ["--dump:snapshotBlob", "dump the contents of snapshot blobs"],
+        ["--forceRefreshToken", "Force refresh token (SPO only)"],
         ["--stat:message", "show a table of message type counts and size"],
         ["--stat:snapshot", "show a table of snapshot path and blob size"],
         ["--stat:dataType", "show a table of data type"],
@@ -88,6 +91,9 @@ export function parseArguments() {
                 process.exit(0);
             case "--jwt":
                 paramJWT = parseStrArg(i++, "jwt token");
+                break;
+            case "--forceRefreshToken":
+                paramForceRefreshToken = true;
                 break;
             case "--snapshotVersionIndex":
                 paramSnapshotVersionIndex = parseIntArg(i++, "version index", true);

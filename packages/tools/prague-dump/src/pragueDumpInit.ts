@@ -15,10 +15,11 @@ import {
 } from "@prague/odsp-utils";
 import * as r11s from "@prague/routerlicious-socket-storage";
 
+import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
 
-import { paramJWT, paramURL } from "./pragueDumpArgs";
+import { paramForceRefreshToken, paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 
 export let paramDocumentService: IDocumentService;
@@ -28,12 +29,18 @@ export let connectionInfo: any;
 const redirectUri = "http://localhost:7000/auth/callback";
 
 async function getAuthorizationCode(server: string, clientConfig: IClientConfig): Promise<string> {
-    console.log("Please open browser and navigate to this URL:");
-    console.log(`  https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
+    let message = "Please open browser and navigate to this URL:";
+    const authUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?`
         + `client_id=${clientConfig.clientId}`
         + `&scope=https://${server}/AllSites.Write`
         + `&response_type=code`
-        + `&redirect_uri=${redirectUri}`);
+        + `&redirect_uri=${redirectUri}`;
+    if (process.platform === "win32") {
+        child_process.exec(`start "prague-dump" /B "${authUrl}"`);
+        message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
+    }
+
+    console.log(`${message}\n  ${authUrl}`);
     return new Promise((resolve, reject) => {
         const httpServer = http.createServer((req, res) => {
             res.write("Please close the window");
@@ -100,7 +107,7 @@ async function getODSPTokens(
     clientConfig: IClientConfig,
     forceTokenRefresh: boolean): Promise<IODSPTokens> {
 
-    if (!forceTokenRefresh) {
+    if (!forceTokenRefresh && !paramForceRefreshToken) {
         const odspTokens = await loadODSPTokens(server);
         if (odspTokens !== undefined && odspTokens.refreshToken !== undefined) {
             return odspTokens;
@@ -156,13 +163,16 @@ function getClientConfig() {
 }
 
 async function initializeODSPCore(server: string, drive: string, item: string, clientConfig: IClientConfig) {
+    if (odspServers.indexOf(server) === -1) {
+        return Promise.reject(new Error(`Tenant not supported: ${server}`));
+    }
     connectionInfo = {
         server,
         drive,
         item,
     };
 
-    console.log(`Connecting to ODSP:\n  drive=${drive}\n  item=${item}`);
+    console.log(`Connecting to ODSP:\n  server: ${server}\n  drive:  ${drive}\n  item:   ${item}`);
 
     const resolvedUrl = await joinODSPSession(server, drive, item, clientConfig);
 
@@ -247,17 +257,33 @@ async function initializeODSP(
     return initializeODSPCore(server, drive, item, clientConfig);
 }
 
-async function initializeFluidOffice(server: string, pathname: string) {
-    const driveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)/);
+async function initializeFluidOffice(pathname: string) {
+    const siteDriveItemMatch = pathname.match(/\/p\/([^\/]*)\/([^\/]*)\/([^\/]*)/);
 
-    if (driveItemMatch === null) {
+    if (siteDriveItemMatch === null) {
         return Promise.reject("Unable to parse fluid.office.com URL path");
     }
 
-    const drive = driveItemMatch[1];
-    const item = driveItemMatch[2];
+    const site = siteDriveItemMatch[1];
+
+    // Path value is base64 encoded so need to decode first
+    const b = Buffer.from(site, "base64");
+    const decodedSite = b.toString();
+
+    // Site value includes storage type
+    const storageType = decodedSite.split(":")[0];
+    const expectedStorageType = "spo";  // Only support spo for now
+    if (storageType !== expectedStorageType) {
+        return Promise.reject(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
+    }
+
+    // Since we have the drive and item, only take the host ignore the rest
+    const url = new URL(decodedSite.substring(storageType.length + 1));
+    const server = url.host;
+    const drive = siteDriveItemMatch[2];
+    const item = siteDriveItemMatch[3];
     // TODO: Assume df server now
-    return initializeODSPCore("microsoft.sharepoint-df.com", drive, item, getClientConfig());
+    return initializeODSPCore(server, drive, item, getClientConfig());
 }
 
 async function initializeR11s(server: string, pathname: string) {
@@ -351,7 +377,7 @@ export async function pragueDumpInit() {
         } else if (r11sServers.indexOf(server) !== -1) {
             return initializeR11s(server, url.pathname);
         } else if (fluidOfficeServers.indexOf(server) !== -1) {
-            return initializeFluidOffice(server, url.pathname);
+            return initializeFluidOffice(url.pathname);
         } else if (server === "localhost" && url.port === "3000") {
             return initializeR11sLocalhost(url.pathname);
         }
