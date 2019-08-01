@@ -90,7 +90,7 @@
   },
   "devDependencies": {
     "@prague/build-common": "^0.8.0",
-    "@prague/prague-dev-server": "~3.7.0",
+    "@prague/prague-dev-server": "~3.8.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "file-loader": "^2.0.0",

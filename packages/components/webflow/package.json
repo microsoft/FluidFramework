@@ -60,7 +60,7 @@
   "devDependencies": {
     "@prague/build-common": "^0.8.0",
     "@prague/local-test-server": "^0.8.0",
-    "@prague/prague-dev-server": "~3.7.0",
+    "@prague/prague-dev-server": "~3.8.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
