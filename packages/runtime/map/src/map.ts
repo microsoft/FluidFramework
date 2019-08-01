@@ -480,7 +480,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected registerCore() {
-        for (const value of this.data.values()) {
+        for (const value of this.values()) {
             if (SharedObject.is(value)) {
                 value.register();
             }
