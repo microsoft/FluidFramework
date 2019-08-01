@@ -146,9 +146,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     }
 
     public annotateRangeFromPast(
-        props: MergeTree.PropertySet,
         start: number,
         end: number,
+        props: MergeTree.PropertySet,
         fromSeq: number) {
 
         const ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
