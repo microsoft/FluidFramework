@@ -71,6 +71,10 @@
       "projectFolder": "packages/components/external-component-loader/"
     },
     {
+      "packageName": "@prague/component-core-interfaces",
+      "projectFolder": "packages/loader/component-core-interfaces/"
+    },
+    {
       "packageName": "@chaincode/image-collection",
       "projectFolder": "packages/components/image-collection/"
     },
