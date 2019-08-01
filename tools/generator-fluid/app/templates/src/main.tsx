@@ -9,7 +9,7 @@ import {
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
   CounterValueType,
   SharedMap,
@@ -26,7 +26,8 @@ import * as ReactDOM from "react-dom";
  * Clicker example using view interfaces and stock component classes.
  */
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
-
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
 
   /**
    * Create is where you do setup for your component. This is only called once the first time your component
