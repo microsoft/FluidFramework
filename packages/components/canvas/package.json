@@ -1,0 +1,70 @@
+{
+  "name": "@chaincode/canvas",
+  "description": "Prague ink canvas",
+  "version": "0.8.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "tsc": "tsc",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@prague/aqueduct": "^0.8.0",
+    "@prague/client-api": "^0.8.0",
+    "@prague/client-ui": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.8.0",
+    "@prague/component-runtime": "^0.8.0",
+    "@prague/container-runtime": "^0.8.0",
+    "@prague/map": "^0.8.0",
+    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/shared-object-common": "^0.8.0",
+    "@prague/stream": "^0.8.0"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "~3.8.0",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "css-loader": "^1.0.0",
+    "less": "^3.0.4",
+    "less-loader": "^4.1.0",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2"
+  }
+}

@@ -51,6 +51,10 @@
       "projectFolder": "packages/components/blob-manager/"
     },
     {
+      "packageName": "@chaincode/canvas",
+      "projectFolder": "packages/components/canvas/"
+    },
+    {
       "packageName": "@chaincode/charts",
       "projectFolder": "packages/components/charts/"
     },
