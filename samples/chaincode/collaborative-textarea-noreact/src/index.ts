@@ -7,7 +7,7 @@ import {
   SimpleModuleInstantiationFactory
 } from "@prague/aqueduct";
 
-import { Raw_html_inputboxInstantiationFactory as ComponentInstantiationFactory } from "./main";
+import { CollaborativeTextAreaNoReactInstantiationFactory as ComponentInstantiationFactory } from "./main";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");

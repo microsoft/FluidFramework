@@ -1,6 +1,6 @@
 {
-  "name": "@chaincode/raw_html_inputbox",
-  "description": "Collaborative HTML <input> (no react).",
+  "name": "@chaincode/collaborative-textarea-noreact",
+  "description": "No react version of collaborative HTML <textarea> (and <input>).",
   "version": "0.0.1",
   "author": "Microsoft",
   "repository": "microsoft/prague",
