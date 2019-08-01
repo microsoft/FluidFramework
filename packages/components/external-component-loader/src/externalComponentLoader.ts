@@ -242,7 +242,8 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         containerDiv.appendChild(subComponentButtonDiv);
         subComponentButtonDiv.innerText = "↗";
         subComponentButtonDiv.onclick = () => {
-            window.open(`${window.location.href}/${url}`, "_blank");
+            window.open(`${window.location.origin}${window.location.pathname}/${url}${window.location.search}`,
+                "_blank");
         };
         const subComponentButtonStyle = subComponentButtonDiv.style;
         subComponentButtonStyle.height = "25px";

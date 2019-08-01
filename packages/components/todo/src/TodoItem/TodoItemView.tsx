@@ -29,7 +29,7 @@ interface s {
 }
 
 export class TodoItemView extends React.Component<p, s> {
-    private readonly baseUrl = `${window.location.origin}${window.location.pathname}`;
+    private readonly baseUrl = `${window.location.origin}`;
     private readonly buttonStyle = {
         height: "25px",
         marginLeft: "2px",
@@ -40,6 +40,14 @@ export class TodoItemView extends React.Component<p, s> {
     constructor(props: p) {
         super(props);
 
+        const pathName = window.location.pathname.split("/");
+        const path: string[] = [];
+        for (const val of pathName) {
+            if (!val.startsWith("item")) {
+                path.push(val);
+            }
+        }
+        this.baseUrl += `${path.join("/")}${window.location.search}`;
         this.state = {
             contentVisible: false,
             innerId: this.props.innerIdCell.get(),
