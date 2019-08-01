@@ -722,12 +722,42 @@ export class Client {
         return op;
     }
 
-    private transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
+    private transformOp(op: ops.IMergeTreeOp, clientId: number, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
+        if (op.type === ops.MergeTreeDeltaType.GROUP) {
+            const tranformedGroupOps: ops.IMergeTreeOp[] = [];
+            for (let i = 0; i < op.ops.length; i++) {
+                const newOp = this.transformOp(op.ops[i], clientId, referenceSequenceNumber, toSequenceNumber);
+                if (newOp.type === ops.MergeTreeDeltaType.GROUP){
+                    tranformedGroupOps.push(...newOp.ops);
+                } else {
+                    tranformedGroupOps.push(newOp);
+                }
+            }
+            return tranformedGroupOps.length > 1 ?
+                OpBuilder.createGroupOp(...tranformedGroupOps) : tranformedGroupOps[0];
+        }
+
+        // covert relative positions to absolute positions
+        // so they can be transformed
+        const start = op.relativePos1 === undefined ?
+            op.pos1 :
+            this.mergeTree.posFromRelativePos(
+                op.relativePos1,
+                referenceSequenceNumber,
+                clientId);
+
+        let end = op.relativePos2 === undefined ?
+            op.pos2 :
+            this.mergeTree.posFromRelativePos(
+                op.relativePos2,
+                referenceSequenceNumber,
+                clientId);
 
         switch (op.type) {
             case ops.MergeTreeDeltaType.ANNOTATE:
             case ops.MergeTreeDeltaType.REMOVE:
-                const ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, referenceSequenceNumber, toSequenceNumber);
+
+                const ranges = this.mergeTree.tardisRange(start, end, referenceSequenceNumber, toSequenceNumber);
                 const tranformedOps: ops.IMergeTreeOp[] =
                     ranges.map((range) => {
                         if (op.type == ops.MergeTreeDeltaType.ANNOTATE) {
@@ -736,7 +766,6 @@ export class Client {
                                 range.end,
                                 op.props,
                                 op.combiningOp)
-
                         } else {
                             return OpBuilder.createRemoveRangeOp(range.start, range.end);
                         }
@@ -745,30 +774,22 @@ export class Client {
 
             case ops.MergeTreeDeltaType.INSERT:
                 return OpBuilder.createInsertSegmentOp(
-                    this.mergeTree.tardisPosition(op.pos1, referenceSequenceNumber, toSequenceNumber),
+                    this.mergeTree.tardisPosition(
+                        start,
+                        referenceSequenceNumber,
+                        toSequenceNumber),
                     op.seg);
 
-            case ops.MergeTreeDeltaType.GROUP:
-                const tranformedOpsGroupOps: ops.IMergeTreeOp[] = [];
-                for (let i = 0; i < op.ops.length; i++) {
-                    const newOp = this.transformOp(op.ops[i], referenceSequenceNumber, toSequenceNumber);
-                    if (newOp.type === ops.MergeTreeDeltaType.GROUP){
-                        tranformedOpsGroupOps.push(...newOp.ops);
-                    } else {
-                        tranformedOpsGroupOps.push(newOp);
-                    }
-                }
-                return tranformedOpsGroupOps.length > 1 ?
-                    OpBuilder.createGroupOp(...tranformedOpsGroupOps) : tranformedOps[0];
-
+            default:
+                throw new Error(`Unrecognized Op Type`);
         }
     }
-    transform(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
+    transform(op: ops.IMergeTreeOp, clientId: number, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
         if (referenceSequenceNumber >= toSequenceNumber) {
             return op;
         }
 
-        return this.transformOp(op, referenceSequenceNumber, toSequenceNumber);
+        return this.transformOp(op, clientId, referenceSequenceNumber, toSequenceNumber);
     }
 
     private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
