@@ -498,6 +498,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             message = cloneDeep(message);
             message.contents = this.client.transform(
                 message.contents as MergeTree.IMergeTreeOp,
+                this.client.getShortClientId(message.clientId),
                 message.referenceSequenceNumber,
                 sequenceNumber);
             message.referenceSequenceNumber = sequenceNumber;

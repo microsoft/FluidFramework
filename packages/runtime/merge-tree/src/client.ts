@@ -246,6 +246,19 @@ export class Client {
         return this.mergeTree.getOffset(segment, this.getCurrentSeq(), this.getClientId());
     }
 
+    public transform(
+        op: ops.IMergeTreeOp,
+        clientId: number,
+        referenceSequenceNumber: number,
+        toSequenceNumber: number,
+    ): ops.IMergeTreeOp {
+        if (referenceSequenceNumber >= toSequenceNumber) {
+            return op;
+        }
+
+        return this.transformOp(op, clientId, referenceSequenceNumber, toSequenceNumber);
+    }
+
     /**
      * Performs the annotate based on the provided op
      * @param opArgs - The ops args for the op
@@ -552,6 +565,75 @@ export class Client {
         }
         this.mergeTree.collabWindow.currentSeq = opArgs.sequencedMessage.sequenceNumber;
     }
+
+    private transformOp(
+        op: ops.IMergeTreeOp,
+        clientId: number,
+        referenceSequenceNumber: number,
+        toSequenceNumber: number,
+    ): ops.IMergeTreeOp {
+        if (op.type === ops.MergeTreeDeltaType.GROUP) {
+            const tranformedGroupOps: ops.IMergeTreeOp[] = [];
+            op.ops.forEach((subOp) => {
+                const newOp = this.transformOp(subOp, clientId, referenceSequenceNumber, toSequenceNumber);
+                if (newOp.type === ops.MergeTreeDeltaType.GROUP) {
+                    tranformedGroupOps.push(...newOp.ops);
+                } else {
+                    tranformedGroupOps.push(newOp);
+                }
+            });
+            return tranformedGroupOps.length > 1 ?
+                OpBuilder.createGroupOp(...tranformedGroupOps) : tranformedGroupOps[0];
+        }
+
+        // covert relative positions to absolute positions
+        // so they can be transformed
+        const start = op.relativePos1 === undefined ?
+            op.pos1 :
+            this.mergeTree.posFromRelativePos(
+                op.relativePos1,
+                referenceSequenceNumber,
+                clientId);
+
+        const end = op.relativePos2 === undefined ?
+            op.pos2 :
+            this.mergeTree.posFromRelativePos(
+                op.relativePos2,
+                referenceSequenceNumber,
+                clientId);
+
+        switch (op.type) {
+            case ops.MergeTreeDeltaType.ANNOTATE:
+            case ops.MergeTreeDeltaType.REMOVE:
+
+                const ranges = this.mergeTree.tardisRange(start, end, referenceSequenceNumber, toSequenceNumber);
+                const tranformedOps: ops.IMergeTreeOp[] =
+                    ranges.map((range) => {
+                        if (op.type === ops.MergeTreeDeltaType.ANNOTATE) {
+                            return OpBuilder.createAnnotateRangeOp(
+                                range.start,
+                                range.end,
+                                op.props,
+                                op.combiningOp);
+                        } else {
+                            return OpBuilder.createRemoveRangeOp(range.start, range.end);
+                        }
+                    });
+                return tranformedOps.length > 1 ? OpBuilder.createGroupOp(...tranformedOps) : tranformedOps[0];
+
+            case ops.MergeTreeDeltaType.INSERT:
+                return OpBuilder.createInsertOp(
+                    this.mergeTree.tardisPosition(
+                        start,
+                        referenceSequenceNumber,
+                        toSequenceNumber),
+                    op.seg);
+
+            default:
+                throw new Error(`Unrecognized Op Type`);
+        }
+    }
+
 // tslint:disable
 // as functions are modified move them above the tslint: disabled waterline and lint them
 
@@ -720,42 +802,6 @@ export class Client {
             }
         }
         return op;
-    }
-
-    private transformOp(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number) {
-        if ((op.type == ops.MergeTreeDeltaType.ANNOTATE) ||
-            (op.type == ops.MergeTreeDeltaType.REMOVE)) {
-            let ranges = this.mergeTree.tardisRange(op.pos1, op.pos2, referenceSequenceNumber, toSequenceNumber);
-            if (ranges.length == 1) {
-                op.pos1 = ranges[0].start;
-                op.pos2 = ranges[0].end;
-            }
-            else {
-                let groupOp = <ops.IMergeTreeGroupMsg>{ type: ops.MergeTreeDeltaType.GROUP };
-                groupOp.ops = ranges.map((range) => <ops.IMergeTreeOp>{
-                    type: op.type,
-                    pos1: range.start,
-                    pos2: range.end,
-                });
-                return groupOp;
-            }
-        }
-        else if (op.type == ops.MergeTreeDeltaType.INSERT) {
-            op.pos1 = this.mergeTree.tardisPosition(op.pos1, referenceSequenceNumber, toSequenceNumber);
-        }
-        else if (op.type === ops.MergeTreeDeltaType.GROUP) {
-            for (let i = 0, len = op.ops.length; i < len; i++) {
-                op.ops[i] = this.transformOp(op.ops[i], referenceSequenceNumber, toSequenceNumber);
-            }
-        }
-        return op;
-    }
-    transform(op: ops.IMergeTreeOp, referenceSequenceNumber: number, toSequenceNumber: number): ops.IMergeTreeOp {
-        if (referenceSequenceNumber >= toSequenceNumber) {
-            return op;
-        }
-
-        return this.transformOp(op, referenceSequenceNumber, toSequenceNumber);
     }
 
     private applyRemoteOp(opArgs: IMergeTreeDeltaOpArgs) {
