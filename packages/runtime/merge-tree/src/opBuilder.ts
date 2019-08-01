@@ -81,9 +81,15 @@ export function createRemoveRangeOp(start: number, end: number, register?: strin
  * @param segment - The segment to insert
  */
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
+    return createInsertOp(
+        pos,
+        segment.toJSONObject());
+}
+
+export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
     return {
         pos1: pos,
-        seg: segment.toJSONObject(),
+        seg: segSpec,
         type: MergeTreeDeltaType.INSERT,
     };
 }
