@@ -49,8 +49,8 @@ export class SequenceDeltaEvent {
                 const set = new SortedSegmentSet<ISequenceDeltaRange>();
                 this.deltaArgs.deltaSegments.forEach((delta) => {
                     const newRange: ISequenceDeltaRange = {
-                        offset: this.mergeTreeClient.getOffset(delta.segment),
                         operation: this.deltaArgs.operation,
+                        position: this.mergeTreeClient.getPosition(delta.segment),
                         propertyDeltas: delta.propertyDeltas,
                         segment: delta.segment,
                     };
@@ -64,7 +64,7 @@ export class SequenceDeltaEvent {
                 if (this.isEmpty) {
                     return undefined;
                 }
-                return this.sortedRanges.value.items[0].offset;
+                return this.sortedRanges.value.items[0].position;
             });
 
         this.pEnd = new Lazy<number>(
@@ -75,7 +75,7 @@ export class SequenceDeltaEvent {
                 const lastRange =
                     this.sortedRanges.value.items[this.sortedRanges.value.size - 1];
 
-                return lastRange.offset + lastRange.segment.cachedLength;
+                return lastRange.position + lastRange.segment.cachedLength;
             });
     }
 
@@ -105,7 +105,7 @@ export class SequenceDeltaEvent {
 
 export interface ISequenceDeltaRange {
     operation: MergeTreeDeltaOperationType;
-    offset: number;
+    position: number;
     segment: ISegment;
     propertyDeltas: PropertySet;
  }

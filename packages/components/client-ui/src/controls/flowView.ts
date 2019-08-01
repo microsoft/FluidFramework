@@ -1312,11 +1312,11 @@ function layoutCell(
     } as ILayoutContext;
     // TODO: deferred height calculation for starting in middle of box
     if (isInnerCell(cellView, layoutInfo)) {
-        const cellPos = getOffset(layoutInfo.flowView, cellView.marker);
+        const cellPos = getPosition(layoutInfo.flowView, cellView.marker);
         cellLayoutInfo.startPos = cellPos + cellView.marker.cachedLength;
     } else {
         const nextTable = layoutInfo.startingPosStack.table.items[layoutInfo.stackIndex + 1];
-        cellLayoutInfo.startPos = getOffset(layoutInfo.flowView, nextTable as MergeTree.Marker);
+        cellLayoutInfo.startPos = getPosition(layoutInfo.flowView, nextTable as MergeTree.Marker);
         cellLayoutInfo.stackIndex = layoutInfo.stackIndex + 1;
     }
     if (!cellView.emptyCell) {
@@ -1324,7 +1324,7 @@ function layoutCell(
         if (cellView.additionalCellMarkers) {
             for (const cellMarker of cellView.additionalCellMarkers) {
                 cellLayoutInfo.endMarker = cellMarker.cell.endMarker;
-                const cellPos = getOffset(layoutInfo.flowView, cellMarker);
+                const cellPos = getPosition(layoutInfo.flowView, cellMarker);
                 cellLayoutInfo.startPos = cellPos + cellMarker.cachedLength;
                 const auxRenderOutput = renderFlow(cellLayoutInfo, targetTranslation, defer);
                 cellView.renderOutput.deferredHeight += auxRenderOutput.deferredHeight;
@@ -1519,9 +1519,9 @@ function showCell(pos: number, flowView: FlowView) {
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
-        const start = getOffset(flowView, cellMarker);
+        const start = getPosition(flowView, cellMarker);
         const endMarker = cellMarker.cell.endMarker;
-        const end = getOffset(flowView, endMarker) + 1;
+        const end = getPosition(flowView, endMarker) + 1;
         // tslint:disable:max-line-length
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
@@ -1534,9 +1534,9 @@ function showTable(pos: number, flowView: FlowView) {
         flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
-        const start = getOffset(flowView, tableMarker);
+        const start = getPosition(flowView, tableMarker);
         const endMarker = tableMarker.table.endTableMarker;
-        const end = getOffset(flowView, endMarker) + 1;
+        const end = getPosition(flowView, endMarker) + 1;
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
@@ -2451,7 +2451,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
                         newBlock.instanceP.then((instance) => {
                             newBlock.instance = instance;
-                            const compPos = getOffset(layoutContext.flowView, asMarker);
+                            const compPos = getPosition(layoutContext.flowView, asMarker);
                             layoutContext.flowView.hostSearchMenu(compPos);
                         });
                     }
@@ -2526,7 +2526,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 tableView = Table.parseTable(asMarker, currentPos, flowView.sharedString,
                     makeFontInfo(layoutContext.docContext));
             }
-            const endTablePos = getOffset(layoutContext.flowView, tableView.endTableMarker);
+            const endTablePos = getPosition(layoutContext.flowView, tableView.endTableMarker);
             currentPos = endTablePos + 1;
             segoff = undefined;
             // TODO: if reached end of viewport, get pos ranges
@@ -3108,12 +3108,12 @@ function findTile(flowView: FlowView, startPos: number, tileType: string, preced
 }
 
 export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet, marker: MergeTree.Marker) {
-    const start = getOffset(flowView, marker);
+    const start = getPosition(flowView, marker);
     const end = start + marker.cachedLength;
     flowView.sharedString.annotateRange(start, end, props);
 }
 
-function getOffset(flowView: FlowView, segment: MergeTree.ISegment) {
+function getPosition(flowView: FlowView, segment: MergeTree.ISegment) {
     return flowView.client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber,
         flowView.client.getClientId());
 }
@@ -4287,7 +4287,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.broadcastDragPresence();
                     if (toPos !== undefined) {
                         // console.log(`moving to ${toPos}`);
-                        const fromPos = getOffset(this, this.movingInclusion.marker);
+                        const fromPos = getPosition(this, this.movingInclusion.marker);
                         moveMarker(this, fromPos, toPos);
                         this.updatePGInfo(fromPos);
                         this.updatePGInfo(toPos);
@@ -4677,18 +4677,18 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     toCell = tableView.nextcell(cell.cell);
                 }
                 if (toCell) {
-                    const offset = this.client.mergeTree.getPosition(toCell.marker,
+                    const position = this.client.mergeTree.getPosition(toCell.marker,
                         MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                    this.cursor.pos = offset + 1;
+                    this.cursor.pos = position + 1;
                 } else {
                     if (shift) {
-                        const offset = this.client.mergeTree.getPosition(tableView.tableMarker,
+                        const position = this.client.mergeTree.getPosition(tableView.tableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                        this.cursor.pos = offset - 1;
+                        this.cursor.pos = position - 1;
                     } else {
-                        const endOffset = this.client.mergeTree.getPosition(tableView.endTableMarker,
+                        const endPosition = this.client.mergeTree.getPosition(tableView.endTableMarker,
                             MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                        this.cursor.pos = endOffset + 1;
+                        this.cursor.pos = endPosition + 1;
                     }
                 }
                 this.broadcastPresence();
@@ -5124,7 +5124,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -5139,7 +5139,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteCellShiftLeft(this.sharedString, cellMarker.cell, tableMarker.table);
@@ -5155,7 +5155,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
@@ -5170,7 +5170,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
@@ -5183,7 +5183,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 this.sharedString.client.getClientId(), ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
-            const tableMarkerPos = getOffset(this, tableMarker);
+            const tableMarkerPos = getPosition(this, tableMarker);
             if (!tableMarker.table) {
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
@@ -5232,12 +5232,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const randomTableOp = () => {
                 count++;
                 if (!tableMarker.table) {
-                    const tableMarkerPos = getOffset(this, tableMarker);
+                    const tableMarkerPos = getPosition(this, tableMarker);
                     Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
                 }
                 const randCell = this.randomCell(tableMarker.table);
                 if (randCell) {
-                    const pos = getOffset(this, randCell.marker);
+                    const pos = getPosition(this, randCell.marker);
                     this.cursor.pos = pos;
                     this.cursor.updateView(this);
                     let hit = false;
@@ -5293,7 +5293,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const rowMarker = stack.row.top() as Table.IRowMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
             if (!tableMarker.table) {
-                const tableMarkerPos = getOffset(this, tableMarker);
+                const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
             Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
@@ -5795,7 +5795,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 dx: this.movingInclusion.dx,
                 dy: this.movingInclusion.dy,
                 exclu: this.movingInclusion.exclu,
-                markerPos: getOffset(this, this.movingInclusion.marker),
+                markerPos: getPosition(this, this.movingInclusion.marker),
                 onTheMove: this.movingInclusion.onTheMove,
                 type: "drag",
             };
@@ -5821,12 +5821,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         event.ranges.forEach((range) => {
             if (MergeTree.Marker.is(range.segment)) {
                 const marker = range.segment as MergeTree.Marker;
-                this.updatePGInfo(range.offset - 1);
+                this.updatePGInfo(range.position - 1);
             } else if (MergeTree.TextSegment.is(range.segment)) {
                 if (range.operation === MergeTree.MergeTreeDeltaType.REMOVE) {
-                    opCursorPos = range.offset;
+                    opCursorPos = range.position;
                 } else {
-                    const insertOrAnnotateEnd = range.offset + range.segment.cachedLength;
+                    const insertOrAnnotateEnd = range.position + range.segment.cachedLength;
                     this.updatePGInfo(insertOrAnnotateEnd);
                     if (range.operation === MergeTree.MergeTreeDeltaType.INSERT) {
                         opCursorPos = insertOrAnnotateEnd;
@@ -5835,12 +5835,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             // if it was a remote op before the local cursor, we need to adjust
             // the local cursor
-            if (!event.isLocal && range.offset <= this.cursor.pos) {
+            if (!event.isLocal && range.position <= this.cursor.pos) {
                 let adjust = range.segment.cachedLength;
                 // we might not need to use the full length if
                 // the range crosses the curors position
-                if (range.offset + adjust > this.cursor.pos) {
-                    adjust -= range.offset + adjust - this.cursor.pos;
+                if (range.position + adjust > this.cursor.pos) {
+                    adjust -= range.position + adjust - this.cursor.pos;
                 }
 
                 // do nothing for annotate, as it doesn't affect position

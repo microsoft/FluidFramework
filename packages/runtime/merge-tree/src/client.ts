@@ -242,7 +242,7 @@ export class Client {
             (end === undefined) ? this.getLength() : end);
     }
 
-    public getOffset(segment: ISegment): number {
+    public getPosition(segment: ISegment): number {
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
 
@@ -764,7 +764,7 @@ export class Client {
                 return undefined;
             }
 
-            const segmentOffset = this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
+            const segmentPosition = this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
 
             // if removed we only need to send a remove op
             // if inserted, we only need to send insert, as that will contain props
@@ -772,13 +772,13 @@ export class Client {
             if (segment.removedSeq === UnassignedSequenceNumber) {
 
                 op = OpBuilder.createRemoveRangeOp(
-                    segmentOffset,
-                    segmentOffset + segment.cachedLength);
+                    segmentPosition,
+                    segmentPosition + segment.cachedLength);
 
             } else if (segment.seq === UnassignedSequenceNumber) {
 
                 op = OpBuilder.createInsertSegmentOp(
-                    segmentOffset,
+                    segmentPosition,
                     segment);
 
                 if (segment.propertyManager) {
@@ -789,8 +789,8 @@ export class Client {
 
                 const annotateInfo = segment.propertyManager.resetPendingPropertiesToOpDetails();
                 op = OpBuilder.createAnnotateRangeOp(
-                    segmentOffset,
-                    segmentOffset + segment.cachedLength,
+                    segmentPosition,
+                    segmentPosition + segment.cachedLength,
                     annotateInfo.props,
                     annotateInfo.combiningOp);
             }

@@ -1758,14 +1758,14 @@ export class MergeTree {
         let recordRange = (segment: ISegment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
             if (this.nodeLength(segment, toSeq, toClientId) > 0) {
-                let offset = this.getPosition(segment, toSeq, toClientId);
+                let position = this.getPosition(segment, toSeq, toClientId);
                 if (segStart < 0) {
                     segStart = 0;
                 }
                 if (segEnd > segment.cachedLength) {
                     segEnd = segment.cachedLength;
                 }
-                ranges.push({ start: offset + segStart, end: offset + segEnd });
+                ranges.push({ start: position + segStart, end: position + segEnd });
             }
             return true;
         }

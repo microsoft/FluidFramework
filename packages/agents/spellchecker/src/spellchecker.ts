@@ -180,14 +180,15 @@ class Speller {
     private sliceParagraph() {
         if (this.pendingMarkers.length > 0) {
             for (const pg of this.pendingMarkers) {
-                let offset = 0;
+                let position = 0;
                 if (pg.tile) {
-                    offset = this.sharedString.client.mergeTree.getPosition(pg.tile, MergeTree.UniversalSequenceNumber,
+                    position = this.sharedString.client.mergeTree.getPosition(
+                        pg.tile, MergeTree.UniversalSequenceNumber,
                         this.sharedString.client.getClientId());
                 }
-                const endMarker = this.sharedString.findTile(offset + 1, "pg", false);
+                const endMarker = this.sharedString.findTile(position + 1, "pg", false);
                 if (endMarker) {
-                    this.tileMap.set(endMarker.tile, {begin: offset, end: endMarker.pos});
+                    this.tileMap.set(endMarker.tile, {begin: position, end: endMarker.pos});
                 }
             }
             for (const entry of this.tileMap.entries()) {

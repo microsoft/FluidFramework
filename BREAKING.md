@@ -17,7 +17,10 @@ public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ```
 
 ## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
-`mergeTree.getOffset()` has been renamed to `getPosition()` to more accurately reflect its functionality.
+`mergeTree.getOffset()` and `Client.getOffset()` have been renamed to `getPosition()` to more accurately reflect their functionality.
+
+## ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
+The `offset` member of the ISequenceDeltaRange interface has been renamed to `position` 
 
 ## IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
 

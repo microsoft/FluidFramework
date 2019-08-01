@@ -525,7 +525,7 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
     }
 }
 
-function getOffset(client: MergeTree.Client, segment: MergeTree.ISegment) {
+function getPosition(client: MergeTree.Client, segment: MergeTree.ISegment) {
     return client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber, client.getClientId());
 }
 
@@ -590,18 +590,18 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     public getText(instance: MathInstance) {
         const client = this.combinedMathText.client;
         const startMarker = instance.startMarker;
-        const start = getOffset(client, startMarker) + startMarker.cachedLength;
+        const start = getPosition(client, startMarker) + startMarker.cachedLength;
         const endMarker = instance.endMarker;
-        const end = getOffset(client, endMarker);
+        const end = getPosition(client, endMarker);
         return this.combinedMathText.getText(start, end);
     }
 
     public remove(instance: MathInstance) {
         const client = this.combinedMathText.client;
         const startMarker = instance.startMarker;
-        const start = getOffset(client, startMarker);
+        const start = getPosition(client, startMarker);
         const endMarker = instance.endMarker;
-        const end = getOffset(client, endMarker) + endMarker.cachedLength;
+        const end = getPosition(client, endMarker) + endMarker.cachedLength;
         this.combinedMathText.removeRange(start, end);
     }
 
@@ -655,7 +655,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     private getStartPos(instance: MathInstance) {
         const client = this.combinedMathText.client;
         const startMarker = instance.startMarker;
-        const start = getOffset(client, startMarker);
+        const start = getPosition(client, startMarker);
         return start + startMarker.cachedLength;
     }
 
@@ -678,7 +678,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
                 let pos: number;
                 let len = 0;
                 event.ranges.forEach((range) => {
-                    pos = range.offset;
+                    pos = range.position;
                     len += range.segment.cachedLength;
                 });
                 // console.log(`got event from ${event.clientId} pos: ${pos}`);
