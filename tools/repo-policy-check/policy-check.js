@@ -46,24 +46,26 @@ if (program.path) {
 const copyrightText = "Copyright (c) Microsoft Corporation. All rights reserved." + newline + "Licensed under the MIT License.";
 const licenseId = 'MIT';
 const author = 'Microsoft';
-
-// promise wrappers over existing file IO callback methods
-async function readFile(file) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(file, 'utf8', (err, data) => {
-            if (err) throw err;
-            resolve(data);
-        });
-    })
+const r11sDockerfilePath = "server/routerlicious/Dockerfile";
+function getDockerfileCopyText(packageFilePath) {
+    const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
+    return `COPY ${packageDir}/package*.json ${packageDir}/`;
 }
 
-async function writeFile(file, data) {
-    return new Promise((resolve, reject) => {
-        fs.writeFile(file, data, err => {
-            if (err) throw err;
-            resolve();
-        });
-    });
+function readFile(file) {
+    return fs.readFileSync(file, { encoding: "utf8" });
+}
+
+function writeFile(file, data) {
+    fs.writeFileSync(file, data, { encoding: "utf8" });
+}
+
+const localMap = new Map();
+function getOrAddLocalMap(key, getter) {
+    if (!localMap.has(key)) {
+        localMap.set(key, getter());
+    }
+    return localMap.get(key);
 }
 
 /**
@@ -76,18 +78,18 @@ const handlers = [
     {
         name: "dockerfile-copyright-file-header",
         match: /(^|\/)Dockerfile$/i,
-        handler: async file => {
-            if (!/#.*Copyright/i.test(await readFile(file))) {
+        handler: file => {
+            if (!/#.*Copyright/i.test(readFile(file))) {
                 return 'Dockerfile missing copyright header';
             }
         },
-        resolver: async file => {
-            const prevContent = await readFile(file);
+        resolver: file => {
+            const prevContent = readFile(file);
 
             // prepend copyright header to existing content
             const newContent = '# ' + copyrightText.replace(newline, newline + '# ') + newline + newline + prevContent;
 
-            await writeFile(file, newContent);
+            writeFile(file, newContent);
 
             return { resolved: true };
         }
@@ -95,19 +97,19 @@ const handlers = [
     {
         name: "js-ts-copyright-file-header",
         match: /(^|\/)[^\/]+\.[jt]sx?$/i,
-        handler: async file => {
-            if (!/(\/\/.*Copyright|\/\*[\s\S]*Copyright[\s\S]*\*\/)/i.test(await readFile(file))) {
+        handler: file => {
+            if (!/(\/\/.*Copyright|\/\*[\s\S]*Copyright[\s\S]*\*\/)/i.test(readFile(file))) {
                 return 'JavaScript/TypeScript file missing copyright header';
             }
         },
-        resolver: async file => {
-            const prevContent = await readFile(file);
+        resolver: file => {
+            const prevContent = readFile(file);
 
             // prepend copyright header to existing content
             const separator = prevContent.startsWith('\r') || prevContent.startsWith('\n') ? newline : newline + newline;
             const newContent = '/*!' + newline + ' * ' + copyrightText.replace(newline, newline + ' * ') + newline + ' */' + separator + prevContent;
 
-            await writeFile(file, newContent);
+            writeFile(file, newContent);
 
             return { resolved: true };
         }
@@ -115,8 +117,8 @@ const handlers = [
     {
         name: "npm-package-author-license",
         match: /(^|\/)package\.json/i,
-        handler: async file => {
-            const json = JSON.parse(await readFile(file));
+        handler: file => {
+            const json = JSON.parse(readFile(file));
             let ret = [];
 
             if (json.author !== author) {
@@ -131,8 +133,8 @@ const handlers = [
                 return 'Package missing ' + ret.join(' and ');
             }
         },
-        resolver: async file => {
-            let json = JSON.parse(await readFile(file));
+        resolver: file => {
+            let json = JSON.parse(readFile(file));
             let resolved = true;
 
             if (!json.author) {
@@ -147,24 +149,61 @@ const handlers = [
                 resolved = false;
             }
 
-            await writeFile(file, JSON.stringify(json, undefined, 2) + newline);
+            writeFile(file, JSON.stringify(json, undefined, 2) + newline);
 
             return { resolved: resolved };
+        }
+    },
+    {
+        name: "dockerfile-packages",
+        match: /^packages\/.*\/package\.json/i,
+        handler: file => {
+            const dockerfileCopyText = getDockerfileCopyText(file);
+
+            const dockerfileContents = getOrAddLocalMap(
+                "dockerfileContents",
+                () => fs.readFileSync(r11sDockerfilePath),
+            );
+
+            if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
+                return "Routerlicious Dockerfile missing COPY command for this package";
+            }
+        },
+        resolver: file => {
+            const dockerfileCopyText = getDockerfileCopyText(file);
+
+            // add to Dockerfile
+            let dockerfileContents = readFile(r11sDockerfilePath);
+
+            if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
+                // regex basically find the last of 3 or more consecutive COPY package lines
+                const endOfCopyLinesRegex = /(COPY\s+packages\/.*\/package\*\.json\s+packages\/.*\/\s*\n){3,}\s*(\r?\n)+/gi;
+                const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents);
+                const insertIndex = regexMatch.index + regexMatch[0].length - newline.length;
+
+                dockerfileContents = dockerfileContents.substring(0, insertIndex)
+                    + dockerfileCopyText + newline
+                    + dockerfileContents.substring(insertIndex, dockerfileContents.length);
+
+                writeFile(r11sDockerfilePath, dockerfileContents);
+            }
+
+            return { resolved: true };
         }
     }
 ];
 
 // route files to their handlers by regex testing their full paths
 // synchronize output, exit code, and resolve decision for all handlers
-async function routeToHandlers(file) {
-    handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(async handler => {
-        const result = await handler.handler(file);
+function routeToHandlers(file) {
+    handlers.filter(handler => handler.match.test(file) && handlerRegex.test(handler.name)).map(handler => {
+        const result = handler.handler(file);
         if (result) {
             let output = newline + 'file failed policy check: ' + file + newline + result;
 
             if (program.resolve && handler.resolver) {
                 output += newline + 'attempting to resolve: ' + file;
-                const resolveResult = await handler.resolver(file);
+                const resolveResult = handler.resolver(file);
 
                 if (resolveResult.message) {
                     output += newline + resolveResult.message;
