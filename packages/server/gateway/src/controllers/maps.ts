@@ -5,7 +5,7 @@
 
 import * as agent from "@prague/agent";
 import * as api from "@prague/client-api";
-import { Browser, IClient, IFluidResolvedUrl, IHost, IResolvedUrl } from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
 import {
     Counter,
     CounterValueType,
@@ -14,6 +14,7 @@ import {
     ISharedMap,
     IValueChanged,
 } from "@prague/map";
+import { Browser, IClient, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { SharedObject } from "@prague/shared-object-common";
 import * as $ from "jquery";

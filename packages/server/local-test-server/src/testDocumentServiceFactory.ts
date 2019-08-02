@@ -8,7 +8,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { TokenProvider } from "@prague/routerlicious-socket-storage";
 import { parse } from "url";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";

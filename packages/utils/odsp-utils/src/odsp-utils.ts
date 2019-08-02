@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 import * as request from "request";
 
 export interface IODSPTokens {

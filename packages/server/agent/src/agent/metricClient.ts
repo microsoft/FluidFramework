@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITrace } from "@prague/container-definitions";
+import { ITrace } from "@prague/protocol-definitions";
 import * as telegraf from "telegrafjs";
 
 export interface IMetricClient {

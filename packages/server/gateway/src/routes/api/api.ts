@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";

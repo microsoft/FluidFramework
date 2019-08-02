@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider } from "@prague/container-definitions";
+import { ITokenProvider } from "@prague/protocol-definitions";
 
 /**
  * Provides basic token related apis.

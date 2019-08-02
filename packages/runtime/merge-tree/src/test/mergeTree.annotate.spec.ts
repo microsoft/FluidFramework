@@ -4,7 +4,7 @@
  */
 
 // tslint:disable: no-object-literal-type-assertion max-func-body-length
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { TextSegment } from "..";
 import {

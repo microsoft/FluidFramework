@@ -7,7 +7,7 @@ import {
     FileMode,
     ITree,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";

@@ -8,11 +8,13 @@ import {
     ICommittedProposal,
     IPendingProposal,
     IQuorum,
-    ISequencedClient,
-    ISequencedDocumentMessage,
     ISequencedProposal,
     ITelemetryLogger,
 } from "@prague/container-definitions";
+import {
+    ISequencedClient,
+    ISequencedDocumentMessage,
+} from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

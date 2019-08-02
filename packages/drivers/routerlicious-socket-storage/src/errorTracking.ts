@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorTrackingService } from "@prague/container-definitions";
+import { IErrorTrackingService } from "@prague/protocol-definitions";
 
 /**
  * The default error tracking service implementation. It does not track any errors.

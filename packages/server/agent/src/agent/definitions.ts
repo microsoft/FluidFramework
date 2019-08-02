@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IHost } from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
+import { IDocumentService } from "@prague/protocol-definitions";
 
 export interface IWork {
     /**

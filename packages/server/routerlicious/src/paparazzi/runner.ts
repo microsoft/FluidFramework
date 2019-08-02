@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";

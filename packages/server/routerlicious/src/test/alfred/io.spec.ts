@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { KafkaOrdererFactory } from "@prague/kafka-orderer";
 import {
     IClientJoin,
     IDocumentMessage,
     ISequencedDocumentSystemMessage,
-    MessageType } from "@prague/container-definitions";
-import { KafkaOrdererFactory } from "@prague/kafka-orderer";
+    MessageType,
+} from "@prague/protocol-definitions";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";

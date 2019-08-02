@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorageService, ISnapshotTree } from "@prague/container-definitions";
+import { IDocumentStorageService, ISnapshotTree } from "@prague/protocol-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
 
 export class ChannelStorageService implements IObjectStorageService {

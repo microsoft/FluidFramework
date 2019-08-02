@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalMessage } from "@prague/container-definitions";
+import { ISignalMessage } from "@prague/protocol-definitions";
 
 /**
  * An envelope wraps the contents with the intended target

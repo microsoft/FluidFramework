@@ -5,8 +5,7 @@
 
 import { EventEmitter } from "events";
 import { IClient } from "./clients";
-import { IServiceConfiguration } from "./deltas";
-import { IResolvedUrl } from "./loader";
+import { IServiceConfiguration } from "./config";
 import {
     IContentMessage,
     IDocumentMessage,
@@ -15,6 +14,7 @@ import {
 } from "./protocol";
 import { ISummaryHandle, ISummaryTree } from "./summary";
 import { ITokenProvider } from "./tokens";
+import { IResolvedUrl } from "./urlResolver";
 
 export interface IDocumentAttributes {
     /**

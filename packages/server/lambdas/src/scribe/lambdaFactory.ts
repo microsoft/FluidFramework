@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentAttributes } from "@prague/container-definitions";
 import { ProtocolOpHandler } from "@prague/container-loader";
+import { IDocumentAttributes } from "@prague/protocol-definitions";
 import { GitManager, Historian } from "@prague/services-client";
 import {
     ICollection,

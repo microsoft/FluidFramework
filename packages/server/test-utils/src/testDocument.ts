@@ -9,11 +9,13 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+} from "@prague/container-definitions";
+import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as utils from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

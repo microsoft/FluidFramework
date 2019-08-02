@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { IDeltaManager } from "@prague/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

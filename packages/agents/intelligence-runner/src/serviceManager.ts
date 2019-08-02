@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";

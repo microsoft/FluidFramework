@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ISequencedClient } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
-import { ISequencedClient } from "./clients";
 
 /**
  * Proposal to set the given key/value pair.

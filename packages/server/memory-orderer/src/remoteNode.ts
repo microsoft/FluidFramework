@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";

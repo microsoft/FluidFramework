@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as git from "@prague/gitresources";
 import {
     IClient,
     IClientJoin,
     ITokenClaims,
-} from "@prague/container-definitions";
-import * as git from "@prague/gitresources";
+} from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";

@@ -10,16 +10,18 @@ import {
 import {
     ConnectionState,
     IDeltaManager,
-    IDocumentMessage,
     IGenericBlob,
     ILoader,
     IQuorum,
-    ISequencedDocumentMessage,
     ITelemetryLogger,
-    ITreeEntry,
-    MessageType,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
+import {
+    IDocumentMessage,
+    ISequencedDocumentMessage,
+    ITreeEntry,
+    MessageType,
+} from "@prague/protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,

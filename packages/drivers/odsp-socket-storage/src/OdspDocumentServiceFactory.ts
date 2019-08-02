@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import { IDocumentService, IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
 import { parse } from "url";
 import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";

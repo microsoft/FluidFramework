@@ -9,19 +9,21 @@ import {
 } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
-    FileMode,
     IBlobManager,
     IDeltaManager,
-    IDocumentMessage,
     IGenericBlob,
     ILoader,
     IQuorum,
-    ISequencedDocumentMessage,
     ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    FileMode,
+    IDocumentMessage,
+    ISequencedDocumentMessage,
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IAttachMessage,
     IChannel,

@@ -8,7 +8,7 @@ import {
     IDocumentStorageService,
     ISnapshotTree,
     IVersion,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

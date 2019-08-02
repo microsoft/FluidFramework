@@ -5,8 +5,9 @@
 
 import { IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { IBlobManager, IDocumentStorageService, IGenericBlob } from "@prague/container-definitions";
+import { IBlobManager, IGenericBlob } from "@prague/container-definitions";
 import { MapExtension } from "@prague/map";
+import { IDocumentStorageService } from "@prague/protocol-definitions";
 import { IComponentContext } from "@prague/runtime-definitions";
 
 // const blobMetaData = this.blobManager!.getBlobMetadata();

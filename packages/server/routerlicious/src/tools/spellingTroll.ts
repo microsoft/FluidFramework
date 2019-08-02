@@ -5,7 +5,7 @@
 
 // tslint:disable
 import * as API from "@prague/client-api";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";

@@ -9,7 +9,7 @@ import {
     IErrorTrackingService,
     IFluidResolvedUrl,
     IResolvedUrl,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { ICredentials, IGitCache } from "@prague/services-client";
 import { parse } from "url";
 import { DocumentService } from "./documentService";

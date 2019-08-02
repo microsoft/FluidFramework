@@ -20,7 +20,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/container-definitions": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/replay-socket-storage": "^0.8.0",
     "@prague/utils": "^0.8.0",
     "debug": "^4.1.1"

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/container-definitions";
+import * as api from "@prague/protocol-definitions";
 import { IDatabaseManager } from "@prague/services-core";
 
 export class TestDeltaStorageService implements api.IDocumentDeltaStorageService {

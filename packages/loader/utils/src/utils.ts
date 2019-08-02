@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState, MessageType } from "@prague/container-definitions";
+import { ConnectionState } from "@prague/container-definitions";
+import { MessageType } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 
 /**

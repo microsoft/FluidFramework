@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
+import * as api from "@prague/protocol-definitions";
 
 /**
  * Git cache data

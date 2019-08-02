@@ -11,7 +11,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as messages from "@prague/socket-storage-shared";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

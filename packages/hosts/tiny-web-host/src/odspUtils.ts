@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
+import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 
 const spoTenants = new Map<string, string>([
     ["spo", "microsoft-my.sharepoint.com"],

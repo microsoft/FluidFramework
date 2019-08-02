@@ -5,19 +5,19 @@
 
 import { RoundTrip } from "@prague/client-api";
 import {
-    IClient,
-    IContentMessage,
-    IDocumentMessage,
-    ISignalMessage,
-    ITokenClaims,
-} from "@prague/container-definitions";
-import {
     LocalNodeFactory,
     LocalOrderer,
     LocalOrderManager,
     NodeManager,
     ReservationManager,
 } from "@prague/memory-orderer";
+import {
+    IClient,
+    IContentMessage,
+    IDocumentMessage,
+    ISignalMessage,
+    ITokenClaims,
+} from "@prague/protocol-definitions";
 import {
     ICollection,
     IDatabaseManager,

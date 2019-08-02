@@ -4,15 +4,22 @@
  */
 
 import { IComponent, IComponentConfiguration, IRequest, IResponse } from "@prague/component-core-interfaces";
+import {
+    IDocumentMessage,
+    IDocumentStorageService,
+    ISequencedDocumentMessage,
+    IServiceConfiguration,
+    ISnapshotTree,
+    ISummaryTree,
+    ITree,
+    MessageType,
+} from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { IBlobManager } from "./blobs";
 import { IQuorum } from "./consensus";
-import { IDeltaManager, IServiceConfiguration } from "./deltas";
+import { IDeltaManager } from "./deltas";
 import { ICodeLoader, ILoader } from "./loader";
 import { ITelemetryLogger } from "./logger";
-import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "./protocol";
-import { IDocumentStorageService, ISnapshotTree, ITree } from "./storage";
-import { ISummaryTree } from "./summary";
 
 /**
  * Person definition in a npm script

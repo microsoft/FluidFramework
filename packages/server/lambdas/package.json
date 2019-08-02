@@ -38,9 +38,9 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.8.0",
     "@prague/container-loader": "^0.8.0",
     "@prague/gitresources": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",
     "@prague/services": "^0.8.0",
     "@prague/services-client": "^0.8.0",

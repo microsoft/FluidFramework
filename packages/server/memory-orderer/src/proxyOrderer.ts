@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient } from "@prague/container-definitions";
+import { IClient } from "@prague/protocol-definitions";
 import { IOrderer, IOrdererConnection, IWebSocket } from "@prague/services-core";
 
 export interface IOrdererConnectionFactory {

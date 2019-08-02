@@ -7,10 +7,10 @@ import {
     IComponent,
     IComponentHTMLRender,
 } from "@prague/component-core-interfaces";
-import { IResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";

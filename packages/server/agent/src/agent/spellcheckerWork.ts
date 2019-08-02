@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentServiceFactory,
-    IHost,
-} from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
+import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
 import {SpellChecker} from "@prague/spellchecker";
 import { BaseWork } from "./baseWork";

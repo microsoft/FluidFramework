@@ -9,7 +9,7 @@ import {
     ISequencedDocumentMessage,
     ISnapshotTree,
     IVersion,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,

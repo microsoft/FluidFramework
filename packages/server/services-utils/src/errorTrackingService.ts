@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorTrackingService } from "@prague/container-definitions";
+import { IErrorTrackingService } from "@prague/protocol-definitions";
 import * as raven from "raven";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {

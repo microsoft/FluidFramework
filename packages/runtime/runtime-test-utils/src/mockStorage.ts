@@ -6,7 +6,7 @@
 import {
     IBlob,
     ITree,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";

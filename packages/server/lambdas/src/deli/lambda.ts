@@ -11,7 +11,7 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     extractBoxcar,
     ICollection,

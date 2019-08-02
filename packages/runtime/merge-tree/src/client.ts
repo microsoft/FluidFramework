@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, ITelemetryLogger, MessageType } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";

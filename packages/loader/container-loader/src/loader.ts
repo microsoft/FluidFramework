@@ -9,15 +9,17 @@ import {
 } from "@prague/component-core-interfaces";
 import {
     ICodeLoader,
+    IHost,
+    ILoader,
+    ITelemetryBaseLogger,
+} from "@prague/container-definitions";
+import {
     IDocumentService,
     IDocumentServiceFactory,
     IFluidResolvedUrl,
-    IHost,
-    ILoader,
     IResolvedUrl,
     ISequencedDocumentMessage,
-    ITelemetryBaseLogger,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 // tslint:disable-next-line:no-var-requires

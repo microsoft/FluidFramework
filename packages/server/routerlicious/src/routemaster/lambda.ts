@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { SequencedLambda } from "@prague/lambdas";
+import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { DocumentManager } from "./documentManager";
 

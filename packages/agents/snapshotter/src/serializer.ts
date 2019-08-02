@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
+import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 
 /**

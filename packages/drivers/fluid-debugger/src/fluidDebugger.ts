@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory } from "@prague/container-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
 import { DebugReplayController } from "./fluidDebuggerController";
 import { DebuggerUI } from "./fluidDebuggerUI";

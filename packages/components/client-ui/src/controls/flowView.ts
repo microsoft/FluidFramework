@@ -16,11 +16,13 @@ import {
 } from "@prague/component-core-interfaces";
 import {
     IGenericBlob,
-    ISequencedDocumentMessage,
-    IUser,
 } from "@prague/container-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import {
+    ISequencedDocumentMessage,
+    IUser,
+} from "@prague/protocol-definitions";
 import {
     ComponentCursorDirection, IComponentCollection, IComponentCursor, IComponentKeyHandlers,
     IComponentLayout, IInboundSignalMessage,

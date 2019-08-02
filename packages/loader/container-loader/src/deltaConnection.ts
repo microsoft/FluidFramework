@@ -4,8 +4,10 @@
  */
 
 import {
-    IClient,
     IConnectionDetails,
+} from "@prague/container-definitions";
+import {
+    IClient,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -13,7 +15,7 @@ import {
     INack,
     ISequencedDocumentMessage,
     ISignalMessage,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 
 export class DeltaConnection extends EventEmitter {

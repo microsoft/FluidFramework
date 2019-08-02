@@ -4,11 +4,11 @@
  */
 
 import { IComponent } from "@prague/component-core-interfaces";
+import { ConnectionState } from "@prague/container-definitions";
 import {
-    ConnectionState,
     ISequencedDocumentMessage,
     ITree,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 
 declare module "@prague/container-definitions" {
     interface IComponent {

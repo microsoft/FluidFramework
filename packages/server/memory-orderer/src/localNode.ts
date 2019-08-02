@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
+import { IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,

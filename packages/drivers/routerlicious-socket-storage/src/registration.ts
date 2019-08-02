@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IErrorTrackingService } from "@prague/container-definitions";
+import { IDocumentService, IErrorTrackingService } from "@prague/protocol-definitions";
 import { IGitCache } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { DefaultErrorTracking } from "./errorTracking";

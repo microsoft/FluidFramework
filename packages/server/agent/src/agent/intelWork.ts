@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentServiceFactory,
-    IHost,
-} from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import { ISharedMap, SharedMap } from "@prague/map";
+import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
 import { BaseWork} from "./baseWork";
 import { IWork} from "./definitions";

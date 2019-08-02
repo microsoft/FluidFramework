@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ITree, TreeEntry } from "@prague/container-definitions";
+import { IBlob, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
 
 export class LocalChannelStorageService implements IObjectStorageService {

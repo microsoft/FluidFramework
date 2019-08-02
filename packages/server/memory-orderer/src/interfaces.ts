@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/container-definitions";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import { IOrderer } from "@prague/services-core";
 import { EventEmitter } from "events";
 

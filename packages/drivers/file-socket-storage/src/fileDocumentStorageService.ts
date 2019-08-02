@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/container-definitions";
+import * as api from "@prague/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@prague/replay-socket-storage";
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";

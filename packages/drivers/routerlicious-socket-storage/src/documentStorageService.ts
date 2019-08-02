@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as resources from "@prague/gitresources";
 import {
     FileMode,
     ICreateBlobResponse,
@@ -14,8 +15,7 @@ import {
     IVersion,
     SummaryObject,
     SummaryType,
-} from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
+} from "@prague/protocol-definitions";
 import * as gitStorage from "@prague/services-client";
 import { buildHierarchy } from "@prague/utils";
 

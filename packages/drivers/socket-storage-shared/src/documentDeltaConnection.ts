@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

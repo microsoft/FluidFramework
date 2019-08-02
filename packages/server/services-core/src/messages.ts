@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IDocumentMessage, INack, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";

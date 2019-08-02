@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ConnectionState } from "@prague/container-definitions";
 import {
-    ConnectionState,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
     ITree,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IChannel,
     IChannelAttributes,
@@ -116,8 +116,8 @@ export class RemoteChannelContext implements IChannelContext {
         // compare snapshot version to collaborative object version
         if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== extension.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${type}, ` +
-                    `Snapshot format version: ${snapshotFormatVersion}, ` +
-                    `client format version: ${extension.snapshotFormatVersion}`);
+                `Snapshot format version: ${snapshotFormatVersion}, ` +
+                `client format version: ${extension.snapshotFormatVersion}`);
         }
 
         const services = createServiceEndpoints(

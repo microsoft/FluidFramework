@@ -29,9 +29,8 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/container-definitions": "^0.8.0",
     "@prague/map": "^0.8.0",
-    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",    "@prague/runtime-definitions": "^0.8.0",
     "@prague/shared-object-common": "^0.8.0",
     "@types/debug": "^0.0.31",
     "@types/uuid": "^3.4.4",

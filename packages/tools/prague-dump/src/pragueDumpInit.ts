@@ -4,7 +4,6 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import { IDocumentService } from "@prague/container-definitions";
 import * as odsp from "@prague/odsp-socket-storage";
 import {
     getDriveItemByFileId,
@@ -13,6 +12,7 @@ import {
     IODSPTokens,
     postTokenRequest,
 } from "@prague/odsp-utils";
+import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
 
 import * as child_process from "child_process";

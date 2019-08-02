@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IUser } from "@prague/container-definitions";
 import { IClientConfig, IODSPTokens } from "@prague/odsp-utils";
+import { IFluidResolvedUrl, IUser } from "@prague/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@prague/services-core";
 import { parse } from "url";
 import { getSpoServer, isSpoTenant, spoJoinSession } from "./odspUtils";

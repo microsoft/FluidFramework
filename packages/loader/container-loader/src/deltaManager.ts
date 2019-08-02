@@ -4,23 +4,25 @@
  */
 
 import {
-    Browser,
-    IClient,
     IConnectionDetails,
-    IContentMessage,
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    Browser,
+    IClient,
+    IContentMessage,
     IDocumentDeltaStorageService,
     IDocumentMessage,
     IDocumentService,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISignalMessage,
-    ITelemetryLogger,
     ITrace,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { Deferred, isSystemType, PerformanceEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:no-object-literal-type-assertion
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { MergeTreeDeltaType } from "./ops";
 import { TestClient } from "./test/testClient";
 

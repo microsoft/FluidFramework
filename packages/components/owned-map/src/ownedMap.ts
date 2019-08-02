@@ -4,13 +4,13 @@
  */
 
 /* tslint:disable:no-unsafe-any*/
+import { ISharedMap, IValueType, SharedMap } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     TreeEntry,
-} from "@prague/container-definitions";
-import { ISharedMap, IValueType, SharedMap } from "@prague/map";
+} from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { debug } from "./debug";
 import { OwnedMapExtension } from "./extension";

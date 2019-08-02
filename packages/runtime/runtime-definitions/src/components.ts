@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
     IComponent,
     IComponentRouter,
@@ -13,18 +12,21 @@ import {
     ConnectionState,
     IBlobManager,
     IDeltaManager,
-    IDocumentMessage,
-    IDocumentStorageService,
     IGenericBlob,
     ILoader,
     IQuorum,
     IRuntime,
+    ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    IDocumentMessage,
+    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISnapshotTree,
-    ITelemetryLogger,
     ITreeEntry,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
+
 import { EventEmitter } from "events";
 import { IChannel } from "./channel";
 

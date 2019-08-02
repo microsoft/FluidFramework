@@ -7,7 +7,7 @@ import {
     IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
-    MessageType } from "@prague/container-definitions";
+    MessageType } from "@prague/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,

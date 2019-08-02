@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.8.0",
-    "@prague/container-definitions": "^0.8.0",
     "@prague/merge-tree": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/sequence": "^0.8.0",
     "debug": "^4.1.1",
     "request": "^2.88.0"

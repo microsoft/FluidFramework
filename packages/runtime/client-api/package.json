@@ -50,6 +50,7 @@
     "@prague/gitresources": "^0.8.0",
     "@prague/map": "^0.8.0",
     "@prague/merge-tree": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",
     "@prague/sequence": "^0.8.0",
     "@prague/shared-object-common": "^0.8.0",

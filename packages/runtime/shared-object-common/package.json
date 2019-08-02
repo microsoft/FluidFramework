@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@prague/container-definitions": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",
     "@prague/utils": "^0.8.0",
     "@types/debug": "^0.0.31",

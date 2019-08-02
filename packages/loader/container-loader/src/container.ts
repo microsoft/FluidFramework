@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import {
     IComponentQueryableLegacy,
     IRequest,
@@ -10,38 +9,40 @@ import {
 } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
-    FileMode,
-    IClient,
     ICodeLoader,
     ICommittedProposal,
     IConnectionDetails,
     IContainer,
     IDeltaManager,
-    IDocumentAttributes,
-    IDocumentMessage,
-    IDocumentService,
-    IDocumentStorageService,
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
     IQuorum,
     IRuntimeFactory,
+    ISequencedProposal,
+    ITelemetryBaseLogger,
+    ITelemetryLogger,
+    TelemetryEventRaisedOnContainer,
+} from "@prague/container-definitions";
+import {
+    FileMode,
+    IClient,
+    IDocumentAttributes,
+    IDocumentMessage,
+    IDocumentService,
+    IDocumentStorageService,
     ISequencedClient,
     ISequencedDocumentMessage,
-    ISequencedProposal,
     IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
-    ITelemetryBaseLogger,
-    ITelemetryLogger,
     ITree,
     ITreeEntry,
     IVersion,
     MessageType,
-    TelemetryEventRaisedOnContainer,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     buildHierarchy,
     ChildLogger,
@@ -213,7 +214,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "prague:telemetry",
-            {documentId: this.id},
+            { documentId: this.id },
             logger);
 
         // Prefix all events in this file with container-loader
@@ -221,7 +222,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this.on("error", (error: any) => {
             // tslint:disable-next-line:no-unsafe-any
-            this.logger.sendErrorEvent({eventName: "onError", [TelemetryEventRaisedOnContainer]: true}, error);
+            this.logger.sendErrorEvent({ eventName: "onError", [TelemetryEventRaisedOnContainer]: true }, error);
         });
     }
 
@@ -274,7 +275,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // Only snapshot once a code quorum has been established
         if (!this.protocolHandler!.quorum.has("code") && !this.protocolHandler!.quorum.has("code2")) {
-            this.logger.sendTelemetryEvent({eventName: "SkipSnapshot"});
+            this.logger.sendTelemetryEvent({ eventName: "SkipSnapshot" });
             return;
         }
 
@@ -287,7 +288,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             await this.snapshotCore(tagMessage, generateFullTreeNoOptimizations);
 
         } catch (ex) {
-            this.logger.logException({eventName: "SnapshotExceptionError"}, ex);
+            this.logger.logException({ eventName: "SnapshotExceptionError" }, ex);
             throw ex;
 
         } finally {
@@ -393,7 +394,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         try {
             return await this.storageService!.getVersions(version, 1);
         } catch (error) {
-            this.logger.logException({eventName: "GetVersionsFailed"}, error);
+            this.logger.logException({ eventName: "GetVersionsFailed" }, error);
             return [];
         }
     }
@@ -413,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const connect = connectionValues.indexOf("open") !== -1;
         const pause = connectionValues.indexOf("pause") !== -1;
 
-        const perfEvent = PerformanceEvent.start(this.logger, {eventName: "ContextLoadProgress", stage: "start"});
+        const perfEvent = PerformanceEvent.start(this.logger, { eventName: "ContextLoadProgress", stage: "start" });
 
         const storageP = this.service.connectToStorage().then((storage) => {
             this.storageService = new PrefetchDocumentStorageService(storage);
@@ -491,7 +492,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.blobManager = blobManager;
                 this.pkg = chaincode.pkg;
 
-                perfEvent.reportProgress({stage: "BeforeContextLoad"});
+                perfEvent.reportProgress({ stage: "BeforeContextLoad" });
 
                 // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
                 // the initial details
@@ -505,7 +506,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this._parentBranch = details!.parentBranch;
                     this._serviceConfiguration = details!.serviceConfiguration;
 
-                    perfEvent.reportProgress({stage: "AfterSocketConnect"});
+                    perfEvent.reportProgress({ stage: "AfterSocketConnect" });
                 }
 
                 // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
@@ -882,7 +883,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private submitMessage(type: MessageType, contents: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
-            this.logger.sendErrorEvent({eventName: "SubmitMessageWithNoConnection", type});
+            this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
         }
 

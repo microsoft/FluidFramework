@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ConnectionState } from "@prague/container-definitions";
 import {
-    ConnectionState,
     FileMode,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";

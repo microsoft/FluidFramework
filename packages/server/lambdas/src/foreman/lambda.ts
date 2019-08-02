@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentSystemMessage, MessageType } from "@prague/container-definitions";
+import { ISequencedDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
 import { IHelpMessage, IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import { RateLimiter } from "@prague/utils";

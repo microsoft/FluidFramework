@@ -13,22 +13,24 @@ import {
     ICodeLoader,
     IContainerContext,
     IDeltaManager,
-    IDocumentAttributes,
-    IDocumentMessage,
-    IDocumentStorageService,
     ILoader,
     IQuorum,
     IRuntime,
     IRuntimeFactory,
+    ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    IDocumentAttributes,
+    IDocumentMessage,
+    IDocumentStorageService,
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
     ISummaryTree,
-    ITelemetryLogger,
     ITree,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { raiseConnectedEvent } from "@prague/utils";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";

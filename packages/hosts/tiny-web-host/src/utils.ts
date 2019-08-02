@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@prague/container-definitions";
+import { ITokenClaims } from "@prague/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.

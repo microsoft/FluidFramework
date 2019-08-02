@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
+import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
 import {
     FileMode,
     IDocumentAttributes,
@@ -12,9 +14,7 @@ import {
     ITreeEntry,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
-import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
-import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
+} from "@prague/protocol-definitions";
 import { IGitManager } from "@prague/services-client";
 import {
     extractBoxcar,

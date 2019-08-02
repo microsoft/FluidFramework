@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import * as api from "@prague/protocol-definitions";
 import { buildHierarchy } from "@prague/utils";
 import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";

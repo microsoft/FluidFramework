@@ -63,6 +63,7 @@
     "@prague/merge-tree": "^0.8.0",
     "@prague/odsp-socket-storage": "^0.8.0",
     "@prague/odsp-utils": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/replay-socket-storage": "^0.8.0",
     "@prague/routerlicious-host": "^0.8.0",
     "@prague/routerlicious-socket-storage": "^0.8.0",

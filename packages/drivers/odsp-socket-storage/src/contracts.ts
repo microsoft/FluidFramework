@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import * as api from "@prague/protocol-definitions";
 
 /**
  * Interface for creating/getting/writing blobs to the underlying storage.

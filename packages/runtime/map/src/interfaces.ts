@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { ISharedObject } from "@prague/shared-object-common";
 
 export interface ISet<T> {

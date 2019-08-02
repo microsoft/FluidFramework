@@ -10,7 +10,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 
 /**
  * Message sent to connect to the given document

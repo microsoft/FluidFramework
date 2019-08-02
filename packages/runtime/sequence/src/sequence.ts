@@ -4,17 +4,17 @@
  */
 
 import {
-    FileMode,
-    ISequencedDocumentMessage,
-    ITree,
-    TreeEntry,
-} from "@prague/container-definitions";
-import {
     IValueChanged,
     IValueType,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
+import {
+    FileMode,
+    ISequencedDocumentMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,

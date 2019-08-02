@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { ContainerRuntime } from "./containerRuntime";

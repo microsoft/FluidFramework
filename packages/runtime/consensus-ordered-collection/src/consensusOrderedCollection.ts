@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";

@@ -14,12 +14,14 @@ var packageMapping = {
   "consensus-register-collection": "dds",
   "shared-object-common": "dds",
 
+  "component-core-interfaces": "framework",
   "aqueduct": "framework",
   "framework-definitions": "framework",
 
   "container-definitions": "loader",
   "container-loader": "loader",
   "loader-web": "loader",
+  "protocol-definitions": "loader",
 
   "routerlicious-socket-storage": "driver",
   "socket-storage-shared": "driver",

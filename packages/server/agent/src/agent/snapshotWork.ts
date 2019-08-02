@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory, IHost, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
+import { IDocumentServiceFactory, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { BaseWork} from "./baseWork";
 import { IWork } from "./definitions";
 import { Serializer } from "./serializer";

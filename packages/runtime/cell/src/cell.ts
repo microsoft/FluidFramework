@@ -9,7 +9,7 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,

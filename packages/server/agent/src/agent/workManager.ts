@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
+import { ICodeLoader, IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
+import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { AgentLoader, IAgent } from "./agentLoader";

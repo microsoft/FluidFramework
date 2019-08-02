@@ -5,12 +5,14 @@
 
 import {
     ConnectionState,
-    ISequencedDocumentMessage,
     ITelemetryErrorEvent,
     ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IComponentRuntime,
     IObjectStorageService,

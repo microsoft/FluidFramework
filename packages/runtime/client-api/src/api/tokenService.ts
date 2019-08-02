@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ITokenService } from "@prague/container-definitions";
+import { ITokenClaims, ITokenService } from "@prague/protocol-definitions";
 import * as jwtDecode from "jwt-decode";
 
 export class TokenService implements ITokenService {

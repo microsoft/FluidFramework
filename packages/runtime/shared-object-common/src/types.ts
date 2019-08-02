@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITree } from "@prague/container-definitions";
+import { ITree } from "@prague/protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@prague/runtime-definitions";
 
 declare module "@prague/container-definitions" {

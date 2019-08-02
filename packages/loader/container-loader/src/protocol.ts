@@ -4,19 +4,21 @@
  */
 
 import {
-    IClientJoin,
     ICommittedProposal,
-    IDocumentAttributes,
     IProposal,
+    ISequencedProposal,
+    ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    IClientJoin,
+    IDocumentAttributes,
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
-    ISequencedProposal,
     ISummaryTree,
-    ITelemetryLogger,
     MessageType,
     SummaryType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { debug } from "./debug";
 import { Quorum } from "./quorum";
 

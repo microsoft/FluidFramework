@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
 import { IGitCache } from "@prague/services-client";
 import {
     ICollection,

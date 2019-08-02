@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@prague/component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@prague/container-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@prague/protocol-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 
 export class OdspUrlResolver implements IUrlResolver {

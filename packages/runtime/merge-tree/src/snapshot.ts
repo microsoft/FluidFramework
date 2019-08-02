@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FileMode, ITelemetryLogger, ITree, TreeEntry } from "@prague/container-definitions";
+import { ITelemetryLogger } from "@prague/container-definitions";
+import { FileMode, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
 import { ChildLogger } from "@prague/utils";
 import * as MergeTree from "./mergeTree";

@@ -42,6 +42,7 @@
     "@prague/component-core-interfaces": "^0.8.0",
     "@prague/container-definitions": "^0.8.0",
     "@prague/gitresources": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",
     "@prague/shared-object-common": "^0.8.0",
     "@prague/utils": "^0.8.0",

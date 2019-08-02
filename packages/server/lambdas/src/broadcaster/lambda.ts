@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { INack, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { INack, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import {
     extractBoxcar,
     IContext,

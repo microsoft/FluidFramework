@@ -4,10 +4,8 @@
  */
 
 import { start } from "@prague/base-host";
-import {
-    IResolvedUrl,
-} from "@prague/container-definitions";
 import { IResolvedPackage } from "@prague/loader-web";
+import { IResolvedUrl } from "@prague/protocol-definitions";
 import { IGitCache } from "@prague/services-client";
 
 export function initialize(

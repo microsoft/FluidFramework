@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeLoader, IDocumentServiceFactory, IHost } from "@prague/container-definitions";
+import { ICodeLoader, IHost } from "@prague/container-definitions";
+import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { IDocumentTaskInfo, IWorkManager } from "./definitions";

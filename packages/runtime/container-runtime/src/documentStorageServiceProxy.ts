@@ -11,7 +11,7 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 
 /**
  * A Proxy DocumentStorageService that allows you to flush the read with a blobCache

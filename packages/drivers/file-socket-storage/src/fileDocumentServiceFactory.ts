@@ -9,7 +9,7 @@ import {
     IDocumentServiceFactory,
     IDocumentStorageService,
     IResolvedUrl,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 

@@ -11,7 +11,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
 import { BatchManager } from "@prague/utils";

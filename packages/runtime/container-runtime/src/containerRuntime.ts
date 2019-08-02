@@ -9,35 +9,37 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 import {
-    Browser,
     ConnectionState,
-    FileMode,
-    IBlob,
     IBlobManager,
-    IChunkedOp,
     IComponentTokenProvider,
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
-    IDocumentMessage,
-    IDocumentStorageService,
     // IMessageScheduler,
     ILoader,
     IQuorum,
+    ITelemetryLogger,
+} from "@prague/container-definitions";
+import {
+    Browser,
+    FileMode,
+    IBlob,
+    IChunkedOp,
+    IDocumentMessage,
+    IDocumentStorageService,
     ISequencedDocumentMessage,
     ISignalMessage,
     ISnapshotTree,
     ISummaryBlob,
     ISummaryConfiguration,
     ISummaryTree,
-    ITelemetryLogger,
     ITree,
     MessageType,
     SummaryObject,
     SummaryTree,
     SummaryType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     FlushMode,
     IAttachMessage,
@@ -387,7 +389,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         if (request.url === "/_scheduler") {
             const component = await this.getComponentRuntime("_scheduler", true);
-            return component.request({url: ""});
+            return component.request({ url: "" });
         }
 
         // If no app specified handler has been specified then this is a 404
@@ -998,7 +1000,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // (as callers should have logic to retain messages in disconnected state and resubmit on connection)
         // It's possible to remove this check -  we would need to skip deltaManager.maxMessageSize call below.
         if (!this.connected) {
-            this.logger.sendErrorEvent({eventName: "submitInDisconnectedState", type});
+            this.logger.sendErrorEvent({ eventName: "submitInDisconnectedState", type });
         }
 
         const serializedContent = JSON.stringify(content);
@@ -1155,7 +1157,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private runTaskAnalyzer() {
         // Analyze the current state and ask for local and remote help separately.
         if (this.clientId === undefined) {
-            this.logger.sendErrorEvent({eventName: "runTasksAnalyzerWithoutClientId"});
+            this.logger.sendErrorEvent({ eventName: "runTasksAnalyzerWithoutClientId" });
             return;
         }
 

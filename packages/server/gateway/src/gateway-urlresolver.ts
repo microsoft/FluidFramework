@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/container-definitions";
 import { IClientConfig } from "@prague/odsp-utils";
+import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
 import { Provider } from "nconf";

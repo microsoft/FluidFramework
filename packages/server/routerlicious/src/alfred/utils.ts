@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IServiceConfiguration, IUser } from "@prague/container-definitions";
+import { IServiceConfiguration, IUser } from "@prague/protocol-definitions";
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
 import { generateToken } from "@prague/services-core";
 import * as _ from "lodash";

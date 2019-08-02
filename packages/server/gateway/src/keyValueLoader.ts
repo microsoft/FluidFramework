@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IFluidResolvedUrl } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap } from "@prague/map";
+import { IClient, IFluidResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { NodeCodeLoader } from "@prague/services";

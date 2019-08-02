@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContentMessage } from "@prague/container-definitions";
+import { IContentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

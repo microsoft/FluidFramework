@@ -8,7 +8,7 @@ import {
     IDocumentService,
     ISequencedDocumentMessage,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
 import * as fs from "fs";
 import * as util from "util";

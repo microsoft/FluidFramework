@@ -12,7 +12,7 @@ import {
     IDocumentSystemMessage,
     ISignalMessage,
     ITokenClaims,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { generateClientId, getRandomInt } from "@prague/services-utils";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";

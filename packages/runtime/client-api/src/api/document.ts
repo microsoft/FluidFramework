@@ -7,16 +7,18 @@ import * as cell from "@prague/cell";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
     IDeltaManager,
-    IDocumentMessage,
-    IDocumentServiceFactory,
     IGenericBlob,
     IHost,
-    ISequencedClient,
-    ISequencedDocumentMessage,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IContainerRuntimeOptions } from "@prague/container-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
+import {
+    IDocumentMessage,
+    IDocumentServiceFactory,
+    ISequencedClient,
+    ISequencedDocumentMessage,
+} from "@prague/protocol-definitions";
 import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";

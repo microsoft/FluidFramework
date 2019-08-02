@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITree } from "@prague/container-definitions";
 import { TextSegment } from "@prague/merge-tree";
+import { ITree } from "@prague/protocol-definitions";
 import { ISharedObjectServices } from "@prague/runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@prague/runtime-test-utils";
 import * as assert from "assert";

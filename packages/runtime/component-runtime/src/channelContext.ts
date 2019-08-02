@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ConnectionState } from "@prague/container-definitions";
 import {
-    ConnectionState,
     FileMode,
     IDocumentStorageService,
     ISequencedDocumentMessage,
@@ -12,7 +12,7 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { IChannel, IChannelAttributes, IEnvelope } from "@prague/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";

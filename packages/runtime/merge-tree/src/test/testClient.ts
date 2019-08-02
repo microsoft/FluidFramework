@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@prague/container-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
 import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";

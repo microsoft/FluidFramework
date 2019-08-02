@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Browser, ISequencedClient } from "@prague/container-definitions";
+import { Browser, ISequencedClient } from "@prague/protocol-definitions";
 
 export interface IHelpTasks {
     robot: string[];

@@ -9,7 +9,7 @@ import {
     ITree,
     MessageType,
     TreeEntry,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
 import { posix } from "path";

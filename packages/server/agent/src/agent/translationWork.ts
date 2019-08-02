@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IDocumentServiceFactory,
-    IHost,
-} from "@prague/container-definitions";
+import { IHost } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
+import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
 import { Translator } from "@prague/translator";
 import { Provider } from "nconf";

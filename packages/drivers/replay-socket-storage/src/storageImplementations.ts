@@ -14,7 +14,7 @@ import {
     ISnapshotTree,
     ITree,
     IVersion,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import { buildHierarchy, flatten } from "@prague/utils";
 import * as assert from "assert";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";

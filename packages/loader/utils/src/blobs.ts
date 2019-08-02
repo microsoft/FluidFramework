@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as git from "@prague/gitresources";
 import {
     FileMode,
     IBlob,
@@ -11,8 +12,7 @@ import {
     ITree,
     ITreeEntry,
     TreeEntry,
-} from "@prague/container-definitions";
-import * as git from "@prague/gitresources";
+} from "@prague/protocol-definitions";
 import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports
 import * as sha1 from "sha.js/sha1";

@@ -57,6 +57,7 @@
   "dependencies": {
     "@prague/container-definitions": "^0.8.0",
     "@prague/gitresources": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11",
     "performance-now": "^2.1.0",

@@ -3,15 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IClient,
-    IClientJoin,
-    IDocumentAttributes,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    IServiceConfiguration,
-    MessageType,
-} from "@prague/container-definitions";
 import { ProtocolOpHandler } from "@prague/container-loader";
 import {
     ActivityCheckingTimeout,
@@ -23,6 +14,15 @@ import {
     ScribeLambda,
     ScriptoriumLambda,
 } from "@prague/lambdas";
+import {
+    IClient,
+    IClientJoin,
+    IDocumentAttributes,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    IServiceConfiguration,
+    MessageType,
+} from "@prague/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,

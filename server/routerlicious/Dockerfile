@@ -75,6 +75,7 @@ COPY packages/loader/container-definitions/package*.json packages/loader/contain
 COPY packages/loader/container-loader/package*.json packages/loader/container-loader/
 COPY packages/loader/gitresources/package*.json packages/loader/gitresources/
 COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
+COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/

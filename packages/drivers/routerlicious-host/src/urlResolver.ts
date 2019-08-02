@@ -9,7 +9,7 @@ import {
 import {
     IResolvedUrl,
     IUrlResolver,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import Axios from "axios";
 
 export class ContainerUrlResolver implements IUrlResolver {

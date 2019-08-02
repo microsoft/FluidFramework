@@ -4,7 +4,7 @@
  */
 
 // tslint:disable
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { ClientSeq, compareNumbers, clientSeqComparer, IncrementalMapState, ISegment, MergeTree, IncrementalExecOp } from "../mergeTree";
 import * as Collections from "../collections";
 import * as Properties from "../properties";

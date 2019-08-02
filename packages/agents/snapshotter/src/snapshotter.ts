@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { Serializer } from "./serializer";
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.

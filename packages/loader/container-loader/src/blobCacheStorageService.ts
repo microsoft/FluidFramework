@@ -11,7 +11,7 @@ import {
     ISummaryTree,
     ITree,
     IVersion,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 
 /**
  * IDocumentStorageService adapter with pre-cached blobs.

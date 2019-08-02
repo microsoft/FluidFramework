@@ -4,7 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
-import { MessageType } from "@prague/container-definitions";
+import { MessageType } from "@prague/protocol-definitions";
 import { SharedString } from "@prague/sequence";
 import * as assert from "assert";
 import {

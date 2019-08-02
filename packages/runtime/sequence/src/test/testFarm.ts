@@ -13,7 +13,7 @@ import * as random from "random-js";
 import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp, MergeTreeTextHelper } from "@prague/merge-tree";
 
 function clock() {

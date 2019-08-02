@@ -6,14 +6,16 @@
 import { IRequest } from "@prague/component-core-interfaces";
 import {
     ICodeLoader,
+} from "@prague/container-definitions";
+import { Container, Loader } from "@prague/container-loader";
+import { WebLoader } from "@prague/loader-web";
+import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,
-} from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
-import { WebLoader } from "@prague/loader-web";
+} from "@prague/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as jwt from "jsonwebtoken";
 import { debug } from "./debug";
@@ -26,10 +28,10 @@ const URL: Window["URL"] = typeof window === "undefined"
     // tslint:disable:no-require-imports
     ? require("url").URL
     : window.URL;
-    // tslint:enable:no-implicit-dependencies
-    // tslint:enable:no-var-requires
-    // tslint:enable:no-require-imports
-    // tslint:enable:no-unsafe-any
+// tslint:enable:no-implicit-dependencies
+// tslint:enable:no-var-requires
+// tslint:enable:no-require-imports
+// tslint:enable:no-unsafe-any
 
 class InsecureUrlResolver implements IUrlResolver {
     constructor(
@@ -166,8 +168,8 @@ export class DataStore {
             // tslint:disable-next-line:max-line-length
             `${this.ordererUrl.replace(/^[^:]+/, "prague")}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
-                // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
-                (path && path.charAt(0)) !== "/" ? "/" : ""
+            // Ensure '/' separator when concatenating 'baseUrl' and 'path'.
+            (path && path.charAt(0)) !== "/" ? "/" : ""
             }${path}`;
 
         debug(`resolving baseUrl = ${baseUrl}`);

@@ -17,9 +17,9 @@
   "author": "Microsoft",
   "license": "MIT",
   "dependencies": {
-    "@prague/container-definitions": "^0.8.0",
     "@prague/odsp-socket-storage": "^0.8.0",
     "@prague/odsp-utils": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/routerlicious-socket-storage": "^0.8.0",
     "@prague/runtime-definitions": "^0.8.0",
     "request": "^2.88.0"

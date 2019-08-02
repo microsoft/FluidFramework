@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/container-definitions";
+import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";

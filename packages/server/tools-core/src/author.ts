@@ -5,8 +5,8 @@
 
 import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as Sequence from "@prague/sequence";
 // tslint:disable-next-line:no-submodule-imports

@@ -5,8 +5,9 @@
 
 // The main app code
 import * as api from "@prague/client-api";
-import { IGenericBlob, MessageType } from "@prague/container-definitions";
+import { IGenericBlob } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
+import { MessageType } from "@prague/protocol-definitions";
 import { IColor } from "@prague/stream";
 import { blobUploadHandler } from "../blob";
 import * as ui from "../ui";

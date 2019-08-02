@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/container-definitions";
+import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
 import { ReplayController } from "./replayController";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";

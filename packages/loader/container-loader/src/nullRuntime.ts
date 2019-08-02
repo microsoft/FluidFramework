@@ -12,11 +12,13 @@ import {
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
+} from "@prague/container-definitions";
+import {
     ISequencedDocumentMessage,
     ISummaryTree,
     ITree,
     SummaryType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 
 class NullRuntime implements IRuntime {
     public ready: Promise<void> | undefined;

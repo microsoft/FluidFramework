@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState, IDocumentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { ConnectionState } from "@prague/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import {
     IDeltaConnection,
     IDeltaHandler,

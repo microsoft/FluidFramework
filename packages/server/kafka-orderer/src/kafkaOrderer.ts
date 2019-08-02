@@ -10,7 +10,7 @@ import {
     IDocumentSystemMessage,
     IServiceConfiguration,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import * as _ from "lodash";
 

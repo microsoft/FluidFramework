@@ -4,7 +4,8 @@
  */
 
 import { IComponent, IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext, ISequencedClient } from "@prague/container-definitions";
+import { IContainerContext } from "@prague/container-definitions";
+import { ISequencedClient } from "@prague/protocol-definitions";
 import { Heap, IComparer, IHeapNode } from "@prague/utils";
 import { EventEmitter } from "events";
 import { debug } from "./debug";

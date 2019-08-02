@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDocumentMessage, ISequencedDocumentMessage } from "@prague/container-definitions";
+import { IDeltaManager } from "@prague/container-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { ITestDeltaConnectionServer } from "./testDeltaConnectionServer";
 
 /**

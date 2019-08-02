@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ConnectionState } from "@prague/container-definitions";
 import {
-    ConnectionState,
     IDocumentStorageService,
     ISequencedDocumentMessage,
     ITree,
     MessageType,
-} from "@prague/container-definitions";
+} from "@prague/protocol-definitions";
 import {
     IChannel,
     IComponentContext,

@@ -34,7 +34,7 @@ export class SimpleModuleInstantiationFactory implements
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public get(name: string): Promise<IComponentFactory> | undefined  {
+    public get(name: string): Promise<IComponentFactory> | undefined {
         return this.registry.get(name);
     }
 

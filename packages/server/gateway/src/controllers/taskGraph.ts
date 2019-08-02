@@ -4,8 +4,8 @@
  */
 
 import * as api from "@prague/client-api";
-import { Browser, ISequencedClient } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
+import { Browser, ISequencedClient } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as d3 from "d3";
 import { registerDocumentServiceFactory } from "./utils";

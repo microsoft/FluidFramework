@@ -4,13 +4,13 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
+import * as git from "@prague/gitresources";
 import {
     IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     MessageType,
-} from "@prague/container-definitions";
-import * as git from "@prague/gitresources";
+} from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 
 export interface IMapSetOperation {

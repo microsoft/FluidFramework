@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
 
 export interface IPgMarker {

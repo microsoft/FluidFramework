@@ -5,14 +5,7 @@
 
 import * as API from "@prague/client-api";
 import {
-    IBlob,
-    IDocumentServiceFactory,
-    IFluidResolvedUrl,
-    IResolvedUrl,
-    ISequencedDocumentMessage,
     ITelemetryBaseEvent,
-    ITree,
-    TreeEntry,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import {
@@ -25,6 +18,15 @@ import {
     Replayer,
     ReplayFileDeltaConnection,
 } from "@prague/file-socket-storage";
+import {
+    IBlob,
+    IDocumentServiceFactory,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    ISequencedDocumentMessage,
+    ITree,
+    TreeEntry,
+} from "@prague/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,

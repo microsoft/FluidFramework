@@ -8,6 +8,8 @@ import { addTranslation, downloadRawText, getInsights } from "@chaincode/shared-
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
+import * as MergeTree from "@prague/merge-tree";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import {
     Browser,
     IClient,
@@ -15,9 +17,7 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
     ISequencedClient,
-} from "@prague/container-definitions";
-import * as MergeTree from "@prague/merge-tree";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+} from "@prague/protocol-definitions";
 import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
