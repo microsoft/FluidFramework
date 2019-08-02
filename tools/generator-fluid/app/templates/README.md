@@ -21,7 +21,7 @@ You can try the following commands
 ````
 
 We suggest you start by typing:
-	
+
     npm start
 
 
@@ -50,7 +50,7 @@ To deploy, use
 
 To view your chaincode, you can go to the URL
 
-    https://www.wu2-ppe.prague.office-int.com/loader/stupefied-kilby/prague/{random container name}?chaincode={pkg.name}@{pkg.version};
+    https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode={pkg.name}@{pkg.version};
 
 This link is then shareable and, in an expanding list of components, embeddable!
 

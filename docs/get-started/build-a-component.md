@@ -29,7 +29,7 @@ component code from a local web server, but will use the Fluid team's hosted Flu
 Congratulations, you have a component! Now it's time to share it. First, you need to publish your package to Verdaccio,
 the Fluid team's private NPM repository. To do that, use `npm run deploy`. This will bump the patch version of your
 package, build it, and publish the result to Verdaccio. It will also provide you a URL to your component of the form
-`https://www.wu2-ppe.prague.office-int.com/loader/prague/<changeable-container-id>?chaincode=@chaincode/<your-package>`, which
+`https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode=@chaincode/<your-package>`, which
 you can use to load your component into the Water Park.
 
 > [!TIP]

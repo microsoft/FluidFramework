@@ -2,7 +2,7 @@
 
 This is a simple Todo application that covers many of the core scenarios for building a Fluid Component. The Todo app uses React as it's view rendering platform.
 
-[Live Example on wu2-ppe](https://www.wu2-ppe.prague.office-int.com/loader/prague/sample-todo?chaincode=@chaincode/todo@0.6.0)
+[Live Example on wu2-ppe](https://www.wu2-ppe.prague.office-int.com/waterpark?chaincode=@chaincode/todo@0.6.0)
 
 ![Todo Example](./resources/todo-screen-capture.gif)
 
@@ -10,7 +10,7 @@ This is a simple Todo application that covers many of the core scenarios for bui
 
 There are two components that make up the Todo application:
 
-## [Todo](./src/Todo/index.tsx)  
+## [Todo](./src/Todo/index.tsx)
 
 A Todo is the top level component and contains three core concepts:
 

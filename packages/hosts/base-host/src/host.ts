@@ -6,6 +6,8 @@
 import {
     IComponent,
     IComponentHTMLRender,
+    IComponentHTMLVisual,
+    IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebLoader } from "@prague/loader-web";
@@ -52,7 +54,11 @@ async function attach(loader: Loader, url: string, host: Host) {
 
     // Check if the component is viewable
     const component = response.value as IComponent;
-    const viewable = component.IComponentHTMLVisual;
+    const queryable = component as IComponentQueryableLegacy;
+    let viewable = component.IComponentHTMLVisual;
+    if (!viewable && queryable.query) {
+        viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
+    }
     if (viewable) {
         let renderable = viewable as IComponentHTMLRender;
         if (viewable.addView) {
