@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/collaborative-textarea-noreact",
   "description": "No react version of collaborative HTML <textarea> (and <input>).",
-  "version": "0.0.1",
+  "version": "0.8.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -20,7 +20,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.6.1",
+    "@prague/prague-dev-server": "~3.8.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "ts-loader": "^4.5.0",
@@ -38,14 +38,15 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.6.0",
-    "@prague/aqueduct": "^0.6.0",
-    "@prague/build-common": "^0.6.0",
-    "@prague/component-runtime": "^0.6.0",
-    "@prague/container-definitions": "^0.6.0",
-    "@prague/map": "^0.6.0",
-    "@prague/runtime-definitions": "^0.6.0",
-    "@prague/shared-object-common": "^0.6.0"
+    "@prague/app-component": "^0.8.0",
+    "@prague/aqueduct": "^0.8.0",
+    "@prague/build-common": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.8.0",
+    "@prague/component-runtime": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/map": "^0.8.0",
+    "@prague/runtime-definitions": "^0.8.0",
+    "@prague/shared-object-common": "^0.8.0"
   },
   "license": "MIT"
 }

@@ -17,7 +17,7 @@ import {
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces"
   import {
     SharedMap,
   } from "@prague/map";
@@ -48,25 +48,23 @@ interface ITextAreaState {
  * CollaborativeTextArea in `packages/framework/aqueductreact`.
  */
 export class CollaborativeTextAreaNoReact 
-             extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = 
-    ["IComponentHTMLVisual", "IComponentHTMLRender"];
+             extends PrimedComponent 
+             implements IComponentHTMLVisual {
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
 
+  private textAreaState: ITextAreaState;
 
+  constructor(runtime: IComponentRuntime, 
+              context: IComponentContext) {
+    super(runtime, context);
 
-private textAreaState: ITextAreaState;
-
-constructor(runtime: IComponentRuntime, 
-            context: IComponentContext, 
-            supportedInterfaces: string[]) {
-  super(runtime, context, supportedInterfaces);
-
-  this.textAreaState = {
-    selectionStart: 0,
-    selectionEnd: 0,
-    text: ""
+    this.textAreaState = {
+      selectionStart: 0,
+      selectionEnd: 0,
+      text: ""
+    }
   }
-}
 
 
 
@@ -119,11 +117,9 @@ constructor(runtime: IComponentRuntime,
    * string.
    */
   private updateSelection() {
-    /**
-     * No access to React style refs, so a manual call is made to the DOM to
-     * retrieve the current <textarea> (and more importantly the caret positions
-     * for the current selection):
-     */
+    // No access to React style refs, so a manual call is made to the DOM to
+    // retrieve the current <textarea> (and more importantly the caret positions
+    // for the current selection):
     const currentTextAreaElement = 
       document.getElementById("textAreaElement") as HTMLTextAreaElement;
 
@@ -141,27 +137,34 @@ constructor(runtime: IComponentRuntime,
     this.textAreaState.selectionStart = selectionStart;
   }
 
+  /**
+   * Handle any incoming SequenceDeltaEvent(s) (fired off whenever an insertion,
+   * replacement, or removal is made to the primary SharedString of this
+   * component).
+   * 
+   * Note that incoming events include events made by the local user, but that
+   * `event` has a flag to mark if the change is local. Much of the logic deals
+   * with how to update the user's selection markers if the incoming changes
+   * affect selected (highlighted) text.
+   * 
+   * @param event Incoming delta on a SharedString
+   */
   private handleIncomingChange(event: SequenceDeltaEvent) {
-    /**
-     * Initial data requests. After the space, the remainder of the code is
-     * lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
-     * these sources instead of React.
-     */
+    // console.log("incoming change to shared string!");
+
+    // Initial data requests. After the space, the remainder of the code is
+    // lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
+    // these sources instead of React.
     const newText = this.root.get<SharedString>("textAreaString").getText();
 
     // We only need to insert if the text changed.
     if (newText === this.textAreaState.text) {
-      console.log(this.textAreaState.text);
-
-      this.forceDOMUpdate(newText);
-        return;
+      return;
     }
 
     // If the event is our own then just insert the text and keep the caret
     // positions the same.
     if (event.isLocal) {
-      console.log(this.textAreaState.text);
-
       this.forceDOMUpdate(newText);
       this.textAreaState.text = newText;
       return;
@@ -224,24 +227,28 @@ constructor(runtime: IComponentRuntime,
   }
 
   /**
-   * TODO: Implicit assumption that this is an event from <textarea>. Place
-   * some sort of `assert` or guard(s)?
+   * Send a change to the SharedString when an event is detected on the
+   * <textarea>.
+   * 
+   * No further changes are made to the <textarea> itself, but the current
+   * positions of the user's selection markers/carets are used to determine
+   * whether a insertion, replacement, or removal call is necessary for the
+   * SharedString.
+   * 
+   * @param ev An outgoing Event on the titular <textarea>
    */
   private handleOutgoingChange(ev: Event) {
-    console.log("outgoing change to shared string!");
+    // console.log("outgoing change to shared string!");
 
-    /**
-     * Initial data requests. After the space, the remainder of the code is
-     * lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
-     * these sources instead of React.
-     */
+    // Initial data requests. After the space, the remainder of the code is
+    // lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
+    // these sources instead of React.
     const evctAsHTML = (ev.currentTarget as HTMLTextAreaElement);
     const textAreaString = this.root.get<SharedString>("textAreaString");
 
     // We need to set the value here to keep the input responsive to the user
     const newText = evctAsHTML.value;
     const charactersModifiedCount = this.textAreaState.text.length - newText.length;
-    this.textAreaState.text = newText;
 
     // Get the new caret position and use that to get the text that was inserted
     const newPosition = evctAsHTML.selectionStart ? evctAsHTML.selectionStart : 0;
@@ -249,14 +256,12 @@ constructor(runtime: IComponentRuntime,
     if (isTextInserted) {
         const insertedText = newText.substring(this.textAreaState.selectionStart, newPosition);
         const changeRangeLength = this.textAreaState.selectionEnd - this.textAreaState.selectionStart;
-        console.log("before insertion: " + textAreaString.getText());
         if (changeRangeLength === 0) {
-            textAreaString.insertText(insertedText, this.textAreaState.selectionStart);
+            textAreaString.insertText(this.textAreaState.selectionStart, insertedText);
         } else {
             textAreaString.replaceText(this.textAreaState.selectionStart, this.textAreaState.selectionEnd, insertedText);
         }
     } else {
-        // Text was removed
         textAreaString.removeText(newPosition, newPosition + charactersModifiedCount);
     }
   }
@@ -275,30 +280,27 @@ constructor(runtime: IComponentRuntime,
    * function properly after such an event. 
    */
   public render(div: HTMLElement) {
-    /**
-     * Bind the `this` referring to the class instance for each of these private
-     * methods. Without doing so, you cannot guarantee that usage of `this`
-     * inside of the private methods will work correctly - most notably,
-     * `this.root` may end up undefined because the root map only exists on the
-     * class instance.
-     */
+    // Bind the `this` referring to the class instance for each of these private
+    // methods. Without doing so, you cannot guarantee that usage of `this`
+    // inside of the private methods will work correctly - most notably,
+    // `this.root` may end up undefined because the root map only exists on the
+    // class instance.
     this.handleIncomingChange = this.handleIncomingChange.bind(this);
     this.handleOutgoingChange = this.handleOutgoingChange.bind(this);
     this.createComponentDom = this.createComponentDom.bind(this);
     this.updateSelection = this.updateSelection.bind(this);
     this.forceDOMUpdate = this.forceDOMUpdate.bind(this);
 
-    /**
-     * Add handler for incoming (from other component views) SharedString
-     * changes. The handler is added here because any (re)rendered component
-     * view needs to "know" when to update its own instance of the <textArea>
-     * (which is what this handler will take care of). You could not add this,
-     * say, in the `create` method because that is only called once - it is
-     * not called for every view, so there would be no way to inform another
-     * client to update on a new change.
-     */
+    // Add handler for incoming (from other component views) SharedString
+    // changes. The handler is added here because any (re)rendered component
+    // view needs to "know" when to update its own instance of the <textArea>
+    // (which is what this handler will take care of). You could not add this,
+    // say, in the `create` method because that is only called once - it is
+    // not called for every view, so there would be no way to inform another
+    // client to update on a new change.
     const textAreaString = this.root.get<SharedString>("textAreaString");
     textAreaString.on("sequenceDelta", this.handleIncomingChange);
+    this.textAreaState.text = textAreaString.getText();
 
     // Do the actual HTML page setup off the given div:
     this.createComponentDom(div);
@@ -346,9 +348,12 @@ constructor(runtime: IComponentRuntime,
     const fluidComponent = 
       new CollaborativeTextAreaNoReact(
         runtime, 
-        context, 
-        CollaborativeTextAreaNoReact.supportedInterfaces);
+        context);
     await fluidComponent.initialize();
+
+    // Wait on the key to load in the map to prevent a timing issue on the
+    // initial render of the <textarea>.
+    await fluidComponent.root.wait<SharedString>("textAreaString");
 
     return fluidComponent;
   }
