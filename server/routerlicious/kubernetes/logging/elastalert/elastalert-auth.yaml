@@ -4,5 +4,5 @@ metadata:
   name: elastalert-auth
 data:
   smtp_auth.yaml: |
-    user: prague.alert@outlook.com
-    password: pass_alert
+    user: sender_email_address
+    password: sender_email_address_password

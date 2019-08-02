@@ -18,4 +18,4 @@ data:
     smtp_host: smtp-mail.outlook.com
     smtp_port: 587
     smtp_auth_file: /opt/config/smtp_auth.yaml
-    from_addr: prague.alert@outlook.com
+    from_addr: sender_email_address

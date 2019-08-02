@@ -14,5 +14,4 @@ alert:
 realert:
     hours: 24
 email:
-- mdaumi@microsoft.com
-- kurtb@microsoft.com
+- list_of_emails_to_send_alert
