@@ -83,14 +83,14 @@ export class ImageCollection extends EventEmitter implements
         this.url = context.id;
     }
 
-    public create(): ImageComponent {
+    public createCollectionItem(): ImageComponent {
         const id = `image-${Date.now()}`;
         this.root.set(id, "https://media.giphy.com/media/13V60VgE2ED7oc/giphy.gif");
         // Relying on valueChanged event to create the bar is error prone
         return this.images.get(id);
     }
 
-     public remove(instance: IComponent): void {
+    public removeCollectionItem(instance: IComponent): void {
         throw new Error("Method not implemented.");
     }
 

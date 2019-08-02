@@ -77,7 +77,7 @@ interface IComponentViewMarker extends MergeTree.Marker {
 }
 
 interface IMathCollection extends IComponent {
-    create(options?: IMathOptions): IMathInstance;
+    createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }
 
@@ -4936,7 +4936,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public insertMath(inline = true) {
         const mathOptions: IMathOptions = { display: inline ? "inline" : "block" };
-        const mathInstance = this.math.create(mathOptions);
+        const mathInstance = this.math.createCollectionItem(mathOptions);
         const props = {
             crefTest: {
                 layout: { inline },
@@ -4963,7 +4963,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public insertNewCollectionComponent(collection: IComponentCollection, inline = false) {
         // TODO - we may want to have a shared component collection?
-        const instance = collection.create();
+        const instance = collection.createCollectionItem();
         const loadable = instance.IComponentLoadable;
 
         const props = {

@@ -78,7 +78,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const insertComponentFromCollection = (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
                 const position = editor.selection.end;
-                const instance = factory.create(componentOptions) as ISharedComponent;
+                const instance = factory.createCollectionItem(componentOptions) as ISharedComponent;
                 doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
             };
 

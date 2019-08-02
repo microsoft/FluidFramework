@@ -582,7 +582,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
         mathMarker.mathTokens = MathExpr.lexMath(mathMarker.mathText);
     }
 
-    public create(options?: IMathOptions): MathInstance {
+    public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
         return new MathInstance(`${this.url}/${leafId}`, leafId, this, options);
     }
@@ -596,7 +596,7 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
         return this.combinedMathText.getText(start, end);
     }
 
-    public remove(instance: MathInstance) {
+    public removeCollectionItem(instance: MathInstance) {
         const client = this.combinedMathText.client;
         const startMarker = instance.startMarker;
         const start = getPosition(client, startMarker);

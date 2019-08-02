@@ -180,14 +180,14 @@ export class VideoPlayerCollection extends EventEmitter implements
         this.root.set(key, newValue);
     }
 
-    public create(): VideoPlayer {
+    public createCollectionItem(): VideoPlayer {
         const id = `video-${Date.now()}`;
         this.root.set(id, "RMzXmkrlFNg");
         // Relying on valueChanged event to create the bar is error prone
         return this.videoPlayers.get(id);
     }
 
-     public remove(instance: IComponent): void {
+     public removeCollectionItem(instance: IComponent): void {
         throw new Error("Method not implemented.");
     }
 

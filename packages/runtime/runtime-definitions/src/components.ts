@@ -387,8 +387,8 @@ export interface IComponentFactory {
  */
 export interface IComponentCollection extends IComponent {
     readonly IComponentCollection: IComponentCollection;
-    create<TOpt = object>(options?: TOpt): IComponent;
-    remove(instance: IComponent): void;
+    createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
+    removeCollectionItem(instance: IComponent): void;
     // need iteration
 }
 

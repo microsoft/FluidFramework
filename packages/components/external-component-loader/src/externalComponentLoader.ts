@@ -221,7 +221,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
 
                     let component = request.value as IComponent;
                     if (component.IComponentCollection !== undefined) {
-                        component = component.IComponentCollection.create();
+                        component = component.IComponentCollection.createCollectionItem();
                     }
 
                     if (component.IComponentLoadable) {
