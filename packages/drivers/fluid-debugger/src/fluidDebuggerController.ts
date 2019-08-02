@@ -104,8 +104,12 @@ export class DebugReplayController extends ReplayController implements IDebugger
     }
 
     public onSnapshotFileSelection(file: File) {
-        if (file.name !== "snapshot.json") {
+        if (!file.name.match(/^snapshot.*\.json/)) {
             alert(`Incorrect file name: ${file.name}`);
+            return;
+        }
+        if (file.name.match(/.*_expanded.*/)) {
+            alert(`Incorrect file name - please use non-extended files: ${file.name}`);
             return;
         }
 

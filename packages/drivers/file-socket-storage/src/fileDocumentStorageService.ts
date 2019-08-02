@@ -53,8 +53,7 @@ export class PragueDumpReader extends ReadDocumentStorageServiceBase implements 
         }
 
         if (!fs.existsSync(filename)) {
-            console.error(`Can't find file ${filename}`);
-            return null;
+            throw new Error(`Can't find file ${filename}`);
         }
         const data = fs.readFileSync(filename);
         const tree = JSON.parse(data.toString("utf-8"));
@@ -176,11 +175,8 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             // Sort entries for easier diffing
             this.sortCommit(tree);
 
-            // Remove "empty" tree IDs for easier comparison of snapshots
-            if (tree.id !== undefined && tree.id !== null) {
-                assert(tree.id === FileStorageVersionTreeIdUnused);
-                delete tree.id;
-            }
+            // Remove tree IDs for easier comparison of snapshots
+            delete tree.id;
             removeNullTreIds(tree);
 
             if (ref) {

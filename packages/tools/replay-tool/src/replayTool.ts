@@ -16,7 +16,8 @@ const optionsArray =
         ["--version <version>", "Load document from particular snapshot.",
                      "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
         ["--quiet", "Reduces amount of output."],
-        ["--stressTest", "Run stress tests."],
+        ["--storageSnapshots", "Validate storage (PragueDump) snapshots."],
+        ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50"],
     ];
 
 /**
@@ -29,12 +30,13 @@ export class ReplayArgs {
     public from: number = 0;
     public to: number = Number.MAX_SAFE_INTEGER;
     public takeSnapshot = false;
-    public snapFreq?: number;
+    public snapFreq: number = Number.MAX_SAFE_INTEGER;
     public version?: string;
     public stressTest = false;
     public verbose = true;
     public createAllFiles = true;
     public opsToSkip = 200;
+    public validateSotrageSnapshots = false;
 
     constructor() {
         this.parseArguments();
@@ -75,6 +77,10 @@ export class ReplayArgs {
                 case "--quiet":
                     this.verbose = false;
                     break;
+                case "--storageSnapshots":
+                    this.validateSotrageSnapshots = true;
+                    this.createAllFiles = false;
+                    return;
                 case "--stressTest":
                     this.stressTest = true;
                     this.verbose = false;
@@ -87,7 +93,11 @@ export class ReplayArgs {
             }
         }
 
-        if (this.snapFreq !== undefined) {
+        if (this.stressTest && this.snapFreq === Number.MAX_SAFE_INTEGER) {
+            this.snapFreq = 50;
+        }
+
+        if (this.snapFreq !== Number.MAX_SAFE_INTEGER) {
             this.opsToSkip = (Math.floor((this.opsToSkip - 1) / this.snapFreq) + 1) * this.snapFreq;
         }
     }
@@ -132,8 +142,7 @@ export class ReplayArgs {
 }
 
 function replayToolMain() {
-    const replayTool = new ReplayArgs();
-    return new ReplayTool(replayTool).Go();
+   return new ReplayTool(new ReplayArgs()).Go();
 }
 
 replayToolMain()

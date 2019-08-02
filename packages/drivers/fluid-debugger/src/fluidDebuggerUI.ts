@@ -34,7 +34,7 @@ Close debugger window to proceed to live document<br/><br/>
 </select>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
-<input id='file' type='file' accept='snapshot.json'/>
+<input id='file' type='file'/>
 <br/><br/><div id='versionText'></div><br/>
 </body>`;
 
