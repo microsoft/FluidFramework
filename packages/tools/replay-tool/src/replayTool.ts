@@ -16,6 +16,7 @@ const optionsArray =
         ["--version <version>", "Load document from particular snapshot.",
                      "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
         ["--quiet", "Reduces amount of output."],
+        ["--windiff", "Launch windiff.exe for any mismatch."],
         ["--storageSnapshots", "Validate storage (PragueDump) snapshots."],
         ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50"],
     ];
@@ -37,6 +38,7 @@ export class ReplayArgs {
     public createAllFiles = true;
     public opsToSkip = 200;
     public validateSotrageSnapshots = false;
+    public windiff = false;
 
     constructor() {
         this.parseArguments();
@@ -76,6 +78,9 @@ export class ReplayArgs {
                     break;
                 case "--quiet":
                     this.verbose = false;
+                    break;
+                case "--windiff":
+                    this.windiff = true;
                     break;
                 case "--storageSnapshots":
                     this.validateSotrageSnapshots = true;

@@ -34,6 +34,7 @@ import {
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { generateToken } from "@prague/services-core";
 import * as assert from "assert";
+import * as child_process from "child_process";
 import * as fs from "fs";
 import { ReplayArgs } from "./replayTool";
 
@@ -382,6 +383,11 @@ export class ReplayTool {
 
             this.expandForReadabilityAndWriteOut(snapshotSaved, `${dir}/${name1}`);
             this.expandForReadabilityAndWriteOut(snapshotSaved2, `${dir}/${name2}`);
+
+            if (this.args.windiff) {
+                console.log(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+                child_process.exec(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+            }
             return false;
         }
 
