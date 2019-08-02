@@ -21,12 +21,12 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
+    "@prague/component-core-interfaces": "^0.8.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
     "@prague/build-common": "^0.8.0",
-    "@prague/component-core-interfaces": "^0.8.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",

@@ -75,10 +75,6 @@
       "projectFolder": "packages/components/external-component-loader/"
     },
     {
-      "packageName": "@prague/component-core-interfaces",
-      "projectFolder": "packages/loader/component-core-interfaces/"
-    },
-    {
       "packageName": "@chaincode/image-collection",
       "projectFolder": "packages/components/image-collection/"
     },
@@ -209,6 +205,14 @@
     {
       "packageName": "@prague/utils",
       "projectFolder": "packages/loader/utils/"
+    },
+    {
+      "packageName": "@prague/component-core-interfaces",
+      "projectFolder": "packages/loader/component-core-interfaces/"
+    },
+    {
+      "packageName": "@prague/protocol-definitions",
+      "projectFolder": "packages/loader/protocol-definitions/"
     },
     {
       "packageName": "@prague/base-host",

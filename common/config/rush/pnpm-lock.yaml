@@ -16,6 +16,7 @@ dependencies:
   '@rush-temp/base-host': 'file:projects/base-host.tgz'
   '@rush-temp/blob-manager': 'file:projects/blob-manager.tgz'
   '@rush-temp/build-common': 'file:projects/build-common.tgz_tslint@5.18.0+typescript@3.4.5'
+  '@rush-temp/canvas': 'file:projects/canvas.tgz'
   '@rush-temp/cell': 'file:projects/cell.tgz'
   '@rush-temp/chart-view': 'file:projects/chart-view.tgz'
   '@rush-temp/charts': 'file:projects/charts.tgz'
@@ -59,6 +60,7 @@ dependencies:
   '@rush-temp/pond': 'file:projects/pond.tgz'
   '@rush-temp/prague-dump': 'file:projects/prague-dump.tgz'
   '@rush-temp/progress-bars': 'file:projects/progress-bars.tgz'
+  '@rush-temp/protocol-definitions': 'file:projects/protocol-definitions.tgz'
   '@rush-temp/react-web-host': 'file:projects/react-web-host.tgz'
   '@rush-temp/replay-socket-storage': 'file:projects/replay-socket-storage.tgz'
   '@rush-temp/replay-tool': 'file:projects/replay-tool.tgz'
@@ -206,6 +208,7 @@ dependencies:
   knockout: 3.5.0
   leaflet: 1.5.1
   less: 3.9.0
+  less-loader: 4.1.0_less@3.9.0+webpack@4.37.0
   loader-utils: 1.2.3
   lodash: 4.17.15
   minio: 7.0.10
@@ -713,6 +716,67 @@ packages:
       webpack: ^4.0.0
     resolution:
       integrity: sha512-lw7NmR+MiNp6NJnylG+ceKnankAV/hq2jvR62Ob3l2bkfzcJnRDfL1kzgvt9XmtsMwHrd0H604VjS6WmcgpMBw==
+  /@prague/prague-dev-server/3.8.0_webpack@4.39.1:
+    dependencies:
+      '@prague/app-component': 0.8.10224
+      '@prague/component-core-interfaces': 0.8.10224
+      '@prague/container-definitions': 0.8.10224
+      '@prague/container-loader': 0.8.10224
+      '@prague/gitresources': 0.8.10224
+      '@prague/loader-web': 0.8.10224
+      '@prague/map': 0.8.10224
+      '@prague/routerlicious-host': 0.8.10224
+      '@prague/routerlicious-socket-storage': 0.8.10224
+      '@prague/runtime-definitions': 0.8.10224
+      ansi-html: 0.0.7
+      axios: 0.18.1
+      bonjour: 3.5.0
+      chokidar: 2.1.6
+      compression: 1.7.4
+      connect-history-api-fallback: 1.6.0
+      cors: 2.8.5
+      debug: 4.1.1
+      del: 4.1.1
+      express: 4.17.1
+      html-entities: 1.2.1
+      http-proxy-middleware: 0.19.1
+      import-local: 2.0.0
+      internal-ip: 4.3.0
+      ip: 1.1.5
+      jsonwebtoken: 8.5.1
+      killable: 1.0.1
+      loglevel: 1.6.3
+      moniker: 0.1.2
+      opn: 5.5.0
+      portfinder: 1.0.21
+      schema-utils: 1.0.0
+      selfsigned: 1.10.4
+      semver: 6.3.0
+      serve-index: 1.9.1
+      sockjs: 0.3.19
+      sockjs-client: 1.3.0
+      spdy: 4.0.1
+      strip-ansi: 3.0.1
+      supports-color: 6.1.0
+      url: 0.11.0
+      webpack: 4.39.1_webpack@4.39.1
+      webpack-dev-middleware: 3.7.0_webpack@4.39.1
+      webpack-log: 2.0.0
+      yargs: 12.0.5
+    dev: false
+    engines:
+      node: '>= 6.11.5'
+    hasBin: true
+    peerDependencies:
+      webpack: ^4.0.0
+    resolution:
+      integrity: sha512-lw7NmR+MiNp6NJnylG+ceKnankAV/hq2jvR62Ob3l2bkfzcJnRDfL1kzgvt9XmtsMwHrd0H604VjS6WmcgpMBw==
+  /@prague/protocol-definitions/0.8.10292:
+    dependencies:
+      debug: 4.1.1
+    dev: false
+    resolution:
+      integrity: sha512-ngDiulj9OTartsaQ0FbEkqPyw5T9VYtCv8VciqhzGNbGuXJmW1MXcZ8bygO/1vE4t7B6mkikNniu/pil+ZVNkQ==
   /@prague/routerlicious-host/0.8.10224:
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
@@ -2657,6 +2721,26 @@ packages:
     dev: false
     resolution:
       integrity: sha512-p8WcneCytvzPxhDvYp31PD039vi77I12W+/KfR9S8AZbaiARFBCpsPJS+9uhWfeBfeAtW7o/4vt3MUqLkbY6nA==
+  /cacache/12.0.2:
+    dependencies:
+      bluebird: 3.5.5
+      chownr: 1.1.2
+      figgy-pudding: 3.5.1
+      glob: 7.1.4
+      graceful-fs: 4.2.0
+      infer-owner: 1.0.4
+      lru-cache: 5.1.1
+      mississippi: 3.0.0
+      mkdirp: 0.5.1
+      move-concurrently: 1.0.1
+      promise-inflight: 1.0.1
+      rimraf: 2.6.3
+      ssri: 6.0.1
+      unique-filename: 1.1.1
+      y18n: 4.0.0
+    dev: false
+    resolution:
+      integrity: sha512-ifKgxH2CKhJEg6tNdAwziu6Q33EvuG26tYcda6PT3WKisZcYDXsnEdnRv67Po3yCzFfaSoMjGZzJyD2c3DT1dg==
   /cache-base/1.0.1:
     dependencies:
       collection-visit: 1.0.0
@@ -3464,6 +3548,28 @@ packages:
       postcss-value-parser: 3.3.1
       source-list-map: 2.0.1
       webpack: 4.37.0_webpack@4.37.0
+    dev: false
+    engines:
+      node: '>= 6.9.0 <7.0.0 || >= 8.9.0'
+    peerDependencies:
+      webpack: ^4.0.0
+    resolution:
+      integrity: sha512-+ZHAZm/yqvJ2kDtPne3uX0C+Vr3Zn5jFn2N4HywtS5ujwvsVkyg0VArEXpl3BgczDA8anieki1FIzhchX4yrDw==
+  /css-loader/1.0.1_webpack@4.39.1:
+    dependencies:
+      babel-code-frame: 6.26.0
+      css-selector-tokenizer: 0.7.1
+      icss-utils: 2.1.0
+      loader-utils: 1.2.3
+      lodash: 4.17.15
+      postcss: 6.0.23
+      postcss-modules-extract-imports: 1.2.1
+      postcss-modules-local-by-default: 1.2.0
+      postcss-modules-scope: 1.1.0
+      postcss-modules-values: 1.3.0
+      postcss-value-parser: 3.3.1
+      source-list-map: 2.0.1
+      webpack: 4.39.1_webpack@4.39.1
     dev: false
     engines:
       node: '>= 6.9.0 <7.0.0 || >= 8.9.0'
@@ -5767,6 +5873,10 @@ packages:
     dev: false
     resolution:
       integrity: sha1-gtwzbSMrkGIXnQWrMpOmYFn9Q10=
+  /infer-owner/1.0.4:
+    dev: false
+    resolution:
+      integrity: sha512-IClj+Xz94+d7irH5qRyfJonOdfTzuDaifE6ZPWfx0N0+/ATZCbuTPq2prFl526urkQd90WyUKIh1DfBQ2hMz9A==
   /inflight/1.0.6:
     dependencies:
       once: 1.4.0
@@ -6662,6 +6772,36 @@ packages:
     dev: false
     resolution:
       integrity: sha512-ekM9KAeG99tYisNBg0IzEywAlp0hYI5XRipsqRXyRTeuU8jcuntilpp+eFf5gaE0xubc9RuSNIVtByEKwqFV0w==
+  /less-loader/4.1.0_less@3.9.0+webpack@4.37.0:
+    dependencies:
+      clone: 2.1.2
+      less: 3.9.0
+      loader-utils: 1.2.3
+      pify: 3.0.0
+      webpack: 4.37.0_webpack@4.37.0
+    dev: false
+    engines:
+      node: '>= 4.8 < 5.0.0 || >= 5.10'
+    peerDependencies:
+      less: ^2.3.1 || ^3.0.0
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0
+    resolution:
+      integrity: sha512-KNTsgCE9tMOM70+ddxp9yyt9iHqgmSs0yTZc5XH5Wo+g80RWRIYNqE58QJKm/yMud5wZEvz50ugRDuzVIkyahg==
+  /less-loader/4.1.0_less@3.9.0+webpack@4.39.1:
+    dependencies:
+      clone: 2.1.2
+      less: 3.9.0
+      loader-utils: 1.2.3
+      pify: 3.0.0
+      webpack: 4.39.1_webpack@4.39.1
+    dev: false
+    engines:
+      node: '>= 4.8 < 5.0.0 || >= 5.10'
+    peerDependencies:
+      less: ^2.3.1 || ^3.0.0
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0
+    resolution:
+      integrity: sha512-KNTsgCE9tMOM70+ddxp9yyt9iHqgmSs0yTZc5XH5Wo+g80RWRIYNqE58QJKm/yMud5wZEvz50ugRDuzVIkyahg==
   /less/3.9.0:
     dependencies:
       clone: 2.1.2
@@ -10341,6 +10481,25 @@ packages:
       webpack: ^4.0.0
     resolution:
       integrity: sha512-W2YWmxPjjkUcOWa4pBEv4OP4er1aeQJlSo2UhtCFQCuRXEHjOFscO8VyWHj9JLlA0RzQb8Y2/Ta78XZvT54uGg==
+  /terser-webpack-plugin/1.4.1_webpack@4.39.1:
+    dependencies:
+      cacache: 12.0.2
+      find-cache-dir: 2.1.0
+      is-wsl: 1.1.0
+      schema-utils: 1.0.0
+      serialize-javascript: 1.7.0
+      source-map: 0.6.1
+      terser: 4.1.2
+      webpack: 4.39.1_webpack@4.39.1
+      webpack-sources: 1.4.1
+      worker-farm: 1.7.0
+    dev: false
+    engines:
+      node: '>= 6.9.0'
+    peerDependencies:
+      webpack: ^4.0.0
+    resolution:
+      integrity: sha512-ZXmmfiwtCLfz8WKZyYUuuHf3dMYEjg8NrjHMb0JqHVHVOSkzp3cW2/XG1fP3tRhqEqSzMwzzRQGtAPbs4Cncxg==
   /terser/4.1.2:
     dependencies:
       commander: 2.20.0
@@ -10972,6 +11131,19 @@ packages:
       webpack: ^3.0.0 || ^4.0.0
     resolution:
       integrity: sha512-dXHkKmw8FhPqu8asTc1puBfe3TehOCo2+RmOOev5suNCIYBcT626kxiWg1NBVkwc4rO8BGa7gP70W7VXuqHrjg==
+  /url-loader/1.1.2_webpack@4.39.1:
+    dependencies:
+      loader-utils: 1.2.3
+      mime: 2.4.4
+      schema-utils: 1.0.0
+      webpack: 4.39.1_webpack@4.39.1
+    dev: false
+    engines:
+      node: '>= 6.9.0'
+    peerDependencies:
+      webpack: ^3.0.0 || ^4.0.0
+    resolution:
+      integrity: sha512-dXHkKmw8FhPqu8asTc1puBfe3TehOCo2+RmOOev5suNCIYBcT626kxiWg1NBVkwc4rO8BGa7gP70W7VXuqHrjg==
   /url-parse-lax/1.0.0:
     dependencies:
       prepend-http: 1.0.4
@@ -11154,12 +11326,48 @@ packages:
       webpack: 4.x.x
     resolution:
       integrity: sha512-0vEa83M7kJtxK/jUhlpZ27WHIOndz5mghWL2O53kiDoA9DIxSKnfqB92LoqEn77cT4f3H2cZm1BMEat/6AZz3A==
+  /webpack-cli/3.3.6_webpack@4.39.1:
+    dependencies:
+      chalk: 2.4.2
+      cross-spawn: 6.0.5
+      enhanced-resolve: 4.1.0
+      findup-sync: 3.0.0
+      global-modules: 2.0.0
+      import-local: 2.0.0
+      interpret: 1.2.0
+      loader-utils: 1.2.3
+      supports-color: 6.1.0
+      v8-compile-cache: 2.0.3
+      webpack: 4.39.1_webpack@4.39.1
+      yargs: 13.2.4
+    dev: false
+    engines:
+      node: '>=6.11.5'
+    hasBin: true
+    peerDependencies:
+      webpack: 4.x.x
+    resolution:
+      integrity: sha512-0vEa83M7kJtxK/jUhlpZ27WHIOndz5mghWL2O53kiDoA9DIxSKnfqB92LoqEn77cT4f3H2cZm1BMEat/6AZz3A==
   /webpack-dev-middleware/3.7.0_webpack@4.37.0:
     dependencies:
       memory-fs: 0.4.1
       mime: 2.4.4
       range-parser: 1.2.1
       webpack: 4.37.0_webpack@4.37.0
+      webpack-log: 2.0.0
+    dev: false
+    engines:
+      node: '>= 6'
+    peerDependencies:
+      webpack: ^4.0.0
+    resolution:
+      integrity: sha512-qvDesR1QZRIAZHOE3iQ4CXLZZSQ1lAUsSpnQmlB1PBfoN/xdRjmge3Dok0W4IdaVLJOGJy3sGI4sZHwjRU0PCA==
+  /webpack-dev-middleware/3.7.0_webpack@4.39.1:
+    dependencies:
+      memory-fs: 0.4.1
+      mime: 2.4.4
+      range-parser: 1.2.1
+      webpack: 4.39.1_webpack@4.39.1
       webpack-log: 2.0.0
     dev: false
     engines:
@@ -11303,6 +11511,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-OiVgSrbGu7NEnEvQJJgdSFPl2qWKkWq5lHMhgiToIiN9w34EBnjYzSYs+VbL5KoYiLNtFFa7BZIKxRED3I32pA==
+  /webpack-sources/1.4.1:
+    dependencies:
+      source-list-map: 2.0.1
+      source-map: 0.6.1
+    dev: false
+    resolution:
+      integrity: sha512-XSz38193PTo/1csJabKaV4b53uRVotlMgqJXm3s3eje0Bu6gQTxYDqpD38CmQfDBA+gN+QqaGjasuC8I/7eW3Q==
   /webpack-visualizer-plugin/0.1.11:
     dependencies:
       d3: 3.5.17
@@ -11347,6 +11562,39 @@ packages:
       webpack: '*'
     resolution:
       integrity: sha512-iJPPvL7XpbcbwOthbzpa2BSPlmGp8lGDokAj/LdWtK80rsPoPOdANSbDBf2GAVLKZD3GhCuQ/gGkgN9HWs0Keg==
+  /webpack/4.39.1_webpack@4.39.1:
+    dependencies:
+      '@webassemblyjs/ast': 1.8.5
+      '@webassemblyjs/helper-module-context': 1.8.5
+      '@webassemblyjs/wasm-edit': 1.8.5
+      '@webassemblyjs/wasm-parser': 1.8.5
+      acorn: 6.2.1
+      ajv: 6.10.2
+      ajv-keywords: 3.4.1_ajv@6.10.2
+      chrome-trace-event: 1.0.2
+      enhanced-resolve: 4.1.0
+      eslint-scope: 4.0.3
+      json-parse-better-errors: 1.0.2
+      loader-runner: 2.4.0
+      loader-utils: 1.2.3
+      memory-fs: 0.4.1
+      micromatch: 3.1.10
+      mkdirp: 0.5.1
+      neo-async: 2.6.1
+      node-libs-browser: 2.2.1
+      schema-utils: 1.0.0
+      tapable: 1.1.3
+      terser-webpack-plugin: 1.4.1_webpack@4.39.1
+      watchpack: 1.6.0
+      webpack-sources: 1.4.1
+    dev: false
+    engines:
+      node: '>=6.11.5'
+    hasBin: true
+    peerDependencies:
+      webpack: '*'
+    resolution:
+      integrity: sha512-/LAb2TJ2z+eVwisldp3dqTEoNhzp/TLCZlmZm3GGGAlnfIWDgOEE758j/9atklNLfRyhKbZTCOIoPqLJXeBLbQ==
   /websocket-driver/0.7.3:
     dependencies:
       http-parser-js: 0.4.10
@@ -11833,6 +12081,7 @@ packages:
     version: 0.0.0
   'file:projects/agent.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/nconf': 0.0.37
       '@types/node': 10.14.13
@@ -11856,7 +12105,7 @@ packages:
     dev: false
     name: '@rush-temp/agent'
     resolution:
-      integrity: sha512-WZCxZgOzu1RbsZqMysuIbQCkbGmsY6U0GS0z0ariOqxCU3bRAP0Te9/sLtPEC67jEqhpzEKbgg1hC6RXFyCByA==
+      integrity: sha512-Dft4sbxLvEYgJk+mb26+nr94zQ7cVn8ydZ54zsq+YLeFZ1fYRXJFOhEixsQmrjPlo43zqOAuevqOGjnDT4eeMw==
       tarball: 'file:projects/agent.tgz'
     version: 0.0.0
   'file:projects/app-component.tgz':
@@ -11882,6 +12131,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/jsonwebtoken': 8.3.2
       '@types/mocha': 5.2.7
@@ -11900,7 +12150,7 @@ packages:
     dev: false
     name: '@rush-temp/app-datastore'
     resolution:
-      integrity: sha512-tr4WP2olmPqXDvXZYSPtaMhC22utumyjTFTLOJDzpPDsJ7PqOg1J38kJODpHEw6YBiNYhFyc1BL/a93QsPPCEg==
+      integrity: sha512-+2SFJ/15gvejFdhK7QhzNMbQ8A5mpoHcqJuLeHG3y1D+70X50mD/vy6PIwSA3m9bkeW0sVcgHiIFK7J5n3zrBg==
       tarball: 'file:projects/app-datastore.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -11952,6 +12202,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/isomorphic-fetch': 0.0.35
       '@types/node': 10.14.13
       chalk: 2.4.2
@@ -11964,13 +12215,14 @@ packages:
     dev: false
     name: '@rush-temp/base-host'
     resolution:
-      integrity: sha512-GN3i1MXYDZN1WEdUvkgxKJfLjLMW7mBeaN6WbuPDFltBgiimaoV+DwmEJXBbDsUOQ3IenTZp5tniE889SUK3GQ==
+      integrity: sha512-asMf02nxQ0a+i9CQ6zx1FRLRI9YXq9PcqY4rou5o4NFvmzpyqOINKBXcohmL/aC+CZABVI1vnsqtiD4Z7Pgx2w==
       tarball: 'file:projects/base-host.tgz'
     version: 0.0.0
   'file:projects/blob-manager.tgz':
     dependencies:
       '@kurtb/pinpoint': 0.1.2
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/angular': 1.6.55
       '@types/angular-route': 1.7.0
       '@types/debug': 0.0.31
@@ -11996,7 +12248,7 @@ packages:
     dev: false
     name: '@rush-temp/blob-manager'
     resolution:
-      integrity: sha512-/VqkwYB4FWGDsF1EosdH9Qyp+LwAZAf7sCsBonPWvsszj4kbxApR1YbSA3ba445cQCF/hWNGCT3CkKXbH0r+UA==
+      integrity: sha512-dN1ddckSIx1MzvXu9Lly6BTsyjPieZnFqd3cjlKTFvR8tcJ9G/rVumskEk2vqQgfKWEB1/HzDbR7e5q1vKlX4A==
       tarball: 'file:projects/blob-manager.tgz'
     version: 0.0.0
   'file:projects/build-common.tgz_tslint@5.18.0+typescript@3.4.5':
@@ -12012,9 +12264,32 @@ packages:
       integrity: sha512-QOD46B+Jbjl2IviNnVfrQqNmvZuT8cHebpWiYYJlUaEznTJzdoaPqtzXPW0ishMJc0j9gviujXJUaaTEHbMyBg==
       tarball: 'file:projects/build-common.tgz'
     version: 0.0.0
+  'file:projects/canvas.tgz':
+    dependencies:
+      '@prague/prague-dev-server': 3.8.0_webpack@4.39.1
+      '@types/node': 10.14.14
+      concurrently: 4.1.1
+      css-loader: 1.0.1_webpack@4.39.1
+      less: 3.9.0
+      less-loader: 4.1.0_less@3.9.0+webpack@4.39.1
+      style-loader: 0.23.1
+      ts-loader: 4.5.0
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+      url-loader: 1.1.2_webpack@4.39.1
+      webpack: 4.39.1_webpack@4.39.1
+      webpack-cli: 3.3.6_webpack@4.39.1
+      webpack-merge: 4.2.1
+    dev: false
+    name: '@rush-temp/canvas'
+    resolution:
+      integrity: sha512-iEGieaNmJph/nQxRtIgjNOgRuQyoe1EFLu0h6H2NfbH1wo7n8L7Jj9T0jBgBBkle8yEUaZ2Ws8qyyqSMxLQAsw==
+      tarball: 'file:projects/canvas.tgz'
+    version: 0.0.0
   'file:projects/cell.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
       '@types/mocha': 5.2.7
@@ -12031,7 +12306,7 @@ packages:
     dev: false
     name: '@rush-temp/cell'
     resolution:
-      integrity: sha512-4lWfFtQSzRUr37mLocRyWhhfuku0m/PW51fTcDm2+Hhjc7cmlE8DWfEboUNKCFBzsmId8JuhuIPToFCchvzaDA==
+      integrity: sha512-wgg7XeNm6Efi2YENpSKCE2fDG4i7APaojPbt7stRZeBMotyMMtNud+3JNmn1MW1VptFSGgoqliOeSojefcvQTg==
       tarball: 'file:projects/cell.tgz'
     version: 0.0.0
   'file:projects/chart-view.tgz':
@@ -12110,6 +12385,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/jwt-decode': 2.2.1
@@ -12139,12 +12415,13 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-dVFCfllH014tjNIZvsX+Jp+bfGRKwJQsNSyinS08GVcA4gIAa44hPi/TrrnghbAiUVt4lPIEZOuXMw35+LosLQ==
+      integrity: sha512-8wv3ZpDPf4h8rlSZrPsartqnGyzWnxDjLXt3mAfWRfCu0v9Tv6CmIfSp8QR/E7sxAG3kGop5cmztslB32ToqTg==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/d3': 5.7.2
       '@types/debug': 0.0.31
       '@types/jquery': 3.3.30
@@ -12174,7 +12451,7 @@ packages:
     dev: false
     name: '@rush-temp/client-ui'
     resolution:
-      integrity: sha512-rZgnp16a8nQHkn24awif6MuaZQdGPeMzPsjc6qDPpq7BDoMb5QcSNsWx+U2xHfmedF1cH+8SM8gLvivEv289qg==
+      integrity: sha512-h7K3IX5M23IJMW9p1tp//EVTkhdtkxqu/soMbBbPFK3sm0NY6sS4e7wlnH4lYpNCKzZRKHnvMN97028I635d4g==
       tarball: 'file:projects/client-ui.tgz'
     version: 0.0.0
   'file:projects/component-core-interfaces.tgz':
@@ -12197,6 +12474,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
@@ -12217,12 +12495,13 @@ packages:
     dev: false
     name: '@rush-temp/component-runtime'
     resolution:
-      integrity: sha512-uxYAy/cC4YR0360RhSJxbivsfwWT0zXqeSpT3GAZKUyAXQ4V+2p8oL86efOukCkTFjK8kSuBnNkG/JBw5MyfHg==
+      integrity: sha512-9QqRdfa4xSLJF0wCbLNPLmcLe/g9GfPV/sWkmTX63jbWKLbZdqDXYftMj/RXb7ATMgSDy3q/8tehU19AtncIjw==
       tarball: 'file:projects/component-runtime.tgz'
     version: 0.0.0
   'file:projects/consensus-ordered-collection.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -12237,12 +12516,13 @@ packages:
     dev: false
     name: '@rush-temp/consensus-ordered-collection'
     resolution:
-      integrity: sha512-Cjw5mMkUraPgFgVEEyvswVslx4tvQNzTDv1SllmBWIVtGHCmRSksQQCza5ZqlzsSfyN4V4QPf6ybqubSItmD8w==
+      integrity: sha512-fTdIzyWMrgDg5ShmSXqmUlObutDPSXZADmqU2VQbm27qsZX68gjFU0RcJV5HOqMIllvzTN3ayD5Jh4JC+EkKqg==
       tarball: 'file:projects/consensus-ordered-collection.tgz'
     version: 0.0.0
   'file:projects/consensus-register-collection.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -12257,13 +12537,14 @@ packages:
     dev: false
     name: '@rush-temp/consensus-register-collection'
     resolution:
-      integrity: sha512-EZwgrPDPbGlBcJIa8I60NM0VHUoB7spYovEUwz8uXvcW3P/CVRWohRN2wknUW1OD3+o2RgFiyt44kuCVLSo1RQ==
+      integrity: sha512-fzRteSnuh515JY7MDkSmjrdHfpc3Z1iCDLiHlpljd74phtHFv/7QzKD/Kbh0SHwal4Hpx703fbV4M6fV3xeiMg==
       tarball: 'file:projects/consensus-register-collection.tgz'
     version: 0.0.0
   'file:projects/container-definitions.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       concurrently: 4.1.1
@@ -12274,13 +12555,14 @@ packages:
     dev: false
     name: '@rush-temp/container-definitions'
     resolution:
-      integrity: sha512-nJTTRli+85NFK/HEB8KzVIeuIuFg2/jn9V6wOdK860NcGLRgSz6oNPERU6g9gTTW1OsQCQKhHFikUYE/MO4Lqw==
+      integrity: sha512-C+t6JwDk39ay3FdAjyXEuJwKuThpFfoT2QE7b5BrbVT1jcIbqwGxDlnLL1j6XCKADmq+l3yRSiRuhwGXGetz0g==
       tarball: 'file:projects/container-definitions.tgz'
     version: 0.0.0
   'file:projects/container-loader.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
       '@types/lodash': 4.14.136
@@ -12297,13 +12579,14 @@ packages:
     dev: false
     name: '@rush-temp/container-loader'
     resolution:
-      integrity: sha512-TI81JlibD+mNPZ/p0RpTbtsOdqU4vKvrsgO3W2wrB6PV4dmyBryQWp1FAE7owmwuEPxl3CkI4ef1jvCrHMdRsA==
+      integrity: sha512-Lh6JfxFUDs1twP6JNlVpH0tfi0hx8XFsl0886VmbkXDUlrDXKjLwL42JaphaF4EwCyxt/ZIdXtetI/b4ZDkVwA==
       tarball: 'file:projects/container-loader.tgz'
     version: 0.0.0
   'file:projects/container-runtime.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
@@ -12324,7 +12607,7 @@ packages:
     dev: false
     name: '@rush-temp/container-runtime'
     resolution:
-      integrity: sha512-Sr0s73M9Po4dN1mNOvQcxUhSbprsxBTlMp6LBrT39EcPA95ns6TeqEwBRwQTA+6Xg6mH0//2pV6YpXWNZu0A9Q==
+      integrity: sha512-iq1xERxNUVtVCFN+RK5bSY69kL3bhyR6pbLzJSEvi7QtJhIq/iKbWWqEMxn/fcwlhzJeBC5xUAAlaxnBqZjqRQ==
       tarball: 'file:projects/container-runtime.tgz'
     version: 0.0.0
   'file:projects/externalcomponentloader.tgz':
@@ -12350,6 +12633,7 @@ packages:
   'file:projects/file-socket-storage.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       concurrently: 4.1.1
@@ -12360,7 +12644,7 @@ packages:
     dev: false
     name: '@rush-temp/file-socket-storage'
     resolution:
-      integrity: sha512-tYnE6FcFZ0fjhIaY3U/rHGTBaTgo4m5r8y5sS4qSRaTvcYmuGn2WMUVP/TuzjQaL9z0OKtIFQvZGAJf9IolEIg==
+      integrity: sha512-sBHLp1j/h/Rf4vaPaervdU7lXQfCtrcgozNxR4eqY3wJu1grCC2ePFz695uQTxJEe8LnOP6orunloYS0h/r0wA==
       tarball: 'file:projects/file-socket-storage.tgz'
     version: 0.0.0
   'file:projects/flow-intel-viewer.tgz':
@@ -12466,6 +12750,7 @@ packages:
   'file:projects/fluid-debugger.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -12478,7 +12763,7 @@ packages:
     dev: false
     name: '@rush-temp/fluid-debugger'
     resolution:
-      integrity: sha512-Fs4UQ6w5MXX2+XI8iF4bAixLPq/Xvnw1Gei+F26b8PFHvUt8YI/dahy4P747mpPFPRjfbKYA1UreHx25pIGaaQ==
+      integrity: sha512-uhD3unvtKclW0TYsmmhUrYGxkb8YG8els+7xwwpTsaHT1e6DXJDTAA+ItIlwSCfj2P8cxJG+ygnqlDG0dfgizQ==
       tarball: 'file:projects/fluid-debugger.tgz'
     version: 0.0.0
   'file:projects/framework-definitions.tgz':
@@ -12497,6 +12782,7 @@ packages:
     version: 0.0.0
   'file:projects/gateway.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/amqplib': 0.5.13
       '@types/async': 2.4.2
       '@types/bytes': 3.0.0
@@ -12603,7 +12889,7 @@ packages:
     dev: false
     name: '@rush-temp/gateway'
     resolution:
-      integrity: sha512-qbBSyYIenJt3poDALhQreJGb/qI+dq78dYl8TEuQQluYaidVwXxQOKMlfWd5gzF3WdjjO3eBg423MMh9yZcU3A==
+      integrity: sha512-usKiS3G2Z4bULwHewcRBpRKE2Qi2vk+Lkq7zi3ArX7oLiS/3GZOo4S4JkEchdLA7qlK2fxR/27JXhoLD8g6ZsQ==
       tarball: 'file:projects/gateway.tgz'
     version: 0.0.0
   'file:projects/gitresources.tgz':
@@ -12639,6 +12925,7 @@ packages:
   'file:projects/intelligence-runner.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       '@types/request': 2.48.2
@@ -12651,11 +12938,12 @@ packages:
     dev: false
     name: '@rush-temp/intelligence-runner'
     resolution:
-      integrity: sha512-F7PjVnCVCTFwVW8k63eNfcmtFNho/ydhyrs4xza70XEn851hcZQ8GxORb+bbp2CKQjWITiDdmnpAigAVNzuGiQ==
+      integrity: sha512-3HGmVQEP2G+dNLP9zBa9q1gR2pfj/fYVAfr7BLGbln8/8xL7wtuHNxj8tMFG/odNA/SzZ0QV6id/2Iww8WGpZg==
       tarball: 'file:projects/intelligence-runner.tgz'
     version: 0.0.0
   'file:projects/kafka-orderer.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/lodash': 4.14.136
       '@types/node': 10.14.13
       concurrently: 4.1.1
@@ -12667,7 +12955,7 @@ packages:
     dev: false
     name: '@rush-temp/kafka-orderer'
     resolution:
-      integrity: sha512-7dq9s7+0F6dafLmkJNjMJGmAIn0tlpsXmMJdhJ4iC/3d33pLziad+WyHYdgiOrGSXhQdwFO93KWfTj7B7JEqpQ==
+      integrity: sha512-QghhuuEvB2JDq10pHmyU3IV8thNWVoZ3vGRSZ8uD6AGZ5HlbmrQ79ij2hDAIgWzsDLlFHRAOYLbzjZEsWxCAag==
       tarball: 'file:projects/kafka-orderer.tgz'
     version: 0.0.0
   'file:projects/key-value.tgz':
@@ -12715,6 +13003,7 @@ packages:
     version: 0.0.0
   'file:projects/lambdas.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/async': 2.4.2
       '@types/lodash': 4.14.136
       '@types/mocha': 5.2.7
@@ -12734,7 +13023,7 @@ packages:
     dev: false
     name: '@rush-temp/lambdas'
     resolution:
-      integrity: sha512-fUpjf2oWTGfwm0DZIdSXKd0KN+YzxOmVpSFCok6USmLIKmi1kxmoik4Prh1dZg9kNG8+IQt2XBYCMU61RxehhQ==
+      integrity: sha512-U2v71+0qCZBYXX36yKAcLEboyK7o9HDSSSQRdmgauJOwr8GEh+qBtmUhzrxYTVO7uYZfI3cSr+tBtB/5GxRSlA==
       tarball: 'file:projects/lambdas.tgz'
     version: 0.0.0
   'file:projects/loader-web.tgz':
@@ -12758,6 +13047,7 @@ packages:
   'file:projects/local-test-server.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/jsonwebtoken': 8.3.2
       '@types/mocha': 5.2.7
       '@types/nock': 9.3.1
@@ -12781,12 +13071,13 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-FX1w/3ny6P7w5OJ+UvaFIFlsBZr+FfTzu1WZXiagNQ6TnroOpSmTOjnqo6sHlRex9/S84tyJ9nGvmAiAebrx2w==
+      integrity: sha512-pLR+Y5XkIbOS27JbD6pqArkTley5ziz5hv+XCgY/hgT65eH9yIjhPrHT742QHnx9QlPOaisHavDiPmtTV/54wg==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -12802,7 +13093,7 @@ packages:
     dev: false
     name: '@rush-temp/map'
     resolution:
-      integrity: sha512-TxU96ZJxysEgbOzlAjv06ZapTCIOhvrJ+jPROXNiqN7tLb0ygrOndDNxwv8MvcgUVnyjEOKC+XD8ppH61VzyyQ==
+      integrity: sha512-wLtG1E+0V5M43xvQLD2ZnopR0fo/IN8VcxNxYiFSLVWaLOJrvAX0wxBI0e7995MqMN3oI4HT6RHuo9UqcDw6MA==
       tarball: 'file:projects/map.tgz'
     version: 0.0.0
   'file:projects/math.tgz':
@@ -12827,6 +13118,7 @@ packages:
     version: 0.0.0
   'file:projects/memory-orderer.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
       '@types/node': 10.14.13
@@ -12845,11 +13137,12 @@ packages:
     dev: false
     name: '@rush-temp/memory-orderer'
     resolution:
-      integrity: sha512-EZ1OWkMKSCm8TmunCz3VVabBSOnkGHFKQU/McHZy9kmhcU/00Jx8/TL2NiEKja5WPXTANFUWsI0VNka9ArG8Gg==
+      integrity: sha512-wg5/4TURxXQShwh1L+lxMqfvNTIEOqrswtZGQARH6kNG5c5rpowzjtIg9mWYKld3OobY9KSIR3ATLY7OZG0mHA==
       tarball: 'file:projects/memory-orderer.tgz'
     version: 0.0.0
   'file:projects/merge-tree.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/diff': 3.5.3
       '@types/mocha': 5.2.7
@@ -12868,7 +13161,7 @@ packages:
     dev: false
     name: '@rush-temp/merge-tree'
     resolution:
-      integrity: sha512-EB73cnaNCZM6eFxDDxnRCImWl7RaKGxWdKjA+yuwE8DcM3tWdRIXUckaVfkgP+BJGq5zTOAQfcbrjVV7n+1b8w==
+      integrity: sha512-Bq9Kn9M4m00MJ6h7qzovEucgnaoziAgWIDMtKH6IiCfLmeJaUWUozctI1n1RhO8HaRFPaW9r2DkqxQXrB1PREw==
       tarball: 'file:projects/merge-tree.tgz'
     version: 0.0.0
   'file:projects/monaco.tgz':
@@ -12910,6 +13203,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       axios: 0.18.1
@@ -12926,11 +13220,12 @@ packages:
     dev: false
     name: '@rush-temp/odsp-socket-storage'
     resolution:
-      integrity: sha512-gcabKpX12GcLY11oP+N2T4q8g1uq5khBSFuLX3YllztM0+iP3FHIMfCh1Tq7rgN7O1GzLThlSo91CKe7WuR54w==
+      integrity: sha512-/E5F+vL92VKniqy1MR6kPjeymPSDjd78uhEOPlBjNG2bW6Ig4C9bOKVl7JsJSF0M5lm8m8Daz8VzPqk+Ve0k1A==
       tarball: 'file:projects/odsp-socket-storage.tgz'
     version: 0.0.0
   'file:projects/odsp-utils.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/request': 2.48.2
       concurrently: 4.1.1
       request: 2.88.0
@@ -12940,12 +13235,13 @@ packages:
     dev: false
     name: '@rush-temp/odsp-utils'
     resolution:
-      integrity: sha512-M4Sf3G1rphbW0rRyL70sw/yXQ2FU8rvE/520DwlFps6SRo+20a80+Yp5g9h+b5yayjQvDefqlqnB065N3bsmXg==
+      integrity: sha512-RKWxnYY7i/zpl0uiE4mU0E6ZG6bPDRDh1hmQ2zlXbd0CWjwPZ3kX4fUO2R7MVm2Aw66WaHWUrikBoe//sroa2A==
       tarball: 'file:projects/odsp-utils.tgz'
     version: 0.0.0
   'file:projects/owned-map.tgz':
     dependencies:
       '@prague/prague-dev-server': 3.8.0_webpack@4.37.0
+      '@prague/protocol-definitions': 0.8.10292
       '@types/node': 10.14.13
       '@types/react-dom': 16.8.5
       debug: 4.1.1
@@ -12962,7 +13258,7 @@ packages:
     dev: false
     name: '@rush-temp/owned-map'
     resolution:
-      integrity: sha512-qnOzAm6cwiNhfLlcaQomxAySFzOd9dOCnD797Eiktu5TcapznYXI2/GVgKnfeujRLr3ceS1d6aLtA0WkZalzzg==
+      integrity: sha512-c6LI3KaHexODEo3oy96IWo4TdgO1NI+jesV1undUbFdAwvfuqJH4HLkXS6Z6PRzkQD4zWsqXdymvDOJ5UWnZOA==
       tarball: 'file:projects/owned-map.tgz'
     version: 0.0.0
   'file:projects/pinpoint-editor.tgz':
@@ -13031,6 +13327,7 @@ packages:
     version: 0.0.0
   'file:projects/prague-dump.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/node': 10.14.13
       '@types/request': 2.48.2
       concurrently: 4.1.1
@@ -13041,7 +13338,7 @@ packages:
     dev: false
     name: '@rush-temp/prague-dump'
     resolution:
-      integrity: sha512-hg+FMylKsWDE6T8ST+DOyZOrc5kutmtEdrf5RJvjCLyPCwuwkucsHOF957CZgcS3WhnRjvpQz/ppIfgIaicoaA==
+      integrity: sha512-iVo4QxOEFdmcqHBUGN3ISRs2RLOjEJZoWwVXST0nYS8Ya8PwD037DQaP+Vicjk5gUJz7SXM4YHEmi/0S/V4sWQ==
       tarball: 'file:projects/prague-dump.tgz'
     version: 0.0.0
   'file:projects/progress-bars.tgz':
@@ -13060,6 +13357,22 @@ packages:
     resolution:
       integrity: sha512-QEgZv+w2w0RCvpL8ft6KZmrlZe+tk8vL09RdoAh4DPrtuTjyJ1nNIrXlgIRhGG5PVSgwoVrL9txT+4aQeDakvQ==
       tarball: 'file:projects/progress-bars.tgz'
+    version: 0.0.0
+  'file:projects/protocol-definitions.tgz':
+    dependencies:
+      '@microsoft/api-extractor': 7.3.4
+      '@types/debug': 0.0.31
+      '@types/node': 10.14.14
+      concurrently: 4.1.1
+      debug: 4.1.1
+      rimraf: 2.6.3
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+    dev: false
+    name: '@rush-temp/protocol-definitions'
+    resolution:
+      integrity: sha512-aLsrAC4Ke52pCZ5iklKPWMt4f2MU7fJ9SZNjUO/FliyWyUnDl7AG8pAuwpUA2nt+WmmKUbQCmaV/WE2cs3EYIQ==
+      tarball: 'file:projects/protocol-definitions.tgz'
     version: 0.0.0
   'file:projects/react-web-host.tgz':
     dependencies:
@@ -13088,6 +13401,7 @@ packages:
   'file:projects/replay-socket-storage.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/keypress.js': 2.1.0
       '@types/mocha': 5.2.7
@@ -13105,12 +13419,13 @@ packages:
     dev: false
     name: '@rush-temp/replay-socket-storage'
     resolution:
-      integrity: sha512-I9RpH268X4muMpImSnWgSQwR19hNffAJmH8McBbKWVRHCI/j8nyPg4C7f60RQrzWwXrmiDCcwh6HBLD+OoBwPQ==
+      integrity: sha512-8N/RHfwA6TFjnAIMc7JywTUS+xJoU4K131Y2hSdAg+QumHZ0tmbCrMfjbcRy2JbOoOlGXvWgNolp2EULQi/tTg==
       tarball: 'file:projects/replay-socket-storage.tgz'
     version: 0.0.0
   'file:projects/replay-tool.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       concurrently: 4.1.1
@@ -13121,12 +13436,13 @@ packages:
     dev: false
     name: '@rush-temp/replay-tool'
     resolution:
-      integrity: sha512-n1TXkm0po1xliEqh0MAwQSUDmWD+Ek2myXX+4/h2DjTk/jENQeW4DAR8mOhJOOIpl4mXiAA6p6iEOZasrP9MZA==
+      integrity: sha512-8bkcv/gC4zISZDbxfAnC4bqqZH1YgwmVwk7TIq4EN7RrOY4l2wJDS8I4Co0eF3rP5HWppo8GRyN3zWFXbr23Lg==
       tarball: 'file:projects/replay-tool.tgz'
     version: 0.0.0
   'file:projects/routerlicious-host.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       axios: 0.18.1
@@ -13139,12 +13455,13 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious-host'
     resolution:
-      integrity: sha512-ATNVZBNMwBISCKgHhrJwjHlR/SYJF4wp8DuneObbFPsAG5715pX99HPm5NSCHXsrZDKmOMsrvRuhmy1Ti6hViw==
+      integrity: sha512-9+yZ3qfDDcv4m5AwmdyEpye6zfiZUM2HoOkoIuDE3aHJl4p0VjtHmsJ/+Q6rDYiDMQ3B1nAmDZybi6Tu4QKIVw==
       tarball: 'file:projects/routerlicious-host.tgz'
     version: 0.0.0
   'file:projects/routerlicious-socket-storage.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/jwt-decode': 2.2.1
       '@types/mocha': 5.2.7
@@ -13166,11 +13483,12 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious-socket-storage'
     resolution:
-      integrity: sha512-FtyGTnsHJkl9oE4W3rLxjYWuW7MKUgHmt7uGPl19mX1lN4yc024nWXtzStlMK0n5N3Bfpdb/qJOUtl1vd240Dg==
+      integrity: sha512-QBztSSj8jDhKjsqcWtm9CMovvc+nvJFJixoslbUWKIKpWL/PPe/apM61fGoQa6YDWIa6vz+cqsiCspbukdL5AQ==
       tarball: 'file:projects/routerlicious-socket-storage.tgz'
     version: 0.0.0
   'file:projects/routerlicious.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/async': 2.4.2
       '@types/bytes': 3.0.0
       '@types/compression': 0.0.33
@@ -13271,13 +13589,14 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-bVGC2R1Gj3KIMFHK9XH3Q6gQx8Ki8rYnl3gFTZjK5jcA4dqVRBORGxKhYn5n4UuNCy+08to1adPc2HVnUvmRMQ==
+      integrity: sha512-LR3xzdoIm8jO/iHRy2WDyBqTkIKTKkUe8snh1H0ADNrMOnToMRrTZRT81NqxOAEAttanBegpKAeEZuhUXfOcnw==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/node': 10.14.13
       concurrently: 4.1.1
       rimraf: 2.6.3
@@ -13286,12 +13605,13 @@ packages:
     dev: false
     name: '@rush-temp/runtime-definitions'
     resolution:
-      integrity: sha512-IWyjI5BTxutHx1hNPhALtubMDmpSphXSz/BhAh2OdgxG75beOUX/0mu1XzxULGZrAIf3xRM40+Tfd3Os8qTEcw==
+      integrity: sha512-3jXr4tOWaYD36arg//aTHi06VV3VP+9dCtA94KsUSFuaiE+c4QtbaEdo735u90mGVgRJvjjQorIXmfwIogDTlQ==
       tarball: 'file:projects/runtime-definitions.tgz'
     version: 0.0.0
   'file:projects/runtime-test-utils.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/node': 10.14.13
       '@types/uuid': 3.4.5
       concurrently: 4.1.1
@@ -13302,7 +13622,7 @@ packages:
     dev: false
     name: '@rush-temp/runtime-test-utils'
     resolution:
-      integrity: sha512-h1XisAEXX0C0nhpiJtdGdTIFQIkMAxAMj7o5XBojG6ksmvECDp95nfWoOKICZuImBfOyvOX0NwzftRi0Uc2mcw==
+      integrity: sha512-oeMGMEEmXJ4gnx8nuDvuesQLS2K6a05OTDabc1BN1KaJBFplBkpS6tj5bR9Xs4AS2FiHaaYgpATbPIExjEKj7g==
       tarball: 'file:projects/runtime-test-utils.tgz'
     version: 0.0.0
   'file:projects/search-menu.tgz':
@@ -13316,12 +13636,13 @@ packages:
     dev: false
     name: '@rush-temp/search-menu'
     resolution:
-      integrity: sha512-Ztulx/MOjaty6/8nmGUUBngE5W2SGt+atz0ISSWBXJpn3IQUCjyOVy+uJZuhypHzJ71PdQxX7vHD5Yay+n8p5Q==
+      integrity: sha512-8yjNMUmaIUO9k0Fpl6KwvFCArB0+tagiFlwDgdQlRmPYTC/gPoYhmgVds0Jz1DA0KPLu43r7f/UMN8Tfj81CIw==
       tarball: 'file:projects/search-menu.tgz'
     version: 0.0.0
   'file:projects/sequence.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/diff': 3.5.3
       '@types/mocha': 5.2.7
       '@types/random-js': 1.0.31
@@ -13342,11 +13663,12 @@ packages:
     dev: false
     name: '@rush-temp/sequence'
     resolution:
-      integrity: sha512-VffYd6zrzJQIwpwjY6dh7hzmfobQ54S8THesiHdo7z+/Bc8vFgheP8aJOtG8DnD1UOhn8aSIGIDziBwQqOav7Q==
+      integrity: sha512-IH5tF/Mpgl0+nYVgJ8XEg8FmbHRtGrc86D8/UKNeHak5Qj6k8pqjfnmN4kAH5k7ZXlGbReiwuDujXJwQHcOUhA==
       tarball: 'file:projects/sequence.tgz'
     version: 0.0.0
   'file:projects/services-client.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -13359,11 +13681,12 @@ packages:
     dev: false
     name: '@rush-temp/services-client'
     resolution:
-      integrity: sha512-u8uU0mMnQDtDDaKFh3cHmQ+Yw1yiwgKZw0Az0LFZXsaKPr2v39hGFRQUoZ/GtK6eT05YiU8RGqYb9XPWKbD5/A==
+      integrity: sha512-Y9bicPHDOMng9/ZXRNCIuGtrJ7JUlckE0j2Ak+6VhXFez7zdVJ2CUKSn61O/2OHpEqIlbjxQRg+66OLEFZ9xfA==
       tarball: 'file:projects/services-client.tgz'
     version: 0.0.0
   'file:projects/services-core.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/jsonwebtoken': 8.3.2
       '@types/nconf': 0.0.37
       '@types/node': 10.14.13
@@ -13377,11 +13700,12 @@ packages:
     dev: false
     name: '@rush-temp/services-core'
     resolution:
-      integrity: sha512-VWycKx/Dlt4wQLoF0A1SBjf9udFie48lQZdW9TTPFelGyWFjposcxSxNZPktnSJZstUSpxqZzX+C+1+ZC9VUuQ==
+      integrity: sha512-rRC0ws8K8Q3NwAjMhMSXrtmGoglWVTntJO6slLGxe0RONkU2TJO7WsKlmTFLH/JX5lLCjg4o2QMXVBLeu6QTXw==
       tarball: 'file:projects/services-core.tgz'
     version: 0.0.0
   'file:projects/services-utils.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/bytes': 3.0.0
       '@types/debug': 0.0.31
       '@types/logform': 1.2.0
@@ -13404,13 +13728,14 @@ packages:
     dev: false
     name: '@rush-temp/services-utils'
     resolution:
-      integrity: sha512-ZiV3lqMQvjS06oakIZGjtYgPgyAzgCO9utg3NrFgAYBe6MShVWj2oMZ1xJfaXB/PRuEZVO2CLV9O/fYWEDuzLg==
+      integrity: sha512-U6qdDT8rnvnasCmCSCbF1QjxBTQdHnZO8NAi691aMANiS0eEYlU7af0zMrexaeanmmeIJAZAOxcx6wqNiZv/Zg==
       tarball: 'file:projects/services-utils.tgz'
     version: 0.0.0
   'file:projects/services.tgz':
     dependencies:
       '@azure/event-hubs': 1.0.8
       '@azure/event-processor-host': 1.0.6
+      '@prague/protocol-definitions': 0.8.10292
       '@types/amqplib': 0.5.13
       '@types/debug': 0.0.31
       '@types/lodash': 4.14.136
@@ -13444,12 +13769,13 @@ packages:
     dev: false
     name: '@rush-temp/services'
     resolution:
-      integrity: sha512-SH7wOssHCdY1UQWBUeWT8TwTrSgIwKkLPnVYklsJKWo7kw+ohPYmp4YV67noKuZ65JU6Q7VN9Vk4sdXDR6hZlg==
+      integrity: sha512-xG/Qmv/C0QuMkFc5iH9uNkgX9mZm6NtUAsbP+kgWWl0o3bLmw2u4UN0isrIvUvSeltddvkC5p+0aPlqI3XppOQ==
       tarball: 'file:projects/services.tgz'
     version: 0.0.0
   'file:projects/shared-object-common.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
       '@types/node': 10.14.13
@@ -13463,7 +13789,7 @@ packages:
     dev: false
     name: '@rush-temp/shared-object-common'
     resolution:
-      integrity: sha512-BShpjseI16QZk8nG5BYgogwYHlQNry1RXRvmiCSq+US0wprTGX4nBYLl49SD0Ka6LCrE6dvSDq2zvwfWEexMZw==
+      integrity: sha512-g5mrQPLD4yp2z0YivNt+77Z3oehPoCbH/3DAmnQOhoUlOW/elb1Ac0ceR+3gv42wxdVpyFZvcxudhi1rtL5WAQ==
       tarball: 'file:projects/shared-object-common.tgz'
     version: 0.0.0
   'file:projects/shared-text.tgz':
@@ -13515,6 +13841,7 @@ packages:
     version: 0.0.0
   'file:projects/snapshotter.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       concurrently: 4.1.1
@@ -13525,12 +13852,13 @@ packages:
     dev: false
     name: '@rush-temp/snapshotter'
     resolution:
-      integrity: sha512-txfPoXC2rptBC5o30GOtecuAc2RZ5iZhOR+jQ0OOXAhgSvyXbm+m02hA+VaNWAZNyO07ZlEj102HeO1lg1clEg==
+      integrity: sha512-RzF/ngPDsyQA7GLmn2L9FPQ97WHEJrYHSoUNQu6+Q1orL0BcgjqKRGkUvwjgunOs16xp5YT4U3FVgnItl8rnrw==
       tarball: 'file:projects/snapshotter.tgz'
     version: 0.0.0
   'file:projects/socket-storage-shared.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       '@types/socket.io-client': 1.4.32
@@ -13543,12 +13871,13 @@ packages:
     dev: false
     name: '@rush-temp/socket-storage-shared'
     resolution:
-      integrity: sha512-Ck06HLxotF4eJg1M5XDwz5FUje/rPHqWhLrmwpcHLFtH1/qXKVzoFi+AjXHx3Bm7x9JoFwQBWxiZZ0rQ5kY/Eg==
+      integrity: sha512-oRFdS/U0L0OWCQdwrcS+S0Bil0G+aYx+JGCCs/Ahl7oBP+jTsv4WshRbFM9+fvgrBoy9HfuSgcIePNSlf4XAtA==
       tarball: 'file:projects/socket-storage-shared.tgz'
     version: 0.0.0
   'file:projects/spellchecker.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       '@types/request': 2.48.2
@@ -13561,12 +13890,13 @@ packages:
     dev: false
     name: '@rush-temp/spellchecker'
     resolution:
-      integrity: sha512-ZvHS+PvG0XummjMIzyl0Q65ckpoPTJXxTg9iJdIMI/I6sdtYuCsdsdZJKC5rC+teeBxnzvlgJ8646xoDk5+6vA==
+      integrity: sha512-0tpFtRyQ5NChJ1YKrDswFM0mYfZQiGukEbdUY+MOZGtkxqwOuznb1EyZpdfAkBwOUuZP43P4Nj/fTByNi/iR3w==
       tarball: 'file:projects/spellchecker.tgz'
     version: 0.0.0
   'file:projects/stream.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/uuid': 3.4.5
       concurrently: 4.1.1
@@ -13578,7 +13908,7 @@ packages:
     dev: false
     name: '@rush-temp/stream'
     resolution:
-      integrity: sha512-Xd/jUIZY578ACRc1AdNaudpmo4CSdQsUPvEf6aBfkeGMMsuyuBLjauZVoqKIEtRQuDGLczoCo8ATleziIoDrNg==
+      integrity: sha512-v2QqNmUckz/uLFr1SPPE+5Bg0swGfKMAJjIGs17oEcwF3+pwzPrVZLo/0jaFkcxuYzuxOgLhEETiyRP37b/Mdg==
       tarball: 'file:projects/stream.tgz'
     version: 0.0.0
   'file:projects/table-document.tgz':
@@ -13627,11 +13957,12 @@ packages:
     dev: false
     name: '@rush-temp/table-view'
     resolution:
-      integrity: sha512-1zxU3wIb3QEEKHDVEM1g5PZEvZ5nPsnAL3I2Ol/i2KhhC1PMjm9qAXC5NoOy19SKhzuxc3kEV6Af0BqHAqDAxw==
+      integrity: sha512-NdGsMQRDr+GOw1BTT/rTMc/gLoGSEK8uvSuA5YOO1a3V/yzJIb+GVhEAgssSH+7/G2FgJ7ouPrjmSwVx39erdg==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
   'file:projects/test-utils.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/lodash': 4.14.136
       '@types/nconf': 0.0.37
       '@types/node': 10.14.13
@@ -13647,12 +13978,13 @@ packages:
     dev: false
     name: '@rush-temp/test-utils'
     resolution:
-      integrity: sha512-Sdnn685xwWJRjmMqpG6+akBx80doMKbZOlkXFrdLzIH8mayXlOe6ugDkK1DTLzdycsYcbH3NgD1PUJj6XFieew==
+      integrity: sha512-ERl0dsZSK/w5DAXwjQFZr3j1fQy5I80MWAu3yTI3A3iDgQgcamZgWGBYnkSivfhWxW5i6wDCk2VfsQhHIaZI9g==
       tarball: 'file:projects/test-utils.tgz'
     version: 0.0.0
   'file:projects/tiny-web-host.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/isomorphic-fetch': 0.0.35
       '@types/node': 10.14.13
       '@types/url-parse': 1.4.3
@@ -13672,7 +14004,7 @@ packages:
     dev: false
     name: '@rush-temp/tiny-web-host'
     resolution:
-      integrity: sha512-/EsFGYgdu7sbHj4OpOx/EZVUmlmcSHhBU1PxpiLuRGXpT2oup3nGQcp01/PnR3a4fpFfvvy5on+Su4nQMMSsEQ==
+      integrity: sha512-Bki2hNaUBvNUNiz8Ff5lT/nRLVXZ5r/Fg2uHsGPTtU4FaXm3yTfA/qmhX0ceyP+s1xkSNDso3ClpiAnrt7jNgw==
       tarball: 'file:projects/tiny-web-host.tgz'
     version: 0.0.0
   'file:projects/todo.tgz':
@@ -13701,6 +14033,7 @@ packages:
     version: 0.0.0
   'file:projects/tools-core.tgz':
     dependencies:
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/jsonwebtoken': 8.3.2
       '@types/lodash': 4.14.136
@@ -13718,12 +14051,13 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-S69vQ/L8MU3bTx0YDPX4gsLy8Y25bYgRl1RIGzPkc0nilsMUv0a8JpW1uBVSoYfnse+BakCbGuIudhdiHGMG1Q==
+      integrity: sha512-i+iQddrn2HdnrmQ5E97MiYiv0JdKA2ZQSuIYKZvfVog8eCMalJldSX8VjBxI8F5qiKFONXLH8pMFDJD5/9UAkg==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/translator.tgz':
     dependencies:
       '@prague/component-core-interfaces': 0.8.10224
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/node': 10.14.13
       '@types/request': 2.48.2
@@ -13736,12 +14070,13 @@ packages:
     dev: false
     name: '@rush-temp/translator'
     resolution:
-      integrity: sha512-NuuvgtvYJLC4x1sszQtjl+uafpwMKQ4gHhJmUDnS0IsBcavueuxwB4H2vCnmGG/m6uqfrjjxRG8iBT1H3pqmMg==
+      integrity: sha512-JYlZipOk9JMl/e+Qcccit/m8JdSVqgp8UfLXCMw9KC7fQm4AFwxriH/H16c1n4boxFVhqy7FeABuhKbbXi6PnA==
       tarball: 'file:projects/translator.tgz'
     version: 0.0.0
   'file:projects/utils.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.4
+      '@prague/protocol-definitions': 0.8.10292
       '@types/debug': 0.0.31
       '@types/mocha': 5.2.7
       '@types/node': 10.14.13
@@ -13759,7 +14094,7 @@ packages:
     dev: false
     name: '@rush-temp/utils'
     resolution:
-      integrity: sha512-fx+jzWbQsOiH2Q3YRxBgRjCnsy2pjdwgP9fQQAd0p/MhH00NMXUJTnZxjIFPfyUwMNEgy1LeN/tVFfZX5WOToA==
+      integrity: sha512-7x5nWBduweP+XaKEieO2n0z2jmqe78Wf03ZLwyoBq1p4Zr6qZrpDh6rNwTyJv7MVtyTMf15abxoM6EQfbyLBcg==
       tarball: 'file:projects/utils.tgz'
     version: 0.0.0
   'file:projects/video-players.tgz':
@@ -13836,6 +14171,7 @@ specifiers:
   '@rush-temp/base-host': 'file:./projects/base-host.tgz'
   '@rush-temp/blob-manager': 'file:./projects/blob-manager.tgz'
   '@rush-temp/build-common': 'file:./projects/build-common.tgz'
+  '@rush-temp/canvas': 'file:./projects/canvas.tgz'
   '@rush-temp/cell': 'file:./projects/cell.tgz'
   '@rush-temp/chart-view': 'file:./projects/chart-view.tgz'
   '@rush-temp/charts': 'file:./projects/charts.tgz'
@@ -13879,6 +14215,7 @@ specifiers:
   '@rush-temp/pond': 'file:./projects/pond.tgz'
   '@rush-temp/prague-dump': 'file:./projects/prague-dump.tgz'
   '@rush-temp/progress-bars': 'file:./projects/progress-bars.tgz'
+  '@rush-temp/protocol-definitions': 'file:./projects/protocol-definitions.tgz'
   '@rush-temp/react-web-host': 'file:./projects/react-web-host.tgz'
   '@rush-temp/replay-socket-storage': 'file:./projects/replay-socket-storage.tgz'
   '@rush-temp/replay-tool': 'file:./projects/replay-tool.tgz'
@@ -14026,6 +14363,7 @@ specifiers:
   knockout: ^3.4.2
   leaflet: ^1.3.4
   less: ^3.0.4
+  less-loader: ^4.1.0
   loader-utils: ^1.1.0
   lodash: ^4.17.11
   minio: ^7.0.2
