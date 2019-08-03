@@ -16,9 +16,9 @@ import {
 /**
  * The event object returned on sequenceDelta events.
  *
- * The properties of this object and it's sub-objects represent a point in time state
+ * The properties of this object and its sub-objects represent a point in time state
  * at the time the operation was applied. They will not take into any future modifications
- *  performed to the undlying sequence and merge tree.
+ * performed to the underlying sequence and merge tree.
  *
  * For group ops, each op will get it's own event, and the group op property will be set on the op args.
  *

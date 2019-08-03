@@ -243,6 +243,10 @@ export class Client {
             (end === undefined) ? this.getLength() : end);
     }
 
+    public getCollabWindow() {
+        return this.mergeTree.getCollabWindow();
+    }
+
     public getPosition(segment: ISegment): number {
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
     }
@@ -407,16 +411,16 @@ export class Client {
                 this.localOps++;
             }
         } else {
-            this.mergeTree.getCollabWindow().currentSeq = clientArgs.sequenceNumber;
+            this.getCollabWindow().currentSeq = clientArgs.sequenceNumber;
             if (clockStart) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
-                this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+                this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
         }
         if (this.verboseOps && (!opArgs.sequencedMessage || !this.noVerboseRemoteAnnote)) {
             console.log(
-                `@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ` +
+                `@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
                 `seq ${clientArgs.sequenceNumber} ${opArgs.op.type} local ${!opArgs.sequencedMessage} ` +
                 `start ${ range.start } end ${range.end} refseq ${clientArgs.referenceSequenceNumber} ` +
                 `cli ${clientArgs.clientId}`);
@@ -497,7 +501,7 @@ export class Client {
         // and unacked, so use this clients sequenced args
         //
         if (!opArgs.sequencedMessage) {
-            const segWindow = this.mergeTree.getCollabWindow();
+            const segWindow = this.getCollabWindow();
             return {
                 clientId: segWindow.clientId,
                 referenceSequenceNumber: segWindow.currentSeq,
@@ -544,11 +548,11 @@ export class Client {
             if (this.measureOps) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
-                this.accumWindow += (this.getCurrentSeq() - this.mergeTree.getCollabWindow().minSeq);
+                this.accumWindow += (this.getCurrentSeq() - this.getCollabWindow().minSeq);
             }
 
             if (this.verboseOps) {
-                console.log(`@cli ${this.getLongClientId(this.mergeTree.getCollabWindow().clientId)} ` +
+                console.log(`@cli ${this.getLongClientId(this.getCollabWindow().clientId)} ` +
                     `ack seq # ${deltaOpArgs.sequencedMessage.sequenceNumber}`);
             }
         };
@@ -833,7 +837,7 @@ export class Client {
     }
 
     public applyMsg(msg: ISequencedDocumentMessage) {
-        if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
+        if ((msg !== undefined) && (msg.minimumSequenceNumber > this.getCollabWindow().minSeq)) {
             this.updateMinSeq(msg.minimumSequenceNumber);
         }
         // Ensure client ID is registered
@@ -857,7 +861,7 @@ export class Client {
         }
     }
     private getLocalSequenceNumber() {
-        let segWindow = this.mergeTree.getCollabWindow();
+        let segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {
             return UnassignedSequenceNumber;
         }
@@ -908,7 +912,7 @@ export class Client {
         }
     }
     getPropertiesAtPosition(pos: number) {
-        let segWindow = this.mergeTree.getCollabWindow();
+        let segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getPropertiesAtPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
@@ -922,7 +926,7 @@ export class Client {
         return propertiesAtPosition;
     }
     getRangeExtentsOfPosition(pos: number) {
-        let segWindow = this.mergeTree.getCollabWindow();
+        let segWindow = this.getCollabWindow();
         if (this.verboseOps) {
             console.log(`getRangeExtentsOfPosition cli ${this.getLongClientId(segWindow.clientId)} ref seq ${segWindow.currentSeq}`);
         }
@@ -939,14 +943,14 @@ export class Client {
         return { posStart, posAfterEnd };
     }
     getCurrentSeq() {
-        return this.mergeTree.getCollabWindow().currentSeq;
+        return this.getCollabWindow().currentSeq;
     }
     getClientId() {
-        return this.mergeTree.getCollabWindow().clientId;
+        return this.getCollabWindow().clientId;
     }
 
     getLength() {
-        let segmentWindow = this.mergeTree.getCollabWindow();
+        let segmentWindow = this.getCollabWindow();
         return this.mergeTree.getLength(segmentWindow.currentSeq, segmentWindow.clientId);
     }
     startCollaboration(longClientId: string | undefined,  minSeq = 0, branchId = 0) {

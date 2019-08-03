@@ -198,26 +198,26 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     }
 
     public getTextAndMarkers(label: string) {
-        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
     }
     public getText(start?: number, end?: number) {
-        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
     /**
      * Adds spaces for markers and components, so that position calculations account for them
      */
     public getTextWithPlaceholders() {
-        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
     }
     public getTextRangeWithPlaceholders(start: number, end: number) {
-        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
     public getTextRangeWithMarkers(start: number, end: number) {
-        const segmentWindow = this.client.mergeTree.getCollabWindow();
+        const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 

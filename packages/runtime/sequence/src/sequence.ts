@@ -652,7 +652,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             this.loadedDeferred.resolve();
 
             // Update the MSN if larger than the set value
-            if (this.pendingMinSequenceNumber > this.client.mergeTree.getCollabWindow().minSeq) {
+            if (this.pendingMinSequenceNumber > this.client.getCollabWindow().minSeq) {
                 this.client.updateMinSeq(this.pendingMinSequenceNumber);
             }
         }

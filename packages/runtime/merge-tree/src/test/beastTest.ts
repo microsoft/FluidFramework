@@ -1082,7 +1082,7 @@ export function TestPack(verbose = true) {
             errorCount++;
         }
         else {
-            log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getCollabWindow().minSeq}`);
+            log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
             //            log(cliA.mergeTree.toString());
 
             log(`testing remove at ${cliA.getCurrentSeq()} and ${cliB.getCurrentSeq()}`);
@@ -1092,7 +1092,7 @@ export function TestPack(verbose = true) {
                 errorCount++;
             }
         }
-        log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.mergeTree.getCollabWindow().minSeq}`);
+        log(`sequence number: ${cliA.getCurrentSeq()} min: ${cliA.getCollabWindow().minSeq}`);
         //                log(cliA.mergeTree.toString());
         //log(cliB.mergeTree.toString());
         //log(cliA.getText());

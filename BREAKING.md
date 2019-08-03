@@ -19,6 +19,12 @@ public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
 `mergeTree.getOffset()` and `Client.getOffset()` have been renamed to `getPosition()` to more accurately reflect their functionality.
 
+## Updated sequence API to provide richer access to the underlying merge tree
+The following methods of mergeTree have been exposed on sequence:
+- `getCollabWindow()`
+
+If these are being accessed directly from the sequence or client, they should be changed to access through sequence, since these will become private in mergeTree/mergeTree client in the future.
+
 ## ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
 The `offset` member of the ISequenceDeltaRange interface has been renamed to `position` 
 

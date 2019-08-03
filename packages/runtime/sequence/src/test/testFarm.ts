@@ -803,7 +803,7 @@ export function TestPack(verbose = true) {
 
         function ohSnap(filename: string) {
             snapInProgress = true;
-            let curmin = snapClient.mergeTree.getCollabWindow().minSeq;
+            let curmin = snapClient.getCollabWindow().minSeq;
             lastSnap = curmin;
             console.log(`snap started seq ${snapClient.getCurrentSeq()} minseq ${curmin}`);
             // let snapshot = new Paparazzo.Snapshot(snapClient.mergeTree, filename, snapFinished);
@@ -812,7 +812,7 @@ export function TestPack(verbose = true) {
 
         function asyncStep() {
             round(asyncRoundCount);
-            let curmin = server.mergeTree.getCollabWindow().minSeq;
+            let curmin = server.getCollabWindow().minSeq;
             if ((!snapInProgress) && (lastSnap < curmin)) {
                 ohSnap("snapit");
             }
