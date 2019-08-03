@@ -46,7 +46,8 @@ async function loadAllSequencedMessages(
     let logMsg = `)`;
     let allMessages = sequencedMessages;
     if (initialMessages) {
-        const lastSequenceNumber = sequencedMessages[sequencedMessages.length - 1].sequenceNumber;
+        const lastSequenceNumber = sequencedMessages.length === 0 ?
+            0 : sequencedMessages[sequencedMessages.length - 1].sequenceNumber;
         const filtered = initialMessages.filter((a) => a.sequenceNumber > lastSequenceNumber);
         const sorted = filtered.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
         logMsg = `, ${initialMessages.length} initial ws messages, ${initialMessages.length - sorted.length} dup)`;
