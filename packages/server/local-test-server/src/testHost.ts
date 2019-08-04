@@ -227,7 +227,7 @@ export class TestHost {
     }
 
     /**
-     * Wait and get the compoent witht he id.
+     * Wait and get the component with the id.
      * @param id component Id
      * @returns Component object
      */

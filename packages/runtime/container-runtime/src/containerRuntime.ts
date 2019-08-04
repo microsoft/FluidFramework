@@ -41,9 +41,9 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
+    ComponentFactoryTypes,
     FlushMode,
     IAttachMessage,
-    IComponentFactory,
     IComponentRuntime,
     IEnvelope,
     IHelpMessage,
@@ -71,11 +71,12 @@ declare module "@prague/component-core-interfaces" {
     }
 }
 
-export type ComponentRegistryTypes = IComponentRegistry | {get(name: string): Promise<IComponentFactory> | undefined};
+export type ComponentRegistryTypes =
+    IComponentRegistry | {get(name: string): Promise<ComponentFactoryTypes> | undefined};
 
 export interface IComponentRegistry {
     readonly IComponentRegistry: IComponentRegistry;
-    get(name: string): Promise<IComponentFactory> | undefined;
+    get(name: string): Promise<ComponentFactoryTypes> | undefined;
 }
 
 interface IBufferedChunk {
@@ -373,7 +374,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
      * Returns the component factory for a particular package.
      * @param name - Name of the package.
      */
-    public getPackage(name: string): Promise<IComponentFactory> {
+    public getPackage(name: string): Promise<ComponentFactoryTypes> {
         return this.registry.get(name);
     }
 
@@ -1189,13 +1190,13 @@ export class WrappedComponentRegistry implements IComponentRegistry {
     private readonly agentScheduler: AgentSchedulerFactory;
 
     constructor(private readonly registry: ComponentRegistryTypes,
-                private readonly extraRegistries?: Map<string, Promise<IComponentFactory>>) {
+                private readonly extraRegistries?: Map<string, Promise<ComponentFactoryTypes>>) {
         this.agentScheduler = new AgentSchedulerFactory();
     }
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public async get(name: string): Promise<ComponentFactoryTypes> {
         if (name === "_scheduler") {
             return this.agentScheduler;
         } else if (this.extraRegistries && this.extraRegistries.has(name)) {

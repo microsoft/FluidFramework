@@ -8,8 +8,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:tsc npm:build:esnext npm:tslint",
-    "build:compile": "npm run build",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:full": "npm run build",
     "build:full:compile": "npm run build",
     "webpack": "webpack --env=\"production\"",

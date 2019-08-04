@@ -37,8 +37,8 @@ export const PondName = pkg.name as string;
  */
 export class Pond extends PrimedComponent implements IComponentHTMLVisual {
 
-  public clicker2Render: IComponentHTMLRender;
-  public clicker3Render: IComponentHTMLRender;
+  public clicker2Render: IComponentHTMLRender | undefined;
+  public clicker3Render: IComponentHTMLRender | undefined;
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
@@ -81,6 +81,10 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   // start IComponentHTMLVisual
 
   public render(div: HTMLElement) {
+    if (!this.clicker2Render || !this.clicker3Render) {
+      throw new Error("Pond not initialized correctly");
+    }
+
     // Pond wrapper component setup
     // Set the border to green to denote components boundaries.
     div.style.border = "1px dotted green";
@@ -133,7 +137,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   new Map([
     [PondName, Promise.resolve(pondInstantiationFactory)],
     [ClickerName, Promise.resolve(
-      { instantiateComponent: Clicker.instantiateComponent, IComponentFactory: undefined })],
+      { instantiateComponent: Clicker.instantiateComponent })],
     [ClickerWithForgeName, Promise.resolve(
-      { instantiateComponent: ClickerWithForge.instantiateComponent, IComponentFactory: undefined })],
+      { instantiateComponent: ClickerWithForge.instantiateComponent })],
   ]));

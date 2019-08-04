@@ -8,11 +8,11 @@ import {
     IContainerContext, IRuntime, IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
+import { ComponentFactoryTypes, IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { SimpleContainerRuntimeFactory } from "./simpleContainerRuntimeFactory";
 
 /**
- *  Simple Fluid Module instantiation library. This should be exposed as fuildExport off the entrypoint to your module
+ *  Simple Fluid Module instantiation library. This should be exposed as fluidExport off the entrypoint to your module
  *
  * This factory exposes the following interfaces:
  *  IComponentFactory: instantiates the default component directly, sub-components must be registered manually
@@ -34,7 +34,7 @@ export class SimpleModuleInstantiationFactory implements
     public get IComponentRegistry() { return this; }
     public get IRuntimeFactory() { return this; }
 
-    public get(name: string): Promise<IComponentFactory> | undefined {
+    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
         return this.registry.get(name);
     }
 

@@ -260,7 +260,7 @@ export interface IComponentContext extends EventEmitter, IComponent {
     bindRuntime(componentRuntime: IComponentRuntime): Promise<void>;
 
     /**
-     * Attaches the runtime to the conatiner
+     * Attaches the runtime to the container
      * @param componentRuntime - runtime to attach
      */
     attach(componentRuntime: IComponentRuntime): void;
@@ -331,7 +331,7 @@ export interface IHostRuntime extends IRuntime {
      * Returns the component factory for a particular package.
      * @param name - Name of the package.
      */
-    getPackage(name: string): Promise<IComponentFactory>;
+    getPackage(name: string): Promise<ComponentFactoryTypes>;
 
     /**
      * Used to raise an unrecoverable error on the runtime.
@@ -378,6 +378,8 @@ export interface IComponentFactory {
      */
     instantiateComponent(context: IComponentContext): void;
 }
+
+export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(context: IComponentContext): void; };
 
 // following are common conventions
 

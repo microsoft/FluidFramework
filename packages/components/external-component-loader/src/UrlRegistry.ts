@@ -6,7 +6,7 @@
 import { IComponent, IComponentQueryableLegacy } from "@prague/component-core-interfaces";
 import { IFluidPackage, IPraguePackage } from "@prague/container-definitions";
 import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
-import { IComponentFactory } from "@prague/runtime-definitions";
+import { ComponentFactoryTypes, IComponentFactory } from "@prague/runtime-definitions";
 import { Deferred } from "@prague/utils";
 
 /**
@@ -15,13 +15,13 @@ import { Deferred } from "@prague/utils";
 export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
-    private readonly urlRegistryMap = new Map<string, Promise<IComponentFactory>>();
+    private readonly urlRegistryMap = new Map<string, Promise<ComponentFactoryTypes>>();
     // tslint:disable-next-line: prefer-array-literal
     private readonly subRegistries: Array<Promise<ComponentRegistryTypes>> = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 
-    constructor(entries: Map<string, Promise<IComponentFactory>>) {
+    constructor(entries: Map<string, Promise<ComponentFactoryTypes>>) {
 
         this.subRegistries.push(Promise.resolve(entries));
         this.subRegistries.push(Promise.resolve(this.urlRegistryMap));
@@ -42,7 +42,7 @@ export class UrlRegistry implements IComponentRegistry {
 
     public get IComponentRegistry() { return this; }
 
-    public async get(name: string): Promise<IComponentFactory> {
+    public async get(name: string): Promise<ComponentFactoryTypes> {
 
         if (!this.urlRegistryMap.has(name)
             && (name.startsWith("http://") || name.startsWith("https://"))) {
@@ -108,7 +108,7 @@ export class UrlRegistry implements IComponentRegistry {
     }
 
     // tslint:disable-next-line: promise-function-async
-    private async getFromSubRegistries(name: string): Promise<IComponentFactory>  {
+    private async getFromSubRegistries(name: string): Promise<ComponentFactoryTypes> {
         for (const registryP of this.subRegistries) {
             try {
                 const registry = await registryP;

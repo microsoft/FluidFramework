@@ -10,12 +10,13 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "prague-dev-server --config webpack.config.js --live --package package.json",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
-    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\""
@@ -41,7 +42,6 @@
   "license": "MIT",
   "dependencies": {
     "@prague/aqueduct": "^0.8.0",
-    "@prague/build-common": "^0.8.0",
     "@prague/component-core-interfaces": "^0.8.0",
     "@prague/component-runtime": "^0.8.0",
     "@prague/framework-definitions": "^0.8.0",
@@ -52,6 +52,7 @@
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
+    "@prague/build-common": "^0.8.0",
     "@prague/prague-dev-server": "~3.8.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",

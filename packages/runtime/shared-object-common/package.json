@@ -13,7 +13,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "node node_modules/@prague/build-common/gen_version.js",
-    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose"
