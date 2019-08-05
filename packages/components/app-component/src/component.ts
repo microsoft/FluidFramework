@@ -42,6 +42,9 @@ export interface IPlatform extends EventEmitter {
     detach();
 }
 
+/**
+ * @deprecated being removed in favor of QI on container-definitions IComponent
+ */
 export class ServicePlatform extends EventEmitter {
     private readonly qi: Map<string, Promise<any>>;
 
@@ -62,6 +65,9 @@ export class ServicePlatform extends EventEmitter {
 // Internal IPlatform implementation used to defer returning the component
 // from DataStore.open() until after the component's async 'opened()' method has
 // completed.  (See 'Chaincode.run()' below.)
+/**
+ * @deprecated being removed in favor of QI on container-definitions IComponent
+ */
 class ComponentPlatform extends EventEmitter implements IPlatform {
     constructor(private readonly component: Promise<Component>) { super(); }
 
@@ -81,6 +87,8 @@ class ComponentPlatform extends EventEmitter implements IPlatform {
 
 /**
  * Base class for chainloadable Fluid components.
+ *
+ * @deprecated being removed in favor of QI on container-definitions IComponent
  */
 export abstract class Component extends EventEmitter {
     private get dbgName() {
@@ -120,6 +128,8 @@ export abstract class Component extends EventEmitter {
 
     /**
      * Helper function to instantiate a new default runtime
+     *
+     * @deprecated being removed in favor of QI on container-definitions IComponent
      */
     public static async instantiateRuntime(
         context: IContainerContext,
@@ -179,6 +189,8 @@ export abstract class Component extends EventEmitter {
 
     /**
      * Helper function to create the component factory method for a given component
+     *
+     * @deprecated being removed in favor of QI on container-definitions IComponent
      */
     public static createComponentFactory<T extends Component>(ctor: new () => T): IComponentFactory {
         const value: Partial<IComponentFactory & IComponent> = {

@@ -14,6 +14,9 @@ import * as sequence from "@prague/sequence";
 import * as stream from "@prague/stream";
 import { Component } from "./component";
 
+/**
+ * @deprecated Deprecated in favor of shared component
+ */
 export abstract class Document extends Component {
     constructor() {
         // Map value types to register as defaults
