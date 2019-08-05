@@ -15,14 +15,8 @@ describe("MergeTree.Client", () => {
     it("ConflictFarm", async () => {
 
         const clients: TestClient[] = [new TestClient()];
-        clients[0].startCollaboration(String.fromCharCode("a".charCodeAt(0)));
-        clients[0].mergeTree.mergeTreeDeltaCallback = (o, d) => {
-            if (d.deltaSegments.length > 0) {
-                d.deltaSegments.forEach((s) => {
-                    assert.notEqual(s.segment.parent, undefined);
-                });
-            }
-        };
+        clients.forEach(
+            (c, i) => c.startCollaboration(String.fromCharCode("a".charCodeAt(0) + i)));
 
         const mt = random.engines.mt19937();
         mt.seedWithArray([0xDEADBEEF, 0xFEEDBED]);
@@ -60,7 +54,11 @@ describe("MergeTree.Client", () => {
                         } else {
                             const start = random.integer(0, len - 1)(mt);
                             const end = random.integer(start + 1, len)(mt);
-                            op = client.removeRangeLocal(start, end);
+                            if (random.bool()(mt)) {
+                                op = client.removeRangeLocal(start, end);
+                            } else {
+                                op = client.annotateRangeLocal(start, end, {bucket: i % 3}, undefined);
+                            }
                         }
                         if (op !== undefined) {
                             assert.notEqual(
