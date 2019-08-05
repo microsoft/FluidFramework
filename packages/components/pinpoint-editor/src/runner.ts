@@ -312,7 +312,7 @@ export class PinpointRunner extends EventEmitter implements
     ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
-        const runner = new PinpointRunner(runtime);
+        const runner = new PinpointRunner(runtime, context);
         await runner.initialize();
 
         return runner;
@@ -340,7 +340,7 @@ export class PinpointRunner extends EventEmitter implements
     private editor: boolean = false;
     private embed: PinpointEmbed;
 
-    constructor(private runtime: IComponentRuntime) {
+    constructor(private runtime: IComponentRuntime, private context: IComponentContext) {
         super();
     }
 
@@ -375,6 +375,7 @@ export class PinpointRunner extends EventEmitter implements
         this.collabDoc = await Document.load(this.runtime);
         this.rootView = await this.collabDoc.getRoot();
         await new Promise<void>((resolve) => {
+            GoogleMapsLoader.KEY = this.getMapAPIKey();
             GoogleMapsLoader.load((google) => {
                 pinpointTool.value("google", google);
                 resolve();
@@ -406,6 +407,16 @@ export class PinpointRunner extends EventEmitter implements
             this.rootView.set("map", JSON.stringify(data));
         } else {
             await this.rootView.wait("map");
+        }
+    }
+
+    private getMapAPIKey() {
+        const hostTokens = this.context.hostRuntime.IComponentTokenProvider;
+        const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.pinpointEditor : undefined;
+        if (intelTokens === undefined || intelTokens.key === undefined) {
+            return undefined;
+        } else {
+            return intelTokens.key;
         }
     }
 }
