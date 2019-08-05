@@ -21,10 +21,6 @@ import {
   ISharedMap,
   SharedMap,
 } from "@prague/map";
-import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 
 import * as React from "react";
@@ -57,10 +53,7 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   /**
    * Do setup work here
    */
-  protected async create() {
-    // This allows the PrimedComponent to create the root map
-    await super.create();
-
+  protected async componentInitializingFirstTime() {
     // create a list for of all inner todo item components
     // we will use this to know what components to load.
     this.root.set(this.innerCellIds, SharedMap.create(this.runtime));
@@ -75,16 +68,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
     this.root.set("sharedString-title", text);
-  }
-
-  /**
-   * Having a static load function allows us to make async calls while creating our object.
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Todo> {
-    const todo = new Todo(runtime, context);
-    await todo.initialize();
-
-    return todo;
   }
 
   // start IComponentHTMLVisual

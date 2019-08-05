@@ -4,8 +4,8 @@
  */
 
 import {
-  PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  SharedComponent,
+  SharedComponentFactory,
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
@@ -13,19 +13,10 @@ import {
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
-  CounterValueType,
-  DistributedSetValueType,
-  SharedMap,
-} from "@prague/map";
-import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
   Clicker,
   ClickerName,
-  ClickerWithForge,
-  ClickerWithForgeName,
+  ClickerWithInitialValue,
+  ClickerWithInitialValueName,
 } from "./internal-components";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -35,7 +26,7 @@ export const PondName = pkg.name as string;
 /**
  * Basic Pond example using new interfaces and stock component classes.
  */
-export class Pond extends PrimedComponent implements IComponentHTMLVisual {
+export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
   public clicker2Render: IComponentHTMLRender | undefined;
   public clicker3Render: IComponentHTMLRender | undefined;
@@ -43,38 +34,28 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
 
-  protected async existing() {
-    await super.existing();
+  protected async componentInitializingFromExisting() {
     await this.setupSubComponents();
   }
   /**
    * Do setup work here
    */
-  protected async create() {
+  protected async componentInitializingFirstTime() {
     // This allows the PrimedComponent to create the root map
-    await super.create();
     await this.createAndAttachComponent("clicker", ClickerName);
-    await this.createAndAttachComponent("clicker-with-forge", ClickerWithForgeName, { initialValue: 100 });
+    await this.createAndAttachComponent(
+      "clicker-with-initial-value",
+      ClickerWithInitialValueName,
+      { initialValue: 100 },
+    );
     await this.setupSubComponents();
-  }
-
-  /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Pond> {
-    const clicker = new Pond(runtime, context);
-    await clicker.initialize();
-
-    return clicker;
   }
 
   async setupSubComponents() {
     const clicker2 = await this.getComponent("clicker");
     this.clicker2Render = clicker2.IComponentHTMLRender;
 
-    const clicker3 = await this.getComponent("clicker");
+    const clicker3 = await this.getComponent("clicker-with-initial-value");
     this.clicker3Render = clicker3.IComponentHTMLRender;
   }
 
@@ -122,22 +103,23 @@ export class Pond extends PrimedComponent implements IComponentHTMLVisual {
   }
 
   // end IComponentHTMLVisual
+
+  // ----- COMPONENT SETUP STUFF -----
+
+  public static getFactory() { return Pond.factory; }
+
+  private static readonly factory = new SharedComponentFactory(
+      Pond,
+      [],
+  );
 }
 
-// ----- COMPONENT SETUP STUFF -----
-
-export const pondInstantiationFactory = new SimpleComponentInstantiationFactory(
-  [
-    SharedMap.getFactory([new DistributedSetValueType(), new CounterValueType()]),
-  ],
-  Pond.load);
+// ----- CONTAINER SETUP STUFF -----
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
   PondName,
   new Map([
-    [PondName, Promise.resolve(pondInstantiationFactory)],
-    [ClickerName, Promise.resolve(
-      { instantiateComponent: Clicker.instantiateComponent })],
-    [ClickerWithForgeName, Promise.resolve(
-      { instantiateComponent: ClickerWithForge.instantiateComponent })],
+    [PondName, Promise.resolve(Pond.getFactory())],
+    [ClickerName, Promise.resolve(Clicker.getFactory())],
+    [ClickerWithInitialValueName, Promise.resolve(ClickerWithInitialValue.getFactory())],
   ]));

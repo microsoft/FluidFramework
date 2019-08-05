@@ -140,6 +140,10 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
         return ConnectionState.Connected;
     }
 
+    public get isAttached(): boolean {
+        return true;
+    }
+
     public async getChannel(id: string): Promise<IChannel> {
         return null;
     }

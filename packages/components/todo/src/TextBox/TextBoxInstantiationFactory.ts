@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
-    SimpleComponentInstantiationFactory,
+    SharedComponentFactory,
 } from "@prague/aqueduct";
 import {
     SharedMap,
@@ -15,10 +15,10 @@ import {
 
 import { TextBox } from "./index";
 
-export const TextBoxInstantiationFactory: IComponentFactory = new SimpleComponentInstantiationFactory(
+export const TextBoxInstantiationFactory: IComponentFactory = new SharedComponentFactory(
+    TextBox,
     [
         SharedMap.getFactory(),
         SharedString.getFactory(),
     ],
-    TextBox.load,
 );

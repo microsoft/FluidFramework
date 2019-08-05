@@ -11,7 +11,6 @@ import {
   IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
 import { MergeTreeDeltaType } from "@prague/merge-tree";
-import {  IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";
 import * as uuid from "uuid";
 import { pkg } from ".";
@@ -20,13 +19,6 @@ import { pkg } from ".";
  * Component that loads extneral components via their url
  */
 export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLVisual {
-    public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<ExternalComponentLoader> {
-        const ucl = new ExternalComponentLoader(runtime, context);
-        await ucl.initialize();
-
-        return ucl;
-    }
-
     private static readonly defaultComponents = [
         "@chaincode/pinpoint-editor",
         "@chaincode/todo",
@@ -144,15 +136,13 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         }
     }
 
-    protected async create() {
-        await super.create();
+    protected async componentInitializingFirstTime() {
         const sequence = SharedObjectSequence.create<string>(this.runtime);
         sequence.register();
         this.root.set("componentIds", sequence);
     }
 
-    protected async opened() {
-        await super.opened();
+    protected async componentHasInitialized() {
         const sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =

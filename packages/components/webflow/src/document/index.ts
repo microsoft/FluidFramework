@@ -418,9 +418,7 @@ export class FlowDocument extends PrimedComponent {
         return this;
     }
 
-    protected async create() {
-        await super.create();
-
+    protected async componentInitializingFirstTime() {
         // For 'findTile(..)', we must enable tracking of left/rightmost tiles:
         // (See: https://github.com/Microsoft/Prague/pull/1118)
         Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
@@ -429,9 +427,7 @@ export class FlowDocument extends PrimedComponent {
         this.root.set("text", text);
     }
 
-    protected async opened() {
-        await super.opened();
-
+    protected async componentHasInitialized() {
         this.maybeSharedString = await this.root.wait<SharedString>("text");
         const client = this.sharedString.client;
         this.maybeClientId = client.getClientId();

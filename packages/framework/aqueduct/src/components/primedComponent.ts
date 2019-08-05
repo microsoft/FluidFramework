@@ -7,10 +7,6 @@ import {
     ISharedMap,
     SharedMap,
 } from "@prague/map";
-import {
-    IComponentContext,
-    IComponentRuntime,
-} from "@prague/runtime-definitions";
 
 import { SharedComponent } from "./sharedComponent";
 
@@ -24,53 +20,43 @@ import { SharedComponent } from "./sharedComponent";
  */
 export abstract class PrimedComponent extends SharedComponent {
     private internalRoot: ISharedMap | undefined;
-
     private readonly rootMapId = "root";
-
-    protected constructor(
-        protected runtime: IComponentRuntime,
-        protected context: IComponentContext,
-    ) {
-        super(runtime, context);
-    }
-
-    // start IComponentRouter
 
     /**
      * The root map will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
      *
-     * If you are overriding `create()` ensure you are calling `super.create()` first.
-     * If you are overriding `existing()` ensure you are calling `super.existing()` first.
+     * If you are overriding `componentInitializingFirstTime()` ensure you are calling `await super.componentInitializingFirstTime()` first.
+     * If you are overriding `componentInitializingFromExisting()` ensure you are calling `await super.componentInitializingFromExisting()` first.
      */
     public get root(): ISharedMap {
         if (!this.internalRoot) {
-            throw new Error("root must be initialized before being accessed. Ensure you are calling super.create() and super.existing() if you are overriding either.");
+            throw new Error(
+                `root must be initialized before being accessed.
+                Ensure you are calling await super.componentInitializingFirstTime()
+                and/or await super.componentInitializingFromExisting() if you are
+                overriding either.`);
         }
 
         return this.internalRoot;
     }
 
-    // end IComponentRouter
-
     /**
-     * If you are overriding this method you must call `super.create()` first in order
-     * to access to root map.
+     * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
      */
-    protected async create(): Promise<void> {
-        // If it's the first time we are creating the component then create a root map
-        this.internalRoot = SharedMap.create(this.runtime, this.rootMapId);
+    protected async initializeInternal(props?: any): Promise<void> {
+        if (this.canForge) {
+            // Create a root map and register it before calling componentInitializingFirstTime
+            this.internalRoot = SharedMap.create(this.runtime, this.rootMapId);
+            this.internalRoot.register();
+            await this.componentInitializingFirstTime(props);
+        } else {
+            // Component has a root map so we just need to set it before calling componentInitializingFromExisting
+            this.internalRoot = await this.runtime.getChannel(this.rootMapId) as ISharedMap;
+            await this.componentInitializingFromExisting();
+        }
 
-        // Calling attach pushes the channel to the websocket. Before this it's only local.
-        this.internalRoot.register();
-    }
-
-    /**
-     * If you are overriding this method you must call `super.existing()` first in order
-     * to access to root map.
-     */
-    protected async existing(): Promise<void> {
-        // If the component already exists, open it's root map.
-        this.internalRoot = await this.runtime.getChannel(this.rootMapId) as ISharedMap;
+        // This always gets called at the end of initialize on FirstTime or from existing.
+        await this.componentHasInitialized();
     }
 }

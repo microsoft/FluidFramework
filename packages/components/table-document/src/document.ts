@@ -152,8 +152,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.maybeCols!.remove(startCol, startCol + numCols);
     }
 
-    protected async create() {
-        super.create();
+    protected async componentInitializingFirstTime() {
         const rows = SharedNumberSequence.create(this.runtime, "rows");
         this.root.set("rows", rows);
 
@@ -164,7 +163,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         this.root.set("matrix", matrix);
     }
 
-    protected async opened() {
+    protected async componentHasInitialized() {
         this.maybeMatrix = await this.root.wait<SparseMatrix>("matrix");
         this.maybeRows = await this.root.wait<SharedNumberSequence>("rows");
         this.maybeCols = await this.root.wait<SharedNumberSequence>("cols");

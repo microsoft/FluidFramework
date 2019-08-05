@@ -60,9 +60,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         this.addView().render(elm, options);
     }
 
-    protected async create() {
-        await super.create();
-
+    protected async componentInitializingFirstTime() {
         await Promise.all([
             this.createAndAttachComponent(this.docId, FlowDocument.type),
             this.createAndAttachComponent("math", "@chaincode/math"),
@@ -80,9 +78,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         }
     }
 
-    protected async opened() {
-        await super.opened();
-
+    protected async componentHasInitialized() {
         const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
         const component = schedulerResponse.value as IComponent;
         this.taskManager = component.ITaskManager;

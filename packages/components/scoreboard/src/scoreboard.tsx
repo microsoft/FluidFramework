@@ -4,9 +4,8 @@
  */
 
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
-import { PrimedComponent, SimpleComponentInstantiationFactory, SimpleModuleInstantiationFactory } from '@prague/aqueduct';
+import { PrimedComponent, SimpleModuleInstantiationFactory, SharedComponentFactory } from '@prague/aqueduct';
 import { CounterValueType, SharedMap } from '@prague/map';
-import { IComponentContext, IComponentRuntime } from '@prague/runtime-definitions';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { TeamScore } from './teamScore';
@@ -21,22 +20,9 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   /**
   * Setup the distributed data structures; called once when the component is created (NOT initialized)
   */
-  protected async create() {
-    await super.create();
+  protected async componentInitializingFirstTime() {
     this.root.set('Hardcoders', 0, CounterValueType.Name);
     this.root.set('Chaincoders', 0, CounterValueType.Name);
-  }
-
-  /**
-  * Static load function that allows us to make async calls while creating our object.
-  * This becomes the standard practice for creating components in the new world.
-  * Using a static allows us to have async calls in class creation that you can't have in a constructor
-  */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Scoreboard> {
-    const comp = new Scoreboard(runtime, context);
-    await comp.initialize();
-
-    return comp;
   }
 
   render(hostingElement: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -73,11 +59,11 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
 /**
  * This is where we define the Distributed Data Structures this component uses
  */
-const ScoreboardComponentInstantiationFactory = new SimpleComponentInstantiationFactory(
+const ScoreboardComponentInstantiationFactory = new SharedComponentFactory(
+  Scoreboard,
   [
     SharedMap.getFactory([new CounterValueType()]),
   ],
-  Scoreboard.load
 );
 
 /**

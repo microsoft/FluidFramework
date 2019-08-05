@@ -32,9 +32,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     }
     // #endregion IComponentHTMLVisual
 
-    protected async create() {
-        await super.create();
-
+    protected async componentInitializingFirstTime() {
         const docP = this.createAndAttachComponent<FlowDocument>(this.docId, FlowDocument.type);
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");

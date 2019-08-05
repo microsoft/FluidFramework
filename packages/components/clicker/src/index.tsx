@@ -5,7 +5,7 @@
 
 import {
   PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  SharedComponentFactory,
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
@@ -22,7 +22,6 @@ import {
 } from "@prague/map";
 import {
   IComponentContext,
-  IComponentRuntime,
 } from "@prague/runtime-definitions";
 
 import * as React from "react";
@@ -37,31 +36,17 @@ export const ClickerName = pkg.name as string;
  */
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
-  /**
-   * Do setup work here
-   */
-  protected async create() {
-    // This allows the PrimedComponent to create the root map
-    await super.create();
-    this.root.set("clicks", 0, CounterValueType.Name);
-  }
-
-  /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Clicker> {
-    const clicker = new Clicker(runtime, context);
-    await clicker.initialize();
-
-    return clicker;
-  }
-
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
 
-  // start IComponentHTMLVisual
+  /**
+   * Do setup work here
+   */
+  protected async componentInitializingFirstTime() {
+    this.root.set("clicks", 0, CounterValueType.Name);
+  }
+
+  // #region IComponentHTMLVisual
 
   /**
    * Will return a new Clicker view
@@ -76,7 +61,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
     return div;
   }
 
-  // end IComponentHTMLVisual
+  // #endregion IComponentHTMLVisual
 }
 
 // ----- REACT STUFF -----
@@ -114,11 +99,12 @@ class CounterReactView extends React.Component<p, s> {
 }
 
 // ----- COMPONENT SETUP STUFF -----
-export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
+
+export const ClickerInstantiationFactory = new SharedComponentFactory(
+  Clicker,
   [
     SharedMap.getFactory([new CounterValueType()]),
   ],
-  Clicker.load,
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

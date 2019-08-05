@@ -16,10 +16,6 @@ import {
   IComponentForge,
 } from "@prague/framework-definitions";
 import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
   SharedString,
 } from "@prague/sequence";
 
@@ -47,23 +43,7 @@ export class TextBox extends PrimedComponent
   /**
    * Do creation work
    */
-  protected async create() {
-    // This allows the PrimedComponent to create the root map
-    await super.create();
-
-    // create a cell that will be use for the text entry
-    this.root.set("text", SharedString.create(this.runtime));
-  }
-
-  // start IComponentForge
-
-  /**
-   * Forge is called after create and before attach. It allows the creating component to pass in a property bag
-   * that can be used to further set values before any other user sees the component.
-   *
-   * In our forge we allow the creating component to set initial text.
-   */
-  public async forge(props?: any): Promise<void> {
+  protected async componentInitializingFirstTime(props?: any) {
     let newItemText = "Important Things";
 
     // if the creating component passed props with a startingText value then set it.
@@ -71,21 +51,10 @@ export class TextBox extends PrimedComponent
       newItemText = props.startingText;
     }
 
-    // Set our text cell to the initial value.
-    const text = this.root.get<SharedString>("text");
+    // create a SharedString that will be use for the text entry
+    const text = SharedString.create(this.runtime);
     text.insertText(0, newItemText);
-  }
-
-  // end IComponentForge
-
-  /**
-   * Having a static load function allows us to make async calls while creating our object.
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TextBox> {
-    const todoItem = new TextBox(runtime, context);
-    await todoItem.initialize();
-
-    return todoItem;
+    this.root.set("text", text);
   }
 
   // start IComponentHTMLVisual

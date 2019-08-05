@@ -106,6 +106,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         return this.componentContext.loader;
     }
 
+    public get isAttached(): boolean {
+        return !this.isLocal;
+    }
+
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;

@@ -16,7 +16,7 @@ import {
 import {
     ISharedObjectExtension,
 } from "@prague/shared-object-common";
-import { initializeKey, SharedComponent } from "../components/sharedComponent";
+import { SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponent, IComponentFactory  {
     private readonly registry: ISharedObjectRegistry;
@@ -42,7 +42,7 @@ export class SharedComponentFactory implements IComponent, IComponentFactory  {
             (runtime) => {
                 // Create a new instance of our component
                 const instance = new this.ctor(runtime, context);
-                const initializedP = instance[initializeKey]();
+                const initializedP = instance.initialize();
 
                 runtime.registerRequestHandler(async (request: IRequest) => {
                     await initializedP;

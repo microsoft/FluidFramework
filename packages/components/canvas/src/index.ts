@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleComponentInstantiationFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { SharedMap } from "@prague/map";
 import { Stream } from "@prague/stream";
 import { Canvas } from "./canvas";
@@ -12,12 +12,12 @@ import { Canvas } from "./canvas";
 const pkg = require("../package.json");
 export const CanvasName = pkg.name as string;
 
-export const CanvasInstantiationFactory = new SimpleComponentInstantiationFactory(
+export const CanvasInstantiationFactory = new SharedComponentFactory(
+    Canvas,
     [
         SharedMap.getFactory(),
         Stream.getFactory(),
     ],
-    Canvas.load,
   );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

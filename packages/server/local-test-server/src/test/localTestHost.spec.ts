@@ -43,13 +43,11 @@ export class TestComponent extends PrimedComponent {
         this.counter.increment(1);
     }
 
-    protected async create() {
-        await super.create();
+    protected async componentInitializingFirstTime() {
         this.root.set("count", 0, CounterValueType.Name);
     }
 
-    protected async opened() {
-        await super.opened();
+    protected async componentHasInitialized() {
         this.counter = await this.root.wait("count");
     }
 }
@@ -88,7 +86,7 @@ describe("TestHost", () => {
 
             // Create/open both instance of TestComponent before applying ops.
             const comp1 = await host1.createAndAttachComponent<TestComponent>("documentId", TestComponent.type);
-            const comp2 = await host2.waitComponent<TestComponent>("documentId");
+            const comp2 = await host2.getComponent<TestComponent>("documentId");
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             comp1.increment();
@@ -117,7 +115,7 @@ describe("TestHost", () => {
 
             // Wait until ops are pending before opening second TestComponent instance.
             const host2 = host1.clone();
-            const comp2 = await host2.waitComponent<TestComponent>("documentId");
+            const comp2 = await host2.getComponent<TestComponent>("documentId");
             assert(comp1 !== comp2, "Each host must return a separate TestComponent instance.");
 
             await TestHost.sync(host1, host2);
@@ -212,7 +210,7 @@ describe("TestHost", () => {
                 const user1Component =
                     await host1.createAndAttachComponent<TestComponent>("test_component", TestComponent.type);
                 const user2Component =
-                    await host2.waitComponent<TestComponent>("test_component");
+                    await host2.getComponent<TestComponent>("test_component");
 
                 await deltaEventManager.pauseProcessing();
 

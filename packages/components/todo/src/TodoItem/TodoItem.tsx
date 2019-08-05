@@ -27,10 +27,6 @@ import {
   CounterValueType,
 } from "@prague/map";
 import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
-import {
   SharedString,
 } from "@prague/sequence";
 
@@ -67,12 +63,18 @@ export class TodoItem extends PrimedComponent
   /**
    * Do creation work
    */
-  protected async create() {
-    // This allows the PrimedComponent to create the root map
-    await super.create();
+  protected async componentInitializingFirstTime(props?: any) {
+    let newItemText = "New Item";
 
+    // if the creating component passed props with a startingText value then set it.
+    if (props && props.startingText) {
+      newItemText = props.startingText;
+    }
+
+    const text = SharedString.create(this.runtime);
+    text.insertText(0, newItemText);
     // create a cell that will be use for the text entry
-    this.root.set("text", SharedString.create(this.runtime));
+    this.root.set("text", text);
 
     // create a counter that will be used for the checkbox
     // we use a counter so if both users press the button at the same time it will result
@@ -84,39 +86,6 @@ export class TodoItem extends PrimedComponent
     const innerIdCell = SharedCell.create(this.runtime);
     innerIdCell.set("");
     this.root.set("innerId", innerIdCell);
-  }
-
-  // start IComponentForge
-
-  /**
-   * Forge is called after create and before attach. It allows the creating component to pass in a property bag
-   * that can be used to further set values before any other user sees the component.
-   *
-   * In our forge we allow the creating component to set initial text.
-   */
-  public async forge(props?: any): Promise<void> {
-    let newItemText = "New Item";
-
-    // if the creating component passed props with a startingText value then set it.
-    if (props && props.startingText) {
-      newItemText = props.startingText;
-    }
-
-    // Set our text cell to the initial value.
-    const text = this.root.get<SharedString>("text");
-    text.insertText(0, newItemText);
-  }
-
-  // end IComponentForge
-
-  /**
-   * Having a static load function allows us to make async calls while creating our object.
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TodoItem> {
-    const todoItem = new TodoItem(runtime, context);
-    await todoItem.initialize();
-
-    return todoItem;
   }
 
   // start IComponentHTMLVisual

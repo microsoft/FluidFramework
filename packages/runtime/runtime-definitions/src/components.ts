@@ -70,6 +70,11 @@ export interface IComponentRuntime extends EventEmitter, IComponent, IComponentR
     readonly logger: ITelemetryLogger;
 
     /**
+     * Returns if the runtime is attached.
+     */
+    isAttached: boolean;
+
+    /**
      * Prepares the op to be processed.
      */
     prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;

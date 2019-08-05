@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
-    SimpleComponentInstantiationFactory,
+    SharedComponentFactory,
 } from "@prague/aqueduct";
 import {
     SharedCell,
@@ -19,11 +19,11 @@ import {
 
 import { TodoItem } from "./index";
 
-export const TodoItemInstantiationFactory: IComponentFactory = new SimpleComponentInstantiationFactory(
+export const TodoItemInstantiationFactory: IComponentFactory = new SharedComponentFactory(
+    TodoItem,
     [
         SharedMap.getFactory([new CounterValueType()]),
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],
-    TodoItem.load,
 );

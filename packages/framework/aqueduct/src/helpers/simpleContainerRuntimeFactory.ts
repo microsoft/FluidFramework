@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@prague/component-core-interfaces";
+import {
+    IComponentLoadable,
+    IRequest,
+} from "@prague/component-core-interfaces";
 import {
     IContainerContext,
     IRuntime,
@@ -30,7 +33,21 @@ export class SimpleContainerRuntimeFactory {
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
             runtime.createComponent(this.defaultComponentId, chaincode)
-                .then((componentRuntime) => {
+                .then(async (componentRuntime) => {
+
+                    // If the component supports forging we need to forge it.
+                    const result = await componentRuntime.request({ url: "/" });
+                    if (result.status !== 200 || result.mimeType !== "prague/component") {
+                        return Promise.reject("Default component is not a component.");
+                    }
+
+                    const component = result.value as IComponentLoadable;
+                    // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
+                    const forge = component.IComponentForge;
+                    if (forge) {
+                        await forge.forge();
+                    }
+
                     componentRuntime.attach();
                 })
                 .catch((error) => {
@@ -65,8 +82,13 @@ export class SimpleContainerRuntimeFactory {
             // Pull the part of the URL after the component ID
             const pathForComponent = trailingSlash !== -1 ? requestUrl.substr(trailingSlash) : requestUrl;
 
+            let wait = true;
+            if (request.headers && (typeof request.headers.wait) === "boolean")  {
+                wait = request.headers.wait as boolean;
+            }
+
             // debug(`awaiting component ${componentId}`);
-            const component = await runtime.getComponentRuntime(componentId, true);
+            const component = await runtime.getComponentRuntime(componentId, wait);
             // debug(`have component ${componentId}`);
 
             // And then defer the handling of the request to the component

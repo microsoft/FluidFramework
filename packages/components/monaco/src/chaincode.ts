@@ -132,8 +132,7 @@ export class MonacoRunner extends PrimedComponent implements
      * Creates the SharedString and inserts some sample text. create() is called only once
      * per component.
      */
-    protected async create(): Promise<void> {
-        super.create();
+    protected async componentInitializingFirstTime() {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
         this.root.set("text", codeString);

@@ -58,7 +58,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     }
     // #endregion IComponentHTMLVisual
 
-    protected async create() {
+    protected async componentInitializingFirstTime() {
         this.configView = new ConfigView(this.runtime, this.root,
             async (id: string) => {
                 await this.createAndAttachComponent(id, TableDocumentType);
@@ -69,7 +69,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
         this.runConfig();
     }
 
-    protected async opened() {
+    protected async componentHasInitialized() {
         await this.createRootElement();
     }
 
@@ -83,7 +83,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
 
     private async createRootElement() {
         const docId = await this.root.wait<string>(ConfigKeys.docId);
-        const doc = await this.waitComponent<TableDocument>(docId);
+        const doc = await this.getComponent<TableDocument>(docId);
         const root = template.clone();
         const grid = template.get(root, "grid");
         grid.appendChild(new GridView(doc).root);

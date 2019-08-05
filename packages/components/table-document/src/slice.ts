@@ -4,7 +4,6 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponentForge } from "@prague/framework-definitions";
 import { SharedMap } from "@prague/map";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
@@ -23,7 +22,7 @@ export interface ITableSliceConfig {
     maxCol: number;
 }
 
-export class TableSlice extends PrimedComponent implements IComponentForge, ITable {
+export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
     private static readonly factory = new SharedComponentFactory(
@@ -32,8 +31,6 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
             SharedMap.getFactory(),
         ],
     );
-
-    public get IComponentForge() { return this; }
 
     public get name() { return this.root.get(ConfigKey.name); }
     public set name(value: string) { this.root.set(ConfigKey.name, value); }
@@ -48,18 +45,6 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
-    }
-
-    public async forge(props?: any) {
-        if (!props) {
-            return Promise.reject();
-        }
-        const maybeConfig = props!;
-        this.root.set(ConfigKey.docId, maybeConfig.docId);
-        this.root.set(ConfigKey.name, maybeConfig.name);
-        await this.ensureDoc();
-        this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
-        return this.finishInitialize();
     }
 
     public evaluateCell(row: number, col: number) {
@@ -119,13 +104,22 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
         this.doc.removeCols(startCol, numCols);
     }
 
-    protected async existing() {
-        await super.existing();
+    protected async componentInitializingFirstTime(props?: any) {
+        if (!props) {
+            return Promise.reject();
+        }
+        const maybeConfig = props!;
+        this.root.set(ConfigKey.docId, maybeConfig.docId);
+        this.root.set(ConfigKey.name, maybeConfig.name);
         await this.ensureDoc();
-        return this.finishInitialize();
+        this.createValuesRange(maybeConfig.minCol, maybeConfig.minRow, maybeConfig.maxCol, maybeConfig.maxRow);
     }
 
-    protected async finishInitialize() {
+    protected async componentInitializingFromExisting() {
+        await this.ensureDoc();
+    }
+
+    protected async componentHasInitialized() {
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
@@ -135,11 +129,11 @@ export class TableSlice extends PrimedComponent implements IComponentForge, ITab
     private async ensureDoc() {
         if (!this.maybeDoc) {
             const docId = this.root.get(ConfigKey.docId);
-            this.maybeDoc = await this.waitComponent(docId);
+            this.maybeDoc = await this.getComponent(docId);
         }
     }
 
-    private async createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
+    private createValuesRange(minCol: number, minRow: number, maxCol: number, maxRow: number) {
         // tslint:disable-next-line:insecure-random
         const valuesRangeId = `values-${Math.random().toString(36).substr(2)}`;
         this.root.set(ConfigKey.valuesKey, valuesRangeId);

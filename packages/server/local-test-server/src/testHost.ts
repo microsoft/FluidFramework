@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Component } from "@prague/app-component";
 import { DataStore } from "@prague/app-datastore";
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, SharedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
 import { SharedMap } from "@prague/map";
@@ -54,8 +53,8 @@ class TestRootComponent extends PrimedComponent {
     }
 
     // tslint:disable-next-line: no-unnecessary-override
-    public async waitComponent<T extends IComponentLoadable>(id: string): Promise<T> {
-        return super.waitComponent<T>(id);
+    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+        return super.getComponent<T>(id);
     }
 
     /**
@@ -108,16 +107,6 @@ class TestRootComponent extends PrimedComponent {
      */
     public getDocumentDeltaEvent(): IDocumentDeltaEvent  {
         return this.runtime;
-    }
-
-    protected async create(): Promise<void> {
-        await super.create();
-        this.root.set("ready", true);
-    }
-
-    protected async opened(): Promise<void> {
-        await super.opened();
-        await this.root.wait("ready");
     }
 }
 
@@ -182,9 +171,10 @@ export class TestHost {
             "http://test-orderer-url.test",
             "http://test-storage-url.test",
             new TestLoader([
-                [TestRootComponent.type, {
+                [TestRootComponent.type,
+                    {
                     IRuntimeFactory: undefined,
-                    instantiateRuntime: (context) => Component.instantiateRuntime(
+                    instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
                         TestRootComponent.type,
                         storeComponentRegistry),
@@ -231,11 +221,11 @@ export class TestHost {
      * @param id component Id
      * @returns Component object
      */
-    public async waitComponent<T extends IComponentLoadable>(
+    public async getComponent<T extends IComponentLoadable>(
         id: string,
     ): Promise<T> {
         const root = await this.root;
-        return root.waitComponent<T>(id);
+        return root.getComponent<T>(id);
     }
 
     /**

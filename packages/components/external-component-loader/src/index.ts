@@ -3,7 +3,7 @@
 * Licensed under the MIT License.
 */
 
-import {  SimpleComponentInstantiationFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import {
   IPraguePackage,
 } from "@prague/container-definitions";
@@ -20,9 +20,11 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     new UrlRegistry(
         new Map([
             [pkg.name, Promise.resolve(
-                new SimpleComponentInstantiationFactory([
+                new SharedComponentFactory(
+                    ExternalComponentLoader,
+                    [
                     SharedMap.getFactory(),
                     SharedObjectSequence.getFactory(),
-                ],
-                ExternalComponentLoader.load))],
+                    ],
+                ))],
         ])));

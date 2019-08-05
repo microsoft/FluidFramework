@@ -18,37 +18,70 @@ import {
 import { EventEmitter } from "events";
 
 /**
- * Do not export from module: For internal use by SharedComponentFactory.
- */
-export const initializeKey = Symbol();
-
-/**
  * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
-
     private initializeP: Promise<void> | undefined;
+    private hasForgedInternal: boolean;
+
+    protected get canForge(): boolean {
+        return !this.hasForgedInternal && !this.runtime.isAttached;
+    }
 
     public get id() { return this.runtime.id; }
     public get IComponentRouter() { return this; }
     public get IComponentForge() { return this; }
     public get IComponentLoadable() { return this; }
 
-    protected constructor(
+    public constructor(
         protected readonly runtime: IComponentRuntime,
         protected readonly context: IComponentContext,
     ) {
         super();
+
+        this.hasForgedInternal = false;
+    }
+
+    /**
+     * Allow inheritors to plugin to an initialize flow
+     * We guarantee that this part of the code will only happen once
+     */
+    public async initialize(): Promise<void> {
+        // We want to ensure if this gets called more than once it only executes the initialize code once.
+        if (!this.initializeP) {
+            // If the runtime is existing we will execute the internal initialize. Otherwise the initialize
+            // happens during the forge
+            if (this.runtime.existing) {
+                this.initializeP = this.initializeInternal();
+            } else {
+                this.initializeP = Promise.resolve();
+            }
+        }
+
+        await this.initializeP;
     }
 
     // #region IComponentForge
 
     /**
      * This should only be called before the component has attached. It allows to pass in props to do setup.
-     * Forge will be called after all the initialize steps.
+     *
+     * Overwriting forge will change the way setup happens and is not recommended.
      */
-    public async forge(props?: any) { }
+    public async forge(props?: any) {
+        // forge should only be called once and before we attach
+        if (!this.canForge) {
+            return;
+        }
+
+        // Set the initializeP incase someone else is calling initialize()
+        this.initializeP = this.initializeInternal(props);
+        await this.initializeP;
+
+        // We only allow forge to be called once
+        this.hasForgedInternal = true;
+    }
 
     // #endregion IComponentForge
 
@@ -82,17 +115,23 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     // #endregion ISharedComponent
 
     /**
-     * Calls existing, create, and opened().  Caller is responsible for ensuring this is only invoked once.
+     * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should generally
+     * not be done.
+     *
+     * Calls componentInitializingFirstTime, componentInitializingFromExisting, and componentHasInitialized.
+     * Caller is responsible for ensuring this is only invoked once.
      */
-    public async [initializeKey]() {
-        // allow the inheriting class to override creation based on the lifetime
-        if (this.runtime.existing) {
-            await this.existing();
+    protected async initializeInternal(props?: any): Promise<void> {
+        if (this.canForge) {
+            // If it's the first time through
+            await this.componentInitializingFirstTime(props);
         } else {
-            await this.create();
+            // Else we are loading from existing
+            await this.componentInitializingFromExisting();
         }
 
-        await this.opened();
+        // This always gets called at the end of initialize on FirstTime or from existing.
+        await this.componentHasInitialized();
     }
 
     /**
@@ -107,9 +146,9 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
         const componentRuntime = await this.context.createComponent(id, pkg);
         const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
 
+        // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
         const forge = component.IComponentForge;
-
-        if (forge && !this.runtime.existing) {
+        if (forge) {
             await forge.forge(props);
         }
 
@@ -119,49 +158,34 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     }
 
     /**
-     * Gets the component of a given id if any
+     * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
-        return this.asComponent(this.context.hostRuntime.request({ url: `/${id}` }));
+    protected async getComponent<T extends IComponentLoadable>(id: string, wait: boolean = true): Promise<T> {
+        const request = {
+            headers: [[wait]],
+            url: `/${id}`,
+        };
+
+        return this.asComponent(this.context.hostRuntime.request(request));
     }
 
     /**
-     * Wait and gets the component of a given id
-     * @param id - component id
+     * Called the first time the component is initialized.
+     *
+     * @param props - Optional props to be passed in on create
      */
-    protected async waitComponent<T extends IComponentLoadable>(id: string): Promise<T> {
-        const componentRuntime = await this.context.getComponentRuntime(id, true);
-        return this.asComponent(componentRuntime.request({ url: "/" }));
-    }
-
-    /**
-     * Called the first time the root component is initialized
-     */
-    protected async create(): Promise<void> { }
+    protected async componentInitializingFirstTime(props?: any): Promise<void> { }
 
     /**
      * Called every time but the first time the component is initialized
      */
-    protected async existing(): Promise<void> { }
+    protected async componentInitializingFromExisting(): Promise<void> { }
 
     /**
-     * Called every time the root component is initialized
+     * Called every time the component is initialized after create or existing.
      */
-    protected async opened(): Promise<void> { }
-
-    /**
-     * Allow inheritors to plugin to an initialize flow
-     * We guarantee that this part of the code will only happen once
-     * TODO: add logging via debug
-     */
-    protected async initialize(): Promise<void> {
-        if (!this.initializeP) {
-            this.initializeP = this[initializeKey]();
-        }
-
-        await this.initializeP;
-    }
+    protected async componentHasInitialized(): Promise<void> { }
 
     /**
      * Given a request response will return a component if a component was in the response.
