@@ -133,7 +133,7 @@ async function joinODSPSession(
         }
         return resolvedUrl;
     } catch (e) {
-        const parsedBody = JSON.parse(e.data);
+        const parsedBody = JSON.parse(e.requestResult.data);
         if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
             return joinODSPSession(server, documentDrive, documentItem, clientConfig, true);
         }
@@ -214,7 +214,7 @@ async function resolveDriveItemByFileId(
         }
         return driveItem;
     } catch (e) {
-        const parsedBody = JSON.parse(e.data);
+        const parsedBody = JSON.parse(e.requestResult.data);
         if (parsedBody.error === "invalid_grant" && parsedBody.suberror === "consent_required" && !forceTokenRefresh) {
             return resolveDriveItemByFileId(server, account, docId, clientConfig, true);
         }

@@ -21,6 +21,23 @@ export interface IODSPDriveItem {
     item: string;
 }
 
+interface IRequestResult {
+    status: number;
+    data: any;
+}
+
+function createRequestResult(response: request.Response, body: any): IRequestResult {
+    // console.log(JSON.stringify(response, undefined, 2));
+    // console.log(JSON.stringify(body, undefined, 2));
+    return { status: response.statusCode, data: body };
+}
+
+function createRequestError(msg: string, requestResult: IRequestResult) {
+    const error = new Error(msg);
+    (error as any).requestResult = requestResult;
+    return error;
+}
+
 function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, lastRefreshToken: string) {
     return `scope=offline_access https://${server}/AllSite.Write`
         + `&client_id=${clientConfig.clientId}`
@@ -29,14 +46,12 @@ function getRefreshAccessTokenBody(server: string, clientConfig: IClientConfig, 
         + `&refresh_token=${lastRefreshToken}`;
 }
 
-async function processTokenBody(body: any): Promise<IODSPTokens> {
-    const parsed = JSON.parse(body);
+async function processTokenBody(requestResult: IRequestResult): Promise<IODSPTokens> {
+    const parsed = JSON.parse(requestResult.data);
     const accessToken = parsed.access_token;
     const refreshToken = parsed.refresh_token;
     if (accessToken === undefined || refreshToken === undefined) {
-        const e = new Error("Unable to refresh access token");
-        (e as any).data = body;
-        return Promise.reject(e);
+        return Promise.reject(createRequestError("Unable to refresh access token", requestResult));
     }
     return { accessToken, refreshToken };
 }
@@ -48,10 +63,10 @@ export async function postTokenRequest(postBody: string): Promise<IODSPTokens> {
         request.post({ url: tokenUrl, body: postBody },
             (error, response, body) => {
                 if (error) {
-                    reject(error);
+                    reject(createRequestError("Error getting the token", error));
                     return;
                 }
-                resolve(processTokenBody(body));
+                resolve(processTokenBody(createRequestResult(response, body)));
             });
     });
 }
@@ -82,13 +97,11 @@ async function requestWithRefresh(
 function getRequestHandler(resolve, reject) {
     return (error, response, body) => {
         if (error) {
-            console.error(`ERROR: request error\n${JSON.stringify(error, undefined, 2)}`);
-            reject(error);
+            // console.error(`ERROR: request error\n${JSON.stringify(error, undefined, 2)}`);
+            reject(createRequestError("request error", error));
             return;
         }
-        const result = { status: response.statusCode, data: body };
-        // console.log(JSON.stringify(result, undefined, 2));
-        resolve(result);
+        resolve(createRequestResult(response, body));
     };
 }
 
@@ -97,7 +110,7 @@ async function getAsync(
     clientConfig: IClientConfig,
     tokens: IODSPTokens,
     url: string,
-    headers?: any): Promise<any> {
+    headers?: any): Promise<IRequestResult> {
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
@@ -112,7 +125,7 @@ async function postAsync(
     clientConfig: IClientConfig,
     tokens: IODSPTokens,
     url: string,
-    headers?: any): Promise<any> {
+    headers?: any): Promise<IRequestResult> {
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
@@ -128,7 +141,7 @@ async function putAsync(
         IClientConfig,
     tokens: IODSPTokens,
     url: string,
-    headers?: any): Promise<any> {
+    headers?: any): Promise<IRequestResult> {
 
     return requestWithRefresh(server, clientConfig, tokens, async (token: string) => {
         return new Promise((resolve, reject) => {
@@ -153,22 +166,22 @@ export async function getODSPFluidResolvedUrl(
     if (joinSessionResult.status === 308) {
         // Redirects
         // TODO: reject for now
-        return Promise.reject(joinSessionResult);
+        return Promise.reject(createRequestError("Redirect not supported", joinSessionResult));
     }
     if (joinSessionResult.status !== 200) {
         if (!create) {
-            return Promise.reject(joinSessionResult);
+            return Promise.reject(createRequestError("Failed to joinSession", joinSessionResult));
         }
         // Try to create it
         const contentUri = `${baseUri}/content`;
         const createResult = await putAsync(server, clientConfig, tokens, contentUri);
         if (createResult.status !== 201) {
-            return Promise.reject(createResult);
+            return Promise.reject(createRequestError("Failed to create file", createResult));
         }
 
         joinSessionResult = await postAsync(server, clientConfig, tokens, joinSessionUri);
         if (joinSessionResult.status !== 200) {
-            return Promise.reject(joinSessionResult);
+            return Promise.reject(createRequestError("Failed to joinSession", joinSessionResult));
         }
     }
     const parsedBody = JSON.parse(joinSessionResult.data);
@@ -203,22 +216,23 @@ export async function getDriveItemByFileId(
     const path = parsedBody.ServerRelativeUrl;
     const documentPathMatch = path.match(/\/(personal|teams)\/(.*)\/(Shared )?Documents\/(.*)/i);
     if (documentPathMatch === null) {
-        return Promise.reject(getFileByIdResult);
+        return Promise.reject(createRequestError("Unable to match file name from file Id", getFileByIdResult));
     }
 
     if (`${documentPathMatch[1]}/${documentPathMatch[2]}`.toLowerCase() !== account.toLowerCase()) {
-        return Promise.reject(getFileByIdResult);
+        return Promise.reject(
+            createRequestError("File URL doesn't match expected account from file Id", getFileByIdResult));
     }
 
     const fileName = documentPathMatch[4];
     if (!fileName) {
-        return Promise.reject(getFileByIdResult);
+        return Promise.reject(createRequestError("Filename missing from URL from file Id", getFileByIdResult));
     }
 
     const getDriveItemUrl = `https://${server}/${account}/_api/v2.1/drive/root:/${fileName}`;
     const getDriveItemResult = await getAsync(server, clientConfig, tokens, getDriveItemUrl);
     if (getDriveItemResult.status !== 200) {
-        return Promise.reject(getDriveItemResult);
+        return Promise.reject(createRequestError("Unable to get drive/item id from path", getDriveItemResult));
     }
     const parsedDriveItemBody = JSON.parse(getDriveItemResult.data);
     return { drive: parsedDriveItemBody.parentReference.driveId, item: parsedDriveItemBody.id };

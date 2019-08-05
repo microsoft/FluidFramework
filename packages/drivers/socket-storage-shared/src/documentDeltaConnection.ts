@@ -28,7 +28,11 @@ function createErrorObject(handler: string, error: any, critical = false) {
     // That is likely Ok, as it may contain PII that will get logged to telemetry,
     // so we do not want it there.
     const errorObj = new Error(`socket.io error: ${handler}: ${error}`);
-    return {...errorObj, critical};
+
+    // Can't use spread here because the error object's properties are not enumerable.
+    // Just add the "critical" property in.
+    (errorObj as any).critical = critical;
+    return errorObj;
 }
 
 /**

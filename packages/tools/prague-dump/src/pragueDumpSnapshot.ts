@@ -116,7 +116,7 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
     const outDir = `${paramSave}/${suffix}/`;
     const snapshotTree = await storage.getSnapshotTree(version);
     if (!snapshotTree) {
-        return Promise.reject("Failed to load snapshot tree");
+        return Promise.reject(new Error("Failed to load snapshot tree"));
     }
     const mkdir = util.promisify(fs.mkdir);
     const writeFile = util.promisify(fs.writeFile);

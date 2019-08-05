@@ -36,5 +36,18 @@ async function pragueDumpMain() {
 parseArguments();
 
 pragueDumpMain()
-    .catch((error: string) => console.log(`ERROR: ${error}`))
+    .catch((error: Error) => {
+        if (error instanceof Error) {
+            const data = (error as any).requestResult;
+            let extraMsg = "";
+            if (data) {
+                extraMsg = "\nRequest Result: JSON.stringify(data, undefined, 2)";
+            }
+            console.log(`ERROR: ${error.stack}${extraMsg}`);
+        } else if (typeof error === "object") {
+            console.log(`ERROR: Unknown exception object\n${JSON.stringify(error, undefined, 2)}`);
+        } else {
+            console.log(`ERROR: ${error}`);
+        }
+    })
     .then(() => process.exit(0));
