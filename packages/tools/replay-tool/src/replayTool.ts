@@ -8,6 +8,7 @@ import { ReplayTool } from "./replayMessages";
 const optionsArray =
     [
         ["--indir <directory>", "Name of the directory containing the output of the prague dumper tool"],
+        ["--from <op#>", "Indicates seq# where to start stress tests / generation of snapshots"],
         ["--to <op#>", "The last op number to be replayed"],
         ["--snapshot", "Take snapshot after replaying all the ops"],
         ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
@@ -16,6 +17,7 @@ const optionsArray =
         ["--version <version>", "Load document from particular snapshot.",
                      "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
         ["--quiet", "Reduces amount of output."],
+        ["--verbose", "Increases amount of output."],
         ["--windiff", "Launch windiff.exe for any mismatch."],
         ["--storageSnapshots", "Validate storage (PragueDump) snapshots."],
         ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50"],
@@ -44,6 +46,12 @@ export class ReplayArgs {
         this.parseArguments();
     }
 
+    public takeSnapshots() {
+        return this.takeSnapshot
+            || this.validateSotrageSnapshots
+            || this.snapFreq !== Number.MAX_SAFE_INTEGER;
+    }
+
     public parseArguments() {
         if (process.argv.length <= 2) {
             this.printUsage();
@@ -56,6 +64,10 @@ export class ReplayArgs {
                 case "--indir":
                     i += 1;
                     this.inDirName = this.parseStrArg(i, "File name");
+                    break;
+                case "--from":
+                    i += 1;
+                    this.from = this.parseIntArg(i, "To");
                     break;
                 case "--to":
                     i += 1;
@@ -79,9 +91,11 @@ export class ReplayArgs {
                 case "--quiet":
                     this.verbose = false;
                     break;
+                case "--verbose":
+                    this.verbose = true;
+                    break;
                 case "--windiff":
                     this.windiff = true;
-                    break;
                 case "--storageSnapshots":
                     this.validateSotrageSnapshots = true;
                     this.createAllFiles = false;
@@ -98,8 +112,17 @@ export class ReplayArgs {
             }
         }
 
+        if (this.from > this.to) {
+            console.error(`ERROR: --from argument should be less or equal to --to argument`);
+            process.exit(-1);
+        }
+
         if (this.stressTest && this.snapFreq === Number.MAX_SAFE_INTEGER) {
             this.snapFreq = 50;
+        }
+
+        if (this.from !== 0 && !this.takeSnapshots()) {
+            console.error(`WARNING: --from argument is ignored as snapshots are not generated`);
         }
 
         if (this.snapFreq !== Number.MAX_SAFE_INTEGER) {

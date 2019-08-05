@@ -6,6 +6,7 @@
 import * as API from "@prague/client-api";
 import {
     ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import {
@@ -41,6 +42,31 @@ import { ReplayArgs } from "./replayTool";
 // tslint:disable:non-literal-fs-path
 
 /**
+ * Logger to catch errors in containers
+ */
+class Logger implements ITelemetryBaseLogger {
+    public constructor(private readonly version?: string) {
+    }
+
+    // ITelemetryBaseLogger implementation
+    public send(event: ITelemetryBaseEvent) {
+        if (event.category === "error") {
+            // Stack is not output properly (with newlines), if done as part of event
+            const stack: string | undefined = event.stack as string | undefined;
+            delete event.stack;
+            console.error("An error has been logged!");
+            if (this.version !== undefined) {
+                console.error(`From container version ${this.version}`);
+            }
+            console.error(event);
+            if (stack) {
+                console.error(stack);
+            }
+        }
+    }
+}
+
+/**
  * helper class holding container and providing load / snapshot capabilities
  */
 class Document {
@@ -71,7 +97,7 @@ class Document {
         this.snapshotFileName = filename;
     }
 
-    public async load() {
+    public async load(version?: string) {
         const deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
         const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
         const documentServiceFactory = new FileDocumentServiceFactory(
@@ -81,7 +107,7 @@ class Document {
 
         this.container = await this.loadContainer(
             documentServiceFactory,
-            this.args.version);
+            version);
 
         this.from = this.container.deltaManager.referenceSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -116,20 +142,6 @@ class Document {
             true /*generateFullTreeNoOtimizations*/);
     }
 
-    // ITelemetryBaseLogger implementation
-    public send(event: ITelemetryBaseEvent) {
-        if (event.category === "error") {
-            // Stack is not output properly (with newlines), if done as part of event
-            const stack: string | undefined = event.stack as string | undefined;
-            delete event.stack;
-            console.error("An error has been logged!");
-            console.error(event);
-            if (stack) {
-                console.error(stack);
-            }
-        }
-    }
-
     private resolveC = () => {};
 
     private async loadContainer(
@@ -161,7 +173,7 @@ class Document {
         };
 
         // Load the Fluid document
-        const loader = new Loader(host, serviceFactory, codeLoader, options, this);
+        const loader = new Loader(host, serviceFactory, codeLoader, options, new Logger(version));
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
@@ -190,12 +202,17 @@ export class ReplayTool {
         if (!fs.existsSync(this.args.inDirName)) {
             return Promise.reject("File does not exist");
         }
-        this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
 
+        this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
         this.mainDocument = new Document(this.args, this.storage);
-        await this.mainDocument.load();
-        console.log("Document Created !!");
-        console.log("Starting with seq# ", this.mainDocument.currentOp);
+        await this.mainDocument.load(this.args.version);
+
+        if (this.args.version !== undefined) {
+            console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
+            if (this.mainDocument.currentOp > this.args.to) {
+                console.log("Warning: --to argument is below snapshot starting op");
+            }
+        }
 
         // Load all snapshots from storage
         if (this.args.validateSotrageSnapshots) {
@@ -205,9 +222,15 @@ export class ReplayTool {
                 }
                 const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, node.name);
                 const doc = new Document(this.args, storage);
-                await doc.load();
+                await doc.load(node.name);
                 doc.setFileName(`${doc.getFileName()}_storage_${node.name}`);
-                this.documentsFromStorageSnapshots.push(doc);
+
+                if (this.args.from > doc.fromOp) {
+                    console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                } else {
+                    console.log(`Loading snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                    this.documentsFromStorageSnapshots.push(doc);
+                }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => {
                 return a.fromOp > b.fromOp ? 1 : -1;
@@ -215,14 +238,19 @@ export class ReplayTool {
         }
 
         if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateSotrageSnapshots) {
-            this.documentNeverSnapshot = new Document(this.args, this.storage);
-            await this.documentNeverSnapshot.load();
+            const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
+            this.documentNeverSnapshot = new Document(this.args, storage);
+            await this.documentNeverSnapshot.load(this.args.version);
             this.documentNeverSnapshot.setFileName(`snapshot_${this.documentNeverSnapshot.fromOp}_noSnapshots`);
         }
 
-        let nextSnapPoint = -1;
+        let nextSnapPoint = this.args.from;
 
-        while (this.mainDocument.currentOp < this.args.to) {
+        if (this.args.verbose) {
+            console.log("Starting");
+        }
+
+        while (true) {
             if (nextSnapPoint <= this.mainDocument.currentOp) {
                 nextSnapPoint = this.mainDocument.currentOp + this.args.snapFreq;
             }
@@ -241,11 +269,10 @@ export class ReplayTool {
                 await doc.replay(replayTo);
             }
 
-            // If we got less than asked, we run out of ops.
-            const final = this.mainDocument.currentOp < replayTo;
-
-            await this.generateSnapshot(final);
-
+            const final = this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
+            if (this.args.takeSnapshots()) {
+                await this.generateSnapshot(final);
+            }
             if (final) {
                 break;
             }
@@ -261,7 +288,8 @@ export class ReplayTool {
         let snapshotSaved: IFileSnapshot | undefined;
         let snapshotSavedString: string | undefined;
 
-        if (this.args.createAllFiles) {
+        const createSnapshot = this.args.createAllFiles || (final && this.args.takeSnapshot);
+        if (createSnapshot) {
             fs.mkdirSync(dir, { recursive: true });
         }
 
@@ -279,20 +307,24 @@ export class ReplayTool {
             this.snapshots[op] = snapshot;
             snapshotSaved = snapshot;
             snapshotSavedString = JSON.stringify(snapshot, undefined, 2);
-            if (this.args.createAllFiles) {
-                fs.writeFileSync(
-                    `${dir}/${this.mainDocument.getFileName()}.json`,
-                    snapshotSavedString,
-                    { encoding: "utf-8" });
+            if (createSnapshot) {
+                this.expandForReadabilityAndWriteOut(snapshotSaved, `${dir}/${this.mainDocument.getFileName()}`);
             }
         };
 
         if (this.args.verbose) {
-            console.log(`Writing snapshot after OP number ${op}`);
+            if (this.args.createAllFiles) {
+                console.log(`Writing snapshot at seq# ${op}`);
+            } else {
+                console.log(`Validating snapshot at seq# ${op}`);
+            }
         }
         await this.mainDocument.snapshot();
         if (snapshotSaved === undefined) {
-            console.error(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
+            // Snapshots are not created if there is no "code2" proposal
+            if (op >= 4) {
+                console.error(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
+            }
             return;
         }
 
@@ -300,14 +332,14 @@ export class ReplayTool {
         const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
         const storage2 = new storageClass(snapshotSaved);
         const document2 = new Document(this.args, storage2);
-        await document2.load();
+        await document2.load(`Saved & loaded at seq# ${op}`);
         await this.saveAndVerify(document2, dir, snapshotSaved, snapshotSavedString);
 
         // Add extra container
         if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
             const storage3 = new storageClass(snapshotSaved);
             const document3 = new Document(this.args, storage3);
-            await document3.load();
+            await document3.load(`Saved & loaded at seq# ${op}`);
             this.documentsWindow.push(document3);
         }
 
