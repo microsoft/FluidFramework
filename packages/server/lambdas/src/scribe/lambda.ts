@@ -10,7 +10,9 @@ import {
     IDocumentAttributes,
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISummaryAck,
     ISummaryContent,
+    ISummaryNack,
     ITreeEntry,
     MessageType,
     TreeEntry,
@@ -253,11 +255,17 @@ export class ScribeLambda extends SequencedLambda {
 
         if (content.head) {
             if (!existingRef || existingRef.object.sha !== content.head) {
-                await this.sendSummaryNack(summarySequenceNumber);
+                await this.sendSummaryNack(
+                    summarySequenceNumber,
+                    `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef}".`,
+                );
                 return;
             }
         } else if (existingRef) {
-            await this.sendSummaryNack(summarySequenceNumber);
+            await this.sendSummaryNack(
+                summarySequenceNumber,
+                `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef}".`,
+            );
             return;
         }
 
@@ -265,7 +273,10 @@ export class ScribeLambda extends SequencedLambda {
         try {
             await Promise.all(content.parents.map((parentSummary) => this.storage.getCommit(parentSummary)));
         } catch (e) {
-            await this.sendSummaryNack(summarySequenceNumber);
+            await this.sendSummaryNack(
+                summarySequenceNumber,
+                "One or more parent summaries are invalid.",
+            );
             return;
         }
 
@@ -363,18 +374,19 @@ export class ScribeLambda extends SequencedLambda {
             await this.storage.createRef(this.documentId, commit.sha);
         }
 
-        await this.sendSummaryAck(commit.sha, sequenceNumber, summarySequenceNumber);
+        await this.sendSummaryAck(commit.sha, summarySequenceNumber);
         winston.info(`END Summary! ${JSON.stringify(content)}`);
     }
 
-    private async sendSummaryAck(handle: string, sequenceNumber: number, summarySequenceNumber: number) {
+    private async sendSummaryAck(handle: string, summarySequenceNumber: number) {
+        const contents: ISummaryAck = {
+            handle,
+            summaryProposal: { summarySequenceNumber },
+        };
+
         const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
-            contents: {
-                handle,
-                sequenceNumber,
-                summarySequenceNumber,
-            },
+            contents,
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.SummaryAck,
@@ -383,10 +395,15 @@ export class ScribeLambda extends SequencedLambda {
         await this.sendToDeli(operation);
     }
 
-    private async sendSummaryNack(summarySequenceNumber: number) {
+    private async sendSummaryNack(summarySequenceNumber: number, errorMessage: string) {
+        const contents: ISummaryNack = {
+            errorMessage,
+            summaryProposal: { summarySequenceNumber },
+        };
+
         const operation: IDocumentMessage = {
             clientSequenceNumber: -1,
-            contents: summarySequenceNumber,
+            contents,
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.SummaryNack,

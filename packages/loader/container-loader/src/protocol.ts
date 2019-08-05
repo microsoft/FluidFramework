@@ -15,6 +15,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
+    ISummaryNack,
     ISummaryTree,
     MessageType,
     SummaryType,
@@ -58,7 +59,7 @@ export class ProtocolOpHandler {
         values: Array<[string, ICommittedProposal]>,
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void,
-        logger?: ITelemetryLogger,
+        private readonly logger?: ITelemetryLogger,
     ) {
         this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
     }
@@ -106,6 +107,12 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.SummaryNack:
+                if (this.logger) {
+                    this.logger.sendErrorEvent({
+                        eventName: "SummaryNack",
+                        summaryNack: message.contents as ISummaryNack,
+                    });
+                }
                 debug("MessageType.SummaryNack", message.contents);
                 break;
 

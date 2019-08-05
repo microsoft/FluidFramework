@@ -205,3 +205,49 @@ export interface ISummaryContent {
     // TODO - need an epoch/reload bit to indicate to clients that the summary has changed and requires a reload
     // This could be encoded in the summary itself as well but then would require the client to download it to check
 }
+
+/**
+ * General errors returned from the server.
+ * May want to add error code or something similar in the future.
+ */
+export interface IServerError {
+    /**
+     * Message describing the server error.
+     */
+    errorMessage: string;
+}
+
+/**
+ * Data about the original proposed summary op.
+ */
+export interface ISummaryProposal {
+    /**
+     * Actual sequence number of the summary op proposal.
+     */
+    summarySequenceNumber: number;
+}
+
+/**
+ * Contents of summary ack expected from the server.
+ */
+export interface ISummaryAck {
+    /**
+     * Handle of the complete summary.
+     */
+    handle: string;
+
+    /**
+     * Information about the proposed summary op.
+     */
+    summaryProposal: ISummaryProposal;
+}
+
+/**
+ * Contents of summary nack expected from the server.
+ */
+export interface ISummaryNack extends IServerError {
+    /**
+     * Information about the proposed summary op.
+     */
+    summaryProposal: ISummaryProposal;
+}
