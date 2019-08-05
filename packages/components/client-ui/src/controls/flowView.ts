@@ -3012,7 +3012,8 @@ interface IWordRange {
     wordEnd: number;
 }
 
-function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
+function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
+    const mergeTree = sharedString.client.mergeTree;
     let wordStart = -1;
     let wordEnd = -1;
 
@@ -3074,8 +3075,7 @@ function getCurrentWord(pos: number, mergeTree: MergeTree.MergeTree) {
         return true;
     };
 
-    const segoff = mergeTree.getContainingSegment(pos,
-        MergeTree.UniversalSequenceNumber, mergeTree.collabWindow.clientId);
+    const segoff = sharedString.getContainingSegment(pos);
     if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
         const maxWord = maximalWord(segoff.segment, segoff.offset);
         if (maxWord.wordStart < maxWord.wordEnd) {
@@ -3101,8 +3101,7 @@ function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) 
 }
 
 function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
-    return flowView.client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber,
-        flowView.client.getClientId());
+    return flowView.client.getContainingSegment(pos);
 }
 
 function findTile(flowView: FlowView, startPos: number, tileType: string, preceding: boolean) {
@@ -4026,8 +4025,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (this.cursor.pos < (this.client.getLength() - 1)) {
             this.cursor.pos++;
 
-            const segoff = this.client.mergeTree.getContainingSegment(this.cursor.pos, MergeTree.UniversalSequenceNumber,
-                this.client.getClientId());
+            const segoff = this.sharedString.getContainingSegment(this.cursor.pos);
             if (MergeTree.Marker.is(segoff.segment)) {
                 // REVIEW: assume marker for now
                 const marker = segoff.segment as MergeTree.Marker;
@@ -4755,7 +4753,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.clearSelection(false);
             this.sharedString.annotateRange(sel.start, sel.end, props);
         } else {
-            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString);
             if (wordRange) {
                 this.sharedString.annotateRange(wordRange.wordStart, wordRange.wordEnd, props);
             }
@@ -4799,7 +4797,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             this.clearSelection(false);
             this.toggleRange(name, valueOn, valueOff, sel.start, sel.end);
         } else {
-            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString.client.mergeTree);
+            const wordRange = getCurrentWord(this.cursor.pos, this.sharedString);
             if (wordRange) {
                 this.toggleRange(name, valueOn, valueOff, wordRange.wordStart, wordRange.wordEnd);
             }
@@ -5735,18 +5733,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private remotePresenceToLocal(longClientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
         const clientId = this.client.getOrAddShortClientId(longClientId);
 
-        let segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos,
-            remotePresenceInfo.refseq, clientId);
-
-        if (segoff.segment === undefined) {
-            if (remotePresenceInfo.origPos === this.client.getLength()) {
-                segoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origPos - 1,
-                    remotePresenceInfo.refseq, clientId);
-                if (segoff.segment) {
-                    segoff.offset++;
-                }
-            }
-        }
+        const rempos = this.sharedString.resolveRemoteClientPosition(
+            remotePresenceInfo.origPos,
+            remotePresenceInfo.refseq,
+            longClientId);
+        const segoff = this.sharedString.getContainingSegment(rempos);
 
         if (segoff.segment) {
             const docClient = this.collabDocument.getClient(longClientId);
@@ -5765,8 +5756,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     user: docClient.client.user,
                 } as ILocalPresenceInfo;
                 if (remotePresenceInfo.origMark >= 0) {
-                    const markSegoff = this.client.mergeTree.getContainingSegment(remotePresenceInfo.origMark,
-                        remotePresenceInfo.refseq, clientId);
+                    const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
                             new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,

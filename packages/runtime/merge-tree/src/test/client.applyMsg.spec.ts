@@ -87,8 +87,7 @@ describe("client.applyMsg", () => {
         }
         assert.equal(client.mergeTree.pendingSegments.count(), 0);
         for (let i = 0; i < client.getText().length; i++) {
-            const segmentInfo =
-                client.mergeTree.getContainingSegment(i, client.getCurrentSeq(), client.getClientId());
+            const segmentInfo = client.getContainingSegment(i);
 
             assert.notEqual(segmentInfo.segment.seq, UnassignedSequenceNumber, "all segments should be acked");
             assert(segmentInfo.segment.segmentGroups.empty, "there should be no outstanding segmentGroups");
@@ -99,8 +98,7 @@ describe("client.applyMsg", () => {
 
         const op = client.insertTextLocal(0, "abc");
 
-        const segmentInfo =
-            client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
+        const segmentInfo = client.getContainingSegment(0);
 
         assert.equal(segmentInfo.segment.seq, UnassignedSequenceNumber);
 
@@ -110,8 +108,7 @@ describe("client.applyMsg", () => {
     });
 
     it("removeRangeLocal", () => {
-        const segmentInfo =
-            client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
+        const segmentInfo = client.getContainingSegment(0);
 
         const removeOp = client.removeRangeLocal(0, 1);
 
@@ -140,8 +137,7 @@ describe("client.applyMsg", () => {
     });
 
     it("annotateSegmentLocal then removeRangeLocal", () => {
-        const segmentInfo =
-            client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
+        const segmentInfo = client.getContainingSegment(0);
 
         const start = 0;
         const end = client.getText().length;
@@ -207,8 +203,7 @@ describe("client.applyMsg", () => {
     });
 
     it("overlapping deletes", () => {
-        const segmentInfo =
-            client.mergeTree.getContainingSegment(0, client.getCurrentSeq(), client.getClientId());
+        const segmentInfo = client.getContainingSegment(0);
 
         const start = 0;
         const end = 5;

@@ -238,8 +238,7 @@ class Speller {
             return true;
         };
 
-        let segoff = this.sharedString.client.mergeTree.getContainingSegment(pos,
-            MergeTree.UniversalSequenceNumber, this.sharedString.client.getClientId());
+        let segoff = this.sharedString.getContainingSegment(pos);
         if (segoff.offset !== 0) {
             console.log("expected pos only at segment boundary");
         }

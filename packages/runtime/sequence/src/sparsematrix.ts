@@ -282,10 +282,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     public getItem(row: number, col: number) {
         const pos = rowColToPosition(row, col);
         const { segment, offset } =
-            this.client.mergeTree.getContainingSegment(
-                pos,
-                this.client.mergeTree.collabWindow.currentSeq,
-                this.client.getClientId());
+            this.getContainingSegment(pos);
         if (RunSegment.is(segment)) {
             return segment.items[offset];
         } else if (PaddingSegment.is(segment)) {
@@ -375,10 +372,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 
     private getSegment(row: number, col: number) {
         const pos = rowColToPosition(row, col);
-        return this.client.mergeTree.getContainingSegment(
-            pos,
-            this.client.mergeTree.collabWindow.currentSeq,
-            this.client.getClientId());
+        return this.getContainingSegment(pos);
     }
 }
 

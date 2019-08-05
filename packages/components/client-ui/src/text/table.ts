@@ -313,8 +313,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
 export function createTable(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
     let pgAtStart = true;
     if (pos > 0) {
-        let segoff = sharedString.client.mergeTree.getContainingSegment(pos - 1, MergeTree.UniversalSequenceNumber,
-            sharedString.client.getClientId());
+        let segoff = sharedString.getContainingSegment(pos - 1);
         if (MergeTree.Marker.is(segoff.segment)) {
             if (segoff.segment.hasTileLabel("pg")) {
                 pgAtStart = false;
@@ -565,8 +564,7 @@ function getEndCellMarker(mergeTree: MergeTree.MergeTree, cellMarker: ICellMarke
 function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     let markEmptyCells = false;
     let mergeTree = sharedString.client.mergeTree;
-    let cellMarkerSegOff = mergeTree.getContainingSegment(cellStartPos, MergeTree.UniversalSequenceNumber,
-        sharedString.client.getClientId());
+    let cellMarkerSegOff = sharedString.getContainingSegment(cellStartPos);
     let cellMarker = <ICellMarker>cellMarkerSegOff.segment;
     let endCellMarker = getEndCellMarker(mergeTree, cellMarker);
     if (!endCellMarker) {
@@ -581,8 +579,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
         cellMarker.cell.emptyCell = true;
     } else {
         while (nextPos < endCellPos) {
-            let segoff = mergeTree.getContainingSegment(nextPos, MergeTree.UniversalSequenceNumber,
-                sharedString.client.getClientId());
+            let segoff = sharedString.getContainingSegment(nextPos);
             // TODO: model error checking
             let segment = segoff.segment;
             if (MergeTree.Marker.is(segment)) {
@@ -639,8 +636,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
 function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
     fontInfo?: Paragraph.IFontInfo) {
     let mergeTree = sharedString.client.mergeTree;
-    let rowMarkerSegOff = mergeTree.getContainingSegment(rowStartPos, MergeTree.UniversalSequenceNumber,
-        sharedString.client.getClientId());
+    let rowMarkerSegOff = sharedString.getContainingSegment(rowStartPos);
     let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     let id = rowMarker.getId();
     let endId = endPrefix + id;

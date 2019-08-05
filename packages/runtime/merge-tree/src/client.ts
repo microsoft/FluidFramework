@@ -911,6 +911,12 @@ export class Client {
             }
         }
     }
+
+    getContainingSegment(pos: number) {
+        const segWindow = this.mergeTree.getCollabWindow();
+        return this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+    }
+
     getPropertiesAtPosition(pos: number) {
         let segWindow = this.getCollabWindow();
         if (this.verboseOps) {
@@ -918,7 +924,7 @@ export class Client {
         }
 
         let propertiesAtPosition: Properties.PropertySet;
-        let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        let segoff = this.getContainingSegment(pos);
         let seg = segoff.segment;
         if (seg) {
             propertiesAtPosition = seg.properties;
@@ -934,7 +940,7 @@ export class Client {
         let posStart: number;
         let posAfterEnd: number;
 
-        let segoff = this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        let segoff = this.getContainingSegment(pos);
         let seg = segoff.segment;
         if (seg) {
             posStart = this.mergeTree.getPosition(seg, segWindow.currentSeq, segWindow.clientId);

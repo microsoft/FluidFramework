@@ -238,10 +238,7 @@ describe("TestClient", () => {
             const insertOp = client.insertMarkerLocal(0, MergeTree.ReferenceType.Tile, {
                 [MergeTree.reservedMarkerIdKey]: "123"});
             assert(insertOp);
-            const markerInfo = client.mergeTree.getContainingSegment(
-                0,
-                client.mergeTree.collabWindow.currentSeq,
-                client.mergeTree.collabWindow.clientId);
+            const markerInfo = client.getContainingSegment(0);
             const marker = markerInfo.segment as MergeTree.Marker;
             const annotateOp = client.annotateMarker(marker, { foo: "bar" }, undefined);
             assert(annotateOp);

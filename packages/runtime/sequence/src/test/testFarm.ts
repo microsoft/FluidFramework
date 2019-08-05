@@ -78,8 +78,6 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <SharedString.SharedStringInterval[]>[];
-    let refseq = client.getCurrentSeq();
-    let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
     let maxRangeLen = Math.min(Math.floor(len / 100), 30);
     for (let i = 0; i < bookmarkCount; i++) {
@@ -94,8 +92,8 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
             pos1 = pos2;
             pos2 = temp;
         }
-        let segoff1 = client.mergeTree.getContainingSegment(pos1, refseq, clientId);
-        let segoff2 = client.mergeTree.getContainingSegment(pos2, refseq, clientId);
+        let segoff1 = client.getContainingSegment(pos1);
+        let segoff2 = client.getContainingSegment(pos2);
 
         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
             let baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
@@ -122,12 +120,10 @@ function makeReferences(client: MergeTree.Client, referenceCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let refs = <MergeTree.LocalReference[]>[];
-    let refseq = client.getCurrentSeq();
-    let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
     for (let i = 0; i < referenceCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
-        let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
+        let segoff = client.getContainingSegment(pos);
         if (segoff && segoff.segment) {
             let baseSegment = <MergeTree.BaseSegment>segoff.segment;
             let lref = new MergeTree.LocalReference(baseSegment, segoff.offset);
@@ -422,8 +418,7 @@ export function TestPack(verbose = true) {
                 const insertOp = !insertAsSibling ?
                     client.insertTextLocal(pos, word1.text) :
                     client.insertSiblingSegment(
-                        client.mergeTree.getContainingSegment(pos, client.getCurrentSeq(), client.getClientId()).segment,
-                        TextSegment.make(word1.text))
+                        client.getContainingSegment(pos).segment, TextSegment.make(word1.text));
 
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(
@@ -560,10 +555,8 @@ export function TestPack(verbose = true) {
                             b = 0;
                         }
                         checkRange[i] = [b, b + rangeSize];
-                        let segoff1 = server.mergeTree.getContainingSegment(checkRange[i][0], MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
-                        let segoff2 = server.mergeTree.getContainingSegment(checkRange[i][1], MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
+                        let segoff1 = server.getContainingSegment(checkRange[i][0]);
+                        let segoff2 = server.getContainingSegment(checkRange[i][1]);
                         if (segoff1 && segoff2 && segoff1.segment && segoff2.segment) {
                             // console.log(`[${checkRange[i][0]},${checkRange[i][1]})`);
                             if (segoff1.segment === segoff2.segment) {
@@ -595,10 +588,8 @@ export function TestPack(verbose = true) {
                     let checkRangeRanges = <SharedString.SharedStringInterval[]>[];
                     for (let i = 0; i < posChecksPerRound; i++) {
                         checkPos[i] = random.integer(0, len - 2)(mt);
-                        let segoff1 = server.mergeTree.getContainingSegment(checkPos[i], MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
-                        let segoff2 = server.mergeTree.getContainingSegment(checkPos[i] + 1, MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
+                        let segoff1 = server.getContainingSegment(checkPos[i]);
+                        let segoff2 = server.getContainingSegment(checkPos[i] + 1);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
@@ -615,10 +606,8 @@ export function TestPack(verbose = true) {
                             b = 0;
                         }
                         checkRange[i] = [b, b + rangeSize];
-                        let segoff1 = server.mergeTree.getContainingSegment(checkRange[i][0], MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
-                        let segoff2 = server.mergeTree.getContainingSegment(checkRange[i][1], MergeTree.UniversalSequenceNumber,
-                            server.getClientId());
+                        let segoff1 = server.getContainingSegment(checkRange[i][0]);
+                        let segoff2 = server.getContainingSegment(checkRange[i][1]);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
                             let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
                             let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
@@ -1237,8 +1226,7 @@ export function TestPack(verbose = true) {
             cli.addLongClientId(cname);
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
-        let segoff = cli.mergeTree.getContainingSegment(0,
-            MergeTree.UniversalSequenceNumber, cli.getClientId());
+        let segoff = cli.getContainingSegment(0);
         let lref1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>(segoff.segment),
             segoff.offset);
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");

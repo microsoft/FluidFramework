@@ -175,6 +175,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     }
 
+    public getContainingSegment(pos: number) {
+        return this.client.getContainingSegment(pos);
+    }
+
     /**
      * Returns the length of the current sequence for the client
      */
@@ -218,11 +222,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public createPositionReference(
         pos: number,
-        refType: MergeTree.ReferenceType,
-        refSeq = this.client.getCurrentSeq(),
-        clientId = this.client.getClientId()): MergeTree.LocalReference {
-        const segoff = this.client.mergeTree.getContainingSegment(pos,
-            refSeq, clientId);
+        refType: MergeTree.ReferenceType): MergeTree.LocalReference {
+        const segoff = this.getContainingSegment(pos);
         if (segoff && segoff.segment) {
             const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
             if (refType !== MergeTree.ReferenceType.Transient) {

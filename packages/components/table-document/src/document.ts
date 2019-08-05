@@ -106,10 +106,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public getRowProperties(row: number): PropertySet {
-        const client = this.maybeRows.client;
-        const mergeTree = client.mergeTree;
-        const { segment } = mergeTree.getContainingSegment(row, mergeTree.collabWindow.currentSeq, client.getClientId());
-        return segment.properties;
+        return this.maybeRows.client.getPropertiesAtPosition(row);
     }
 
     public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
@@ -117,10 +114,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public getColProperties(col: number): PropertySet {
-        const client = this.maybeCols.client;
-        const mergeTree = client.mergeTree;
-        const { segment } = mergeTree.getContainingSegment(col, mergeTree.collabWindow.currentSeq, client.getClientId());
-        return segment.properties;
+        return this.maybeCols.client.getPropertiesAtPosition(col);
     }
 
     // For internal use by TableSlice: Please do not use.

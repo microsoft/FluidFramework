@@ -112,12 +112,10 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <MergeTree.LocalReference[]>[];
-    let refseq = client.getCurrentSeq();
-    let clientId = client.getClientId();
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
     for (let i = 0; i < bookmarkCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
-        let segoff = client.mergeTree.getContainingSegment(pos, refseq, clientId);
+        let segoff = client.getContainingSegment(pos);
         let refType = ops.ReferenceType.Simple;
         if (i&1) {
             refType = ops.ReferenceType.SlideOnRemove;
@@ -152,7 +150,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
             // curPG.pos is ca end
             let curPG = client.findTile(pos, "pg", false);
             let properties = curPG.tile.properties;
-            let curSegOff = client.mergeTree.getContainingSegment(pos, MergeTree.UniversalSequenceNumber, client.getClientId());
+            let curSegOff = client.getContainingSegment(pos);
             let curSeg = curSegOff.segment;
             // combine paragraph and direct properties
             Properties.extend(properties, curSeg.properties);
