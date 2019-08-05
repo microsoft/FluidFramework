@@ -545,7 +545,7 @@ export async function typeChunk(
                 offset: 0,
             };
 
-            pos = a.ss.client.mergeTree.posFromRelativePos(relPosit);
+            pos = a.ss.posFromRelativePos(relPosit);
 
             // Start inserting text into the string
             let code = chunk.charCodeAt(readPosition);

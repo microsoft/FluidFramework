@@ -1922,7 +1922,7 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: TestClient
         }
     }
     if (elm.val && /[^\s]/.test(elm.val)) {
-        const pos = client.mergeTree.posFromRelativePos({ id: elmId })
+        const pos = client.posFromRelativePos({ id: elmId })
         client.insertTextLocal(pos, elm.val);
     }
     return elmId;

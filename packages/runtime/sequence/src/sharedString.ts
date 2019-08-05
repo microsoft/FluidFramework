@@ -60,7 +60,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
             segment.addProperties(props);
         }
 
-        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        const pos = this.posFromRelativePos(relativePos1);
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);
@@ -104,7 +104,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
             segment.addProperties(props);
         }
 
-        const pos = this.client.mergeTree.posFromRelativePos(relativePos1);
+        const pos = this.posFromRelativePos(relativePos1);
         const insertOp = this.client.insertSegmentLocal(pos, segment);
         if (insertOp) {
             this.submitSequenceMessage(insertOp);

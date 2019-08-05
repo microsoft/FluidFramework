@@ -346,6 +346,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.submitLocalMessage(message);
     }
 
+    /**
+     * Given a position specified relative to a marker id, lookup the marker
+     * and convert the position to a character position.
+     * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+     */
+    public posFromRelativePos(relativePos) {
+        return this.client.posFromRelativePos(relativePos);
+    }
+
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // insert first, so local references can slide to the inserted seg
         // if any

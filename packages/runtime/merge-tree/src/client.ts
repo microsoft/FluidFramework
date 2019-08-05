@@ -265,6 +265,15 @@ export class Client {
     }
 
     /**
+     * Given a position specified relative to a marker id, lookup the marker
+     * and convert the position to a character position.
+     * @param relativePos - Id of marker (may be indirect) and whether position is before or after marker.
+     */
+    public posFromRelativePos(relativePos: ops.IRelativePosition) {
+        return this.mergeTree.posFromRelativePos(relativePos);
+    }
+
+    /**
      * Performs the annotate based on the provided op
      * @param opArgs - The ops args for the op
      * @returns True if the annotate was applied. False if it could not be.
@@ -438,12 +447,12 @@ export class Client {
 
         let start: number = op.pos1;
         if (start === undefined && op.relativePos1) {
-            start = this.mergeTree.posFromRelativePos(op.relativePos1);
+            start = this.posFromRelativePos(op.relativePos1);
         }
 
         let end: number = op.pos2;
         if (end === undefined && op.relativePos2) {
-            end = this.mergeTree.posFromRelativePos(op.relativePos2);
+            end = this.posFromRelativePos(op.relativePos2);
         }
 
         // validate if local op

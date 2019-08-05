@@ -2164,7 +2164,7 @@ export class MergeTree {
      * @param refseq - The reference sequence number at which to compute the position.
      * @param clientId - The client id with which to compute the position.
      */
-    posFromRelativePos(relativePos: ops.IRelativePosition, refseq = UniversalSequenceNumber,
+    posFromRelativePos(relativePos: ops.IRelativePosition, refseq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         let pos = -1;
         let marker: Marker;
