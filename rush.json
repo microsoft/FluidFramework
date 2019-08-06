@@ -119,6 +119,10 @@
       "projectFolder": "packages/components/pinpoint-editor/"
     },
     {
+      "packageName": "@chaincode/scoreboard",
+      "projectFolder": "packages/components/scoreboard/"
+    },
+    {
       "packageName": "@chaincode/shared-text",
       "projectFolder": "packages/components/shared-text/"
     },
@@ -187,6 +191,10 @@
       "projectFolder": "packages/framework/framework-definitions/"
     },
     {
+      "packageName": "@prague/component-core-interfaces",
+      "projectFolder": "packages/loader/component-core-interfaces/"
+    },
+    {
       "packageName": "@prague/container-definitions",
       "projectFolder": "packages/loader/container-definitions/"
     },
@@ -203,16 +211,12 @@
       "projectFolder": "packages/loader/loader-web/"
     },
     {
-      "packageName": "@prague/utils",
-      "projectFolder": "packages/loader/utils/"
-    },
-    {
-      "packageName": "@prague/component-core-interfaces",
-      "projectFolder": "packages/loader/component-core-interfaces/"
-    },
-    {
       "packageName": "@prague/protocol-definitions",
       "projectFolder": "packages/loader/protocol-definitions/"
+    },
+    {
+      "packageName": "@prague/utils",
+      "projectFolder": "packages/loader/utils/"
     },
     {
       "packageName": "@prague/base-host",

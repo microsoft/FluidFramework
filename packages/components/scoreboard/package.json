@@ -17,6 +17,14 @@
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
     "post-deploy": "getUrl -p"
   },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
   "dependencies": {
     "@prague/aqueduct": "^0.8.0",
     "@prague/component-core-interfaces": "^0.8.0",
@@ -33,6 +41,7 @@
     "@prague/prague-dev-server": "~3.8.0",
     "@prague/url-generator": "^1.0.7860",
     "@types/node": "^10.12.12",
+    "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
     "bulma": "^0.7.5",
     "css-loader": "^1.0.0",
@@ -48,13 +57,5 @@
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2"
-  },
-  "prague": {
-    "browser": {
-      "entrypoint": "main",
-      "bundle": [
-        "dist/main.bundle.js"
-      ]
-    }
   }
 }
