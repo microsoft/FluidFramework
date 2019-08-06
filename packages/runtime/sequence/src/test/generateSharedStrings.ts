@@ -13,6 +13,7 @@ export function* generateStrings() {
     const insertText = "text";
 
     let sharedString = new SharedString(runtime, documentId);
+    sharedString.initializeLocal();
     // small enough so snapshot won't have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
@@ -21,6 +22,7 @@ export function* generateStrings() {
     yield sharedString;
 
     sharedString = new SharedString(runtime, documentId);
+    sharedString.initializeLocal();
     // big enough that snapshot will have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
@@ -29,6 +31,7 @@ export function* generateStrings() {
     yield sharedString;
 
     sharedString = new SharedString(runtime, documentId);
+    sharedString.initializeLocal();
     // very big sharedString
     for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}-${i}`));
@@ -37,6 +40,7 @@ export function* generateStrings() {
     yield sharedString;
 
     sharedString = new SharedString(runtime, documentId);
+    sharedString.initializeLocal();
     // sharedString with markers
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
@@ -53,6 +57,7 @@ export function* generateStrings() {
     yield sharedString;
 
     sharedString = new SharedString(runtime, documentId);
+    sharedString.initializeLocal();
     // sharedString with annotations
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
         sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));

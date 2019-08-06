@@ -81,6 +81,9 @@ export class TestServer extends TestClient {
             type: msg.type
         };
     }
+
+    private minSeq = 0;
+
     applyMessages(msgCount: number) {
         while (msgCount > 0) {
             let msg = this.q.dequeue();
@@ -89,6 +92,7 @@ export class TestServer extends TestClient {
                     this.transformUpstreamMessage(msg);
                 }
                 msg.sequenceNumber = this.seq++;
+                msg.minimumSequenceNumber = this.minSeq;
                 if (this.applyMsg(msg)) {
                     return true;
                 }
@@ -103,7 +107,7 @@ export class TestServer extends TestClient {
                         minCli = this.clientSeqNumbers.peek();
                         if (minCli.refSeq > oldSeq) {
                             msg.minimumSequenceNumber = minCli.refSeq;
-                            this.updateMinSeq(minCli.refSeq);
+                            this.minSeq = minCli.refSeq;
                         }
                     }
                     for (let client of this.clients) {

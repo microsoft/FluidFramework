@@ -211,12 +211,13 @@ export class TestClient extends Client {
         op: IMergeTreeOp,
         seq: number = UnassignedSequenceNumber,
         refSeq: number = this.getCurrentSeq(),
-        longClientId?: string) {
+        longClientId?: string,
+        minSeqNumber = 0) {
         const msg: ISequencedDocumentMessage = {
             clientId: longClientId === undefined ? this.longClientId : longClientId,
             clientSequenceNumber: 1,
             contents: op,
-            minimumSequenceNumber: undefined,
+            minimumSequenceNumber: minSeqNumber,
             origin: null,
             referenceSequenceNumber: refSeq,
             sequenceNumber: seq,

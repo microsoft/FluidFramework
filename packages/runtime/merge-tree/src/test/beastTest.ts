@@ -984,8 +984,11 @@ export function TestPack(verbose = true) {
             }
             return error;
         }
+
+        let min = 0;
         cliA.accumTime = 0;
         cliB.accumTime = 0;
+
         function insertTest() {
             for (let i = 0; i < insertRounds; i++) {
                 let insertCount = randSegmentCount();
@@ -997,8 +1000,11 @@ export function TestPack(verbose = true) {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliAMsgs.push(cliA.makeOpMessage(cliA.insertTextLocal(pos, text), sequenceNumber++));
-                    cliB.applyMsg(cliAMsgs[cliAMsgs.length - 1]);
+
+                    const msg = cliA.makeOpMessage(cliA.insertTextLocal(pos, text), sequenceNumber++);
+                    msg.minimumSequenceNumber = min;
+                    cliAMsgs.push(msg);
+                    cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
                     cliA.applyMsg(cliAMsgs.shift());
@@ -1006,8 +1012,9 @@ export function TestPack(verbose = true) {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
+
+                min = sequenceNumber - 1;
+
                 insertCount = randSegmentCount();
                 sequenceNumber = cliA.getCurrentSeq() + 1;
                 firstSeq = sequenceNumber;
@@ -1017,8 +1024,10 @@ export function TestPack(verbose = true) {
                     let text = randomString(textLen, String.fromCharCode(zedCode + (sequenceNumber % 50)));
                     let preLen = cliB.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliBMsgs.push(cliB.makeOpMessage(cliB.insertTextLocal(pos, text), sequenceNumber++))
-                    cliA.applyMsg(cliBMsgs[cliBMsgs.length - 1]);
+                    const msg = cliB.makeOpMessage(cliB.insertTextLocal(pos, text), sequenceNumber++);
+                    msg.minimumSequenceNumber = min;
+                    cliBMsgs.push(msg);
+                    cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
                     cliB.applyMsg(cliBMsgs.shift());
@@ -1026,8 +1035,8 @@ export function TestPack(verbose = true) {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
+
+                min = sequenceNumber - 1;
             }
             return false;
         }
@@ -1042,8 +1051,10 @@ export function TestPack(verbose = true) {
                     let dlen = randTextLength();
                     let preLen = cliA.getLength();
                     let pos = random.integer(0, preLen)(mt);
-                    cliAMsgs.push(cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen), sequenceNumber++));
-                    cliB.applyMsg(cliAMsgs[cliAMsgs.length - 1]);
+                    const msg = cliA.makeOpMessage(cliA.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    msg.minimumSequenceNumber = min;
+                    cliAMsgs.push(msg);
+                    cliB.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
                     cliA.applyMsg(cliAMsgs.shift());
@@ -1051,8 +1062,9 @@ export function TestPack(verbose = true) {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
+
+                min = sequenceNumber - 1;
+
                 removeCount = randSegmentCount();
                 sequenceNumber = cliA.getCurrentSeq() + 1;
                 firstSeq = sequenceNumber;
@@ -1061,8 +1073,10 @@ export function TestPack(verbose = true) {
                     let dlen = randTextLength();
                     let preLen = cliB.getLength() - 1;
                     let pos = random.integer(0, preLen)(mt);
-                    cliBMsgs.push(cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen), sequenceNumber++));
-                    cliA.applyMsg(cliBMsgs[cliBMsgs.length - 1]);
+                    const msg = cliB.makeOpMessage(cliB.removeRangeLocal(pos, pos + dlen), sequenceNumber++);
+                    msg.minimumSequenceNumber = min;
+                    cliBMsgs.push(msg);
+                    cliA.applyMsg(msg);
                 }
                 for (let k = firstSeq; k < sequenceNumber; k++) {
                     cliB.applyMsg(cliBMsgs.shift());
@@ -1070,8 +1084,8 @@ export function TestPack(verbose = true) {
                 if (checkTextMatch(sequenceNumber - 1)) {
                     return true;
                 }
-                cliA.updateMinSeq(sequenceNumber - 1);
-                cliB.updateMinSeq(sequenceNumber - 1);
+
+                min = sequenceNumber - 1;
             }
             return false;
         }
@@ -1146,7 +1160,7 @@ export function TestPack(verbose = true) {
         cli.insertMarkerRemote(0, { refType: MergeTree.ReferenceType.Tile },
             { [MergeTree.reservedTileLabelsKey]: ["peach"] },
             5, 0, "2")
-        cli.insertTextRemote(6, "very ", undefined, 4, 2, "2");
+        cli.insertTextRemote(6, "very ", undefined, 6, 2, "2");
         if (verbose) {
             log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1155,7 +1169,6 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.updateMinSeq(6);
         let segs = <SharedStringJSONSegment[]>new MergeTree.Snapshot(cli.mergeTree, DebugLogger.create("prague:snapshot")).extractSync();
         if (verbose) {
             for (let seg of segs) {
@@ -1207,14 +1220,14 @@ export function TestPack(verbose = true) {
         if (verbose) {
             log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2);
+        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2, cli.getClientId());
         if (verbose) {
             log(`fwd range 0 5 on 1 => 2`);
             for (let r of fwdRanges) {
                 log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2);
+        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2, cli.getClientId());
         if (verbose) {
             log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1264,7 +1277,7 @@ export function TestPack(verbose = true) {
             }
         }
         const removeOp = cli.removeRangeLocal(3,5);
-        fwdRanges = cli.mergeTree.tardisRangeFromClient(3,6,9,10,2,0);
+        fwdRanges = cli.mergeTree.tardisRangeFromClient(3,6,9,10,2);
         if (verbose) {
             log(cli.mergeTree.toString());
             log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);

@@ -17,9 +17,10 @@ describe("snapshot", () => {
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
-            client1.applyMsg(client1.makeOpMessage(op, i + 1));
+            const msg = client1.makeOpMessage(op, i + 1);
+            msg.minimumSequenceNumber = i + 1;
+            client1.applyMsg(msg);
         }
-        client1.updateMinSeq(Snapshot.sizeOfFirstChunk);
 
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();
@@ -43,9 +44,10 @@ describe("snapshot", () => {
         client1.startCollaboration("me");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
-            client1.applyMsg(client1.makeOpMessage(op, i + 1));
+            const msg = client1.makeOpMessage(op, i + 1);
+            msg.minimumSequenceNumber = i + 1;
+            client1.applyMsg(msg);
         }
-        client1.updateMinSeq(Snapshot.sizeOfFirstChunk + 10);
 
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();

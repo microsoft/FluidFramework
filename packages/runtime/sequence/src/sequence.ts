@@ -51,7 +51,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public client: MergeTree.Client;
     protected isLoaded = false;
     protected collabStarted = false;
-    protected pendingMinSequenceNumber: number = 0;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
@@ -392,11 +391,25 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected snapshotContent(): ITree {
+        // Are we fully loaded? If not, things will go south
+        assert(this.isLoaded);
+
+        const minSeq = this.runtime.deltaManager ? this.runtime.deltaManager.minimumSequenceNumber : 0;
+
         // Catch up to latest MSN, if we have not had a chance to do it.
         // Required for case where ComponentRuntime.attachChannel() generates snapshot right after loading component.
         // Note that we mock runtime in tests and mock does not have deltamanager implementation.
         if (this.runtime.deltaManager) {
-            this.processMinSequenceNumberChanged(this.runtime.deltaManager.minimumSequenceNumber);
+            this.processMinSequenceNumberChanged(minSeq);
+            this.client.updateSeqNumbers(minSeq, this.runtime.deltaManager.referenceSequenceNumber);
+
+            this.client.mergeTree.commitGlobalMin();
+
+            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+            // Not sure why - need to catch it sooner
+            assert(this.client.mergeTree.collabWindow.minSeq === minSeq);
+        } else {
+            this.client.mergeTree.commitGlobalMin();
         }
 
         // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
@@ -404,10 +417,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         for (const message of this.messagesSinceMSNChange) {
             transformedMessages.push(this.transform(
                 message,
-                this.runtime.deltaManager.minimumSequenceNumber));
+                minSeq));
         }
 
-        this.client.mergeTree.commitGlobalMin();
         const snap = new MergeTree.Snapshot(this.client.mergeTree, this.logger);
         snap.extractSync();
         const mtSnap = snap.emit();
@@ -431,8 +443,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected processContent(message: ISequencedDocumentMessage) {
-        this.messagesSinceMSNChange.push(message);
         this.processMessage(message);
+
+        this.messagesSinceMSNChange.push(message);
+
+        // Do GC every once in a while...
+        if (this.messagesSinceMSNChange.length > 20
+                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+            this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
+        }
     }
 
     protected registerContent() {
@@ -464,14 +483,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         });
     }
 
-    protected didAttach() {
-        this.runtime.addListener("minSequenceNumberChanged", (msn: number) => {
-            this.processMinSequenceNumberChanged(msn);
-        });
-
-        super.didAttach();
-    }
-
     private getSharedIntervalCollectionInternal<TInterval extends ISerializableInterval>(
         label: string,
         type: string,
@@ -489,46 +500,51 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return sharedCollection;
     }
 
-    private processMinSequenceNumberChanged(value: number) {
+    private processMinSequenceNumberChanged(minSeq: number) {
         let index = 0;
         for (; index < this.messagesSinceMSNChange.length; index++) {
-            if (this.messagesSinceMSNChange[index].sequenceNumber > value) {
+            if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
                 break;
             }
         }
         if (index !== 0) {
             this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
         }
-
-        // Apply directly once loaded - otherwise track so we can update later
-        if (this.isLoaded) {
-            this.client.updateMinSeq(value);
-        } else {
-            this.pendingMinSequenceNumber = value;
-        }
     }
 
     private processMessage(message: ISequencedDocumentMessage) {
         this.client.applyMsg(message);
-        if (this.client.mergeTree.minSeqPending) {
-            this.client.mergeTree.notifyMinSeqListeners();
-        }
     }
 
-    private transform(originalMessage: ISequencedDocumentMessage, sequenceNumber: number): ISequencedDocumentMessage {
+    private transform(
+            originalMessage: ISequencedDocumentMessage,
+            minSequenceNumber: number): ISequencedDocumentMessage {
         let message = originalMessage;
 
+        assert(message.minimumSequenceNumber <= message.referenceSequenceNumber);
+        // Make sure Merge tree current seq # is up to date!
+        // This is important for check in MergeTree.tardisPositionFromClient() to be correct!
+        assert(minSequenceNumber <= this.client.getCurrentSeq());
+
         // Allow the distributed data types to perform custom transformations
-        if (message.referenceSequenceNumber < sequenceNumber) {
+        if (message.referenceSequenceNumber < minSequenceNumber) {
             // Make a copy of original message since we will be modifying in place
             message = cloneDeep(message);
             message.contents = this.client.transform(
                 message.contents as MergeTree.IMergeTreeOp,
                 this.client.getShortClientId(message.clientId),
                 message.referenceSequenceNumber,
-                sequenceNumber);
-            message.referenceSequenceNumber = sequenceNumber;
+                minSequenceNumber);
+            assert(message.contents);
+            message.referenceSequenceNumber = minSequenceNumber;
+            message.minimumSequenceNumber = minSequenceNumber;
+        } else if (message.minimumSequenceNumber < minSequenceNumber) {
+            message.minimumSequenceNumber = minSequenceNumber;
         }
+
+        // This should be true when we get here (see processMinSequenceNumberChanged()),
+        // and should stay true after transform
+        assert(message.sequenceNumber > minSequenceNumber);
 
         return message;
     }
@@ -549,8 +565,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
             // Do not use minimumSequenceNumber - it's from the "future" in case compoennt is delay loaded.
             // We need the one used when snapshot was created! That's chunk.chunkSequenceNumber
+            let msn = chunk.chunkSequenceNumber;
+
+            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
+            // Not sure why - need to catch it sooner!
+            if (msn > minimumSequenceNumber) {
+                this.logger.sendErrorEvent({eventName: "SharedStringMsnTooHigh", msn, minimumSequenceNumber});
+                msn = minimumSequenceNumber;
+            }
+
             this.client.startCollaboration(
-                this.runtime.clientId, chunk.chunkSequenceNumber, branchId);
+                this.runtime.clientId, msn, branchId);
         }
         return chunk;
     }
@@ -664,11 +689,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         } else {
             this.isLoaded = true;
             this.loadedDeferred.resolve();
-
-            // Update the MSN if larger than the set value
-            if (this.pendingMinSequenceNumber > this.client.getCollabWindow().minSeq) {
-                this.client.updateMinSeq(this.pendingMinSequenceNumber);
-            }
         }
     }
 }
