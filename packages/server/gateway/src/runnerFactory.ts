@@ -48,7 +48,8 @@ export class GatewayResourcesFactory implements utils.IResourcesFactory<GatewayR
         const alfred = new Alfred(
             appTenants,
             config.get("worker:alfredUrl"),
-            config.get("worker:blobStorageUrl"));
+            config.get("worker:blobStorageUrl"),
+            config.get("gateway:auth:endpoint"));
 
         return new GatewayResources(
             config,

@@ -37,6 +37,9 @@
                 "https://www.eu2.prague.office-int.com",
                 "https://www.we.prague.office-int.com"
             ]
+        },
+        "auth": {
+            "endpoint": "http://riddler:5000"
         }
     },
     "login": {

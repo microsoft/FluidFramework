@@ -37,6 +37,9 @@ data:
                     "https://www.eu2.prague.office-int.com",
                     "https://www.we.prague.office-int.com"
                 ]
+            },
+            "auth": {
+                "endpoint": "http://{{ template "riddler.fullname" . }}"
             }
         },
         "login": {

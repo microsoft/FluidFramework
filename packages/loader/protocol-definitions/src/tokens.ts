@@ -14,6 +14,16 @@ export interface ITokenClaims {
     user: IUser;
 }
 
+export interface ISummaryTokenClaims {
+    sub: string;
+    act: IActorClient;
+    claims: ITokenClaims;
+}
+
+export interface IActorClient {
+    sub: string;
+}
+
 /**
  * The ITokenService abstracts the discovery of claims contained within a token
  */

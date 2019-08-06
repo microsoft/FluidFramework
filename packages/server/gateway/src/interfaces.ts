@@ -6,6 +6,7 @@
 import { IFluidCodeDetails } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
 import { IGitCache } from "@prague/services-client";
+import { ITenantManager } from "@prague/services-core";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;
@@ -17,6 +18,8 @@ export interface IAlfred {
     getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit>;
 
     getLatestVersion(tenantId: string, documentId: string): Promise<ICommit>;
+
+    getTenantManager(): ITenantManager;
 }
 
 export interface IKeyValue {
