@@ -1604,8 +1604,7 @@ export class DocumentTree {
                     let id = prevChild.id;
                     let endId = "end-" + id;
                     let endRowMarker = <MergeTree.Marker>client.mergeTree.getSegmentFromId(endId);
-                    let endRowPos = client.mergeTree.getPosition(endRowMarker, MergeTree.UniversalSequenceNumber,
-                        client.getClientId());
+                    let endRowPos = client.getPosition(endRowMarker);
                     prevPos = endRowPos;
                 }
                 let tilePos = client.findTile(prevPos+1, "pg", false);

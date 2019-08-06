@@ -177,7 +177,7 @@ export class FlowDocument extends PrimedComponent {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         return segment === endOfTextSegment
             ? this.length
-            : this.mergeTree.getPosition(segment, this.currentSeq, this.clientId);
+            : this.sharedString.getPosition(segment);
     }
 
     public addLocalRef(position: number) {

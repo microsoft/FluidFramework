@@ -185,7 +185,7 @@ class SequenceUndoRedo implements IRevertable {
     }
 
     public revert() {
-        const mergeTree = this.sequence.client.mergeTree;
+        const sequence = this.sequence;
         const ops: IMergeTreeOp[] = [];
 
         this.tracking.forEach((tracked) => {
@@ -196,10 +196,7 @@ class SequenceUndoRedo implements IRevertable {
                     case MergeTreeDeltaType.INSERT:
                         if (!sg.removedSeq) {
                             const start =
-                                mergeTree.getPosition(
-                                    sg,
-                                    mergeTree.collabWindow.currentSeq,
-                                    mergeTree.collabWindow.clientId);
+                                sequence.getPosition(sg);
                             const removeOp = this.sequence.client.removeRangeLocal(
                                 start,
                                 start + sg.cachedLength);
@@ -224,10 +221,7 @@ class SequenceUndoRedo implements IRevertable {
                     case MergeTreeDeltaType.ANNOTATE:
                         if (!sg.removedSeq) {
                             const start =
-                                mergeTree.getPosition(
-                                    sg,
-                                    mergeTree.collabWindow.currentSeq,
-                                    mergeTree.collabWindow.clientId);
+                                sequence.getPosition(sg);
                             const annnotateOp =
                                 this.sequence.client.annotateRangeLocal(
                                     start,

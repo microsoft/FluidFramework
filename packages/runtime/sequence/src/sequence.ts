@@ -185,6 +185,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return this.client.getLength();
     }
 
+    public getPosition(segment): number {
+        return this.client.getPosition(segment);
+    }
+
     /**
      * Annotates the range with the provided properties
      *
@@ -238,8 +242,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public localRefToPos(localRef: MergeTree.LocalReference) {
         if (localRef.segment) {
-            return localRef.offset + this.client.mergeTree.getPosition(localRef.segment,
-                this.client.getCurrentSeq(), this.client.getClientId());
+            return localRef.offset + this.getPosition(localRef.segment);
         } else {
             return -1;
         }
@@ -267,10 +270,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         if (segmentInfo && segmentInfo.segment) {
 
-            const segmentPosition = this.client.mergeTree.getPosition(
-                segmentInfo.segment,
-                this.client.getCurrentSeq(),
-                this.client.getClientId());
+            const segmentPosition = this.getPosition(segmentInfo.segment);
 
             return segmentPosition + segmentInfo.offset;
         } else {

@@ -1371,8 +1371,8 @@ function renderTable(
     defer = false) {
 
     const flowView = layoutInfo.flowView;
-    const mergeTree = flowView.client.mergeTree;
-    const tablePos = mergeTree.getPosition(table, MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
+    const sharedString = flowView.sharedString;
+    const tablePos = sharedString.getPosition(table);
     let tableView = table.table;
     if (!tableView) {
         tableView = Table.parseTable(table, tablePos, flowView.sharedString, makeFontInfo(docContext));
@@ -1567,8 +1567,7 @@ function renderTree(
     } as ILayoutContext;
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const outerTable = startingPosStack.table.items[0];
-        const outerTablePos = flowView.client.mergeTree.getPosition(outerTable as MergeTree.Marker,
-            MergeTree.UniversalSequenceNumber, flowView.client.getClientId());
+        const outerTablePos = flowView.sharedString.getPosition(outerTable as MergeTree.Marker);
         layoutContext.startPos = outerTablePos;
         layoutContext.stackIndex = 0;
         layoutContext.startingPosStack = startingPosStack;
@@ -2149,6 +2148,7 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
 function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
     const flowView = layoutContext.flowView;
     const client = flowView.client;
+    const sharedString = flowView.sharedString;
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
     const docContext = layoutContext.docContext;
@@ -2308,8 +2308,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 if (flowView.bookmarks) {
                     let computedEnd = lineEnd;
                     if (!computedEnd) {
-                        computedEnd = client.mergeTree.getPosition(endPGMarker, client.getCurrentSeq(),
-                            client.getClientId());
+                        computedEnd = sharedString.getPosition(endPGMarker);
                     }
                     showBookmarks(layoutContext.flowView, lineStart,
                         computedEnd, lineFontstr, lineDivHeight, breakIndex, docContext, contentDiv, endPGMarker);
@@ -3096,8 +3095,7 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
 }
 
 function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) {
-    return flowView.client.mergeTree.getPosition(localRef.segment, MergeTree.UniversalSequenceNumber,
-        flowView.client.getClientId()) + localRef.offset;
+    return flowView.sharedString.getPosition(localRef.segment) + localRef.offset;
 }
 
 function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
@@ -3115,8 +3113,7 @@ export function annotateMarker(flowView: FlowView, props: MergeTree.PropertySet,
 }
 
 function getPosition(flowView: FlowView, segment: MergeTree.ISegment) {
-    return flowView.client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber,
-        flowView.client.getClientId());
+    return flowView.sharedString.getPosition(segment);
 }
 
 function preventD(e: Event) {
@@ -4677,17 +4674,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     toCell = tableView.nextcell(cell.cell);
                 }
                 if (toCell) {
-                    const position = this.client.mergeTree.getPosition(toCell.marker,
-                        MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                    const position = this.sharedString.getPosition(toCell.marker);
                     this.cursor.pos = position + 1;
                 } else {
                     if (shift) {
-                        const position = this.client.mergeTree.getPosition(tableView.tableMarker,
-                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                        const position = this.sharedString.getPosition(tableView.tableMarker);
                         this.cursor.pos = position - 1;
                     } else {
-                        const endPosition = this.client.mergeTree.getPosition(tableView.endTableMarker,
-                            MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                        const endPosition = this.sharedString.getPosition(tableView.endTableMarker);
                         this.cursor.pos = endPosition + 1;
                     }
                 }

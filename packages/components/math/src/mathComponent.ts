@@ -525,8 +525,8 @@ export class MathInstance implements ISharedComponent, IComponentRouter,
     }
 }
 
-function getPosition(client: MergeTree.Client, segment: MergeTree.ISegment) {
-    return client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber, client.getClientId());
+function getPosition(sharedString: Sequence.SharedString, segment: MergeTree.ISegment) {
+    return sharedString.getPosition(segment);
 }
 
 const endIdPrefix = "end-";
@@ -588,20 +588,20 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     }
 
     public getText(instance: MathInstance) {
-        const client = this.combinedMathText.client;
+        const sharedString = this.combinedMathText;
         const startMarker = instance.startMarker;
-        const start = getPosition(client, startMarker) + startMarker.cachedLength;
+        const start = getPosition(sharedString, startMarker) + startMarker.cachedLength;
         const endMarker = instance.endMarker;
-        const end = getPosition(client, endMarker);
+        const end = getPosition(sharedString, endMarker);
         return this.combinedMathText.getText(start, end);
     }
 
     public removeCollectionItem(instance: MathInstance) {
-        const client = this.combinedMathText.client;
+        const sharedString = this.combinedMathText;
         const startMarker = instance.startMarker;
-        const start = getPosition(client, startMarker);
+        const start = getPosition(sharedString, startMarker);
         const endMarker = instance.endMarker;
-        const end = getPosition(client, endMarker) + endMarker.cachedLength;
+        const end = getPosition(sharedString, endMarker) + endMarker.cachedLength;
         this.combinedMathText.removeRange(start, end);
     }
 
@@ -653,9 +653,9 @@ export class MathCollection implements ISharedComponent, IComponentCollection, I
     }
 
     private getStartPos(instance: MathInstance) {
-        const client = this.combinedMathText.client;
+        const sharedString = this.combinedMathText;
         const startMarker = instance.startMarker;
-        const start = getPosition(client, startMarker);
+        const start = getPosition(sharedString, startMarker);
         return start + startMarker.cachedLength;
     }
 

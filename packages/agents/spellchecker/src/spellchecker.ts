@@ -182,9 +182,7 @@ class Speller {
             for (const pg of this.pendingMarkers) {
                 let position = 0;
                 if (pg.tile) {
-                    position = this.sharedString.client.mergeTree.getPosition(
-                        pg.tile, MergeTree.UniversalSequenceNumber,
-                        this.sharedString.client.getClientId());
+                    position = this.sharedString.getPosition(pg.tile);
                 }
                 const endMarker = this.sharedString.findTile(position + 1, "pg", false);
                 if (endMarker) {

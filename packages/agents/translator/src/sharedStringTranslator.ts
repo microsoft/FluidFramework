@@ -140,10 +140,7 @@ export class SharedStringTranslator {
                 const translations = languageTranslations[1];
                 if (translations.length > 0) {
                     const translation = translations[0];
-                    const pos = this.sharedString.client.mergeTree.getPosition(
-                        pgMarker,
-                        this.sharedString.client.getCurrentSeq(),
-                        this.sharedString.client.getClientId());
+                    const pos = this.sharedString.getPosition(pgMarker);
 
                     const props: any = {};
                     props[`translation-${language}`] = translation;

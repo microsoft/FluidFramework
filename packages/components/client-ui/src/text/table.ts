@@ -34,8 +34,7 @@ let rowIdSuffix = 0;
 let columnIdSuffix = 0;
 
 function getPosition(sharedString: SharedString, segment: MergeTree.ISegment) {
-    return sharedString.client.mergeTree.getPosition(segment, MergeTree.UniversalSequenceNumber,
-        sharedString.client.getClientId());
+    return sharedString.getPosition(segment);
 }
 
 function createRelativeMarkerOp(
@@ -223,11 +222,10 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
                 const clientId = sharedString.client.longClientId;
-                const mergeTree = sharedString.client.mergeTree;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
                     sharedString.removeRange(
-                        mergeTree.getPosition(cell.marker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId),
-                        mergeTree.getPosition(cell.endMarker, mergeTree.collabWindow.currentSeq, mergeTree.collabWindow.clientId));
+                        sharedString.getPosition(cell.marker),
+                        sharedString.getPosition(cell.endMarker));
                 });
             }
         }
@@ -591,8 +589,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                         cellMarker.cell.minContentWidth = tableMarker.table.minContentWidth;
                     }
                     let endTableMarker = tableMarker.table.endTableMarker;
-                    nextPos = mergeTree.getPosition(
-                        endTableMarker, MergeTree.UniversalSequenceNumber, sharedString.client.getClientId());
+                    nextPos = sharedString.getPosition(endTableMarker);
                     nextPos += endTableMarker.cachedLength;
                 } else {
                     // empty paragraph
