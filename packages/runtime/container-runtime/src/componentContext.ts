@@ -326,11 +326,17 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
             return Promise.reject("runtime already bound");
         }
 
-        // Apply all pending ops
-        for (const op of this.pending) {
-            const context = await componentRuntime.prepare(op, false);
-            componentRuntime.process(op, false, context);
+        if (this.pending.length > 0) {
+            // component has been modified and will need to regenerate its snapshot
+            this.baseId = null;
+
+            // Apply all pending ops
+            for (const op of this.pending) {
+                const context = await componentRuntime.prepare(op, false);
+                componentRuntime.process(op, false, context);
+            }
         }
+
         this.pending = undefined;
 
         // and now mark the runtime active
