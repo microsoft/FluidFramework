@@ -53,6 +53,7 @@ export class MockDeltaConnectionFactory {
         while (this.messages.length > 0) {
             const msg = this.messages.shift();
             msg.sequenceNumber = ++this.sequenceNumber;
+            msg.minimumSequenceNumber = 0;
             for (const dc of this.deltaConnections) {
                 for (const h of dc.handlers) {
                     await h.prepare(msg, true);

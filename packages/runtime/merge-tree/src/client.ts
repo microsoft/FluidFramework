@@ -18,6 +18,7 @@ import {
     IUndoInfo,
     Marker,
     MergeTree,
+    NonCollabClient,
     RegisterCollection,
     SegmentGroup,
     UnassignedSequenceNumber,
@@ -252,10 +253,7 @@ export class Client {
         referenceSequenceNumber: number,
         toSequenceNumber: number,
     ): ops.IMergeTreeOp {
-        if (referenceSequenceNumber >= toSequenceNumber) {
-            return op;
-        }
-
+        assert (referenceSequenceNumber < toSequenceNumber);
         return this.transformOp(op, clientId, referenceSequenceNumber, toSequenceNumber);
     }
 
@@ -406,7 +404,8 @@ export class Client {
                 this.localOps++;
             }
         } else {
-            this.mergeTree.getCollabWindow().currentSeq = clientArgs.sequenceNumber;
+            assert(this.mergeTree.getCollabWindow().currentSeq < clientArgs.sequenceNumber);
+            assert(this.mergeTree.getCollabWindow().minSeq <= opArgs.sequencedMessage.minimumSequenceNumber);
             if (clockStart) {
                 this.accumTime += elapsedMicroseconds(clockStart);
                 this.accumOps++;
@@ -433,12 +432,18 @@ export class Client {
 
         let start: number = op.pos1;
         if (start === undefined && op.relativePos1) {
-            start = this.mergeTree.posFromRelativePos(op.relativePos1);
+            start = this.mergeTree.posFromRelativePos(
+                op.relativePos1,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId);
         }
 
         let end: number = op.pos2;
         if (end === undefined && op.relativePos2) {
-            end = this.mergeTree.posFromRelativePos(op.relativePos2);
+            end = this.mergeTree.posFromRelativePos(
+                op.relativePos2,
+                clientArgs.referenceSequenceNumber,
+                clientArgs.clientId);
         }
 
         // validate if local op
@@ -563,7 +568,6 @@ export class Client {
         } else {
             ackOp(opArgs);
         }
-        this.mergeTree.collabWindow.currentSeq = opArgs.sequencedMessage.sequenceNumber;
     }
 
     private transformOp(
@@ -606,7 +610,12 @@ export class Client {
             case ops.MergeTreeDeltaType.ANNOTATE:
             case ops.MergeTreeDeltaType.REMOVE:
 
-                const ranges = this.mergeTree.tardisRange(start, end, referenceSequenceNumber, toSequenceNumber);
+                const ranges = this.mergeTree.tardisRange(
+                    start,
+                    end,
+                    referenceSequenceNumber,
+                    toSequenceNumber,
+                    NonCollabClient);
                 const tranformedOps: ops.IMergeTreeOp[] =
                     ranges.map((range) => {
                         if (op.type === ops.MergeTreeDeltaType.ANNOTATE) {
@@ -626,7 +635,8 @@ export class Client {
                     this.mergeTree.tardisPosition(
                         start,
                         referenceSequenceNumber,
-                        toSequenceNumber),
+                        toSequenceNumber,
+                        clientId),
                     op.seg);
 
             default:
@@ -832,9 +842,6 @@ export class Client {
     }
 
     public applyMsg(msg: ISequencedDocumentMessage) {
-        if ((msg !== undefined) && (msg.minimumSequenceNumber > this.mergeTree.getCollabWindow().minSeq)) {
-            this.updateMinSeq(msg.minimumSequenceNumber);
-        }
         // Ensure client ID is registered
         // TODO support for more than two branch IDs
         // The existance of msg.origin means we are a branch message - and so should be marked as 0
@@ -854,7 +861,19 @@ export class Client {
                 this.applyRemoteOp(opArgs);
             }
         }
+
+        this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
     }
+
+    public updateSeqNumbers(min: number, seq: number) {
+        const collabWindow = this.mergeTree.getCollabWindow();
+        // equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
+        assert(collabWindow.currentSeq <= seq);
+        collabWindow.currentSeq = seq;
+        assert(min <= seq);
+        this.updateMinSeq(min);
+    }
+
     private getLocalSequenceNumber() {
         let segWindow = this.mergeTree.getCollabWindow();
         if (segWindow.collaborating) {

@@ -1228,7 +1228,6 @@ export function TestPack(verbose = true) {
                 }
             }
         }
-        cli.updateMinSeq(5);
 
         cli = new TestClient();
         cli.insertTextLocal(0, " old sock!");
@@ -1294,14 +1293,14 @@ export function TestPack(verbose = true) {
         if (verbose) {
             console.log(cli.mergeTree.toString());
         }
-        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2);
+        let fwdRanges = cli.mergeTree.tardisRange(0, 5, 1, 2, cli.getClientId());
         if (verbose) {
             console.log(`fwd range 0 5 on 1 => 2`);
             for (let r of fwdRanges) {
                 console.log(`fwd range (${r.start}, ${r.end})`);
             }
         }
-        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2);
+        let fwdPos = cli.mergeTree.tardisPosition(2, 1, 2, cli.getClientId());
         if (verbose) {
             console.log(`fwd pos 2 on 1 => 2 is ${fwdPos}`);
             for (let clientId = 0; clientId < 4; clientId++) {
@@ -1374,7 +1373,7 @@ export function TestPack(verbose = true) {
             }
         }
         const localRemoveOp = cli.removeRangeLocal(3, 5);
-        fwdRanges = cli.mergeTree.tardisRangeFromClient(3, 6, 9, 10, 2, 0);
+        fwdRanges = cli.mergeTree.tardisRangeFromClient(3, 6, 9, 10, 2);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             console.log(`fwd range 3 6 on cli 2 refseq 9 => cli 0 local`);

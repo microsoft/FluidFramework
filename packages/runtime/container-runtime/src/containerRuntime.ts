@@ -249,7 +249,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private readonly componentContextsDeferred = new Map<string, Deferred<ComponentContext>>();
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
     private proposeLeadershipOnConnection = false;
@@ -268,7 +267,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     ) {
         super();
         this.logger = context.logger;
-        this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
 
         this.deltaManager.on("allSentOpsAckd", () => {
@@ -595,11 +593,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
 
         this.emit("op", message);
-
-        if (this.lastMinSequenceNumber !== message.minimumSequenceNumber) {
-            this.lastMinSequenceNumber = message.minimumSequenceNumber;
-            this.updateMinSequenceNumber(message.minimumSequenceNumber);
-        }
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -866,10 +859,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
             return summaryTree;
         }
-    }
-
-    private updateMinSequenceNumber(minimumSequenceNumber: number) {
-        this.emit("minSequenceNumberChanged", this.deltaManager.minimumSequenceNumber);
     }
 
     private submit(type: MessageType, content: any): number {

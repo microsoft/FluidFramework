@@ -81,7 +81,7 @@ describe("SubSequence", () => {
                 }
             }
         }
-        cli.applyMsg(cli.makeOpMessage(insert));
+        cli.applyMsg(cli.makeOpMessage(insert, 3));
         cli.insertItemsRemote(5, [1, 5, 6, 2, 3], undefined, 4, 2, "2");
         cli.insertItemsRemote(0, [9], undefined, 5, 0, "2");
         if (verbose) {
@@ -97,7 +97,6 @@ describe("SubSequence", () => {
             6,
             5,
             "3"));
-        cli.updateMinSeq(6);
         if (verbose) {
             console.log(cli.mergeTree.toString());
             for (let clientId = 0; clientId < 4; clientId++) {
