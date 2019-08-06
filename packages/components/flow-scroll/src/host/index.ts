@@ -39,7 +39,10 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     public get IComponentHTMLRender() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {
-        if (request.url.startsWith(this.taskManager.url)) {
+        const url = request.url;
+
+        // Note: Aqueduct requests '/' before 'this.taskManager' is initialized.
+        if (url && url !== "/" && url.startsWith(this.taskManager.url)) {
             return this.taskManager.request(request);
         } else {
             return super.request(request);

@@ -4,35 +4,60 @@
  */
 // tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
-import { Dom, Scheduler } from "@prague/flow-util";
-import { ISegment, Marker, ReferenceType, reservedMarkerIdKey, TextSegment } from "@prague/merge-tree";
+import { Dom } from "@prague/flow-util";
+import { ISegment, LocalReference, TextSegment } from "@prague/merge-tree";
+import { SequenceDeltaEvent } from "@prague/sequence";
 import * as assert from "assert";
-import { DocTile, FlowDocument } from "../../document";
-import { clamp } from "../../util";
+import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../../document";
+import { clamp, getSegmentRange } from "../../util";
+import { updateRef } from "../../util/localref";
 import { debug, nodeToString } from "../debug";
-import { DocumentFormatter } from "./element";
+import { documentFormatter } from "./element";
 import { Formatter, IFormatterState } from "./formatter";
 
 interface ILayoutCursor { parent: Node; previous: Node; }
 
 interface IFormatInfo {
-    format: Formatter<IFormatterState>;
+    formatter: Readonly<Formatter<IFormatterState>>;
     state: IFormatterState;
-    segment: ISegment;
-    depth: number;
+}
+
+class LayoutCheckpoint {
+    public readonly formatStack: ReadonlyArray<Readonly<IFormatInfo>>;
+    public readonly cursorStack: ReadonlyArray<Readonly<ILayoutCursor>>;
+
+    constructor(
+        formatStack: ReadonlyArray<IFormatInfo>,
+        cursorStack: ReadonlyArray<ILayoutCursor>,
+    ) {
+        this.formatStack = Object.freeze(formatStack.slice(0));
+        this.cursorStack = Object.freeze(cursorStack.map((cursor) => Object.freeze({...cursor})));
+    }
 }
 
 export class Layout {
     public get cursor(): Readonly<ILayoutCursor> { return this.internalCursor; }
     private get internalCursor(): ILayoutCursor { return this.cursorStack[this.cursorStack.length - 1]; }
-    private get format() { return this.formatStack[this.formatStack.length - 1]; }
+
+    private readonly rootFormatInfo: IFormatInfo;
+
+    private get format() {
+        const stack = this.formatStack;
+        return stack.length > 0
+            ? stack[stack.length - 1]
+            : this.rootFormatInfo;
+    }
 
     private get slot() { return this.root; }
-    private readonly formatStack: IFormatInfo[];
-    private readonly cursorStack: ILayoutCursor[] = [];
-    private readonly segmentToFormatStackMap = new WeakMap<ISegment, IFormatInfo[]>();
+    private formatStack: Array<Readonly<IFormatInfo>>;
+    private cursorStack: ILayoutCursor[];
+    private emitted: Set<Node>;
+    private pending: Set<Node> = new Set();
+    private readonly initialCheckpoint: LayoutCheckpoint;
+    private readonly segmentToCheckpoint = new WeakMap<ISegment, LayoutCheckpoint>();
     private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
     private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
+    private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
     // tslint:disable:variable-name
     private _position = NaN;
@@ -48,31 +73,24 @@ export class Layout {
     public get endOffset() { return this._endOffset; }
     // tslint:enable:variable-name
 
-    private startInvalid = +Infinity;
-    private endInvalid = -Infinity;
-    private readonly scheduleSync: () => void;
+    private startInvalid: LocalReference;
+    private endInvalid: LocalReference;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scope?: IComponent,
-        public readonly scheduler = new Scheduler()) {
-        this.formatStack = [{ format: new DocumentFormatter(), state: { root }, segment: undefined, depth: -1 }];
-        this.scheduleSync = scheduler.coalesce(scheduler.onTurnEnd, () => {
-            const start = this.startInvalid;
-            const end = this.endInvalid;
-            this.startInvalid = +Infinity;
-            this.endInvalid = -Infinity;
-            this.sync(start, end);
-        });
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scope?: IComponent) {
+        this.initialCheckpoint = new LayoutCheckpoint([], [{ parent: this.slot, previous: null }]);
+        this.rootFormatInfo = Object.freeze({ formatter: documentFormatter, state: { root } });
+
+        doc.on("sequenceDelta", this.onChange);
+
+        debug("begin: initial sync");
+        this.sync(0, doc.length);
+        debug("end: initial sync");
     }
 
-    public invalidate(start: number, end: number) {
-        this.startInvalid = Math.min(this.startInvalid, start);
-        this.endInvalid = Math.max(this.endInvalid, end);
-        debug(`invalidate([${start}..${end})) -> [${this.startInvalid}..${this.endInvalid})`);
-        this.scheduleSync();
-    }
-
+    // tslint:disable-next-line:max-func-body-length
     public sync(start = 0, end = this.doc.length) {
-        console.time("Layout.sync()");
+        const doc = this.doc;
+        const length = doc.length;
 
         // This works around two issues:
         //   1) If the document shrinks to zero length, the below will early exit w/o
@@ -81,125 +99,127 @@ export class Layout {
         //      in the cursor jumping according to margin/padding.
         // ...unfortunately, if the user hits enter on the first line, this appears to
         // have no effect.
-        if (this.doc.length === 0) {
-            const empty = "<p><br></p>";
+        if (length === 0) {
+            const empty = "";
             if (this.root.innerHTML !== empty) {
                 // tslint:disable-next-line:no-inner-html
-                this.root.innerHTML = "<p><br></p>";
+                this.root.innerHTML = empty;
             }
             return;
         }
 
+        console.time("Layout.sync()");
+
         {
             const oldStart = start;
             const oldEnd = end;
-            const doc = this.doc;
-            const length = doc.length;
             start = clamp(0, start, length);
             end = clamp(start, end, length);
 
-            this.cursorStack.push({ parent: this.slot, previous: null });
-
-            if (end < this.doc.length) {
-                const endPg = doc.findTile(end, DocTile.paragraph, /* preceding: */ false);
-                end = endPg ? endPg.pos : doc.length;
-            }
+            let checkpoint = this.initialCheckpoint;
 
             while (start > 0) {
-                // Look for a preceding tile
-                const tileInfo = doc.findTile(start - 1, DocTile.paragraph, /* preceding: */ true);
+                const position = start - 1;
+                const { segment, offset } = doc.getSegmentAndOffset(position);
+                const range = getSegmentRange(position, segment, offset);
 
-                // If there is none, we've hit the beginning of the document.  Start there.
-                if (!tileInfo) {
-                    start = 0;
+                // If the segment ends at our start position, we can resume here.
+                if (range.end === start) {
+                    checkpoint = this.segmentToCheckpoint.get(segment);
                     break;
                 }
 
-                // See if we've constructed DOM for this tile.
-                start = tileInfo.pos;
-                const seg = tileInfo.tile as unknown as ISegment;
-                const formats = this.segmentToFormatStackMap.get(seg);
-                if (formats) {
-                    const root = formats[0].state.root;
-                    const cursor = this.internalCursor;
-                    cursor.parent = root.parentNode;
-                    cursor.previous = root.previousSibling;
-                    this._position = start;
-                    this._segment = seg;
-                    this._startOffset = 0;
-                    this._endOffset = 0;
-                    this.pushFormat(formats[0].format);
-                    break;
-                }
+                // Otherwise backtrack to the previous segment
+                start = range.start;
             }
 
-            debug("sync([%d..%d)) -> [%d..%d)", oldStart, oldEnd, start, end);
+            this.restoreCheckpoint(checkpoint);
+
+            debug("sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
         }
 
         try {
-            this.doc.visitRange((position, segment, startOffset, endOffset) => {
+            doc.visitRange((position, segment, startOffset, endOffset) => {
                 this._position = position;
                 this._segment = segment;
                 this._startOffset = startOffset;
                 this._endOffset = endOffset;
 
-                let consumed: boolean;
-                do {
-                    const { format, state } = this.format;
-                    consumed = format.visit(state, this);
-                } while (!consumed);
-                return true;
-            }, start, end);
+                this.emitted = this.pending;
+                this.pending = this.segmentToEmitted.get(this._segment) || new Set();
+                this.segmentToEmitted.set(this._segment, this.emitted);
+
+                assert.strictEqual(this.emitted.size, 0);
+                assert.notStrictEqual(this.emitted, this.pending);
+
+                while (true) {
+                    const { formatter, state } = this.format;
+                    if (formatter.visit(this, state)) {
+                        return this.saveCheckpoint(end);
+                    }
+                }
+            }, start);
         } finally {
-            this._position = end;
             this._segment = undefined;
             this._startOffset = NaN;
             this._endOffset = NaN;
 
-            while (this.formatStack.length > 1) { this.popFormat(); }
+            if (this.position >= (length - 1)) {
+                this._position = length;
+                while (this.formatStack.length > 0) { this.popFormat(); }
+            }
+
+            this.removePending();
+            this.formatStack.length = 0;
             this.cursorStack.length = 0;
 
+            debug("Complete: sync() -> [%d..%d) len: %d", start, this.position + 1, (this.position + 1) - start);
             this._position = NaN;
-        }
 
-        console.timeEnd("Layout.sync()");
+            console.timeEnd("Layout.sync()");
+        }
     }
 
-    public getTagId(marker: ISegment) {
-        if (Marker.is(marker)) {
-            switch (marker.refType) {
-                case ReferenceType.NestBegin:
-                    return marker.properties[reservedMarkerIdKey].slice(6);
-                case ReferenceType.NestEnd:
-                    return marker.properties[reservedMarkerIdKey].slice(4);
-                default:
-            }
-        }
-        return undefined;
-    }
+    public pushFormat<TState extends IFormatterState>(formatter: Readonly<Formatter<TState>>) {
+        const depth = this.formatStack.length;
 
-    public pushFormat<T extends IFormatterState>(format: Formatter<T>) {
         const segment = this.segment;
-        debug("  pushFormat(%o,pos=%d,%s,start=%d,end=%d)", format, this.position, segment && segment.toString(), this.startOffset, this.endOffset);
-        const formatInfo = this.getEnsuredFormatInfo(format, segment);
+        debug("  pushFormat(%o,pos=%d,%s,start=%d,end=%d,depth=%d)",
+            formatter,
+            this.position,
+            segment.toString(),
+            this.startOffset,
+            this.endOffset,
+            depth);
 
-        formatInfo.state = {...formatInfo.state};
-        format.begin(formatInfo.state as T, this);
-        assert(formatInfo.state.root);
-        formatInfo.state = Object.freeze(formatInfo.state);
+        // Must not request a formatter for a removed segment.
+        assert.strictEqual(segment.removedSeq, undefined);
 
-        this.formatStack.push(formatInfo);
+        // If we've checkpointed this segment previously, we can potentially reuse our previous state to
+        // minimize damage to the DOM.
+        //
+        // Look in the checkpoint's saved format stack at the depth we are about to push on to the
+        // current format stack.
+        const checkpoint = this.segmentToCheckpoint.get(segment);
+        const stack = checkpoint && checkpoint.formatStack;
+        const candidate = stack && stack[this.formatStack.length];
+
+        // If we find the same kind of formatter at the expected depth, clone it's state for reuse.
+        const state = (
+            candidate && candidate.formatter === formatter
+                ? {...candidate.state}
+                : {}) as TState;
+        formatter.begin(this, state);
+
+        this.formatStack.push(Object.freeze({ formatter, state: Object.freeze(state) }));
     }
 
     public popFormat() {
         const length = this.formatStack.length;
-        debug("  popFormat(%o): %d", this.format.format, length - 1);
-
-        // DocumentFormatter @0 must remain on the stack.
-        assert(length > 1);
-
-        const { format, state } = this.formatStack.pop();
-        format.end(state, this);
+        debug("  popFormat(%o): %d", this.format.formatter, length - 1);
+        assert(length > 0);
+        const { formatter, state } = this.formatStack.pop();
+        formatter.end(this, state);
     }
 
     public pushNode(node: Node) {
@@ -210,36 +230,26 @@ export class Layout {
     }
 
     public emitNode(node: Node) {
-        debug("  emitNode(%s@%d)", nodeToString(node), this.position);
+        debug("    emitNode(%s@%d)", nodeToString(node), this.position);
 
         const top = this.internalCursor;
         const { parent, previous } = top;
-        this.ensureAfter(parent, node, previous);
+
+        // Move 'node' to the correct position in the DOM, if it's not there already.
+        if (node.parentNode !== parent || node.previousSibling !== previous) {
+            Dom.insertAfter(parent, node, previous);
+        }
+
+        this.emitted.add(node);
+        this.pending.delete(node);
+
         top.previous = node;
         this.nodeToSegmentMap.set(node, this.segment);
     }
 
     public popNode() {
-        debug("  popNode(): %d", this.cursorStack.length - 1);
-
-        // Any remaining children of the node being popped are stale and should be removed.
-        const cursor = this.cursor;
-        let next = cursor.previous && cursor.previous.nextSibling;
-        while (next) {
-            const toRemove = next;
-            next = next.nextSibling;
-            this.remove(toRemove);
-        }
-
+        debug("  popNode(%s@%d): %d -> %d", nodeToString(this.cursor.parent), this.position, this.cursorStack.length, this.cursorStack.length - 1);
         this.cursorStack.pop();
-
-        // Even though we attempted to trim stale nodes when this node was originally emitted,
-        // we try again now, having advanced 'this.position' to the start of the last child in
-        // this subtree.
-        next = cursor.previous && cursor.previous.nextSibling;
-        if (next) {
-            this.trimAfter(this.cursor.previous && this.cursor.previous.nextSibling);
-        }
     }
 
     public emitText() {
@@ -269,73 +279,133 @@ export class Layout {
             }
         }
 
-        const stack = this.segmentToFormatStackMap.get(segment);
-        if (stack) {
-            const node = stack[stack.length - 1].state.root;
-            assert.notStrictEqual(node.nodeType, Node.TEXT_NODE);
+        const checkpoint = this.segmentToCheckpoint.get(segment);
+        if (checkpoint) {
+            const stack = checkpoint.cursorStack;
+            const top = stack[stack.length - 1];
+            const node = top.previous || top.parent.firstChild || top.parent;
             return { node, nodeOffset: Math.min(offset, node.childNodes.length) };
         }
 
         return { node: null, nodeOffset: NaN };
     }
 
-    private ensureAfter(parent: Node, node: Node, previous: Node) {
-        // Move 'node' to the correct position in the DOM, if it's not there already.
-        if (node.parentNode !== parent || node.previousSibling !== previous) {
-            Dom.insertAfter(parent, node, previous);
+    private removePending() {
+        for (const node of this.pending) {
+            this.removeNode(node);
         }
-
-        this.trimAfter(node);
+        this.pending.clear();
     }
 
-    private trimAfter(node: Node) {
-        // Remove any peers to the right of 'node' that are no longer in the tree, or now appear
-        // earlier in the document.
-        const position = this.position;
-        for (let next = node.nextSibling; next !== null; next = node.nextSibling) {
-            const seg = this.nodeToSegment(next);
-            if (seg && (this.doc.getPosition(seg) > position)) {
-                break;
-            }
-            this.remove(next);
+    private saveCheckpoint(end: number) {
+        this.removePending();
+        const previous = this.segmentToCheckpoint.get(this.segment);
+
+        this.segmentToCheckpoint.set(
+            this.segment,
+            new LayoutCheckpoint(
+                this.formatStack,
+                this.cursorStack));
+
+        // Continue synchronizing the DOM if we've not yet reached the last segment in the invalidated range.
+        if (!previous || this.position < (end - 1)) {
+            return true;
         }
+
+        // Continue synchronizing the DOM if the DOM structure differs than the previous time we've encountered
+        // this checkpoint.
+        const oldStack = previous.cursorStack;
+        const newStack = this.cursorStack;
+        return oldStack.length !== newStack.length || !oldStack.every(
+            (oldCursor, index) => {
+                const newCursor = this.cursorStack[index];
+                return oldCursor.previous === newCursor.previous && oldCursor.parent === newCursor.parent;
+            });
     }
 
-    private getEnsuredFormatInfo<T>(formatter: Formatter<T>, segment: ISegment) {
-        assert.strictEqual(segment.removedSeq, undefined);
-
-        // If we're requesting another formatter for the same segment, increment the depth.
-        // If we've moved to a new segment, look at zero.
-        const depth = this.format.segment === segment
-            ? this.format.depth + 1
-            : 0;
-
-        let stack = this.segmentToFormatStackMap.get(segment);
-        if (!stack) {
-            stack = [];
-            this.segmentToFormatStackMap.set(segment, stack);
-        }
-
-        let info: IFormatInfo;
-        if (stack.length <= depth) {
-            info = { format: formatter, state: formatter.createState(), segment, depth };
-            stack.push(info);
-        } else {
-            info = stack[depth];
-            if (info.format !== formatter) {
-                info.format = formatter;
-                info.state = formatter.createState();
-                // The formatting structure has changed.  Reparenting is inevitable.  Delete
-                // all following formatters for this segment.
-                stack.splice(depth + 1, stack.length - depth);
-            }
-        }
-
-        return info;
+    private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
+        const { formatStack, cursorStack } = checkpoint;
+        this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
+        this.cursorStack = cursorStack.map((cursor) => ({...cursor}));
     }
 
-    private remove(node: Node) {
+    private removeNode(node: Node) {
+        debug("        removed %s@%d", nodeToString(node), this.position);
         this.nodeToSegmentMap.delete(node);
-        node.parentNode.removeChild(node);
+        if (node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    }
+
+    private union(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
+        return fn(
+            position === undefined
+                ? limit
+                : position,
+            ref === undefined
+                ? limit
+                : doc.localRefToPosition(ref),
+        );
+    }
+
+    private readonly onChange = (e: SequenceDeltaEvent) => {
+        // If the segment was removed, promptly remove any DOM nodes it emitted.
+        for (const { segment } of e.ranges) {
+            if (segment.removedSeq) {
+                const emitted = this.segmentToEmitted.get(segment);
+                if (emitted) {
+                    for (const node of emitted) {
+                        this.removeNode(node);
+                    }
+                    this.segmentToEmitted.delete(segment);
+                }
+
+                this.segmentToCheckpoint.delete(segment);
+                this.segmentToTextMap.delete(segment);
+            }
+        }
+
+        // Union the delta range with the current invalidated range (if any).
+        const doc = this.doc;
+        let start = this.union(doc, e.start, this.startInvalid, Math.min, +Infinity);
+        let end   = this.union(doc, e.end,   this.endInvalid,   Math.max, -Infinity);
+
+        // If the event callback is for a non-terminal grouped op...
+        const group = e.opArgs.groupOp;
+        if (group && e.opArgs.op !== group.ops[group.ops.length - 1]) {
+            // ...expand the tracked invalidated range.
+            this.startInvalid = updateRef(doc, this.startInvalid, start);
+            this.endInvalid = updateRef(doc, this.endInvalid, end);
+        } else {
+            // ...otherwise, render the invalidated range and dispose of the local references.
+            if (this.startInvalid) {
+                doc.removeLocalRef(this.startInvalid);
+                this.startInvalid = undefined;
+
+                doc.removeLocalRef(this.endInvalid);
+                this.endInvalid = undefined;
+            }
+
+            {
+                if (start > 0) {
+                    const position = start - 1;
+                    const { segment, offset } = doc.getSegmentAndOffset(position);
+                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
+                        start = getSegmentRange(position, segment, offset).start;
+                    }
+                }
+            }
+
+            {
+                if (end < this.doc.length - 1) {
+                    const { segment, offset } = doc.getSegmentAndOffset(end);
+                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
+                        end = getSegmentRange(end, segment, offset).end;
+                    }
+                }
+            }
+
+            this.sync(start, end);
+        }
     }
 }

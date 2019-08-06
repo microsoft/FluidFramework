@@ -45,7 +45,7 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
         // Assign the datalist a random 'id' and <input> element to the datalist.
         input.setAttribute("list", list.id = randomId());
 
-        this.onDom(input, "keypress", this.onKeyPress);
+        this.onDom(input, "keydown", this.onKeyDown);
 
         this.state = props;
 
@@ -104,7 +104,7 @@ export class SearchMenuView extends View<ISearchMenuProps, ISearchMenuProps> {
         this.state.onComplete(command);
     }
 
-    private readonly onKeyPress = (e: KeyboardEvent) => {
+    private readonly onKeyDown = (e: KeyboardEvent) => {
         switch (e.code) {
             case KeyCode.enter:
                 this.complete(e, true);

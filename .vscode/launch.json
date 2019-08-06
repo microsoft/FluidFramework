@@ -29,8 +29,7 @@
             "console": "integratedTerminal",
             "skipFiles": [
                 "<node_internals>/**/*.js"
-            ],
-            "runtimeExecutable": "/Users/danlehen/.nvm/versions/node/v8.15.0/bin/node"
+            ]
         },
         {
             "type": "node",
@@ -52,8 +51,7 @@
                 // "DEBUG": "flow:*",
                 "TS_NODE_PROJECT": "tsconfig.json",
             },
-            "console": "integratedTerminal",
-            "runtimeExecutable": "/Users/danlehen/.nvm/versions/node/v8.15.0/bin/node"
+            "console": "integratedTerminal"
         },
         {
             "type": "node",

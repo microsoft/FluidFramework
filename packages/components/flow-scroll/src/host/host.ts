@@ -15,7 +15,7 @@ const template = new Template(
     { tag: "div", props: { className: styles.host }, children: [
         { tag: "div", ref: "viewport", props: { className: styles.viewport }, children: [
             { tag: "div", props: { className: styles.padding }, children: [
-                { tag: "div", ref: "slot", props: { className: styles.slot } },
+                { tag: "p", ref: "slot", props: { className: styles.slot } },
             ]},
         ]},
     ]});
@@ -50,6 +50,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
         const flowDiv = document.createElement("div");
         const insightsDiv = document.createElement("div");
         elm.style.display = "flex";
+        elm.style.height = "100%";
         flowDiv.style.flexGrow = "4";
         insightsDiv.style.flexGrow = "1";
         insightsDiv.style.minWidth = "25%";

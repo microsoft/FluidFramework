@@ -5,7 +5,6 @@
 
 import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "@prague/flow-util";
-import { SequenceDeltaEvent } from "@prague/sequence";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "./caret";
 import { debug } from "./debug";
@@ -25,23 +24,9 @@ export class Editor {
         root.contentEditable = "true";
         root.addEventListener("keydown", this.onKeyDown);
         root.addEventListener("keypress", this.onKeyPress);
-
-        doc.on("sequenceDelta", this.onChange);
-
-        debug("begin: initial sync");
-        this.layout.sync(0, doc.length);
-        debug("end: initial sync");
-    }
-
-    public dispose() {
-        this.doc.off("sequenceDelta", this.onChange);
     }
 
     public get selection() { return this.caret.selection; }
-
-    private readonly onChange = (e: SequenceDeltaEvent) => {
-        this.layout.sync(e.start, e.end);
-    }
 
     private delete(e: Event, direction: Direction) {
         this.consume(e);
@@ -96,7 +81,13 @@ export class Editor {
         }
 
         switch (e.code) {
+            case KeyCode.F4: {
+                console.clear();
+                break;
+            }
+
             case KeyCode.F5: {
+                console.clear();
                 debug(`*** RESET ***`);
                 this.unlinkChildren(this.layout.root);
                 this.layout.sync();

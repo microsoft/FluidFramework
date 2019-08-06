@@ -7,6 +7,8 @@ import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } fro
 import { LocalReference } from "@prague/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
+import { updateRef } from "../util/localref";
+import { Tag } from "../util/tag";
 import { debug, domRangeToString, nodeAndOffsetToString, windowSelectionToString } from "./debug";
 import * as styles from "./index.css";
 import { Layout } from "./view/layout";
@@ -84,9 +86,9 @@ export class Caret {
     public setSelection(start: number, end: number) {
         debug(`  Cursor.setSelection(${start},${end}):`);
         debug(`    start:`);
-        this.startRef = this.updateRef(this.startRef, start);
+        this.startRef = updateRef(this.doc, this.startRef, start);
         debug(`    end:`);
-        this.endRef = this.updateRef(this.endRef, end);
+        this.endRef = updateRef(this.doc, this.endRef, end);
     }
 
     public sync() {
@@ -123,25 +125,6 @@ export class Caret {
         this.setSelection(start, end);
     }
 
-    private updateRef(ref: LocalReference, position: number) {
-        if (isNaN(position)) {
-            debug(`      ${position} (ignored)`);
-            return ref;
-        }
-
-        const doc = this.doc;
-        const oldPosition = doc.localRefToPosition(ref);
-        if (!(position !== oldPosition)) {
-            debug(`      ${position} (unchanged)`);
-            return ref;
-        }
-
-        debug(`      ${position} (was: ${oldPosition})`);
-
-        doc.removeLocalRef(ref);
-        return doc.addLocalRef(position);
-    }
-
     private positionToNodeOffset(ref: LocalReference) {
         let result: { node: Node, nodeOffset: number };
 
@@ -153,6 +136,7 @@ export class Caret {
         // position.  For text nodes, an offset of 0 is "just before" the first character.
         if (position === 0 || rightKind === DocSegmentKind.text) {
             result = this.layout.segmentAndOffsetToNodeAndOffset(rightSegment, rightOffset);
+            debug(`    positionToNodeOffset(@${position},${rightSegment}:${rightOffset}) -> ${nodeAndOffsetToString(result.node, result.nodeOffset)}`);
         } else {
             // For other nodes, the user typical perceives "just before" to be after the preceding segment.
             const { segment: leftSegment, offset: leftOffset } = this.doc.getSegmentAndOffset(position - 1);
@@ -165,17 +149,23 @@ export class Caret {
             result = this.layout.segmentAndOffsetToNodeAndOffset(
                 leftSegment,
                 leftOffset + delta);
-        }
 
-        debug(`    positionToNodeOffset(@${position},${rightSegment}:${rightOffset}) -> ${nodeAndOffsetToString(result.node, result.nodeOffset)}`);
+            debug(`    positionToNodeOffset(@${position} - 1,${leftSegment}:${leftOffset + delta}) -> ${nodeAndOffsetToString(result.node, result.nodeOffset)}`);
+        }
         return result;
     }
 
-    private nodeOffsetToPosition(node: Node, nodeOffset: number) {
+    private nodeOffsetToPosition(node: Node | Element, nodeOffset: number) {
         const segment = this.layout.nodeToSegment(node);
         const kind = getDocSegmentKind(segment);
         const position = this.doc.getPosition(segment) + nodeOffset;
-        return kind === DocSegmentKind.text || kind === DocSegmentKind.endOfText
+
+        // If 'node' maps to a paragraph or tags marker, nudge the position forward to place the caret
+        // "just before" the paragraph/tag's content.
+        //
+        // Note that empty paragraph/tag's markers emit a '<br>' tag to force the block to line height.
+        // If the 'node' maps to the '<br>' tag, we are already inside the paragraph/tag's content.
+        return kind === DocSegmentKind.text || kind === DocSegmentKind.endOfText || "tagName" in node && node.tagName === Tag.br
             ? position
             : position + 1;
     }

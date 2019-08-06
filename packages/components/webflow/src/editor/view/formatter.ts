@@ -6,39 +6,44 @@
 import { Tag } from "../../util/tag";
 import { Layout } from "./layout";
 
-export interface IFormatterState {
-    root?: Node;
-}
+// tslint:disable-next-line:no-empty-interface
+export interface IFormatterState { }
 
 export abstract class Formatter<TState extends IFormatterState> {
-    // tslint:disable-next-line:variable-name
     public abstract begin(
-        state: TState,
         layout: Layout,
+        state: TState,
     ): void;
 
     public abstract visit(
-        state: Readonly<TState>,
         layout: Layout,
+        state: Readonly<TState>,
     ): boolean;
 
     public abstract end(
-        state: Readonly<TState>,
         layout: Layout,
+        state: Readonly<TState>,
     );
-
-    public abstract createState(): TState;
 
     public toString() { return this.constructor.name; }
 
-    protected pushTag(layout: Layout, tag: Tag, existing?: Element) {
+    protected pushTag(layout: Layout, tag: Tag, existing?: Node | Element) {
+        existing = this.elementForTag(layout, tag, existing);
+        layout.pushNode(existing);
+        return existing as Element;
+    }
+
+    protected emitTag(layout: Layout, tag: Tag, existing?: Node | Element) {
+        existing = this.elementForTag(layout, tag, existing);
+        layout.emitNode(existing);
+        return existing as Element;
+    }
+
+    protected elementForTag(layout: Layout, tag: Tag, existing?: Node | Element) {
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
-        existing = existing && existing.tagName === tag
-            ? existing
+        return existing && "tagName" in existing && existing.tagName === tag && layout.nodeToSegment(existing) === layout.segment
+            ? existing as Element
             : document.createElement(tag);
-
-        layout.pushNode(existing);
-        return existing;
     }
 }

@@ -1,16 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
-// tslint:disable:binary-expression-operand-order
-import { TestHost } from "@prague/local-test-server";
-import { Marker, TextSegment } from "@prague/merge-tree";
-import * as assert from "assert";
-import { DocSegmentKind, FlowDocument, flowDocumentFactory, getDocSegmentKind } from "../src/document";
+* Copyright (c) Microsoft Corporation. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
+
+// tslint:disable:binary-expression-operand-order
+import { TestHost } from "@prague/local-test-server";
+import { Marker, ReferenceType } from "@prague/merge-tree";
+import * as assert from "assert";
+import { FlowDocument, flowDocumentFactory } from "../src/document";
+
+import { randomId } from "@prague/flow-util";
 import { Tag } from "../src/util/tag";
 
 describe("FlowDocument", () => {
@@ -21,47 +23,29 @@ describe("FlowDocument", () => {
         host = new TestHost([
             [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
         ]);
-
-        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
     });
 
     after(async () => {
         await host.close();
     });
 
-    beforeEach(() => {
-        doc.remove(0, doc.length);
+    beforeEach(async () => {
+        doc = await host.createAndAttachComponent(randomId(), FlowDocument.type);
     });
 
-    function stringify() {
-        const s: string[] = [];
-        doc.visitRange((position, segment) => {
-            const kind = getDocSegmentKind(segment);
-            switch (kind) {
-                case DocSegmentKind.text:
-                    s.push((segment as TextSegment).text);
-                    break;
-                case DocSegmentKind.beginTags:
-                    for (const tag of segment.properties.tags) {
-                        s.push(`<${tag}>`);
-                    }
-                    break;
-                case DocSegmentKind.endTags:
-                    segment = doc.getStart(segment as Marker);
-                    for (const tag of segment.properties.tags.reverse()) {
-                        s.push(`</${tag}>`);
-                    }
-                    break;
-                default:
-                    s.push(kind);
-            }
-            return true;
-        });
-        return s.join("");
+    function expect(expected: string) {
+        assert.strictEqual(doc.toString(), expected);
     }
 
-    function expect(expected: string) {
-        assert.strictEqual(stringify(), expected);
+    function expectTags(start: number, end = start + 1, ...expected: string[][]) {
+        for (let i = start; i < end; i++) {
+            const actual = doc.getTags(i).map((marker) => {
+                // tslint:disable-next-line:no-bitwise
+                assert.strictEqual(marker.refType, ReferenceType.NestBegin | ReferenceType.Tile);
+                return marker.properties.tags;
+            });
+            assert.deepStrictEqual(actual, expected);
+        }
     }
 
     function verifyEnds(start: number, end: number) {
@@ -72,22 +56,28 @@ describe("FlowDocument", () => {
         assert.strictEqual(doc.getEnd(startSeg as Marker), endSeg);
     }
 
-    function insertTags(tags: string[], start: number, end: number) {
+    function insertTags(tags: string[], start: number, end?: number) {
         doc.insertTags(tags as Tag[], start, end);
     }
 
     describe("tags", () => {
-        describe("insertTag", () => {
+        describe("insertTags", () => {
             it("insert tag into empty", () => {
-                insertTags(["t"], 0, 0);
+                insertTags(["t"], 0);
                 expect("<t></t>");
                 verifyEnds(0, 1);
+                expectTags(0, 1, ["t"]);
+                expectTags(1);
             });
             it("insert tag around text", () => {
                 doc.insertText(0, "012");
-                insertTags(["t"], 1, 2);
-                expect("0<t>1</t>2");
+                expectTags(0, doc.length);
+                insertTags(["a", "b"], 1, 2);
+                expect("0<a><b>1</b></a>2");
                 verifyEnds(1, 3);
+                expectTags(0);
+                expectTags(1, 3, ["a", "b"]);
+                expectTags(3, 4);
             });
         });
         describe("removeRange", () => {

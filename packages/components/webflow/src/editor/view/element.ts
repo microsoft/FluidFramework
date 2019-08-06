@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ServicePlatform } from "@prague/app-component";
 import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../../document";
+import { emptyObject } from "../../util";
 import { Tag } from "../../util/tag";
 import { debug } from "../debug";
 import * as styles from "../index.css";
@@ -16,14 +16,11 @@ import { ICssProps, sameCss, syncCss } from "./css";
 import { Formatter, IFormatterState } from "./formatter";
 import { Layout } from "./layout";
 
-export class DocumentFormatter extends Formatter<IFormatterState> {
-    constructor() { super(); }
-
-    public createState(): never { throw new Error(); }
+class DocumentFormatter extends Formatter<IFormatterState> {
     public begin(): never { throw new Error(); }
     public end(): never { throw new Error(); }
 
-    public visit(state: IFormatterState, layout: Layout) {
+    public visit(layout: Layout, state: IFormatterState) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
@@ -61,58 +58,55 @@ export class DocumentFormatter extends Formatter<IFormatterState> {
     }
 }
 
-interface IInclusionState { root?: HTMLElement; slot?: HTMLElement; view?: IComponentHTMLView; }
+interface IInclusionState {
+    root?: HTMLElement;
+    slot?: HTMLElement;
+    view?: Promise<IComponentHTMLView>;
+}
 
 export class InclusionFormatter extends Formatter<IInclusionState> {
-    public createState() { return {}; }
-
-    public begin(state: IInclusionState, layout: Layout) {
+    public begin(layout: Layout, state: IInclusionState) {
         const segment = layout.segment;
         if (!state.root) {
-            const tag = getComponentOptions(segment).display === "block"
-                ? Tag.div
-                : Tag.span;
             const marker = segment as Marker;
-            state.root = document.createElement(tag);
+
+            state.root = document.createElement(Tag.span);
             state.root.contentEditable = "false";
-            const slot = document.createElement(tag);
-            state.root.appendChild(slot);
-            state.slot = slot;
-            layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
+
+            state.slot = document.createElement(
+                getComponentOptions(segment).display === "block"
+                    ? Tag.div
+                    : Tag.span);
+
+            state.view = layout.doc.getComponentFromMarker(marker).then((component: IComponent) => {
                 const visual = component.IComponentHTMLVisual;
-                if (visual) {
-                    if (visual.addView) {
-                        const view = visual.addView(layout.scope);
-                        // add view options here
-                        // where do we remove the view when finished?
-                        view.render(slot);
-                        // change context to enable this
-                        // state.view = view;
-                    } else {
-                        visual.render(slot);
-                    }
-                    CaretUtil.caretEnter(slot as Element, Direction.right, Rect.empty);
-                    slot.focus();
-                // TODO included for back compat - can remove once we migrate to 0.5
-            } else if ("attach" in component) {
-                    const legacyComponent = component as { attach(platform: ServicePlatform) };
-                    legacyComponent.attach(new ServicePlatform([["div", Promise.resolve(slot)]]));
-                }
+                const view: IComponentHTMLView = visual.addView
+                    ? visual.addView(layout.scope)
+                    : {
+                        IComponentHTMLRender: visual,
+                        render: visual.render.bind(visual),
+                        remove: state.slot.remove.bind(state.slot),
+                    };
+
+                view.render(state.slot);
+                CaretUtil.caretEnter(state.slot, Direction.right, Rect.empty);
+                state.slot.focus();
+                return view;
             });
         }
 
-        const root = state.root;
-        syncCss(root, getCss(segment), styles.inclusion);
-        layout.pushNode(root);
+        syncCss(state.root, getCss(segment), styles.inclusion);
+        layout.pushNode(state.root);
+        layout.emitNode(state.slot);
     }
 
-    public visit(state: IInclusionState, layout: Layout) {
+    public visit(layout: Layout) {
         assert.strictEqual(getDocSegmentKind(layout.segment), DocSegmentKind.inclusion);
         layout.popFormat();
         return true;
     }
 
-    public end(state: IInclusionState, layout: Layout) {
+    public end(layout: Layout) {
         layout.popNode();
     }
 }
@@ -121,11 +115,9 @@ interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: Tag; po
 interface ITagsProps { tags?: Tag[]; }
 
 class TagsFormatter extends Formatter<ITagsState> {
-    public createState(): ITagsState { return { popCount: 0, pTag: undefined }; }
-
-    public begin(state: ITagsState, layout: Layout) {
+    public begin(layout: Layout, state: ITagsState) {
         const segment = layout.segment;
-        const props: ITagsProps = (segment && segment.properties) || {};
+        const props: ITagsProps = (segment && segment.properties) || emptyObject;
         const tags = props.tags;
 
         state.root = this.pushTag(layout, tags[0], state.root) as HTMLElement;
@@ -133,15 +125,14 @@ class TagsFormatter extends Formatter<ITagsState> {
         syncCss(root, getCss(segment), undefined);
 
         for (let index = 1, existing: Element = root; index < tags.length; index++) {
-            existing = existing && existing.firstElementChild;
-            this.pushTag(layout, tags[index], existing);
+            existing = this.pushTag(layout, tags[index], existing && existing.firstElementChild);
         }
 
         state.popCount = tags.length;
         state.pTag = tags[tags.length - 1];
     }
 
-    public visit(state: Readonly<ITagsState>, layout: Layout) {
+    public visit(layout: Layout, state: Readonly<ITagsState>) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
@@ -154,14 +145,8 @@ class TagsFormatter extends Formatter<ITagsState> {
             case DocSegmentKind.paragraph: {
                 layout.popNode();
                 const previous = layout.cursor.previous;
-                const next = previous && previous.nextSibling as Node | Element;
-
-                const pg = (next && "tagName" in next && next.tagName === state.pTag)
-                    ? next
-                    : document.createElement(state.pTag);
-
+                const pg = this.pushTag(layout, Tag.li, previous && previous.nextSibling);
                 syncCss(pg as HTMLElement, getCss(segment), undefined);
-                layout.pushNode(pg);
                 return true;
             }
 
@@ -171,7 +156,6 @@ class TagsFormatter extends Formatter<ITagsState> {
             }
 
             case DocSegmentKind.endTags: {
-                layout.emitNode(document.createElement(Tag.br));
                 layout.popFormat();
                 return true;
             }
@@ -183,7 +167,7 @@ class TagsFormatter extends Formatter<ITagsState> {
         }
     }
 
-    public end(state: Readonly<ITagsState>, layout: Layout) {
+    public end(layout: Layout, state: Readonly<ITagsState>) {
         for (let i = state.popCount; i > 0; i--) {
             layout.popNode();
         }
@@ -195,9 +179,7 @@ interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 class ParagraphFormatter extends Formatter<IParagraphState> {
     constructor(private readonly defaultTag: Tag) { super(); }
 
-    public createState(): IParagraphState { return {}; }
-
-    public begin(state: IParagraphState, layout: Layout) {
+    public begin(layout: Layout, state: IParagraphState) {
         const segment = layout.segment;
         // tslint:disable-next-line:strict-boolean-expressions
         const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
@@ -205,7 +187,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
         syncCss(state.root, getCss(segment), undefined);
     }
 
-    public visit(state: Readonly<IParagraphState>, layout: Layout) {
+    public visit(layout: Layout, state: Readonly<IParagraphState>) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
@@ -238,9 +220,9 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
         }
     }
 
-    public end(state: Readonly<IParagraphState>, layout: Layout) {
+    public end(layout: Layout, state: Readonly<IParagraphState>) {
         if (!layout.cursor.previous) {
-            layout.emitNode(document.createElement(Tag.br));
+            this.emitTag(layout, Tag.br, state.root.lastElementChild);
         }
         layout.popNode();
     }
@@ -249,15 +231,13 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssProps; }
 
 class TextFormatter extends Formatter<ITextState> {
-    public createState(): ITextState { return {}; }
-
-    public begin(state: ITextState, layout: Layout) {
+    public begin(layout: Layout, state: ITextState) {
         state.root = this.pushTag(layout, Tag.span, state.root) as HTMLElement;
         state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
     }
 
-    public visit(state: Readonly<ITextState>, layout: Layout) {
+    public visit(layout: Layout, state: Readonly<ITextState>) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
@@ -278,12 +258,13 @@ class TextFormatter extends Formatter<ITextState> {
         }
     }
 
-    public end(state: Readonly<ITextState>, layout: Layout) {
+    public end(layout: Layout, state: Readonly<ITextState>) {
         layout.popNode();
     }
 }
 
-const inclusionFormatter = new InclusionFormatter();
-const paragraphFormatter = new ParagraphFormatter(Tag.p);
-const tagsFormatter = new TagsFormatter();
-const textFormatter = new TextFormatter();
+export const documentFormatter = Object.freeze(new DocumentFormatter());
+const inclusionFormatter = Object.freeze(new InclusionFormatter());
+const paragraphFormatter = Object.freeze(new ParagraphFormatter(Tag.p));
+const tagsFormatter = Object.freeze(new TagsFormatter());
+const textFormatter = Object.freeze(new TextFormatter());
