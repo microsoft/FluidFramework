@@ -17,6 +17,7 @@ import {
     IConsensusInfo,
     ISegment,
     IUndoInfo,
+    LocalReference,
     Marker,
     MergeTree,
     RegisterCollection,
@@ -262,6 +263,10 @@ export class Client {
         }
 
         return this.transformOp(op, clientId, referenceSequenceNumber, toSequenceNumber);
+    }
+
+    public addLocalReference(lref: LocalReference) {
+        return this.mergeTree.addLocalReference(lref);
     }
 
     /**

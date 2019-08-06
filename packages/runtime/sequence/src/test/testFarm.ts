@@ -106,8 +106,8 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
             lref1.pairedRef = lref2;
             lref2.refType = MergeTree.ReferenceType.RangeEnd;
             lref2.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
-            client.mergeTree.addLocalReference(lref1);
-            client.mergeTree.addLocalReference(lref2);
+            client.addLocalReference(lref1);
+            client.addLocalReference(lref2);
             bookmarks.push(new SharedString.SharedStringInterval(lref1, lref2, MergeTree.IntervalType.Simple));
         } else {
             i--;
@@ -130,7 +130,7 @@ function makeReferences(client: MergeTree.Client, referenceCount: number) {
             if (i & 1) {
                 lref.refType = MergeTree.ReferenceType.SlideOnRemove;
             }
-            client.mergeTree.addLocalReference(lref);
+            client.addLocalReference(lref);
             refs.push(lref);
         } else {
             i--;

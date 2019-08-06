@@ -206,7 +206,7 @@ function createPositionReference(client: MergeTree.Client, pos: number,
     if (segoff && segoff.segment) {
         const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
         if (refType !== MergeTree.ReferenceType.Transient) {
-            client.mergeTree.addLocalReference(lref);
+            client.addLocalReference(lref);
         }
         return lref;
     }

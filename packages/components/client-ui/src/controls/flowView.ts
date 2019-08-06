@@ -3711,9 +3711,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
         }
-        this.client.mergeTree.addLocalReference(localPresenceInfo.localRef);
+        this.sharedString.addLocalReference(localPresenceInfo.localRef);
         if (localPresenceInfo.markLocalRef) {
-            this.client.mergeTree.addLocalReference(localPresenceInfo.localRef);
+            this.sharedString.addLocalReference(localPresenceInfo.localRef);
         }
         this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
         if ((localPresenceInfo.xformPos !== tempXformPos) ||
