@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as types from "@prague/stream";
+import * as stream from "@prague/stream";
 import * as $ from "jquery";
 import * as ui from "../ui";
 import { Image } from "./image";
@@ -40,16 +40,16 @@ export class InkCanvas extends ui.Component {
     private penID: number = -1;
     private canvasWrapper: HTMLElement;
     private currentStylusActionId: string;
-    private currentPen: types.IPen;
-    private lastLayerRenderOp: { [key: string]: number } = {};
+    private currentPen: stream.IPen;
+    private lastStrokeRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(element: HTMLDivElement, private model: types.IStream, private image?: CanvasImageSource) {
+    constructor(element: HTMLDivElement, private model: stream.IStream, private image?: CanvasImageSource) {
         super(element);
 
         this.model.on("op", (op) => {
             // Update the canvas
-            this.addAndDrawStroke(op.contents as types.IDelta, false);
+            this.addAndDrawStroke(op.contents as stream.IInkDelta, false);
         });
 
         this.model.on("load", () => {
@@ -85,19 +85,19 @@ export class InkCanvas extends ui.Component {
         this.element.style.pointerEvents = enable ? "auto" : "none";
     }
 
-    public setPenColor(color: types.IColor) {
+    public setPenColor(color: stream.IColor) {
         this.currentPen.color = color;
     }
 
     public replay() {
         this.clearCanvas();
 
-        const layers = this.model.getLayers();
+        const strokes = this.model.getStrokes();
 
-        // Time of the first operation in layer 0 is our starting time
-        const startTime = layers[0].operations[0].time;
-        for (const layer of layers) {
-            this.animateLayer(layer, 0, startTime);
+        // Time of the first operation in stroke 0 is our starting time
+        const startTime = strokes[0].operations[0].time;
+        for (const stroke of strokes) {
+            this.animateStroke(stroke, 0, startTime);
         }
     }
 
@@ -132,8 +132,8 @@ export class InkCanvas extends ui.Component {
             // Anchor and clear any current selection.
             const pt = new EventPoint(this.canvas, evt);
 
-            const delta = new types.InkDelta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStylusActionId = delta.operations[0].stylusDown.id;
+            const delta = new stream.InkDelta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
+            this.currentStylusActionId = (delta.operations[0] as stream.IStylusDownOperation).id;
             this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
@@ -143,7 +143,7 @@ export class InkCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
             const pt = new EventPoint(this.canvas, evt);
-            const delta = new types.InkDelta().stylusMove(
+            const delta = new stream.InkDelta().stylusMove(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -161,7 +161,7 @@ export class InkCanvas extends ui.Component {
             const pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
-            const delta = new types.InkDelta().stylusUp(
+            const delta = new stream.InkDelta().stylusUp(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStylusActionId);
@@ -173,21 +173,21 @@ export class InkCanvas extends ui.Component {
         return false;
     }
 
-    private animateLayer(layer: types.IInkLayer, operationIndex: number, startTime: number) {
-        if (operationIndex >= layer.operations.length) {
+    private animateStroke(stroke: stream.IInkStroke, operationIndex: number, startTime: number) {
+        if (operationIndex >= stroke.operations.length) {
             return;
         }
 
         // Draw the requested stroke
-        const currentOperation = layer.operations[operationIndex];
-        const previousOperation = layer.operations[Math.max(0, operationIndex - 1)];
+        const currentOperation = stroke.operations[operationIndex];
+        const previousOperation = stroke.operations[Math.max(0, operationIndex - 1)];
         const time = operationIndex === 0
             ? currentOperation.time - startTime
             : currentOperation.time - previousOperation.time;
 
         setTimeout(() => {
-            this.drawStroke(layer, currentOperation, previousOperation);
-            this.animateLayer(layer, operationIndex + 1, startTime);
+            this.drawStroke(stroke, currentOperation, previousOperation);
+            this.animateStroke(stroke, operationIndex + 1, startTime);
         }, time);
     }
 
@@ -204,38 +204,41 @@ export class InkCanvas extends ui.Component {
     private redraw() {
         this.clearCanvas();
 
-        const layers = this.model.getLayers();
-        for (const layer of layers) {
-            let previous: types.IInkOperation = layer.operations[0];
-            for (const operation of layer.operations) {
-                this.drawStroke(layer, operation, previous);
+        const strokes = this.model.getStrokes();
+        for (const stroke of strokes) {
+            let previous: stream.IInkOperation = stroke.operations[0];
+            for (const operation of stroke.operations) {
+                this.drawStroke(stroke, operation, previous);
                 previous = operation;
             }
         }
     }
 
     private drawStroke(
-        layer: types.IInkLayer,
-        current: types.IInkOperation,
-        previous: types.IInkOperation) {
-        const type = types.getInkActionType(current);
+        stroke: stream.IInkStroke,
+        current: stream.IInkOperation,
+        previous: stream.IInkOperation) {
         let shapes: IShape[];
 
-        const currentAction = types.getStylusAction(current);
-        const previousAction = types.getStylusAction(previous);
-        const pen = layer.operations[0].stylusDown.pen;
+        // Assume these are IStylusOperations at this point, we'll throw if it's a clear
+        const currentOperation = (current as stream.IStylusOperation);
+        const previousOperation = (previous as stream.IStylusOperation);
+        const pen = (stroke.operations[0] as stream.IStylusDownOperation).pen;
 
-        switch (type) {
-            case types.InkActionType.StylusDown:
-                shapes = this.getShapes(currentAction, currentAction, pen, SegmentCircleInclusive.End);
+        switch (current.type) {
+            case "clear":
+                throw new Error("Non-stylus event");
+
+            case "down":
+                shapes = this.getShapes(currentOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
-            case types.InkActionType.StylusMove:
-                shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
+            case "move":
+                shapes = this.getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
-            case types.InkActionType.StylusUp:
-                shapes = this.getShapes(previousAction, currentAction, pen, SegmentCircleInclusive.End);
+            case "up":
+                shapes = this.getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
             default:
@@ -253,37 +256,36 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private addAndDrawStroke(delta: types.IDelta, submit: boolean) {
+    private addAndDrawStroke(delta: stream.IInkDelta, submit: boolean) {
         if (submit) {
             this.model.submitOp(delta);
         }
 
-        let dirtyLayers: { [key: string]: any } = {};
+        let dirtyStrokes: { [key: string]: any } = {};
         for (const operation of delta.operations) {
-            const type = types.getInkActionType(operation);
-            if (type === types.InkActionType.Clear) {
+            if (operation.type === "clear") {
                 this.clearCanvas();
-                this.lastLayerRenderOp = {};
-                dirtyLayers = {};
+                this.lastStrokeRenderOp = {};
+                dirtyStrokes = {};
             } else {
-                // Get the layer the delta applies to
-                const stylusId = types.getStylusId(operation);
-                dirtyLayers[stylusId] = true;
+                // Get the stroke the delta applies to
+                const stylusId = operation.id;
+                dirtyStrokes[stylusId] = true;
             }
         }
 
-        // Render all the dirty layers
+        // Render all the dirty strokes
         // tslint:disable-next-line:forin
-        for (const id in dirtyLayers) {
-            let index = this.lastLayerRenderOp[id] ? this.lastLayerRenderOp[id] : 0;
+        for (const id in dirtyStrokes) {
+            let index = this.lastStrokeRenderOp[id] ? this.lastStrokeRenderOp[id] : 0;
 
-            const layer = this.model.getLayer(id);
-            for (; index < layer.operations.length; index++) {
+            const stroke = this.model.getStroke(id);
+            for (; index < stroke.operations.length; index++) {
                 // render the stroke
-                this.drawStroke(layer, layer.operations[index], layer.operations[Math.max(0, index - 1)]);
+                this.drawStroke(stroke, stroke.operations[index], stroke.operations[Math.max(0, index - 1)]);
             }
 
-            this.lastLayerRenderOp[id] = index;
+            this.lastStrokeRenderOp[id] = index;
         }
     }
 
@@ -294,9 +296,9 @@ export class InkCanvas extends ui.Component {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: types.IStylusAction,
-        endPoint: types.IStylusAction,
-        pen: types.IPen,
+        startPoint: stream.IStylusOperation,
+        endPoint: stream.IStylusOperation,
+        pen: stream.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
         const dirVector = new ui.Vector(

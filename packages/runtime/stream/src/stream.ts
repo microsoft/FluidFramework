@@ -16,7 +16,7 @@ import {
 } from "@prague/runtime-definitions";
 import { SharedObject } from "@prague/shared-object-common";
 import { StreamExtension } from "./extension";
-import { IDelta, IInkLayer, IStream } from "./interfaces";
+import { IInkDelta, IInkStroke, IStream } from "./interfaces";
 import { IInkSnapshot, InkSnapshot } from "./snapshot";
 
 /**
@@ -27,7 +27,7 @@ const snapshotFileName = "header";
 /**
  * An empty ISnapshot (used for initializing to empty).
  */
-const emptySnapshot: IInkSnapshot = { layers: [], layerIndex: {} };
+const emptySnapshot: IInkSnapshot = { strokes: [], strokeIndex: {} };
 
 /**
  * Inking data structure.
@@ -69,19 +69,19 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Get the ink layers from the snapshot.
+     * Get the ink strokes from the snapshot.
      */
-    public getLayers(): IInkLayer[] {
-        return this.inkSnapshot.layers;
+    public getStrokes(): IInkStroke[] {
+        return this.inkSnapshot.strokes;
     }
 
     /**
-     * Get a specific layer from the snapshot.
+     * Get a specific stroke from the snapshot.
      *
-     * @param key - The UUID for the layer
+     * @param key - The UUID for the stroke
      */
-    public getLayer(key: string): IInkLayer {
-        return this.inkSnapshot.layers[this.inkSnapshot.layerIndex[key]];
+    public getStroke(key: string): IInkStroke {
+        return this.inkSnapshot.strokes[this.inkSnapshot.strokeIndex[key]];
     }
 
     /**
@@ -89,7 +89,7 @@ export class Stream extends SharedObject implements IStream {
      *
      * @param op - Op to submit
      */
-    public submitOp(op: IDelta) {
+    public submitOp(op: IInkDelta) {
         this.submitLocalMessage(op);
         this.inkSnapshot.apply(op);
     }
@@ -163,7 +163,7 @@ export class Stream extends SharedObject implements IStream {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && !local) {
-            this.inkSnapshot.apply(message.contents as IDelta);
+            this.inkSnapshot.apply(message.contents as IInkDelta);
         }
     }
 

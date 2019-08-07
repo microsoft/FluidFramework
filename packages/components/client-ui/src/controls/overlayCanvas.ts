@@ -83,26 +83,29 @@ export class DrawingContext {
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
     public drawStroke(current: stream.IInkOperation) {
-        const type = stream.getInkActionType(current);
         let shapes: IShape[];
 
-        const currentAction = stream.getStylusAction(current);
-        const previousAction = stream.getStylusAction(this.lastOperation || current);
+        // Assume these are IStylusOperations at this point, we'll throw if it's a clear.
+        const currentOperation = (current as stream.IStylusOperation);
+        const previousOperation = ((this.lastOperation || current) as stream.IStylusOperation);
 
-        switch (type) {
-            case stream.InkActionType.StylusDown:
-                this.pen = current.stylusDown.pen;
-                shapes = this.getShapes(currentAction, currentAction, this.pen, SegmentCircleInclusive.End);
+        switch (current.type) {
+            case "clear":
+                throw new Error("Non-stylus event");
+
+            case "down":
+                this.pen = (current as stream.IStylusDownOperation).pen;
+                shapes = this.getShapes(currentOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case stream.InkActionType.StylusMove:
+            case "move":
                 assert(this.pen);
-                shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
+                shapes = this.getShapes(previousOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
                 break;
 
-            case stream.InkActionType.StylusUp:
+            case "up":
                 assert(this.pen);
-                shapes = this.getShapes(previousAction, currentAction, this.pen, SegmentCircleInclusive.End);
+                shapes = this.getShapes(previousOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
                 break;
 
             default:
@@ -195,8 +198,8 @@ export class DrawingContext {
      * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
      */
     private getShapes(
-        startPoint: stream.IStylusAction,
-        endPoint: stream.IStylusAction,
+        startPoint: stream.IStylusOperation,
+        endPoint: stream.IStylusOperation,
         pen: stream.IPen,
         circleInclusive: SegmentCircleInclusive): IShape[] {
 
@@ -329,21 +332,21 @@ export class InkLayer extends Layer {
                 return;
             }
 
-            const delta = op.contents as stream.IDelta;
+            const delta = op.contents as stream.IInkDelta;
             for (const operation of delta.operations) {
                 this.drawingContext.drawStroke(operation);
             }
         });
 
-        const layers = this.model.getLayers();
-        for (const layer of layers) {
-            for (const operation of layer.operations) {
+        const strokes = this.model.getStrokes();
+        for (const stroke of strokes) {
+            for (const operation of stroke.operations) {
                 this.drawingContext.drawStroke(operation);
             }
         }
     }
 
-    public drawDelta(delta: stream.IDelta) {
+    public drawDelta(delta: stream.IInkDelta) {
         this.model.submitOp(delta);
         for (const operation of delta.operations) {
             this.drawingContext.drawStroke(operation);
@@ -498,7 +501,7 @@ export class OverlayCanvas extends ui.Component {
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
-            this.currentStylusActionId = delta.operations[0].stylusDown.id;
+            this.currentStylusActionId = (delta.operations[0] as stream.IStylusDownOperation).id;
             this.activeLayer.drawDelta(delta);
 
             evt.returnValue = false;
