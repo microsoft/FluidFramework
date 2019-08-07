@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as assert from "assert";
 // tslint:disable: no-suspicious-comment
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
@@ -62,11 +63,13 @@ export interface PartialSequenceLength {
  */
 export class PartialSequenceLengths {
     public static options = {
+        verify: false,
         zamboni: true,
     };
 
-    public static fromLeaves(mergeTree: MergeTree, branchId: number, combinedPartialLengths: PartialSequenceLengths,
-                             block: IMergeBlock, collabWindow: CollaborationWindow) {
+    public static fromLeaves(
+        mergeTree: MergeTree, branchId: number, combinedPartialLengths: PartialSequenceLengths,
+        block: IMergeBlock, collabWindow: CollaborationWindow) {
         combinedPartialLengths.minLength = 0;
         combinedPartialLengths.segmentCount = block.childCount;
 
@@ -117,6 +120,9 @@ export class PartialSequenceLengths {
             prevLen = seqPartials[i].len;
             combinedPartialLengths.addClientSeqNumberFromPartial(seqPartials[i]);
         }
+        if (PartialSequenceLengths.options.verify) {
+            combinedPartialLengths.verify();
+        }
     }
 
     public static combine(mergeTree: MergeTree, block: IMergeBlock, collabWindow: CollaborationWindow, recur = false) {
@@ -147,6 +153,16 @@ export class PartialSequenceLengths {
         PartialSequenceLengths.fromLeaves(mergeTree, branchId, combinedPartialLengths, block, collabWindow);
         let prevPartial: PartialSequenceLength;
 
+        function cloneOverlapRemoveClients(oldTree: RedBlackTree<number, IOverlapClient>) {
+            if (!oldTree) { return undefined; }
+            const newTree = new RedBlackTree<number, IOverlapClient>(compareNumbers);
+            oldTree.map((bProp: Property<number, IOverlapClient>) => {
+                newTree.put(bProp.data.clientId, { ...bProp.data });
+                return true;
+            });
+            return newTree;
+        }
+
         function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLength) {
             if (a.overlapRemoveClients) {
                 if (b.overlapRemoveClients) {
@@ -155,13 +171,13 @@ export class PartialSequenceLengths {
                         if (aProp) {
                             aProp.data.seglen += bProp.data.seglen;
                         } else {
-                            a.overlapRemoveClients.put(bProp.data.clientId, bProp.data);
+                            a.overlapRemoveClients.put(bProp.data.clientId, { ...bProp.data });
                         }
                         return true;
                     });
                 }
             } else {
-                a.overlapRemoveClients = b.overlapRemoveClients;
+                a.overlapRemoveClients = cloneOverlapRemoveClients(b.overlapRemoveClients);
             }
         }
 
@@ -184,7 +200,7 @@ export class PartialSequenceLengths {
             prevPartial = {
                 clientId: partialLength.clientId,
                 len: pLen + partialLength.seglen,
-                overlapRemoveClients: partialLength.overlapRemoveClients,
+                overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
                 seglen: partialLength.seglen,
                 seq,
             };
@@ -250,6 +266,11 @@ export class PartialSequenceLengths {
         if (PartialSequenceLengths.options.zamboni) {
             combinedPartialLengths.zamboni(collabWindow);
         }
+
+        if (PartialSequenceLengths.options.verify) {
+            combinedPartialLengths.verify();
+        }
+
         // console.log(combinedPartialLengths.toString());
         return combinedPartialLengths;
     }
@@ -649,6 +670,9 @@ export class PartialSequenceLengths {
         if (PartialSequenceLengths.options.zamboni) {
             this.zamboni(collabWindow);
         }
+        if (PartialSequenceLengths.options.verify) {
+            this.verify();
+        }
         //   console.log('ZZZ');
         //   console.log(this.toString());
     }
@@ -658,6 +682,60 @@ export class PartialSequenceLengths {
             return this.downstreamPartialLengths[branchId - 1];
         } else {
             return this;
+        }
+    }
+
+    private verifyPartialLengths(partialLengths: PartialSequenceLength[], hasOverlapRemoveClients: boolean) {
+        let lastSeqNum = 0;
+        let accumSegLen = 0;
+        let count = 0;
+        for (const partialLength of partialLengths) {
+            // Count total number of partial length
+            count++;
+
+            // sequence number should be sorted
+            assert(lastSeqNum < partialLength.seq);
+            lastSeqNum = partialLength.seq;
+
+            // len is a accumulation of all the seglen adjustments
+            accumSegLen += partialLength.seglen;
+            if (accumSegLen !== partialLength.len) {
+                assert(false);
+            }
+
+            // Overlow len adjustment should not make length negative
+            if (this.minLength + partialLength.len < 0) {
+                assert(false);
+            }
+            if (partialLength.overlapRemoveClients) {
+                // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
+                assert(hasOverlapRemoveClients);
+
+                // Each overlap client count as one
+                count += partialLength.overlapRemoveClients.size();
+            }
+        }
+        return count;
+    }
+
+    private verify() {
+        if (this.clientSeqNumbers) {
+            let cliCount = 0;
+            for (const cliSeq of this.clientSeqNumbers) {
+                if (cliSeq) {
+                    cliCount += this.verifyPartialLengths(cliSeq, false);
+                }
+            }
+
+            // If we have client view, we should have the flat view
+            assert(this.partialLengths);
+            const flatCount = this.verifyPartialLengths(this.partialLengths, true);
+
+            // The number of partial lengths on the client view and flat view should be the same
+            assert(flatCount === cliCount);
+        } else {
+            // If we don't have a client view, we shouldn't have the flat view either
+            assert(!this.partialLengths);
         }
     }
 }

@@ -3020,14 +3020,9 @@ export class MergeTree {
     private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq != UnassignedSequenceNumber) && (seq != TreeMaintenanceSequenceNumber)) {
-            if (node.partialLengths !== undefined) {
-                if (MergeTree.options.incrementalUpdate) {
-                    node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
-                }
-                else {
-                    node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
-                }
-            }
+            if (node.partialLengths !== undefined && MergeTree.options.incrementalUpdate) {
+                node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
+            } 
             else {
                 node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
             }
