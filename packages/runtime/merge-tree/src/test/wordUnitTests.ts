@@ -5,7 +5,6 @@
 
 // tslint:disable
 
-import * as MergeTree from "../mergeTree";
 import { LocalReference } from "../localReference";
 import { TestClient } from "./testClient";
 import * as Properties from "../properties";
@@ -113,7 +112,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <LocalReference[]>[];
-    let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
+    let len = client.getLength();
     for (let i = 0; i < bookmarkCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
         let segoff = client.getContainingSegment(pos);

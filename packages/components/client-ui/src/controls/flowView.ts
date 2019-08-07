@@ -3431,10 +3431,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
     }
 
-    public treeForViewport() {
-        console.log(this.sharedString.client.mergeTree.rangeToString(this.viewportStartPos, this.viewportEndPos));
-    }
-
     public renderChildFlow(startChar: number, cursorPos: number, flowElement: HTMLDivElement,
         flowRect: IExcludedRectangle, marker: MergeTree.Marker) {
         const childFlow = new FlowView(flowElement, this.collabDocument, this.sharedString,

@@ -383,7 +383,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
-        return this.mergeTree.findTile(position, this.clientId, tileType as unknown as string, preceding);
+        return this.sharedString.findTile(position, tileType as unknown as string, preceding);
     }
 
     public findParagraph(position: number) {

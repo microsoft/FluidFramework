@@ -75,8 +75,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         super.on("newListener", (event) => {
             switch (event) {
                 case "sequenceDelta":
-                    if (!this.client.mergeTree.mergeTreeDeltaCallback) {
-                        this.client.mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
+                    if (!this.client.mergeTreeDeltaCallback) {
+                        this.client.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
                             this.emit("sequenceDelta", new SequenceDeltaEvent(opArgs, deltaArgs, this.client), this);
                         };
                     }
@@ -88,7 +88,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             switch (event) {
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
-                        this.client.mergeTree.mergeTreeDeltaCallback = undefined;
+                        this.client.mergeTreeDeltaCallback = undefined;
                     }
                     break;
                 default:
@@ -256,24 +256,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         remoteClientPosition: number,
         remoteClientRefSeq: number,
         remoteClientId: string): number {
-
-        const shortRemoteClientId = this.client.getOrAddShortClientId(remoteClientId);
-
-        const segmentInfo = this.client.mergeTree.getContainingSegment(
+        return this.client.resolveRemoteClientPosition(
             remoteClientPosition,
             remoteClientRefSeq,
-            shortRemoteClientId);
+            remoteClientId);
 
-        if (segmentInfo && segmentInfo.segment) {
-
-            const segmentPosition = this.getPosition(segmentInfo.segment);
-
-            return segmentPosition + segmentInfo.offset;
-        } else {
-            if (remoteClientPosition === this.client.mergeTree.getLength(remoteClientRefSeq, shortRemoteClientId)) {
-                return this.client.getLength();
-            }
-        }
     }
 
     public async waitSharedIntervalCollection<TInterval extends ISerializableInterval>(

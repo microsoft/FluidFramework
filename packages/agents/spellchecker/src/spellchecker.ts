@@ -195,8 +195,7 @@ class Speller {
                 if (entry[0]) {
                     endPos = range.end;
                 } else {
-                    endPos = this.sharedString.client.mergeTree.getLength(MergeTree.UniversalSequenceNumber,
-                        this.sharedString.client.getClientId());
+                    endPos = this.sharedString.getLength();
                 }
                 const queryString = this.sharedString.getText(range.begin, endPos);
                 const newRange: IRange = {

@@ -26,6 +26,7 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./mergeTree";
+import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -47,6 +48,9 @@ export class Client {
     public longClientId: string;
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
+
+    get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
+    set mergeTreeDeltaCallback(mtdcb: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = mtdcb; }
 
     private readonly clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
@@ -895,6 +899,26 @@ export class Client {
         collabWindow.currentSeq = seq;
         assert(min <= seq);
         this.updateMinSeq(min);
+    }
+
+    /**
+     * Resolves a remote client's position against the local sequence
+     * and returns the remote client's position relative to the local
+     * sequence
+     * @param remoteClientPosition - The remote client's position to resolve
+     * @param remoteClientRefSeq - The reference sequence number of the remote client
+     * @param remoteClientId - The client id of the remote client
+     */
+    public resolveRemoteClientPosition(
+        remoteClientPosition: number,
+        remoteClientRefSeq: number,
+        remoteClientId: string): number {
+
+        const shortRemoteClientId = this.getOrAddShortClientId(remoteClientId);
+        return this.mergeTree.resolveRemoteClientPosition(
+            remoteClientPosition,
+            remoteClientRefSeq,
+            shortRemoteClientId);
     }
 
     private getLocalSequenceNumber() {

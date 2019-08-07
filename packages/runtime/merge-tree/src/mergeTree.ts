@@ -2214,6 +2214,37 @@ export class MergeTree {
         }
     }
 
+    /**
+     * Resolves a remote client's position against the local sequence
+     * and returns the remote client's position relative to the local
+     * sequence
+     * @param remoteClientPosition - The remote client's position to resolve
+     * @param remoteClientRefSeq - The reference sequence number of the remote client
+     * @param remoteClientId - The client id of the remote client
+     */
+    public resolveRemoteClientPosition(
+        remoteClientPosition: number,
+        remoteClientRefSeq: number,
+        remoteClientId: number): number {
+
+        const segmentInfo = this.getContainingSegment(
+            remoteClientPosition,
+            remoteClientRefSeq,
+            remoteClientId);
+
+        const segwindow = this.getCollabWindow();
+
+        if (segmentInfo && segmentInfo.segment) {
+            const segmentPosition = this.getPosition(segmentInfo.segment, segwindow.currentSeq, segwindow.clientId);
+
+            return segmentPosition + segmentInfo.offset;
+        } else {
+            if (remoteClientPosition === this.getLength(remoteClientRefSeq, remoteClientId)) {
+                return this.getLength(segwindow.currentSeq, segwindow.clientId);
+            }
+        }
+    }
+
     private insertChildNode(block: IMergeBlock, child: IMergeNode, childIndex: number) {
 
         assert(block.childCount < MaxNodesInBlock);
