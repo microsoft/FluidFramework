@@ -1198,10 +1198,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
             for (const b of flowView.tempBookmarks) {
                 if (b.overlapsPos(client.mergeTree, lineStart, lineEnd)) {
-                    const start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
-                        client.getClientId());
-                    const end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
-                        client.getClientId());
+                    const start = b.start.toPosition();
+                    const end = b.end.toPosition();
                     showBookmark(b.properties, lineText, start, end, lineStart,
                         endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
                         docContext, contentDiv, client, true);
@@ -1210,10 +1208,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         }
         if (bookmarks && flowView.modes.showBookmarks) {
             for (const b of bookmarks) {
-                const start = b.start.toPosition(client.mergeTree, client.getCurrentSeq(),
-                    client.getClientId());
-                const end = b.end.toPosition(client.mergeTree, client.getCurrentSeq(),
-                    client.getClientId());
+                const start = b.start.toPosition();
+                const end = b.end.toPosition();
                 showBookmark(b.properties, lineText, start, end, lineStart,
                     endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
                     docContext, contentDiv, client, true);
@@ -1221,10 +1217,8 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         }
         if (comments && flowView.modes.showComments) {
             for (const comment of comments) {
-                const start = comment.start.toPosition(client.mergeTree, client.getCurrentSeq(),
-                    client.getClientId());
-                const end = comment.end.toPosition(client.mergeTree, client.getCurrentSeq(),
-                    client.getClientId());
+                const start = comment.start.toPosition();
+                const end = comment.end.toPosition();
                 comment.addProperties({ bgColor: "gold" });
                 showBookmark(comment.properties, lineText, start, end, lineStart,
                     endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
@@ -4826,10 +4820,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 result = this.bookmarks.nextInterval(this.cursor.pos);
             }
             if (result) {
-                const s = result.start.toPosition(this.client.mergeTree,
-                    MergeTree.UniversalSequenceNumber, this.client.getClientId());
-                const e = result.end.toPosition(this.client.mergeTree,
-                    MergeTree.UniversalSequenceNumber, this.client.getClientId());
+                const s = result.start.toPosition();
+                const e = result.end.toPosition();
                 let descr = "next ";
                 if (before) {
                     descr = "previous ";
@@ -5737,7 +5729,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const localPresenceInfo = {
                     clientId,
                     fresh: true,
-                    localRef: new MergeTree.LocalReference(segoff.segment as MergeTree.BaseSegment, segoff.offset,
+                    localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
                         MergeTree.ReferenceType.SlideOnRemove),
                     shouldShowCursor: () => {
                         return this.client.getClientId() !== clientId &&
@@ -5751,7 +5743,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
-                            new MergeTree.LocalReference(markSegoff.segment as MergeTree.BaseSegment,
+                            new MergeTree.LocalReference(this.client, markSegoff.segment as MergeTree.BaseSegment,
                                 markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
                     }
                 }

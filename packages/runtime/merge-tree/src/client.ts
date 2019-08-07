@@ -9,6 +9,7 @@ import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
+import { LocalReference } from "./localReference";
 import {
     ClientIds,
     clock,
@@ -17,7 +18,6 @@ import {
     IConsensusInfo,
     ISegment,
     IUndoInfo,
-    LocalReference,
     Marker,
     MergeTree,
     NonCollabClient,

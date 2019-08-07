@@ -6,6 +6,7 @@
 // tslint:disable
 
 import * as MergeTree from "../mergeTree";
+import { LocalReference } from "../localReference";
 import { TestClient } from "./testClient";
 import * as Properties from "../properties";
 import * as ops from "../ops";
@@ -111,7 +112,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    let bookmarks = <MergeTree.LocalReference[]>[];
+    let bookmarks = <LocalReference[]>[];
     let len = client.mergeTree.getLength(MergeTree.UniversalSequenceNumber, MergeTree.NonCollabClient);
     for (let i = 0; i < bookmarkCount; i++) {
         let pos = random.integer(0, len - 1)(mt);
@@ -120,7 +121,7 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (i&1) {
             refType = ops.ReferenceType.SlideOnRemove;
         }
-        let lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
+        let lref = new LocalReference(client, segoff.segment, segoff.offset, refType);
         client.mergeTree.addLocalReference(lref);
         bookmarks.push(lref);
     }

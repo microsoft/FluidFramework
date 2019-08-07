@@ -119,10 +119,8 @@ export class SharedStringInterval implements ISerializableInterval {
     }
 
     public serialize(client: MergeTree.Client) {
-        const startPosition = this.start.toPosition(client.mergeTree,
-            client.getCurrentSeq(), client.getClientId());
-        const endPosition = this.end.toPosition(client.mergeTree,
-            client.getCurrentSeq(), client.getClientId());
+        const startPosition = this.start.toPosition();
+        const endPosition = this.end.toPosition();
         const serializedInterval = {
             end: endPosition,
             intervalType: this.intervalType,
@@ -167,22 +165,16 @@ export class SharedStringInterval implements ISerializableInterval {
     }
 
     public overlapsPos(mergeTree: MergeTree.MergeTree, bstart: number, bend: number) {
-        const startPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
-            mergeTree.collabWindow.clientId);
-        const endPos = this.start.toPosition(mergeTree, MergeTree.UniversalSequenceNumber,
-            mergeTree.collabWindow.clientId);
+        const startPos = this.start.toPosition();
+        const endPos = this.start.toPosition();
         return (endPos > bstart) && (startPos < bend);
     }
 
     private checkOverlaps(b: SharedStringInterval, result: boolean) {
-        const astart = this.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
-            this.checkMergeTree.collabWindow.clientId);
-        const bstart = b.start.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
-            this.checkMergeTree.collabWindow.clientId);
-        const aend = this.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
-            this.checkMergeTree.collabWindow.clientId);
-        const bend = b.end.toPosition(this.checkMergeTree, this.checkMergeTree.collabWindow.currentSeq,
-            this.checkMergeTree.collabWindow.clientId);
+        const astart = this.start.toPosition();
+        const bstart = b.start.toPosition();
+        const aend = this.end.toPosition();
+        const bend = b.end.toPosition();
         const checkResult = ((astart < bend) && (bstart < aend));
         if (checkResult !== result) {
             // tslint:disable-next-line:max-line-length
@@ -204,13 +196,13 @@ function createPositionReference(client: MergeTree.Client, pos: number,
     const segoff = client.mergeTree.getContainingSegment(pos,
         refSeq, client.getClientId());
     if (segoff && segoff.segment) {
-        const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
+        const lref = new MergeTree.LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== MergeTree.ReferenceType.Transient) {
             client.addLocalReference(lref);
         }
         return lref;
     }
-    return new MergeTree.LocalReference(undefined);
+    return new MergeTree.LocalReference(client, undefined);
 }
 
 function createSharedStringInterval(

@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 import { TestClient } from ".";
-import { LocalReference } from "../mergeTree";
+import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
 
 describe("MergeTree.Client", () => {
@@ -27,11 +27,11 @@ describe("MergeTree.Client", () => {
             client2.applyMsg(insert);
         }
 
-        const segInfo = client1.mergeTree.getContainingSegment(2, seq, client1.getClientId());
-        const c1LocalRef = new LocalReference(segInfo.segment, segInfo.offset, ReferenceType.Simple);
+        const segInfo = client1.getContainingSegment(2);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.Simple);
         segInfo.segment.addLocalRef(c1LocalRef);
 
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 2);
+        assert.equal(c1LocalRef.toPosition(), 2);
 
         const remove =
             client2.makeOpMessage(
@@ -42,7 +42,7 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         // this only works because zamboni hasn't run yet
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), -1);
+        assert.equal(c1LocalRef.toPosition(), -1);
 
         // this will force zamoni to run
         for (let i = 0; i < 5; i++) {
@@ -55,7 +55,7 @@ describe("MergeTree.Client", () => {
             client2.applyMsg(insert);
         }
         assert.equal(c1LocalRef.segment, undefined);
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), -1);
+        assert.equal(c1LocalRef.toPosition(), -1);
     });
 
     it("Remove segment of sliding local reference", () => {
@@ -75,11 +75,11 @@ describe("MergeTree.Client", () => {
             client2.applyMsg(insert);
         }
 
-        const segInfo = client1.mergeTree.getContainingSegment(2, seq, client1.getClientId());
-        const c1LocalRef = new LocalReference(segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
+        const segInfo = client1.getContainingSegment(2);
+        const c1LocalRef = new LocalReference(client1, segInfo.segment, segInfo.offset, ReferenceType.SlideOnRemove);
         segInfo.segment.addLocalRef(c1LocalRef);
 
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 2);
+        assert.equal(c1LocalRef.toPosition(), 2);
 
         const remove =
             client2.makeOpMessage(
@@ -89,7 +89,7 @@ describe("MergeTree.Client", () => {
         client1.applyMsg(remove);
         client2.applyMsg(remove);
 
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 2);
+        assert.equal(c1LocalRef.toPosition(), 2);
 
         for (let i = 0; i < 5; i++) {
             const insert =
@@ -101,6 +101,6 @@ describe("MergeTree.Client", () => {
             client2.applyMsg(insert);
         }
 
-        assert.equal(c1LocalRef.toPosition(client1.mergeTree, seq, client1.getClientId()), 2);
+        assert.equal(c1LocalRef.toPosition(), 2);
     });
 });

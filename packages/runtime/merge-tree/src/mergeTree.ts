@@ -14,6 +14,7 @@ import { MergeTreeDeltaCallback, IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta }
 import { SegmentPropertiesManager } from "./segmentPropertiesManager";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { PartialSequenceLengths } from "./partialLengths";
+import { LocalReference } from "./localReference";
 
 export interface ReferencePosition {
     properties: Properties.PropertySet;
@@ -57,99 +58,6 @@ export interface IHierBlock extends IMergeBlock {
     rightmostTiles: Properties.MapLike<ReferencePosition>;
     leftmostTiles: Properties.MapLike<ReferencePosition>;
     rangeStacks: RangeStackMap;
-}
-
-export class LocalReference implements ReferencePosition {
-    public static readonly DetachedPosition: number = -1;
-
-    properties: Properties.PropertySet;
-    pairedRef?: LocalReference;
-
-    constructor(public segment: ISegment, public offset = 0,
-        public refType = ops.ReferenceType.Simple) {
-    }
-
-    min(b: LocalReference) {
-        if (this.compare(b) < 0) {
-            return this;
-        } else {
-            return b;
-        }
-    }
-
-    max(b: LocalReference) {
-        if (this.compare(b) > 0) {
-            return this;
-        } else {
-            return b;
-        }
-    }
-
-    compare(b: LocalReference) {
-        if (this.segment === b.segment) {
-            return this.offset - b.offset;
-        } else {
-            if (this.segment === undefined
-                || ( b.segment !== undefined &&
-                    this.segment.ordinal < b.segment.ordinal)) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-    }
-
-    toPosition(mergeTree: MergeTree, refSeq: number, clientId: number) {
-        if (this.segment) {
-            return this.offset + mergeTree.getPosition(this.segment, refSeq, clientId);
-        } else {
-            return LocalReference.DetachedPosition;
-        }
-    }
-
-    hasTileLabels() {
-        return refHasTileLabels(this);
-    }
-
-    hasRangeLabels() {
-        return refHasRangeLabels(this);
-    }
-
-    hasTileLabel(label: string) {
-        return refHasTileLabel(this, label);
-    }
-
-    hasRangeLabel(label: string) {
-        return refHasRangeLabel(this, label);
-    }
-
-    getTileLabels() {
-        return refGetTileLabels(this);
-    }
-
-    getRangeLabels() {
-        return refGetRangeLabels(this);
-    }
-
-    isLeaf() {
-        return false;
-    }
-
-    addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp) {
-        this.properties = Properties.addProperties(this.properties, newProps, op);
-    }
-
-    getSegment() {
-        return this.segment;
-    }
-
-    getOffset() {
-        return this.offset;
-    }
-
-    getProperties() {
-        return this.properties;
-    }
 }
 
 export interface IRemovalInfo {
@@ -768,18 +676,18 @@ export let reservedRangeLabelsKey = "referenceRangeLabels";
 export let reservedMarkerIdKey = "markerId";
 export let reservedMarkerSimpleTypeKey = "markerSimpleType";
 
-function refHasTileLabels(refPos: ReferencePosition) {
+export function refHasTileLabels(refPos: ReferencePosition) {
     return (refPos.refType & ops.ReferenceType.Tile) &&
         refPos.properties && refPos.properties[reservedTileLabelsKey];
 }
 
-function refHasRangeLabels(refPos: ReferencePosition) {
+export function refHasRangeLabels(refPos: ReferencePosition) {
     return (refPos.refType & (ops.ReferenceType.NestBegin | ops.ReferenceType.NestEnd)) &&
         refPos.properties && refPos.properties[reservedRangeLabelsKey];
 
 }
 
-function refHasTileLabel(refPos: ReferencePosition, label: string) {
+export function refHasTileLabel(refPos: ReferencePosition, label: string) {
     if (refPos.hasTileLabels()) {
         for (let refLabel of refPos.properties[reservedTileLabelsKey]) {
             if (label === refLabel) {
@@ -790,7 +698,7 @@ function refHasTileLabel(refPos: ReferencePosition, label: string) {
     return false;
 }
 
-function refHasRangeLabel(refPos: ReferencePosition, label: string) {
+export function refHasRangeLabel(refPos: ReferencePosition, label: string) {
     if (refPos.hasRangeLabels()) {
         for (let refLabel of refPos.properties[reservedRangeLabelsKey]) {
             if (label === refLabel) {
@@ -801,7 +709,7 @@ function refHasRangeLabel(refPos: ReferencePosition, label: string) {
     return false;
 }
 
-function refGetTileLabels(refPos: ReferencePosition) {
+export function refGetTileLabels(refPos: ReferencePosition) {
     if (refPos.hasTileLabels()) {
         return <string[]>refPos.properties[reservedTileLabelsKey];
     } else {
@@ -809,7 +717,7 @@ function refGetTileLabels(refPos: ReferencePosition) {
     }
 }
 
-function refGetRangeLabels(refPos: ReferencePosition) {
+export function refGetRangeLabels(refPos: ReferencePosition) {
     if (refPos.hasRangeLabels()) {
         return <string[]>refPos.properties[reservedRangeLabelsKey];
     } else {
@@ -2029,7 +1937,7 @@ export class MergeTree {
                 pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
             } else {
                 let localRef = <LocalReference>searchInfo.tile;
-                pos = localRef.toPosition(this, UniversalSequenceNumber, clientId);
+                pos = localRef.toPosition();
             }
             return { tile: searchInfo.tile, pos };
         }
@@ -3244,7 +3152,6 @@ export class MergeTree {
         }
         return go;
     }
-
 }
 
 

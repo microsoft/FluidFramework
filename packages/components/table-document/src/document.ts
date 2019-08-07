@@ -209,9 +209,9 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     private readonly localRefToRowCol = (localRef: LocalReference) => {
-        const client = this.maybeMatrix.client;
-        const mergeTree = client.mergeTree;
-        const position = localRef.toPosition(mergeTree, mergeTree.collabWindow.currentSeq, client.getClientId());
+        // const client = this.maybeMatrix.client;
+        // const mergeTree = client.mergeTree;
+        const position = localRef.toPosition();
         return positionToRowCol(position);
     }
 }

@@ -98,8 +98,8 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
             let baseSegment1 = <MergeTree.BaseSegment>segoff1.segment;
             let baseSegment2 = <MergeTree.BaseSegment>segoff2.segment;
-            let lref1 = new MergeTree.LocalReference(baseSegment1, segoff1.offset);
-            let lref2 = new MergeTree.LocalReference(baseSegment2, segoff2.offset);
+            let lref1 = new MergeTree.LocalReference(client, baseSegment1, segoff1.offset);
+            let lref2 = new MergeTree.LocalReference(client, baseSegment2, segoff2.offset);
             lref1.refType = MergeTree.ReferenceType.RangeBegin;
             lref1.addProperties({ [MergeTree.reservedRangeLabelsKey]: ["bookmark"] });
             // can do this locally; for shared refs need to use id/index to ref end
@@ -126,7 +126,7 @@ function makeReferences(client: MergeTree.Client, referenceCount: number) {
         let segoff = client.getContainingSegment(pos);
         if (segoff && segoff.segment) {
             let baseSegment = <MergeTree.BaseSegment>segoff.segment;
-            let lref = new MergeTree.LocalReference(baseSegment, segoff.offset);
+            let lref = new MergeTree.LocalReference(client, baseSegment, segoff.offset);
             if (i & 1) {
                 lref.refType = MergeTree.ReferenceType.SlideOnRemove;
             }
@@ -534,11 +534,9 @@ export function TestPack(verbose = true) {
                 let refReadsPerRound = 200;
                 let posChecksPerRound = 200;
                 let rangeChecksPerRound = 200;
-                let refseq = server.getCurrentSeq();
-                let clientId = server.getClientId();
                 let clockStart = clock();
                 for (let i = 0; i < refReadsPerRound; i++) {
-                    references[i].toPosition(server.mergeTree, refseq, clientId);
+                    references[i].toPosition();
                     refReads++;
                 }
                 refReadTime += elapsedMicroseconds(clockStart);
@@ -591,8 +589,8 @@ export function TestPack(verbose = true) {
                         let segoff1 = server.getContainingSegment(checkPos[i]);
                         let segoff2 = server.getContainingSegment(checkPos[i] + 1);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
-                            let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
+                            let lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
+                            let lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkPosRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
@@ -609,8 +607,8 @@ export function TestPack(verbose = true) {
                         let segoff1 = server.getContainingSegment(checkRange[i][0]);
                         let segoff2 = server.getContainingSegment(checkRange[i][1]);
                         if (segoff1 && segoff1.segment && segoff2 && segoff2.segment) {
-                            let lrefPos1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
-                            let lrefPos2 = new MergeTree.LocalReference(<MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
+                            let lrefPos1 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff1.segment, segoff1.offset);
+                            let lrefPos2 = new MergeTree.LocalReference(server, <MergeTree.BaseSegment>segoff2.segment, segoff2.offset);
                             checkRangeRanges[i] = new SharedString.SharedStringInterval(lrefPos1, lrefPos2, MergeTree.IntervalType.Simple);
                         } else {
                             i--;
@@ -1226,7 +1224,7 @@ export function TestPack(verbose = true) {
         }
         cli.insertTextRemote(0, "abcde", undefined, 1, 0, "2");
         let segoff = cli.getContainingSegment(0);
-        let lref1 = new MergeTree.LocalReference(<MergeTree.BaseSegment>(segoff.segment),
+        let lref1 = new MergeTree.LocalReference(cli, <MergeTree.BaseSegment>(segoff.segment),
             segoff.offset);
         cli.insertTextRemote(0, "yyy", undefined, 2, 0, "1");
         cli.insertTextRemote(2, "zzz", undefined, 3, 1, "3");

@@ -228,7 +228,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         refType: MergeTree.ReferenceType): MergeTree.LocalReference {
         const segoff = this.getContainingSegment(pos);
         if (segoff && segoff.segment) {
-            const lref = new MergeTree.LocalReference(segoff.segment, segoff.offset, refType);
+            const lref = new MergeTree.LocalReference(this.client, segoff.segment, segoff.offset, refType);
             if (refType !== MergeTree.ReferenceType.Transient) {
                 this.addLocalReference(lref);
             }

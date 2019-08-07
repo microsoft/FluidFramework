@@ -183,11 +183,11 @@ export class FlowDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return new LocalReference(endOfTextSegment);
+            return new LocalReference(this.sharedString.client, endOfTextSegment);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = new LocalReference(segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
+        const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
         this.mergeTree.addLocalReference(localRef);
         return localRef;
     }
@@ -207,7 +207,7 @@ export class FlowDocument extends PrimedComponent {
             return this.length;
         }
 
-        return localRef.toPosition(this.mergeTree, this.currentSeq, this.clientId);
+        return localRef.toPosition();
     }
 
     public insertText(position: number, text: string) {
