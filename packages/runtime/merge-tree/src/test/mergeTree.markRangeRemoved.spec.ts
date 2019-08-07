@@ -44,7 +44,7 @@ describe("MergeTree.markRangeRemoved", () => {
             client.makeOpMessage(
                 createRemoveRangeOp(0, client.getLength()),
                 client.mergeTree.collabWindow.currentSeq + 1,
-                client.mergeTree.collabWindow.currentSeq ,
+                client.mergeTree.collabWindow.currentSeq,
                 "remote"));
 
         assert.equal(client.getText(), "");
@@ -61,7 +61,7 @@ describe("MergeTree.markRangeRemoved", () => {
             client.makeOpMessage(
                 createInsertSegmentOp(0, TextSegment.make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
-                client.mergeTree.collabWindow.currentSeq ,
+                client.mergeTree.collabWindow.currentSeq,
                 "remote"));
 
         assert.equal(client.getText(), "text");
@@ -72,15 +72,15 @@ describe("MergeTree.markRangeRemoved", () => {
         const removeMsg =
             client.makeOpMessage(
                 createRemoveRangeOp(0, client.getLength()),
-                client.mergeTree.collabWindow.currentSeq + 2,
+                client.mergeTree.collabWindow.currentSeq + 1,
                 client.mergeTree.collabWindow.currentSeq,
                 "remote2");
 
         const insertMsg =
             client.makeOpMessage(
                 createInsertSegmentOp(0, TextSegment.make("text")),
-                client.mergeTree.collabWindow.currentSeq + 1,
-                client.mergeTree.collabWindow.currentSeq ,
+                client.mergeTree.collabWindow.currentSeq + 2,
+                client.mergeTree.collabWindow.currentSeq,
                 "remote");
 
         client.applyMsg(removeMsg);
@@ -94,7 +94,7 @@ describe("MergeTree.markRangeRemoved", () => {
             client.makeOpMessage(
                 createInsertSegmentOp(0, TextSegment.make("text")),
                 client.mergeTree.collabWindow.currentSeq + 1,
-                client.mergeTree.collabWindow.currentSeq ,
+                client.mergeTree.collabWindow.currentSeq,
                 "remote");
 
         const removeMsg =

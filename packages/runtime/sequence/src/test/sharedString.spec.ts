@@ -136,6 +136,8 @@ describe("SharedString", () => {
             const insertText = "text";
             const segmentCount = 1000;
 
+            sharedString.initializeLocal();
+
             for (let i = 0; i < segmentCount; i = i + 1) {
                 sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
             }

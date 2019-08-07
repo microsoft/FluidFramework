@@ -1480,7 +1480,11 @@ export class MergeTree {
     // for now assume min starts at zero
     startCollaboration(localClientId: number, minSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
-        this.collabWindow.minSeq = minSeq;
+        if (this.collabWindow.localMinSeq !== undefined) {            
+            this.collabWindow.minSeq = Math.min(minSeq, this.collabWindow.localMinSeq);
+        } else {
+            this.collabWindow.minSeq = minSeq;
+        }
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = minSeq;
         this.localBranchId = branchId;
@@ -1498,6 +1502,8 @@ export class MergeTree {
     }
 
     private addToLRUSet(segment: ISegment, seq: number) {
+        // sequence should be always above current.
+        assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
         this.segmentsToScour.add({ segment: segment, maxSeq: seq });
     }
 
@@ -1633,46 +1639,42 @@ export class MergeTree {
             clockStart = clock();
         }
 
-        let segmentToScour = this.segmentsToScour.peek();
-        if (segmentToScour && (segmentToScour.maxSeq <= this.collabWindow.minSeq)) {
-            for (let i = 0; i < MergeTree.zamboniSegmentsMaxCount; i++) {
-                segmentToScour = this.segmentsToScour.get();
-                if (segmentToScour && segmentToScour.segment.parent &&
-                    (segmentToScour.maxSeq <= this.collabWindow.minSeq)) {
-                    let block = segmentToScour.segment.parent;
-                    let childrenCopy = <IMergeNode[]>[];
-                    //                console.log(`scouring from ${segmentToScour.segment.seq}`);
-                    this.scourNode(block, childrenCopy);
-                    let newChildCount = childrenCopy.length;
+        for (let i = 0; i < MergeTree.zamboniSegmentsMaxCount; i++) {
+            let segmentToScour = this.segmentsToScour.peek();
+            if (!segmentToScour || segmentToScour.maxSeq > this.collabWindow.minSeq) {
+                break;
+            }
+            segmentToScour = this.segmentsToScour.get();
+            if (segmentToScour.segment.parent) {
+                let block = segmentToScour.segment.parent;
+                let childrenCopy = <IMergeNode[]>[];
+                //                console.log(`scouring from ${segmentToScour.segment.seq}`);
+                this.scourNode(block, childrenCopy);
+                let newChildCount = childrenCopy.length;
 
-                    if (newChildCount < block.childCount) {
-                        block.childCount = newChildCount;
-                        block.children = childrenCopy;
-                        for (let j = 0; j < newChildCount; j++) {
-                            block.assignChild(childrenCopy[j], j, false);
-                        }
-
-                        if (this.underflow(block) && block.parent) {
-                            //nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
-                            let packClockStart;
-                            if (MergeTree.options.measureWindowTime) {
-                                packClockStart = clock();
-                            }
-                            this.pack(block);
-
-                            if (MergeTree.options.measureWindowTime) {
-                                this.packTime += elapsedMicroseconds(packClockStart);
-                            }
-                        }
-                        else {
-                            this.nodeUpdateOrdinals(block);
-                            this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
-                        }
-
+                if (newChildCount < block.childCount) {
+                    block.childCount = newChildCount;
+                    block.children = childrenCopy;
+                    for (let j = 0; j < newChildCount; j++) {
+                        block.assignChild(childrenCopy[j], j, false);
                     }
-                }
-                else {
-                    break;
+
+                    if (this.underflow(block) && block.parent) {
+                        //nodeUpdatePathLengths(node, UnassignedSequenceNumber, -1, true);
+                        let packClockStart;
+                        if (MergeTree.options.measureWindowTime) {
+                            packClockStart = clock();
+                        }
+                        this.pack(block);
+
+                        if (MergeTree.options.measureWindowTime) {
+                            this.packTime += elapsedMicroseconds(packClockStart);
+                        }
+                    }
+                    else {
+                        this.nodeUpdateOrdinals(block);
+                        this.blockUpdatePathLengths(block, UnassignedSequenceNumber, -1, true);
+                    }
                 }
             }
         }
@@ -1732,33 +1734,31 @@ export class MergeTree {
         return rootStats;
     }
 
-    tardisPosition(pos: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
-        return this.tardisPositionFromClient(pos, fromSeq, toSeq, NonCollabClient, toClientId);
+    tardisPosition(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+        return this.tardisPositionFromClient(pos, fromSeq, toSeq, clientId);
     }
 
-    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, fromClientId: number,
-        toClientId = NonCollabClient) {
-        if (((fromSeq < toSeq) || (toClientId === this.collabWindow.clientId)) && pos < this.getLength(fromSeq, fromClientId)) {
-            if (toSeq <= this.collabWindow.currentSeq) {
-                let segoff = this.getContainingSegment(pos, fromSeq, fromClientId);
-                let toPos = this.getOffset(segoff.segment, toSeq, toClientId);
-                let ret = toPos + segoff.offset;
-                assert(ret !== undefined);
-                return ret;
-            }
-            assert(false);
+    tardisPositionFromClient(pos: number, fromSeq: number, toSeq: number, clientId: number) {
+        assert(fromSeq < toSeq);
+        if (pos < this.getLength(fromSeq, clientId)) {
+            assert(toSeq <= this.collabWindow.currentSeq);
+            let segoff = this.getContainingSegment(pos, fromSeq, clientId);
+            assert(segoff.segment !== undefined);
+            let toPos = this.getOffset(segoff.segment, toSeq, clientId);
+            let ret = toPos + segoff.offset;
+            assert(ret !== undefined);
+            return ret;
         } else {
             return pos;
         }
     }
 
-    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, fromClientId: number,
-        toClientId = NonCollabClient) {
+    tardisRangeFromClient(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
         let ranges = <Base.IIntegerRange[]>[];
         let recordRange = (segment: ISegment, pos: number, refSeq: number, clientId: number, segStart: number,
             segEnd: number) => {
-            if (this.nodeLength(segment, toSeq, toClientId) > 0) {
-                let offset = this.getOffset(segment, toSeq, toClientId);
+            if (this.nodeLength(segment, toSeq, clientId) > 0) {
+                let offset = this.getOffset(segment, toSeq, clientId);
                 if (segStart < 0) {
                     segStart = 0;
                 }
@@ -1769,12 +1769,12 @@ export class MergeTree {
             }
             return true;
         }
-        this.mapRange({ leaf: recordRange }, fromSeq, fromClientId, undefined, rangeStart, rangeEnd);
+        this.mapRange({ leaf: recordRange }, fromSeq, clientId, undefined, rangeStart, rangeEnd);
         return ranges;
     }
 
-    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, toClientId = NonCollabClient) {
-        return this.tardisRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, NonCollabClient, toClientId);
+    tardisRange(rangeStart: number, rangeEnd: number, fromSeq: number, toSeq: number, clientId: number) {
+        return this.tardisRangeFromClient(rangeStart, rangeEnd, fromSeq, toSeq, clientId);
     }
 
     getLength(refSeq: number, clientId: number) {
@@ -1820,8 +1820,8 @@ export class MergeTree {
 
 
     getContainingSegment(pos: number, refSeq: number, clientId: number) {
-        let segment: ISegment;
-        let offset: number;
+        let segment: ISegment | undefined;
+        let offset: number | undefined;
 
         let leaf = (leafSeg: ISegment, segpos: number, refSeq: number, clientId: number, start: number) => {
             segment = leafSeg;
@@ -1904,8 +1904,13 @@ export class MergeTree {
     }
 
     updateLocalMinSeq(localMinSeq: number) {
-        this.collabWindow.localMinSeq = localMinSeq;
-        this.setMinSeq(Math.min(this.collabWindow.globalMinSeq, localMinSeq));
+        // You can't go down in min seq numbers!
+        if (this.collabWindow.globalMinSeq !== undefined) {
+            this.collabWindow.localMinSeq = Math.min(this.collabWindow.globalMinSeq, localMinSeq);
+        } else {
+            this.collabWindow.localMinSeq = localMinSeq;
+        }
+        this.setMinSeq(this.collabWindow.localMinSeq);
     }
 
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
@@ -1926,6 +1931,11 @@ export class MergeTree {
     }
 
     setMinSeq(minSeq: number) {
+        assert(minSeq <= this.collabWindow.currentSeq);
+
+        // only move forward
+        assert(this.collabWindow.minSeq <= minSeq);
+
         if (minSeq > this.collabWindow.minSeq) {
             this.collabWindow.minSeq = minSeq;
             if (MergeTree.options.zamboniSegments) {
@@ -1933,6 +1943,9 @@ export class MergeTree {
             }
             if (this.minSeqListeners && this.minSeqListeners.count()) {
                 this.minSeqPending = true;
+            }
+            if (this.minSeqPending) {
+                this.notifyMinSeqListeners();
             }
         }
     }
@@ -2336,7 +2349,10 @@ export class MergeTree {
                         (clientId == this.collabWindow.clientId)) {
                         segmentGroup = this.addToPendingList(locSegment, segmentGroup);
                     }
-                    else if ((locSegment.seq >= this.collabWindow.minSeq) &&
+                    // locSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
+                    // In all other cases this has to be true (checked by addToLRUSet):
+                    // locSegment.seq > this.collabWindow.currentSeq
+                    else if ((locSegment.seq > this.collabWindow.minSeq) &&
                         MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(locSegment, locSegment.seq);
                     }
@@ -2739,7 +2755,7 @@ export class MergeTree {
                     segmentGroup = this.addToPendingList(segment, segmentGroup);
                 } else {
                     if (MergeTree.options.zamboniSegments) {
-                        this.addToLRUSet(segment, segment.seq);
+                        this.addToLRUSet(segment, seq);
                     }
                 }
             }

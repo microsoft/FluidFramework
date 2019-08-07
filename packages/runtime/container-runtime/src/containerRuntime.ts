@@ -234,7 +234,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     // Components tracked by the Domain
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private lastMinSequenceNumber: number;
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
@@ -300,7 +299,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.deltaSender = this.deltaManager.query ? this.deltaManager.query("IDeltaSender") : undefined;
 
         this.logger = context.logger;
-        this.lastMinSequenceNumber = context.minimumSequenceNumber;
         this.startLeaderElection();
 
         this.deltaManager.on("allSentOpsAckd", () => {
@@ -637,11 +635,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         this.emit("op", message);
 
-        if (this.lastMinSequenceNumber !== message.minimumSequenceNumber) {
-            this.lastMinSequenceNumber = message.minimumSequenceNumber;
-            this.updateMinSequenceNumber(message.minimumSequenceNumber);
-        }
-
         // Post-process part
         switch (message.type) {
             case MessageType.Attach:
@@ -975,10 +968,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
             return summaryTree;
         }
-    }
-
-    private updateMinSequenceNumber(minimumSequenceNumber: number) {
-        this.emit("minSequenceNumberChanged", this.deltaManager.minimumSequenceNumber);
     }
 
     private submit(type: MessageType, content: any): number {
