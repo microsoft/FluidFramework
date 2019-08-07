@@ -48,8 +48,9 @@ class TestRootComponent extends PrimedComponent {
     }
 
     // tslint:disable-next-line: no-unnecessary-override
-    public async createAndAttachComponent<T extends IComponentLoadable>(id: string, type: string): Promise<T> {
-        return super.createAndAttachComponent<T>(id, type);
+    public async createAndAttachComponent<T extends IComponentLoadable>(
+        id: string, type: string, props?: any): Promise<T> {
+        return super.createAndAttachComponent<T>(id, type, props);
     }
 
     // tslint:disable-next-line: no-unnecessary-override
@@ -203,16 +204,16 @@ export class TestHost {
      * runs createComponent followed by openComponent
      * @param id component id
      * @param type component type
-     * @param services component services for query interface
+     * @param props optional props to pass through forge
      * @returns Component object
      */
     public async createAndAttachComponent<T extends IComponentLoadable>(
         id: string,
         type: string,
-        services?: [string, Promise<any>][],
+        props?: any,
     ): Promise<T> {
         const root = await this.root;
-        return root.createAndAttachComponent<T>(id, type);
+        return root.createAndAttachComponent<T>(id, type, props);
     }
 
     /**
