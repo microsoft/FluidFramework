@@ -10,30 +10,49 @@ import {
   IComponentHTMLVisual,
   IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
+import { IPraguePackage } from "@prague/container-definitions";
 import { MergeTreeDeltaType } from "@prague/merge-tree";
+import { IComponentCollection } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";
-import * as uuid from "uuid";
-import { pkg } from ".";
+
+// tslint:disable-next-line: no-var-requires no-require-imports
+const pkg = require("../../package.json") as IPraguePackage;
+export const WaterParkViewName = `${pkg.name}-view`;
 
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends PrimedComponent implements IComponentHTMLVisual {
-    private static readonly defaultComponents = [
-        "@chaincode/pinpoint-editor",
-        "@chaincode/todo",
-        "@chaincode/math",
-        "@chaincode/monaco",
-        "@chaincode/image-collection",
-        "@chaincode/pond",
-        "@chaincode/clicker",
-    ];
+export class ExternalComponentView extends PrimedComponent implements IComponentHTMLVisual, IComponentCollection {
+
     public get IComponentHTMLVisual() { return this; }
     public get IComponentHTMLRender() { return this; }
+    public get IComponentCollection() { return this; }
 
+    private sequence: SharedObjectSequence<string>;
     private readonly urlToComponent = new Map<string, IComponent>();
     private savedElement: HTMLElement;
-    private error: string;
+
+    public createCollectionItem<T>(options: T): IComponent  {
+        // tslint:disable-next-line: no-string-literal
+        const url = options["url"];
+        if (!url) {
+            throw new Error("Options do not contain any url!!");
+        }
+        this.sequence.insert(this.sequence.getLength(), [url]);
+        return options as IComponent;
+    }
+
+    public removeCollectionItem(instance: IComponent): void {
+        let componentUrl: string;
+        if (instance.IComponentLoadable) {
+            componentUrl = instance.IComponentLoadable.url;
+        }
+        const componentRemoved: boolean = this.sequence.delete(componentUrl);
+        if (componentRemoved) {
+            this.urlToComponent.delete(componentUrl);
+        }
+        throw new Error("Deletion of item from sequence was unsuccessful!!");
+    }
 
     public render(element: HTMLElement) {
 
@@ -53,42 +72,8 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             const mainDiv = document.createElement("div");
             this.savedElement.appendChild(mainDiv);
 
-            const inputDiv = document.createElement("div");
-            mainDiv.appendChild(inputDiv);
-            inputDiv.style.border = "1px solid lightgray";
-            inputDiv.style.maxWidth = "800px";
-            inputDiv.style.margin = "5px";
-            inputDiv.style.padding = "5px";
-            const dataList = document.createElement("datalist");
-            inputDiv.append(dataList);
-            dataList.id = uuid();
-            ExternalComponentLoader.defaultComponents.forEach((url) => {
-                const option = document.createElement("option");
-                option.value = `${url}@${pkg.version}`;
-                dataList.append(option);
-            });
-
-            const input = document.createElement("input");
-            inputDiv.append(input);
-            input.setAttribute("list", dataList.id);
-            input.type = "text";
-            input.placeholder = "@chaincode/component-name@version";
-            input.style.width = "100%";
-
-            const counterButton = document.createElement("button");
-            inputDiv.appendChild(counterButton);
-            counterButton.textContent = "Add Component";
-            counterButton.onclick = () => this.inputClick(input);
-
-            if (this.error) {
-                const errorDiv = document.createElement("div");
-                inputDiv.appendChild(errorDiv);
-                errorDiv.innerText = this.error;
-            }
-
-            const sequence = this.root.get<SharedObjectSequence<string>>("componentIds");
-            if (sequence !== undefined) {
-                sequence.getItems(0).forEach((url) => {
+            if (this.sequence !== undefined) {
+                this.sequence.getItems(0).forEach((url) => {
                     const component = this.urlToComponent.get(url);
                     if (component) {
                         const queryable = component as IComponentQueryableLegacy;
@@ -143,7 +128,7 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
     }
 
     protected async componentHasInitialized() {
-        const sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
+        this.sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =
                 // tslint:disable-next-line: promise-function-async
@@ -164,9 +149,9 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
             }
         };
 
-        await cacheComponentsByUrl(sequence.getItems(0));
+        await cacheComponentsByUrl(this.sequence.getItems(0));
 
-        sequence.on("sequenceDelta", async (event) => {
+        this.sequence.on("sequenceDelta", async (event) => {
             if (event.deltaOperation === MergeTreeDeltaType.INSERT) {
                 const items = event.deltaArgs.deltaSegments.reduce<string[]>(
                     (pv, cv) => {
@@ -179,7 +164,6 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
                 await cacheComponentsByUrl(items)
                     .then(() => this.render(this.savedElement))
                     .catch((e) => {
-                        this.error = e;
                         this.render(this.savedElement);
                     });
 
@@ -190,41 +174,6 @@ export class ExternalComponentLoader extends PrimedComponent implements ICompone
         });
 
         this.render(this.savedElement);
-    }
-
-    private async inputClick(input: HTMLInputElement) {
-        const value = input.value;
-        this.error = undefined;
-        if (value !== undefined && value.length > 0) {
-            let url = value;
-            if (url.startsWith("@")) {
-                url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
-            }
-            const seq = await this.root.wait<SharedObjectSequence<string>>("componentIds");
-
-            await this.context.createComponent(uuid(), url)
-                .then(async (cr) => {
-                    if (cr.attach !== undefined) {
-                        cr.attach();
-                    }
-                    const request = await cr.request({ url: "/" });
-
-                    let component = request.value as IComponent;
-                    if (component.IComponentCollection !== undefined) {
-                        component = component.IComponentCollection.createCollectionItem();
-                    }
-
-                    if (component.IComponentLoadable) {
-                        seq.insert(seq.getLength(), [component.IComponentLoadable.url]);
-                    }
-                })
-                .catch((e) => {
-                    this.error = e;
-                    this.render(this.savedElement);
-                });
-        } else {
-            input.style.backgroundColor = "#FEE";
-        }
     }
 
     private renderSubComponentButton(url: string, containerDiv: HTMLDivElement) {

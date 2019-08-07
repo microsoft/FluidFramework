@@ -3,28 +3,15 @@
 * Licensed under the MIT License.
 */
 
-import { SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import {
-  IPraguePackage,
-} from "@prague/container-definitions";
-import { SharedMap } from "@prague/map";
-import { SharedObjectSequence } from "@prague/sequence";
-import { ExternalComponentLoader } from "./externalComponentLoader";
-import { UrlRegistry } from "./UrlRegistry";
-
-// tslint:disable-next-line: no-var-requires no-require-imports
-export const pkg = require("../package.json") as IPraguePackage;
+import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { UrlRegistry } from "./urlRegistry";
+import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
+import { WaterParkViewInstantiationFactory, WaterParkViewName } from "./waterParkView";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    pkg.name,
+    WaterParkLoaderName,
     new UrlRegistry(
         new Map([
-            [pkg.name, Promise.resolve(
-                new SharedComponentFactory(
-                    ExternalComponentLoader,
-                    [
-                    SharedMap.getFactory(),
-                    SharedObjectSequence.getFactory(),
-                    ],
-                ))],
+            [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],
+            [WaterParkViewName, Promise.resolve(WaterParkViewInstantiationFactory)],
         ])));
