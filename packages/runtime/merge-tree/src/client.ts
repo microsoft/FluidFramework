@@ -267,6 +267,10 @@ export class Client {
         return this.mergeTree.addLocalReference(lref);
     }
 
+    public removeLocalReference(lref: LocalReference) {
+        return this.mergeTree.removeLocalReference(lref.segment, lref);
+    }
+
     /**
      * Given a position specified relative to a marker id, lookup the marker
      * and convert the position to a character position.

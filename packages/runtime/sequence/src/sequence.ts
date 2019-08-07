@@ -223,10 +223,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.client.mergeTree.updateLocalMinSeq(lmseq);
     }
 
-    public addLocalReference(lref) {
-        return this.client.addLocalReference(lref);
-    }
-
     public createPositionReference(
         pos: number,
         refType: MergeTree.ReferenceType): MergeTree.LocalReference {
@@ -347,6 +343,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
         this.submitLocalMessage(message);
+    }
+
+    public addLocalReference(lref) {
+        return this.client.addLocalReference(lref);
+    }
+
+    public removeLocalReference(lref) {
+        return this.client.removeLocalReference(lref);
     }
 
     /**

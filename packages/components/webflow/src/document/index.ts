@@ -197,7 +197,7 @@ export class FlowDocument extends PrimedComponent {
 
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (segment !== endOfTextSegment) {
-            this.mergeTree.removeLocalReference(segment, localRef);
+            this.sharedString.removeLocalReference(localRef);
         }
     }
 

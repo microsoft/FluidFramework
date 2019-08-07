@@ -3700,11 +3700,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 localPresenceInfo.cursor.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
-                const markBaseSegment = presentPresence.localRef.segment as MergeTree.BaseSegment;
-                this.client.mergeTree.removeLocalReference(markBaseSegment, presentPresence.markLocalRef);
+                this.sharedString.removeLocalReference(presentPresence.markLocalRef);
             }
-            const baseSegment = presentPresence.localRef.segment as MergeTree.BaseSegment;
-            this.client.mergeTree.removeLocalReference(baseSegment, presentPresence.localRef);
+            this.sharedString.removeLocalReference(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
         }
