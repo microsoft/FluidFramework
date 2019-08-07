@@ -509,11 +509,14 @@ export class PartialSequenceLengths {
         const cliLatestindex = this.cliLatest(clientId);
         const cliSeq = this.clientSeqNumbers[clientId];
         if (seqIndex >= 0) {
+            // Add the partial length up to refSeq
             pLen += this.partialLengths[seqIndex].len;
+
             if (cliLatestindex >= 0) {
                 const cliLatest = cliSeq[cliLatestindex];
 
                 if (cliLatest.seq > refSeq) {
+                    // The client has local edits after refSeq, add in the length adjustments
                     pLen += cliLatest.len;
                     const precedingCliIndex = this.cliLatestLEQ(clientId, refSeq);
                     if (precedingCliIndex >= 0) {
@@ -522,6 +525,8 @@ export class PartialSequenceLengths {
                 }
             }
         } else {
+            // refSeq is before any of the partial lengths
+            // so just add in all local edits of that client (which should all be after the refSeq)
             if (cliLatestindex >= 0) {
                 const cliLatest = cliSeq[cliLatestindex];
                 pLen += cliLatest.len;
@@ -685,13 +690,19 @@ export class PartialSequenceLengths {
         }
     }
 
-    private verifyPartialLengths(partialLengths: PartialSequenceLength[], hasOverlapRemoveClients: boolean) {
+    private verifyPartialLengths(partialLengths: PartialSequenceLength[], clientPartials: boolean) {
+        if (partialLengths.length === 0) { return 0; }
+
         let lastSeqNum = 0;
         let accumSegLen = 0;
         let count = 0;
+
         for (const partialLength of partialLengths) {
             // Count total number of partial length
             count++;
+
+            // sequence number should be larger or equal to minseq
+            assert(this.minSeq <= partialLength.seq);
 
             // sequence number should be sorted
             assert(lastSeqNum < partialLength.seq);
@@ -703,13 +714,27 @@ export class PartialSequenceLengths {
                 assert(false);
             }
 
-            // Overlow len adjustment should not make length negative
-            if (this.minLength + partialLength.len < 0) {
-                assert(false);
+            if (clientPartials) {
+                // client partials used to track local edits so we can account for them some refSeq.
+                // But the information we keep track of are since minSeq, so we keep track of more history
+                // then needed, and some of them doesn't make sense to be used for length calculations
+                // e.g. if you have this sequence, where the minSeq is #5 because of other clients
+                //    seq 10: client 1: insert seg #1
+                //    seq 11: client 2: delete seg #2 refseq: 10
+                // minLength is 0, we would have keep a record of seglen: -1 for clientPartialLengths for client 2
+                // So if you ask for partial length for client 2 @ seq 5, we will have return -1.
+                // However, that combination is invalid, since we should never see any ops with refseq < 10 for
+                // client 2 after seq 11.
+            } else {
+                // len adjustment should not make length negative
+                if (this.minLength + partialLength.len < 0) {
+                    assert(false);
+                }
             }
+
             if (partialLength.overlapRemoveClients) {
                 // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
-                assert(hasOverlapRemoveClients);
+                assert(!clientPartials);
 
                 // Each overlap client count as one
                 count += partialLength.overlapRemoveClients.size();
@@ -723,13 +748,13 @@ export class PartialSequenceLengths {
             let cliCount = 0;
             for (const cliSeq of this.clientSeqNumbers) {
                 if (cliSeq) {
-                    cliCount += this.verifyPartialLengths(cliSeq, false);
+                    cliCount += this.verifyPartialLengths(cliSeq, true);
                 }
             }
 
             // If we have client view, we should have the flat view
             assert(this.partialLengths);
-            const flatCount = this.verifyPartialLengths(this.partialLengths, true);
+            const flatCount = this.verifyPartialLengths(this.partialLengths, false);
 
             // The number of partial lengths on the client view and flat view should be the same
             assert(flatCount === cliCount);

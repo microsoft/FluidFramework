@@ -694,14 +694,16 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                             leafSegment.removalsByBranch[i] = {
                                 removedClientId: fromRemovalInfo.removedClientId,
                                 removedSeq: fromRemovalInfo.removedSeq,
-                                removedClientOverlap: fromRemovalInfo.removedClientOverlap,
+                                removedClientOverlap: fromRemovalInfo.removedClientOverlap ? [...fromRemovalInfo.removedClientOverlap] : undefined,
                             }
                         }
                     }
                 }
                 leafSegment.seq = this.seq;
                 leafSegment.clientId = this.clientId;
-                leafSegment.removedClientOverlap = this.removedClientOverlap;
+                if (this.removedClientOverlap) {
+                    leafSegment.removedClientOverlap = [...this.removedClientOverlap];
+                }
                 this.segmentGroups.copyTo(leafSegment);
                 this.trackingCollection.copyTo(leafSegment);
                 if (this.localRefs) {
