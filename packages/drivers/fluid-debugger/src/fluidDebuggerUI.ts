@@ -34,7 +34,7 @@ Close debugger window to proceed to live document<br/><br/>
 </select>
 &nbsp; &nbsp; &nbsp;
 <button id='buttonVers' style='width:60px'>Go</button><br/>
-<input id='file' type='file' accept='snapshot.json'/>
+<input id='file' type='file'/>
 <br/><br/><div id='versionText'></div><br/>
 </body>`;
 
@@ -59,9 +59,7 @@ export class DebuggerUI {
                 typeof window !== "object" ||
                 window === null ||
                 typeof window.document !== "object" ||
-                window.document == null ||
-                typeof localStorage !== "object" ||
-                localStorage === null) {
+                window.document == null) {
             console.log("Can't create debugger window - not running in browser!");
             return null;
         }

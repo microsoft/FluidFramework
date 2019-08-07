@@ -98,7 +98,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      * @returns Document delta connection.
      */
     public static async create(
-            documentDeltaStorageService: FileDeltaStorageService): Promise<IDocumentDeltaConnection> {
+            documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
         const connection = {
             claims: Claims,
             clientId: "",
@@ -121,33 +121,23 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             user: null,
             version: fileProtocolVersion,
         };
-        const deltaConnection = new ReplayFileDeltaConnection(connection);
-        // tslint:disable-next-line: no-floating-promises
-        await this.createReplayer(documentDeltaStorageService, deltaConnection);
-
+        const deltaConnection = new ReplayFileDeltaConnection(connection, documentDeltaStorageService);
         return deltaConnection;
     }
 
-    /**
-     * Creates the replay service to replay ops.
-     *
-     * @param documentDeltaStorageService - The delta storage service to get ops from.
-     * @param deltaConnection - Delta connection to be used to fire ops.
-     */
-    public static async createReplayer(
-        documentDeltaStorageService: FileDeltaStorageService,
-        deltaConnection: ReplayFileDeltaConnection,
-    ) {
+    public readonly maxMessageSize = ReplayMaxMessageSize;
+    private readonly replayer: Replayer;
+
+    public constructor(public details: messages.IConnected, documentDeltaStorageService: FileDeltaStorageService) {
+        super();
         this.replayer = new Replayer(
-            deltaConnection,
+            this,
             documentDeltaStorageService);
     }
 
-    public static getReplayer() {
+    public getReplayer() {
         return this.replayer;
     }
-
-    private static replayer: Replayer;
 
     public get clientId(): string {
         return this.details.clientId;
@@ -179,14 +169,6 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get serviceConfiguration(): IServiceConfiguration {
         return this.details.serviceConfiguration;
-    }
-
-    public readonly maxMessageSize = ReplayMaxMessageSize;
-
-    constructor(
-        public details: messages.IConnected,
-    ) {
-        super();
     }
 
     public submit(documentMessages: IDocumentMessage[]): void {
