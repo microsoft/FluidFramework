@@ -5,17 +5,17 @@
 
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
-import { ConsensusQueueExtension, ConsensusStackExtension } from "../extension";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionExtension } from "../interfaces";
+import { ConsensusQueueFactory, ConsensusStackFactory } from "../extension";
+import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
-        generate("ConsensusQueue", new ConsensusQueueExtension(), [1, 2], [1, 2]);
-        generate("ConsensusStack", new ConsensusStackExtension(), [1, 2], [2, 1]);
+        generate("ConsensusQueue", new ConsensusQueueFactory(), [1, 2], [1, 2]);
+        generate("ConsensusStack", new ConsensusStackFactory(), [1, 2], [2, 1]);
         function generate(
             name: string,
-            extension: IConsensusOrderedCollectionExtension,
+            factory: IConsensusOrderedCollectionFactory,
             input: any[],
             output: any[]) {
 
@@ -23,7 +23,7 @@ describe("Routerlicious", () => {
                 let testCollection: IConsensusOrderedCollection;
 
                 beforeEach(async () => {
-                    testCollection = extension.create(new MockRuntime(), "consensus-ordered-collection");
+                    testCollection = factory.create(new MockRuntime(), "consensus-ordered-collection");
                 });
 
                 it("Can create a collection", () => {

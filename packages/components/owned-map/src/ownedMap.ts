@@ -13,7 +13,7 @@ import {
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { debug } from "./debug";
-import { OwnedMapExtension } from "./extension";
+import { OwnedMapFactory } from "./extension";
 
 const snapshotFileName = "header";
 const ownerPath = "owner";
@@ -31,7 +31,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      * @returns newly create owned shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(OwnedSharedMap.getIdForCreate(id), OwnedMapExtension.Type) as OwnedSharedMap;
+        return runtime.createChannel(OwnedSharedMap.getIdForCreate(id), OwnedMapFactory.Type) as OwnedSharedMap;
     }
 
     /**
@@ -40,7 +40,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      * @returns a factory that creates and load OwnedSharedMap
      */
     public static getFactory(defaultValueTypes: Array<IValueType<any>> = []) {
-        return new OwnedMapExtension(defaultValueTypes);
+        return new OwnedMapFactory(defaultValueTypes);
     }
 
     public owner: string;

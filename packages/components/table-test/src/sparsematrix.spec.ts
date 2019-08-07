@@ -5,7 +5,7 @@
 
 import "mocha";
 import * as assert from "assert";
-import { SparseMatrix, SparseMatrixExtension } from "@prague/sequence"
+import { SparseMatrix, SparseMatrixFactory } from "@prague/sequence"
 import { TestHost } from "@prague/local-test-server";
 
 describe("SparseMatrix", () => {
@@ -28,7 +28,7 @@ describe("SparseMatrix", () => {
         before(async () => {
             host = new TestHost([]);
 
-            matrix = await host.createType("matrix", SparseMatrixExtension.Type);
+            matrix = await host.createType("matrix", SparseMatrixFactory.Type);
         });
 
         const expect = async (expected: ReadonlyArray<ReadonlyArray<any>>) => {
@@ -138,7 +138,7 @@ describe("SparseMatrix", () => {
             host1 = new TestHost([]);
             host2 = host1.clone();
 
-            matrix1 = await host1.createType("matrix", SparseMatrixExtension.Type);
+            matrix1 = await host1.createType("matrix", SparseMatrixFactory.Type);
             matrix2 = await host2.getType("matrix");
         });
 

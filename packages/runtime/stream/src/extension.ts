@@ -4,13 +4,13 @@
  */
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 import { Stream } from "./stream";
 
 /**
  * Factory for Streams.
  */
-export class StreamExtension implements ISharedObjectExtension {
+export class StreamFactory implements ISharedObjectFactory {
     /**
      * Static type identifier.
      */
@@ -19,7 +19,7 @@ export class StreamExtension implements ISharedObjectExtension {
     /**
      * Type identifier.
      */
-    public type = StreamExtension.Type;
+    public type = StreamFactory.Type;
 
     /**
      * Version of the stream snapshot format.

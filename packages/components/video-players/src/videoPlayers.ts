@@ -20,7 +20,7 @@ import {
     IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 declare global {
@@ -265,9 +265,9 @@ export class VideoPlayerFactoryComponent implements IComponentFactory {
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectExtension>();
-        const mapExtension = SharedMap.getFactory();
-        dataTypes.set(mapExtension.type, mapExtension);
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const mapFactory = SharedMap.getFactory();
+        dataTypes.set(mapFactory.type, mapFactory);
 
         ComponentRuntime.load(
             context,

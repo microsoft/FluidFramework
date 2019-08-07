@@ -15,7 +15,7 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { SharedObject } from "@prague/shared-object-common";
-import { StreamExtension } from "./extension";
+import { StreamFactory } from "./extension";
 import { IInkDelta, IInkStroke, IStream } from "./interfaces";
 import { IInkSnapshot, InkSnapshot } from "./snapshot";
 
@@ -41,7 +41,7 @@ export class Stream extends SharedObject implements IStream {
      * @returns newly create shared stream (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), StreamExtension.Type) as Stream;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), StreamFactory.Type) as Stream;
     }
 
     /**
@@ -50,7 +50,7 @@ export class Stream extends SharedObject implements IStream {
      * @returns a factory that creates and load SharedStream
      */
     public static getFactory() {
-        return new StreamExtension();
+        return new StreamFactory();
     }
 
     /**
@@ -65,7 +65,7 @@ export class Stream extends SharedObject implements IStream {
      * @param id - UUID for the stream
      */
     constructor(runtime: IComponentRuntime, id: string) {
-        super(id, runtime, StreamExtension.Type);
+        super(id, runtime, StreamFactory.Type);
     }
 
     /**

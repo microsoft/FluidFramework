@@ -6,7 +6,7 @@
 import * as MergeTree from "@prague/merge-tree";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import {
-    SharedStringExtension,
+    SharedStringFactory,
 } from "./extension";
 import {
     SharedSegmentSequence,
@@ -24,7 +24,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
      */
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
-            SharedStringExtension.Type) as SharedString;
+            SharedStringFactory.Type) as SharedString;
     }
 
     /**
@@ -33,13 +33,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
      * @returns a factory that creates and load SharedMap
      */
     public static getFactory() {
-        return new SharedStringExtension();
+        return new SharedStringFactory();
     }
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedStringExtension.Type);
+        super(document, id, SharedStringFactory.Type);
         this.mergeTreeTextHelper = new MergeTree.MergeTreeTextHelper(this.client.mergeTree);
     }
 

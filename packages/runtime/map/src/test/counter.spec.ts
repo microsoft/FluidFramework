@@ -15,8 +15,8 @@ describe("Routerlicious", () => {
             let testCounter: map.Counter;
 
             beforeEach(async () => {
-                const extension = new map.MapExtension();
-                testMap = extension.create(null, "test");
+                const factory = new map.MapFactory();
+                testMap = factory.create(null, "test");
                 testMap.registerValueType(new map.CounterValueType());
 
                 testCounter = testMap.

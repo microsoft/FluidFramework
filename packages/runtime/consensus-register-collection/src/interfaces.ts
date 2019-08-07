@@ -4,15 +4,15 @@
  */
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 
 /**
- * Consensus Register Collection channel extension interface
+ * Consensus Register Collection channel factory interface
  *
- * Extends the base ISharedObjectExtension to return a more definite type of IConsensusRegisterCollection
+ * Extends the base ISharedObjectFactory to return a more definite type of IConsensusRegisterCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
-export interface IConsensusRegisterCollectionExtension extends ISharedObjectExtension {
+export interface IConsensusRegisterCollectionFactory extends ISharedObjectFactory {
     load(
         document: IComponentRuntime,
         id: string,

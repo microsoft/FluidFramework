@@ -38,12 +38,12 @@ export class LocalChannelContext implements IChannelContext {
         private readonly storageService: IDocumentStorageService,
         private readonly submitFn: (type: MessageType, content: any) => number,
     ) {
-        const extension = registry.get(type);
-        if (!extension) {
-            throw new Error(`Channel Extension ${type} not registered`);
+        const factory = registry.get(type);
+        if (!factory) {
+            throw new Error(`Channel Factory ${type} not registered`);
         }
 
-        this.channel = extension.create(runtime, id);
+        this.channel = factory.create(runtime, id);
     }
 
     public async getChannel(): Promise<IChannel> {

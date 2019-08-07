@@ -14,9 +14,9 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
 import { debug } from "./debug";
-import { CellExtension } from "./extension";
+import { CellFactory } from "./extension";
 import { ISharedCell } from "./interfaces";
 
 /**
@@ -55,7 +55,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), CellExtension.Type) as SharedCell;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), CellFactory.Type) as SharedCell;
     }
 
     /**
@@ -63,8 +63,8 @@ export class SharedCell extends SharedObject implements ISharedCell {
      *
      * @returns a factory that creates and load SharedCell
      */
-    public static getFactory(): ISharedObjectExtension {
-        return new CellExtension();
+    public static getFactory(): ISharedObjectFactory {
+        return new CellFactory();
     }
     /**
      * The data held by this cell.
@@ -84,7 +84,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @param id - optional name of the shared map
      */
     constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, CellExtension.Type);
+        super(id, runtime, CellFactory.Type);
         this.pendingClientSequenceNumber = -1;
     }
 

@@ -15,7 +15,7 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
 import { debug } from "./debug";
 import {
     ISerializableValue,
@@ -87,12 +87,12 @@ interface IMapDataObject {
 }
 
 /**
- * The extension that defines the map
+ * The factory that defines the map
  */
-export class MapExtension implements ISharedObjectExtension {
+export class MapFactory implements ISharedObjectFactory {
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
-    public readonly type: string = MapExtension.Type;
+    public readonly type: string = MapFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
@@ -139,7 +139,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * @returns newly create shared map (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedMap {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), MapExtension.Type) as SharedMap;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), MapFactory.Type) as SharedMap;
     }
 
     /**
@@ -147,8 +147,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectExtension {
-        return new MapExtension(defaultValueTypes);
+    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectFactory {
+        return new MapFactory(defaultValueTypes);
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedMap";
@@ -165,7 +165,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        type = MapExtension.Type,
+        type = MapFactory.Type,
     ) {
         super(id, runtime, type);
         this.localValueMaker = new LocalValueMaker(runtime, this);

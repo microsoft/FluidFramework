@@ -108,16 +108,16 @@ export class RemoteChannelContext implements IChannelContext {
                 this.tree.blobs[".attributes"]);
 
         // Pass the transformedMessages - but the object really should be storing this
-        const extension = this.registry.get(type);
-        if (!extension) {
-            throw new Error(`Channel Extension ${type} not registered`);
+        const factory = this.registry.get(type);
+        if (!factory) {
+            throw new Error(`Channel Factory ${type} not registered`);
         }
 
         // compare snapshot version to collaborative object version
-        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== extension.snapshotFormatVersion) {
+        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${type}, ` +
                 `Snapshot format version: ${snapshotFormatVersion}, ` +
-                `client format version: ${extension.snapshotFormatVersion}`);
+                `client format version: ${factory.snapshotFormatVersion}`);
         }
 
         const services = createServiceEndpoints(
@@ -127,7 +127,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.storageService,
             this.tree,
             this.extraBlobs);
-        this.channel = await extension.load(
+        this.channel = await factory.load(
             this.runtime,
             this.id,
             this.minimumSequenceNumber,

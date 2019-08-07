@@ -15,9 +15,9 @@ class PinpointMapsFactory implements IComponent, IComponentFactory {
     public instantiateComponent(context: IComponentContext): void {
         const modules = new Map<string, any>();
 
-        // Create channel extensions
-        const mapExtension = SharedMap.getFactory();
-        modules.set(mapExtension.type, mapExtension);
+        // Create channel factories
+        const mapFactory = SharedMap.getFactory();
+        modules.set(mapFactory.type, mapFactory);
 
         ComponentRuntime.load(
             context,

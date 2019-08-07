@@ -4,17 +4,17 @@
  */
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
 
 /**
- * The extension that defines the map
+ * The factory that defines the map
  */
-export class CellExtension implements ISharedObjectExtension {
+export class CellFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/cell";
 
-    public type: string = CellExtension.Type;
+    public type: string = CellFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(

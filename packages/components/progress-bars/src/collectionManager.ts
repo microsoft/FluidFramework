@@ -17,7 +17,7 @@ import {
     IComponentContext,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import { ProgressCollection } from "./progressBars";
 
@@ -82,10 +82,10 @@ export function instantiateComponent(context: IComponentContext): void {
         new CounterValueType(),
     ];
 
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    const mapExtension = SharedMap.getFactory(mapValueTypes);
+    const dataTypes = new Map<string, ISharedObjectFactory>();
+    const mapFactory = SharedMap.getFactory(mapValueTypes);
 
-    dataTypes.set(mapExtension.type, mapExtension);
+    dataTypes.set(mapFactory.type, mapFactory);
 
     ComponentRuntime.load(
         context,

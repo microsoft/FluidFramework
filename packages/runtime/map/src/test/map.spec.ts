@@ -11,12 +11,12 @@ describe("Routerlicious", () => {
     describe("Map", () => {
         let rootMap: map.ISharedMap;
         let testMap: map.ISharedMap;
-        let extension: map.MapExtension;
+        let factory: map.MapFactory;
 
         beforeEach(async () => {
-            extension = new map.MapExtension();
-            rootMap = extension.create(null, "root");
-            testMap = extension.create(null, "test");
+            factory = new map.MapFactory();
+            rootMap = factory.create(null, "root");
+            testMap = factory.create(null, "test");
         });
 
         describe("SharedMap", () => {
@@ -90,7 +90,7 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to set a shared object as a key", () => {
-                    const subMap = extension.create(null, "subMap");
+                    const subMap = factory.create(null, "subMap");
                     sharedMap.set("test", subMap);
                     assert.equal(sharedMap.get("test"), subMap);
                 });
@@ -125,7 +125,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("first", "second");
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", "sixth");
-                    const subMap = extension.create(null, "subMap");
+                    const subMap = factory.create(null, "subMap");
                     sharedMap.set("object", subMap);
 
                     const serialized = (sharedMap as SharedMap).serialize();

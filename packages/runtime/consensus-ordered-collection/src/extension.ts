@@ -6,15 +6,15 @@
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { ConsensusStack } from "./consensusStack";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionExtension } from "./interfaces";
+import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
 
 /**
- * The extension that defines the consensus queue
+ * The factory that defines the consensus queue
  */
-export class ConsensusQueueExtension implements IConsensusOrderedCollectionExtension {
+export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
-    public type: string = ConsensusQueueExtension.Type;
+    public type: string = ConsensusQueueFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
@@ -37,12 +37,12 @@ export class ConsensusQueueExtension implements IConsensusOrderedCollectionExten
 }
 
 /**
- * The extension that defines the consensus stack
+ * The factory that defines the consensus stack
  */
-export class ConsensusStackExtension implements IConsensusOrderedCollectionExtension {
+export class ConsensusStackFactory implements IConsensusOrderedCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-stack";
 
-    public type: string = ConsensusStackExtension.Type;
+    public type: string = ConsensusStackFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(

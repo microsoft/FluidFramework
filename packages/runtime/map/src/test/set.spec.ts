@@ -16,8 +16,8 @@ describe("Routerlicious", () => {
             let populatedSet: map.DistributedSet<number>;
 
             beforeEach(async () => {
-                const extension = new map.MapExtension();
-                testMap = extension.create(null, "test");
+                const factory = new map.MapFactory();
+                testMap = factory.create(null, "test");
                 testMap.registerValueType(new map.DistributedSetValueType());
 
                 emptySet = testMap.

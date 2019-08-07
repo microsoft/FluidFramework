@@ -14,7 +14,7 @@ import {
     IComponentHTMLVisual,
     IRequest,
     IResponse } from "@prague/component-core-interfaces";
-import { MapExtension, SharedMap } from "@prague/map";
+import { MapFactory, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
@@ -141,4 +141,4 @@ class TaskScheduler {
     }
 }
 
-export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new MapExtension()]);
+export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new MapFactory()]);

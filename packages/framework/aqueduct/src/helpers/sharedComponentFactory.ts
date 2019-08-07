@@ -14,7 +14,7 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import {
-    ISharedObjectExtension,
+    ISharedObjectFactory,
 } from "@prague/shared-object-common";
 import { SharedComponent } from "../components/sharedComponent";
 
@@ -23,7 +23,7 @@ export class SharedComponentFactory implements IComponent, IComponentFactory  {
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
-        sharedObjects: ReadonlyArray<ISharedObjectExtension>,
+        sharedObjects: ReadonlyArray<ISharedObjectFactory>,
     ) {
         this.registry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }

@@ -5,16 +5,16 @@
 
 import { ISharedMap, IValueType } from "@prague/map";
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { OwnedSharedMap } from "./ownedMap";
 
 /**
- * The extension that defines the map
+ * The factory that defines the map
  */
-export class OwnedMapExtension implements ISharedObjectExtension {
+export class OwnedMapFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/ownedmap";
 
-    public readonly type: string = OwnedMapExtension.Type;
+    public readonly type: string = OwnedMapFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
@@ -27,7 +27,7 @@ export class OwnedMapExtension implements ISharedObjectExtension {
         services: ISharedObjectServices,
         headerOrigin: string): Promise<ISharedMap> {
 
-        const map = new OwnedSharedMap(id, runtime, OwnedMapExtension.Type);
+        const map = new OwnedSharedMap(id, runtime, OwnedMapFactory.Type);
         this.registerValueTypes(map);
         await map.load(minimumSequenceNumber, headerOrigin, services);
 
@@ -35,7 +35,7 @@ export class OwnedMapExtension implements ISharedObjectExtension {
     }
 
     public create(document: IComponentRuntime, id: string): ISharedMap {
-        const map = new OwnedSharedMap(id, document, OwnedMapExtension.Type);
+        const map = new OwnedSharedMap(id, document, OwnedMapFactory.Type);
         this.registerValueTypes(map);
         map.initializeLocal();
 

@@ -22,7 +22,7 @@ import {
     IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 
 // tslint:disable no-var-requires
 // tslint:disable no-require-imports
@@ -104,9 +104,9 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectExtension>();
-        const mapExtension = SharedMap.getFactory();
-        dataTypes.set(mapExtension.type, mapExtension);
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const mapFactory = SharedMap.getFactory();
+        dataTypes.set(mapFactory.type, mapFactory);
 
         ComponentRuntime.load(
             context,

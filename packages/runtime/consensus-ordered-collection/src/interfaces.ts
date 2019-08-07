@@ -9,15 +9,15 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 
 /**
- * Consensus Ordered Collection channel extension interface
+ * Consensus Ordered Collection channel factory interface
  *
- * Extends the base ISharedObjectExtension to return a more definite type of IConsensusOrderedCollection
+ * Extends the base ISharedObjectFactory to return a more definite type of IConsensusOrderedCollection
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
-export interface IConsensusOrderedCollectionExtension extends ISharedObjectExtension {
+export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory {
     load(
         document: IComponentRuntime,
         id: string,

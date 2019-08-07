@@ -7,7 +7,7 @@ import { IntervalType, LocalReference } from "@prague/merge-tree";
 import {
     SharedIntervalCollectionView,
     SharedString,
-    SharedStringExtension,
+    SharedStringFactory,
     SharedStringInterval,
 } from "@prague/sequence";
 import * as assert from "assert";
@@ -52,7 +52,7 @@ describe("SharedInterval", () => {
 
         beforeEach(async () => {
             host = new TestHost([]);
-            sharedString = await host.createType("text", SharedStringExtension.Type);
+            sharedString = await host.createType("text", SharedStringFactory.Type);
             sharedString.insertText(0, "012");
             intervals = await sharedString.getSharedIntervalCollection("intervals").getView();
         });
@@ -170,7 +170,7 @@ describe("SharedInterval", () => {
     describe("multiple clients", () => {
         it("propagates", async () => {
             const host1 = new TestHost([]);
-            const sharedString1 = await host1.createType<SharedString>("text", SharedStringExtension.Type);
+            const sharedString1 = await host1.createType<SharedString>("text", SharedStringFactory.Type);
             sharedString1.insertText(0, "0123456789");
             const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);

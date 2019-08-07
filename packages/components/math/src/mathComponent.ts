@@ -35,7 +35,7 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 
@@ -713,12 +713,12 @@ export class MathFactoryComponent implements IComponentFactory {
     // tslint:disable:no-require-imports no-submodule-imports
     require("katex/dist/katex.min.css");
     require("./index.css");
-    const mapExtension = SharedMap.getFactory(mapValueTypes);
-    const sharedStringExtension = Sequence.SharedString.getFactory();
+    const mapFactory = SharedMap.getFactory(mapValueTypes);
+    const sharedStringFactory = Sequence.SharedString.getFactory();
 
-    const dataTypes = new Map<string, ISharedObjectExtension>();
-    dataTypes.set(mapExtension.type, mapExtension);
-    dataTypes.set(sharedStringExtension.type, sharedStringExtension);
+    const dataTypes = new Map<string, ISharedObjectFactory>();
+    dataTypes.set(mapFactory.type, mapFactory);
+    dataTypes.set(sharedStringFactory.type, sharedStringFactory);
 
     ComponentRuntime.load(
         context,

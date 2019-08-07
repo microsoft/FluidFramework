@@ -4,7 +4,7 @@
  */
 
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedNumberSequenceExtension } from "./extension";
+import { SharedNumberSequenceFactory } from "./extension";
 import { SharedSequence } from "./sharedSequence";
 
 export class SharedNumberSequence extends SharedSequence<number> {
@@ -17,7 +17,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
      */
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedSequence.getIdForCreate(id),
-            SharedNumberSequenceExtension.Type) as SharedNumberSequence;
+            SharedNumberSequenceFactory.Type) as SharedNumberSequence;
     }
 
     /**
@@ -26,11 +26,11 @@ export class SharedNumberSequence extends SharedSequence<number> {
      * @returns a factory that creates and load SharedNumberSequence
      */
     public static getFactory() {
-        return new SharedNumberSequenceExtension();
+        return new SharedNumberSequenceFactory();
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedNumberSequenceExtension.Type);
+        super(document, id, SharedNumberSequenceFactory.Type);
     }
 
     public getRange(start: number, end?: number) {

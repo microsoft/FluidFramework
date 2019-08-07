@@ -116,9 +116,9 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     constructor(
         document: IComponentRuntime,
         public id: string,
-        extensionType: string,
+        factoryType: string,
     ) {
-        super(document, id, extensionType);
+        super(document, id, factoryType);
     }
 
     /**

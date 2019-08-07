@@ -6,7 +6,7 @@
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { Counter, CounterValueType, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString, SharedStringExtension } from "@prague/sequence";
+import { SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
 import { DocumentDeltaEventManager, TestHost } from "..";
 
@@ -142,7 +142,7 @@ describe("TestHost", () => {
 
             beforeEach(async () => {
                 host = new TestHost([]);
-                text = await host.createType("text", SharedStringExtension.Type);
+                text = await host.createType("text", SharedStringFactory.Type);
             });
 
             afterEach(async () => {
@@ -162,7 +162,7 @@ describe("TestHost", () => {
 
             beforeEach(async () => {
                 host1 = new TestHost([]);
-                text1 = await host1.createType("text", SharedStringExtension.Type);
+                text1 = await host1.createType("text", SharedStringFactory.Type);
 
                 host2 = host1.clone();
                 text2 = await host2.getType("text");

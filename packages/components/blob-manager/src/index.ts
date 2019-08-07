@@ -6,7 +6,7 @@
 import { IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IBlobManager, IGenericBlob } from "@prague/container-definitions";
-import { MapExtension } from "@prague/map";
+import { MapFactory } from "@prague/map";
 import { IDocumentStorageService } from "@prague/protocol-definitions";
 import { IComponentContext } from "@prague/runtime-definitions";
 
@@ -120,9 +120,9 @@ export class BlobManager implements IBlobManager {
 export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
 
-    // Create channel extensions
-    const mapExtension = new MapExtension();
-    modules.set(MapExtension.Type, mapExtension);
+    // Create channel factories
+    const mapFactory = new MapFactory();
+    modules.set(MapFactory.Type, mapFactory);
 
     // TODO custom blob specific runtime
     ComponentRuntime.load(

@@ -4,7 +4,7 @@
  */
 
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedObjectSequenceExtension } from "./extension";
+import { SharedObjectSequenceFactory } from "./extension";
 import { SharedSequence } from "./sharedSequence";
 
 export class SharedObjectSequence<T> extends SharedSequence<T> {
@@ -17,7 +17,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      */
     public static create<T>(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedSequence.getIdForCreate(id),
-            SharedObjectSequenceExtension.Type) as SharedObjectSequence<T>;
+            SharedObjectSequenceFactory.Type) as SharedObjectSequence<T>;
     }
 
     /**
@@ -26,11 +26,11 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * @returns a factory that creates and load SharedObjectSequence
      */
     public static getFactory() {
-        return new SharedObjectSequenceExtension();
+        return new SharedObjectSequenceFactory();
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedObjectSequenceExtension.Type);
+        super(document, id, SharedObjectSequenceFactory.Type);
     }
 
     public getRange(start: number, end?: number) {

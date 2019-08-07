@@ -21,7 +21,7 @@ import {
     ITask,
     ITaskManager,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as debug from "debug";
 import { EventEmitter } from "events";
@@ -406,11 +406,11 @@ export class AgentSchedulerFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const mapExtension = SharedMap.getFactory();
-        const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
-        const dataTypes = new Map<string, ISharedObjectExtension>();
-        dataTypes.set(mapExtension.type, mapExtension);
-        dataTypes.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
+        const mapFactory = SharedMap.getFactory();
+        const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        dataTypes.set(mapFactory.type, mapFactory);
+        dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
         ComponentRuntime.load(
             context,

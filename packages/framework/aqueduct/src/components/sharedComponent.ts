@@ -18,7 +18,7 @@ import {
 import { EventEmitter } from "events";
 
 /**
- * This is as bare-bones base class that does basic setup and enables for extension on an initialize call.
+ * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
 export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {

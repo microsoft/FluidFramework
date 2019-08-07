@@ -61,7 +61,7 @@ class TestRootComponent extends PrimedComponent {
      * Creates a channel and returns the instance as a shared object.
      * This will add the instance to the root map.
      * @param id - id of channel for new shared object
-     * @param type - channel extension type
+     * @param type - channel factory type
      */
     public createType<T extends ISharedObject>(id: string, type: string): T {
         const instance = this.runtime.createChannel(id, type) as T;

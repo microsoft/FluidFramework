@@ -24,7 +24,7 @@ import {
     IComponentFactory,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 // tslint:disable-next-line:no-var-requires no-submodule-imports
@@ -233,9 +233,9 @@ class ProgressBarsFactory implements IComponent, IComponentFactory {
             new CounterValueType(),
         ];
 
-        const dataTypes = new Map<string, ISharedObjectExtension>();
-        const mapExtension = SharedMap.getFactory(mapValueTypes);
-        dataTypes.set(mapExtension.type, mapExtension);
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        const mapFactory = SharedMap.getFactory(mapValueTypes);
+        dataTypes.set(mapFactory.type, mapFactory);
 
         ComponentRuntime.load(
             context,

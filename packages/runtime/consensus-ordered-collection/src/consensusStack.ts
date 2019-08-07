@@ -4,9 +4,9 @@
  */
 
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
-import { ConsensusStackExtension } from "./extension";
+import { ConsensusStackFactory } from "./extension";
 import { IOrderedCollection } from "./interfaces";
 import { SnapshotableArray } from "./snapshotableArray";
 
@@ -38,7 +38,7 @@ export class ConsensusStack<T = any> extends ConsensusOrderedCollection<T> {
      */
     public static create<T = any>(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(ConsensusOrderedCollection.getIdForCreate(id),
-            ConsensusStackExtension.Type) as ConsensusStack<T>;
+            ConsensusStackFactory.Type) as ConsensusStack<T>;
     }
 
     /**
@@ -46,8 +46,8 @@ export class ConsensusStack<T = any> extends ConsensusOrderedCollection<T> {
      *
      * @returns a factory that creates and load ConsensusStack
      */
-    public static getFactory(): ISharedObjectExtension {
-        return new ConsensusStackExtension();
+    public static getFactory(): ISharedObjectFactory {
+        return new ConsensusStackFactory();
     }
 
     /**
@@ -55,6 +55,6 @@ export class ConsensusStack<T = any> extends ConsensusOrderedCollection<T> {
      * be provided
      */
     public constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, ConsensusStackExtension.Type, new SnapshotableStack<T>());
+        super(id, runtime, ConsensusStackFactory.Type, new SnapshotableStack<T>());
     }
 }

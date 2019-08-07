@@ -32,7 +32,7 @@ import {
     IEnvelope,
     IInboundSignalMessage,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -43,7 +43,7 @@ import { RemoteChannelContext } from "./remoteChannelContext";
 export interface ISharedObjectRegistry {
     // TODO consider making this async. A consequence is that either the creation of a distributed data type
     // is async or we need a new API to split the synchronous vs. asynchronous creation.
-    get(name: string): ISharedObjectExtension | undefined;
+    get(name: string): ISharedObjectFactory | undefined;
 }
 
 /**

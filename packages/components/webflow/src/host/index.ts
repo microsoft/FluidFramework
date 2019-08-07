@@ -5,7 +5,7 @@
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { MapExtension } from "@prague/map";
+import { MapFactory } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
 import { WebflowView } from "./host";
@@ -44,4 +44,4 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     private get docId() { return `${this.runtime.id}-doc`; }
 }
 
-export const webFlowFactory = new SharedComponentFactory(WebFlow, [new MapExtension()]);
+export const webFlowFactory = new SharedComponentFactory(WebFlow, [new MapFactory()]);

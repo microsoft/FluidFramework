@@ -6,7 +6,7 @@
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { ISharedCell } from "..";
-import { CellExtension } from "../extension";
+import { CellFactory } from "../extension";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
@@ -14,8 +14,8 @@ describe("Routerlicious", () => {
             let testCell: ISharedCell;
 
             beforeEach(async () => {
-                const extension = new CellExtension();
-                testCell = extension.create(new MockRuntime(), "cell");
+                const factory = new CellFactory();
+                testCell = factory.create(new MockRuntime(), "cell");
             });
 
             it("Can create a cell", () => {

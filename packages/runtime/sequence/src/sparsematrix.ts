@@ -12,7 +12,7 @@ import {
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 import {
     SharedSegmentSequence,
     SubSequence,
@@ -195,7 +195,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      */
     public static create(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedSegmentSequence.getIdForCreate(id),
-            SparseMatrixExtension.Type) as SparseMatrix;
+            SparseMatrixFactory.Type) as SparseMatrix;
     }
 
     /**
@@ -203,12 +203,12 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(): ISharedObjectExtension {
-        return new SparseMatrixExtension();
+    public static getFactory(): ISharedObjectFactory {
+        return new SparseMatrixFactory();
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SparseMatrixExtension.Type);
+        super(document, id, SparseMatrixFactory.Type);
     }
 
     // "Replace" ops currently trigger an assert in 'BaseSegment.ack()'
@@ -376,10 +376,10 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 }
 
-export class SparseMatrixExtension implements ISharedObjectExtension {
+export class SparseMatrixFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
-    public type: string = SparseMatrixExtension.Type;
+    public type: string = SparseMatrixFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(

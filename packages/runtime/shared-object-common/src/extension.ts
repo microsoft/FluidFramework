@@ -6,11 +6,11 @@
 import { IChaincodeModule } from "@prague/runtime-definitions";
 
 /**
- * Definitions of a shared extensions. Extensions follow a common model but enable custom behavior.
+ * Definitions of a shared factories. Factories follow a common model but enable custom behavior.
  */
-export interface ISharedObjectExtension extends IChaincodeModule {
+export interface ISharedObjectFactory extends IChaincodeModule {
     /**
-     * String representing the type of the extension.
+     * String representing the type of the factory.
      */
     type: string;
 

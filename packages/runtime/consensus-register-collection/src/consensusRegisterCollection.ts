@@ -15,7 +15,7 @@ import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-defini
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
-import { ConsensusRegisterCollectionExtension } from "./extension";
+import { ConsensusRegisterCollectionFactory } from "./extension";
 import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
 
 interface ILocalData {
@@ -86,7 +86,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      */
     public static create<T>(runtime: IComponentRuntime, id?: string) {
         return runtime.createChannel(SharedObject.getIdForCreate(id),
-            ConsensusRegisterCollectionExtension.Type) as ConsensusRegisterCollection<T>;
+            ConsensusRegisterCollectionFactory.Type) as ConsensusRegisterCollection<T>;
     }
 
     /**
@@ -95,7 +95,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
      * @returns a factory that creates and load ConsensusRegisterCollection
      */
     public static getFactory() {
-        return new ConsensusRegisterCollectionExtension();
+        return new ConsensusRegisterCollectionFactory();
     }
 
     private readonly data = new Map<string, ILocalData>();

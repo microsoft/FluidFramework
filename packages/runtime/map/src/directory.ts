@@ -11,7 +11,7 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObjectExtension, SharedObject, ValueType } from "@prague/shared-object-common";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
 import { posix } from "path";
 import { debug } from "./debug";
 import {
@@ -84,12 +84,12 @@ export interface IDirectoryDataObject {
 }
 
 /**
- * The extension that defines the directory
+ * The factory that defines the directory
  */
-export class DirectoryExtension {
+export class DirectoryFactory {
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
-    public readonly type: string = DirectoryExtension.Type;
+    public readonly type: string = DirectoryFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
@@ -143,7 +143,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @returns newly create shared directory (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string): SharedDirectory {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryExtension.Type) as SharedDirectory;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), DirectoryFactory.Type) as SharedDirectory;
     }
 
     /**
@@ -151,8 +151,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      *
      * @returns a factory that creates and load SharedDirectory
      */
-    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectExtension {
-        return new DirectoryExtension(defaultValueTypes);
+    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectFactory {
+        return new DirectoryFactory(defaultValueTypes);
     }
 
     public [Symbol.toStringTag]: string = "SharedDirectory";
@@ -175,7 +175,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         id: string,
         runtime: IComponentRuntime,
     ) {
-        super(id, runtime, DirectoryExtension.Type);
+        super(id, runtime, DirectoryFactory.Type);
         this.localValueMaker = new LocalValueMaker(runtime, this);
         this.setMessageHandlers();
     }

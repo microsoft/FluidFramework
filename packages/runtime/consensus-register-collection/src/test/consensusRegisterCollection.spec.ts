@@ -4,22 +4,22 @@
  */
 
 import * as assert from "assert";
-import { ConsensusRegisterCollectionExtension } from "../extension";
-import { IConsensusRegisterCollection, IConsensusRegisterCollectionExtension } from "../interfaces";
+import { ConsensusRegisterCollectionFactory } from "../extension";
+import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {
     describe("Api", () => {
         // tslint:disable:mocha-no-side-effect-code
-        generate("ConsensusRegisterCollection", new ConsensusRegisterCollectionExtension());
+        generate("ConsensusRegisterCollection", new ConsensusRegisterCollectionFactory());
         function generate(
             name: string,
-            extension: IConsensusRegisterCollectionExtension) {
+            factory: IConsensusRegisterCollectionFactory) {
 
             describe(name, () => {
                 let testCollection: IConsensusRegisterCollection;
 
                 beforeEach(async () => {
-                    testCollection = extension.create(null, "consensus-register-collection");
+                    testCollection = factory.create(null, "consensus-register-collection");
                 });
 
                 it("Can create a collection", () => {

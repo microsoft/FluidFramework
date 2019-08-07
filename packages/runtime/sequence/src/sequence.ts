@@ -58,9 +58,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     constructor(
         document: IComponentRuntime,
         public id: string,
-        extensionType: string,
+        factoryType: string,
     ) {
-        super(id, document, extensionType);
+        super(id, document, factoryType);
 
         for (const valueType of valueTypes) {
             this.registerValueType(valueType);

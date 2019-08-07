@@ -14,7 +14,7 @@ import {
     ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, MapExtension } from "@prague/map";
+import { ISharedMap, MapFactory } from "@prague/map";
 import {
     IComponentCollection,
     IComponentContext,
@@ -22,7 +22,7 @@ import {
     IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
-import { ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
@@ -121,7 +121,7 @@ export class ImageCollection extends EventEmitter implements
 
     private async initialize() {
         if (!this.runtime.existing) {
-            this.root = this.runtime.createChannel("root", MapExtension.Type) as ISharedMap;
+            this.root = this.runtime.createChannel("root", MapFactory.Type) as ISharedMap;
             this.root.register();
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
@@ -151,8 +151,8 @@ export class ImageCollectionFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        const dataTypes = new Map<string, ISharedObjectExtension>();
-        dataTypes.set(MapExtension.Type, new MapExtension());
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        dataTypes.set(MapFactory.Type, new MapFactory());
 
         ComponentRuntime.load(
             context,

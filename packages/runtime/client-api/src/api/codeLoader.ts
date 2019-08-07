@@ -39,32 +39,32 @@ class Chaincode implements IComponent, IComponentFactory {
             new sequence.SharedIntervalCollectionValueType(),
         ];
 
-        // Create channel extensions
-        const mapExtension = map.SharedMap.getFactory(mapValueTypes);
-        const sharedStringExtension = sequence.SharedString.getFactory();
-        const streamExtension = stream.Stream.getFactory();
-        const cellExtension = cell.SharedCell.getFactory();
-        const objectSequenceExtension = sequence.SharedObjectSequence.getFactory();
-        const numberSequenceExtension = sequence.SharedNumberSequence.getFactory();
-        const consensusQueueExtension = ConsensusQueue.getFactory();
-        const consensusStackExtension = ConsensusStack.getFactory();
-        const consensusRegisterCollectionExtension = ConsensusRegisterCollection.getFactory();
-        const sparseMatrixExtension = sequence.SparseMatrix.getFactory();
-        const directoryExtension = map.SharedDirectory.getFactory(mapValueTypes);
+        // Create channel factories
+        const mapFactory = map.SharedMap.getFactory(mapValueTypes);
+        const sharedStringFactory = sequence.SharedString.getFactory();
+        const streamFactory = stream.Stream.getFactory();
+        const cellFactory = cell.SharedCell.getFactory();
+        const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
+        const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
+        const consensusQueueFactory = ConsensusQueue.getFactory();
+        const consensusStackFactory = ConsensusStack.getFactory();
+        const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
+        const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
+        const directoryFactory = map.SharedDirectory.getFactory(mapValueTypes);
 
-        // Register channel extensions
+        // Register channel factories
         const modules = new Map<string, any>();
-        modules.set(mapExtension.type, mapExtension);
-        modules.set(sharedStringExtension.type, sharedStringExtension);
-        modules.set(streamExtension.type, streamExtension);
-        modules.set(cellExtension.type, cellExtension);
-        modules.set(objectSequenceExtension.type, objectSequenceExtension);
-        modules.set(numberSequenceExtension.type, numberSequenceExtension);
-        modules.set(consensusQueueExtension.type, consensusQueueExtension);
-        modules.set(consensusStackExtension.type, consensusStackExtension);
-        modules.set(consensusRegisterCollectionExtension.type, consensusRegisterCollectionExtension);
-        modules.set(sparseMatrixExtension.type, sparseMatrixExtension);
-        modules.set(directoryExtension.type, directoryExtension);
+        modules.set(mapFactory.type, mapFactory);
+        modules.set(sharedStringFactory.type, sharedStringFactory);
+        modules.set(streamFactory.type, streamFactory);
+        modules.set(cellFactory.type, cellFactory);
+        modules.set(objectSequenceFactory.type, objectSequenceFactory);
+        modules.set(numberSequenceFactory.type, numberSequenceFactory);
+        modules.set(consensusQueueFactory.type, consensusQueueFactory);
+        modules.set(consensusStackFactory.type, consensusStackFactory);
+        modules.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
+        modules.set(sparseMatrixFactory.type, sparseMatrixFactory);
+        modules.set(directoryFactory.type, directoryFactory);
 
         ComponentRuntime.load(
             context,

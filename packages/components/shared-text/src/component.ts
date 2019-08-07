@@ -251,20 +251,20 @@ export function instantiateComponent(context: IComponentContext): void {
         new SharedIntervalCollectionValueType(),
     ];
 
-    // Create channel extensions
-    const mapExtension = SharedMap.getFactory(mapValueTypes);
-    const sharedStringExtension = SharedString.getFactory();
-    const streamExtension = Stream.getFactory();
-    const cellExtension = SharedCell.getFactory();
-    const objectSequenceExtension = SharedObjectSequence.getFactory();
-    const numberSequenceExtension = SharedNumberSequence.getFactory();
+    // Create channel factories
+    const mapFactory = SharedMap.getFactory(mapValueTypes);
+    const sharedStringFactory = SharedString.getFactory();
+    const streamFactory = Stream.getFactory();
+    const cellFactory = SharedCell.getFactory();
+    const objectSequenceFactory = SharedObjectSequence.getFactory();
+    const numberSequenceFactory = SharedNumberSequence.getFactory();
 
-    modules.set(mapExtension.type, mapExtension);
-    modules.set(sharedStringExtension.type, sharedStringExtension);
-    modules.set(streamExtension.type, streamExtension);
-    modules.set(cellExtension.type, cellExtension);
-    modules.set(objectSequenceExtension.type, objectSequenceExtension);
-    modules.set(numberSequenceExtension.type, numberSequenceExtension);
+    modules.set(mapFactory.type, mapFactory);
+    modules.set(sharedStringFactory.type, sharedStringFactory);
+    modules.set(streamFactory.type, streamFactory);
+    modules.set(cellFactory.type, cellFactory);
+    modules.set(objectSequenceFactory.type, objectSequenceFactory);
+    modules.set(numberSequenceFactory.type, numberSequenceFactory);
 
     ComponentRuntime.load(
         context,

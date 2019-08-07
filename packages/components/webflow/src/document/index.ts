@@ -6,7 +6,7 @@
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
-import { MapExtension } from "@prague/map";
+import { MapFactory } from "@prague/map";
 import {
     BaseSegment,
     Client,
@@ -26,7 +26,7 @@ import {
     TextSegment,
 } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SharedString, SharedStringExtension } from "@prague/sequence";
+import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
 import { emptyArray } from "../util";
 import { Tag } from "../util/tag";
@@ -498,4 +498,4 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new MapExtension(), new SharedStringExtension()]);
+export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new MapFactory(), new SharedStringFactory()]);

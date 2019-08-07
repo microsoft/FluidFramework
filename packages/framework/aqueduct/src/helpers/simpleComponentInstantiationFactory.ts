@@ -15,7 +15,7 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import {
-    ISharedObjectExtension,
+    ISharedObjectFactory,
 } from "@prague/shared-object-common";
 
 /**
@@ -28,7 +28,7 @@ import {
 export class SimpleComponentInstantiationFactory implements IComponent, IComponentFactory  {
 
     constructor(
-        private readonly sharedObjects: ISharedObjectExtension[],
+        private readonly sharedObjects: ISharedObjectFactory[],
         private readonly entryPoint: (runtime: IComponentRuntime, context: IComponentContext) => Promise<IComponentRouter>,
     ) {
     }
@@ -40,7 +40,7 @@ export class SimpleComponentInstantiationFactory implements IComponent, ICompone
      */
     public instantiateComponent(context: IComponentContext): void {
         // Create a map of all the supported Distributed Data Structures
-        const dataTypes = new Map<string, ISharedObjectExtension>();
+        const dataTypes = new Map<string, ISharedObjectFactory>();
         this.sharedObjects.forEach((sharedObject) => {
             dataTypes.set(sharedObject.type, sharedObject);
         });

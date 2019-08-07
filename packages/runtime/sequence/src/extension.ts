@@ -4,17 +4,17 @@
  */
 
 import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectExtension } from "@prague/shared-object-common";
+import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 import { SharedNumberSequence} from "./sharedNumberSequence";
 import { SharedObjectSequence} from "./sharedObjectSequence";
 import { SharedString } from "./sharedString";
 
-export class SharedStringExtension implements ISharedObjectExtension {
+export class SharedStringFactory implements ISharedObjectFactory {
     // TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
     // load code
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public type: string = SharedStringExtension.Type;
+    public type: string = SharedStringFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
@@ -36,10 +36,10 @@ export class SharedStringExtension implements ISharedObjectExtension {
     }
 }
 
-export class SharedObjectSequenceExtension implements ISharedObjectExtension {
+export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
-    public type: string = SharedObjectSequenceExtension.Type;
+    public type: string = SharedObjectSequenceFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
@@ -61,10 +61,10 @@ export class SharedObjectSequenceExtension implements ISharedObjectExtension {
     }
 }
 
-export class SharedNumberSequenceExtension implements ISharedObjectExtension {
+export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
-    public type: string = SharedNumberSequenceExtension.Type;
+    public type: string = SharedNumberSequenceFactory.Type;
     public readonly snapshotFormatVersion: string = "0.1";
 
     public async load(
