@@ -155,15 +155,16 @@ describe("SharedString", () => {
                 sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}-${i}`));
             }
 
+            // TODO: Due to segment packing, we have only "header" and no body
+            // Need to change test to include other types of segments (like marker) to exercise "body".
             tree = sharedString.snapshot();
             assert(tree.entries.length === 2);
             assert(tree.entries[0].path === "header");
             assert(tree.entries[1].path === "content");
             subTree = tree.entries[1].value as ITree;
-            assert(subTree.entries.length === 3);
+            assert(subTree.entries.length === 2);
             assert(subTree.entries[0].path === "header");
-            assert(subTree.entries[1].path === "body");
-            assert(subTree.entries[2].path === "tardis");
+            assert(subTree.entries[1].path === "tardis");
 
             await CreateStringAndCompare(tree);
         });

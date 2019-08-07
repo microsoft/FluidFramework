@@ -101,6 +101,20 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
     return base;
 }
 
+export function clone<T>(extension: MapLike<T>) {
+    if (extension === undefined) {
+        return undefined;
+    }
+    const clone: MapLike<T> = createMap<any>();
+    for (let key in extension) {
+        let v = extension[key];
+        if (v !== null) {
+            clone[key] = v;
+        }
+    }
+    return clone;
+}
+
 export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp, seq?: number) {
     if ((!oldProps) || (op && (op.name === "rewrite"))) {
         oldProps = createMap<any>();

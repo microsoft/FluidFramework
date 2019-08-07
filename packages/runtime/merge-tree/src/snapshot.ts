@@ -8,6 +8,7 @@ import { IObjectStorageService} from "@prague/runtime-definitions";
 import { ChildLogger } from "@prague/utils";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
+import * as Properties from "./properties";
 
 // tslint:disable
 
@@ -129,23 +130,40 @@ export class Snapshot {
                 MergeTree.NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
         };
-        let segs = <ops.IJSONSegment[]>[];
-        let segLengths = <number[]> [];
-        let totalLength: number = 0;
+
+        const segs = <MergeTree.ISegment[]>[];
+        let prev: MergeTree.ISegment | undefined;
         let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
             if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
                 ((segment.removedSeq === undefined) || (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
                     (segment.removedSeq > this.seq))) {
-                segs.push(segment.toJSONObject());
-                segLengths.push(segment.cachedLength);
-                totalLength += segment.cachedLength;
+                if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
+                    prev = prev.clone();
+                    prev.append(segment.clone());
+                } else {
+                    if (prev) {
+                        segs.push(prev);
+                    }
+                    prev = segment;
+                }
             }
             return true;
         }
+
         this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
-        this.segments = segs;
-        this.segmentLengths = segLengths;
+        if (prev) {
+            segs.push(prev);
+        }
+
+        this.segments = [];
+        this.segmentLengths = [];
+        let totalLength: number = 0;
+        segs.map((segment) => {
+            totalLength += segment.cachedLength;
+            this.segments.push(segment.toJSONObject());
+            this.segmentLengths.push(segment.cachedLength);
+        });
 
         // We observed this.header.segmentsTotalLength < totalLength to happen in some cases
         // When this condition happens, we might not write out all segments in getSeqLengthSegs() when writing out "body"
@@ -156,7 +174,7 @@ export class Snapshot {
             this.header.segmentsTotalLength = totalLength;
         }
 
-        return segs;
+        return this.segments;
     }
 
     public static async loadChunk(storage: IObjectStorageService, path: string): Promise<ops.MergeTreeChunk> {
