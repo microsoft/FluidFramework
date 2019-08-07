@@ -99,6 +99,6 @@ describe("MergeTree.Client", () => {
             }
         })
             // tslint:disable-next-line: mocha-no-side-effect-code
-            .timeout(10 * 1000);
+            .timeout(30 * 1000);
     }
 });
