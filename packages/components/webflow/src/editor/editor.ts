@@ -5,6 +5,7 @@
 
 import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "@prague/flow-util";
+import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "./caret";
 import { debug } from "./debug";
@@ -22,6 +23,7 @@ export class Editor {
 
         root.tabIndex = 0;
         root.contentEditable = "true";
+        root.addEventListener("paste", this.onPaste);
         root.addEventListener("keydown", this.onKeyDown);
         root.addEventListener("keypress", this.onKeyPress);
     }
@@ -116,6 +118,15 @@ export class Editor {
                 debug(`Key: ${e.key} (${e.keyCode})`);
             }
         }
+    }
+
+    private readonly onPaste = (e: ClipboardEvent) => {
+        if (!this.shouldHandleEvent(e)) {
+            return;
+        }
+
+        this.consume(e);
+        paste(this.doc, e.clipboardData, this.caret.position);
     }
 
     private readonly onKeyPress = (e: KeyboardEvent) => {

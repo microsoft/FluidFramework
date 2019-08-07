@@ -145,7 +145,7 @@ class TagsFormatter extends Formatter<ITagsState> {
             case DocSegmentKind.paragraph: {
                 layout.popNode();
                 const previous = layout.cursor.previous;
-                const pg = this.pushTag(layout, Tag.li, previous && previous.nextSibling);
+                const pg = this.pushTag(layout, state.pTag, previous && previous.nextSibling);
                 syncCss(pg as HTMLElement, getCss(segment), undefined);
                 return true;
             }
@@ -153,6 +153,11 @@ class TagsFormatter extends Formatter<ITagsState> {
             case DocSegmentKind.inclusion: {
                 layout.pushFormat(inclusionFormatter);
                 return false;
+            }
+
+            case DocSegmentKind.beginTags: {
+                layout.pushFormat(tagsFormatter);
+                return true;
             }
 
             case DocSegmentKind.endTags: {
@@ -200,6 +205,11 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
             case DocSegmentKind.paragraph: {
                 layout.popFormat();
                 layout.pushFormat(this);
+                return true;
+            }
+
+            case DocSegmentKind.beginTags: {
+                layout.pushFormat(tagsFormatter);
                 return true;
             }
 
