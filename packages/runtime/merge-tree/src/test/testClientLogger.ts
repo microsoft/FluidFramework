@@ -58,11 +58,18 @@ export class TestClientLogger {
     }
 
     public validate() {
+        const baseText = this.clients[0].getText();
         this.clients.forEach(
-            (c) => assert.equal(
-                c.getText(),
-                this.clients[0].getText(),
-                `Client ${c.longClientId} does not match client ${this.clients[0].longClientId}${this.toString()}`));
+            (c) => {
+                if (c === this.clients[0]) { return; }
+                // Precheck to avoid this.toString() in the string template
+                if (c.getText() !== baseText) {
+                    assert.equal(
+                        c.getText(),
+                        baseText,
+                        `Client ${c.longClientId} does not match client ${this.clients[0].longClientId}${this}`);
+                }
+            });
     }
 
     public toString() {

@@ -208,7 +208,7 @@ describe("client.applyMsg", () => {
         const start = 0;
         const end = 5;
         const intialText = client.getText();
-        const initalLength = intialText.length;
+        const initialLength = intialText.length;
 
         assert.equal(segmentInfo.segment.removedSeq, undefined);
         assert(segmentInfo.segment.segmentGroups.empty);
@@ -230,7 +230,7 @@ describe("client.applyMsg", () => {
 
         assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
         assert(segmentInfo.segment.segmentGroups.empty);
-        assert.equal(client.getLength(), initalLength - (end - start));
+        assert.equal(client.getLength(), initialLength - (end - start));
         assert.equal(client.getText(), intialText.substring(0, start) + intialText.substring(end));
     });
 
@@ -241,9 +241,9 @@ describe("client.applyMsg", () => {
         const logger = new TestClientLogger([client, remoteClient]);
         logger.log();
         let seq = 0;
-        const initalMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
+        const initialMsg = client.makeOpMessage(client.insertTextLocal(0, "-"), ++seq);
 
-        logger.log(initalMsg, (c) => c.applyMsg(initalMsg));
+        logger.log(initialMsg, (c) => c.applyMsg(initialMsg));
         logger.validate();
 
         const messages = [
