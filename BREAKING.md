@@ -1,5 +1,7 @@
 # 0.8 Breaking Changes
 
+- [Deprecate @prague/app-component](#deprecate-pragueapp-component)
+
 ## `sequence.annotateRange()` argument order changed
 The `start` and `end` arguments of `sequence.annotateRange()` have been changed to the first two arguments to make the codebase more consistent. The new function signature is as below:
 ```typescript
@@ -138,7 +140,15 @@ declare module "@prague/component-core-interfaces" {
 }
 ```
 
+## Deprecate @prague/app-component
+
+@prague/app-component is deprecated. Please switch to use @prague/aqueduct for the new component interfaces
+
 # 0.7 Breaking Changes
+
+- [instantiateComponent changes](#instantiatecomponent-changes)
+
+## instantiateComponent changes
 
 `ComponentRuntime.load` no longer returns the runtime as a promise. Instead clients need to provide a callback to the
 method which is called with the runtime as an argument once the runtime is loaded and ready. This method will be
@@ -176,8 +186,8 @@ ComponentRuntime.load(
 # 0.6 Breaking Changes
 
 - [Interface renames](#interface-renames)
-- [defaultValueTypes is no longer global](#defaultValueTypes-is-no-longer-global)
-- [ContainerRuntime registerRequestHandler passed into the constructor](#containerRuntime-registerRequestHandler-passed-into-the-constructor)
+- [defaultValueTypes is no longer global](#defaultvaluetypes-is-no-longer-global)
+- [ContainerRuntime registerRequestHandler passed into the constructor](#containerruntime-registerrequesthandler-passed-into-the-constructor)
 
 ## Interface renames
 
@@ -237,9 +247,9 @@ We use a factory so we can pass in the runtime after it has been created to be u
 # 0.5 Breaking Changes (July 3, 2019)
 Renamed the sharepoint driver files and class names in odsp-socket-storage. Deleted the previous implementation of odsp driver.
 
-- [attach() on IChannel/ISharedObject is now register()](#attach()-on-IChannel/ISharedObject-is-now-register())
-- [Separate Create and Attach Component](#Separate-Create-and-Attach-Component)
-- [Stream inheritance and Cell rename](#Stream-inheritance-and-Cell-rename)
+- [attach() on IChannel/ISharedObject is now register()](#attach-on-ichannelisharedobject-is-now-register)
+- [Separate Create and Attach Component](#separate-create-and-attach-component)
+- [Stream inheritance and Cell rename](#stream-inheritance-and-cell-rename)
 
 ## attach() on IChannel/ISharedObject is now register()
 

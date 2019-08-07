@@ -72,7 +72,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: this.getOwner(),
-                    encoding: "unclear",
+                    encoding: "utf-8",
                 },
             });
         }
@@ -123,7 +123,8 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
     }
 
     protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
-        this.owner = await storage.read(ownerPath);
+        const owner = await storage.read(ownerPath);
+        this.owner = Buffer.from(owner, "base64").toString("utf-8");
     }
 
     protected setOwner(): string | undefined {

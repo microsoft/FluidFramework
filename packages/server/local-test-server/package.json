@@ -42,7 +42,6 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@chaincode/table-document": "^0.8.0",
-    "@prague/app-component": "^0.8.0",
     "@prague/app-datastore": "^0.8.0",
     "@prague/aqueduct": "^0.8.0",
     "@prague/cell": "^0.8.0",

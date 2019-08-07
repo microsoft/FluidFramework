@@ -4,56 +4,79 @@
  */
 
 // tslint:disable:no-console
-import { Component } from "@prague/app-component";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { Counter, CounterValueType } from "@prague/map";
+import {
+  PrimedComponent,
+  SharedComponentFactory,
+  SimpleContainerRuntimeFactory,
+  SimpleModuleInstantiationFactory,
+} from "@prague/aqueduct";
+import {
+  IComponentHTMLOptions,
+  IComponentHTMLVisual,
+} from "@prague/component-core-interfaces";
+import {
+  IContainerContext,
+  IRuntime,
+} from "@prague/container-definitions";
+import { Counter, CounterValueType, SharedMap } from "@prague/map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ExtendedDocument as Document } from "./extendedDocument";
 import { OwnedSharedMap } from "./ownedMap";
 
-export class OwnedMap extends Document {
+export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
+
+  public static getFactory() { return OwnedMap.factory; }
+
+  public get IComponentHTMLVisual() { return this; }
+  public get IComponentHTMLRender() { return this; }
+
+  private static readonly factory = new SharedComponentFactory(
+    OwnedMap,
+    [
+      SharedMap.getFactory([new CounterValueType()]),
+      OwnedSharedMap.getFactory(),
+    ],
+  );
+
   public ownedMap: OwnedSharedMap;
   public counter: Counter;
+
+  // #region IComponetHTMLView
+  public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
+    const render = () => this.doRender(elm);
+    this.root.on("op", () => {
+      render();
+    });
+
+    this.ownedMap.on("op", () => {
+      render();
+    });
+
+    this.doRender(elm);
+  }
+  // #endregion ICompoentHTMLRender
 
   /**
    *  The component has been loaded. Render the component into the provided div
    */
-  public async opened() {
-    const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-    if (maybeDiv) {
-      this.counter = await this.root.wait<Counter>("clicks");
-      this.ownedMap = await this.root.wait<OwnedSharedMap>("ownedMap");
-
-      const render = () => this.render(maybeDiv);
-
-      this.root.on("op", () => {
-        render();
-      });
-
-      this.ownedMap.on("op", () => {
-        render();
-      });
-
-      this.render(maybeDiv);
-
-    } else {
-      return;
-    }
+  protected async componentInitializingFromExisting() {
+    this.counter = await this.root.wait<Counter>("clicks");
+    this.ownedMap = await this.root.wait<OwnedSharedMap>("ownedMap");
   }
+
   /**
    * Create the component's schema and perform other initialization tasks
    * (only called when document is initially created).
    */
-  protected async create() {
+  protected async componentInitializingFirstTime() {
     this.root.set("clicks", 0, CounterValueType.Name);
-
-    this.root.set("ownedMap", this.createOwnedMap());
+    this.counter = await this.root.wait<Counter>("clicks");
+    this.root.set("ownedMap", OwnedSharedMap.create(this.runtime));
     this.ownedMap = this.root.get("ownedMap");
     this.ownedMap.set("title", "Default Title");
   }
 
-  protected render(host: HTMLDivElement) {
+  private doRender(host: HTMLElement) {
 
     let title = "Not Defined Yet!";
     let amOwner = false;
@@ -93,14 +116,21 @@ export class OwnedMap extends Document {
   }
 }
 
+export const fluidExport = new SimpleModuleInstantiationFactory(
+  "@chaincode/owned-map",
+  new Map([
+    ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
+  ]),
+);
+
 export async function instantiateRuntime(
   context: IContainerContext,
 ): Promise<IRuntime> {
-  return Component.instantiateRuntime(
+  return SimpleContainerRuntimeFactory.instantiateRuntime(
     context,
-    "@chaincode/counter",
+    "@chaincode/owned-map",
     new Map(
       [
-        ["@chaincode/counter", Promise.resolve(Component.createComponentFactory(OwnedMap))],
+        ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
       ]));
 }
