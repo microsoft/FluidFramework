@@ -5,12 +5,14 @@
 
 import {
     IBranchOrigin,
+    IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import {
     extractBoxcar,
@@ -68,6 +70,7 @@ const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
         lastUpdate: -1,
         nack: false,
         referenceSequenceNumber: -1,
+        scopes: [],
     },
 };
 
@@ -115,6 +118,7 @@ export class DeliLambda implements IPartitionLambda {
                     client.referenceSequenceNumber,
                     client.lastUpdate,
                     client.canEvict,
+                    client.scopes,
                     client.nack);
             }
         }
@@ -242,37 +246,44 @@ export class DeliLambda implements IPartitionLambda {
                         return;
                     }
                 } else if (message.operation.type === MessageType.ClientJoin) {
+                    const clientJoinMessage = systemContent as IClientJoin;
                     this.upsertClient(
-                        systemContent.clientId,
+                        clientJoinMessage.clientId,
                         0,
                         this.minimumSequenceNumber,
                         message.timestamp,
-                        true);
+                        true,
+                        clientJoinMessage.detail.scopes);
                 } else if (message.operation.type === MessageType.Fork) {
                     winston.info(`Fork ${message.documentId} -> ${systemContent.name}`);
                 }
             } else {
-                // Nack handling
+                // Nack inexistent client.
                 const node = this.clientNodeMap.get(message.clientId);
                 if (!node || node.value.nack) {
                     return this.createNackMessage(message);
                 }
-
                 // Verify that the message is within the current window.
                 // -1 check just for directly sent ops (e.g., using REST API).
                 if (message.clientId &&
                     message.operation.referenceSequenceNumber !== -1 &&
                     message.operation.referenceSequenceNumber < this.minimumSequenceNumber) {
-                    // Add in a placeholder for the nack'ed client to allow them to rejoin at the current MSN
                     this.upsertClient(
                         message.clientId,
                         message.operation.clientSequenceNumber,
                         this.minimumSequenceNumber,
                         message.timestamp,
                         true,
+                        [],
                         true);
-
                     return this.createNackMessage(message);
+                }
+                // Nack if an unauthorized client tries to summarize.
+                if (message.operation.type === MessageType.Summarize) {
+                    const canSummarize = node.value.scopes.indexOf(ScopeType.SummaryWrite) !== -1;
+                    if (!canSummarize) {
+                        return this.createNackMessage(message);
+                    }
                 }
             }
         }
@@ -635,6 +646,7 @@ export class DeliLambda implements IPartitionLambda {
      * @param referenceSequenceNumber The sequence number the client is at
      * @param timestamp The time of the operation
      * @param canEvict Flag indicating whether or not we can evict the client (branch clients cannot be evicted)
+     * @param scopes scope of the client
      * @param nack Flag indicating whether we have nacked this client
      */
     private upsertClient(
@@ -643,6 +655,7 @@ export class DeliLambda implements IPartitionLambda {
         referenceSequenceNumber: number,
         timestamp: number,
         canEvict: boolean,
+        scopes: string[] = [],
         nack: boolean = false) {
 
         // Add the client ID to our map if this is the first time we've seen it
@@ -654,6 +667,7 @@ export class DeliLambda implements IPartitionLambda {
                 lastUpdate: timestamp,
                 nack,
                 referenceSequenceNumber,
+                scopes,
             });
             this.clientNodeMap.set(clientId, newNode);
         }

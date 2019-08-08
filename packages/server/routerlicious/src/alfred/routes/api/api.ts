@@ -87,6 +87,7 @@ function sendJoin(tenantId: string, documentId: string, clientId: string, produc
     const detail: IClient = {
         mode: undefined,
         permission: [],
+        scopes: [],
         type: Robot,
         user: {id: "Rest-Client"},
     };

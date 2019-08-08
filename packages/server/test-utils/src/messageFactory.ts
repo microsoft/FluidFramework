@@ -4,10 +4,12 @@
  */
 
 import {
+    IClientJoin,
     IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
-    MessageType } from "@prague/protocol-definitions";
+    MessageType,
+    ScopeType } from "@prague/protocol-definitions";
 import {
     BoxcarType,
     IBoxcarMessage,
@@ -89,10 +91,19 @@ export class MessageFactory {
     }
 
     public createJoin(timestamp = Date.now()) {
+        const joinMessage: IClientJoin = {
+            clientId: this.clientId,
+            detail: {
+                permission: [],
+                scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+                type: "",
+                user: null,
+            },
+        };
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
-            data: JSON.stringify({ clientId: this.clientId}),
+            data: JSON.stringify(joinMessage),
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientJoin,

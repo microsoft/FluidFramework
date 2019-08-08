@@ -15,6 +15,7 @@ import {
     IResolvedUrl,
     ITokenClaims,
     IUrlResolver,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as jwt from "jsonwebtoken";
@@ -81,7 +82,7 @@ class InsecureUrlResolver implements IUrlResolver {
         const claims: ITokenClaims = {
             documentId,
             permission: "read:write",
-            scopes: ["doc:read", "doc:write", "summary:write"],
+            scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             tenantId,
             user: { id: this.user },
         };

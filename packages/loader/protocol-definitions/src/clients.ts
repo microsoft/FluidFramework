@@ -7,11 +7,13 @@ import { IUser } from "./users";
 
 export const Browser = "browser";
 
+// TODO: Remove mode and use scopes to decide permission.
 export interface IClient {
     mode?: "readonly" | undefined;
     type: string;
     permission: string[];
     user: IUser;
+    scopes: string[];
 }
 
 export interface ISequencedClient {

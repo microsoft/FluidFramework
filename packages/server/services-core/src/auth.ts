@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, IUser } from "@prague/protocol-definitions";
+import { ITokenClaims, IUser, ScopeType } from "@prague/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 import { debug } from "util";
 // tslint:disable-next-line:no-submodule-imports
@@ -23,7 +23,7 @@ export function generateToken(tenantId: string, documentId: string, key: string,
     const claims: ITokenClaims = {
         documentId,
         permission: "read:write",
-        scopes: ["doc:read", "doc:write", "summary:write"],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
         tenantId,
         user,
     };

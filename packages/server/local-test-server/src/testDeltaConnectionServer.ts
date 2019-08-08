@@ -205,6 +205,7 @@ export function register(
 
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
+            messageClient.scopes = claims.scopes;
 
             // Join the room to receive signals.
             roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);

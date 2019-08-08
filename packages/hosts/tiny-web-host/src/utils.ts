@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@prague/protocol-definitions";
+import { ITokenClaims, ScopeType } from "@prague/protocol-definitions";
 import * as jwt from "jsonwebtoken";
 
 // This is insecure, but is being used for the time being for ease of use during the hackathon.
@@ -33,7 +33,7 @@ export async function auth(tenantId: string, documentId: string, getToken: () =>
     const claims: ITokenClaims = {
         documentId,
         permission: "read:write",
-        scopes: ["doc:read", "doc:write", "summary:write"],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
         tenantId,
         user: { id: "anonymous-coward" },
     };

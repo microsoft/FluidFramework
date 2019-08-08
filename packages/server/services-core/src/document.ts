@@ -97,6 +97,8 @@ export interface IDocument {
         lastUpdate: number,
 
         nack: boolean,
+
+        scopes: string[],
     }];
 
     branchMap: IRangeTrackerSnapshot;

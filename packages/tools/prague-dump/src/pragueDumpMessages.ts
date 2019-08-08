@@ -38,7 +38,7 @@ async function loadAllSequencedMessages(
         curr = messages[messages.length - 1].sequenceNumber;
     }
 
-    const client: IClient = { mode: undefined, permission: [], type: "browser", user: { id: "blah" } };
+    const client: IClient = { mode: undefined, permission: [], type: "browser", scopes: [], user: { id: "blah" } };
     const deltaStream = await documentService.connectToDeltaStream(client);
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();

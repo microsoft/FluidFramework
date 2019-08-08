@@ -19,6 +19,7 @@ export interface IClientSequenceNumber {
     nack: boolean;
     referenceSequenceNumber: number;
     clientSequenceNumber: number;
+    scopes: string[];
 }
 
 export interface ICheckpoint {

@@ -103,6 +103,7 @@ export function register(
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
+            messageClient.scopes = claims.scopes;
 
             // Join the room to receive signals.
             roomMap.set(clientId, `${claims.tenantId}/${claims.documentId}`);
@@ -117,7 +118,7 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            // Readonly clients don't need an orderer.
+            // TODO: Use scopes to decide readonly clients.
             if (messageClient.mode !== "readonly") {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient);
