@@ -47,11 +47,17 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
         if (instance.IComponentLoadable) {
             componentUrl = instance.IComponentLoadable.url;
         }
-        const componentRemoved: boolean = this.sequence.delete(componentUrl);
-        if (componentRemoved) {
-            this.urlToComponent.delete(componentUrl);
+        let position: number = 0;
+        const componentsUrl: string[] = this.sequence.getItems(0);
+        while (componentUrl !== componentsUrl[position]) {
+            position += 1;
         }
-        throw new Error("Deletion of item from sequence was unsuccessful!!");
+        if (position < componentsUrl.length) {
+            this.sequence.remove(position, position + 1);
+            this.urlToComponent.delete(componentUrl);
+        } else {
+            throw new Error("Component url is not found in sequence. Component not removed!!");
+        }
     }
 
     public render(element: HTMLElement) {
