@@ -349,6 +349,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return this.client.posFromRelativePos(relativePos);
     }
 
+    public walkSegments<TClientData>(
+        handler: MergeTree.ISegmentAction<TClientData>,
+        start?: number, end?: number, accum?: TClientData) {
+
+        return this.client.walkSegments<TClientData>(handler, start, end, accum);
+    }
+
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // insert first, so local references can slide to the inserted seg
         // if any

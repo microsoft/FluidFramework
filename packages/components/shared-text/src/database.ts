@@ -85,10 +85,6 @@ export class GraphQLService {
                         function leaf(
                             segment: MergeTree.ISegment,
                             pos: number,
-                            refSeq: number,
-                            clientId: number,
-                            start: number,
-                            end: number,
                         ) {
                             if (MergeTree.Marker.is(segment)) {
                                 if (segment.refType === MergeTree.ReferenceType.Tile && segment.hasTileLabel("pg")) {
@@ -99,11 +95,8 @@ export class GraphQLService {
 
                             return true;
                         }
-                        root.client.mergeTree.mapRange(
-                            { leaf },
-                            MergeTree.UniversalSequenceNumber,
-                            root.client.getClientId());
 
+                        root.walkSegments(leaf);
                         return pgs;
                     },
                     type: GraphQLList(paragraphType),

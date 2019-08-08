@@ -152,8 +152,7 @@ class Speller {
 
         do {
             endMarkerFound = false;
-            this.sharedString.client.mergeTree.mapRange({ leaf: gatherPG }, MergeTree.UniversalSequenceNumber,
-                this.sharedString.client.getClientId(), undefined, startPGPos);
+            this.sharedString.walkSegments(gatherPG, startPGPos);
         } while (endMarkerFound);
 
         if (prevPG) {

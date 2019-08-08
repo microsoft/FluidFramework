@@ -612,8 +612,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                         }, itemsContext);
                         itemsContext.paragraphLexer = paragraphLexer;
 
-                        mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,
-                            sharedString.client.getClientId(), itemsContext, nextPos, tilePos.pos);
+                        sharedString.walkSegments(Paragraph.segmentToItems, nextPos, tilePos.pos, itemsContext);
                         pgMarker.itemCache = itemsContext.itemInfo;
                     }
                 }
@@ -680,8 +679,7 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
         }
         return false;
     }
-    sharedString.client.mergeTree.mapRange({ leaf: addColumn },
-        MergeTree.UniversalSequenceNumber, sharedString.client.getClientId(), undefined, pos);
+    sharedString.walkSegments(addColumn, pos);
     return nextPos;
 }
 
@@ -753,8 +751,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
         }
         return true;
     }
-    mergeTree.mapRange({ leaf: printTableSegment }, MergeTree.UniversalSequenceNumber, sharedString.client.getClientId(),
-        undefined, tableMarkerPos, endTablePos);
+    sharedString.walkSegments(printTableSegment, tableMarkerPos, endTablePos);
     console.log(lineBuf);
 }
 

@@ -162,14 +162,15 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     public getItems(start: number, end?: number): T[] {
         const items: T[] = [];
 
-        this.client.walkSegments(
-            start,
-            end,
+        this.walkSegments(
             (segment: ISegment) => {
                 if (SubSequence.is(segment)) {
                     items.push(...segment.items);
                 }
-            });
+                return true;
+            },
+            start,
+            end);
 
         return items;
     }

@@ -41,13 +41,12 @@ class SubSequenceTestClient extends TestClient {
         let items: string = "";
 
         this.walkSegments(
-            0,
-            this.getLength(),
             (s) => {
                 if (SubSequence.is(s)) {
                     items += s.items.toString();
                 }
-            });
+                return true;
+            }, 0, this.getLength());
 
         return `cli: ${this.getLongClientId(clientId)} refSeq: ${refSeq}: ${items}`;
     }

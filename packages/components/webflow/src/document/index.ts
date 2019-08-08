@@ -104,8 +104,7 @@ type LeafAction = (position: number, segment: ISegment, startOffset: number, end
  * leaf action callback, allowing us to simplify the the callback signature and while (maybe)
  * avoiding unnecessary allocation to wrap the given 'callback'.
  */
-const accumAsLeafAction = {
-    leaf: (
+const accumAsLeafAction = (
         segment: ISegment,
         position: number,
         refSeq: number,
@@ -113,8 +112,7 @@ const accumAsLeafAction = {
         startOffset: number,
         endOffset: number,
         accum?: LeafAction,
-    ) => (accum as LeafAction)(position, segment, startOffset, endOffset),
-};
+    ) => (accum as LeafAction)(position, segment, startOffset, endOffset);
 
 // TODO: We need the ability to create LocalReferences to the end of the document. Our
 //       workaround creates a LocalReference with an 'undefined' segment that is never
@@ -405,13 +403,7 @@ export class FlowDocument extends PrimedComponent {
         // Note: We pass the leaf callback action as the accumulator, and then use the 'accumAsLeafAction'
         //       actions to invoke the accum for each leaf.  (Paranoid micro-optimization that attempts to
         //       avoid allocation while simplifying the 'LeafAction' signature.)
-        this.mergeTree.mapRange(
-            /* actions: */ accumAsLeafAction,
-            this.currentSeq,
-            this.clientId,
-            /* accum: */ callback,
-            start,
-            end);
+        this.sharedString.walkSegments(accumAsLeafAction, start, end, callback);
     }
 
     public getText(start?: number, end?: number): string {

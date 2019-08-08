@@ -161,7 +161,7 @@ export const sharedStringToBlockArary = (sharedString: SharedString): ContentBlo
   let currentBlock: any = { key: undefined, text: "" };
 
   let characterList = [];
-  sharedString.client.walkSegments(0, sharedString.client.getLength(), (segment: ISegment) => {
+  sharedString.walkSegments((segment: ISegment) => {
     if (segment.type === "Marker") {
       const markerSegment = segment as Marker;
       if (
@@ -198,7 +198,8 @@ export const sharedStringToBlockArary = (sharedString: SharedString): ContentBlo
       characterList = characterList.concat(new Array(textSegment.cachedLength).fill(meta));
       currentBlock.text += textSegment.text;
     }
-  });
+    return true;
+  }, 0, sharedString.getLength());
 
   blocks.push(
     new ContentBlock({
@@ -214,7 +215,7 @@ export const getMarkersInBlockRange = (sharedString: SharedString, startKey: str
 
   let enteredRange = false;
   let exitedRange = false;
-  sharedString.client.walkSegments(0, sharedString.getLength(), (segment: ISegment) => {
+  sharedString.walkSegments((segment: ISegment) => {
     if (
       !exitedRange &&
       segment.type === "Marker" &&
@@ -231,7 +232,8 @@ export const getMarkersInBlockRange = (sharedString: SharedString, startKey: str
         exitedRange = true;
       }
     }
-  });
+    return true;
+  }, 0, sharedString.getLength());
 
   return markers;
 };

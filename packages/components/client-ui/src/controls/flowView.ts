@@ -1024,8 +1024,7 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
         if (end === lineDiv.linePos) {
             end++;
         }
-        flowView.client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, MergeTree.UniversalSequenceNumber,
-            flowView.client.getClientId(), lineContext, lineDiv.linePos, end);
+        flowView.sharedString.walkSegments(renderSegmentIntoLine, lineDiv.linePos, end, lineContext);
         lineDiv.lineEnd = lineEnd;
         showBookmarks(flowView, lineDiv.linePos,
             lineEnd, lineDiv.style.font, lineDivHeight, lineDiv.breakIndex, docContext,
@@ -2141,7 +2140,6 @@ export function breakPGIntoLinesFFVP(flowView: FlowView, itemInfo: Paragraph.IPa
 
 function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, deferWhole = false): IRenderOutput {
     const flowView = layoutContext.flowView;
-    const client = flowView.client;
     const sharedString = flowView.sharedString;
     // TODO: for stable viewports cache the geometry and the divs
     // TODO: cache all this pre-amble in style blocks; override with pg properties
@@ -2297,8 +2295,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 if (viewportStartPos < 0) {
                     viewportStartPos = lineStart;
                 }
-                client.mergeTree.mapRange({ leaf: renderSegmentIntoLine }, MergeTree.UniversalSequenceNumber,
-                    client.getClientId(), lineContext, lineStart, lineEnd);
+                sharedString.walkSegments(renderSegmentIntoLine, lineStart, lineEnd, lineContext);
                 if (flowView.bookmarks) {
                     let computedEnd = lineEnd;
                     if (!computedEnd) {
@@ -2344,7 +2341,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
     const fetchLog = false;
     let segoff: ISegmentOffset;
-    const totalLength = client.getLength();
+    const totalLength = sharedString.getLength();
     let viewportEndPos = currentPos;
     // TODO: use end of doc marker
     do {
@@ -2557,8 +2554,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
             if (!curPGMarker.itemCache) {
                 itemsContext.itemInfo = { items: [], minWidth: 0 };
-                client.mergeTree.mapRange({ leaf: Paragraph.segmentToItems }, MergeTree.UniversalSequenceNumber,
-                    client.getClientId(), itemsContext, currentPos, curPGMarkerPos + 1);
+                sharedString.walkSegments(Paragraph.segmentToItems, currentPos, curPGMarkerPos + 1, itemsContext);
                 curPGMarker.itemCache = itemsContext.itemInfo;
             } else {
                 itemsContext.itemInfo = curPGMarker.itemCache;
@@ -2616,13 +2612,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
     // Find overlay annotations
 
     const overlayMarkers: IOverlayMarker[] = [];
-    client.mergeTree.mapRange(
-        { leaf: gatherOverlayLayer },
-        MergeTree.UniversalSequenceNumber,
-        client.getClientId(),
-        overlayMarkers,
-        viewportStartPos,
-        viewportEndPos);
+    sharedString.walkSegments(gatherOverlayLayer, viewportStartPos, viewportEndPos, overlayMarkers);
 
     layoutContext.viewport.removeInclusions();
 
@@ -4796,8 +4786,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 return !someSet;
             }
         };
-        this.sharedString.client.mergeTree.mapRange({ leaf: findPropSet }, MergeTree.UniversalSequenceNumber,
-            this.sharedString.client.getClientId(), undefined, start, end);
+        this.sharedString.walkSegments(findPropSet, start, end);
         this.undoRedoManager.closeCurrentOperation();
         if (someSet) {
             this.sharedString.annotateRange(start, end, { [name]: valueOff });

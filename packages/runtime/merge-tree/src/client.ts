@@ -17,6 +17,7 @@ import {
     elapsedMicroseconds,
     IConsensusInfo,
     ISegment,
+    ISegmentAction,
     IUndoInfo,
     Marker,
     MergeTree,
@@ -233,20 +234,16 @@ export class Client {
         return undefined;
     }
 
-    public walkSegments(start: number, end: number, handler: (segment: ISegment) => void) {
+    public walkSegments<TClientData>(
+        handler: ISegmentAction<TClientData>,
+        start?: number, end?: number, accum?: TClientData) {
 
         this.mergeTree.mapRange(
             {
-                leaf: (segment) => {
-                    handler(segment);
-                    return true;
-                },
+                leaf: handler,
             },
-            this.getCurrentSeq(),
-            this.getClientId(),
-            undefined,
-            start,
-            (end === undefined) ? this.getLength() : end);
+            this.getCurrentSeq(), this.getClientId(),
+            accum, start, end);
     }
 
     public getCollabWindow() {

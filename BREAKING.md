@@ -27,10 +27,11 @@ public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ## Updated sequence API to provide richer access to the underlying merge tree
 The following methods of mergeTree have been exposed on sequence:
 - `addLocalReference()`
+- `removeLocalReference()`
 - `posFromRelativePos()`
 - `getPosition()`
 - `getContainingSegment()` (takes only one argument: position. If you want to use a remote refseq and/or clientID, use sequence.resolveRemoteClientPosition())
-- `removeLocalReference()`
+- `walkSegments()` (this should be used instead of `mergeTree.mapRange()`)
 
 If these are being accessed directly from the sequence or client, they should be changed to access through sequence, since these will become private in mergeTree/mergeTree client in the future.
 
