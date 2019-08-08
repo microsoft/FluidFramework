@@ -5,11 +5,7 @@ FROM node:10.16.0-slim AS base
 
 # node-gyp and docfx dependencies
 RUN apt-get update && apt-get install -y \
-        python \
-        make \
         git \
-        curl \
-        g++ \
         mono-complete \
         wget \
         unzip
@@ -20,26 +16,10 @@ RUN wget https://github.com/dotnet/docfx/releases/download/v2.42.3/docfx.zip -nv
 RUN unzip docfx.zip
 WORKDIR /
 
-# Install api-documenter
-RUN npm install -g @microsoft/api-documenter@^7.2.1
-
 #############################
 FROM base AS r11s
 
 COPY . .
-
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
-# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
-# and be able to change them.
-RUN npm install --unsafe-perm
-
-RUN npm run build:compile
-
-#############################
-FROM r11s AS docs
-
-# Build docs; runs both api-extractor and api-documenter
-RUN npm run build:docs
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api
