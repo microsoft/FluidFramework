@@ -20,7 +20,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
     constructor(
         public objectId: string,
-        // tslint:disable-next-line:variable-name
         private _state: ConnectionState,
         private readonly submitFn: (message: IDocumentMessage) => number) {
     }

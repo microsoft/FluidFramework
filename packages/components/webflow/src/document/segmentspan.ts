@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:variable-name
 // tslint:disable:binary-expression-operand-order
 import { ISegment } from "@prague/merge-tree";
 

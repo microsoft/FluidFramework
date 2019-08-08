@@ -103,9 +103,7 @@ export class ComponentHost extends EventEmitter implements IComponentDeltaHandle
     private closed = false;
     private pendingAttach = new Map<string, IAttachMessage>();
 
-    // tslint:disable-next-line:variable-name
     private _platform: IPlatform;
-    // tslint:enable-next-line:variable-name
 
     private constructor(
         private readonly componentRuntime: IComponentRuntime,

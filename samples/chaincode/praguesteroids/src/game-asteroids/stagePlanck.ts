@@ -6,10 +6,8 @@
 import * as Stage from "stage-js";
 
 export class PlanckViewer extends Stage {
-    // tslint:disable:variable-name
     private _options: any;
     private _world: any;
-    // tslint:enable:variable-name
 
     constructor(world, opts) {
         super();

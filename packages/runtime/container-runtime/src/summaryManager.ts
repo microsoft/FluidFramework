@@ -28,7 +28,6 @@ class ClientComparer implements IComparer<ITrackedClient> {
 }
 
 export class SummaryManager extends EventEmitter {
-    // tslint:disable-next-line:variable-name
     private _summarizer: string;
     private readonly heap = new Heap<ITrackedClient>((new ClientComparer()));
     private readonly heapMembers = new Map<string, IHeapNode<ITrackedClient>>();

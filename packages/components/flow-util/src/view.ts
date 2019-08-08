@@ -18,7 +18,6 @@ export interface IView<TInit, TProps> {
 }
 
 export abstract class View<TInit extends TProps, TProps = {} | undefined> implements IView<TInit, TProps> {
-    // tslint:disable-next-line:variable-name
     private _root?: Element;
     private listeners?: IListenerRegistration[];
 

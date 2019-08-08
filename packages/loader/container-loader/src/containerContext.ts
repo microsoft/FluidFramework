@@ -143,9 +143,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     public legacyMessaging = true;
 
     private runtime: IRuntime | undefined;
-    // tslint:disable:variable-name allowing _ for params exposed with getter
     private readonly _minimumSequenceNumber: number | undefined;
-    // tslint:enable:variable-name
 
     constructor(
         private readonly container: Container,

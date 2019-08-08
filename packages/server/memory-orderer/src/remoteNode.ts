@@ -116,7 +116,6 @@ export class RemoteNode extends EventEmitter implements IConcreteNode {
     // I can probably assume it's all good so long as it tells me things are good. And then I avoid the update loop.
     // Expired nodes I can track separately.
 
-    // tslint:disable-next-line:variable-name
     private constructor(private _id: string, private socket: Socket<INodeMessage>) {
         super();
 

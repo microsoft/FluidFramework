@@ -56,7 +56,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
     public get IAgentScheduler() { return this; }
     public get IComponentRouter() { return this; }
 
-    // tslint:disable-next-line:variable-name private fields exposed via getters
     private _leader = false;
 
     // List of all tasks client is capable of running. This is a strict superset of tasks

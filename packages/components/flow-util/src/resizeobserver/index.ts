@@ -4,7 +4,6 @@
  */
 
 // tslint:disable:import-name
-// tslint:disable:variable-name
 import { isBrowser } from "../isbrowser";
 import { Template } from "../template";
 import { View } from "../view";

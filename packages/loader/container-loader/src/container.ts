@@ -126,7 +126,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     // Active chaincode and associated runtime
     private storageService: IDocumentStorageService | undefined | null;
 
-    // tslint:disable:variable-name
     private _version: string | undefined;
     private _clientId: string | undefined;
     private _deltaManager: DeltaManager | undefined;
@@ -135,7 +134,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private _parentBranch: string | undefined | null;
     private _connectionState = ConnectionState.Disconnected;
     private _serviceConfiguration: IServiceConfiguration | undefined;
-    // tslint:enable:variable-name
 
     private context: ContainerContext | undefined;
     private pkg: string | IFluidCodeDetails | undefined;

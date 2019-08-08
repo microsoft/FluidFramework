@@ -226,7 +226,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     // back-compat: version decides between loading document and chaincode.
     private version: string;
 
-    // tslint:disable:variable-name
     private _flushMode = FlushMode.Automatic;
 
     public get connected(): boolean {

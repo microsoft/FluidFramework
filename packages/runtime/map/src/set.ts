@@ -76,7 +76,6 @@ export class DistributedSetValueType implements IValueType<DistributedSet<any>> 
         return DistributedSetValueType._ops;
     }
 
-    // tslint:disable:variable-name
     private static readonly _factory: IValueFactory<DistributedSet<any>> = new DistributedSetFactory();
     private static readonly _ops: Map<string, IValueOperation<DistributedSet<any>>> =
         new Map<string, IValueOperation<DistributedSet<any>>>(
@@ -112,5 +111,4 @@ export class DistributedSetValueType implements IValueType<DistributedSet<any>> 
                 },
             },
         ]]);
-    // tslint:enable:variable-name
 }

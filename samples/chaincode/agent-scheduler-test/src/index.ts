@@ -4,7 +4,6 @@
  */
 
 // tslint:disable no-console
-// tslint:disable variable-name
 import { IAgentScheduler, instantiateComponent, ITask } from "@chaincode/agent-scheduler";
 import { Component } from "@prague/app-component";
 import { IComponent, IContainerContext, IRuntime } from "@prague/container-definitions";

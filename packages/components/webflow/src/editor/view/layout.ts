@@ -59,7 +59,6 @@ export class Layout {
     private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
     private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
-    // tslint:disable:variable-name
     private _position = NaN;
     public get position() { return this._position; }
 
@@ -71,7 +70,6 @@ export class Layout {
 
     private _endOffset = NaN;
     public get endOffset() { return this._endOffset; }
-    // tslint:enable:variable-name
 
     private startInvalid: LocalReference;
     private endInvalid: LocalReference;

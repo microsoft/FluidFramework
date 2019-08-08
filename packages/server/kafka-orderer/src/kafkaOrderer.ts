@@ -43,9 +43,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
         return this._parentBranch;
     }
 
-    // tslint:disable:variable-name
     private _parentBranch: string;
-    // tslint:enable:variable-name
 
     constructor(
         public readonly existing: boolean,

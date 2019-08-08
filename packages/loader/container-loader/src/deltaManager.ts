@@ -74,12 +74,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private lastQueuedSequenceNumber: number = 0;
     private baseSequenceNumber: number = 0;
 
-    // tslint:disable:variable-name
     private readonly _inboundPending: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
-    // tslint:enable:variable-name
 
     private connecting: Deferred<IConnectionDetails> | undefined | null;
     private connection: DeltaConnection | undefined;

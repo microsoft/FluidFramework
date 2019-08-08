@@ -405,7 +405,6 @@ export class SharedStringIntervalCollectionValueType
         return SharedStringIntervalCollectionValueType._ops;
     }
 
-    // tslint:disable:variable-name
     private static readonly _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>> =
         new SharedStringIntervalCollectionFactory();
     private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>> =
@@ -433,7 +432,6 @@ export class SharedStringIntervalCollectionValueType
                 },
             },
         ]]);
-    // tslint:enable:variable-name
 }
 
 function compareIntervalEnds(a: Interval, b: Interval) {
@@ -483,7 +481,6 @@ export class SharedIntervalCollectionValueType
         return SharedIntervalCollectionValueType._ops;
     }
 
-    // tslint:disable:variable-name
     private static readonly _factory: IValueFactory<SharedIntervalCollection<Interval>> =
         new SharedIntervalCollectionFactory();
     private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>> =
@@ -509,7 +506,6 @@ export class SharedIntervalCollectionValueType
                 },
             },
         ]]);
-    // tslint:enable:variable-name
 }
 
 export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;

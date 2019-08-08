@@ -129,11 +129,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     private loaded = false;
     private pending = new Array<ISequencedDocumentMessage>();
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
-    // tslint:disable-next-line:variable-name
     private _baseSnapshot: ISnapshotTree;
 
     constructor(
-        // tslint:disable-next-line:variable-name
         private readonly _hostRuntime: ContainerRuntime,
         public readonly id: string,
         public readonly existing: boolean,

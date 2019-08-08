@@ -48,6 +48,9 @@
                 "function-regex": "^[a-z][\\w\\d]+$"
             }
         ],
+        "variable-name": {
+            "options": ["ban-keywords", "check-format", "allow-leading-underscore", "allow-pascal-case"]
+        },
         // Copyright file header
         "file-header": [
             true,

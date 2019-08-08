@@ -21,7 +21,6 @@ export class Counter extends EventEmitter {
         return this._value;
     }
 
-    // tslint:disable-next-line:variable-name
     constructor(private readonly emitter: IValueOpEmitter, private _value: number) {
         super();
     }
@@ -60,7 +59,6 @@ export class CounterValueType implements IValueType<Counter> {
         return CounterValueType._ops;
     }
 
-    // tslint:disable:variable-name
     private static readonly _factory: IValueFactory<Counter> = new CounterFactory();
     private static readonly _ops: Map<string, IValueOperation<Counter>> = new Map<string, IValueOperation<Counter>>(
         [[
@@ -79,5 +77,4 @@ export class CounterValueType implements IValueType<Counter> {
                 },
             },
         ]]);
-    // tslint:enable:variable-name
 }

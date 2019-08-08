@@ -72,7 +72,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Connection state
      */
-    // tslint:disable-next-line:variable-name private fields exposed via getters
     private _state = ConnectionState.Disconnected;
 
     /**

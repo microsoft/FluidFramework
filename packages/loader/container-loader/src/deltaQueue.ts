@@ -16,9 +16,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private sysPause = true;
     private userPause = false;
 
-    // tslint:disable:variable-name
     private _paused = true;
-    // tslint:enable:variable-name
 
     private processing = false;
     private pauseDeferred: Deferred<void> | undefined;
