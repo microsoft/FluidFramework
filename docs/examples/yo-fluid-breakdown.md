@@ -116,7 +116,7 @@ distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
 to other components.
 3. Provide the following setup overrides
-    - `create()` - only called the first time a component is initialized
+    - `componentInitializingFirstTime()` - only called the first time a component is initialized
     - `existing()` - called every time except the first time a component is initialized
     - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
@@ -134,7 +134,7 @@ export class ExampleFluidComponent extends PrimedComponent implements IComponent
 }
 ```
 
-### `load(...)` and `create()`
+### `load(...)` and `componentInitializingFirstTime()`
 
 The `public static async load(runtime: IComponentRuntime, context: IComponentContext){...}` function is the entry point
 to creating an instance of our `ExampleFluidComponent`. We require using a `static async` load function instead of simply
@@ -149,12 +149,12 @@ We also pass through our `supportedInterface`. As described above our component 
 can discover that we implement `IComponentHTMLViewable`.
 
 Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:aqueduct.SharedComponent> that properly calls the three override methods discussed above, `create()`, `existing()`,
+<xref:aqueduct.SharedComponent> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
 and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
 a component.
 
-`create()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
-want to happen once. `await super.create()` calls the `create()` function on the `PrimedComponent`. In here we create and
+`componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
+want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`. In here we create and
 set the `root` SharedMap. We need to call this first to ensure the root is available later. Next we create a new counter,
 called `"clicks"` on our root map `this.root.set("clicks", 0, CounterValueType.Name);`
 
@@ -162,12 +162,12 @@ called `"clicks"` on our root map `this.root.set("clicks", 0, CounterValueType.N
 private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
 
 /**
- * Create is where you do setup for your component. This is only called once the first time your component
- * is created. Anything that happens in create will happen before any other user will see the component.
+ * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
+ * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
  */
-protected async create() {
-  // Calling super.create() creates a root SharedMap that you can work off.
-  await super.create();
+protected async componentInitializingFirstTime() {
+  // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
+  await super.componentInitializingFirstTime();
   this.root.set("clicks", 0, CounterValueType.Name);
 }
 
@@ -194,7 +194,7 @@ Component can use to render into. Every time `render(...)` is called we should r
 
 #### [React Implementation](#tab/tabid-1)
 
-The first thing we do is get our `"clicks"` counter, created in `create()`.
+The first thing we do is get our `"clicks"` counter, created in `componentInitializingFirstTime()`.
 
 ```typescript
 const counter = this.root.get("clicks");

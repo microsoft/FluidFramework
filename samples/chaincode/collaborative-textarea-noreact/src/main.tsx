@@ -79,9 +79,9 @@ export class CollaborativeTextAreaNoReact
    * The legendary Sam Broner notes: we can only use distributed data types that 
    * have been registered in the exported component instantiation factory.
    */
-  protected async create() {
-    // Calling super.create() creates a root SharedMap.
-    await super.create();
+  protected async componentInitializingFirstTime() {
+    // Calling super.componentInitializingFirstTime() creates a root SharedMap.
+    await super.componentInitializingFirstTime();
 
     this.root.set("textAreaString", SharedString.create(this.runtime));
   }
@@ -295,7 +295,7 @@ export class CollaborativeTextAreaNoReact
     // changes. The handler is added here because any (re)rendered component
     // view needs to "know" when to update its own instance of the <textArea>
     // (which is what this handler will take care of). You could not add this,
-    // say, in the `create` method because that is only called once - it is
+    // say, in the `componentInitializingFirstTime` method because that is only called once - it is
     // not called for every view, so there would be no way to inform another
     // client to update on a new change.
     const textAreaString = this.root.get<SharedString>("textAreaString");

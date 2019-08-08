@@ -82,12 +82,12 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
   private static readonly countDownIncrementCount = 3;
 
   /**
-   * Create is where you do setup for your component. This is only called once the first time your component
-   * is created. Anything that happens in create will happen before any other user will see the component.
+   * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component
+   * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
    */
-  protected async create() {
-    // Calling super.create() creates a root SharedMap that you can work off.
-    await super.create();
+  protected async componentInitializingFirstTime() {
+    // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
+    await super.componentInitializingFirstTime();
     this.root.set(this.targetTextKey, this.textGenerator.generateText());
     this.root.set("started", false);
     this.root.set("players finished count", 0);
