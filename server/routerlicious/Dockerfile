@@ -139,7 +139,7 @@ COPY packages/ packages/
 ARG VERSION_BUILDNUMBER=0
 RUN echo $VERSION_BUILDNUMBER
 RUN version=`node tools/build-server-resources/build-version.js`; echo $version; npx lerna version $version --no-git-tag-version --no-push --yes
-RUN npm run build:full
+RUN npm run build:ci
 
 # Build that alfred uses
 FROM base AS runner
