@@ -4,13 +4,13 @@
  */
 // tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
-import { Dom } from "@prague/flow-util";
+import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, LocalReference, TextSegment } from "@prague/merge-tree";
 import { SequenceDeltaEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../../document";
 import { clamp, getSegmentRange } from "../../util";
-import { updateRef } from "../../util/localref";
+import { extractRef, updateRef } from "../../util/localref";
 import { debug, nodeToString } from "../debug";
 import { documentFormatter } from "./element";
 import { Formatter, IFormatterState } from "./formatter";
@@ -76,7 +76,14 @@ export class Layout {
     private startInvalid: LocalReference;
     private endInvalid: LocalReference;
 
+    private readonly scheduleRender: () => void;
+
     constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scope?: IComponent) {
+        {
+            const scheduler = new Scheduler();
+            this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
+        }
+
         this.initialCheckpoint = new LayoutCheckpoint([], [{ parent: this.slot, previous: null }]);
         this.rootFormatInfo = Object.freeze({ formatter: documentFormatter, state: { root } });
 
@@ -115,6 +122,25 @@ export class Layout {
             const oldEnd = end;
             start = clamp(0, start, length);
             end = clamp(start, end, length);
+
+            {
+                if (start > 0) {
+                    const position = start - 1;
+                    const { segment, offset } = doc.getSegmentAndOffset(position);
+                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
+                        start = getSegmentRange(position, segment, offset).start;
+                    }
+                }
+            }
+
+            {
+                if (end < this.doc.length - 1) {
+                    const { segment, offset } = doc.getSegmentAndOffset(end);
+                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
+                        end = getSegmentRange(end, segment, offset).end;
+                    }
+                }
+            }
 
             let checkpoint = this.initialCheckpoint;
 
@@ -337,17 +363,6 @@ export class Layout {
         }
     }
 
-    private union(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
-        return fn(
-            position === undefined
-                ? limit
-                : position,
-            ref === undefined
-                ? limit
-                : doc.localRefToPosition(ref),
-        );
-    }
-
     private readonly onChange = (e: SequenceDeltaEvent) => {
         // If the segment was removed, promptly remove any DOM nodes it emitted.
         for (const { segment } of e.ranges) {
@@ -365,47 +380,36 @@ export class Layout {
             }
         }
 
+        this.invalidate(e.start, e.end);
+    }
+
+    private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
+        return updateRef(doc, ref, fn(
+            position === undefined
+                ? limit
+                : position,
+            ref === undefined
+                ? limit
+                : doc.localRefToPosition(ref),
+        ));
+    }
+
+    private invalidate(start: number, end: number) {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
-        let start = this.union(doc, e.start, this.startInvalid, Math.min, +Infinity);
-        let end   = this.union(doc, e.end,   this.endInvalid,   Math.max, -Infinity);
+        this.startInvalid = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
+        this.endInvalid   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        this.scheduleRender();
+    }
 
-        // If the event callback is for a non-terminal grouped op...
-        const group = e.opArgs.groupOp;
-        if (group && e.opArgs.op !== group.ops[group.ops.length - 1]) {
-            // ...expand the tracked invalidated range.
-            this.startInvalid = updateRef(doc, this.startInvalid, start);
-            this.endInvalid = updateRef(doc, this.endInvalid, end);
-        } else {
-            // ...otherwise, render the invalidated range and dispose of the local references.
-            if (this.startInvalid) {
-                doc.removeLocalRef(this.startInvalid);
-                this.startInvalid = undefined;
+    private render() {
+        const doc = this.doc;
+        const start = extractRef(doc, this.startInvalid);
+        this.startInvalid = undefined;
 
-                doc.removeLocalRef(this.endInvalid);
-                this.endInvalid = undefined;
-            }
+        const end = extractRef(doc, this.endInvalid);
+        this.endInvalid = undefined;
 
-            {
-                if (start > 0) {
-                    const position = start - 1;
-                    const { segment, offset } = doc.getSegmentAndOffset(position);
-                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
-                        start = getSegmentRange(position, segment, offset).start;
-                    }
-                }
-            }
-
-            {
-                if (end < this.doc.length - 1) {
-                    const { segment, offset } = doc.getSegmentAndOffset(end);
-                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
-                        end = getSegmentRange(end, segment, offset).end;
-                    }
-                }
-            }
-
-            this.sync(start, end);
-        }
+        this.sync(start, end);
     }
 }

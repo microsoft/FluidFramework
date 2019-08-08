@@ -29,3 +29,9 @@ export function updateRef(doc: FlowDocument, ref: LocalReference, position: numb
     doc.removeLocalRef(ref);
     return doc.addLocalRef(position);
 }
+
+export function extractRef(doc: FlowDocument, ref: LocalReference) {
+    const position = doc.localRefToPosition(ref);
+    doc.removeLocalRef(ref);
+    return position;
+}

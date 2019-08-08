@@ -95,9 +95,9 @@ describe("Layout", () => {
             doc.insertText(1, "1");
         });
 
-        it("Single paragraph", () => {
-            doc.insertParagraph(0);
-        });
+        // it("Single paragraph", () => {
+        //     doc.insertParagraph(0);
+        // });
 
         // '<br>' tag is recreated?
         // it("Insert paragraph", () => {
