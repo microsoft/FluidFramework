@@ -14,36 +14,58 @@ describe("MergeTree.Client", () => {
 
     // short runs about 3s per seed, long runs about 4 mins per seed
     const long = false;
-    const maxSeed = 10;
     // tslint:disable: mocha-no-side-effect-code
-    const maxClients = long ? 128 : 16;
+
+    // Test config
+    const maxSeed = 10;
+    const maxClients = long ? 64 : 16;
     const maxOpsPerRound = long ? 1024 : 128;
     const totalRounds = long ? 100 : 10;
+    const annotate = true;
+
+    // control how many clients to start with for debugging
+    const minClients = Math.min(maxClients, 1);
+
+    // Generate a list of single character client names, support up to 69 clients
+    const clientNames: string[] = [];
+    function addClientNames(startChar: string, count: number) {
+        const startCode = startChar.charCodeAt(0);
+        for (let i = 0; i < count; i++) {
+            clientNames.push(String.fromCharCode(startCode + i));
+        }
+    }
+    addClientNames("A", 26);
+    addClientNames("a", 26);
+    addClientNames("0", 17);
+
     // tslint:enable: mocha-no-side-effect-code
+
     for (let j = 0; j < maxSeed; j++) {
-        const annotate = true;
         it(`ConflictFarm_${j}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED + j]);
 
             const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
             clients.forEach(
-                (c, i) => c.startCollaboration(String.fromCharCode("a".charCodeAt(0) + i)));
+                (c, i) => c.startCollaboration(clientNames[i]));
 
             let seq = 0;
             while (clients.length < maxClients) {
                 clients.forEach((c) => c.updateMinSeq(seq));
 
                 // Add double the number of clients each iteration
-                const targetClients = clients.length * 2;
+                const targetClients = Math.max(minClients, clients.length * 2);
                 for (let cc = clients.length; cc < targetClients; cc++) {
                     const newClient = await TestClient.createFromSnapshot(clients[0]);
                     clients.push(newClient);
-                    newClient.startCollaboration(String.fromCharCode("a".charCodeAt(0) + cc), seq);
+                    newClient.startCollaboration(clientNames[cc], seq);
                 }
 
-                for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound *= 2) {
-                    for (let round = 0; round < totalRounds; round++) {
+                for (let round = 0; round < totalRounds; round++) {
+                    if (long) {
+                        console.log(`Clients: ${clients.length} Round: ${round}`);
+                    }
+                    for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound *= 2) {
                         const minimumSequenceNumber = seq;
                         let tempSeq = seq * -1;
                         const logger = new TestClientLogger(
