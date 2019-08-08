@@ -14,6 +14,7 @@
     "build:docs": "api-extractor run --local",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tsc": "tsc",

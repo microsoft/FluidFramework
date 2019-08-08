@@ -61,6 +61,7 @@ import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
+import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum } from "./quorum";
@@ -212,7 +213,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
             "prague:telemetry",
-            { documentId: this.id },
+            { documentId: this.id, [pkgName]: pkgVersion },
             logger);
 
         // Prefix all events in this file with container-loader
