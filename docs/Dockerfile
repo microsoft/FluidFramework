@@ -17,9 +17,13 @@ RUN unzip docfx.zip
 WORKDIR /
 
 #############################
+# Copy the source and the api artifact
 FROM base AS r11s
 
 COPY . .
+
+#############################
+FROM r11s AS docs
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api

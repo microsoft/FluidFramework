@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
+// tslint:disable:no-parameter-reassignment
+// tslint:disable:object-literal-sort-keys
+// tslint:disable:switch-default
+// tslint:disable:switch-final-break
 
 import * as MergeLib from "./index";
 export enum OverlayNodePosition {
@@ -12,16 +15,21 @@ export enum OverlayNodePosition {
     Right,
     Append,
     Prepend,
-    Root
+    Root,
 }
 
 export let onodeTypeKey = "onodeType";
 
-function createTreeMarkerOps(treeRangeLabel: string,
-    beginMarkerPos: MergeLib.IRelativePosition, endMarkerPos: MergeLib.IRelativePosition,
-    id: string, nodeType: string, beginMarkerProps?: MergeLib.PropertySet) {
-    let endMarkerProps = MergeLib.createMap<any>();
-    endMarkerProps[MergeLib.reservedMarkerIdKey] = "end-" + id;
+function createTreeMarkerOps(
+    treeRangeLabel: string,
+    beginMarkerPos: MergeLib.IRelativePosition,
+    endMarkerPos: MergeLib.IRelativePosition,
+    id: string,
+    nodeType: string,
+    beginMarkerProps?: MergeLib.PropertySet): [MergeLib.IMergeTreeInsertMsg, MergeLib.IMergeTreeInsertMsg] {
+
+    const endMarkerProps = MergeLib.createMap<any>();
+    endMarkerProps[MergeLib.reservedMarkerIdKey] = endIdFromId(id);
     endMarkerProps[MergeLib.reservedRangeLabelsKey] = [treeRangeLabel];
     endMarkerProps[onodeTypeKey] = nodeType;
 
@@ -32,17 +40,17 @@ function createTreeMarkerOps(treeRangeLabel: string,
     beginMarkerProps[MergeLib.reservedRangeLabelsKey] = [treeRangeLabel];
     beginMarkerProps[onodeTypeKey] = nodeType;
     return [
-        <MergeLib.IMergeTreeInsertMsg>{
+        {
             seg: { marker: { refType: MergeLib.ReferenceType.NestBegin }, props: beginMarkerProps },
             relativePos1: beginMarkerPos,
             type: MergeLib.MergeTreeDeltaType.INSERT,
         },
-        <MergeLib.IMergeTreeInsertMsg>{
+        {
             seg: { marker: { refType: MergeLib.ReferenceType.NestEnd }, props: endMarkerProps },
             relativePos1: endMarkerPos,
             type: MergeLib.MergeTreeDeltaType.INSERT,
-        }
-    ]
+        },
+    ];
 }
 
 let idSuffix = 0;
@@ -55,20 +63,21 @@ function makeId(client: MergeLib.Client) {
 }
 
 function endIdFromId(id: string) {
-    return "end-"+id;
+    return `end-${id}`;
 }
 
-export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, nodeType: string,
+export function insertOverlayNode(
+    treeLabel: string, client: MergeLib.Client, nodeType: string,
     position: OverlayNodePosition, beginProps: MergeLib.PropertySet,
     refNodeId?: string) {
-    let nodeId = makeId(client);
+    const nodeId = makeId(client);
     switch (position) {
         case OverlayNodePosition.Append: {
-            let endId = endIdFromId(refNodeId);
-            let beforeRef = <MergeLib.IRelativePosition>{ id: endId, before: true };
-            let markerOps = createTreeMarkerOps(treeLabel, beforeRef, beforeRef,
+            const endId = endIdFromId(refNodeId);
+            const beforeRef: MergeLib.IRelativePosition = { id: endId, before: true };
+            const markerOps = createTreeMarkerOps(treeLabel, beforeRef, beforeRef,
                 nodeId, nodeType, beginProps);
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: markerOps,
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -76,10 +85,10 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
             break;
         }
         case OverlayNodePosition.Prepend: {
-            let afterRef = <MergeLib.IRelativePosition>{ id: refNodeId };
-            let markerOps = createTreeMarkerOps(treeLabel, afterRef, afterRef,
+            const afterRef: MergeLib.IRelativePosition = { id: refNodeId };
+            const markerOps = createTreeMarkerOps(treeLabel, afterRef, afterRef,
                 nodeId, nodeType, beginProps);
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: [markerOps[1], markerOps[0]],
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -87,12 +96,12 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
             break;
         }
         case OverlayNodePosition.Above: {
-            let endId = endIdFromId(refNodeId);
-            let afterRef = <MergeLib.IRelativePosition>{ id: endId };
-            let beforeRef = <MergeLib.IRelativePosition>{ id: refNodeId, before: true };
-            let markerOps = createTreeMarkerOps(treeLabel, beforeRef, afterRef, nodeId,
+            const endId = endIdFromId(refNodeId);
+            const afterRef: MergeLib.IRelativePosition = { id: endId };
+            const beforeRef: MergeLib.IRelativePosition = { id: refNodeId, before: true };
+            const markerOps = createTreeMarkerOps(treeLabel, beforeRef, afterRef, nodeId,
                 nodeType, beginProps);
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: markerOps,
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -100,10 +109,10 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
             break;
         }
         case OverlayNodePosition.Left: {
-            let beforeRef = <MergeLib.IRelativePosition>{ id: refNodeId, before: true };
-            let markerOps = createTreeMarkerOps(treeLabel, beforeRef, beforeRef,
+            const beforeRef: MergeLib.IRelativePosition = { id: refNodeId, before: true };
+            const markerOps = createTreeMarkerOps(treeLabel, beforeRef, beforeRef,
                 nodeId, nodeType, beginProps);
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: markerOps,
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -111,11 +120,11 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
             break;
         }
         case OverlayNodePosition.Right: {
-            let endId = endIdFromId(refNodeId);
-            let afterRef = <MergeLib.IRelativePosition>{ id: endId };
-            let markerOps = createTreeMarkerOps(treeLabel, afterRef, afterRef,
+            const endId = endIdFromId(refNodeId);
+            const afterRef: MergeLib.IRelativePosition = { id: endId };
+            const markerOps = createTreeMarkerOps(treeLabel, afterRef, afterRef,
                 nodeId, nodeType, beginProps);
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: [markerOps[1], markerOps[0]],
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -123,11 +132,11 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
             break;
         }
         case OverlayNodePosition.Root: {
-            let markerOps = createTreeMarkerOps(treeLabel, undefined, undefined,
-            nodeId, nodeType, beginProps);
+            const markerOps = createTreeMarkerOps(treeLabel, undefined, undefined,
+                nodeId, nodeType, beginProps);
             markerOps[0].pos1 = 0;
             markerOps[1].pos1 = 0;
-            let groupOp = <MergeLib.IMergeTreeGroupMsg>{
+            const groupOp: MergeLib.IMergeTreeGroupMsg = {
                 ops: [markerOps[1], markerOps[0]],
                 type: MergeLib.MergeTreeDeltaType.GROUP,
             };
@@ -137,4 +146,3 @@ export function insertOverlayNode(treeLabel: string, client: MergeLib.Client, no
     }
     return nodeId;
 }
-

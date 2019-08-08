@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
+// tslint:disable:interface-name
+// tslint:disable:callable-types
 
 export interface Property<TKey, TData> {
     key: TKey;
     data: TData;
 }
-
 
 export interface QProperty<TKey, TData> {
     key?: TKey;

@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable
 import * as ops from "./ops";
+
+// tslint:disable:interface-name
+// tslint:disable:no-for-in
+// tslint:disable:forin
+// tslint:disable:switch-default
+// tslint:disable:no-parameter-reassignment
+// tslint:disable:switch-final-break
+// tslint:disable:object-literal-sort-keys
+// tslint:disable:no-unsafe-any
 
 export interface MapLike<T> {
     [index: string]: T;
@@ -29,7 +37,7 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
     // fixed set of operations for now
     switch (combiningInfo.name) {
         case "incr":
-            currentValue += <number>newValue;
+            currentValue += newValue as number;
             if (combiningInfo.minValue) {
                 if (currentValue < combiningInfo.minValue) {
                     currentValue = combiningInfo.minValue;
@@ -38,13 +46,15 @@ export function combine(combiningInfo: ops.ICombiningOp, currentValue: any, newV
             break;
         case "consensus":
             if (currentValue === undefined) {
-                currentValue = <IConsensusValue>{
+                const cv: IConsensusValue = {
                     value: newValue,
-                    seq
+                    seq,
                 };
+
+                currentValue = cv;
             } else {
-                let cv = <IConsensusValue>currentValue;
-                if (cv.seq===-1) {
+                const cv = currentValue as IConsensusValue;
+                if (cv.seq === -1) {
                     cv.seq = seq;
                 }
             }
@@ -59,14 +69,14 @@ export function matchProperties(a: PropertySet, b: PropertySet) {
             return false;
         } else {
             // for now, straightforward; later use hashing
-            for (let key in a) {
+            for (const key in a) {
                 if (b[key] === undefined) {
                     return false;
                 } else if (b[key] !== a[key]) {
                     return false;
                 }
             }
-            for (let key in b) {
+            for (const key in b) {
                 if (a[key] === undefined) {
                     return false;
                 }
@@ -85,9 +95,10 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T>, combiningOp?:
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
         }
-        for (let key in extension) {
-            let v = extension[key];
+        for (const key in extension) {
+            const v = extension[key];
             if (v === null) {
+                // tslint:disable-next-line: no-dynamic-delete
                 delete base[key];
             } else {
                 if (combiningOp && (combiningOp.name !== "rewrite")) {
@@ -105,14 +116,14 @@ export function clone<T>(extension: MapLike<T>) {
     if (extension === undefined) {
         return undefined;
     }
-    const clone: MapLike<T> = createMap<any>();
-    for (let key in extension) {
-        let v = extension[key];
+    const cloneMap = createMap<T>();
+    for (const key in extension) {
+        const v = extension[key];
         if (v !== null) {
-            clone[key] = v;
+            cloneMap[key] = v;
         }
     }
-    return clone;
+    return cloneMap;
 }
 
 export function addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ops.ICombiningOp, seq?: number) {
@@ -128,7 +139,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
         if ((typeof extension !== "object")) {
             console.log(`oh my ${extension}`);
         }
-        for (let key in extension) {
+        for (const key in extension) {
             if (base[key] === undefined) {
                 base[key] = extension[key];
             }
@@ -137,16 +148,18 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T>) {
     return base;
 }
 
-/** Create a MapLike with good performance. */
+// Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
     const map = Object.create(null); // tslint:disable-line:no-null-keyword
 
     // Using 'delete' on an object causes V8 to put the object in dictionary mode.
     // This disables creation of hidden classes, which are expensive when an object is
     // constantly changing shape.
+    // tslint:disable-next-line: no-string-literal
     map["__"] = undefined;
+    // tslint:disable-next-line: no-dynamic-delete no-string-literal
     delete map["__"];
 
+    // tslint:disable-next-line: no-unsafe-any
     return map;
 }
-
