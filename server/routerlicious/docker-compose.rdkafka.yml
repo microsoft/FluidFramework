@@ -1,9 +1,10 @@
-version: '3'
+version: '3.4'
 services:
     jarvis:
         build:
             context: .
             dockerfile: ./functions/Dockerfile
+            target: runner
             args:
                 - NPM_TOKEN=${NPM_TOKEN}
         ports:
@@ -20,6 +21,7 @@ services:
         build:
             context: .
             dockerfile: ./functions/Dockerfile
+            target: runner
             args:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js deli /usr/src/server/functions/deli/dist/deli/index.js
@@ -34,6 +36,7 @@ services:
         build:
             context: .
             dockerfile: ./functions/Dockerfile
+            target: runner
             args:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js scriptorium ../scriptorium/index.js
@@ -48,6 +51,7 @@ services:
         build:
             context: .
             dockerfile: ./functions/Dockerfile
+            target: runner
             args:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js broadcaster /usr/src/server/functions/deli/dist/broadcaster/index.js

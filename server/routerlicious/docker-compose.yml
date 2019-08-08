@@ -1,9 +1,10 @@
-version: '3'
+version: '3.4'
 services:
     gateway:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         ports:
             - "3000:3000"
         command: node ../gateway/dist/www.js
@@ -18,6 +19,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         ports:
             - "3003:3000"
         command: node dist/alfred/www.js
@@ -29,6 +31,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
         environment:
             - DEBUG=prague:*
@@ -38,6 +41,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=prague:*
@@ -47,6 +51,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
         environment:
             - DEBUG=prague:*
@@ -56,6 +61,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js scribe /usr/src/server/packages/server/routerlicious/dist/scribe/index.js
         environment:
             - DEBUG=prague:*
@@ -65,6 +71,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js foreman /usr/src/server/packages/server/routerlicious/dist/foreman/index.js
         environment:
             - DEBUG=prague:*
@@ -74,6 +81,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/kafka-service/index.js routemaster /usr/src/server/packages/server/lambdas-driver/dist/document-router/index.js
         environment:
             - DEBUG=prague:*
@@ -84,6 +92,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         command: node dist/paparazzi/index.js
         environment:
             - DEBUG=prague:*
@@ -95,6 +104,7 @@ services:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
+            target: runner
         ports:
             - "5000:5000"
         command: node dist/riddler/www.js

@@ -7,10 +7,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:compile && npm run tslint",
+    "build": "concurrently npm:build:compile npm:tslint",
     "build:compile": "npm run tsc && npm run webpack:dev",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "build:full": "npm run build && npm run tsc",
+    "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
