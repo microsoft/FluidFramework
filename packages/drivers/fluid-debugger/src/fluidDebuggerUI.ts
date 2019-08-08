@@ -20,11 +20,11 @@ export interface IDebuggerUI {
     updateVerison(index: number, version: IVersion, seqNumber: number, timeStamp: number): void;
 
     /**
-     * Called in response to successful onVersionSelection() call
+     * Called in response to successful onVersionSelection() or onSnapshotFileSelection() call
      * and provides extra information about selection.
      * It expected that UI layer would change its mode as result of this call, i.e. switch to
      * displaying op playback controls (if this is supported)
-     * Note: There maybe no call to versionSelected() in response to onVersionSelection() call
+     * Note: There maybe no call to versionSelected() in response to onSnapshotFileSelection() call
      * if file does not exist, has wrong name of wrong format.
      * @param version - version, file name, or undefined if playing ops.
      */
@@ -73,9 +73,16 @@ export interface IDebuggerController {
     /**
      * UI Layer notifies about selection of version to continue.
      * On successful load, versionSelected() is called.
-     * @param version - Version, File or undefined (playing ops)
+     * @param version - Version, undefined (playing ops)
      */
-    onVersionSelection(version: IVersion | File | undefined): void;
+    onVersionSelection(version?: IVersion): void;
+
+    /**
+     * UI Layer notifies about selection of version to continue.
+     * On successful load, versionSelected() is called.
+     * @param version - File to load snapshot from
+     */
+    onSnapshotFileSelection(file: File): void;
 
     /**
      * "next op" button is clicked in UI
@@ -187,7 +194,7 @@ export class DebuggerUI {
         fileSnapshot.addEventListener("change", async () => {
             const files = fileSnapshot.files;
             if (files) {
-                controller.onVersionSelection(files[0]);
+                controller.onSnapshotFileSelection(files[0]);
             }
         }, false);
 

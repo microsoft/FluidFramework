@@ -81,23 +81,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
         this.startSeqDeferred.resolve(DebugReplayController.WindowClosedSeq);
     }
 
-    public async onVersionSelection(version: IVersion | File | undefined) {
+    public async onVersionSelection(version?: IVersion) {
         if (version === undefined) {
             this.resolveStorage(0, new OpStorage());
             return;
         }
-        const ver = version as IVersion;
-        if (ver.id !== undefined && ver.treeId !== undefined) {
-            // tslint:disable-next-line:no-floating-promises
-            this.onVersionSelectionCore(ver);
-        } else {
-            this.onSnapshotFileSelection(version as File);
-        }
-    }
 
-    public async onVersionSelectionCore(version: IVersion) {
         if (!this.documentStorageService) {
-            throw new Error("onVersionSelectionCore: no storage");
+            throw new Error("onVersionSelection: no storage");
         }
 
         const tree = await this.documentStorageService.getSnapshotTree(version);
