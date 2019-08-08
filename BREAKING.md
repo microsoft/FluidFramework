@@ -145,6 +145,19 @@ declare module "@prague/component-core-interfaces" {
 
 @prague/app-component is deprecated. Please switch to use @prague/aqueduct for the new component interfaces
 
+## Value type op change
+
+In 0.7 and below, the type of a SharedMap message for value types (Counter, DistributedSet, etc.) would match the type
+("counter", "distributedSet", etc.).  In 0.8 the message type is "act" for all value types.  Value type ops produced
+from runtimes before 0.8 are not compatible with 0.8 as a result (e.g. if replaying old ops).
+
+## `SharedMap.values()` and `.entries()` unpack local values
+
+Previously, `SharedMap.values()` and `SharedMap.entries()` would iterate over `ILocalViewElement`s rather than the
+contained values.  To retrieve the contained values you would have then extracted the ILocalViewElement.localValue.
+In 0.8 these methods now iterate over the contained values directly, so calls to get the .localValue should be
+removed.
+
 # 0.7 Breaking Changes
 
 - [instantiateComponent changes](#instantiatecomponent-changes)
