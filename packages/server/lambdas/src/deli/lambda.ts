@@ -180,6 +180,11 @@ export class DeliLambda implements IPartitionLambda {
             // Check for idle clients.
             this.checkIdleClients(ticketedMessage);
 
+            // Check for document inactivity.
+            if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
+                this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+            }
+
             // Return early if sending is not required.
             if (ticketedMessage.send === SendType.Never) {
                 continue;
@@ -580,7 +585,7 @@ export class DeliLambda implements IPartitionLambda {
         };
     }
 
-    private createNoOpMessage(): IRawOperationMessage {
+    private createOpMessage(type: string): IRawOperationMessage {
         const noOpMessage: IRawOperationMessage = {
             clientId: null,
             documentId: this.documentId,
@@ -589,7 +594,7 @@ export class DeliLambda implements IPartitionLambda {
                 contents: null,
                 referenceSequenceNumber: -1,
                 traces: [],
-                type: MessageType.NoOp,
+                type,
             },
             tenantId: this.tenantId,
             timestamp: Date.now(),
@@ -740,7 +745,7 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
         this.idleTimer = setTimeout(() => {
-            const noOpMessage = this.createNoOpMessage();
+            const noOpMessage = this.createOpMessage(MessageType.NoOp);
             this.sendToAlfred(noOpMessage);
         }, this.activityTimeout);
     }
@@ -757,7 +762,7 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
         this.noopTimer = setTimeout(() => {
-            const noOpMessage = this.createNoOpMessage();
+            const noOpMessage = this.createOpMessage(MessageType.NoOp);
             this.sendToAlfred(noOpMessage);
         }, this.noOpConsolidationTimeout);
     }

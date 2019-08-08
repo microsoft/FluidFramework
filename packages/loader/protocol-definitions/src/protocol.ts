@@ -54,6 +54,9 @@ export enum MessageType {
 
     // Message to indicate the need of a remote agent for a document.
     RemoteHelp = "remoteHelp",
+
+    // Message to indicate that no active clients are present.
+    NoClient = "noClient",
 }
 
 export interface IChunkedOp {
