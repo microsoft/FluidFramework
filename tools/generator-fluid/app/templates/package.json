@@ -8,7 +8,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\"",
+    "build": "webpack --env=\"production\" && npm run tsc",
     "dev": "webpack --env=\"development\"",
     "start": "prague-dev-server --config webpack.config.js --package package.json --pragueHost https://www.wu2.prague.office-int.com --tenantId cocky-ramanujan --tenantSecret 3e439fcb58228d3f8f7deb55399d978c",
     "start:local": "prague-dev-server --config webpack.config.js --package package.json",
