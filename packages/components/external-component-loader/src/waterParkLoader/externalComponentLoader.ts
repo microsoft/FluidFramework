@@ -111,27 +111,20 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
                 url = `https://pragueauspkn-3873244262.azureedge.net/${url}`;
             }
 
-            await this.context.createComponent(uuid(), url)
-                .then(async (cr) => {
-                    if (cr.attach !== undefined) {
-                        cr.attach();
-                    }
-                    const request = await cr.request({ url: "/" });
-
-                    let component = request.value as IComponent;
-                    if (component.IComponentCollection !== undefined) {
-                        // tslint:disable-next-line: await-promise
-                        component = await component.IComponentCollection.createCollectionItem();
-                    }
-
-                    if (component.IComponentLoadable) {
-                        this.viewComponent.createCollectionItem(component.IComponentLoadable);
-                    }
-                })
-                .catch((e) => {
-                    this.error = e;
-                    this.render(this.savedElement);
-                });
+            try {
+                const componentId = uuid();
+                let component = await this.createAndAttachComponent(componentId, url) as IComponent;
+                if (component.IComponentCollection !== undefined) {
+                    // tslint:disable-next-line: await-promise
+                    component = await component.IComponentCollection.createCollectionItem();
+                }
+                if (component.IComponentLoadable) {
+                    this.viewComponent.createCollectionItem(component.IComponentLoadable);
+                }
+            } catch (error) {
+                this.error = error;
+                this.render(this.savedElement);
+            }
         } else {
             input.style.backgroundColor = "#FEE";
         }
