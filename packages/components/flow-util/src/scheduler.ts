@@ -58,7 +58,7 @@ export class Scheduler {
 
             queue(() => {
                 // Reset 'scheduled' before invoking callback to prevent a coalesced task from
-                // becoming permenantly unschedulable if 'callback()' throws.
+                // becoming permanently unschedulable if 'callback()' throws.
                 scheduled = false;
 
                 callback();

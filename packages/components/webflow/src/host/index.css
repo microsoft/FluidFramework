@@ -30,12 +30,6 @@ html, body {
     white-space: pre-wrap;
 }
 
-.slot:last-child::after {
-    content: "ᅜ";
-    color: #ccc;
-    padding: 0px 2px 0px 3px;
-}
-
 .slot:focus-within {
     outline: none;
 }
@@ -47,38 +41,3 @@ html, body {
 .bold {
     font-weight: bold;
 }
-
-blockquote::before, h1::before, h2::before, h3::before, h4::before, h5::before, h6::before, li::before, ol::before, p::before, ul::before {
-    border: 1px solid #d97;
-    background: #d97;
-}
-
-blockquote::after, h1::after, h2::after, h3::after, h4::after, h5::after, h6::after, li::after, ol::after, p::after, ul::after { 
-    border: 1px solid #796;
-    background: #796;
-}
-
-blockquote::before, h1::before, h2::before, h3::before, h4::before, h5::before, h6::before, li::before, ol::before, p::before, ul::before,
-blockquote::after, h1::after, h2::after, h3::after, h4::after, h5::after, h6::after, li::after, ol::after, p::after, ul::after { 
-    color: white;
-    font-size: 0.4em;
-    vertical-align: middle;
-    border-radius: 1em;
-}
-
-blockquote::before, h1::before, h2::before, h3::before, h4::before, h5::before, h6::before, p::before,
-blockquote::after, h1::after, h2::after, h3::after, h4::after, h5::after, h6::after, p::after {
-    display: table;
-}
-
-blockquote::before { content: "<blockquote>" } blockquote::after { content: "</blockquote>" }
-h1::before { content: "<h1>" } h1::after { content: "</h1>" }
-h2::before { content: "<h2>" } h2::after { content: "</h2>" }
-h3::before { content: "<h3>" } h3::after { content: "</h3>" }
-h4::before { content: "<h4>" } h4::after { content: "</h4>" }
-h5::before { content: "<h5>" } h5::after { content: "</h5>" }
-h6::before { content: "<h6>" } h6::after { content: "</h6>" }
-li::before { content: "<li>" } li::after { content: "</li>" }
-ol::before { content: "<ol>" } ol::after { content: "</ol>" }
-p::before { content: "<p>" } p::after { content: "</p>" }
-ul::before { content: "<ul>" } ul::after { content: "</ul>" }

@@ -81,6 +81,7 @@ export class WebflowView implements IComponentHTMLView {
                 commands: [
                     { name: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); }},
                     { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
+                    { name: "debug", enabled: () => true, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
                     { name: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); }},
                     { name: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); }},
                     { name: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); }},
