@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
 import { PinpointRunner } from "./runner";
 
-class PinpointMapsFactory implements IComponent, IComponentFactory {
+class PinpointMapsFactory implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {

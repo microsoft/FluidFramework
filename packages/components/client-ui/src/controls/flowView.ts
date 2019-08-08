@@ -68,7 +68,7 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 
 interface IBlockViewMarker extends MergeTree.Marker {
     instanceP?: Promise<IComponentHTMLRender>;
-    instance?: IComponentHTMLRender;
+    instance?: IComponentHTMLRender & IComponent;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
@@ -76,7 +76,7 @@ interface IComponentViewMarker extends MergeTree.Marker {
     instance?: IComponentHTMLRender;
 }
 
-interface IMathCollection extends IComponent {
+interface IMathCollection {
     createCollectionItem(options?: IMathOptions): IMathInstance;
     getInstance(id: string, options?: IMathOptions): IMathInstance;
 }

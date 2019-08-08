@@ -222,7 +222,7 @@ export class ProgressCollection extends EventEmitter implements ISharedComponent
     }
 }
 
-class ProgressBarsFactory implements IComponent, IComponentFactory {
+class ProgressBarsFactory implements IComponentFactory {
 
     public get IComponentFactory() { return this; }
 

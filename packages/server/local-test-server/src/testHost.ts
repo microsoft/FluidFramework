@@ -48,12 +48,12 @@ class TestRootComponent extends PrimedComponent {
     }
 
     // tslint:disable-next-line: no-unnecessary-override
-    public async createAndAttachComponent<T extends IComponentLoadable>(id: string, type: string): Promise<T> {
+    public async createAndAttachComponent<T>(id: string, type: string): Promise<T> {
         return super.createAndAttachComponent<T>(id, type);
     }
 
     // tslint:disable-next-line: no-unnecessary-override
-    public async getComponent<T extends IComponentLoadable>(id: string): Promise<T> {
+    public async getComponent<T>(id: string): Promise<T> {
         return super.getComponent<T>(id);
     }
 

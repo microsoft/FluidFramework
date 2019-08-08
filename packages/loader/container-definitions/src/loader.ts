@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IRequest, IResponse } from "@prague/component-core-interfaces";
 import { IDocumentMessage, ISequencedDocumentMessage, IUrlResolver } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { IFluidCodeDetails } from "./chaincode";
@@ -37,7 +37,7 @@ export interface IContainer extends EventEmitter {
     getQuorum(): IQuorum;
 }
 
-export interface ILoader extends IComponent {
+export interface ILoader {
     /**
      * Loads the resource specified by the URL + headers contained in the request object.
      */

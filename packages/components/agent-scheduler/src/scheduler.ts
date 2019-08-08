@@ -387,7 +387,9 @@ export class TaskManager implements ITaskManager {
 
     public async pick(componentUrl: string, ...tasks: ITask[]) {
         const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
-        const configuration = this.context.hostRuntime.IComponentConfiguration;
+        const runtimeAsComponent = this.context.hostRuntime as IComponent;
+        const configuration = runtimeAsComponent.IComponentConfiguration;
+
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }

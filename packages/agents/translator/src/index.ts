@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -18,7 +17,7 @@ interface ITokenConfig {
     key: string;
 }
 
-export class Translator implements IComponent, IComponentRouter, IComponentRunnable {
+export class Translator implements IComponentRouter, IComponentRunnable {
 
     constructor(
         private readonly sharedString: Sequence.SharedString,

@@ -49,11 +49,7 @@ import {
     getInsights,
 } from "./utils";
 
-export class SharedTextRunner extends EventEmitter implements
-    IComponent,
-    IComponentHTMLVisual,
-    IComponentLoadable {
-
+export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisual, IComponentLoadable {
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -226,8 +222,10 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = this.componentContext.hostRuntime.IComponentTokenProvider;
-        const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
+        const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
+        const intelTokens = hostTokens && hostTokens.intelligence
+            ? hostTokens.intelligence.textAnalytics
+            : undefined;
         const intelTask: ITask = {
             id: "intel",
             instance: new TextAnalyzer(this.sharedString, this.insightsMap, intelTokens),

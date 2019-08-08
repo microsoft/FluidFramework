@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponentLoadable,
+    IComponent,
     IRequest,
 } from "@prague/component-core-interfaces";
 import {
@@ -41,7 +41,7 @@ export class SimpleContainerRuntimeFactory {
                         return Promise.reject("Default component is not a component.");
                     }
 
-                    const component = result.value as IComponentLoadable;
+                    const component = result.value as IComponent;
                     // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
                     const forge = component.IComponentForge;
                     if (forge) {

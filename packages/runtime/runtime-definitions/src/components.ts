@@ -43,7 +43,7 @@ declare module "@prague/component-core-interfaces" {
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
-export interface IComponentRuntime extends EventEmitter, IComponent, IComponentRouter {
+export interface IComponentRuntime extends EventEmitter, IComponentRouter {
 
     readonly IComponentRouter: IComponentRouter;
 
@@ -392,7 +392,7 @@ export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(c
  * A component that implements a collection of components.  Typically, the
  * components in the collection would be like-typed.
  */
-export interface IComponentCollection extends IComponent {
+export interface IComponentCollection {
     readonly IComponentCollection: IComponentCollection;
     createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
     removeCollectionItem(instance: IComponent): void;
@@ -402,7 +402,7 @@ export interface IComponentCollection extends IComponent {
 /**
  * Provide information about component preferences for layout.
  */
-export interface IComponentLayout extends IComponent {
+export interface IComponentLayout {
     readonly IComponentLayout: IComponentLayout;
     aspectRatio?: number;
     minimumWidth?: number;
@@ -426,7 +426,7 @@ export enum ComponentCursorDirection {
     Focus,
 }
 
-export interface IComponentCursor extends IComponent {
+export interface IComponentCursor {
     readonly IComponentCursor: IComponentCursor;
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
@@ -436,7 +436,7 @@ export interface IComponentCursor extends IComponent {
 }
 
 // used when another component will forward keyboard events to this component
-export interface IComponentKeyHandlers extends IComponent {
+export interface IComponentKeyHandlers {
     readonly IComponentKeyHandlers: IComponentKeyHandlers;
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;

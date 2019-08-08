@@ -2,6 +2,9 @@
 
 - [Deprecate @prague/app-component](#deprecate-pragueapp-component)
 
+`IComponent` is no longer intended to be derived from. Instead it serves as a Fluid specific form of 'any' and that
+clients can cast objects to in order to probe for implemented component interfaces.
+
 ## `sequence.annotateRange()` argument order changed
 The `start` and `end` arguments of `sequence.annotateRange()` have been changed to the first two arguments to make the codebase more consistent. The new function signature is as below:
 ```typescript

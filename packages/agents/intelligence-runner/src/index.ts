@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -14,7 +13,7 @@ import { ISharedMap } from "@prague/map";
 import * as Sequence from "@prague/sequence";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
-export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
+export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
 
     public get IComponentRouter() { return this; }
     public get IComponentRunnable() { return this; }

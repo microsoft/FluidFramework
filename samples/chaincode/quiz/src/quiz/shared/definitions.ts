@@ -61,7 +61,7 @@ export interface IChoice {
     value: any;
 }
 
-export interface IChoiceComponent extends IComponent {
+export interface IChoiceComponent {
     question: {
         [type: string]: any;
     };

@@ -4,7 +4,7 @@
  */
 
 import * as cell from "@prague/cell";
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
 import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
@@ -27,7 +27,7 @@ import { Document } from "./document";
 const rootMapId = "root";
 const insightsMapId = "insights";
 
-class Chaincode implements IComponent, IComponentFactory {
+class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
@@ -112,7 +112,7 @@ class BackCompatLoader implements IComponentRegistry {
     }
 }
 
-export class ChaincodeFactory implements IComponent, IRuntimeFactory {
+export class ChaincodeFactory implements IRuntimeFactory {
 
     constructor(private readonly runtimeOptions: IContainerRuntimeOptions) {
     }

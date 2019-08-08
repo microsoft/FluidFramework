@@ -113,7 +113,7 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
 
             try {
                 const componentId = uuid();
-                let component = await this.createAndAttachComponent(componentId, url) as IComponent;
+                let component = await this.createAndAttachComponent<IComponent>(componentId, url);
                 if (component.IComponentCollection !== undefined) {
                     // tslint:disable-next-line: await-promise
                     component = await component.IComponentCollection.createCollectionItem();

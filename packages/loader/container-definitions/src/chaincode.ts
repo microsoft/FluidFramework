@@ -135,7 +135,7 @@ export interface IFluidCodeDetails {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime extends IComponent {
+export interface IRuntime {
     /**
      * Executes a request against the runtime
      */
@@ -185,7 +185,7 @@ export interface IRuntime extends IComponent {
     processSignal(message: any, local: boolean);
 }
 
-export interface IMessageScheduler extends IComponent {
+export interface IMessageScheduler {
     readonly IMessageScheduler: IMessageScheduler;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }

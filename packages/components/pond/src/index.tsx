@@ -9,6 +9,7 @@ import {
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
+  IComponent,
   IComponentHTMLRender,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
@@ -52,10 +53,10 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
   }
 
   async setupSubComponents() {
-    const clicker2 = await this.getComponent("clicker");
+    const clicker2 = await this.getComponent<IComponent>("clicker");
     this.clicker2Render = clicker2.IComponentHTMLRender;
 
-    const clicker3 = await this.getComponent("clicker-with-initial-value");
+    const clicker3 = await this.getComponent<IComponent>("clicker-with-initial-value");
     this.clicker3Render = clicker3.IComponentHTMLRender;
   }
 

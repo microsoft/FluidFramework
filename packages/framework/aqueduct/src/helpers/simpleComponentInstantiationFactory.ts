@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentRouter,
     IRequest,
 } from "@prague/component-core-interfaces";
@@ -25,7 +24,7 @@ import {
  * Loading happens after creating a new component, after another person creates a new component, and
  * whenever the page loads.
  */
-export class SimpleComponentInstantiationFactory implements IComponent, IComponentFactory  {
+export class SimpleComponentInstantiationFactory implements IComponentFactory  {
 
     constructor(
         private readonly sharedObjects: ISharedObjectFactory[],

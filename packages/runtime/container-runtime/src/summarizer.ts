@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
 import {
@@ -46,7 +45,7 @@ export interface ISummarizer {
     run(onBehalfOf: string): Promise<void>;
 }
 
-export class Summarizer implements IComponent, IComponentLoadable, ISummarizer {
+export class Summarizer implements IComponentLoadable, ISummarizer {
 
     public get ISummarizer() { return this; }
     public get IComponentLoadable() { return this; }

@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IComponentLoadable,
     IComponentRouter,
     IComponentRunnable,
@@ -27,7 +26,7 @@ export interface ITaskManager extends IComponentLoadable, IComponentRouter {
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IComponent, IComponentRouter {
+export interface IAgentScheduler extends IComponentRouter {
     readonly IComponentRouter: IComponentRouter;
     readonly IAgentScheduler: IAgentScheduler;
 

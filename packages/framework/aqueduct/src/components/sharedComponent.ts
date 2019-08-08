@@ -4,7 +4,7 @@
  */
 
 import {
-    IComponentLoadable,
+    IComponent,
     IComponentRouter,
     IRequest,
     IResponse,
@@ -142,9 +142,9 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
      * @param pkg - package name for the new component
      * @param props - optional props to be passed in if the new component supports IComponentForge and you want to pass props to the forge.
      */
-    protected async createAndAttachComponent<T extends IComponentLoadable>(id: string, pkg: string, props?: any): Promise<T> {
+    protected async createAndAttachComponent<T>(id: string, pkg: string, props?: any): Promise<T> {
         const componentRuntime = await this.context.createComponent(id, pkg);
-        const component = await this.asComponent<T>(componentRuntime.request({ url: "/" }));
+        const component = await this.asComponent<IComponent>(componentRuntime.request({ url: "/" }));
 
         // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
         const forge = component.IComponentForge;
@@ -154,14 +154,14 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
 
         componentRuntime.attach();
 
-        return component;
+        return component as T;
     }
 
     /**
      * Gets the component of a given id. Will follow the pattern of the container for waiting.
      * @param id - component id
      */
-    protected async getComponent<T extends IComponentLoadable>(id: string, wait: boolean = true): Promise<T> {
+    protected async getComponent<T>(id: string, wait: boolean = true): Promise<T> {
         const request = {
             headers: [[wait]],
             url: `/${id}`,
@@ -190,7 +190,7 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
     /**
      * Given a request response will return a component if a component was in the response.
      */
-    private async asComponent<T extends IComponentLoadable>(response: Promise<IResponse>): Promise<T> {
+    private async asComponent<T>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
         if (result.status === 200 && result.mimeType === "prague/component") {

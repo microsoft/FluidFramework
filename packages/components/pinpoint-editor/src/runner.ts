@@ -5,6 +5,7 @@
 
 import { Pinpoint } from "@kurtb/pinpoint";
 import {
+    IComponent,
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -411,7 +412,7 @@ export class PinpointRunner extends EventEmitter implements
     }
 
     private getMapAPIKey() {
-        const hostTokens = this.context.hostRuntime.IComponentTokenProvider;
+        const hostTokens = (this.context.hostRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.pinpointEditor : undefined;
         if (intelTokens === undefined || intelTokens.key === undefined) {
             return undefined;

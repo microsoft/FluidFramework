@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
 import { ConnectionState } from "@prague/container-definitions";
 import {
     ISequencedDocumentMessage,
@@ -16,7 +15,7 @@ declare module "@prague/container-definitions" {
     }
 }
 
-export interface IChannel extends IComponent {
+export interface IChannel {
     /**
      * A readonly identifier for the shared object
      */

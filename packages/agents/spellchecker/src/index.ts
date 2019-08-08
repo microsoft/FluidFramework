@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentRouter, IRequest, IResponse } from "@prague/component-core-interfaces";
+import { IComponentRouter, IRequest, IResponse } from "@prague/component-core-interfaces";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import { loadDictionary } from "./dictionaryLoader";
@@ -20,7 +20,7 @@ declare module "@prague/component-core-interfaces" {
     }
 }
 
-export class SpellChecker implements IComponent, IComponentRouter, ISpellChecker {
+export class SpellChecker implements IComponentRouter, ISpellChecker {
 
     public get IComponentRouter() { return this; }
     public get ISpellChecker() { return this; }

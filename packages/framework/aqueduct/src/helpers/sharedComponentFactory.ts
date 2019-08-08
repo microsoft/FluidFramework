@@ -4,7 +4,6 @@
  */
 
 import {
-    IComponent,
     IRequest,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime, ISharedObjectRegistry } from "@prague/component-runtime";
@@ -18,7 +17,7 @@ import {
 } from "@prague/shared-object-common";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponent, IComponentFactory  {
+export class SharedComponentFactory implements IComponentFactory  {
     private readonly registry: ISharedObjectRegistry;
 
     constructor(

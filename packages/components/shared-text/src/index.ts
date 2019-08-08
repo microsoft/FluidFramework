@@ -7,7 +7,7 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IComponent, IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@prague/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentContext } from "@prague/runtime-definitions";
@@ -75,7 +75,7 @@ class MyRegistry implements IComponentRegistry {
     }
 }
 
-class SharedTextFactoryComponent implements IComponent, IComponentFactory, IRuntimeFactory {
+class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
 
     public get IComponentFactory() { return this; }
     public get IRuntimeFactory() { return this; }

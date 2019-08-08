@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
@@ -13,7 +13,7 @@ import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-export class GraphIQLView extends EventEmitter implements IComponent, IComponentHTMLVisual {
+export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
     public readonly id = "graphiql";
 
     public get IComponentHTMLVisual() { return this; }

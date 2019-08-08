@@ -127,7 +127,7 @@ class TaskScheduler {
     }
 
     public start() {
-        const hostTokens = this.componentContext.hostRuntime.IComponentTokenProvider;
+        const hostTokens = (this.componentContext.hostRuntime as IComponent).IComponentTokenProvider;
         const intelTokens = hostTokens && hostTokens.intelligence ? hostTokens.intelligence.textAnalytics : undefined;
         const intelTask: ITask = {
             id: "intel",

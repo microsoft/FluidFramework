@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent } from "@prague/component-core-interfaces";
 import {
     IContentMessage,
     ISequencedDocumentMessage,
@@ -47,7 +46,7 @@ declare module "@prague/component-core-interfaces" {
     }
 }
 
-export interface IDeltaSender extends IComponent {
+export interface IDeltaSender {
 
     readonly IDeltaSender: IDeltaSender;
     /**

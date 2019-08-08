@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-    IComponent,
-} from "@prague/component-core-interfaces";
+
+import { } from "@prague/component-core-interfaces";
 
 declare module "@prague/component-core-interfaces" {
     export interface IComponent {
@@ -16,7 +15,7 @@ declare module "@prague/component-core-interfaces" {
  * Implementing this interface identifies that as part of component creation you want to perform an action after
  * creation but before attaching.
  */
-export interface IComponentForge extends IComponent {
+export interface IComponentForge {
 
     readonly IComponentForge: IComponentForge;
 

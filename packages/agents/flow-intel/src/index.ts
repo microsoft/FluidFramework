@@ -5,7 +5,6 @@
 
 import { FlowDocument } from "@chaincode/webflow";
 import {
-    IComponent,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -14,7 +13,7 @@ import {
 import { ISharedMap } from "@prague/map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
-export class TextAnalyzer implements IComponent, IComponentRouter, IComponentRunnable {
+export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
 
     constructor(
         private readonly document: FlowDocument,

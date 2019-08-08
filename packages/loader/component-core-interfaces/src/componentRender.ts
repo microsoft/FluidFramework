@@ -14,7 +14,7 @@ import { IComponent } from "./components";
  * If elm has an empty client rect, then it is assumed that it will expand to hold the
  * rendered component.
  */
-export interface IComponentHTMLRender extends IComponent {
+export interface IComponentHTMLRender {
     readonly IComponentHTMLRender: IComponentHTMLRender;
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
