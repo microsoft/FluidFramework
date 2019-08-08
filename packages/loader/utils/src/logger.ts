@@ -14,6 +14,7 @@ import {
     TelemetryPerfType,
 } from "@prague/container-definitions";
 import * as registerDebug from "debug";
+import { pkgName, pkgVersion } from "./packageVersion";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now") as (() => number);
 
@@ -188,6 +189,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
         const newEvent = { ...this.properties, ...event };
+        if (newEvent[pkgName] === undefined) {
+            newEvent[pkgName]  = pkgVersion;
+        }
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
