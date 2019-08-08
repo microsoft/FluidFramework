@@ -22,7 +22,7 @@ docker run \
   -e VSTS_WORK='/var/lib/vsts/$VSTS_AGENT' \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /var/lib/vsts:/var/lib/vsts \
-  microsoft/vsts-agent:ubuntu-16.04-docker-17.03.0-ce-standard
+  microsoft/vsts-agent:ubuntu-16.04-docker-18.06.1-ce-standard
 ```
 
 The work directory must match between the host and container due to how we run Docker. We provide the container access
@@ -32,6 +32,18 @@ processes rely on being able to volume mount a local volume inside a running con
 an example we run Helm and Kubernetes commands via a container. When sharing the Docker socket any volume mounts apply
 to the host's file system. Not the container executing the command's file system. To work around this we mount our
 VSTS_WORK directory inside the container in the same structure as on the host.
+
+## Azure setup
+
+Create a new Ubuntu 18 VM. Currently we make use of the F16s_v2 VM size and add a 1TB data disk.
+
+To mount the disk once the VM is online follow the instructions at
+https://docs.microsoft.com/en-us/azure/virtual-machines/linux/attach-disk-portal.
+
+Then follow the instructions above. You likely want to store your images as well as VSTS work directory on the
+data drive. To change where Docker stores files follow the symbolic linking instructions at https://forums.docker.com/t/how-do-i-change-the-docker-image-installation-directory/1169. We prefer creating a `/datadrive/docker` folder that we
+then symbolically link `/var/lib/docker` to. For VSTS we create a `/datadrive/vsts` folder that we then have `/var/lib/vsts`
+symbolically link to - i.e. `sudo ln -s /datadrive/vsts /var/lib/vsts`.
 
 ## Build Machine Help
 
