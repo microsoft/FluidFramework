@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@prague/component-core-interfaces";
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode } from "@prague/flow-util";
+import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "./caret";
@@ -15,11 +15,14 @@ import { Layout } from "./view/layout";
 export class Editor {
     private readonly layout: Layout;
     private readonly caret: Caret;
+    private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
     constructor(doc: FlowDocument, root: HTMLElement, scope?: IComponent) {
-        this.layout = new Layout(doc, root, scope);
+        const scheduler = new Scheduler();
+        this.layout = new Layout(doc, root, scheduler, scope);
         this.caret = new Caret(this.layout);
+        this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
 
         root.tabIndex = 0;
         root.contentEditable = "true";
@@ -49,7 +52,7 @@ export class Editor {
         const doc = this.doc;
         doc.remove(Math.max(0, start), Math.min(end, doc.length));
         caret.collapseForward();
-        caret.sync();
+        this.caretSync();
     }
 
     private unlinkChildren(node: Node | HTMLElement) {
@@ -93,7 +96,7 @@ export class Editor {
                 debug(`*** RESET ***`);
                 this.unlinkChildren(this.layout.root);
                 this.layout.sync();
-                this.caret.sync();
+                this.caretSync();
                 break;
             }
 
@@ -145,7 +148,7 @@ export class Editor {
                 } else {
                     this.doc.insertParagraph(position);
                 }
-                caret.sync();
+                this.caretSync();
                 break;
             }
             default: {
@@ -162,7 +165,7 @@ export class Editor {
             this.doc.replaceWithText(start, end, e.key);
         }
         this.caret.collapseForward();
-        this.caret.sync();
+        this.caretSync();
     }
 
     private consume(e: Event) {

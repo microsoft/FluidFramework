@@ -76,12 +76,8 @@ export class Layout {
 
     private readonly scheduleRender: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, public readonly scope?: IComponent) {
-        {
-            const scheduler = new Scheduler();
-            this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
-        }
-
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, scheduler = new Scheduler(), public readonly scope?: IComponent) {
+        this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
         this.initialCheckpoint = new LayoutCheckpoint([], [{ parent: this.slot, previous: null }]);
         this.rootFormatInfo = Object.freeze({ formatter: documentFormatter, state: { root } });
 
