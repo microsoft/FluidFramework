@@ -4,6 +4,6 @@
  */
 
 export * from "./sharedObject";
-export * from "./extension";
+export * from "./sharedObjectFactory";
 export * from "./types";
 export * from "./valueType";

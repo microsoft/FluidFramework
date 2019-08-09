@@ -6,7 +6,7 @@
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { ISharedCell } from "..";
-import { CellFactory } from "../extension";
+import { CellFactory } from "../cellFactory";
 
 describe("Routerlicious", () => {
     describe("Api", () => {

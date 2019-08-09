@@ -15,9 +15,9 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { SharedObject } from "@prague/shared-object-common";
-import { StreamFactory } from "./extension";
 import { IInkDelta, IInkStroke, IStream } from "./interfaces";
 import { IInkSnapshot, InkSnapshot } from "./snapshot";
+import { StreamFactory } from "./streamFactory";
 
 /**
  * Filename where the snapshot is stored.

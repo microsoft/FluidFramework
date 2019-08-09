@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { ConsensusRegisterCollectionFactory } from "../extension";
+import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {

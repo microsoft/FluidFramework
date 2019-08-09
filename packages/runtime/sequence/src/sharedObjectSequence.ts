@@ -4,7 +4,7 @@
  */
 
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedObjectSequenceFactory } from "./extension";
+import { SharedObjectSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
 export class SharedObjectSequence<T> extends SharedSequence<T> {

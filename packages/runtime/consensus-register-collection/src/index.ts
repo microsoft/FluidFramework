@@ -4,5 +4,5 @@
  */
 
 export * from "./consensusRegisterCollection";
-export * from "./extension";
+export * from "./consensusRegisterCollectionFactory";
 export * from "./interfaces";

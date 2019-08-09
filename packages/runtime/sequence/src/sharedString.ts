@@ -6,11 +6,11 @@
 import * as MergeTree from "@prague/merge-tree";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import {
-    SharedStringFactory,
-} from "./extension";
-import {
     SharedSegmentSequence,
 } from "./sequence";
+import {
+    SharedStringFactory,
+} from "./sequenceFactory";
 
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 

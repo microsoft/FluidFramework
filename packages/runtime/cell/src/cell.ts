@@ -15,8 +15,8 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
-import { CellFactory } from "./extension";
 import { ISharedCell } from "./interfaces";
 
 /**

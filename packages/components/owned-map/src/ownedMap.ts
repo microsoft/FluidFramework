@@ -13,7 +13,7 @@ import {
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { debug } from "./debug";
-import { OwnedMapFactory } from "./extension";
+import { OwnedMapFactory } from "./ownedMapFactory";
 
 const snapshotFileName = "header";
 const ownerPath = "owner";

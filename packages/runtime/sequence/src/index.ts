@@ -18,7 +18,7 @@ export {
 } from "./intervalCollection";
 export * from "./sharedString";
 export * from "./sequence";
-export * from "./extension";
+export * from "./sequenceFactory";
 export * from "./sequenceDeltaEvent";
 export * from "./sharedSequence";
 export * from "./sharedObjectSequence";

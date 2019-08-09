@@ -6,7 +6,7 @@
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection";
-import { ConsensusStackFactory } from "./extension";
+import { ConsensusStackFactory } from "./consensusOrderedCollectionFactory";
 import { IOrderedCollection } from "./interfaces";
 import { SnapshotableArray } from "./snapshotableArray";
 

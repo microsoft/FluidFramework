@@ -5,7 +5,7 @@
 
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
-import { ConsensusQueueFactory, ConsensusStackFactory } from "../extension";
+import { ConsensusQueueFactory, ConsensusStackFactory } from "../consensusOrderedCollectionFactory";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "../interfaces";
 
 describe("Routerlicious", () => {

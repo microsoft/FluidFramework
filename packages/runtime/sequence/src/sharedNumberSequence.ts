@@ -4,7 +4,7 @@
  */
 
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedNumberSequenceFactory } from "./extension";
+import { SharedNumberSequenceFactory } from "./sequenceFactory";
 import { SharedSequence } from "./sharedSequence";
 
 export class SharedNumberSequence extends SharedSequence<number> {

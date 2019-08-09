@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./extension";
+export * from "./streamFactory";
 export * from "./inkDelta";
 export * from "./interfaces";
 export * from "./snapshot";

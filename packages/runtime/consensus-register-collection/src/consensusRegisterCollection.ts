@@ -14,8 +14,8 @@ import {
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
+import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
-import { ConsensusRegisterCollectionFactory } from "./extension";
 import { IConsensusRegisterCollection, ReadPolicy } from "./interfaces";
 
 interface ILocalData {
