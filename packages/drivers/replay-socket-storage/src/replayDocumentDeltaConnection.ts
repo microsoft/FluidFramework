@@ -221,7 +221,6 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
 
     private static readonly claims: ITokenClaims = {
         documentId: "",
-        permission: "",
         scopes: [],
         tenantId: "",
         user: {

@@ -106,7 +106,6 @@ function generateToken(tenantId, documentId, key) {
     const userId = uuidv4();
     const claims = {
         documentId,
-        permission: "read:write",
         tenantId,
         user: {
             id: userId,

@@ -26,7 +26,6 @@ const fileProtocolVersion = "^0.1.0";
 
 const Claims: ITokenClaims = {
     documentId: "",
-    permission: "",
     scopes: [],
     tenantId: "",
     user: {

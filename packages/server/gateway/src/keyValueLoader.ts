@@ -93,7 +93,6 @@ export class KeyValueLoader {
         const token = jwt.sign(
             {
                 documentId: this.documentId,
-                permission: "read:write",
                 scopes: [ScopeType.DocRead],
                 tenantId: this.tenantId,
                 user: {id: "admin-portal"},

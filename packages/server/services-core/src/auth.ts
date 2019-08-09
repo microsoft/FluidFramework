@@ -22,7 +22,6 @@ export function generateToken(tenantId: string, documentId: string, key: string,
 
     const claims: ITokenClaims = {
         documentId,
-        permission: "read:write",
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
         tenantId,
         user,

@@ -30,7 +30,6 @@ async function launchPuppeteer(documentId: string, loaderType: string) {
     const token = jwt.sign(
         {
             documentId,
-            permission: "read:write", // use "read:write" for now
             scopes: ["doc:read", "doc:write", "summary:write"],
             tenantId,
             user,
