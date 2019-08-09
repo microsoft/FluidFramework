@@ -11,4 +11,3 @@ export * from "./logger";
 export * from "./port";
 export * from "./random";
 export * from "./runner";
-export * from "./scopes";

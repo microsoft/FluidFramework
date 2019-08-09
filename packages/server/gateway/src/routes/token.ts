@@ -4,7 +4,7 @@
  */
 
 import { ISummaryTokenClaims, ITokenClaims } from "@prague/protocol-definitions";
-import { canSummarize } from "@prague/services-utils";
+import { canSummarize } from "@prague/services-client";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

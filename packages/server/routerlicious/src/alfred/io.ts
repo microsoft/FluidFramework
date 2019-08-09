@@ -13,8 +13,9 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@prague/protocol-definitions";
+import { canSummarize, canWrite } from "@prague/services-client";
 import * as core from "@prague/services-core";
-import { canSummarize, canWrite, generateClientId, getRandomInt } from "@prague/services-utils";
+import { generateClientId, getRandomInt } from "@prague/services-utils";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";

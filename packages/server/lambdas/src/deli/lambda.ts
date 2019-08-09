@@ -13,6 +13,7 @@ import {
     ITrace,
     MessageType,
 } from "@prague/protocol-definitions";
+import { canSummarize } from "@prague/services-client";
 import {
     extractBoxcar,
     ICollection,
@@ -30,7 +31,6 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@prague/services-core";
-import { canSummarize } from "@prague/services-utils";
 import {
     Heap,
     IComparer,
