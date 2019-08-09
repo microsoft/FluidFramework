@@ -5,6 +5,9 @@
 
 import { IComponentHandle } from "./handles";
 
+/**
+ * A shared component has a URL from which it can be referenced
+ */
 export interface IComponentLoadable {
     // absolute URL to the component within the document
     url: string;
@@ -16,18 +19,9 @@ export interface IComponentLoadable {
 }
 
 export interface IComponentRunnable {
-    readonly IComponentRunnable: IComponentRunnable;
     run(): Promise<void>;
 }
 
-/**
- * A shared component has a URL from which it can be referenced
- */
-export interface ISharedComponent extends IComponentLoadable {
-    readonly IComponentLoadable: IComponentLoadable;
-}
-
 export interface IComponentConfiguration {
-    readonly IComponentConfiguration: IComponentConfiguration;
     canReconnect: boolean;
 }

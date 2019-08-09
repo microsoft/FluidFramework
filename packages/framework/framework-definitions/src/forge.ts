@@ -16,9 +16,6 @@ declare module "@prague/component-core-interfaces" {
  * creation but before attaching.
  */
 export interface IComponentForge {
-
-    readonly IComponentForge: IComponentForge;
-
     /**
      * Modify your existing setup after creation and before attach.
      * @param props - initial setup properties

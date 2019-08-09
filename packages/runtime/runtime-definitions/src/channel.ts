@@ -27,8 +27,6 @@ export interface IChannel {
 
     readonly snapshotFormatVersion?: string;
 
-    readonly IChannel: IChannel;
-
     /**
      * Generates snapshot of the shared object.
      */

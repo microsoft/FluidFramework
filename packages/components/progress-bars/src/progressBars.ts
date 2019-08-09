@@ -7,10 +7,10 @@ import {
     IComponent,
     IComponentHTMLView,
     IComponentHTMLVisual,
+    IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import {
@@ -79,7 +79,7 @@ class ProgressBarView implements IComponentHTMLView {
 }
 
 // The "model" side of a progress bar
-export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, IComponentRouter {
+export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
 
     private views = new Set<ProgressBarView>();
     private defaultView: ProgressBarView;
@@ -135,7 +135,7 @@ export class ProgressBar implements ISharedComponent, IComponentHTMLVisual, ICom
     }
 }
 
-export class ProgressCollection extends EventEmitter implements ISharedComponent, IComponentRouter {
+export class ProgressCollection extends EventEmitter implements IComponentLoadable, IComponentRouter {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);

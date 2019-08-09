@@ -9,7 +9,6 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentLoadable,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import {
@@ -310,7 +309,7 @@ pinpointTool.filter("html", ($sce) => {
 });
 
 export class PinpointRunner extends EventEmitter implements
-    ISharedComponent, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
+    IComponentLoadable, IComponentHTMLVisual, IComponentLoadable, IComponentLayout {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<PinpointRunner> {
         const runner = new PinpointRunner(runtime, context);

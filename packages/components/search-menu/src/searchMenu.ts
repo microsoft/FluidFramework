@@ -19,7 +19,6 @@ declare module "@prague/component-core-interfaces" {
 }
 
 export interface ISearchMenuHost {
-    readonly ISearchMenuHost: ISearchMenuHost;
     // TD switch to options structure
     showSearchMenu(
         cmdTree: MergeTree.TST<ISearchMenuCommand>,
@@ -30,7 +29,6 @@ export interface ISearchMenuHost {
 }
 
 export interface ISearchMenuClient {
-    readonly ISearchMenuClient: ISearchMenuClient;
     registerSearchMenuHost(host: ISearchMenuHost): void;
 }
 

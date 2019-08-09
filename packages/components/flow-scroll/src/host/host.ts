@@ -5,7 +5,7 @@
 import * as SearchMenu from "@chaincode/search-menu";
 
 import { Editor, FlowDocument, Tag } from "@chaincode/webflow";
-import { IComponentHTMLView, IComponentHTMLVisual, ISharedComponent } from "@prague/component-core-interfaces";
+import { IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { TST } from "@prague/merge-tree";
 import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
@@ -79,7 +79,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
             const insertComponentFromCollection = (factory: IComponentCollection, componentOptions: object, style?: string, classList?: string[]) => {
                 const position = editor.selection.end;
-                const instance = factory.createCollectionItem(componentOptions) as ISharedComponent;
+                const instance = factory.createCollectionItem(componentOptions) as IComponentLoadable;
                 doc.insertComponent(position, `/${instance.url}`, componentOptions, style, classList);
             };
 

@@ -18,8 +18,6 @@ export interface ITask {
  * Wrapper on top of IAgentScheduler.
  */
 export interface ITaskManager extends IComponentLoadable, IComponentRouter {
-    readonly IComponentLoadable: IComponentLoadable;
-    readonly IComponentRouter: IComponentRouter;
     pick(componentUrl: string, ...tasks: ITask[]): Promise<void>;
 }
 
@@ -27,9 +25,6 @@ export interface ITaskManager extends IComponentLoadable, IComponentRouter {
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
 export interface IAgentScheduler extends IComponentRouter {
-    readonly IComponentRouter: IComponentRouter;
-    readonly IAgentScheduler: IAgentScheduler;
-
     /**
      * Whether this instance is the leader.
      */

@@ -30,7 +30,6 @@ const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
 export interface IKeyValue {
-    readonly IKeyValue: IKeyValue;
     set(key: string, value: any): void;
     get(key: string): any;
 }

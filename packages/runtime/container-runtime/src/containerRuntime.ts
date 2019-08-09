@@ -75,7 +75,6 @@ export type ComponentRegistryTypes =
     IComponentRegistry | {get(name: string): Promise<ComponentFactoryTypes> | undefined};
 
 export interface IComponentRegistry {
-    readonly IComponentRegistry: IComponentRegistry;
     get(name: string): Promise<ComponentFactoryTypes> | undefined;
 }
 

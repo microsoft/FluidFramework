@@ -6,10 +6,10 @@
 import {
     IComponent,
     IComponentHTMLVisual,
+    IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
@@ -79,7 +79,7 @@ interface IYouTubePlayer {
 }
 
 export class VideoPlayer implements
-    ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
+    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
 
     private player: IYouTubePlayer;
     private playerDiv: HTMLDivElement;
@@ -152,7 +152,7 @@ export class VideoPlayer implements
 }
 
 export class VideoPlayerCollection extends EventEmitter implements
-    ISharedComponent, IComponentRouter, IComponentCollection {
+    IComponentLoadable, IComponentRouter, IComponentCollection {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new VideoPlayerCollection(runtime, context);

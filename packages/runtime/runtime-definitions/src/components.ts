@@ -376,7 +376,6 @@ export interface IHostRuntime extends IRuntime {
  * The interface implemented by a component module.
  */
 export interface IComponentFactory {
-    readonly IComponentFactory: IComponentFactory;
     /**
      * Generates runtime for the component from the component context. Once created should be bound to the context.
      * @param context - Conext for the component.
@@ -393,7 +392,6 @@ export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(c
  * components in the collection would be like-typed.
  */
 export interface IComponentCollection {
-    readonly IComponentCollection: IComponentCollection;
     createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
     removeCollectionItem(instance: IComponent): void;
     // need iteration
@@ -403,7 +401,6 @@ export interface IComponentCollection {
  * Provide information about component preferences for layout.
  */
 export interface IComponentLayout {
-    readonly IComponentLayout: IComponentLayout;
     aspectRatio?: number;
     minimumWidth?: number;
     minimumHeight?: number;
@@ -427,7 +424,6 @@ export enum ComponentCursorDirection {
 }
 
 export interface IComponentCursor {
-    readonly IComponentCursor: IComponentCursor;
     enter(direction: ComponentCursorDirection): void;
     leave(direction: ComponentCursorDirection): void;
     // returns true if cursor leaves the component
@@ -437,7 +433,6 @@ export interface IComponentCursor {
 
 // used when another component will forward keyboard events to this component
 export interface IComponentKeyHandlers {
-    readonly IComponentKeyHandlers: IComponentKeyHandlers;
     onKeypress(e: KeyboardEvent): void;
     onKeydown(e: KeyboardEvent): void;
 }

@@ -11,10 +11,10 @@ import {
     IComponentHTMLRender,
     IComponentHTMLView,
     IComponentHTMLVisual,
+    IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
@@ -426,7 +426,7 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 
 }
 
-export class MathInstance implements ISharedComponent, IComponentRouter,
+export class MathInstance implements IComponentLoadable, IComponentRouter,
     IComponentHTMLVisual, IComponentHTMLRender {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
@@ -534,7 +534,7 @@ const endIdPrefix = "end-";
 // tslint:disable-next-line:no-empty-interface
 export interface IMathOptions extends IComponentHTMLOptions { }
 
-export class MathCollection implements ISharedComponent, IComponentCollection, IComponentRouter {
+export class MathCollection implements IComponentLoadable, IComponentCollection, IComponentRouter {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new MathCollection(runtime, context);

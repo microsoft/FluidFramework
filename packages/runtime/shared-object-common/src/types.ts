@@ -26,9 +26,6 @@ export interface ISharedObject extends IChannel {
      */
     __sharedObject__: boolean;
 
-    readonly ISharedObject: ISharedObject;
-    readonly IChannel: IChannel;
-
     /**
      * Attaches an event listener for the given event
      */

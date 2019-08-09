@@ -12,7 +12,6 @@ import {
     IComponent,
     IComponentHTMLRender,
     IComponentLoadable,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import {
     IGenericBlob,
@@ -88,7 +87,7 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends ISharedComponent, IComponentHTMLRender, IComponentCursor,
+export interface IMathInstance extends IComponentLoadable, IComponentHTMLRender, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
     IComponentHTMLRender: IComponentHTMLRender;

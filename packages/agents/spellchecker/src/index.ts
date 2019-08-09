@@ -10,7 +10,6 @@ import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
 export interface ISpellChecker {
-    readonly ISpellChecker: ISpellChecker;
     run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>): void;
 }
 

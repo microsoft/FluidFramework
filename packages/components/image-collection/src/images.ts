@@ -8,10 +8,10 @@ import {
     IComponentHTMLOptions,
     IComponentHTMLRender,
     IComponentHTMLVisual,
+    IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, MapFactory } from "@prague/map";
@@ -26,7 +26,7 @@ import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
-    ISharedComponent, IComponentHTMLVisual, IComponentRouter, IComponentHTMLRender, IComponentLayout {
+    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentHTMLRender, IComponentLayout {
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
@@ -59,7 +59,7 @@ export class ImageComponent implements
 }
 
 export class ImageCollection extends EventEmitter implements
-    ISharedComponent, IComponentRouter, IComponentCollection {
+    IComponentLoadable, IComponentRouter, IComponentCollection {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ImageCollection(runtime, context);

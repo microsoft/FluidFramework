@@ -5,10 +5,10 @@
 
 import {
     IComponent,
+    IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
-    ISharedComponent,
 } from "@prague/component-core-interfaces";
 import { IComponentForge } from "@prague/framework-definitions";
 import {
@@ -21,7 +21,7 @@ import { EventEmitter } from "events";
  * This is as bare-bones base class that does basic setup and enables for factory on an initialize call.
  * You probably don't want to inherit from this component directly unless you are creating another base component class
  */
-export abstract class SharedComponent extends EventEmitter implements ISharedComponent, IComponentForge, IComponentRouter {
+export abstract class SharedComponent extends EventEmitter implements IComponentLoadable, IComponentForge, IComponentRouter {
     private initializeP: Promise<void> | undefined;
     private hasForgedInternal: boolean;
 
@@ -108,11 +108,11 @@ export abstract class SharedComponent extends EventEmitter implements ISharedCom
 
     // #endregion IComponentRouter
 
-    // #region ISharedComponent
+    // #region IComponentLoadable
 
     public get url() { return this.context.id; }
 
-    // #endregion ISharedComponent
+    // #endregion IComponentLoadable
 
     /**
      * Internal initialize implementation. Overwriting this will change the flow of the SharedComponent and should generally

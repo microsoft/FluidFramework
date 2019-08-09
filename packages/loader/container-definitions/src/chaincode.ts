@@ -186,7 +186,6 @@ export interface IRuntime {
 }
 
 export interface IMessageScheduler {
-    readonly IMessageScheduler: IMessageScheduler;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
@@ -221,7 +220,6 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
 }
 
 export interface IComponentTokenProvider {
-    readonly IComponentTokenProvider: IComponentTokenProvider;
     intelligence: { [service: string]: any };
 }
 
@@ -233,7 +231,6 @@ export interface IFluidModule {
  * Exported module definition
  */
 export interface IRuntimeFactory {
-    readonly IRuntimeFactory: IRuntimeFactory;
     /**
      * Instantiates a new chaincode container
      */

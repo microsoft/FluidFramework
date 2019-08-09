@@ -82,11 +82,12 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                 const visual = component.IComponentHTMLVisual;
                 const view: IComponentHTMLView = visual.addView
                     ? visual.addView(layout.scope)
+                    // tslint:disable-next-line:no-object-literal-type-assertion
                     : {
                         IComponentHTMLRender: visual,
                         render: visual.render.bind(visual),
                         remove: state.slot.remove.bind(state.slot),
-                    };
+                    } as IComponentHTMLView;
 
                 view.render(state.slot);
                 CaretUtil.caretEnter(state.slot, Direction.right, Rect.empty);

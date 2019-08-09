@@ -15,7 +15,6 @@ import { IComponent } from "./components";
  * rendered component.
  */
 export interface IComponentHTMLRender {
-    readonly IComponentHTMLRender: IComponentHTMLRender;
     render(elm: HTMLElement, options?: IComponentHTMLOptions): void;
 }
 
@@ -28,6 +27,5 @@ export interface IComponentHTMLView extends IComponentHTMLRender {
 }
 
 export interface IComponentHTMLVisual extends IComponentHTMLRender {
-    readonly IComponentHTMLVisual: IComponentHTMLVisual;
     addView?(scope?: IComponent): IComponentHTMLView;
 }

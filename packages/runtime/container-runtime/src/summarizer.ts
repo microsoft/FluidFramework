@@ -37,7 +37,6 @@ declare module "@prague/component-core-interfaces" {
 }
 
 export interface ISummarizer {
-    readonly ISummarizer: ISummarizer;
     /**
      * Runs the summarizer on behalf of another clientId. In this case it will only run so long as the given
      * clientId is the elected summarizer and will stop once it is not.
