@@ -40,7 +40,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
 
     constructor(document: IComponentRuntime, public id: string) {
         super(document, id, SharedStringFactory.Type);
-        this.mergeTreeTextHelper = new MergeTree.MergeTreeTextHelper(this.client.mergeTree);
+        this.mergeTreeTextHelper = this.client.createTextHelper();
     }
 
     /**

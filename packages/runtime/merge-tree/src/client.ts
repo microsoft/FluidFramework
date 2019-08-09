@@ -31,6 +31,7 @@ import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+import { MergeTreeTextHelper } from "./textSegment";
 
 export class Client {
     public readonly mergeTree: MergeTree;
@@ -69,6 +70,7 @@ export class Client {
         this.mergeTree.getLongClientId = (id) => this.getLongClientId(id);
         this.mergeTree.clientIdToBranchId = this.shortClientBranchIdMap;
     }
+
     /**
      * Annotate a maker and call the callback on concensus.
      * @param marker - The marker to annotate
@@ -916,6 +918,10 @@ export class Client {
             remoteClientPosition,
             remoteClientRefSeq,
             shortRemoteClientId);
+    }
+
+    public createTextHelper() {
+        return new MergeTreeTextHelper(this.mergeTree);
     }
 
     private getLocalSequenceNumber() {
