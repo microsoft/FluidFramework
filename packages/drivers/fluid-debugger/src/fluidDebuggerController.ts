@@ -62,8 +62,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
     protected stepsDeferred?: Deferred<number>;
     protected startSeqDeferred = new Deferred<number>();
 
-    // true will cause us ping server indefinetly waiting for new ops
-    protected doneFetchingOps = true;
+    // true will cause us ping server indefinitely waiting for new ops
+    protected retryFetchOpsOnEndOfFile = false;
 
     protected documentStorageService?: IDocumentStorageService;
     protected versions: IVersion[] = [];
@@ -132,7 +132,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
                     this.startSeqDeferred.resolve(seq);
                     */
                     // No ability to load ops, so just say - pick up from infinite op.
-                    this.doneFetchingOps = true;
+                    this.retryFetchOpsOnEndOfFile = false;
+                    this.lastOpReached = true;
                     this.resolveStorage(
                         Number.MAX_SAFE_INTEGER,
                         new FileSnapshotReader(json),
@@ -266,7 +267,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
                 this.ui.updateLastOpText(currentOp, false);
             }
         }
-        return this.doneFetchingOps;
+        return this.lastOpReached && !this.retryFetchOpsOnEndOfFile;
     }
 
     public async replay(
