@@ -12,7 +12,6 @@ import {
     ISequencedDocumentSystemMessage,
     ITrace,
     MessageType,
-    ScopeType,
 } from "@prague/protocol-definitions";
 import {
     extractBoxcar,
@@ -31,6 +30,7 @@ import {
     RawOperationType,
     SequencedOperationType,
 } from "@prague/services-core";
+import { canSummarize } from "@prague/services-utils";
 import {
     Heap,
     IComparer,
@@ -285,8 +285,7 @@ export class DeliLambda implements IPartitionLambda {
                 }
                 // Nack if an unauthorized client tries to summarize.
                 if (message.operation.type === MessageType.Summarize) {
-                    const canSummarize = node.value.scopes.indexOf(ScopeType.SummaryWrite) !== -1;
-                    if (!canSummarize) {
+                    if (!canSummarize(node.value.scopes)) {
                         return this.createNackMessage(message);
                     }
                 }

@@ -227,8 +227,7 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            // Readonly clients don't need an orderer.
-            if (messageClient.mode !== "readonly") {
+            if (canWrite(messageClient.scopes)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient);
                 connectionsMap.set(clientId, connection);
@@ -268,6 +267,10 @@ export function register(
 
                 return connectedMessage;
             }
+        }
+
+        function canWrite(scopes: string[]): boolean {
+            return true;
         }
 
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTokenClaims, ITokenClaims, ScopeType } from "@prague/protocol-definitions";
+import { ISummaryTokenClaims, ITokenClaims } from "@prague/protocol-definitions";
+import { canSummarize } from "@prague/services-utils";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -29,8 +30,7 @@ export function create(alfred: IAlfred): Router {
         const tokenRequest = request.body as ISummaryTokenRequest;
         const token = tokenRequest.issuerToken;
         const claims = jwt.decode(token) as ITokenClaims;
-        const canSummarize = claims.scopes.indexOf(ScopeType.SummaryWrite) !== -1;
-        if (!canSummarize) {
+        if (!canSummarize(claims.scopes)) {
             response.status(400).end("No summary claim is found");
         } else {
             const verifyP = tenantManager.verifyToken(claims.tenantId, token);

@@ -8,6 +8,7 @@ import {
     IDocumentService,
     ISequencedDocumentMessage,
     MessageType,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
 import * as fs from "fs";
@@ -38,7 +39,12 @@ async function loadAllSequencedMessages(
         curr = messages[messages.length - 1].sequenceNumber;
     }
 
-    const client: IClient = { mode: undefined, permission: [], type: "browser", scopes: [], user: { id: "blah" } };
+    const client: IClient = {
+        permission: [],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+        type: "browser",
+        user: { id: "blah" },
+     };
     const deltaStream = await documentService.connectToDeltaStream(client);
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();

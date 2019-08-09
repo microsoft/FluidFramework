@@ -8,6 +8,7 @@ import {
     IClient,
     IClientJoin,
     ITokenClaims,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { Request, Response, Router } from "express";
@@ -85,9 +86,8 @@ function mapSetBuilder(request: Request): any[] {
 
 function sendJoin(tenantId: string, documentId: string, clientId: string, producer: core.IProducer) {
     const detail: IClient = {
-        mode: undefined,
         permission: [],
-        scopes: [],
+        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
         type: Robot,
         user: {id: "Rest-Client"},
     };

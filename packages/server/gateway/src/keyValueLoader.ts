@@ -5,7 +5,7 @@
 
 import { Container, Loader } from "@prague/container-loader";
 import { ISharedMap } from "@prague/map";
-import { IClient, IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { NodeCodeLoader } from "@prague/services";
@@ -94,7 +94,7 @@ export class KeyValueLoader {
             {
                 documentId: this.documentId,
                 permission: "read:write",
-                scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+                scopes: [ScopeType.DocRead],
                 tenantId: this.tenantId,
                 user: {id: "admin-portal"},
             },
@@ -125,14 +125,11 @@ export class KeyValueLoader {
             hostToken,
             new Map([[documentUrl, resolved]]));
 
-        // Join as readonly.
-        const client: Partial<IClient> = { mode: "readonly" };
-
         const loader = new Loader(
             { resolver },
             new RouterliciousDocumentServiceFactory(),
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            { client });
+            { });
 
         return {loader, documentUrl};
     }

@@ -14,7 +14,7 @@ import {
     ITokenClaims,
 } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
-import { generateClientId, getRandomInt } from "@prague/services-utils";
+import { canSummarize, canWrite, generateClientId, getRandomInt } from "@prague/services-utils";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
@@ -118,8 +118,7 @@ export function register(
                     `Client: ${JSON.stringify(connectVersions)}`);
             }
 
-            // TODO: Use scopes to decide readonly clients.
-            if (messageClient.mode !== "readonly") {
+            if (canWrite(messageClient.scopes) || canSummarize(messageClient.scopes)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId);
                 const connection = await orderer.connect(socket, clientId, messageClient as IClient);
                 connectionsMap.set(clientId, connection);
