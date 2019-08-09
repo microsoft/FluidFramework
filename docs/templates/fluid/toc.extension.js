@@ -16,6 +16,7 @@ var packageMapping = {
 
   "component-core-interfaces": "framework",
   "aqueduct": "framework",
+  "aqueduct-react": "framework",
   "framework-definitions": "framework",
 
   "container-definitions": "loader",
@@ -32,7 +33,7 @@ var packageMapping = {
   "base-host": "host",
   "tiny-web-host": "host",
   "react-web-host": "host",
-  
+
   "utils": "misc",
 }
 
