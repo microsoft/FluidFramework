@@ -11,8 +11,9 @@
     "build:flow": "lerna run build --stream --scope '@chaincode/flow-*' --scope '@prague/flow-*' --scope '@prague/routerlicious'",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run tslint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "clean": "lerna run clean --stream --parallel && npm run clean:docs",
+    "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf packages/_api-extractor-temp docs/api/*/**",
+    "clean:nyc": "rimraf nyc/**",
     "postinstall": "npm run postinstall:lerna && (npm run postinstall:r11s || true)",
     "postinstall:lerna": "lerna bootstrap --hoist --nohoist tslint-microsoft-contrib",
     "publish-local": "lerna run publish-local --stream",
@@ -23,9 +24,12 @@
     "rush:rebuild": "npm run rush -- rebuild",
     "rush:update": "npm run rush -- update",
     "test": "lerna run test --stream --no-bail --no-sort",
-    "test:coverage": "lerna run test:coverage --stream --no-bail --no-sort",
+    "test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
+    "test:coverage": "nyc npm run test:report",
+    "test:ci": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
+    "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
-    "test:full": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
+    "test:full": "npm run test:ci:coverage",
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --no-sort --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
@@ -53,10 +57,33 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
+    "nyc": "^13.0.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.4.5"
   },
   "dependencies": {},
+  "nyc": {
+    "all": true,
+    "exclude": [
+      "packages/**/src/test/**/*.ts",
+      "packages/**/dist/test/**/*.js",
+      "**/*.bundle.js",
+      "packages/components/**",
+      "packages/server/gateway/public/**"
+    ],
+    "include": [
+      "packages/**/src/**/*.ts",
+      "packages/**/dist/**/*.js"
+    ],
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output",
+    "cache-dir": "nyc/.cache",
+    "report-dir": "nyc/report"
+  },
   "author": "Microsoft",
   "license": "MIT"
 }
