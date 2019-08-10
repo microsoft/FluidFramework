@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
@@ -70,7 +70,8 @@ async function getInternalComponent(
         id: request.user.oid,
         name: request.user.name,
     } : undefined;
-    const token = getToken(tenantId, documentId, appTenants, user);
+    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+    const token = getToken(tenantId, documentId, appTenants, scopes, user);
 
     const fluidUrl = `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 

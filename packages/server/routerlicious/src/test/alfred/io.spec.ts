@@ -9,6 +9,7 @@ import {
     IDocumentMessage,
     ISequencedDocumentSystemMessage,
     MessageType,
+    ScopeType,
 } from "@prague/protocol-definitions";
 import * as services from "@prague/services";
 import * as core from "@prague/services-core";
@@ -86,7 +87,8 @@ describe("Routerlicious", () => {
                     tenantId: string,
                     secret: string,
                     socket: TestWebSocket): Promise<IConnected> {
-                    const token = core.generateToken(tenantId, id, secret);
+                    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+                    const token = core.generateToken(tenantId, id, secret, scopes);
 
                     const connectMessage: IConnect = {
                         client: undefined,

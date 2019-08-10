@@ -5,6 +5,7 @@
 
 import { IPraguePackage } from "@prague/container-definitions";
 import { extractDetails, WebLoader } from "@prague/loader-web";
+import { ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -55,8 +56,9 @@ export function create(
         const documentId = request.params.id;
         const path = request.params[0];
         const tenantId = appTenants[0].id;
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+            resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
 
         const workerConfig = getConfig(
             config.get("worker"),

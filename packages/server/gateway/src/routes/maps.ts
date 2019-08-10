@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
@@ -42,7 +42,8 @@ export function create(
             name: request.user.name,
         } : undefined;
 
-        const token = utils.getToken(tenantId, request.params.id, appTenants, user);
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        const token = utils.getToken(tenantId, request.params.id, appTenants, scopes, user);
         const pragueUrl = "prague://" +
             `${parse(config.get("worker:serverUrl")).host}/` +
             `${encodeURIComponent(tenantId)}/` +

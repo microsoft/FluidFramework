@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
+import { ISequencedDocumentSystemMessage, MessageType, ScopeType } from "@prague/protocol-definitions";
 import { IHelpMessage, IQueueMessage } from "@prague/runtime-definitions";
 import * as core from "@prague/services-core";
 import { RateLimiter } from "@prague/utils";
@@ -73,13 +73,14 @@ export class ForemanLambda extends SequencedLambda {
             const queueName = queueTask[0];
             const tasks = this.rateLimiter.filter(clientId, queueTask[1]);
             if (tasks.length > 0) {
+                const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
                 const queueMessage: IQueueMessage = {
                     documentId: docId,
                     message: {
                         tasks,
                     },
                     tenantId,
-                    token: core.generateToken(tenantId, docId, key),
+                    token: core.generateToken(tenantId, docId, key, scopes),
                 };
                 this.messageSender.sendTask(
                     queueName,

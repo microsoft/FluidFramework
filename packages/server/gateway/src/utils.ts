@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@prague/protocol-definitions";
+import { IUser, ScopeType } from "@prague/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@prague/services-core";
 import * as _ from "lodash";
 
@@ -39,10 +39,15 @@ export function getConfig(
     return JSON.stringify(updatedConfig);
 }
 
-export function getToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IAlfredUser): string {
+export function getToken(
+    tenantId: string,
+    documentId: string,
+    tenants: IAlfredTenant[],
+    scopes: ScopeType[],
+    user?: IAlfredUser): string {
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, user);
+            return generateToken(tenantId, documentId, tenant.key, scopes, user);
         }
     }
 

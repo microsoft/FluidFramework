@@ -26,6 +26,7 @@ import {
     IResolvedUrl,
     ISequencedDocumentMessage,
     ITree,
+    ScopeType,
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
@@ -148,13 +149,14 @@ class Document {
             serviceFactory: IDocumentServiceFactory,
             version?: string,
             ): Promise<Container> {
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl: "replay.com",
                 ordererUrl: "replay.com",
                 storageUrl: "replay.com",
             },
-            tokens: { jwt: generateToken("prague", "replay-tool", "replay-tool") },
+            tokens: { jwt: generateToken("prague", "replay-tool", "replay-tool", scopes) },
             type: "prague",
             url: `prague://localhost:6000/prague/${FileStorageDocumentName}`,
         };

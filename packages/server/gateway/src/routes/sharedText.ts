@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -22,6 +22,8 @@ const defaultTemplate = "pp.txt";
 const defaultSpellChecking = "enabled";
 
 // This one is going to need to have references to all storage options
+
+const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 
 export function create(
     config: Provider,
@@ -67,7 +69,7 @@ export function create(
             tenantId,
             config.get("error:track"));
         const versionP = alfred.getLatestVersion(tenantId, request.params.id);
-        const token = getToken(tenantId, request.params.id, appTenants);
+        const token = getToken(tenantId, request.params.id, appTenants, scopes);
 
         versionP.then((version) => {
             response.render(
@@ -93,7 +95,7 @@ export function create(
         const tenantId = request.params.tenantId || appTenants[0].id;
 
         const disableCache = "disableCache" in request.query;
-        const token = getToken(tenantId, request.params.id, appTenants);
+        const token = getToken(tenantId, request.params.id, appTenants, scopes);
 
         const workerConfig = getConfig(
             config.get("worker"),
@@ -197,7 +199,7 @@ export function create(
             config.get("error:track"));
 
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, request.params.id, request);
+            resolveUrl(config, alfred, appTenants, tenantId, request.params.id, scopes, request);
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
 
         Promise.all([resolvedP, fullTreeP, treeTimeP]).then(([resolved, fullTree, treeTime]) => {

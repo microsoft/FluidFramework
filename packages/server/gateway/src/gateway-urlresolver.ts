@@ -4,7 +4,7 @@
  */
 
 import { IClientConfig } from "@prague/odsp-utils";
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
@@ -38,6 +38,7 @@ function r11sResolveUrl(
     appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
+    scopes: ScopeType[],
     request: Request,
 ) {
     let user: IAlfredUser | undefined;
@@ -52,7 +53,7 @@ function r11sResolveUrl(
         };
     }
 
-    const token = getToken(tenantId, documentId, appTenants, user);
+    const token = getToken(tenantId, documentId, appTenants, scopes, user);
 
     const fluidUrl = "prague://" +
         `${parse(config.get("worker:serverUrl")).host}/` +
@@ -91,11 +92,12 @@ export function resolveUrl(
     appTenants: IAlfredTenant[],
     tenantId: string,
     documentId: string,
+    scopes: ScopeType[],
     request: Request,
 ) {
     if (isSpoTenant(tenantId)) {
         return spoResolveUrl(config, tenantId, `${documentId}`, request);
     } else {
-        return r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+        return r11sResolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
     }
 }

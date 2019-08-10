@@ -5,6 +5,7 @@
 
 import { IFluidCodeDetails } from "@prague/container-definitions";
 import { extractDetails, WebLoader } from "@prague/loader-web";
+import { ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -52,8 +53,9 @@ export function create(
         const tenantId = request.params.tenantId;
 
         const search = parse(request.url).search;
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, documentId, request);
+            resolveUrl(config, alfred, appTenants, tenantId, documentId, scopes, request);
 
         const workerConfig = getConfig(
             config.get("worker"),

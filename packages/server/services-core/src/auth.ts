@@ -13,7 +13,12 @@ import { getRandomName } from "./dockerNames";
 /**
  * Generates a JWT token to authorize routerlicious
  */
-export function generateToken(tenantId: string, documentId: string, key: string, user?: IUser): string {
+export function generateToken(
+    tenantId: string,
+    documentId: string,
+    key: string,
+    scopes: ScopeType[],
+    user?: IUser): string {
     user = (user) ? user : generateUser();
     if (user.id === "" || user.id === undefined) {
         debug("User with no id");
@@ -22,7 +27,7 @@ export function generateToken(tenantId: string, documentId: string, key: string,
 
     const claims: ITokenClaims = {
         documentId,
-        scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+        scopes,
         tenantId,
         user,
     };

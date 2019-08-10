@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -76,7 +76,8 @@ export function create(
             name: request.user.name,
         } : undefined;
 
-        const token = getToken(tenantId, documentId, appTenants, user);
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        const token = getToken(tenantId, documentId, appTenants, scopes, user);
 
         const fluidUrl = "prague://" +
         `${parse(config.get("worker:serverUrl")).host}/` +

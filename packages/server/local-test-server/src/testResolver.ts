@@ -4,7 +4,7 @@
  */
 
 import { IRequest } from "@prague/component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@prague/protocol-definitions";
 import { generateToken } from "@prague/services-core";
 
 /**
@@ -23,13 +23,14 @@ export class TestResolver implements IUrlResolver {
      * @param request - request to handle; not used
      */
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl: "test.com",
                 ordererUrl: "test.com",
                 storageUrl: "test.com",
             },
-            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey) },
+            tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
             type: "prague",
             url: `prague://test.com/${this.tenantId}/${this.id}`,
         };

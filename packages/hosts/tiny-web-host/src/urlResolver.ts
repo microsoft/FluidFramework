@@ -4,7 +4,7 @@
  */
 
 import { IClientConfig, IODSPTokens } from "@prague/odsp-utils";
-import { IFluidResolvedUrl, IUser } from "@prague/protocol-definitions";
+import { IFluidResolvedUrl, IUser, ScopeType } from "@prague/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@prague/services-core";
 import { parse } from "url";
 import { getSpoServer, isSpoTenant, spoJoinSession } from "./odspUtils";
@@ -100,9 +100,10 @@ export function resolveUrl(
 }
 
 function getR11sToken(tenantId: string, documentId: string, tenants: IAlfredTenant[], user?: IAlfredUser): string {
+    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
     for (const tenant of tenants) {
         if (tenantId === tenant.id) {
-            return generateToken(tenantId, documentId, tenant.key, user);
+            return generateToken(tenantId, documentId, tenant.key, scopes, user);
         }
     }
 
