@@ -4,7 +4,6 @@
  */
 
 import * as stream from "@prague/stream";
-import * as $ from "jquery";
 import * as ui from "../ui";
 import { Image } from "./image";
 import { SegmentCircleInclusive } from "./overlayCanvas";
@@ -25,10 +24,10 @@ class EventPoint {
     public properties: IPointerPointProps;
 
     constructor(relative: HTMLElement, evt: PointerEvent) {
-        const offset = $(relative).offset();
+        const bcr = relative.getBoundingClientRect();
         this.rawPosition = {
-            x: evt.pageX - offset.left,
-            y: evt.pageY - offset.top,
+            x: evt.clientX - bcr.left,
+            y: evt.clientY - bcr.top,
         };
         this.properties = { isEraser: false };
     }
