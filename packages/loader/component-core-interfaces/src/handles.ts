@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentRouter } from "./componentRouter";
+
 /**
  * An IComponentHandleContext describes a routing context from which other IComponentHandleContexts are defined
  */
-export interface IComponentHandleContext {
+export interface IComponentHandleContext extends IComponentRouter {
     /**
      * Path to the handle context relative to the routeContext
      */
     path: string;
 
     /**
-     * The parent IComponentHandleContext that has provided a route path to this IComponentHandleContext
+     * The parent IComponentHandleContext that has provided a route path to this IComponentHandleContext or undefined
+     * at the root.
      */
-    routeContext: IComponentHandleContext;
+    routeContext?: IComponentHandleContext;
 
     /**
      * Flag indicating whether or not the component is attached to the document. An attached context is

@@ -4,6 +4,8 @@
  */
 
 import {
+    IComponentHandleContext,
+    IComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -21,6 +23,14 @@ import {
 } from "@prague/protocol-definitions";
 
 class NullRuntime implements IRuntime {
+    public get IComponentSerializer(): IComponentSerializer {
+        throw new Error("Not implemented");
+    }
+
+    public get IComponentHandleContext(): IComponentHandleContext {
+        throw new Error("Not implemented");
+    }
+
     public ready: Promise<void> | undefined;
 
     public snapshot(tagMessage: string): Promise<ITree | null> {

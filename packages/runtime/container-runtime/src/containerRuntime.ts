@@ -5,6 +5,8 @@
 
 import { AgentSchedulerFactory } from "@component/agent-scheduler";
 import {
+    IComponentHandleContext,
+    IComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -58,9 +60,11 @@ import {
     LocalComponentContext,
     RemotedComponentContext,
 } from "./componentContext";
+import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
+import { ComponentSerializer } from "./serializer";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";
@@ -110,7 +114,6 @@ export interface IContainerRuntimeOptions {
  * It will define the component level mappings.
  */
 export class ContainerRuntime extends EventEmitter implements IHostRuntime {
-
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.
@@ -216,6 +219,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this._flushMode;
     }
 
+    public readonly IComponentSerializer: IComponentSerializer = new ComponentSerializer();
+
+    public readonly IComponentHandleContext: IComponentHandleContext;
+
     public readonly logger: ITelemetryLogger;
     private readonly summaryManager: SummaryManager;
 
@@ -275,6 +282,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         super();
 
         this.chunkMap = new Map<string, string[]>(chunks);
+
+        this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // Extract components stored inside the snapshot
         const components = new Map<string, ISnapshotTree | string>();

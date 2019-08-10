@@ -56,6 +56,7 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
+    "@prague/component-core-interfaces": "^0.8.0",
     "@prague/container-definitions": "^0.8.0",
     "@prague/gitresources": "^0.8.0",
     "@prague/protocol-definitions": "^0.8.0",

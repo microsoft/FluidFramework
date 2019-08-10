@@ -10,6 +10,5 @@ export * from "./componentLoadable";
 export * from "./componentRender";
 export * from "./componentRouter";
 export * from "./handles";
-export * from "./serializer";
 export * from "./legacy";
 export * from "./serializer";

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IComponent, IComponentConfiguration, IRequest, IResponse } from "@prague/component-core-interfaces";
+import {
+    IComponent,
+    IComponentConfiguration,
+    IComponentHandleContext,
+    IComponentSerializer,
+    IRequest,
+    IResponse,
+} from "@prague/component-core-interfaces";
 import {
     IDocumentMessage,
     IDocumentStorageService,
@@ -136,6 +143,9 @@ export interface IFluidCodeDetails {
  * The IRuntime represents an instantiation of a code package within a container.
  */
 export interface IRuntime {
+    readonly IComponentSerializer: IComponentSerializer;
+    readonly IComponentHandleContext: IComponentHandleContext;
+
     /**
      * Executes a request against the runtime
      */

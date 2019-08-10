@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISerializedHandle } from "@prague/component-core-interfaces";
 import { ConnectionState } from "@prague/container-definitions";
 import { MessageType } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
@@ -32,4 +33,9 @@ export function raiseConnectedEvent(emitter: EventEmitter, state: ConnectionStat
     } else {
         emitter.emit("disconnected");
     }
+}
+
+export function isSerializedHandle(value: any): value is ISerializedHandle {
+    // tslint:disable-next-line:no-unsafe-any
+    return value && value.type === "__fluid_handle__";
 }
