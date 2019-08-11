@@ -141,14 +141,24 @@ export class FlexView extends ui.Component {
             document.createElement("div"),
             buttonSize,
             ["btn", "btn-palette", "prague-icon-replay"]);
+        const clearButton = new Button(
+            document.createElement("div"),
+            buttonSize,
+            ["btn", "btn-palette", "prague-icon-cross"]);
 
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);
+        stackPanel.addChild(clearButton);
         this.dock.addBottom(stackPanel);
 
         replayButton.on("click", (event) => {
             debug("Replay button click");
             this.ink.replay();
+        });
+
+        clearButton.on("click", (event) => {
+            debug("Clear button click");
+            this.ink.clear();
         });
 
         this.colorButton.on("click", (event) => {

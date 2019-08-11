@@ -110,6 +110,11 @@ export class InkCanvas extends ui.Component {
         this.element.appendChild(video.element);
     }
 
+    public clear() {
+        const delta = new stream.InkDelta().clear();
+        this.addAndDrawStroke(delta, true);
+    }
+
     /**
      * Resizes the canvas
      */
@@ -260,22 +265,21 @@ export class InkCanvas extends ui.Component {
             this.model.submitOp(delta);
         }
 
-        let dirtyStrokes: { [key: string]: any } = {};
+        const dirtyStrokeIds: Set<string> = new Set();
         for (const operation of delta.operations) {
             if (operation.type === "clear") {
                 this.clearCanvas();
                 this.lastStrokeRenderOp = {};
-                dirtyStrokes = {};
+                dirtyStrokeIds.clear();
             } else {
                 // Get the stroke the delta applies to
-                const stylusId = operation.id;
-                dirtyStrokes[stylusId] = true;
+                const strokeId = operation.id;
+                dirtyStrokeIds.add(strokeId);
             }
         }
 
         // Render all the dirty strokes
-        // tslint:disable-next-line:forin
-        for (const id in dirtyStrokes) {
+        for (const id of dirtyStrokeIds) {
             let index = this.lastStrokeRenderOp[id] ? this.lastStrokeRenderOp[id] : 0;
 
             const stroke = this.model.getStroke(id);
