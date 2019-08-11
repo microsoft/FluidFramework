@@ -4,6 +4,7 @@
  */
 
 import * as api from "@prague/protocol-definitions";
+import * as assert from "assert";
 import * as fs from "fs";
 
 /**
@@ -12,7 +13,8 @@ import * as fs from "fs";
 export class FileDeltaStorageService implements api.IDocumentDeltaStorageService {
 
     private readonly messages: api.ISequencedDocumentMessage[];
-    private isGetCalledFirstTime = true;
+    private lastOps: api.ISequencedDocumentMessage[] = [];
+
     constructor(private readonly path: string) {
         const data = fs.readFileSync(`${this.path}//messages.json`);
         this.messages = JSON.parse(data.toString("utf-8"));
@@ -22,12 +24,8 @@ export class FileDeltaStorageService implements api.IDocumentDeltaStorageService
         from?: number,
         to?: number,
     ): Promise<api.ISequencedDocumentMessage[]> {
-        if (this.isGetCalledFirstTime === true) {
-            this.isGetCalledFirstTime = false;
-            return this.getCore(false, from, to);
-        } else {
-            return this.getCore(true, from, to === undefined ? undefined : to - 1);
-        }
+        // Do not allow container move forward
+        return [];
     }
 
     /**
@@ -36,25 +34,20 @@ export class FileDeltaStorageService implements api.IDocumentDeltaStorageService
      * @param from - First op to be fetched.
      * @param to - Last op to be fetched. This is exclusive.
      */
-    public async getFromWebSocket(
-        from?: number,
-        to?: number,
-    ): Promise<api.ISequencedDocumentMessage[]> {
-        return this.getCore(true, from, to);
-    }
+    public getFromWebSocket(from: number, to: number): api.ISequencedDocumentMessage[] {
+        const readFrom = Math.max(from, 0); // inclusive
+        const readTo = Math.min(to, this.messages.length); // exclusive
 
-    private async getCore(
-        isFromWebSocket: boolean,
-        from?: number,
-        to?: number,
-    ): Promise<api.ISequencedDocumentMessage[]> {
-        const readFrom = from === undefined ? 0 : Math.max(from, 0); // inclusive
-        const readTo = to === undefined ? this.messages.length : Math.min(to, this.messages.length); // exclusive
-
-        if (isFromWebSocket === false || readFrom >= this.messages.length || readTo <= 0) {
+        if (readFrom >= this.messages.length || readTo <= 0) {
             return [];
         }
 
-        return this.messages.slice(readFrom, readTo);
+        // Optimizations for multiple readers (replay tool)
+        if (this.lastOps.length > 0 && this.lastOps[0].sequenceNumber === readFrom + 1) {
+            return this.lastOps;
+        }
+        this.lastOps = this.messages.slice(readFrom, readTo);
+        assert(this.lastOps[0].sequenceNumber === readFrom + 1);
+        return this.lastOps;
     }
 }

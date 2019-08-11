@@ -36,6 +36,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     protected docTree: ISnapshotTree;
     protected readonly blobs = new Map<string, string>();
     protected readonly commits: {[key: string]: ITree} = {};
+    protected readonly trees: {[key: string]: ISnapshotTree} = {};
 
     public constructor(json: IFileSnapshot) {
         super();
@@ -65,13 +66,18 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
         if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
             throw new Error(`Unknown version id: ${versionRequested}`);
         }
-        const tree = this.commits[versionRequested.id];
-        if (tree === undefined) {
-            throw new Error(`Can't find version ${versionRequested.id}`);
-        }
 
-        const flattened = flatten(tree.entries, this.blobs);
-        return buildHierarchy(flattened);
+        let snapshotTree = this.trees[versionRequested.id];
+        if (snapshotTree === undefined) {
+            const tree = this.commits[versionRequested.id];
+            if (tree === undefined) {
+                throw new Error(`Can't find version ${versionRequested.id}`);
+            }
+
+            const flattened = flatten(tree.entries, this.blobs);
+            this.trees[versionRequested.id] = snapshotTree = buildHierarchy(flattened);
+        }
+        return snapshotTree;
     }
 
     public async read(blobId: string): Promise<string> {

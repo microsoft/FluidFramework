@@ -56,14 +56,14 @@ export class Replayer {
      * Replay the ops upto a certain number.
      * @param replayTo - The last op number to be replayed.
      */
-    public async replay(replayTo: number) {
+    public replay(replayTo: number) {
         let totalReplayedOps = 0;
         let done: boolean;
         do {
             const fetchToBatch = this.currentReplayOp + MaxBatchDeltas;
             const fetchTo = Math.min(fetchToBatch, replayTo);
 
-            const fetchedOps = await this.documentStorageService.getFromWebSocket(this.currentReplayOp, fetchTo);
+            const fetchedOps = this.documentStorageService.getFromWebSocket(this.currentReplayOp, fetchTo);
 
             if (fetchedOps.length <= 0) {
                 break;

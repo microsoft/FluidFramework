@@ -113,10 +113,17 @@ export type ReaderConstructor = new (...args: any[]) => api.IDocumentStorageServ
 export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(Base: TBase) {
     return class extends Base implements ISnapshotWriterStorage {
         // Note: if variable name has same name as in base class, it overrides it!
-        public readonly blobsWriter = new Map<string, string>();
-        public readonly commitsWriter: {[key: string]: api.ITree} = {};
+        public blobsWriter = new Map<string, string>();
+        public commitsWriter: {[key: string]: api.ITree} = {};
         public latestWriterTree?: api.ISnapshotTree;
-        public savedSnapshot = false;
+        public docId?: string;
+
+        public reset() {
+            this.blobsWriter = new Map<string, string>();
+            this.commitsWriter = {};
+            this.latestWriterTree = undefined;
+            this.docId = undefined;
+        }
 
         public onCommitHandler(componentName: string, tree: api.ITree): void {
             throw new Error("onCommitHandler is not setup! Please provide your handler!");
@@ -139,8 +146,11 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             // each unchanged component.
             // If we want to change that, we would need to capture docId on first call and return this.latestWriterTree
             // when latest is requested.
-            if (this.savedSnapshot) {
-                return [];
+            if (this.docId === undefined && versionId !== undefined) {
+                this.docId = versionId;
+            }
+            if (this.latestWriterTree && (this.docId === versionId || versionId === undefined)) {
+                return [{id: "latest", treeId: FileStorageVersionTreeId}];
             }
 
             if (this.commitsWriter[versionId] !== undefined) {
@@ -149,6 +159,13 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 throw new Error("Not supporting commit loading");
             }
             return super.getVersions(versionId, count);
+        }
+
+        public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+            if (this.latestWriterTree && (!version || version.id === "latest")) {
+                return this.latestWriterTree;
+            }
+            return super.getSnapshotTree(version);
         }
 
         public async write(
@@ -173,7 +190,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             const commitName = `commit_${componentName}`;
 
             // Sort entries for easier diffing
-            this.sortCommit(tree);
+            this.sortTree(tree);
 
             // Remove tree IDs for easier comparison of snapshots
             delete tree.id;
@@ -182,8 +199,6 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             if (ref) {
                 this.commitsWriter[commitName] = tree;
             } else {
-                this.savedSnapshot = true;
-
                 // Rebuild latest tree - runtime will ask for it when generating next snapshot to write out
                 // non-changed commits for components
                 await this.writeOutFullSnapshot(tree);
@@ -206,6 +221,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         }
 
         public async writeOutFullSnapshot(tree: api.ITree) {
+            const commits: {[key: string]: api.ITree} = {};
             for (const entry of tree.entries) {
                 if (entry.type === api.TreeEntry[api.TreeEntry.Commit]) {
                     const commitId = entry.value as string;
@@ -217,7 +233,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                             const commitTree = await this.getSnapshotTree(version[0]);
                             if (commitTree) {
                                 commit = await this.buildTree(commitTree);
-                                this.sortCommit(commit);
+                                this.sortTree(commit);
                                 this.commitsWriter[commitId] = commit;
                             }
                         }
@@ -225,23 +241,29 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                             console.error(`Can't resolve commit ${commitId}`);
                         }
                     }
+                    commits[commitId] = commit;
                 }
             }
 
             // Sort keys. This does not guarantees that JSON.stringify() would produce sorted result,
             // but in practice it does.
-            const commits: {[key: string]: api.ITree} = {};
-            for (const key of Object.keys(this.commitsWriter).sort()) {
-                commits[key] = this.commitsWriter[key];
+            const commitsSorted: {[key: string]: api.ITree} = {};
+            for (const key of Object.keys(commits).sort()) {
+                commitsSorted[key] = commits[key];
             }
 
-            const fileSnapshot: IFileSnapshot = {tree, commits};
+            const fileSnapshot: IFileSnapshot = {tree, commits: commitsSorted};
             this.onSnapshotHandler(fileSnapshot);
         }
 
-        public sortCommit(tree: api.ITree) {
+        public sortTree(tree: api.ITree) {
             tree.entries.sort((a, b) => {
                 return a.path.localeCompare(b.path);
+            });
+            tree.entries.map((entry) => {
+                if (entry.type === api.TreeEntry[api.TreeEntry.Tree]) {
+                    this.sortTree(entry.value as api.ITree);
+                }
             });
         }
 

@@ -35,6 +35,7 @@ import {
 } from "@prague/replay-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { generateToken } from "@prague/services-core";
+import { ChildLogger, TelemetryLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";
@@ -46,7 +47,7 @@ import { ReplayArgs } from "./replayTool";
  * Logger to catch errors in containers
  */
 class Logger implements ITelemetryBaseLogger {
-    public constructor(private readonly version?: string) {
+    public constructor(private readonly containerDescription: string) {
     }
 
     // ITelemetryBaseLogger implementation
@@ -55,10 +56,7 @@ class Logger implements ITelemetryBaseLogger {
             // Stack is not output properly (with newlines), if done as part of event
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
-            console.error("An error has been logged!");
-            if (this.version !== undefined) {
-                console.error(`From container version ${this.version}`);
-            }
+            console.error(`An error has been logged from ${this.containerDescription}!`);
             console.error(event);
             if (stack) {
                 console.error(stack);
@@ -76,6 +74,7 @@ class Document {
     private documentSeqNumber = 0;
     private from = -1;
     private snapshotFileName: string = "";
+    private docLogger: TelemetryLogger;
 
     public constructor(
             protected readonly args: ReplayArgs,
@@ -90,6 +89,10 @@ class Document {
         return this.from;
     }
 
+    public get logger() {
+        return this.docLogger;
+    }
+
     public getFileName() {
         return this.snapshotFileName;
     }
@@ -98,8 +101,7 @@ class Document {
         this.snapshotFileName = filename;
     }
 
-    public async load(version?: string) {
-        const deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
+    public async load(deltaStorageService: FileDeltaStorageService, containerDescription: string) {
         const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
         const documentServiceFactory = new FileDocumentServiceFactory(
             this.storage,
@@ -108,7 +110,7 @@ class Document {
 
         this.container = await this.loadContainer(
             documentServiceFactory,
-            version);
+            containerDescription);
 
         this.from = this.container.deltaManager.referenceSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -126,7 +128,7 @@ class Document {
     }
 
     public async replay(replayTo: number) {
-        await this.replayer.replay(replayTo);
+        this.replayer.replay(replayTo);
 
         if (this.documentSeqNumber !== this.currentOp) {
             // tslint:disable-next-line: promise-must-complete
@@ -140,14 +142,14 @@ class Document {
     public snapshot() {
         return this.container.snapshot(
             `ReplayTool Snapshot: op ${this.currentOp}, ${this.getFileName()}`,
-            true /*generateFullTreeNoOtimizations*/);
+            !this.args.incremental /*generateFullTreeNoOtimizations*/);
     }
 
     private resolveC = () => {};
 
     private async loadContainer(
             serviceFactory: IDocumentServiceFactory,
-            version?: string,
+            containerDescription: string,
             ): Promise<Container> {
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
@@ -171,11 +173,11 @@ class Document {
 
         const options: object = {
             blockUpdateMarkers: true,
-            generateFullTreeNoOptimizations: true,
         };
 
         // Load the Fluid document
-        const loader = new Loader(host, serviceFactory, codeLoader, options, new Logger(version));
+        this.docLogger = ChildLogger.create(new Logger(containerDescription));
+        const loader = new Loader(host, serviceFactory, codeLoader, options, this.docLogger);
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that
@@ -189,15 +191,35 @@ class Document {
  */
 export class ReplayTool {
     private storage: ISnapshotWriterStorage;
-    private readonly snapshots = new Map<number, IFileSnapshot>();
     private mainDocument: Document;
     private documentNeverSnapshot?: Document;
+    private documentPriorSnapshot?: Document;
+    private readonly documents: Document[] = [];
     private readonly documentsWindow: Document[] = [];
     private readonly documentsFromStorageSnapshots: Document[] = [];
+    private windiffCount = 0;
+    private deltaStorageService: FileDeltaStorageService;
 
     public constructor(private readonly args: ReplayArgs) {}
 
     public async Go() {
+        await this.setup();
+
+        if (this.args.verbose) {
+            console.log("Starting");
+        }
+
+        await this.mainCycle();
+
+        if (this.args.verbose) {
+            console.log("\nLast replayed op seq# ", this.mainDocument.currentOp);
+        } else {
+            process.stdout.write("\n");
+        }
+        assert(this.documentsFromStorageSnapshots.length === 0);
+    }
+
+    private async setup() {
         if (this.args.inDirName === undefined) {
             return Promise.reject("Please provide --indir argument");
         }
@@ -205,15 +227,30 @@ export class ReplayTool {
             return Promise.reject("File does not exist");
         }
 
+        this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
+
         this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
         this.mainDocument = new Document(this.args, this.storage);
-        await this.mainDocument.load(this.args.version);
+        await this.mainDocument.load(
+            this.deltaStorageService,
+            this.args.version ? this.args.version : "main container");
+        this.documents.push(this.mainDocument);
 
         if (this.args.version !== undefined) {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
                 console.log("Warning: --to argument is below snapshot starting op");
             }
+        }
+
+        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateSotrageSnapshots) {
+            const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
+            this.documentNeverSnapshot = new Document(this.args, storage);
+            await this.documentNeverSnapshot.load(
+                this.deltaStorageService,
+                this.args.version ? this.args.version : "secondary container");
+            this.documentNeverSnapshot.setFileName(`snapshot_${this.documentNeverSnapshot.fromOp}_noSnapshots`);
+            this.documents.push(this.documentNeverSnapshot);
         }
 
         // Load all snapshots from storage
@@ -224,37 +261,33 @@ export class ReplayTool {
                 }
                 const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, node.name);
                 const doc = new Document(this.args, storage);
-                await doc.load(node.name);
-                doc.setFileName(`${doc.getFileName()}_storage_${node.name}`);
+                try {
+                    await doc.load(this.deltaStorageService, node.name);
+                    doc.setFileName(`${doc.getFileName()}_storage_${node.name}`);
 
-                if (this.args.from > doc.fromOp) {
-                    console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
-                } else {
-                    console.log(`Loading snapshots ${node.name} generated at op = ${doc.fromOp}`);
-                    this.documentsFromStorageSnapshots.push(doc);
+                    if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
+                        console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                    } else {
+                        console.log(`Loaded snapshots ${node.name} generated at op = ${doc.fromOp}`);
+                        this.documentsFromStorageSnapshots.push(doc);
+                    }
+                } catch (error) {
+                    doc.logger.logException({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => {
                 return a.fromOp > b.fromOp ? 1 : -1;
             });
         }
+    }
 
-        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateSotrageSnapshots) {
-            const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-            this.documentNeverSnapshot = new Document(this.args, storage);
-            await this.documentNeverSnapshot.load(this.args.version);
-            this.documentNeverSnapshot.setFileName(`snapshot_${this.documentNeverSnapshot.fromOp}_noSnapshots`);
-        }
-
+    private async mainCycle() {
         let nextSnapPoint = this.args.from;
 
-        if (this.args.verbose) {
-            console.log("Starting");
-        }
-
         while (true) {
-            if (nextSnapPoint <= this.mainDocument.currentOp) {
-                nextSnapPoint = this.mainDocument.currentOp + this.args.snapFreq;
+            const currentOp = this.mainDocument.currentOp;
+            if (nextSnapPoint <= currentOp) {
+                nextSnapPoint = currentOp + this.args.snapFreq;
             }
             let replayTo = Math.min(nextSnapPoint, this.args.to);
 
@@ -263,9 +296,12 @@ export class ReplayTool {
                 replayTo = Math.min(replayTo, op);
             }
 
-            await this.mainDocument.replay(replayTo);
-            if (this.documentNeverSnapshot) {
-                await this.documentNeverSnapshot.replay(replayTo);
+            assert(replayTo > currentOp);
+            for (const doc of this.documents) {
+                await doc.replay(replayTo);
+            }
+            if (this.documentPriorSnapshot) {
+                await this.documentPriorSnapshot.replay(replayTo);
             }
             for (const doc of this.documentsWindow) {
                 await doc.replay(replayTo);
@@ -279,9 +315,6 @@ export class ReplayTool {
                 break;
             }
         }
-
-        console.log("\nLast replayed op seq# ", this.mainDocument.currentOp);
-        assert(this.documentsFromStorageSnapshots.length === 0);
     }
 
     private async generateSnapshot(final: boolean) {
@@ -306,7 +339,6 @@ export class ReplayTool {
         };
 
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
-            this.snapshots[op] = snapshot;
             snapshotSaved = snapshot;
             snapshotSavedString = JSON.stringify(snapshot, undefined, 2);
             if (createSnapshot) {
@@ -334,14 +366,14 @@ export class ReplayTool {
         const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
         const storage2 = new storageClass(snapshotSaved);
         const document2 = new Document(this.args, storage2);
-        await document2.load(`Saved & loaded at seq# ${op}`);
+        await document2.load(this.deltaStorageService, `Saved & loaded at seq# ${op}`);
         await this.saveAndVerify(document2, dir, snapshotSaved, snapshotSavedString);
 
         // Add extra container
         if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
-            const storage3 = new storageClass(snapshotSaved);
-            const document3 = new Document(this.args, storage3);
-            await document3.load(`Saved & loaded at seq# ${op}`);
+            storage2.reset();
+            const document3 = new Document(this.args, storage2);
+            await document3.load(this.deltaStorageService, `Saved & loaded at seq# ${op}`);
             this.documentsWindow.push(document3);
         }
 
@@ -357,13 +389,16 @@ export class ReplayTool {
             await this.saveAndVerify(doc, dir, snapshotSaved, snapshotSavedString);
         }
 
-        while (this.documentsFromStorageSnapshots.length > 0 && this.documentsFromStorageSnapshots[0].fromOp <= op) {
-            const doc = this.documentsFromStorageSnapshots.shift();
-            assert(doc.fromOp === op);
-            const good = await this.saveAndVerify(doc, dir, snapshotSaved, snapshotSavedString);
-            if (good) {
-                console.log(`\nStorage snapshot at ${op} is good!`);
-            }
+        const processVersionedSnapshot = this.documentsFromStorageSnapshots.length > 0 &&
+            this.documentsFromStorageSnapshots[0].fromOp <= op;
+        if (this.documentPriorSnapshot && (processVersionedSnapshot || final)) {
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, snapshotSaved, snapshotSavedString);
+            this.documentPriorSnapshot = undefined;
+        }
+        if (processVersionedSnapshot) {
+            this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
+            assert(this.documentPriorSnapshot.fromOp === op);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, snapshotSaved, snapshotSavedString);
         }
 
         /*
@@ -420,7 +455,12 @@ export class ReplayTool {
 
             if (this.args.windiff) {
                 console.log(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
-                child_process.exec(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+                this.windiffCount++;
+                if (this.windiffCount <= 10) {
+                    child_process.exec(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
+                } else if (this.windiffCount === 10) {
+                    console.error("Launched 10 windiff processes, stopping!");
+                }
             }
             return false;
         }

@@ -18,6 +18,7 @@ const optionsArray =
                      "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
         ["--quiet", "Reduces amount of output."],
         ["--verbose", "Increases amount of output."],
+        ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy."],
         ["--windiff", "Launch windiff.exe for any mismatch."],
         ["--storageSnapshots", "Validate storage (PragueDump) snapshots."],
         ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50"],
@@ -41,6 +42,7 @@ export class ReplayArgs {
     public opsToSkip = 200;
     public validateSotrageSnapshots = false;
     public windiff = false;
+    public incremental = false;
 
     constructor() {
         this.parseArguments();
@@ -63,30 +65,30 @@ export class ReplayArgs {
             switch (arg) {
                 case "--indir":
                     i += 1;
-                    this.inDirName = this.parseStrArg(i, "File name");
+                    this.inDirName = this.parseStrArg(i);
                     break;
                 case "--from":
                     i += 1;
-                    this.from = this.parseIntArg(i, "To");
+                    this.from = this.parseIntArg(i);
                     break;
                 case "--to":
                     i += 1;
-                    this.to = this.parseIntArg(i, "To");
+                    this.to = this.parseIntArg(i);
                     break;
                 case "--snapshot":
                     this.takeSnapshot = true;
                     break;
                 case "--snapfreq":
                     i += 1;
-                    this.snapFreq = this.parseIntArg(i, "Snapshot Frequency");
+                    this.snapFreq = this.parseIntArg(i);
                     break;
                 case "--outdir":
                     i += 1;
-                    this.outDirName = this.parseStrArg(i, "Output Directory");
+                    this.outDirName = this.parseStrArg(i);
                     break;
                 case "--version":
                     i += 1;
-                    this.version = this.parseStrArg(i, "Snapshot Version");
+                    this.version = this.parseStrArg(i);
                     break;
                 case "--quiet":
                     this.verbose = false;
@@ -96,10 +98,14 @@ export class ReplayArgs {
                     break;
                 case "--windiff":
                     this.windiff = true;
+                    break;
+                case "--incremental":
+                    this.incremental = true;
+                    break;
                 case "--storageSnapshots":
                     this.validateSotrageSnapshots = true;
                     this.createAllFiles = false;
-                    return;
+                    break;
                 case "--stressTest":
                     this.stressTest = true;
                     this.verbose = false;
@@ -130,18 +136,18 @@ export class ReplayArgs {
         }
     }
 
-    public parseStrArg(i: number, name: string) {
+    public parseStrArg(i: number) {
         if (i >= process.argv.length) {
-            console.error(`ERROR: Missing ${name}`);
+            console.error(`ERROR: Missing ${process.argv[i - 1]} argument`);
             this.printUsage();
             process.exit(-1);
         }
         return process.argv[i];
     }
 
-    public parseIntArg(i: number, name: string) {
+    public parseIntArg(i: number) {
         if (i >= process.argv.length) {
-            console.error(`ERROR: Missing ${name}`);
+            console.error(`ERROR: Missing ${process.argv[i - 1]} argument`);
             this.printUsage();
             process.exit(-1);
         }

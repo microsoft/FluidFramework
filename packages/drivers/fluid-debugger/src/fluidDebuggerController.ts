@@ -266,6 +266,8 @@ export class DebugReplayController extends ReplayController implements IDebugger
             } else {
                 this.ui.updateLastOpText(currentOp, false);
             }
+        } else {
+            this.ui.updateLastOpText(currentOp, true);
         }
         return this.lastOpReached && !this.retryFetchOpsOnEndOfFile;
     }
@@ -273,12 +275,6 @@ export class DebugReplayController extends ReplayController implements IDebugger
     public async replay(
             emitter: (op: ISequencedDocumentMessage) => void,
             fetchedOps: ISequencedDocumentMessage[]): Promise<void> {
-
-        if (!this.lastOpReached) {
-            const op = fetchedOps[fetchedOps.length - 1];
-            const lastSeq = op.sequenceNumber;
-            this.ui.updateLastOpText(lastSeq, true);
-        }
         while (true) {
             if (fetchedOps.length === 0) {
                 this.ui.updateNextOpText([]);
