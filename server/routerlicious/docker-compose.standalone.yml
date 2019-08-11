@@ -39,6 +39,13 @@ services:
             - DEBUG=prague:*
             - NODE_ENV=development
         restart: always
+    scribe:
+        image: prague.azurecr.io/prague:latest
+        command: node dist/kafka-service/index.js scribe /usr/src/server/packages/server/routerlicious/dist/scribe/index.js
+        environment:
+            - DEBUG=prague:*
+            - NODE_ENV=development
+        restart: always
     foreman:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js foreman /usr/src/server/packages/server/routerlicious/dist/foreman/index.js
