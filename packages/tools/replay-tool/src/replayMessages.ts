@@ -166,7 +166,6 @@ class Document {
         const codeLoader = new API.CodeLoader({ generateSummaries: false });
 
         const options: object = {
-            blockUpdateMarkers: true,
             generateFullTreeNoOptimizations: true,
         };
 
