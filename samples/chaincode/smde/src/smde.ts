@@ -92,6 +92,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
 
     private setupEditor() {
         this.smde = new SimpleMDE({ element: this.textArea });
+
         this.smde.value(this.text.getText());
 
         let localEdit = false;
@@ -107,9 +108,9 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
 
                 localEdit = true;
                 for (const range of ev.ranges) {
-                    if (range.operation === MergeTreeDeltaType.INSERT) {
-                        const segment = range.segment;
+                    const segment = range.segment;
 
+                    if (range.operation === MergeTreeDeltaType.INSERT) {
                         if (TextSegment.is(segment)) {
                             // TODO need to count markers
                             this.smde.codemirror.replaceRange(
@@ -121,29 +122,36 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                                 this.smde.codemirror.posFromIndex(range.position));
                         }
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                        const textSegment = range.segment as TextSegment;
-                        this.smde.codemirror.replaceRange(
-                            "",
-                            this.smde.codemirror.posFromIndex(range.position),
-                            this.smde.codemirror.posFromIndex(range.position + textSegment.text.length));
+                        if (TextSegment.is(segment)) {
+                            const textSegment = range.segment as TextSegment;
+                            this.smde.codemirror.replaceRange(
+                                "",
+                                this.smde.codemirror.posFromIndex(range.position),
+                                this.smde.codemirror.posFromIndex(range.position + textSegment.text.length));
+                        } else if (Marker.is(segment)) {
+                            this.smde.codemirror.replaceRange(
+                                "",
+                                this.smde.codemirror.posFromIndex(range.position),
+                                this.smde.codemirror.posFromIndex(range.position + 1));
+                        }
                     }
                 }
                 localEdit = false;
             });
 
         this.smde.codemirror.on(
-            "change",
+            "beforeChange",
             (instance, changeObj) => {
                 if (localEdit) {
                     return;
                 }
 
                 // we add in line to adjust for paragraph markers
-                let from = instance.doc.indexFromPos(changeObj.from) + changeObj.from.line;
-                // const to = instance.doc.indexFromPos(changeObj.to);
+                let from = instance.doc.indexFromPos(changeObj.from);
+                const to = instance.doc.indexFromPos(changeObj.to);
 
-                if (changeObj.removed[0].length > 0) {
-                    this.text.removeText(from, from + changeObj.removed[0].length);
+                if (from !== to) {
+                    this.text.removeText(from, to);
                 }
 
                 const text = changeObj.text as string[];
