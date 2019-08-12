@@ -9,41 +9,16 @@ import {
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
+import { ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IResolvedUrl } from "@prague/protocol-definitions";
+import { IErrorTrackingService, IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
 import { EventEmitter } from "events";
 import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
-
-async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
-    if (!pkg) {
-        return;
-    }
-
-    const quorum = document.getQuorum();
-
-    // Wait for connection so that proposals can be sent
-    if (!document.connected) {
-        // tslint:disable-next-line: no-unnecessary-callback-wrapper
-        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
-    }
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code2")) {
-        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
-        // based format.
-        await Promise.all([
-            quorum.propose("code", pkg.details),
-            quorum.propose("code2", pkg.parsed.full),
-        ]);
-    }
-
-    console.log(`Code is ${quorum.get("code2")}`);
-}
 
 async function attach(loader: Loader, url: string, host: Host) {
     const response = await loader.request({ url });
@@ -76,13 +51,6 @@ async function attach(loader: Loader, url: string, host: Host) {
         legacy.attach(new LocalPlatform(host.div));
         return;
     }
-}
-
-async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {
-    attach(loader, uri, host);
-    container.on("contextChanged", (value) => {
-        attach(loader, uri, host);
-    });
 }
 
 class LocalPlatform extends EventEmitter {
@@ -120,20 +88,48 @@ class Host {
     }
 }
 
-export let lastLoaded: Container;
+export async function initializeChaincode(document: Container, pkg: IResolvedPackage): Promise<void> {
+    if (!pkg) {
+        return;
+    }
 
-export async function start(
+    const quorum = document.getQuorum();
+
+    // Wait for connection so that proposals can be sent
+    if (!document.connected) {
+        // tslint:disable-next-line: no-unnecessary-callback-wrapper
+        await new Promise<void>((resolve) => document.on("connected", () => resolve()));
+    }
+
+    // And then make the proposal if a code proposal has not yet been made
+    if (!quorum.has("code2")) {
+        // We propose both code and code2. code2 is the legacy format of just a string. code is the new object
+        // based format.
+        await Promise.all([
+            quorum.propose("code", pkg.details),
+            quorum.propose("code2", pkg.parsed.full),
+        ]);
+    }
+
+    console.log(`Code is ${quorum.get("code2")}`);
+}
+
+async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {
+    attach(loader, uri, host);
+    container.on("contextChanged", (value) => {
+        attach(loader, uri, host);
+    });
+}
+
+export function getLoader(
     url: string,
     resolved: IResolvedUrl,
     cache: IGitCache,
-    pkg: IResolvedPackage,
-    scriptIds: string[],
-    npm: string,
     jwt: string,
     config: any,
-    div?: HTMLDivElement,
-): Promise<void> {
-    const errorService = new DefaultErrorTracking();
+    codeLoader: ICodeLoader,
+    errorService: IErrorTrackingService,
+): Loader {
 
     // URL resolver for routes
     const resolver = new ContainerUrlResolver(
@@ -149,6 +145,29 @@ export async function start(
             "prague:": r11sDocumentServiceFactory,
         });
 
+    return new Loader(
+        { resolver },
+        documentServiceFactory,
+        codeLoader,
+        {
+            blockUpdateMarkers: true,
+            config,
+         });
+}
+
+export let lastLoaded: Container;
+
+export async function start(
+    url: string,
+    resolved: IResolvedUrl,
+    cache: IGitCache,
+    pkg: IResolvedPackage,
+    scriptIds: string[],
+    npm: string,
+    jwt: string,
+    config: any,
+    div?: HTMLDivElement,
+): Promise<void> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm);
     if (pkg) {
@@ -161,16 +180,16 @@ export async function start(
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 
-    const loader = new Loader(
-        { resolver },
-        documentServiceFactory,
+    const errorService = new DefaultErrorTracking();
+    const loader = getLoader(
+        url,
+        resolved,
+        cache,
+        jwt,
+        config,
         codeLoader,
-        {
-            blockUpdateMarkers: true,
-            config,
-         });
+        errorService);
     const container = await loader.resolve({ url });
-
     lastLoaded = container;
 
     const platform = new Host(div ? div : document.getElementById("content"));

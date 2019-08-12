@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
     "@prague/container-loader": "^0.8.0",
     "@prague/loader-web": "^0.8.0",
     "@prague/odsp-socket-storage": "^0.8.0",
