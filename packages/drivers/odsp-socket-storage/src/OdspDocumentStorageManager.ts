@@ -26,7 +26,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         queryParams: { [key: string]: string },
         private readonly documentId: string,
         private readonly snapshotUrl: string | undefined,
-        private readonly latestSha: string | null | undefined,
+        private latestSha: string | null | undefined,
         trees: resources.ITree[] | undefined,
         blobs: resources.IBlob[] | undefined,
         private readonly fetchWrapper: IFetchWrapper,
@@ -150,11 +150,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         if (blobid === this.documentId) {
             if (count === 1) {
                 // If app indicate there are no latest snapshot, do not bother asking SPO - this adds substantially to load time
-                if (this.latestSha === null) {
+                const latestSha = this.latestSha;
+
+                // clear it after using it once - this allows summary clients to fetch the correct versions
+                this.latestSha = undefined;
+
+                if (latestSha === null) {
                     return [];
                 }
-                if (this.latestSha !== undefined) {
-                    const cachedTree = this.treesCache.get(this.latestSha);
+
+                if (latestSha !== undefined) {
+                    const cachedTree = this.treesCache.get(latestSha);
                     if (cachedTree) {
                         return [{ id: cachedTree.sha, treeId: undefined! }];
                     }
