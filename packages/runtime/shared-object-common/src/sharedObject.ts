@@ -184,6 +184,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
         this.registered = true;
 
+        this.handle.attach();
+
         this.setOwner();
 
         // Allow derived classes to perform custom processing prior to registering this object

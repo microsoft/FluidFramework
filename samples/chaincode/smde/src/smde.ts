@@ -13,6 +13,7 @@ import {
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
+import { MergeTreeDeltaType, TextSegment, ReferenceType, reservedTileLabelsKey, Marker } from "@prague/merge-tree";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
@@ -20,7 +21,6 @@ import { EventEmitter } from "events";
 import * as SimpleMDE from "simplemde";
 
 import 'simplemde/dist/simplemde.min.css';
-import { MergeTreeDeltaType, TextSegment } from "@prague/merge-tree";
 
 export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -58,8 +58,14 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
         if (!this.runtime.existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
-            this.root.set("text", text);
 
+            // initial paragraph marker
+            text.insertMarker(
+                0,
+                ReferenceType.Tile,
+                { [reservedTileLabelsKey]: ["pg"] });
+
+            this.root.set("text", text);
             this.root.register();
         }
 
@@ -102,10 +108,18 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                 localEdit = true;
                 for (const range of ev.ranges) {
                     if (range.operation === MergeTreeDeltaType.INSERT) {
-                        const textSegment = range.segment as TextSegment;
-                        this.smde.codemirror.replaceRange(
-                            textSegment.text,
-                            this.smde.codemirror.posFromIndex(range.position));
+                        const segment = range.segment;
+
+                        if (TextSegment.is(segment)) {
+                            // TODO need to count markers
+                            this.smde.codemirror.replaceRange(
+                                segment.text,
+                                this.smde.codemirror.posFromIndex(range.position));
+                        } else if (Marker.is(segment)) {
+                            this.smde.codemirror.replaceRange(
+                                "\n",
+                                this.smde.codemirror.posFromIndex(range.position));
+                        }
                     } else if (range.operation === MergeTreeDeltaType.REMOVE) {
                         const textSegment = range.segment as TextSegment;
                         this.smde.codemirror.replaceRange(
@@ -124,16 +138,29 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     return;
                 }
 
-                const from = instance.doc.indexFromPos(changeObj.from);
+                // we add in line to adjust for paragraph markers
+                let from = instance.doc.indexFromPos(changeObj.from) + changeObj.from.line;
                 // const to = instance.doc.indexFromPos(changeObj.to);
 
                 if (changeObj.removed[0].length > 0) {
                     this.text.removeText(from, from + changeObj.removed[0].length);
                 }
 
-                if (changeObj.text[0].length > 0) {
-                    this.text.insertText(from, changeObj.text[0]);                
-                }
+                const text = changeObj.text as string[];
+                text.forEach((value, index) => {
+                    if (value) {
+                        this.text.insertText(from, value);
+                    }
+
+                    if (index !== 0) {
+                        this.text.insertMarker(
+                            from + value.length,
+                            ReferenceType.Tile,
+                            { [reservedTileLabelsKey]: ["pg"] });
+                    }
+
+                    from += value.length + 1;
+                });
             });
     }
 }
