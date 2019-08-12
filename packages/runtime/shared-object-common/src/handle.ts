@@ -17,6 +17,8 @@ import { ISharedObject } from "./types";
 export class SharedObjectComponentHandle implements IComponentHandle {
     private bound: Set<IComponentHandle> | undefined;
 
+    public get IComponentHandle(): IComponentHandle { return this; }
+
     public get isAttached(): boolean {
         return !this.value.isLocal();
     }

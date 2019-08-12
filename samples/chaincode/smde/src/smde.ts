@@ -20,6 +20,7 @@ import { EventEmitter } from "events";
 import * as SimpleMDE from "simplemde";
 
 import 'simplemde/dist/simplemde.min.css';
+import { MergeTreeDeltaType, TextSegment } from "@prague/merge-tree";
 
 export class Smde extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
@@ -96,8 +97,23 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     return;
                 }
 
+                console.log(ev);
+
                 localEdit = true;
-                this.smde.value(this.text.getText());
+                for (const range of ev.ranges) {
+                    if (range.operation === MergeTreeDeltaType.INSERT) {
+                        const textSegment = range.segment as TextSegment;
+                        this.smde.codemirror.replaceRange(
+                            textSegment.text,
+                            this.smde.codemirror.posFromIndex(range.position));
+                    } else if (range.operation === MergeTreeDeltaType.REMOVE) {
+                        const textSegment = range.segment as TextSegment;
+                        this.smde.codemirror.replaceRange(
+                            "",
+                            this.smde.codemirror.posFromIndex(range.position),
+                            this.smde.codemirror.posFromIndex(range.position + textSegment.text.length));
+                    }
+                }
                 localEdit = false;
             });
 
@@ -109,12 +125,15 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                 }
 
                 const from = instance.doc.indexFromPos(changeObj.from);
-                this.text.insertText(from, changeObj.text[0]);
-                // 
-                // instance.doc.indexFromPos(changeObj.to)
-                // console.log(changeObj);
-                // changeObj.text;
-                // changeObj.removed;
+                // const to = instance.doc.indexFromPos(changeObj.to);
+
+                if (changeObj.removed[0].length > 0) {
+                    this.text.removeText(from, from + changeObj.removed[0].length);
+                }
+
+                if (changeObj.text[0].length > 0) {
+                    this.text.insertText(from, changeObj.text[0]);                
+                }
             });
     }
 }
