@@ -161,7 +161,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      */
     public readonly localValueMaker: LocalValueMaker;
 
-    private readonly root: SubDirectory = new SubDirectory(this, posix.sep);
+    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, posix.sep);
     private readonly messageHandlers: Map<string, IDirectoryMessageHandler> = new Map();
 
     /**
@@ -265,7 +265,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         for (const [currentSubDirObject, currentSubDir] of subdirsToDeserialize) {
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
-                    const newSubDir = new SubDirectory(this, `${currentSubDir.absolutePath}${posix.sep}${subdirName}`);
+                    const newSubDir = new SubDirectory(
+                        this,
+                        this.runtime,
+                        `${currentSubDir.absolutePath}${posix.sep}${subdirName}`);
                     currentSubDir.setSubDirectory(subdirName, newSubDir);
                     subdirsToDeserialize.set(subdirObject, newSubDir);
                 }
@@ -503,7 +506,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             if (nextSubDir) {
                 currentSubDir = nextSubDir;
             } else {
-                currentSubDir = currentSubDir.setSubDirectory(subdir, new SubDirectory(this, currentPath));
+                currentSubDir = currentSubDir.setSubDirectory(
+                    subdir,
+                    new SubDirectory(this, this.runtime, currentPath));
             }
         }
         return currentSubDir;
@@ -631,7 +636,10 @@ export class SubDirectory implements IDirectory {
      * @param directory - reference back to the SharedDirectory to perform operations
      * @param absolutePath - the absolute path of this SubDirectory
      */
-    constructor(private readonly directory: SharedDirectory, public absolutePath: string) {
+    constructor(
+        private readonly directory: SharedDirectory,
+        private readonly runtime: IComponentRuntime,
+        public absolutePath: string) {
     }
 
     /**
@@ -702,7 +710,10 @@ export class SubDirectory implements IDirectory {
             serializableValue = { type, value };
         } else {
             localValue = this.directory.localValueMaker.fromInMemory(value);
-            serializableValue = localValue.makeSerializable();
+            serializableValue = localValue.makeSerializable(
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.directory.handle);
         }
 
         this.setCore(
@@ -969,7 +980,10 @@ export class SubDirectory implements IDirectory {
         }
         const serializedStorage: {[key: string]: ISerializableValue} = {};
         for (const [key, localValue] of this.storage) {
-            serializedStorage[key] = localValue.makeSerializable();
+            serializedStorage[key] = localValue.makeSerializable(
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.directory.handle);
         }
         return serializedStorage;
     }

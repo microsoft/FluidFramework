@@ -4,6 +4,8 @@
  */
 
 import {
+    IComponentHandle,
+    IComponentHandleContext,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -49,7 +51,7 @@ export interface ISharedObjectRegistry {
 /**
  * Base component class
  */
-export class ComponentRuntime extends EventEmitter implements IComponentRuntime {
+export class ComponentRuntime extends EventEmitter implements IComponentRuntime, IComponentHandleContext {
     public static load(
         context: IComponentContext,
         registry: ISharedObjectRegistry,
@@ -109,6 +111,18 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
     public get isAttached(): boolean {
         return !this.isLocal;
     }
+
+    public get path(): string {
+        return this.id;
+    }
+
+    public get routeContext(): IComponentHandleContext {
+        return this.componentContext.hostRuntime.IComponentHandleContext;
+    }
+
+    public get IComponentSerializer() { return this.componentContext.hostRuntime.IComponentSerializer; }
+
+    public get IComponentHandleContext() { return this; }
 
     private readonly contexts = new Map<string, IChannelContext>();
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
@@ -290,6 +304,10 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
         this.attachChannelQueue.clear();
     }
 
+    public bind(handle: IComponentHandle): void {
+        return;
+    }
+
     public changeConnectionState(value: ConnectionState, clientId: string) {
         this.verifyNotClosed();
 
@@ -469,7 +487,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {
-            if (value instanceof LocalChannelContext) {
+            if (!(value instanceof LocalChannelContext)) {
+                throw new Error("Should only be called with local channel handles");
+            }
+
+            if (value.isRegistered()) {
                 const snapshot = value.getAttachSnapshot();
 
                 // And then store the tree
@@ -479,8 +501,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime 
                     type: TreeEntry[TreeEntry.Tree],
                     value: snapshot,
                 });
-            } else {
-                throw new Error("Should only be called with local channel handles");
             }
         }
 

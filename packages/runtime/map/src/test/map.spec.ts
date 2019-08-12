@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import * as map from "..";
 import { SharedMap } from "../map";
@@ -12,11 +13,13 @@ describe("Routerlicious", () => {
         let rootMap: map.ISharedMap;
         let testMap: map.ISharedMap;
         let factory: map.MapFactory;
+        let runtime: MockRuntime;
 
         beforeEach(async () => {
+            runtime = new MockRuntime();
             factory = new map.MapFactory();
-            rootMap = factory.create(null, "root");
-            testMap = factory.create(null, "test");
+            rootMap = factory.create(runtime, "root");
+            testMap = factory.create(runtime, "test");
         });
 
         describe("SharedMap", () => {
@@ -90,7 +93,7 @@ describe("Routerlicious", () => {
                 });
 
                 it("Should be able to set a shared object as a key", () => {
-                    const subMap = factory.create(null, "subMap");
+                    const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("test", subMap);
                     assert.equal(sharedMap.get("test"), subMap);
                 });
@@ -125,7 +128,7 @@ describe("Routerlicious", () => {
                     sharedMap.set("first", "second");
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", "sixth");
-                    const subMap = factory.create(null, "subMap");
+                    const subMap = factory.create(runtime, "subMap");
                     sharedMap.set("object", subMap);
 
                     const serialized = (sharedMap as SharedMap).serialize();

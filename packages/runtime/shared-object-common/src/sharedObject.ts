@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     ITelemetryErrorEvent,
@@ -24,6 +25,7 @@ import * as Deque from "double-ended-queue";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
+import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject } from "./types";
 import { ValueType } from "./valueType";
 
@@ -57,12 +59,15 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
 
     public get ISharedObject() { return this; }
     public get IChannel() { return this; }
+    public get IComponentLoadable() { return this; }
 
     /**
      * Marker to clearly identify the object as a shared object
      */
     // tslint:disable-next-line:variable-name
     public readonly __sharedObject__ = true;
+
+    public readonly handle: IComponentHandle;
 
     /**
      * Telemetry logger for the shared object
@@ -98,6 +103,10 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         return this._state;
     }
 
+    public get url(): string {
+        return this.handle.path;
+    }
+
     /**
      * @param id - the id of the shared object
      * @param runtime - the IComponentRuntime which contains the shared object
@@ -105,6 +114,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      */
     constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
         super();
+
+        this.handle = new SharedObjectComponentHandle(
+            this,
+            id,
+            runtime.IComponentHandleContext);
 
         // runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done

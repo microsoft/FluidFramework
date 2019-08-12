@@ -4,6 +4,9 @@
  */
 
 import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -115,9 +118,13 @@ class MockDeltaConnection implements IDeltaConnection {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  */
-export class MockRuntime extends EventEmitter implements IComponentRuntime {
+export class MockRuntime extends EventEmitter
+    implements IComponentRuntime, IComponentHandleContext, IComponentSerializer {
 
+    public get IComponentSerializer(): IComponentSerializer { return this; }
+    public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
+
     public readonly documentId: string;
     public readonly id: string;
     public readonly existing: boolean;
@@ -125,6 +132,7 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     public readonly clientId: string = uuid();
     public readonly clientType: string = "browser";
     public readonly parentBranch: string;
+    public readonly path = "";
     public readonly connected: boolean;
     public readonly leader: boolean;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -157,6 +165,10 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
     }
 
     public attach(): void {
+        return;
+    }
+
+    public bind(handle: IComponentHandle): void {
         return;
     }
 
@@ -232,6 +244,14 @@ export class MockRuntime extends EventEmitter implements IComponentRuntime {
 
     public async requestComponent(request: IRequest): Promise<IResponse> {
         return null;
+    }
+
+    public stringify(value: any, context: IComponentHandleContext, bind: IComponentHandle): string {
+        return JSON.stringify(value);
+    }
+
+    public parse(value: string, context: IComponentHandleContext) {
+        return JSON.parse(value);
     }
 
     public error(err: any): void {}

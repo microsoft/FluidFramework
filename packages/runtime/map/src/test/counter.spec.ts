@@ -5,18 +5,21 @@
 
 // tslint:disable: newline-per-chained-call
 // tslint:disable: no-backbone-get-set-outside-model
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import * as map from "..";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Counter", () => {
+            let runtime: MockRuntime;
             let testMap: map.ISharedMap;
             let testCounter: map.Counter;
 
             beforeEach(async () => {
+                runtime = new MockRuntime();
                 const factory = new map.MapFactory();
-                testMap = factory.create(null, "test");
+                testMap = factory.create(runtime, "test");
                 testMap.registerValueType(new map.CounterValueType());
 
                 testCounter = testMap.

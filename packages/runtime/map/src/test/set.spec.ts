@@ -5,19 +5,22 @@
 
 // tslint:disable: newline-per-chained-call
 // tslint:disable: no-backbone-get-set-outside-model
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import * as map from "..";
 
 describe("Routerlicious", () => {
     describe("Map", () => {
         describe("Set", () => {
+            let runtime: MockRuntime;
             let testMap: map.ISharedMap;
             let emptySet: map.DistributedSet<number>;
             let populatedSet: map.DistributedSet<number>;
 
             beforeEach(async () => {
+                runtime = new MockRuntime();
                 const factory = new map.MapFactory();
-                testMap = factory.create(null, "test");
+                testMap = factory.create(runtime, "test");
                 testMap.registerValueType(new map.DistributedSetValueType());
 
                 emptySet = testMap.
@@ -27,11 +30,11 @@ describe("Routerlicious", () => {
                         map.DistributedSetValueType.Name).
                     get<map.DistributedSet<number>>("emptySet");
                 populatedSet = testMap.
-                set(
-                    "populatedSet",
-                    [1, 2, 4, 6],
-                    map.DistributedSetValueType.Name).
-                    get<map.DistributedSet<number>>("populatedSet");
+                    set(
+                        "populatedSet",
+                        [1, 2, 4, 6],
+                        map.DistributedSetValueType.Name).
+                        get<map.DistributedSet<number>>("populatedSet");
             });
 
             describe(".add()", () => {

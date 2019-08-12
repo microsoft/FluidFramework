@@ -5,6 +5,7 @@
 
 // tslint:disable:no-console
 
+import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import * as map from "..";
 import { IDirectoryDataObject, SharedDirectory } from "../directory";
@@ -16,12 +17,14 @@ describe("Routerlicious", () => {
         let testDirectory: map.SharedDirectory;
         let directoryFactory: map.DirectoryFactory;
         let mapFactory: map.MapFactory;
+        let runtime: MockRuntime;
 
         beforeEach(async () => {
+            runtime = new MockRuntime();
             directoryFactory = new map.DirectoryFactory();
             mapFactory = new map.MapFactory();
-            rootDirectory = directoryFactory.create(null, "root") as SharedDirectory;
-            testDirectory = directoryFactory.create(null, "test") as SharedDirectory;
+            rootDirectory = directoryFactory.create(runtime, "root") as SharedDirectory;
+            testDirectory = directoryFactory.create(runtime, "test") as SharedDirectory;
         });
 
         it("Can get the root directory", () => {
@@ -99,7 +102,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("first", "second");
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
-                const subMap = mapFactory.create(null, "subMap");
+                const subMap = mapFactory.create(runtime, "subMap");
                 testDirectory.set("object", subMap);
 
                 const serialized = testDirectory.serialize();
@@ -112,7 +115,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("first", "second");
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
-                const subMap = mapFactory.create(null, "subMap");
+                const subMap = mapFactory.create(runtime, "subMap");
                 testDirectory.set("object", subMap);
                 testDirectory.setKeyAtPath("deepKey1", "deepValue1", "nested");
                 testDirectory.setKeyAtPath("deepKey2", "deepValue2", "nested/nested2/nested3");

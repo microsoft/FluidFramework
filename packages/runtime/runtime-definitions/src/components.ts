@@ -4,7 +4,9 @@
  */
 import {
     IComponent,
+    IComponentHandleContext,
     IComponentRouter,
+    IComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -44,8 +46,11 @@ declare module "@prague/component-core-interfaces" {
  * Represents the runtime for the component. Contains helper functions/state of the component.
  */
 export interface IComponentRuntime extends EventEmitter, IComponentRouter {
-
     readonly IComponentRouter: IComponentRouter;
+
+    readonly IComponentSerializer: IComponentSerializer;
+
+    readonly IComponentHandleContext: IComponentHandleContext;
 
     readonly options: any;
 

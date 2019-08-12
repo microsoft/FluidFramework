@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@prague/component-core-interfaces";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
@@ -10,7 +11,10 @@ import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from
 export interface ILocalValue {
     readonly type: string;
     readonly value: any;
-    makeSerializable(): ISerializableValue;
+    makeSerializable(
+        serializer: IComponentSerializer,
+        context: IComponentHandleContext,
+        bind: IComponentHandle): ISerializableValue;
 }
 
 export class PlainLocalValue implements ILocalValue {
@@ -21,10 +25,22 @@ export class PlainLocalValue implements ILocalValue {
         return ValueType[ValueType.Plain];
     }
 
-    public makeSerializable(): ISerializableValue {
+    public makeSerializable(
+        serializer: IComponentSerializer,
+        context: IComponentHandleContext,
+        bind: IComponentHandle,
+    ): ISerializableValue {
+        // Stringify to convert to the serialized handle values - and then parse in order to create
+        // a POJO for the op
+        const result = serializer.stringify(
+            this.value,
+            context,
+            bind);
+        const value = JSON.parse(result);
+
         return {
             type: this.type,
-            value: this.value,
+            value,
         };
     }
 }
@@ -87,7 +103,10 @@ export class LocalValueMaker {
             const localValue = await this.runtime.getChannel(serializable.value as string) as ISharedObject;
             return new SharedLocalValue(localValue);
         } else if (serializable.type === ValueType[ValueType.Plain]) {
-            return new PlainLocalValue(serializable.value);
+            // stored value comes in already parsed so we stringify again to run through converter
+            const translatedValue = this.runtime.IComponentSerializer.parse(
+                JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
+            return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
             const valueType = this.valueTypes.get(serializable.type);
             const localValue = valueType.factory.load(emitter, serializable.value);

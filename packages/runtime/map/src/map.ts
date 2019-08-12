@@ -284,7 +284,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
             serializableValue = { type, value };
         } else {
             localValue = this.localValueMaker.fromInMemory(value);
-            serializableValue = localValue.makeSerializable();
+            serializableValue = localValue.makeSerializable(
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.handle);
         }
 
         this.setCore(
@@ -391,7 +394,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
     public serialize(): string {
         const serializableMapData: IMapDataObject = {};
         this.data.forEach((localValue, key) => {
-            serializableMapData[key] = localValue.makeSerializable();
+            serializableMapData[key] = localValue.makeSerializable(
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.handle);
         });
         return JSON.stringify(serializableMapData);
     }
