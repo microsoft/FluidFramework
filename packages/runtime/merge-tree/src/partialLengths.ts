@@ -154,7 +154,7 @@ export class PartialSequenceLengths {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             if (!child.isLeaf()) {
-                const childBlock = child as IMergeBlock;
+                const childBlock = child;
                 if (recur) {
                     childBlock.partialLengths =
                         PartialSequenceLengths.combine(mergeTree, childBlock, collabWindow, true);
@@ -232,7 +232,7 @@ export class PartialSequenceLengths {
             const child = block.children[i];
             if (child.isLeaf()) {
                 // leaf segment
-                const segment = child as ISegment;
+                const segment = child;
                 const segBranchId = mergeTree.getBranchId(segment.clientId);
                 // tslint:disable-next-line: max-line-length
                 // console.log(`seg br ${segBranchId} cli ${glc(mergeTree, segment.clientId)} me ${glc(mergeTree, mergeTree.collabWindow.clientId)}`);
@@ -562,7 +562,7 @@ export class PartialSequenceLengths {
         for (let i = 0; i < node.childCount; i++) {
             const child = node.children[i];
             if (!child.isLeaf()) {
-                const childBlock = child as IMergeBlock;
+                const childBlock = child;
                 const branchPartialLengths = childBlock.partialLengths.partialLengthsForBranch(branchId);
                 const partialLengths = branchPartialLengths.partialLengths;
                 const seqIndex = latestLEQ(partialLengths, seq);
@@ -574,7 +574,7 @@ export class PartialSequenceLengths {
                 }
                 segCount += branchPartialLengths.segmentCount;
             } else {
-                const segment = child as ISegment;
+                const segment = child;
 
                 const segBranchId = mergeTree.getBranchId(segment.clientId);
                 const removalInfo = mergeTree.getRemovalInfo(branchId, segBranchId, segment);
