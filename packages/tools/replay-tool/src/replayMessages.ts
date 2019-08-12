@@ -170,10 +170,7 @@ class Document {
         const host = { resolver };
 
         const codeLoader = new API.CodeLoader({ generateSummaries: false });
-
-        const options: object = {
-            blockUpdateMarkers: true,
-        };
+        const options = {};
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription));

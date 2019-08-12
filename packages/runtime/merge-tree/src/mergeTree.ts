@@ -1220,6 +1220,10 @@ export class MergeTree {
     static traceIncrTraversal = false;
     static initBlockUpdateActions: BlockUpdateActions;
     static theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
+    // WARNING:
+    // Setting blockUpdateMarkers to false will result in eventual consistency issues
+    // for property updates on markers when loading from snapshots
+    static readonly blockUpdateMarkers = true;
 
     windowTime = 0;
     packTime = 0;
@@ -1227,7 +1231,6 @@ export class MergeTree {
     maxOrdTime = 0;
 
     root: IMergeBlock;
-    blockUpdateMarkers = false;
     blockUpdateActions: BlockUpdateActions;
     collabWindow = new CollaborationWindow();
     pendingSegments: Collections.List<SegmentGroup>;
@@ -1248,9 +1251,6 @@ export class MergeTree {
     constructor(public options?: Properties.PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
         if (options) {
-            if (options.blockUpdateMarkers) {
-                this.blockUpdateMarkers = options.blockUpdateMarkers;
-            }
             if (options.localMinSeq !== undefined) {
                 this.collabWindow.localMinSeq = options.localMinSeq;
             }
@@ -1260,7 +1260,7 @@ export class MergeTree {
 
     private makeBlock(childCount: number) {
         let block: MergeBlock;
-        if (this.blockUpdateMarkers) {
+        if (MergeTree.blockUpdateMarkers) {
             block = new HierMergeBlock(childCount);
         } else {
             block = new MergeBlock(childCount);
@@ -1277,7 +1277,6 @@ export class MergeTree {
 
     clone() {
         const options = {
-            blockUpdateMarkers: this.blockUpdateMarkers,
             localMinSeq: this.collabWindow.localMinSeq,
         };
         const b = new MergeTree(options);
@@ -1357,7 +1356,7 @@ export class MergeTree {
                     if (nodeIndex < nodes.length) {
                         const childIndex = this.addNode(blocks[i], nodes[nodeIndex]);
                         len += nodes[nodeIndex].cachedLength;
-                        if (this.blockUpdateMarkers) {
+                        if (MergeTree.blockUpdateMarkers) {
                             const hierBlock = blocks[i].hierBlock();
                             hierBlock.addNodeReferences(this, nodes[nodeIndex]);
                         }
@@ -1385,7 +1384,7 @@ export class MergeTree {
             this.root = this.makeBlock(1);
             const block = buildMergeBlock(segments);
             this.root.assignChild(block, 0, false);
-            if (this.blockUpdateMarkers) {
+            if (MergeTree.blockUpdateMarkers) {
                 const hierRoot = this.root.hierBlock();
                 hierRoot.addNodeReferences(this, block);
             }
@@ -2916,7 +2915,7 @@ export class MergeTree {
     private blockUpdate(block: IMergeBlock) {
         let len = 0;
         let hierBlock: IHierBlock;
-        if (this.blockUpdateMarkers) {
+        if (MergeTree.blockUpdateMarkers) {
             hierBlock = block.hierBlock();
             hierBlock.rightmostTiles = Properties.createMap<Marker>();
             hierBlock.leftmostTiles = Properties.createMap<Marker>();
@@ -2925,7 +2924,7 @@ export class MergeTree {
         for (let i = 0; i < block.childCount; i++) {
             const child = block.children[i];
             len += nodeTotalLength(this, child);
-            if (this.blockUpdateMarkers) {
+            if (MergeTree.blockUpdateMarkers) {
                 hierBlock.addNodeReferences(this, child);
             }
             if (this.blockUpdateActions) {
@@ -2987,7 +2986,7 @@ export class MergeTree {
     nodeToString(block: IMergeBlock, strbuf: string, indentCount = 0) {
         strbuf += internedSpaces(indentCount);
         strbuf += `Node (len ${block.cachedLength}) p len (${block.parent ? block.parent.cachedLength : 0}) ord ${ordinalToArray(block.ordinal)} with ${block.childCount} segs:\n`;
-        if (this.blockUpdateMarkers) {
+        if (MergeTree.blockUpdateMarkers) {
             strbuf += internedSpaces(indentCount);
             strbuf += (<IHierBlock>block).hierToString(indentCount);
         }
