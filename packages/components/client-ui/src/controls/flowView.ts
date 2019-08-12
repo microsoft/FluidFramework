@@ -3975,7 +3975,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     let beginMarker: Table.ICellMarker;
                     if (endId) {
                         const id = Table.idFromEndId(endId);
-                        beginMarker = this.sharedString.client.mergeTree.getSegmentFromId(id) as Table.ICellMarker;
+                        beginMarker = this.sharedString.getMarkerFromId(id) as Table.ICellMarker;
                     }
                     if (beginMarker && Table.cellIsMoribund(beginMarker)) {
                         this.tryMoveCell(this.cursor.pos, true);

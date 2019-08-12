@@ -2079,7 +2079,7 @@ export class MergeTree {
     }
 
     // TODO: error checking
-    getSegmentFromId(id: string) {
+    getMarkerFromId(id: string) {
         return this.idToSegment[id];
     }
 
@@ -2095,7 +2095,7 @@ export class MergeTree {
         let pos = -1;
         let marker: Marker;
         if (relativePos.id) {
-            marker = <Marker>this.getSegmentFromId(relativePos.id);
+            marker = <Marker>this.getMarkerFromId(relativePos.id);
         }
         if (marker) {
             pos = this.getPosition(marker, refseq, clientId);

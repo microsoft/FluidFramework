@@ -552,10 +552,10 @@ export class Cell {
     }
 }
 
-function getEndCellMarker(mergeTree: MergeTree.MergeTree, cellMarker: ICellMarker) {
+function getEndCellMarker(sharedString: SharedString, cellMarker: ICellMarker) {
     let gloId = cellMarker.getId();
     if (gloId) {
-        return <ICellMarker>mergeTree.getSegmentFromId(endPrefix + gloId);
+        return <ICellMarker>sharedString.getMarkerFromId(endPrefix + gloId);
     }
 }
 
@@ -564,7 +564,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
     let mergeTree = sharedString.client.mergeTree;
     let cellMarkerSegOff = sharedString.getContainingSegment(cellStartPos);
     let cellMarker = <ICellMarker>cellMarkerSegOff.segment;
-    let endCellMarker = getEndCellMarker(mergeTree, cellMarker);
+    let endCellMarker = getEndCellMarker(sharedString, cellMarker);
     if (!endCellMarker) {
         console.log(`ut-oh: no end for ${cellMarker.toString()}`);
         return undefined;
@@ -631,12 +631,11 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
 
 function parseRow(rowStartPos: number, sharedString: SharedString, table: Table,
     fontInfo?: Paragraph.IFontInfo) {
-    let mergeTree = sharedString.client.mergeTree;
     let rowMarkerSegOff = sharedString.getContainingSegment(rowStartPos);
     let rowMarker = <IRowMarker>rowMarkerSegOff.segment;
     let id = rowMarker.getId();
     let endId = endPrefix + id;
-    let endRowMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    let endRowMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     if (!endRowMarker) {
         console.log(`row parse error: ${rowStartPos}`);
         return undefined;
@@ -688,7 +687,7 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
     let id = tableMarker.getId();
     let endId = endPrefix + id;
     let mergeTree = sharedString.client.mergeTree;
-    let endTableMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    let endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     let endTablePos = endTableMarker.cachedLength + getPosition(sharedString, endTableMarker);
     let lineBuf = "";
     let lastWasCO = false;
@@ -772,10 +771,9 @@ export function insertHoleFixer(sharedString: SharedString, prevMarker: MergeTre
 export function parseTable(
     tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
 
-    let mergeTree = sharedString.client.mergeTree;
     let id = tableMarker.getId();
     let endId = endPrefix + id;
-    let endTableMarker = <MergeTree.Marker>mergeTree.getSegmentFromId(endId);
+    let endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     let endTablePos = getPosition(sharedString, endTableMarker);
     let table = new Table(tableMarker, endTableMarker);
     tableMarker.table = table;

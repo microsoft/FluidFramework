@@ -1810,7 +1810,7 @@ export class DocumentTree {
                 if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
                     let id = prevChild.id;
                     let endId = "end-" + id;
-                    let endRowMarker = <MergeTree.Marker>client.mergeTree.getSegmentFromId(endId);
+                    let endRowMarker = <MergeTree.Marker>client.getMarkerFromId(endId);
                     let endRowPos = client.getPosition(endRowMarker);
                     prevPos = endRowPos;
                 }

@@ -228,4 +228,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         const maybeMarker = MergeTree.Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
     }
+
+    public getMarkerFromId(id: string) {
+        return this.client.getMarkerFromId(id);
+    }
 }

@@ -283,6 +283,10 @@ export class Client {
         return this.mergeTree.posFromRelativePos(relativePos);
     }
 
+    public getMarkerFromId(id: string) {
+        return this.mergeTree.getMarkerFromId(id);
+    }
+
     /**
      * Performs the annotate based on the provided op
      * @param opArgs - The ops args for the op

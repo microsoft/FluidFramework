@@ -30,6 +30,7 @@ The following methods of mergeTree have been exposed on sequence:
 - `removeLocalReference()`
 - `posFromRelativePos()`
 - `getPosition()`
+- `getSegmentFromId()` (as `getMarkerFromId() on sharedString)
 - `getContainingSegment()` (takes only one argument: position. If you want to use a remote refseq and/or clientID, use sequence.resolveRemoteClientPosition())
 - `walkSegments()` (this should be used instead of `mergeTree.mapRange()`)
 

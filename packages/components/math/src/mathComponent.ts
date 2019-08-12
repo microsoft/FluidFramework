@@ -572,11 +572,11 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
                 mathEnd: true,
             });
         }
-        let seg = this.combinedMathText.client.mergeTree.getSegmentFromId(endId);
+        let seg = this.combinedMathText.getMarkerFromId(endId);
         const mathMarker = seg as MathExpr.IMathMarker;
         instance.endMarker = mathMarker;
         mathMarker.mathInstance = instance;
-        seg = this.combinedMathText.client.mergeTree.getSegmentFromId(instance.leafId);
+        seg = this.combinedMathText.getMarkerFromId(instance.leafId);
         instance.startMarker = seg as MergeTree.Marker;
         mathMarker.mathText = this.getText(instance);
         mathMarker.mathTokens = MathExpr.lexMath(mathMarker.mathText);
@@ -640,7 +640,7 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
 
     public getInstance(id: string, options = MathInstance.defaultOptions) {
         const endId = endIdPrefix + id;
-        const mathMarker = this.combinedMathText.client.mergeTree.getSegmentFromId(endId) as IMathMarkerInst;
+        const mathMarker = this.combinedMathText.getMarkerFromId(endId) as IMathMarkerInst;
         if (mathMarker !== undefined) {
             if (!mathMarker.mathInstance) {
                 if (mathMarker.properties.componentOptions) {
