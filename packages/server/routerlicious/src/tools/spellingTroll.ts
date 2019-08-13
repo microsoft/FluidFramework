@@ -119,33 +119,28 @@ class Speller {
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
             if (Marker.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    if (segment.hasTileLabel("pg")) {
-                        if (prevPG) {
-                            // TODO: send paragraph to service
-                            spellParagraph(startPGPos, segpos, pgText);
-                            endMarkerFound = true;
-                        }
-                        startPGPos = segpos + mergeTree.localNetLength(segment);
-                        prevPG = segment;
-                        pgText = "";
-                        if (endMarkerFound) {
-                            return false;
-                        }
+                if (segment.hasTileLabel("pg")) {
+                    if (prevPG) {
+                        // TODO: send paragraph to service
+                        spellParagraph(startPGPos, segpos, pgText);
+                        endMarkerFound = true;
                     }
-                    else {
-                        for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
-                            pgText += " ";
-                        }
+                    startPGPos = segpos + segment.cachedLength;
+                    prevPG = segment;
+                    pgText = "";
+                    if (endMarkerFound) {
+                        return false;
+                    }
+                }
+                else {
+                    for (let i = 0; i < segment.cachedLength; i++) {
+                        pgText += " ";
                     }
                 }
             } else if (TextSegment.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    pgText += segment.text;
-                }
+                pgText += segment.text;
             }
             return true;
         }
@@ -180,7 +175,6 @@ class Speller {
         let sentence = "";
         let fwdSentence = "";
         let wordsFound = false;
-        let mergeTree = this.sharedString.client.mergeTree;
 
         let gatherReverse = (segment: MergeTree.ISegment) => {
             if (Marker.is(segment)) {
@@ -192,12 +186,10 @@ class Speller {
                     return false;
                 }
             } else if (TextSegment.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    if (!wordsFound) {
-                        words = segment.text + words;
-                    }
-                    sentence = segment.text + sentence;
+                if (!wordsFound) {
+                    words = segment.text + words;
                 }
+                sentence = segment.text + sentence;
             }
             // TODO: component
             // console.log(`rev: -${text}-`);
@@ -220,12 +212,10 @@ class Speller {
                     return false;
                 }
             } else if (TextSegment.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    if (!wordsFound) {
-                        fwdWords = fwdWords + segment.text;
-                    }
-                    fwdSentence = fwdSentence + segment.text;
+                if (!wordsFound) {
+                    fwdWords = fwdWords + segment.text;
                 }
+                fwdSentence = fwdSentence + segment.text;
             }
             // TODO: component
             if (/\w+\s+/.test(fwdWords)) {

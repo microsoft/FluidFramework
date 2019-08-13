@@ -64,32 +64,27 @@ class Speller {
         let startPGPos = 0;
         let pgText = "";
         let endMarkerFound = false;
-        const mergeTree = this.sharedString.client.mergeTree;
         function gatherPG(segment: MergeTree.ISegment, segpos: number) {
             if (MergeTree.Marker.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    if (segment.hasTileLabel("pg")) {
-                        if (prevPG) {
-                            // TODO: send paragraph to service
-                            spellParagraph(startPGPos, segpos, pgText);
-                            endMarkerFound = true;
-                        }
-                        startPGPos = segpos + mergeTree.localNetLength(segment);
-                        prevPG = segment;
-                        pgText = "";
-                        if (endMarkerFound) {
-                            return false;
-                        }
-                    } else {
-                        for (let i = 0; i < mergeTree.localNetLength(segment); i++) {
-                            pgText += " ";
-                        }
+                if (segment.hasTileLabel("pg")) {
+                    if (prevPG) {
+                        // TODO: send paragraph to service
+                        spellParagraph(startPGPos, segpos, pgText);
+                        endMarkerFound = true;
+                    }
+                    startPGPos = segpos + segment.cachedLength;
+                    prevPG = segment;
+                    pgText = "";
+                    if (endMarkerFound) {
+                        return false;
+                    }
+                } else {
+                    for (let i = 0; i < segment.cachedLength; i++) {
+                        pgText += " ";
                     }
                 }
             } else if (MergeTree.TextSegment.is(segment)) {
-                if (mergeTree.localNetLength(segment)) {
-                    pgText += segment.text;
-                }
+                pgText += segment.text;
             } else {
 
                 throw new Error("Unknown SegmentType");
