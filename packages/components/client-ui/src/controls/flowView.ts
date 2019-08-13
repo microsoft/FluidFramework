@@ -1195,7 +1195,7 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
         }
         if (flowView.tempBookmarks && (!flowView.modes.showBookmarks)) {
             for (const b of flowView.tempBookmarks) {
-                if (b.overlapsPos(client.mergeTree, lineStart, lineEnd)) {
+                if (b.overlapsPos(lineStart, lineEnd)) {
                     const start = b.start.toPosition();
                     const end = b.end.toPosition();
                     showBookmark(b.properties, lineText, start, end, lineStart,

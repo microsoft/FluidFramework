@@ -164,7 +164,7 @@ export class SharedStringInterval implements ISerializableInterval {
         this.properties = MergeTree.addProperties(this.properties, newProps, op);
     }
 
-    public overlapsPos(mergeTree: MergeTree.MergeTree, bstart: number, bend: number) {
+    public overlapsPos(bstart: number, bend: number) {
         const startPos = this.start.toPosition();
         const endPos = this.start.toPosition();
         return (endPos > bstart) && (startPos < bend);
