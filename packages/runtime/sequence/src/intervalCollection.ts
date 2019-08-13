@@ -191,10 +191,8 @@ export class SharedStringInterval implements ISerializableInterval {
 }
 
 function createPositionReference(client: MergeTree.Client, pos: number,
-    refType: MergeTree.ReferenceType, refSeq = client.getCurrentSeq(),
-    clientId = client.getClientId()): MergeTree.LocalReference {
-    const segoff = client.mergeTree.getContainingSegment(pos,
-        refSeq, client.getClientId());
+    refType: MergeTree.ReferenceType): MergeTree.LocalReference {
+    const segoff = client.getContainingSegment(pos);
     if (segoff && segoff.segment) {
         const lref = new MergeTree.LocalReference(client, segoff.segment, segoff.offset, refType);
         if (refType !== MergeTree.ReferenceType.Transient) {

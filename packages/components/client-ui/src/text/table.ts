@@ -561,7 +561,6 @@ function getEndCellMarker(sharedString: SharedString, cellMarker: ICellMarker) {
 
 function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: Paragraph.IFontInfo) {
     let markEmptyCells = false;
-    let mergeTree = sharedString.client.mergeTree;
     let cellMarkerSegOff = sharedString.getContainingSegment(cellStartPos);
     let cellMarker = <ICellMarker>cellMarkerSegOff.segment;
     let endCellMarker = getEndCellMarker(sharedString, cellMarker);
@@ -686,7 +685,6 @@ export function parseColumns(sharedString: SharedString, pos: number, table: Tab
 export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: number, sharedString: SharedString) {
     let id = tableMarker.getId();
     let endId = endPrefix + id;
-    let mergeTree = sharedString.client.mergeTree;
     let endTableMarker = <MergeTree.Marker>sharedString.getMarkerFromId(endId);
     let endTablePos = endTableMarker.cachedLength + getPosition(sharedString, endTableMarker);
     let lineBuf = "";
