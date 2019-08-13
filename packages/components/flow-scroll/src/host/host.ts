@@ -4,7 +4,7 @@
  */
 import * as SearchMenu from "@chaincode/search-menu";
 
-import { Editor, FlowDocument, Tag } from "@chaincode/webflow";
+import { Editor, FlowDocument, htmlFormatter, Tag } from "@chaincode/webflow";
 import { IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { TST } from "@prague/merge-tree";
@@ -63,7 +63,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
 
         Promise.all([this.docP, this.mathP, this.videosP, this.imagesP]).then(([doc, math, videos, images]) => {
             const slot = template.get(this.viewport, "slot") as HTMLElement;
-            const editor = new Editor(doc, slot, this);
+            const editor = new Editor(doc, slot, htmlFormatter, this);
 
             const hasSelection = () => {
                 const { start, end } = editor.selection;

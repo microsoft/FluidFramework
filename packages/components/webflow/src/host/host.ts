@@ -7,6 +7,9 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-cor
 import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
+import { documentFormatter as htmlFormatter } from "../editor/view/element";
+import { Formatter, IFormatterState } from "../editor/view/formatter";
+import { plainTextFormatter } from "../plaintext/formatter";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import * as styles from "./index.css";
@@ -49,7 +52,7 @@ export class WebflowView implements IComponentHTMLView {
 
         this.docP.then((doc) => {
             const slot = template.get(this.root, "slot") as HTMLElement;
-            const editor = new Editor(doc, slot);
+            let editor = new Editor(doc, slot, htmlFormatter);
 
             this.searchMenu = new SearchMenuView();
 
@@ -77,20 +80,27 @@ export class WebflowView implements IComponentHTMLView {
                 doc.toggleCssClass(start, end, className);
             };
 
+            const switchFormatter = (formatter: Readonly<Formatter<IFormatterState>>) => {
+                editor.remove();
+                editor = new Editor(doc, slot, formatter);
+            };
+
             this.searchMenu.attach(template.get(this.root, "search"), {
                 commands: [
-                    { name: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); }},
-                    { name: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                    { name: "debug", enabled: () => true, exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
-                    { name: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); }},
-                    { name: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); }},
-                    { name: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); }},
-                    { name: "h4", enabled: () => true, exec: () => { setFormat(Tag.h4); }},
-                    { name: "h5", enabled: () => true, exec: () => { setFormat(Tag.h5); }},
-                    { name: "h6", enabled: () => true, exec: () => { setFormat(Tag.h6); }},
-                    { name: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); }},
-                    { name: "p",  enabled: () => true, exec: () => { setFormat(Tag.p); }},
-                    { name: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); }},
+                    { name: "blockquote",   enabled: () => true,    exec: () => { setFormat(Tag.blockquote); }},
+                    { name: "bold",         enabled: hasSelection,  exec: () => toggleSelection(styles.bold) },
+                    { name: "debug",        enabled: () => true,    exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
+                    { name: "h1",           enabled: () => true,    exec: () => { setFormat(Tag.h1); }},
+                    { name: "h2",           enabled: () => true,    exec: () => { setFormat(Tag.h2); }},
+                    { name: "h3",           enabled: () => true,    exec: () => { setFormat(Tag.h3); }},
+                    { name: "h4",           enabled: () => true,    exec: () => { setFormat(Tag.h4); }},
+                    { name: "h5",           enabled: () => true,    exec: () => { setFormat(Tag.h5); }},
+                    { name: "h6",           enabled: () => true,    exec: () => { setFormat(Tag.h6); }},
+                    { name: "ol",           enabled: () => true,    exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                    { name: "p",            enabled: () => true,    exec: () => { setFormat(Tag.p); }},
+                    { name: "plaintext",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
+                    { name: "html",         enabled: () => true,    exec: () => { switchFormatter(htmlFormatter); }},
+                    { name: "ul",           enabled: () => true,    exec: () => { insertTags([Tag.ul, Tag.li]); }},
                 ],
                 onComplete: this.onComplete,
             });

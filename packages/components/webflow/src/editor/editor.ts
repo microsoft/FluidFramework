@@ -10,6 +10,7 @@ import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
+import { Formatter, IFormatterState } from "./view/formatter";
 import { Layout } from "./view/layout";
 
 export class Editor {
@@ -18,9 +19,9 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, scope?: IComponent) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<Formatter<IFormatterState>>, scope?: IComponent) {
         const scheduler = new Scheduler();
-        this.layout = new Layout(doc, root, scheduler, scope);
+        this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
         this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
 

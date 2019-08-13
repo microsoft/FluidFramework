@@ -8,6 +8,8 @@ import { IContainerContext, IRuntime } from "@prague/container-definitions";
 export { FlowDocument, flowDocumentFactory } from "./document";
 export { Editor } from "./editor";
 export { Tag } from "./util/tag";
+export { documentFormatter as htmlFormatter } from "./editor/view/element";
+export { plainTextFormatter } from "./plaintext/formatter";
 
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
     const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");

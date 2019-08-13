@@ -9,10 +9,9 @@ import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from 
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { FlowDocument } from "../../document";
-import { clamp, getSegmentRange } from "../../util";
+import { clamp, emptyObject, getSegmentRange } from "../../util";
 import { extractRef, updateRef } from "../../util/localref";
 import { debug, nodeToString } from "../debug";
-import { documentFormatter } from "./element";
 import { Formatter, IFormatterState } from "./formatter";
 
 interface ILayoutCursor { parent: Node; previous: Node; }
@@ -76,10 +75,10 @@ export class Layout {
 
     private readonly scheduleRender: () => void;
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, scheduler = new Scheduler(), public readonly scope?: IComponent) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<Formatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
         this.initialCheckpoint = new LayoutCheckpoint([], [{ parent: this.slot, previous: null }]);
-        this.rootFormatInfo = Object.freeze({ formatter: documentFormatter, state: { root } });
+        this.rootFormatInfo = Object.freeze({ formatter, state: emptyObject });
 
         doc.on("sequenceDelta", this.onChange);
         doc.on("maintenance", this.onChange);
