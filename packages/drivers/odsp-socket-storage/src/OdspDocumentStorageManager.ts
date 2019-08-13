@@ -227,8 +227,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public async uploadSummary(tree: api.ISummaryTree): Promise<api.ISummaryHandle> {
-        console.log("uploadSummary", tree, JSON.stringify(tree, undefined, 4));
-
         this.checkSnapshotUrl();
 
         const result = await this.writeSummaryTree(tree);
@@ -244,8 +242,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     public downloadSummary(commit: api.ISummaryHandle): Promise<api.ISummaryTree> {
-        console.log("downloadSummary", commit);
-
         return Promise.reject("Not implemented yet");
     }
 
@@ -363,8 +359,6 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             sha: snapshotTree.id!,
             type: SnapshotType.Channel,
         };
-
-        console.log("writeSummaryTree", depth, snapshotTree, snapshot, JSON.stringify(snapshot, undefined, 4));
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
             const tokenProvider = await this.getTokenProvider(refresh);
