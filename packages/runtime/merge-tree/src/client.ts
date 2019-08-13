@@ -791,7 +791,7 @@ export class Client {
         return this.shortClientBranchIdMap[clientId];
     }
 
-    resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
+    private resetPendingSegmentToOp(segment: ISegment): ops.IMergeTreeOp {
         let op: ops.IMergeTreeOp;
         if (!segment.segmentGroups.empty) {
             segment.segmentGroups.clear();
@@ -922,6 +922,47 @@ export class Client {
             remoteClientPosition,
             remoteClientRefSeq,
             shortRemoteClientId);
+    }
+
+    public resetPendingSegmentsToOp(): ops.IMergeTreeOp {
+        const orderedSegments = [] as ISegment[];
+        while (!this.mergeTree.pendingSegments.empty()) {
+            const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
+            for (const segment of NACKedSegmentGroup.segments) {
+                orderedSegments.push(segment);
+            }
+        }
+
+        orderedSegments.sort((a, b) => {
+            if (a === b) {
+                return 0;
+            } else if (a.ordinal < b.ordinal) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
+        const opList: ops.IMergeTreeOp[] = [];
+        let prevSeg: ISegment;
+        for (const segment of orderedSegments) {
+            if (prevSeg !== segment) {
+                const op = this.resetPendingSegmentToOp(segment);
+                if (op) {
+                    opList.push(op);
+                }
+                prevSeg = segment;
+            }
+        }
+
+        if (opList.length > 0) {
+            const groupOp: ops.IMergeTreeGroupMsg = {
+                ops: opList,
+                type: ops.MergeTreeDeltaType.GROUP,
+            };
+            return groupOp;
+        }
+        return undefined;
     }
 
     public createTextHelper() {

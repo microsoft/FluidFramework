@@ -287,41 +287,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     public sendNACKed() {
-        const orderedSegments = [] as MergeTree.ISegment[];
-        while (!this.client.mergeTree.pendingSegments.empty()) {
-            const NACKedSegmentGroup = this.client.mergeTree.pendingSegments.dequeue();
-            for (const segment of NACKedSegmentGroup.segments) {
-                orderedSegments.push(segment);
-            }
-        }
-
-        orderedSegments.sort((a, b) => {
-            if (a === b) {
-                return 0;
-            } else if (a.ordinal < b.ordinal) {
-                return -1;
-            } else {
-                return 1;
-            }
-        });
-
-        const opList: MergeTree.IMergeTreeOp[] = [];
-        let prevSeg: MergeTree.ISegment;
-        for (const segment of orderedSegments) {
-            if (prevSeg !== segment) {
-                const op = this.client.resetPendingSegmentToOp(segment);
-                if (op) {
-                    opList.push(op);
-                }
-                prevSeg = segment;
-            }
-        }
-
-        if (opList.length > 0) {
-            const groupOp: MergeTree.IMergeTreeGroupMsg = {
-                ops: opList,
-                type: MergeTree.MergeTreeDeltaType.GROUP,
-            };
+        const groupOp = this.client.resetPendingSegmentsToOp();
+        if (groupOp) {
             this.submitSequenceMessage(groupOp);
         }
     }
