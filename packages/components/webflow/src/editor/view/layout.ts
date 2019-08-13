@@ -89,6 +89,12 @@ export class Layout {
         debug("end: initial sync");
     }
 
+    public remove() {
+        this.doc.off("sequenceDelta", this.onChange);
+        this.doc.off("maintenance", this.onChange);
+        Dom.removeAllChildren(this.root);
+    }
+
     // tslint:disable-next-line:max-func-body-length
     public sync(start = 0, end = this.doc.length) {
         const doc = this.doc;

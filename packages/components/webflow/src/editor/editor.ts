@@ -18,7 +18,7 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, root: HTMLElement, scope?: IComponent) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, scope?: IComponent) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, scheduler, scope);
         this.caret = new Caret(this.layout);
@@ -32,6 +32,14 @@ export class Editor {
     }
 
     public get selection() { return this.caret.selection; }
+
+    public remove() {
+        this.root.contentEditable = "false";
+        this.root.removeEventListener("paste", this.onPaste);
+        this.root.removeEventListener("keydown", this.onKeyDown);
+        this.root.removeEventListener("keypress", this.onKeyPress);
+        this.layout.remove();
+    }
 
     private delete(e: Event, direction: Direction) {
         this.consume(e);
