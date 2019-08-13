@@ -204,7 +204,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             const value = await this.contextsDeferred.get(id).promise;
             const channel = await value.getChannel();
 
-            return { mimeType: "prague/dataType", status: 200, value: channel };
+            return { mimeType: "prague/component", status: 200, value: channel };
         }
 
         // Otherwise defer to an attached request handler
