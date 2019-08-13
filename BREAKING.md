@@ -1,12 +1,34 @@
+# 0.9 Breaking Changes
+
+- [Deprecate @prague/app-datastore](#deprecate-pragueapp-datastore)
+
+## Deprecate @prague/app-datastore
+
+The package @prague/app-datastore is deprecated. Please switch to use tiny-web-host
+
 # 0.8 Breaking Changes
 
+- [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)
+- [`sequence.annotateRange()` argument order changed](#sequenceannotaterange-argument-order-changed)
+- [`sharedString.insertText()` argument order changed](#sharedstringinserttext-argument-order-changed)
+- [`mergeTree.getOffset()` -> `mergeTree.getPosition()`](#mergetreegetoffset-mergetreegetposition)
+- [Updated sequence API to provide richer access to the underlying merge tree](#updated-sequence-api-to-provide-richer-access-to-the-underlying-merge-tree)
+- [ISequenceDeltaRange.offset -> ISequenceDeltaRange.position](#isequencedeltarangeoffset-isequencedeltarangeposition)
+- [IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces](#icomponent-interfaces-from-praguecontainer-definitions-are-moved-to-praguecomponent-core-interfaces)
 - [Deprecate @prague/app-component](#deprecate-pragueapp-component)
+- [Query and List Removed From IComponent](#query-and-list-removed-from-icomponent)
+- [Value type op change](#value-type-op-change)
+- [`SharedMap.values()` and `.entries()` unpack local values](#sharedmapvalues-and-entries-unpack-local-values)
+
+## `IComponent` not to be derived from
 
 `IComponent` is no longer intended to be derived from. Instead it serves as a Fluid specific form of 'any' and that
 clients can cast objects to in order to probe for implemented component interfaces.
 
 ## `sequence.annotateRange()` argument order changed
+
 The `start` and `end` arguments of `sequence.annotateRange()` have been changed to the first two arguments to make the codebase more consistent. The new function signature is as below:
+
 ```typescript
 public annotateRange(
         start: number,
@@ -16,16 +38,21 @@ public annotateRange(
 ```
 
 ## `sharedString.insertText()` argument order changed
+
 The `pos` and `text` arguments of `sharedString.insertText()` have been switched to make it more consistent with other sharedString methods. The new function signature is as below:
+
 ```typescript
 public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
 ```
 
 ## `mergeTree.getOffset()` -> `mergeTree.getPosition()`
+
 `mergeTree.getOffset()` and `Client.getOffset()` have been renamed to `getPosition()` to more accurately reflect their functionality.
 
 ## Updated sequence API to provide richer access to the underlying merge tree
+
 The following methods of mergeTree have been exposed on sequence:
+
 - `addLocalReference()`
 - `removeLocalReference()`
 - `posFromRelativePos()`
@@ -37,6 +64,7 @@ The following methods of mergeTree have been exposed on sequence:
 If these are being accessed directly from the sequence or client, they should be changed to access through sequence, since these will become private in mergeTree/mergeTree client in the future.
 
 ## ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
+
 The `offset` member of the ISequenceDeltaRange interface has been renamed to `position` 
 
 ## IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
@@ -62,14 +90,17 @@ The following interfaces have moved:
 The query and list methods have been removed from IComponent and been replaced with strongly type properties.
 
 ### Component Consumers
+
 Consumers should update their code as follows.
 
 Before:
+
 ```typescript
 const thing = component.query<IComponentThing>('IComponentThing');
 ```
 
 After:
+
 ```typescript
 const thing = component.IComponentThing;
 ```
@@ -77,11 +108,13 @@ const thing = component.IComponentThing;
 in both cases the consumer should check for undefined before using.
 
 ### Component Implementors
+
 Component implementors no longer need to implement query, list, or supported interfaces. They now need to add a property for
 each interface they implement, or wish to expose. They will get compile time errors if they do not implement these properties for
 interfaces they implement.
 
 Before:
+
 ```typescript
 class MyComponent implements IComponentThing {
     private static readonly supportedInterfaces = ["IComponentThing"];
@@ -102,7 +135,9 @@ class MyComponent implements IComponentThing {
     }
 }
 ```
+
 After:
+
 ```typescript
 class MyComponent implements IComponentThing {
 
@@ -115,16 +150,20 @@ class MyComponent implements IComponentThing {
 ```
 
 ### Component Interface Implementors
+
 Component interface implementors must do the following so that their interfaces are exposed off IComponent for consumers,
 and so Component implementors get strong typing.
 
  Before:
+
 ```typescript
 export interface IComponentThing {
     doThing(): void;
 }
 ```
+
 After:
+
 ```typescript
 export interface IComponentThing {
     // This property will be implemented by component implementors

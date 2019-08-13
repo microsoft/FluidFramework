@@ -32,7 +32,6 @@ COPY packages/agents/snapshotter/package*.json packages/agents/snapshotter/
 COPY packages/agents/spellchecker/package*.json packages/agents/spellchecker/
 COPY packages/agents/translator/package*.json packages/agents/translator/
 COPY packages/components/agent-scheduler/package*.json packages/components/agent-scheduler/
-COPY packages/components/app-datastore/package*.json packages/components/app-datastore/
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
 COPY packages/components/blob-manager/package*.json packages/components/blob-manager/
 COPY packages/components/canvas/package*.json packages/components/canvas/

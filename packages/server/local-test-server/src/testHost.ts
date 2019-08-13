@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { DataStore } from "@prague/app-datastore";
 import { PrimedComponent, SharedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
@@ -17,7 +16,9 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestLoader,
+    TestResolver,
 } from ".";
+import { TestDataStore } from "./testDataStore";
 
 // tslint:disable:array-type
 /**
@@ -166,10 +167,8 @@ export class TestHost {
             storeComponentRegistry =
                 new WrappedComponentRegistry(componentRegistry as IComponentRegistry, extraRegistryMap);
         }
-        // tslint:disable:no-http-string - Allow fake test URLs when constructing DataStore.
-        const store = new DataStore(
-            "http://test-orderer-url.test",
-            "http://test-storage-url.test",
+
+        const store = new TestDataStore(
             new TestLoader([
                 [TestRootComponent.type,
                 {
@@ -180,9 +179,7 @@ export class TestHost {
                 }],
             ]),
             new TestDocumentServiceFactory(this.deltaConnectionServer),
-            "tokenKey",
-            "tenantId",
-            "userId");
+            new TestResolver());
 
         store.open<TestRootComponent>("test-root-component", TestRootComponent.type, "")
             .then(this.rootResolver)
