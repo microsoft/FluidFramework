@@ -38,7 +38,6 @@ class ProgressBarView implements IComponentHTMLView {
     }
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public remove() {
         this.bar.detach(this);
@@ -93,7 +92,6 @@ export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IC
 
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentRouter() { return this; }
 
     public render(elm: HTMLElement) {

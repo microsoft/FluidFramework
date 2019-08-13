@@ -8,7 +8,6 @@ import { ISharedMap } from "@prague/map";
 
 export class FlowIntelViewer implements IComponentHTMLVisual {
   public get IComponentHTMLVisual() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   private insightFound = false;
   constructor(private readonly insights: ISharedMap) {

@@ -12,7 +12,9 @@ import {
 } from "@prague/component-core-interfaces";
 
 export class ComponentHandle implements IComponentHandle {
-    public get IComponentHandle(): IComponentHandle { return this; }
+    public get IComponentRouter() { return this; }
+    public get IComponentHandleContext() { return this; }
+    public get IComponentHandle() { return this; }
 
     public readonly isAttached = true;
     private componentP: Promise<IComponent>;

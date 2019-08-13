@@ -5,7 +5,6 @@
 
 import {
     IComponent,
-    IComponentHTMLRender,
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
@@ -35,10 +34,8 @@ async function attach(loader: Loader, url: string, host: Host) {
         viewable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
     }
     if (viewable) {
-        let renderable = viewable as IComponentHTMLRender;
-        if (viewable.addView) {
-            renderable = viewable.addView();
-        }
+        const renderable =
+            viewable.addView ? viewable.addView() : viewable;
 
         renderable.render(host.div);
         return;

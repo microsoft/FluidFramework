@@ -22,7 +22,7 @@ const template = new Template(
 
 export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost {
     public get ISearchMenuHost() { return this; }
-    public get IComponentHTMLRender() { return this; }
+
     public get IComponentHTMLView() { return this; }
 
     private activeSearchBox?: SearchMenu.ISearchBox;

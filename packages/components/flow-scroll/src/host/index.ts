@@ -36,7 +36,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;

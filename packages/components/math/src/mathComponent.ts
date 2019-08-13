@@ -8,7 +8,7 @@ import * as ClientUI from "@prague/client-ui";
 import {
     IComponent,
     IComponentHTMLOptions,
-    IComponentHTMLRender,
+
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -60,7 +60,7 @@ type IMathMarkerInst = MathExpr.IMathMarker;
 class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout {
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentHTMLRender() { return this; }
+
     public get IComponentCursor() { return this; }
     public get IComponentLayout() { return this; }
 
@@ -427,13 +427,12 @@ class MathView implements IComponentHTMLView, IComponentCursor, IComponentLayout
 }
 
 export class MathInstance implements IComponentLoadable, IComponentRouter,
-    IComponentHTMLVisual, IComponentHTMLRender {
+    IComponentHTMLVisual {
     public static defaultOptions: IMathOptions = { display: "inline" };
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public views: MathView[];
     public endMarker: IMathMarkerInst;

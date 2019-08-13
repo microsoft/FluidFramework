@@ -319,7 +319,6 @@ export class PinpointRunner extends EventEmitter implements
     }
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentLoadable() { return this; }
     public get IComponentLayout() { return this; }
 

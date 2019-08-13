@@ -59,7 +59,6 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
 
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public readonly url = "/text";
     private sharedString: SharedString;

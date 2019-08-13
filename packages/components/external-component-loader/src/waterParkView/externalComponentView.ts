@@ -6,7 +6,6 @@
 import { PrimedComponent } from "@prague/aqueduct";
 import {
   IComponent,
-  IComponentHTMLRender,
   IComponentHTMLVisual,
   IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
@@ -25,7 +24,6 @@ export const WaterParkViewName = `${pkg.name}-view`;
 export class ExternalComponentView extends PrimedComponent implements IComponentHTMLVisual, IComponentCollection {
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentCollection() { return this; }
 
     private sequence: SharedObjectSequence<string>;
@@ -83,9 +81,9 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
                     const component = this.urlToComponent.get(url);
                     if (component) {
                         const queryable = component as IComponentQueryableLegacy;
-                        let renderable = component.IComponentHTMLRender;
+                        let renderable = component.IComponentHTMLVisual;
                         if (!renderable && queryable.query) {
-                            renderable = queryable.query<IComponentHTMLRender>("IComponentHTMLRender");
+                            renderable = queryable.query<IComponentHTMLVisual>("IComponentHTMLVisual");
                         }
                         if (renderable) {
                             const containerDiv = document.createElement("div");

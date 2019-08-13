@@ -6,8 +6,8 @@
 import {
     IComponent,
     IComponentConfiguration,
-    IComponentHandleContext,
-    IComponentSerializer,
+    IProvideComponentHandleContext,
+    IProvideComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -142,9 +142,7 @@ export interface IFluidCodeDetails {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime {
-    readonly IComponentSerializer: IComponentSerializer;
-    readonly IComponentHandleContext: IComponentHandleContext;
+export interface IRuntime extends IProvideComponentSerializer, IProvideComponentHandleContext {
 
     /**
      * Executes a request against the runtime
@@ -224,12 +222,15 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, ICom
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
-    readonly IMessageScheduler: IMessageScheduler;
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }
 
-export interface IComponentTokenProvider {
+export interface IProvideComponentTokenProvider {
+    readonly IComponentTokenProvider: IComponentTokenProvider;
+}
+
+export interface IComponentTokenProvider extends IProvideComponentTokenProvider {
     intelligence: { [service: string]: any };
 }
 
@@ -237,10 +238,13 @@ export interface IFluidModule {
     fluidExport: IComponent;
 }
 
+export interface IProvideRuntimeFactory {
+    readonly IRuntimeFactory: IRuntimeFactory;
+}
 /**
  * Exported module definition
  */
-export interface IRuntimeFactory {
+export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
      * Instantiates a new chaincode container
      */
@@ -248,10 +252,8 @@ export interface IRuntimeFactory {
 }
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        readonly IRuntimeFactory?: IRuntimeFactory;
-        readonly IComponentConfiguration?: IComponentConfiguration;
-        readonly IMessageScheduler?: IMessageScheduler;
-        readonly IComponentTokenProvider?: IComponentTokenProvider;
+    export interface IComponent extends Readonly<Partial<
+        IProvideRuntimeFactory
+        & IProvideComponentTokenProvider>> {
     }
 }

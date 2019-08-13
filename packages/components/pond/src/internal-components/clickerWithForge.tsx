@@ -27,7 +27,6 @@ export const ClickerWithInitialValueName = `${pkg.name as string}-clickerWithIni
 export class ClickerWithInitialValue extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     /**
      * Do setup work here

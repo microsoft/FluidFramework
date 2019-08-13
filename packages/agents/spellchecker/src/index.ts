@@ -9,13 +9,16 @@ import * as Sequence from "@prague/sequence";
 import { loadDictionary } from "./dictionaryLoader";
 import { Spellchecker } from "./spellchecker";
 
-export interface ISpellChecker {
+export interface IProvideSpellChecker {
+    readonly ISpellChecker: ISpellChecker;
+}
+
+export interface ISpellChecker extends IProvideSpellChecker {
     run(sharedString: Sequence.SharedString, dictionary?: MergeTree.TST<number>): void;
 }
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        ISpellChecker?: ISpellChecker;
+    export interface IComponent extends Readonly<Partial<IProvideSpellChecker>> {
     }
 }
 

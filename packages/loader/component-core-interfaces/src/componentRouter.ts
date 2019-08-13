@@ -18,6 +18,9 @@ export interface IResponse {
 /**
  * Request routing
  */
-export interface IComponentRouter {
+export interface IProvideComponentRouter {
+    readonly IComponentRouter: IComponentRouter;
+}
+export interface IComponentRouter extends IProvideComponentRouter {
     request(request: IRequest): Promise<IResponse>;
 }

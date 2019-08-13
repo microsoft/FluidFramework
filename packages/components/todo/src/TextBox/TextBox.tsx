@@ -38,7 +38,6 @@ export class TextBox extends PrimedComponent
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   /**
    * Do creation work

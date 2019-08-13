@@ -12,10 +12,14 @@ import { KeyCode } from "./keycode";
 import * as ui from "./rectangle";
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        readonly ISearchMenuClient?: ISearchMenuClient;
-        readonly ISearchMenuHost?: ISearchMenuHost;
+    export interface IComponent extends Readonly<Partial<
+        IProvideSearchMenuHost
+        & ISearchMenuClient>> {
     }
+}
+
+export interface IProvideSearchMenuHost {
+    readonly ISearchMenuHost: ISearchMenuHost;
 }
 
 export interface ISearchMenuHost {
@@ -28,7 +32,10 @@ export interface ISearchMenuHost {
     cancelSearchMenu(): void;
 }
 
-export interface ISearchMenuClient {
+export interface IProvideSearchMenuClient {
+    readonly ISearchMenuClient: ISearchMenuClient;
+}
+export interface ISearchMenuClient extends IProvideSearchMenuClient {
     registerSearchMenuHost(host: ISearchMenuHost): void;
 }
 

@@ -29,14 +29,17 @@ import { ISharedObjectFactory } from "@prague/shared-object-common";
 const pkg = require("../package.json");
 export const ComponentName = pkg.name;
 
-export interface IKeyValue {
+export interface IProvideKeyValue {
+    readonly IKeyValue: IKeyValue;
+}
+
+export interface IKeyValue extends IProvideKeyValue {
     set(key: string, value: any): void;
     get(key: string): any;
 }
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        readonly IKeyValue?: IKeyValue;
+    export interface IComponent extends Readonly<Partial<IProvideKeyValue>> {
     }
 }
 

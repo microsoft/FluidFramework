@@ -4,25 +4,26 @@
  */
 
 import {
-    IComponentConfiguration,
-    IComponentLoadable,
-    IComponentRunnable,
+    IProvideComponentConfiguration,
+    IProvideComponentLoadable,
+    IProvideComponentRunnable,
 } from "./componentLoadable";
-import { IComponentHTMLRender, IComponentHTMLVisual } from "./componentRender";
-import { IComponentRouter } from "./componentRouter";
-import { IComponentHandle, IComponentHandleContext } from "./handles";
+import { IProvideComponentHTMLVisual } from "./componentRender";
+import { IProvideComponentRouter } from "./componentRouter";
+import { IProvideComponentHandle, IProvideComponentHandleContext } from "./handles";
 import { IComponentQueryableLegacy } from "./legacy";
-import { IComponentSerializer } from "./serializer";
+import { IProvideComponentSerializer } from "./serializer";
 
-export interface IComponent {
-    readonly IComponentLoadable?: IComponentLoadable;
-    readonly IComponentRunnable?: IComponentRunnable;
-    readonly IComponentRouter?: IComponentRouter;
-    readonly IComponentHTMLRender?: IComponentHTMLRender;
-    readonly IComponentHTMLVisual?: IComponentHTMLVisual;
+export interface IComponent extends
+    Readonly<Partial<
+        IProvideComponentHTMLVisual
+        & IProvideComponentLoadable
+        & IProvideComponentRunnable
+        & IProvideComponentRouter
+        & IProvideComponentHandleContext
+        & IProvideComponentConfiguration
+        & IProvideComponentHandle
+        & IProvideComponentSerializer>> {
+
     readonly IComponentQueryableLegacy?: IComponentQueryableLegacy;
-    readonly IComponentConfiguration?: IComponentConfiguration;
-    readonly IComponentHandleContext?: IComponentHandleContext;
-    readonly IComponentHandle?: IComponentHandle;
-    readonly IComponentSerializer?: IComponentSerializer;
 }

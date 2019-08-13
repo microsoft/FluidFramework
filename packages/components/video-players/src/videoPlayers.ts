@@ -87,7 +87,6 @@ export class VideoPlayer implements
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentLayout() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentLoadable() { return this; }
 
     // Video def has a preferred aspect ratio

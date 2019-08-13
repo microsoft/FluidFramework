@@ -10,7 +10,6 @@ import {
 } from "@prague/aqueduct";
 import {
   IComponent,
-  IComponentHTMLRender,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
@@ -29,11 +28,10 @@ export const PondName = pkg.name as string;
  */
 export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
-  public clicker2Render: IComponentHTMLRender | undefined;
-  public clicker3Render: IComponentHTMLRender | undefined;
+  public clicker2Render: IComponentHTMLVisual | undefined;
+  public clicker3Render: IComponentHTMLVisual | undefined;
 
   public get IComponentHTMLVisual() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   protected async componentInitializingFromExisting() {
     await this.setupSubComponents();
@@ -54,10 +52,10 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
 
   async setupSubComponents() {
     const clicker2 = await this.getComponent<IComponent>("clicker");
-    this.clicker2Render = clicker2.IComponentHTMLRender;
+    this.clicker2Render = clicker2.IComponentHTMLVisual;
 
     const clicker3 = await this.getComponent<IComponent>("clicker-with-initial-value");
-    this.clicker3Render = clicker3.IComponentHTMLRender;
+    this.clicker3Render = clicker3.IComponentHTMLVisual;
   }
 
   // start IComponentHTMLVisual

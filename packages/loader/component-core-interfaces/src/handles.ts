@@ -5,10 +5,13 @@
 
 import { IComponentRouter } from "./componentRouter";
 
+export interface IProvideComponentHandleContext {
+    readonly IComponentHandleContext: IComponentHandleContext;
+}
 /**
  * An IComponentHandleContext describes a routing context from which other IComponentHandleContexts are defined
  */
-export interface IComponentHandleContext extends IComponentRouter {
+export interface IComponentHandleContext extends IComponentRouter, IProvideComponentHandleContext {
     /**
      * Path to the handle context relative to the routeContext
      */
@@ -37,10 +40,13 @@ export interface IComponentHandleContext extends IComponentRouter {
     bind(handle: IComponentHandle): void;
 }
 
+export interface IProvideComponentHandle {
+    readonly IComponentHandle: IComponentHandle;
+}
 /**
  * Handle to a shared component
  */
-export interface IComponentHandle extends IComponentHandleContext {
+export interface IComponentHandle extends IComponentHandleContext, IProvideComponentHandle {
     /**
      * Returns a promise to the component referenced by the handle.
      */

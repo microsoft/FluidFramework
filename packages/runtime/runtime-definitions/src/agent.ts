@@ -14,17 +14,24 @@ export interface ITask {
     instance: IComponentRunnable;
 }
 
+export interface IProvideTaskManager {
+    readonly ITaskManager: ITaskManager;
+}
 /**
  * Wrapper on top of IAgentScheduler.
  */
-export interface ITaskManager extends IComponentLoadable, IComponentRouter {
+export interface ITaskManager extends IProvideTaskManager, IComponentLoadable, IComponentRouter {
     pick(componentUrl: string, ...tasks: ITask[]): Promise<void>;
+}
+
+export interface IProvideAgentScheduler {
+    readonly IAgentScheduler: IAgentScheduler;
 }
 
 /**
  * Agent scheduler distributes a set of tasks/variables across connected clients.
  */
-export interface IAgentScheduler extends IComponentRouter {
+export interface IAgentScheduler extends IProvideAgentScheduler, IComponentRouter {
     /**
      * Whether this instance is the leader.
      */
@@ -67,8 +74,6 @@ export interface IAgentScheduler extends IComponentRouter {
 }
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        readonly IAgentScheduler?: IAgentScheduler;
-        readonly ITaskManager?: ITaskManager;
-    }
+    export interface IComponent extends
+        Readonly<Partial<IProvideTaskManager & IProvideAgentScheduler>> { }
 }

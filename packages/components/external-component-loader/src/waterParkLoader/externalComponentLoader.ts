@@ -30,7 +30,6 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
         "@chaincode/clicker",
     ];
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     private viewComponent: ExternalComponentView;
     private readonly viewComponentID = `WaterViewComponentID`;

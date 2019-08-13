@@ -31,12 +31,14 @@ interface IOpSnapshotDetails {
 }
 
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        readonly ISummarizer?: ISummarizer;
-    }
+    export interface IComponent extends Readonly<Partial<IProvideSummarizer>> { }
 }
 
-export interface ISummarizer {
+export interface IProvideSummarizer {
+    readonly ISummarizer: ISummarizer;
+}
+
+export interface ISummarizer extends IProvideSummarizer {
     /**
      * Runs the summarizer on behalf of another clientId. In this case it will only run so long as the given
      * clientId is the elected summarizer and will stop once it is not.

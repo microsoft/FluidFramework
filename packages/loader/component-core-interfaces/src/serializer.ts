@@ -16,7 +16,11 @@ export interface ISerializedHandle {
     url: string;
 }
 
-export interface IComponentSerializer {
+export interface IProvideComponentSerializer {
+    readonly IComponentSerializer: IComponentSerializer;
+}
+
+export interface IComponentSerializer extends IProvideComponentSerializer {
     /**
      * Stringifies a given value. Converts any IComponentHandle to its stringified equivalent.
      */

@@ -26,6 +26,10 @@ export interface IComponentHTMLView extends IComponentHTMLRender {
     remove(): void;
 }
 
-export interface IComponentHTMLVisual extends IComponentHTMLRender {
+export interface IProvideComponentHTMLVisual {
+    readonly IComponentHTMLVisual: IComponentHTMLVisual;
+}
+
+export interface IComponentHTMLVisual extends IComponentHTMLRender, IProvideComponentHTMLVisual {
     addView?(scope?: IComponent): IComponentHTMLView;
 }

@@ -12,6 +12,8 @@ import {
 import { IRuntime } from "@prague/container-definitions";
 
 export class ComponentHandleContext implements IComponentHandleContext {
+    public get IComponentRouter() { return this; }
+    public get IComponentHandleContext() { return this; }
     public readonly isAttached = true;
 
     constructor(

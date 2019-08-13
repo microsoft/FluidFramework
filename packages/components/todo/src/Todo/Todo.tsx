@@ -48,7 +48,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   /**
    * Do setup work here

@@ -28,7 +28,6 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
   public static getFactory() { return OwnedMap.factory; }
 
   public get IComponentHTMLVisual() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   private static readonly factory = new SharedComponentFactory(
     OwnedMap,

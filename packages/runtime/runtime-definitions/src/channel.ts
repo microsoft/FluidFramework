@@ -11,12 +11,15 @@ import {
 } from "@prague/protocol-definitions";
 
 declare module "@prague/container-definitions" {
-    interface IComponent {
-        readonly IChannel?: IChannel;
+    interface IComponent extends Readonly<Partial<IProvideChannel>> {
     }
 }
 
-export interface IChannel extends IComponentLoadable {
+export interface IProvideChannel {
+    readonly IChannel: IChannel;
+}
+
+export interface IChannel extends IProvideChannel, IComponentLoadable {
     /**
      * A readonly identifier for the shared object
      */

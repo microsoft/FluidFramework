@@ -171,7 +171,8 @@ export class TestHost {
         const store = new TestDataStore(
             new TestLoader([
                 [TestRootComponent.type,
-                {
+                    {
+                    IRuntimeFactory: undefined,
                     instantiateRuntime: (context) => SimpleContainerRuntimeFactory.instantiateRuntime(
                         context,
                         TestRootComponent.type,

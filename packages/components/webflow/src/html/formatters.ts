@@ -84,7 +84,7 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
                     ? visual.addView(layout.scope)
                     // tslint:disable-next-line:no-object-literal-type-assertion
                     : {
-                        IComponentHTMLRender: visual,
+                        IComponentHTMLVisual: visual,
                         render: visual.render.bind(visual),
                         remove: state.slot.remove.bind(state.slot),
                     } as IComponentHTMLView;

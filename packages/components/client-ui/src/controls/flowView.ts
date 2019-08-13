@@ -10,7 +10,7 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,
-    IComponentHTMLRender,
+    IComponentHTMLVisual,
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
 import {
@@ -66,13 +66,13 @@ function getComponentBlock(marker: MergeTree.Marker): IBlockViewMarker {
 }
 
 interface IBlockViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLRender>;
-    instance?: IComponentHTMLRender & IComponent;
+    instanceP?: Promise<IComponentHTMLVisual>;
+    instance?: IComponentHTMLVisual & IComponent;
 }
 
 interface IComponentViewMarker extends MergeTree.Marker {
-    instanceP?: Promise<IComponentHTMLRender>;
-    instance?: IComponentHTMLRender;
+    instanceP?: Promise<IComponentHTMLVisual>;
+    instance?: IComponentHTMLVisual;
 }
 
 interface IMathCollection {
@@ -87,10 +87,10 @@ interface IMathOptions {
     display: string;
 }
 
-export interface IMathInstance extends IComponentLoadable, IComponentHTMLRender, IComponentCursor,
+export interface IMathInstance extends IComponentLoadable, IComponentHTMLVisual, IComponentCursor,
     IComponentKeyHandlers, IComponentLayout, SearchMenu.ISearchMenuClient {
     IComponentLoadable: IComponentLoadable;
-    IComponentHTMLRender: IComponentHTMLRender;
+    IComponentHTMLVisual: IComponentHTMLVisual;
     IComponentCursor: IComponentCursor;
     IComponentKeyHandlers: IComponentKeyHandlers;
     IComponentLayout: IComponentLayout;
@@ -906,7 +906,7 @@ function renderSegmentIntoLine(
                                 }
 
                                 const component = response.value as IComponent;
-                                const viewable = component.IComponentHTMLRender;
+                                const viewable = component.IComponentHTMLVisual;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }
@@ -2430,9 +2430,9 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
 
                                 const component = response.value as IComponent;
                                 // TODO below is a temporary workaround. Should every QI interface also implement
-                                // IComponent. Then you can go from IComponentHTMLRender to IComponentLayout.
+                                // IComponent. Then you can go from IComponentHTMLVisual to IComponentLayout.
                                 // Or should you query for each one individually.
-                                const viewable = component.IComponentHTMLRender;
+                                const viewable = component.IComponentHTMLVisual;
                                 if (!viewable) {
                                     return Promise.reject("component is not viewable");
                                 }

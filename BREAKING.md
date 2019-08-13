@@ -65,7 +65,7 @@ If these are being accessed directly from the sequence or client, they should be
 
 ## ISequenceDeltaRange.offset -> ISequenceDeltaRange.position
 
-The `offset` member of the ISequenceDeltaRange interface has been renamed to `position` 
+The `offset` member of the ISequenceDeltaRange interface has been renamed to `position`
 
 ## IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces
 
@@ -165,10 +165,15 @@ export interface IComponentThing {
 After:
 
 ```typescript
-export interface IComponentThing {
-    // This property will be implemented by component implementors
-    // to expose this interface
+export interface IProvideComponentThing {
+    // This property will be implemented
+    // to expose this interface IComponentThing
+    // For both direct implementors, and those that
+    // delegate the implmentation to another object
     readonly IComponentThing: IComponentThing;
+}
+
+export interface IComponentThing extends IProvideComponentThing {
     doThing(): void;
 }
 
@@ -179,8 +184,7 @@ export interface IComponentThing {
 // and interface merging here:
 // https://www.typescriptlang.org/docs/handbook/declaration-merging.html
 declare module "@prague/component-core-interfaces" {
-    export interface IComponent {
-        IComponentThing?: IComponentThing;
+    export interface IComponent extends Readonly<Partial<IProvideComponentThing>> {
     }
 }
 ```

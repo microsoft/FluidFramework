@@ -19,7 +19,6 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     // #region IComponentHTMLVisual
     public addView?(scope?: IComponent): IComponentHTMLView {

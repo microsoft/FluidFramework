@@ -27,7 +27,6 @@ export const ClickerName = `${pkg.name as string}-clicker`;
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     /**
      * Do setup work here

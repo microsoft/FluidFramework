@@ -6,7 +6,7 @@
 import {
     IComponent,
     IComponentHTMLOptions,
-    IComponentHTMLRender,
+
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
@@ -26,11 +26,10 @@ import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 
 export class ImageComponent implements
-    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentHTMLRender, IComponentLayout {
+    IComponentLoadable, IComponentHTMLVisual, IComponentRouter, IComponentLayout {
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
     public get IComponentRouter() { return this; }
-    public get IComponentHTMLRender() { return this; }
     public get IComponentLayout() { return this; }
 
     // Video def has a preferred aspect ratio

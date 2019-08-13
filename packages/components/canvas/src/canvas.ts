@@ -19,10 +19,8 @@ import "./style.less";
 
 // tslint:disable:no-console
 class CanvasView implements IComponentHTMLView {
-    public static supportedInterfaces = ["IComponentHTMLRender", "IComponentHTMLView"];
 
     public get IComponentHTMLView() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public static create(
         runtime: IComponentRuntime,
@@ -53,7 +51,6 @@ class CanvasView implements IComponentHTMLView {
 
 export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
-    public get IComponentHTMLRender() { return this; }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         CanvasView.create(this.runtime, this.root).render(elm, options);

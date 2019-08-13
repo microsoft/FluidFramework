@@ -7,15 +7,17 @@ import { ITree } from "@prague/protocol-definitions";
 import { IChannel, ISharedObjectServices } from "@prague/runtime-definitions";
 
 declare module "@prague/container-definitions" {
-    interface IComponent {
-        readonly ISharedObject?: ISharedObject;
-    }
+    interface IComponent extends Readonly<Partial<IProvideSharedObject>> { }
+}
+
+export interface IProvideSharedObject {
+    readonly ISharedObject: ISharedObject;
 }
 
 /**
  * Base interface for shared objects from which other interfaces derive. Implemented by SharedObject
  */
-export interface ISharedObject extends IChannel {
+export interface ISharedObject extends IProvideSharedObject, IChannel {
     /**
      * The type of the shared object
      */

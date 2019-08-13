@@ -27,7 +27,6 @@ import * as ReactDOM from "react-dom";
  */
 export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
   public get IComponentHTMLVisual() { return this; }
-  public get IComponentHTMLRender() { return this; }
 
   /**
    * ComponentInitializingFirstTime is where you do setup for your component. This is only called once the first time your component

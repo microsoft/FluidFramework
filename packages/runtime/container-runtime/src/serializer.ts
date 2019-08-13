@@ -33,6 +33,9 @@ function toAbsoluteUrl(handle: IComponentHandle): string {
 }
 
 export class ComponentSerializer implements IComponentSerializer {
+
+    public get IComponentSerializer() { return this; }
+
     public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle): string {
         const contextAttached = bind.isAttached;
 
