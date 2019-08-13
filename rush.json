@@ -35,10 +35,6 @@
       "projectFolder": "packages/components/agent-scheduler/"
     },
     {
-      "packageName": "@prague/app-datastore",
-      "projectFolder": "packages/components/app-datastore/"
-    },
-    {
       "packageName": "@prague/app-ui",
       "projectFolder": "packages/components/app-ui/"
     },
