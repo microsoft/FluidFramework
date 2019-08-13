@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Tag } from "../../util/tag";
+import { Tag } from "../util/tag";
 import { Layout } from "./layout";
 
 // tslint:disable-next-line:no-empty-interface

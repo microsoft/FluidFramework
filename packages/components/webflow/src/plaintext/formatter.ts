@@ -5,8 +5,8 @@
 
 import { TextSegment } from "@prague/merge-tree";
 import { getDocSegmentKind } from "../document";
-import { Formatter, IFormatterState } from "../editor/view/formatter";
-import { Layout } from "../editor/view/layout";
+import { Formatter, IFormatterState } from "../view/formatter";
+import { Layout } from "../view/layout";
 
 class PlainTextFormatter extends Formatter<IFormatterState> {
     public begin(): never { throw new Error(); }

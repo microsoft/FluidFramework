@@ -17,7 +17,7 @@ import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";
 import { htmlFormatter } from "../src";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
-import { Layout } from "../src/editor";
+import { Layout } from "../src/view/layout";
 
 interface ISnapshotNode {
     node: Node;

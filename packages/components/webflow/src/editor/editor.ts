@@ -7,11 +7,11 @@ import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
+import { Formatter, IFormatterState } from "../view/formatter";
+import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
-import { Formatter, IFormatterState } from "./view/formatter";
-import { Layout } from "./view/layout";
 
 export class Editor {
     private readonly layout: Layout;

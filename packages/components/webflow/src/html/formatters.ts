@@ -7,14 +7,14 @@ import { IComponent, IComponentHTMLView } from "@prague/component-core-interface
 import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
 import { Marker } from "@prague/merge-tree";
 import * as assert from "assert";
-import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../../document";
-import { emptyObject } from "../../util";
-import { Tag } from "../../util/tag";
-import { debug } from "../debug";
-import * as styles from "../index.css";
+import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
+import * as styles from "../editor/index.css";
+import { emptyObject } from "../util";
+import { Tag } from "../util/tag";
+import { Formatter, IFormatterState } from "../view/formatter";
+import { Layout } from "../view/layout";
 import { ICssProps, sameCss, syncCss } from "./css";
-import { Formatter, IFormatterState } from "./formatter";
-import { Layout } from "./layout";
+import { debug } from "./debug";
 
 class DocumentFormatter extends Formatter<IFormatterState> {
     public begin(): never { throw new Error(); }

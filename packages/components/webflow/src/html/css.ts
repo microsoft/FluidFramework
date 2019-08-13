@@ -5,7 +5,7 @@
 
 import { areStringsEquivalent } from "@prague/flow-util";
 import { ISegment } from "@prague/merge-tree";
-import { getCss } from "../../document";
+import { getCss } from "../document";
 
 // Note: Similar to TokenList.set(..), but elides the search for duplicate tokens.
 function concat(leftTokens: string, rightTokens: string) {

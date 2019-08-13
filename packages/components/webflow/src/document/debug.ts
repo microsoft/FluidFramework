@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as registerDebug from "debug";
+import { IDebugger } from "debug";
+import { debug as parent } from "../debug";
 
-export const debug = registerDebug("flow:document");
+export const debug: IDebugger = parent.extend("document");

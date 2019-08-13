@@ -7,10 +7,10 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-cor
 import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
-import { documentFormatter as htmlFormatter } from "../editor/view/element";
-import { Formatter, IFormatterState } from "../editor/view/formatter";
+import { documentFormatter as htmlFormatter } from "../html/formatters";
 import { plainTextFormatter } from "../plaintext/formatter";
 import { Tag } from "../util/tag";
+import { Formatter, IFormatterState } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";

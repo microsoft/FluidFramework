@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { Editor } from "./editor";
+import * as registerDebug from "debug";
+
+export const debug = registerDebug("flow");

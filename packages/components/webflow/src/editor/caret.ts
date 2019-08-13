@@ -7,11 +7,12 @@ import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } fro
 import { LocalReference } from "@prague/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
+import { domRangeToString, nodeAndOffsetToString, windowSelectionToString } from "../util/debug";
 import { updateRef } from "../util/localref";
 import { Tag } from "../util/tag";
-import { debug, domRangeToString, nodeAndOffsetToString, windowSelectionToString } from "./debug";
+import { Layout } from "../view/layout";
+import { debug } from "./debug";
 import * as styles from "./index.css";
-import { Layout } from "./view/layout";
 
 export class Caret {
     private startRef: LocalReference;

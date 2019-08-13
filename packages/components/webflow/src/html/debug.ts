@@ -6,4 +6,4 @@
 import { IDebugger } from "debug";
 import { debug as parent } from "../debug";
 
-export const debug: IDebugger = parent.extend("clipboard");
+export const debug: IDebugger = parent.extend("html");

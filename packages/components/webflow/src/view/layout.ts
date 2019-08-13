@@ -8,10 +8,11 @@ import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from "@prague/merge-tree";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "@prague/sequence";
 import * as assert from "assert";
-import { FlowDocument } from "../../document";
-import { clamp, emptyObject, getSegmentRange } from "../../util";
-import { extractRef, updateRef } from "../../util/localref";
-import { debug, nodeToString } from "../debug";
+import { FlowDocument } from "../document";
+import { clamp, emptyObject, getSegmentRange } from "../util";
+import { nodeToString } from "../util/debug";
+import { extractRef, updateRef } from "../util/localref";
+import { debug } from "./debug";
 import { Formatter, IFormatterState } from "./formatter";
 
 interface ILayoutCursor { parent: Node; previous: Node; }
