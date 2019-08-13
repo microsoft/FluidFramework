@@ -6,7 +6,7 @@
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
-import { ISharedMap, SharedDirectory, SharedMap } from "@prague/map";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@prague/map";
 import { MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import {
@@ -26,10 +26,9 @@ describe("Directory", () => {
     let user1Document: api.Document;
     let user2Document: api.Document;
     let user3Document: api.Document;
-    // TODO: Make these ISharedDirectory
-    let root1Directory: SharedDirectory;
-    let root2Directory: SharedDirectory;
-    let root3Directory: SharedDirectory;
+    let root1Directory: ISharedDirectory;
+    let root2Directory: ISharedDirectory;
+    let root3Directory: ISharedDirectory;
 
     beforeEach(async () => {
         testDeltaConnectionServer = TestDeltaConnectionServer.create();
@@ -59,11 +58,11 @@ describe("Directory", () => {
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
-        const user1Value = root1Directory.getKeyAtPath(key, path) as string;
+        const user1Value = root1Directory.getWorkingDirectory(path).get(key) as string;
         assert.equal(user1Value, value1, `Incorrect value for ${key} in document 1 ${msg}`);
-        const user2Value = root2Directory.getKeyAtPath(key, path) as string;
+        const user2Value = root2Directory.getWorkingDirectory(path).get(key) as string;
         assert.equal(user2Value, value2, `Incorrect value for ${key} in document 2 ${msg}`);
-        const user3Value = root3Directory.getKeyAtPath(key, path) as string;
+        const user3Value = root3Directory.getWorkingDirectory(path).get(key) as string;
         assert.equal(user3Value, value3, `Incorrect value for ${key} in document 3 ${msg}`);
     }
     function expectAllBeforeValues(key, path, value1, value2, value3) {
@@ -280,13 +279,13 @@ describe("Directory", () => {
 
     describe("SubDirectory operations", () => {
         it("should set a key in a SubDirectory in three documents correctly", async () => {
-            root1Directory.setKeyAtPath("testKey1", "testValue1", "testSubDir1");
+            root1Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
         });
 
         it("should delete a key in a SubDirectory in three documents correctly", async () => {
-            root2Directory.setKeyAtPath("testKey1", "testValue1", "testSubDir1");
+            root2Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
             const subDir1 = root3Directory.getWorkingDirectory("testSubDir1");
@@ -295,10 +294,21 @@ describe("Directory", () => {
             expectAllAfterValues("testKey1", "testSubDir1", undefined);
         });
 
+        it("should delete a child SubDirectory in a SubDirectory in three documents correctly", async () => {
+            root2Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
+            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            expectAllAfterValues("testKey1", "testSubDir1", "testValue1");
+            root3Directory.deleteSubDirectory("testSubDir1");
+            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            assert.equal(root1Directory.getWorkingDirectory("testSubDir1"), undefined);
+            assert.equal(root2Directory.getWorkingDirectory("testSubDir1"), undefined);
+            assert.equal(root3Directory.getWorkingDirectory("testSubDir1"), undefined);
+        });
+
         it("should have the correct size in three documents", async () => {
-            root1Directory.setKeyAtPath("testKey1", "testValue1", "testSubDir1");
-            root2Directory.setKeyAtPath("testKey2", "testValue2", "testSubDir1");
-            root3Directory.setKeyAtPath("testKey3", "testValue3", "otherSubDir2");
+            root1Directory.createSubDirectory("testSubDir1").set("testKey1", "testValue1");
+            root2Directory.createSubDirectory("testSubDir1").set("testKey2", "testValue2");
+            root3Directory.createSubDirectory("otherSubDir2").set("testKey3", "testValue3");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             expectAllSize(2, "testSubDir1");
             root3Directory.getWorkingDirectory("testSubDir1").clear();
@@ -338,7 +348,7 @@ describe("Directory", () => {
                 }
             });
 
-            root1Directory.setKeyAtPath("testKey1", "updatedValue", "testSubDir1");
+            root1Directory.createSubDirectory("testSubDir1").set("testKey1", "updatedValue");
 
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
@@ -354,7 +364,7 @@ describe("Directory", () => {
             let root2SubDir;
             let root3SubDir;
             beforeEach(async () => {
-                root1Directory.setKeyAtPath("dummyKey", "dummyValue", "testSubDir");
+                root1Directory.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 root1SubDir = root1Directory.getWorkingDirectory("testSubDir");
                 root2SubDir = root2Directory.getWorkingDirectory("testSubDir");

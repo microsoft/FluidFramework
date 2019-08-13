@@ -63,7 +63,10 @@ interface IDirectoryDeleteOperation {
     path: string;
 }
 
-type IDirectoryStorageOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
+/**
+ * An operation on a specific key within a directory
+ */
+type IDirectoryKeyOperation = IDirectoryValueTypeOperation | IDirectorySetOperation | IDirectoryDeleteOperation;
 
 interface IDirectoryClearOperation {
     type: "clear";
@@ -71,13 +74,37 @@ interface IDirectoryClearOperation {
 }
 
 /**
- * Description of a directory delta operation
+ * An operation on one or more of the keys within a directory
  */
-type IDirectoryOperation = IDirectoryStorageOperation | IDirectoryClearOperation;
+type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+
+interface IDirectoryCreateSubDirectoryOperation {
+    type: "createSubDirectory";
+    path: string;
+    subdirName: string;
+}
+
+interface IDirectoryDeleteSubDirectoryOperation {
+    type: "deleteSubDirectory";
+    path: string;
+    subdirName: string;
+}
+
+/**
+ * An operation on the subdirectories within a directory
+ */
+type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
+
+/**
+ * Any operation on a directory
+ */
+type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 // Definines the in-memory object structure to be used for the conversion to/from serialized.
 // Directly used in JSON.stringify, direct result from JSON.parse
-// TODO: no export
+/**
+ * @internal
+ */
 export interface IDirectoryDataObject {
     storage?: {[key: string]: ISerializableValue};
     subdirectories?: {[subdirName: string]: IDirectoryDataObject};
@@ -128,11 +155,9 @@ export class DirectoryFactory {
  * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.  E.g.:
- * mySharedDirectory.setKeyAtPath("foo", val1, "/a/b/c/");
- * mySharedDirectory.setKeyAtPath("bar", val2, "/a/b/c/");
+ * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
  * mySubDir.get("foo"); // val1
- * mySubDir.get("bar"); // val2
  */
 export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
@@ -184,6 +209,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.get<T>(key);
     }
 
+    public async wait<T = any>(key: string): Promise<T> {
+        return this.root.wait<T>(key);
+    }
+
     public set<T = any>(key: string, value: T, type?: string): this {
         this.root.set(key, value, type);
         return this;
@@ -225,69 +254,20 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.values();
     }
 
-    /**
-     * Returns the contents of the SharedDirectory as a string which can be rehydrated into a SharedDirectory
-     * when loaded using populate().
-     */
-    public serialize(): string {
-        const serializableDirectoryData: IDirectoryDataObject = {};
-
-        // Map SubDirectories that need serializing to the corresponding data objects they will occupy
-        const subdirsToSerialize = new Map<SubDirectory, IDirectoryDataObject>();
-        subdirsToSerialize.set(this.root, serializableDirectoryData);
-
-        for (const [currentSubDir, currentSubDirObject] of subdirsToSerialize) {
-            const subDirStorage = currentSubDir.getSerializableStorage();
-            if (subDirStorage) {
-                currentSubDirObject.storage = subDirStorage;
-            }
-
-            for (const [subdirName, subdir] of currentSubDir.subdirectoriesIterator()) {
-                if (!currentSubDirObject.subdirectories) {
-                    currentSubDirObject.subdirectories = {};
-                }
-                currentSubDirObject.subdirectories[subdirName] = {};
-                subdirsToSerialize.set(subdir, currentSubDirObject.subdirectories[subdirName]);
-            }
-        }
-
-        return JSON.stringify(serializableDirectoryData);
+    public createSubDirectory(subdirName: string): SubDirectory {
+        return this.root.createSubDirectory(subdirName);
     }
 
-    // TODO: make private
-    public async populate(data: IDirectoryDataObject): Promise<void> {
-        const localValuesP = new Array<Promise<SubDirectory>>();
+    public getSubDirectory(subdirName: string): SubDirectory {
+        return this.root.getSubDirectory(subdirName);
+    }
 
-        // Map the data objects representing each subdirectory to their actual SubDirectory object
-        const subdirsToDeserialize = new Map<IDirectoryDataObject, SubDirectory>();
-        subdirsToDeserialize.set(data, this.root);
+    public hasSubDirectory(subdirName: string): boolean {
+        return this.root.hasSubDirectory(subdirName);
+    }
 
-        for (const [currentSubDirObject, currentSubDir] of subdirsToDeserialize) {
-            if (currentSubDirObject.subdirectories) {
-                for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
-                    const newSubDir = new SubDirectory(
-                        this,
-                        this.runtime,
-                        `${currentSubDir.absolutePath}${posix.sep}${subdirName}`);
-                    currentSubDir.setSubDirectory(subdirName, newSubDir);
-                    subdirsToDeserialize.set(subdirObject, newSubDir);
-                }
-            }
-
-            if (currentSubDirObject.storage) {
-                for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
-                    const populateP = this.makeLocal(
-                                          key,
-                                          currentSubDir.absolutePath,
-                                          serializable,
-                                      )
-                                      .then((localValue) => currentSubDir.set(key, localValue.value, localValue.type));
-                    localValuesP.push(populateP);
-                }
-            }
-        }
-
-        await Promise.all(localValuesP);
+    public deleteSubDirectory(subdirName: string): boolean {
+        return this.root.deleteSubDirectory(subdirName);
     }
 
     /**
@@ -311,31 +291,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return currentSubDir;
     }
 
-    /**
-     * Retrieves the given key from the given path.
-     * @param key - the key to retrieve
-     * @param path - the path to the SubDirectory containing the key
-     */
-    public getKeyAtPath<T = any>(key: string, path: string): T {
-        const subdir = this.getWorkingDirectory(path);
-        if (!subdir) {
-            return undefined;
-        }
-        return subdir.get<T>(key);
-    }
-
-    /**
-     * Sets the given key at the given path.  Creates the SubDirectory and any intermediate SubDirectories if needed.
-     * @param key - the key to set
-     * @param value - the value to set the key to
-     * @param path - the path to the SubDirectory where the key should be set
-     */
-    public setKeyAtPath<T = any>(key: string, value: T, path: string, type?: string): this {
-        this.ensureSubDirectoryAtPath(path)
-            .set(key, value, type);
-        return this;
-    }
-
     public snapshot(): ITree {
         const tree: ITree = {
             entries: [
@@ -355,6 +310,95 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
+     * Registers a new value type on the directory
+     */
+    public registerValueType<T>(type: IValueType<T>) {
+        this.localValueMaker.registerValueType(type);
+    }
+
+    /**
+     * Registers a listener on the specified events
+     */
+    public on(
+        event: "pre-op" | "op",
+        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
+    public on(event: "valueChanged", listener: (
+        changed: IDirectoryValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: this) => void): this;
+    public on(event: string | symbol, listener: (...args: any[]) => void): this;
+
+    /* tslint:disable:no-unnecessary-override */
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
+    /**
+     * Returns the contents of the SharedDirectory as a string which can be rehydrated into a SharedDirectory
+     * when loaded using populate().
+     * @internal
+     */
+    public serialize(): string {
+        const serializableDirectoryData: IDirectoryDataObject = {};
+
+        // Map SubDirectories that need serializing to the corresponding data objects they will occupy
+        const subdirsToSerialize = new Map<SubDirectory, IDirectoryDataObject>();
+        subdirsToSerialize.set(this.root, serializableDirectoryData);
+
+        for (const [currentSubDir, currentSubDirObject] of subdirsToSerialize) {
+            const subDirStorage = currentSubDir.getSerializableStorage();
+            if (subDirStorage) {
+                currentSubDirObject.storage = subDirStorage;
+            }
+
+            for (const [subdirName, subdir] of currentSubDir.subdirectories()) {
+                if (!currentSubDirObject.subdirectories) {
+                    currentSubDirObject.subdirectories = {};
+                }
+                currentSubDirObject.subdirectories[subdirName] = {};
+                subdirsToSerialize.set(subdir, currentSubDirObject.subdirectories[subdirName]);
+            }
+        }
+
+        return JSON.stringify(serializableDirectoryData);
+    }
+
+    /**
+     * @internal
+     */
+    public async populate(data: IDirectoryDataObject): Promise<void> {
+        const localValuesP = new Array<Promise<SubDirectory>>();
+
+        // Map the data objects representing each subdirectory to their actual SubDirectory object
+        const subdirsToDeserialize = new Map<IDirectoryDataObject, SubDirectory>();
+        subdirsToDeserialize.set(data, this.root);
+
+        for (const [currentSubDirObject, currentSubDir] of subdirsToDeserialize) {
+            if (currentSubDirObject.subdirectories) {
+                for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
+                    const newSubDir = currentSubDir.createSubDirectory(subdirName);
+                    subdirsToDeserialize.set(subdirObject, newSubDir);
+                }
+            }
+
+            if (currentSubDirObject.storage) {
+                for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
+                    const populateP = this.makeLocal(
+                                          key,
+                                          currentSubDir.absolutePath,
+                                          serializable,
+                                      )
+                                      .then((localValue) => currentSubDir.set(key, localValue.value, localValue.type));
+                    localValuesP.push(populateP);
+                }
+            }
+        }
+
+        await Promise.all(localValuesP);
+    }
+
+    /**
      * Submits an operation
      * @param op - op to submit
      * @internal
@@ -364,13 +408,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Registers a new value type on the directory
+     * @internal
      */
-    public registerValueType<T>(type: IValueType<T>) {
-        this.localValueMaker.registerValueType(type);
-    }
-
-    // TODO make private
     public makeDirectoryValueOpEmitter(
         key: string,
         path: string,
@@ -391,24 +430,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             this.emit("valueChanged", event, true, null);
         };
         return { emit };
-    }
-
-    /**
-     * Registers a listener on the specified events
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    /* tslint:disable:no-unnecessary-override */
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
     }
 
     protected onDisconnect() {
@@ -451,7 +472,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                 }
             }
 
-            for (const [, subdir] of currentSubDir.subdirectoriesIterator()) {
+            for (const [, subdir] of currentSubDir.subdirectories()) {
                 subdirsToRegisterFrom.push(subdir);
             }
         }
@@ -488,33 +509,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Gets the SubDirectory at the given path, creating it and any intermediate SubDirectories if needed.
-     * @param path - the path of the SubDirectory to ensure
-     */
-    private ensureSubDirectoryAtPath(path: string): SubDirectory {
-        const absolutePath = this.makeAbsolute(path);
-        if (absolutePath === posix.sep) {
-            return this.root;
-        }
-
-        const subdirs = absolutePath.substr(1).split(posix.sep);
-        let currentSubDir = this.root;
-        let currentPath = posix.sep;
-        for (const subdir of subdirs) {
-            currentPath += subdir;
-            const nextSubDir = currentSubDir.getSubDirectory(subdir);
-            if (nextSubDir) {
-                currentSubDir = nextSubDir;
-            } else {
-                currentSubDir = currentSubDir.setSubDirectory(
-                    subdir,
-                    new SubDirectory(this, this.runtime, currentPath));
-            }
-        }
-        return currentSubDir;
-    }
-
-    /**
      * The remote ISerializableValue we're receiving (either as a result of a snapshot load or an incoming set op)
      * will have the information we need to create a real object, but will not be the real object yet.  For example,
      * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
@@ -538,6 +532,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
+    // tslint:disable-next-line:max-func-body-length
     private setMessageHandlers() {
         const defaultPrepare = (op: IDirectoryOperation, local: boolean) => Promise.resolve();
         this.messageHandlers.set(
@@ -556,7 +551,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                         subdir.submitClearMessage(op);
                     }
                 },
-            });
+            },
+        );
         this.messageHandlers.set(
             "delete",
             {
@@ -570,10 +566,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                 submit: (op: IDirectoryDeleteOperation) => {
                     const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
-                        subdir.submitStorageMessage(op);
+                        subdir.submitKeyMessage(op);
                     }
                 },
-            });
+            },
+        );
         this.messageHandlers.set(
             "set",
             {
@@ -581,16 +578,57 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     return local ? Promise.resolve(null) : this.makeLocal(op.key, op.path, op.value);
                 },
                 process: (op: IDirectorySetOperation, context, local, message) => {
-                    const subdir = this.ensureSubDirectoryAtPath(op.path);
-                    subdir.processSetMessage(op, context, local, message);
+                    const subdir = this.getWorkingDirectory(op.path);
+                    if (subdir) {
+                        subdir.processSetMessage(op, context, local, message);
+                    }
                 },
                 submit: (op: IDirectorySetOperation) => {
                     const subdir = this.getWorkingDirectory(op.path);
                     if (subdir) {
-                        subdir.submitStorageMessage(op);
+                        subdir.submitKeyMessage(op);
                     }
                 },
-            });
+            },
+        );
+
+        this.messageHandlers.set(
+            "createSubDirectory",
+            {
+                prepare: defaultPrepare,
+                process: (op: IDirectoryCreateSubDirectoryOperation, context, local, message) => {
+                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    if (parentSubdir) {
+                        parentSubdir.processCreateSubDirectoryMessage(op, context, local, message);
+                    }
+                },
+                submit: (op: IDirectoryCreateSubDirectoryOperation) => {
+                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    if (parentSubdir) {
+                        parentSubdir.submitSubDirectoryMessage(op);
+                    }
+                },
+            },
+        );
+
+        this.messageHandlers.set(
+            "deleteSubDirectory",
+            {
+                prepare: defaultPrepare,
+                process: (op: IDirectoryDeleteSubDirectoryOperation, context, local, message) => {
+                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    if (parentSubdir) {
+                        parentSubdir.processDeleteSubDirectoryMessage(op, context, local, message);
+                    }
+                },
+                submit: (op: IDirectoryDeleteSubDirectoryOperation) => {
+                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    if (parentSubdir) {
+                        parentSubdir.submitSubDirectoryMessage(op);
+                    }
+                },
+            },
+        );
 
         // Ops with type "act" describe actions taken by custom value type handlers of whatever item is
         // being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
@@ -600,13 +638,15 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "act",
             {
                 prepare: async (op: IDirectoryValueTypeOperation, local, message) => {
-                    const localValue = this.getKeyAtPath<ValueTypeLocalValue>(op.key, op.path);
+                    const subdir = this.getWorkingDirectory(op.path);
+                    const localValue = subdir ? subdir.get<ValueTypeLocalValue>(op.key) : undefined;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const value = localValue.value;
                     return handler.prepare(value, op.value.value, local, message);
                 },
                 process: (op: IDirectoryValueTypeOperation, context, local, message) => {
-                    const localValue = this.getKeyAtPath<ValueTypeLocalValue>(op.key, op.path);
+                    const subdir = this.getWorkingDirectory(op.path);
+                    const localValue = subdir ? subdir.get<ValueTypeLocalValue>(op.key) : undefined;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     handler.process(previousValue, op.value.value, context, local, message);
@@ -616,7 +656,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                 submit: (op) => {
                     this.submitDirectoryMessage(op);
                 },
-            });
+            },
+        );
     }
 }
 
@@ -626,9 +667,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 export class SubDirectory implements IDirectory {
     public [Symbol.toStringTag]: string = "SubDirectory";
 
-    private readonly storage: Map<string, ILocalValue> = new Map();
-    private readonly subdirectories: Map<string, SubDirectory> = new Map();
+    private readonly _storage: Map<string, ILocalValue> = new Map();
+    private readonly _subdirectories: Map<string, SubDirectory> = new Map();
     private readonly pendingKeys: Map<string, number> = new Map();
+    private readonly pendingSubDirectories: Map<string, number> = new Map();
     private pendingClearClientSequenceNumber: number = -1;
 
     /**
@@ -647,15 +689,7 @@ export class SubDirectory implements IDirectory {
      * @param key - the key to check
      */
     public has(key: string): boolean {
-        return this.storage.has(key);
-    }
-
-    /**
-     * Checks whether the given SubDirectory exists as a child of this SubDirectory.
-     * @param subdirName - the name of the SubDirectory to check
-     */
-    public hasSubDirectory(subdirName: string): boolean {
-        return this.subdirectories.has(subdirName);
+        return this._storage.has(key);
     }
 
     /**
@@ -663,28 +697,30 @@ export class SubDirectory implements IDirectory {
      * @param key - the key to retrieve
      */
     public get<T = any>(key: string): T {
-        if (!this.storage.has(key)) {
+        if (!this._storage.has(key)) {
             return undefined;
         }
 
-        return this.storage.get(key).value as T;
+        return this._storage.get(key).value as T;
     }
 
-    /**
-     * Retrieves the given SubDirectory from within this SubDirectory.
-     * @param subdirName - the name of the SubDirectory to retrieve
-     */
-    public getSubDirectory(subdirName: string): SubDirectory {
-        return this.subdirectories.get(subdirName);
-    }
+    public async wait<T = any>(key: string): Promise<T> {
+        // Return immediately if the value already exists
+        if (this._storage.has(key)) {
+            return this._storage.get(key).value as T;
+        }
 
-    /**
-     * Retrieves the given key from the given path relative to this SubDirectory.
-     * @param key - the key to retrieve
-     * @param path - the path to the SubDirectory containing the key
-     */
-    public getKeyAtPath<T = any>(key: string, path: string): T {
-        return this.directory.getKeyAtPath<T>(key, this.makeAbsolute(path));
+        // Otherwise subscribe to changes
+        return new Promise<T>((resolve, reject) => {
+            const callback = (changed: IDirectoryValueChanged) => {
+                if (this.absolutePath === changed.path && key === changed.key) {
+                    resolve(this._storage.get(changed.key).value as T);
+                    this.directory.removeListener("valueChanged", callback);
+                }
+            };
+
+            this.directory.on("valueChanged", callback);
+        });
     }
 
     /**
@@ -723,61 +759,51 @@ export class SubDirectory implements IDirectory {
             null,
         );
 
-        const op: IDirectoryStorageOperation = {
+        const op: IDirectorySetOperation = {
             key,
             path: this.absolutePath,
             type: "set",
             value: serializableValue,
         };
-        this.submitStorageMessage(op);
+        this.submitKeyMessage(op);
         return this;
     }
 
     /**
-     * Sets the given SubDirectory with the given name as a child of this SubDirectory.
-     * Public interface should probably only expose move/copy though to avoid non-tree structures.
+     * Creates a SubDirectory with the given name as a child of this SubDirectory.
      * @param subdirName - name of the SubDirectory
-     * @param subdir - the actual SubDirectory
      */
-    public setSubDirectory(subdirName: string, subdir: SubDirectory): SubDirectory {
-        this.subdirectories.set(subdirName, subdir);
-        return this.subdirectories.get(subdirName);
-    }
+    public createSubDirectory(subdirName: string): SubDirectory {
+        if (subdirName.indexOf(posix.sep) !== -1) {
+            throw new Error(`SubDirectory names may not contain ${posix.sep}`);
+        }
 
-    /**
-     * Sets the given key to the given value at the given path.  Creates the SubDirectory and any
-     * intermediate SubDirectories if needed.
-     * @param key - the key to set
-     * @param value - the value to set the key to
-     * @param path - the path to the SubDirectory where the key should be set
-     */
-    public setKeyAtPath<T = any>(key: string, value: T, path: string, type?: string): this {
-        this.directory.setKeyAtPath(key, value, this.makeAbsolute(path), type);
-        return this;
-    }
+        this.createSubDirectoryCore(subdirName, true, null);
 
-    /**
-     * Deletes the given key from within this SubDirectory.
-     * @param key - the key to delete
-     */
-    public delete(key: string): boolean {
-        return this.deleteKey(key);
-    }
-
-    /**
-     * Deletes the given key from within this SubDirectory.
-     * @param key - the key to delete
-     */
-    public deleteKey(key: string): boolean {
-        const op: IDirectoryDeleteOperation = {
-            key,
+        const op: IDirectoryCreateSubDirectoryOperation = {
             path: this.absolutePath,
-            type: "delete",
+            subdirName,
+            type: "createSubDirectory",
         };
+        this.submitSubDirectoryMessage(op);
 
-        const successfullyRemoved = this.deleteCore(op.key, true, null);
-        this.submitStorageMessage(op);
-        return successfullyRemoved;
+        return this._subdirectories.get(subdirName);
+    }
+
+    /**
+     * Retrieves the given SubDirectory from within this SubDirectory.
+     * @param subdirName - the name of the SubDirectory to retrieve
+     */
+    public getSubDirectory(subdirName: string): SubDirectory {
+        return this._subdirectories.get(subdirName);
+    }
+
+    /**
+     * Checks whether the given SubDirectory exists as a child of this SubDirectory.
+     * @param subdirName - the name of the SubDirectory to check
+     */
+    public hasSubDirectory(subdirName: string): boolean {
+        return this._subdirectories.has(subdirName);
     }
 
     /**
@@ -785,9 +811,31 @@ export class SubDirectory implements IDirectory {
      * @param subdirName - the SubDirectory to delete
      */
     public deleteSubDirectory(subdirName: string): boolean {
-        // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
-        // Might want to consider cleaning out the structure more exhaustively though?
-        return this.subdirectories.delete(subdirName);
+        const op: IDirectoryDeleteSubDirectoryOperation = {
+            path: this.absolutePath,
+            subdirName,
+            type: "deleteSubDirectory",
+        };
+
+        const successfullyRemoved = this.deleteSubDirectoryCore(subdirName, true, null);
+        this.submitSubDirectoryMessage(op);
+        return successfullyRemoved;
+    }
+
+    /**
+     * Deletes the given key from within this SubDirectory.
+     * @param key - the key to delete
+     */
+    public delete(key: string): boolean {
+        const op: IDirectoryDeleteOperation = {
+            key,
+            path: this.absolutePath,
+            type: "delete",
+        };
+
+        const successfullyRemoved = this.deleteCore(op.key, true, null);
+        this.submitKeyMessage(op);
+        return successfullyRemoved;
     }
 
     /**
@@ -804,20 +852,11 @@ export class SubDirectory implements IDirectory {
     }
 
     /**
-     * Deletes all SubDirectories under this SubDirectory.
-     */
-    public clearSubDirectories(): void {
-        // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
-        // Might want to consider cleaning out the structure more exhaustively though?
-        this.subdirectories.clear();
-    }
-
-    /**
      * Issue a callback on each entry under this SubDirectory.
      * @param callback - callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-        this.storage.forEach((localValue, key, map) => {
+        this._storage.forEach((localValue, key, map) => {
             callback(localValue.value, key, map);
         });
     }
@@ -826,14 +865,14 @@ export class SubDirectory implements IDirectory {
      * The number of entries under this SubDirectory.
      */
     public get size(): number {
-        return this.storage.size;
+        return this._storage.size;
     }
 
     /**
      * Get an iterator over the entries under this SubDirectory.
      */
     public entries(): IterableIterator<[string, any]> {
-        const localEntriesIterator = this.storage.entries();
+        const localEntriesIterator = this._storage.entries();
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
@@ -855,21 +894,21 @@ export class SubDirectory implements IDirectory {
      * Get an iterator over the keys under this Subdirectory.
      */
     public keys(): IterableIterator<string> {
-        return this.storage.keys();
+        return this._storage.keys();
     }
 
     /**
      * Get an iterator over the SubDirectories contained within this SubDirectory.
      */
-    public subdirectoriesIterator(): IterableIterator<[string, SubDirectory]> {
-        return this.subdirectories.entries();
+    public subdirectories(): IterableIterator<[string, SubDirectory]> {
+        return this._subdirectories.entries();
     }
 
     /**
      * Get an iterator over the values under this Subdirectory.
      */
     public values(): IterableIterator<any> {
-        const localValuesIterator = this.storage.values();
+        const localValuesIterator = this._storage.values();
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
@@ -954,6 +993,36 @@ export class SubDirectory implements IDirectory {
     /**
      * @internal
      */
+    public processCreateSubDirectoryMessage(
+        op: IDirectoryCreateSubDirectoryOperation,
+        context: ILocalValue,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): void {
+        if (!this.needProcessSubDirectoryOperations(op, local, message)) {
+            return;
+        }
+        this.createSubDirectoryCore(op.subdirName, local, message);
+    }
+
+    /**
+     * @internal
+     */
+    public processDeleteSubDirectoryMessage(
+        op: IDirectoryDeleteSubDirectoryOperation,
+        context: ILocalValue,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): void {
+        if (!this.needProcessSubDirectoryOperations(op, local, message)) {
+            return;
+        }
+        this.deleteSubDirectoryCore(op.subdirName, local, message);
+    }
+
+    /**
+     * @internal
+     */
     public submitClearMessage(op: IDirectoryClearOperation): void {
         const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
         if (clientSequenceNumber !== -1) {
@@ -964,7 +1033,7 @@ export class SubDirectory implements IDirectory {
     /**
      * @internal
      */
-    public submitStorageMessage(op: IDirectoryStorageOperation): void {
+    public submitKeyMessage(op: IDirectoryKeyOperation): void {
         const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
         if (clientSequenceNumber !== -1) {
             this.pendingKeys.set(op.key, clientSequenceNumber);
@@ -974,12 +1043,22 @@ export class SubDirectory implements IDirectory {
     /**
      * @internal
      */
+    public submitSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
+        const clientSequenceNumber = this.directory.submitDirectoryMessage(op);
+        if (clientSequenceNumber !== -1) {
+            this.pendingSubDirectories.set(op.subdirName, clientSequenceNumber);
+        }
+    }
+
+    /**
+     * @internal
+     */
     public getSerializableStorage(): {[key: string]: ISerializableValue} {
-        if (this.storage.size === 0) {
+        if (this._storage.size === 0) {
             return undefined;
         }
         const serializedStorage: {[key: string]: ISerializableValue} = {};
-        for (const [key, localValue] of this.storage) {
+        for (const [key, localValue] of this._storage) {
             serializedStorage[key] = localValue.makeSerializable(
                 this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
@@ -997,7 +1076,7 @@ export class SubDirectory implements IDirectory {
     }
 
     private needProcessStorageOperations(
-        op: IDirectoryStorageOperation,
+        op: IDirectoryKeyOperation,
         local: boolean,
         message: ISequencedDocumentMessage,
     ): boolean {
@@ -1022,27 +1101,45 @@ export class SubDirectory implements IDirectory {
         return !local;
     }
 
+    private needProcessSubDirectoryOperations(
+        op: IDirectorySubDirectoryOperation,
+        local: boolean,
+        message: ISequencedDocumentMessage,
+    ): boolean {
+        if (this.pendingSubDirectories.has(op.subdirName)) {
+            if (local) {
+                const pendingSubDirectoryClientSequenceNumber = this.pendingSubDirectories.get(op.subdirName);
+                if (pendingSubDirectoryClientSequenceNumber === message.clientSequenceNumber) {
+                    this.pendingSubDirectories.delete(op.subdirName);
+                }
+            }
+            return false;
+        }
+
+        return !local;
+    }
+
     private clearExceptPendingKeys(pendingKeys: Map<string, number>) {
         // Assuming the pendingKeys is small and the map is large
         // we will get the value for the pendingKeys and clear the map
         const temp = new Map<string, ILocalValue>();
         pendingKeys.forEach((value, key, map) => {
-            temp.set(key, this.storage.get(key));
+            temp.set(key, this._storage.get(key));
         });
-        this.storage.clear();
+        this._storage.clear();
         temp.forEach((value, key, map) => {
-            this.storage.set(key, value);
+            this._storage.set(key, value);
         });
     }
 
     private clearCore(local: boolean, op: ISequencedDocumentMessage) {
-        this.storage.clear();
+        this._storage.clear();
         this.directory.emit("clear", local, op);
     }
 
     private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
-        const successfullyRemoved = this.storage.delete(key);
+        const successfullyRemoved = this._storage.delete(key);
         if (successfullyRemoved) {
             const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
             this.directory.emit("valueChanged", event, local, op);
@@ -1052,8 +1149,23 @@ export class SubDirectory implements IDirectory {
 
     private setCore(key: string, value: ILocalValue, local: boolean, op: ISequencedDocumentMessage) {
         const previousValue = this.get(key);
-        this.storage.set(key, value);
+        this._storage.set(key, value);
         const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
         this.directory.emit("valueChanged", event, local, op);
+    }
+
+    private createSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
+        if (!this._subdirectories.has(subdirName)) {
+            this._subdirectories.set(
+                subdirName,
+                new SubDirectory(this.directory, this.runtime, posix.join(this.absolutePath, subdirName)),
+            );
+        }
+    }
+
+    private deleteSubDirectoryCore(subdirName: string, local: boolean, op: ISequencedDocumentMessage) {
+        // This should make the subdirectory structure unreachable so it can be GC'd and won't appear in snapshots
+        // Might want to consider cleaning out the structure more exhaustively though?
+        return this._subdirectories.delete(subdirName);
     }
 }

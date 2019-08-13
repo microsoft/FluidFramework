@@ -83,15 +83,44 @@ export interface IValueTypeSupporter {
  */
 export interface IDirectory extends Map<string, any> {
     /**
-     * Retrieves the given key from the map
+     * Retrieves the given key from the directory
      */
     get<T = any>(key: string): T;
+
+    /**
+     * A form of get except it will only resolve the promise once the key exists in the directory.
+     */
+    wait<T = any>(key: string): Promise<T>;
 
     /**
      * Sets the key to the provided value. An optional type can be specified to initialize the key
      * to one of the registered value types.
      */
     set<T = any>(key: string, value: T, type?: string): this;
+
+    /**
+     * Creates an IDirectory child of this IDirectory.
+     * @param subdirName - Name of the new child directory to create
+     */
+    createSubDirectory(subdirName: string): IDirectory;
+
+    /**
+     * Gets an IDirectory child of this IDirectory, if it exists.
+     * @param subdirName - Name of the child directory to create
+     */
+    getSubDirectory(subdirName: string): IDirectory;
+
+    /**
+     * Checks whether this directory has a child directory with the given name.
+     * @param subdirName - Name of the child directory to check
+     */
+    hasSubDirectory(subdirName: string): boolean;
+
+    /**
+     * Deletes an IDirectory child of this IDirectory, if it exists, along with all descendent keys and directories.
+     * @param subdirName - Name of the child directory to delete
+     */
+    deleteSubDirectory(subdirName: string): boolean;
 
     /**
      * Get an IDirectory within the directory, in order to use relative paths from that location.
@@ -125,7 +154,7 @@ export interface ISharedMap extends ISharedObject, IValueTypeSupporter, Map<stri
     /**
      * A form of get except it will only resolve the promise once the key exists in the map.
      */
-    wait<T>(key: string): Promise<T>;
+    wait<T = any>(key: string): Promise<T>;
 
     /**
      * Sets the key to the provided value. An optional type can be specified to initialize the key
@@ -168,11 +197,10 @@ export interface ISerializableValue {
 }
 
 /**
- * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  The type on the op itself
- * will describe the type of ValueType, so the value on the op instead carries a more-complex object to describe
- * specificially what that ValueType is doing.  IValueTypeOperationValue is that more complex object.  The type on it
- * is the ValueType-specific operation (e.g. "increment" on Counter) and the value is whatever params the
- * ValueType needs to complete that operation.
+ * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  Since the Map/Directory doesn't
+ * know how to handle the ValueType's ops, those ops are instead passed along to the ValueType for processing.
+ * IValueTypeOperationValue is that passed-along op.  The opName on it is the ValueType-specific operation (e.g.
+ * "increment" on Counter) and the value is whatever params the ValueType needs to complete that operation.
  * Similar to ISerializableValue, it is serializable via JSON.stringify/parse but differs in that it has no
  * equivalency with an in-memory value - rather it just describes an operation to be applied to an already-in-memory
  * value.

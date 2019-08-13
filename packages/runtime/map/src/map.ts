@@ -251,9 +251,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Otherwise subscribe to changes
         return new Promise<T>((resolve, reject) => {
-            const callback = (value: { key: string }) => {
-                if (key === value.key) {
-                    resolve(this.get<T>(value.key));
+            const callback = (changed: IValueChanged) => {
+                if (key === changed.key) {
+                    resolve(this.get<T>(changed.key));
                     this.removeListener("valueChanged", callback);
                 }
             };

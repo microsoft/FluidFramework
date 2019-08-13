@@ -12,9 +12,8 @@ import { IDirectoryDataObject, SharedDirectory } from "../directory";
 
 describe("Routerlicious", () => {
     describe("Directory", () => {
-        // TODO: make these ISharedDirectory again.
-        let rootDirectory: map.SharedDirectory;
-        let testDirectory: map.SharedDirectory;
+        let rootDirectory: map.ISharedDirectory;
+        let testDirectory: map.ISharedDirectory;
         let directoryFactory: map.DirectoryFactory;
         let mapFactory: map.MapFactory;
         let runtime: MockRuntime;
@@ -23,8 +22,8 @@ describe("Routerlicious", () => {
             runtime = new MockRuntime();
             directoryFactory = new map.DirectoryFactory();
             mapFactory = new map.MapFactory();
-            rootDirectory = directoryFactory.create(runtime, "root") as SharedDirectory;
-            testDirectory = directoryFactory.create(runtime, "test") as SharedDirectory;
+            rootDirectory = directoryFactory.create(runtime, "root");
+            testDirectory = directoryFactory.create(runtime, "test");
         });
 
         it("Can get the root directory", () => {
@@ -43,58 +42,51 @@ describe("Routerlicious", () => {
         });
 
         it("Can set and get keys two levels deep", () => {
-            testDirectory.setKeyAtPath("testKey", "testValue", "/foo");
-            testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-            testDirectory.setKeyAtPath("testKey3", "testValue3", "/bar/");
-            assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), "testValue");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "foo/"), "testValue2");
-            assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), "testValue3");
+            const fooDirectory = testDirectory.createSubDirectory("foo");
+            const barDirectory = testDirectory.createSubDirectory("bar");
+            fooDirectory.set("testKey", "testValue");
+            fooDirectory.set("testKey2", "testValue2");
+            barDirectory.set("testKey3", "testValue3");
+            assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey"), "testValue");
+            assert.equal(testDirectory.getWorkingDirectory("foo/").get("testKey2"), "testValue2");
+            assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), "testValue3");
         });
 
         it("Can clear keys stored directly under the root", () => {
-            testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-            testDirectory.setKeyAtPath("testKey2", "testValue2", "/foo/");
-            testDirectory.setKeyAtPath("testKey3", "testValue3", "./bar/");
+            const fooDirectory = testDirectory.createSubDirectory("foo");
+            const barDirectory = testDirectory.createSubDirectory("bar");
+            fooDirectory.set("testKey", "testValue");
+            fooDirectory.set("testKey2", "testValue2");
+            barDirectory.set("testKey3", "testValue3");
             testDirectory.set("testKey", "testValue4");
             testDirectory.set("testKey2", "testValue5");
             testDirectory.clear();
-            assert.equal(testDirectory.getKeyAtPath("testKey", "/foo/"), "testValue");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "./foo"), "testValue2");
-            assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), "testValue3");
+            assert.equal(testDirectory.getWorkingDirectory("/foo/").get("testKey"), "testValue");
+            assert.equal(testDirectory.getWorkingDirectory("./foo").get("testKey2"), "testValue2");
+            assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), "testValue3");
             assert.equal(testDirectory.get("testKey"), undefined);
             assert.equal(testDirectory.get("testKey2"), undefined);
         });
 
         it("Can delete keys from the root", () => {
-            testDirectory.setKeyAtPath("testKey", "testValue", "/./foo");
-            testDirectory.setKeyAtPath("testKey2", "testValue2", "././foo");
-            testDirectory.setKeyAtPath("testKey3", "testValue3", "foo/../bar");
+            const fooDirectory = testDirectory.createSubDirectory("foo");
+            const barDirectory = testDirectory.createSubDirectory("bar");
+            fooDirectory.set("testKey", "testValue");
+            fooDirectory.set("testKey2", "testValue2");
+            barDirectory.set("testKey3", "testValue3");
             testDirectory.set("testKey", "testValue4");
             testDirectory.set("testKey2", "testValue5");
             testDirectory.delete("testKey2");
-            assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), "testValue");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), "testValue2");
-            assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), "testValue3");
+            assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey"), "testValue");
+            assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), "testValue2");
+            assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), "testValue3");
             assert.equal(testDirectory.get("testKey"), "testValue4");
             assert.equal(testDirectory.get("testKey2"), undefined);
         });
 
-        it("Can set keys using new AtPath approach", () => {
-            testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-            testDirectory.setKeyAtPath("testKey2", "testValue2", "/foo");
-            testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-            testDirectory.setKeyAtPath("testKey", "testValue4", "/");
-            testDirectory.setKeyAtPath("testKey2", "testValue5", "");
-            assert.equal(testDirectory.getKeyAtPath("testKey", "/foo"), "testValue");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), "testValue2");
-            assert.equal(testDirectory.getKeyAtPath("testKey3", "/bar"), "testValue3");
-            assert.equal(testDirectory.getKeyAtPath("testKey", ""), "testValue4");
-            assert.equal(testDirectory.getKeyAtPath("testKey2", "/"), "testValue5");
-        });
-
         describe(".serialize", () => {
             it("Should serialize an empty directory as a JSON object", () => {
-                const serialized = testDirectory.serialize();
+                const serialized = (testDirectory as SharedDirectory).serialize();
                 assert.equal(serialized, "{}");
             });
 
@@ -105,7 +97,7 @@ describe("Routerlicious", () => {
                 const subMap = mapFactory.create(runtime, "subMap");
                 testDirectory.set("object", subMap);
 
-                const serialized = testDirectory.serialize();
+                const serialized = (testDirectory as SharedDirectory).serialize();
                 // tslint:disable-next-line:max-line-length
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}}}`;
                 assert.equal(serialized, expected);
@@ -117,10 +109,13 @@ describe("Routerlicious", () => {
                 testDirectory.set("fifth", "sixth");
                 const subMap = mapFactory.create(runtime, "subMap");
                 testDirectory.set("object", subMap);
-                testDirectory.setKeyAtPath("deepKey1", "deepValue1", "nested");
-                testDirectory.setKeyAtPath("deepKey2", "deepValue2", "nested/nested2/nested3");
+                const nestedDirectory = testDirectory.createSubDirectory("nested");
+                nestedDirectory.set("deepKey1", "deepValue1");
+                nestedDirectory.createSubDirectory("nested2")
+                    .createSubDirectory("nested3")
+                    .set("deepKey2", "deepValue2");
 
-                const serialized = testDirectory.serialize();
+                const serialized = (testDirectory as SharedDirectory).serialize();
                 // tslint:disable-next-line:max-line-length
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
@@ -129,13 +124,13 @@ describe("Routerlicious", () => {
 
         describe(".populate", () => {
             it("Should populate the directory from an empty JSON object", async () => {
-                await testDirectory.populate(JSON.parse("{}") as IDirectoryDataObject);
+                await (testDirectory as SharedDirectory).populate(JSON.parse("{}") as IDirectoryDataObject);
                 assert.equal(testDirectory.size, 0, "Failed to initialize to empty directory storage");
                 testDirectory.set("testKey", "testValue");
                 assert.equal(testDirectory.get("testKey"), "testValue", "Failed to set testKey");
-                testDirectory.setKeyAtPath("testSubKey", "testSubValue", "testSubDir");
+                testDirectory.createSubDirectory("testSubDir").set("testSubKey", "testSubValue");
                 assert.equal(
-                    testDirectory.getKeyAtPath("testSubKey", "testSubDir"),
+                    testDirectory.getWorkingDirectory("testSubDir").get("testSubKey"),
                     "testSubValue",
                     "Failed to set testSubKey",
                 );
@@ -144,18 +139,18 @@ describe("Routerlicious", () => {
             it("Should populate the directory from a basic JSON object", async () => {
                 // tslint:disable-next-line:max-line-length
                 const jsonValue = `{"storage":{"testKey":{"type":"Plain","value":"testValue4"},"testKey2":{"type":"Plain","value":"testValue5"}},"subdirectories":{"foo":{"storage":{"testKey":{"type":"Plain","value":"testValue"},"testKey2":{"type":"Plain","value":"testValue2"}}},"bar":{"storage":{"testKey3":{"type":"Plain","value":"testValue3"}}}}}`;
-                await testDirectory.populate(JSON.parse(jsonValue) as IDirectoryDataObject);
+                await (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
                 assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
-                assert.equal(testDirectory.getKeyAtPath("testKey", "/foo"), "testValue");
-                assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), "testValue2");
-                assert.equal(testDirectory.getKeyAtPath("testKey3", "/bar"), "testValue3");
-                assert.equal(testDirectory.getKeyAtPath("testKey", ""), "testValue4");
-                assert.equal(testDirectory.getKeyAtPath("testKey2", "/"), "testValue5");
+                assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), "testValue2");
+                assert.equal(testDirectory.getWorkingDirectory("/bar").get("testKey3"), "testValue3");
+                assert.equal(testDirectory.getWorkingDirectory("").get("testKey"), "testValue4");
+                assert.equal(testDirectory.getWorkingDirectory("/").get("testKey2"), "testValue5");
                 testDirectory.set("testKey", "newValue");
                 assert.equal(testDirectory.get("testKey"), "newValue", "Failed to set testKey");
-                testDirectory.setKeyAtPath("testSubKey", "newSubValue", "testSubDir");
+                testDirectory.createSubDirectory("testSubDir").set("testSubKey", "newSubValue");
                 assert.equal(
-                    testDirectory.getKeyAtPath("testSubKey", "testSubDir"),
+                    testDirectory.getWorkingDirectory("testSubDir").get("testSubKey"),
                     "newSubValue",
                     "Failed to set testSubKey",
                 );
@@ -177,17 +172,21 @@ describe("Routerlicious", () => {
 
         describe("SubDirectory", () => {
             it("Can get a subdirectory", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "/../../foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "/././foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "../../bar");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
                 const testSubdir = testDirectory.getWorkingDirectory("/foo");
                 assert.ok(testSubdir);
             });
 
             it("Can get and set keys from a subdirectory using relative paths", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "/.././foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "/.././foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "./../bar");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
                 const testSubdir = testDirectory.getWorkingDirectory("/foo");
                 assert.equal(testSubdir.has("testKey"), true);
                 assert.equal(testSubdir.has("garbage"), false);
@@ -195,45 +194,68 @@ describe("Routerlicious", () => {
                 assert.equal(testSubdir.get("testKey2"), "testValue2");
                 assert.equal(testSubdir.get("testKey3"), undefined);
                 testSubdir.set("fromSubdir", "testValue4");
-                assert.equal(testDirectory.getKeyAtPath("fromSubdir", "foo"), "testValue4");
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("fromSubdir"), "testValue4");
+            });
+
+            describe(".wait()", () => {
+                it("Should resolve returned promise for existing keys", async () => {
+                    testDirectory.set("test", "resolved");
+                    assert.ok(testDirectory.has("test"));
+                    await testDirectory.wait("test");
+                });
+
+                it("Should resolve returned promise once unavailable key is available", async () => {
+                    assert.ok(!testDirectory.has("test"));
+
+                    const waitP = testDirectory.wait("test");
+                    testDirectory.set("test", "resolved");
+
+                    await waitP;
+                });
             });
 
             it("Can be cleared from the subdirectory", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-                testDirectory.setKeyAtPath("testKey", "testValue4", "");
-                testDirectory.setKeyAtPath("testKey2", "testValue5", "/");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                testDirectory.set("testKey", "testValue4");
+                testDirectory.set("testKey2", "testValue5");
                 const testSubdir = testDirectory.getWorkingDirectory("/foo");
                 testSubdir.clear();
-                assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), undefined);
-                assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), undefined);
-                assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), "testValue3");
-                assert.equal(testDirectory.getKeyAtPath("testKey", ".."), "testValue4");
-                assert.equal(testDirectory.getKeyAtPath("testKey2", "."), "testValue5");
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey"), undefined);
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), undefined);
+                assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), "testValue3");
+                assert.equal(testDirectory.getWorkingDirectory("..").get("testKey"), "testValue4");
+                assert.equal(testDirectory.getWorkingDirectory(".").get("testKey2"), "testValue5");
             });
 
             it("Can delete keys from the subdirectory", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
                 testDirectory.set("testKey", "testValue4");
                 testDirectory.set("testKey2", "testValue5");
                 const testSubdirFoo = testDirectory.getWorkingDirectory("/foo");
                 testSubdirFoo.delete("testKey2");
                 const testSubdirBar = testDirectory.getWorkingDirectory("/bar");
                 testSubdirBar.delete("testKey3");
-                assert.equal(testDirectory.getKeyAtPath("testKey", "foo"), "testValue");
-                assert.equal(testDirectory.getKeyAtPath("testKey2", "foo"), undefined);
-                assert.equal(testDirectory.getKeyAtPath("testKey3", "bar"), undefined);
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey"), "testValue");
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), undefined);
+                assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), undefined);
                 assert.equal(testDirectory.get("testKey"), "testValue4");
                 assert.equal(testDirectory.get("testKey2"), "testValue5");
             });
 
             it("Knows the size of the subdirectory", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
                 testDirectory.set("testKey", "testValue4");
                 testDirectory.set("testKey2", "testValue5");
                 const testSubdirFoo = testDirectory.getWorkingDirectory("/foo");
@@ -252,10 +274,13 @@ describe("Routerlicious", () => {
             });
 
             it("Can get a subdirectory from a subdirectory", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-                testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
                 const testSubdir = testDirectory.getWorkingDirectory("/bar");
                 assert.ok(testSubdir);
                 const testSubdir2 = testSubdir.getWorkingDirectory("./baz");
@@ -263,11 +288,38 @@ describe("Routerlicious", () => {
                 assert.equal(testSubdir2.get("testKey4"), "testValue4");
             });
 
+            it("Can delete a child subdirectory", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
+                barDirectory.deleteSubDirectory("baz");
+                assert.equal(barDirectory.getWorkingDirectory("baz"), undefined);
+            });
+
+            it("Can delete a child subdirectory with children", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
+                testDirectory.deleteSubDirectory("bar");
+                assert.equal(testDirectory.getWorkingDirectory("bar"), undefined);
+            });
+
             it("Can get and use a keys iterator", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-                testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
 
                 const testSubdir1 = testDirectory.getWorkingDirectory("/foo");
                 const testSubdir1Iterator = testSubdir1.keys();
@@ -292,10 +344,13 @@ describe("Routerlicious", () => {
             });
 
             it("Can get and use a values iterator", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-                testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
 
                 const testSubdir1 = testDirectory.getWorkingDirectory("/foo");
                 const testSubdir1Iterator = testSubdir1.values();
@@ -320,10 +375,13 @@ describe("Routerlicious", () => {
             });
 
             it("Can get and use an entries iterator", () => {
-                testDirectory.setKeyAtPath("testKey", "testValue", "foo");
-                testDirectory.setKeyAtPath("testKey2", "testValue2", "foo");
-                testDirectory.setKeyAtPath("testKey3", "testValue3", "bar");
-                testDirectory.setKeyAtPath("testKey4", "testValue4", "bar/baz");
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = testDirectory.createSubDirectory("bar");
+                const bazDirectory = barDirectory.createSubDirectory("baz");
+                fooDirectory.set("testKey", "testValue");
+                fooDirectory.set("testKey2", "testValue2");
+                barDirectory.set("testKey3", "testValue3");
+                bazDirectory.set("testKey4", "testValue4");
 
                 const testSubdir1 = testDirectory.getWorkingDirectory("/foo");
                 const testSubdir1Iterator = testSubdir1.entries();
