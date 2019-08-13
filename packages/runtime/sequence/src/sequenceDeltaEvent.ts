@@ -7,40 +7,32 @@ import {
     Client,
     IMergeTreeDeltaCallbackArgs,
     IMergeTreeDeltaOpArgs,
+    IMergeTreeMaintenanceCallbackArgs,
     ISegment,
     MergeTreeDeltaOperationType,
+    MergeTreeMaintenanceType,
     PropertySet,
     SortedSegmentSet,
 } from "@prague/merge-tree";
 
 /**
- * The event object returned on sequenceDelta events.
+ * Base class for SequenceDeltaEvent and SequenceMaintenanceEvent.
  *
  * The properties of this object and its sub-objects represent a point in time state
  * at the time the operation was applied. They will not take into any future modifications
  * performed to the underlying sequence and merge tree.
- *
- * For group ops, each op will get it's own event, and the group op property will be set on the op args.
- *
- * Ops may get multiple events. For instance, as insert-replace will get a remove then an insert event.
  */
-export class SequenceDeltaEvent {
-
-    public readonly isLocal: boolean;
+export class SequenceEvent {
     public readonly isEmpty: boolean;
-    public readonly deltaOperation: MergeTreeDeltaOperationType;
+    public readonly deltaOperation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
     private readonly pStart: Lazy<number>;
     private readonly pEnd: Lazy<number>;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange>>;
 
     constructor(
-        public readonly opArgs: IMergeTreeDeltaOpArgs,
-        public readonly deltaArgs: IMergeTreeDeltaCallbackArgs,
+        public readonly deltaArgs: IMergeTreeDeltaCallbackArgs | IMergeTreeMaintenanceCallbackArgs,
         private readonly mergeTreeClient: Client,
     ) {
-        this.isLocal =
-            this.deltaArgs.mergeTreeClientId ===
-            this.deltaArgs.mergeTree.collabWindow.clientId;
         this.isEmpty = deltaArgs.deltaSegments.length === 0;
         this.deltaOperation = deltaArgs.operation;
 
@@ -103,8 +95,50 @@ export class SequenceDeltaEvent {
     }
 }
 
+/**
+ * The event object returned on sequenceDelta events.
+ *
+ * The properties of this object and its sub-objects represent a point in time state
+ * at the time the operation was applied. They will not take into any future modifications
+ * performed to the underlying sequence and merge tree.
+ *
+ * For group ops, each op will get it's own event, and the group op property will be set on the op args.
+ *
+ * Ops may get multiple events. For instance, as insert-replace will get a remove then an insert event.
+ */
+export class SequenceDeltaEvent extends SequenceEvent {
+    public readonly isLocal: boolean;
+
+    constructor(
+        public readonly opArgs: IMergeTreeDeltaOpArgs,
+        deltaArgs: IMergeTreeDeltaCallbackArgs,
+        mergeTreeClient: Client,
+    ) {
+        super(deltaArgs, mergeTreeClient);
+        this.isLocal =
+            deltaArgs.mergeTreeClientId ===
+            deltaArgs.mergeTree.collabWindow.clientId;
+    }
+}
+
+/**
+ * The event object returned on maintenance events.
+ *
+ * The properties of this object and its sub-objects represent a point in time state
+ * at the time the operation was applied. They will not take into any future modifications
+ * performed to the underlying sequence and merge tree.
+ */
+export class SequenceMaintenanceEvent extends SequenceEvent {
+    constructor(
+        deltaArgs: IMergeTreeMaintenanceCallbackArgs,
+        mergeTreeClient: Client,
+    ) {
+        super(deltaArgs, mergeTreeClient);
+    }
+}
+
 export interface ISequenceDeltaRange {
-    operation: MergeTreeDeltaOperationType;
+    operation: MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
     position: number;
     segment: ISegment;
     propertyDeltas: PropertySet;

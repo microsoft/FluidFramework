@@ -8,10 +8,7 @@
  * defined as { "", undefined, null }.
  */
 export function areStringsEquivalent(left: string, right: string) {
-    const isLeftEmpty = !left;
-    const isRightEmpty = !right;
-
-    return isLeftEmpty
-        ? isRightEmpty
-        : !isRightEmpty && left === right;
+    return !left                // If left any of { null, undefined, "" } ...
+        ? !right                //   ...true if right any of  { null, undefined, "" }
+        : left === right;       //   ...otherwise only true if left === right.
 }

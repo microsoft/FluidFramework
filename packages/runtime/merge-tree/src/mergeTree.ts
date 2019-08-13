@@ -7,7 +7,13 @@ import * as assert from "assert";
 import * as Base from "./base";
 import * as Collections from "./collections";
 import { LocalReference } from "./localReference";
-import { IMergeTreeDeltaOpArgs, IMergeTreeSegmentDelta, MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
+import {
+    IMergeTreeDeltaOpArgs,
+    IMergeTreeSegmentDelta,
+    MergeTreeDeltaCallback,
+    MergeTreeMaintenanceCallback,
+    MergeTreeMaintenanceType,
+} from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
 import * as ops from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
@@ -1248,6 +1254,7 @@ export class MergeTree {
     // for diagnostics
     getLongClientId: (id: number) => string;
     mergeTreeDeltaCallback: MergeTreeDeltaCallback;
+    mergeTreeMaintenanceCallback: MergeTreeMaintenanceCallback;
 
     // TODO: make and use interface describing options
     constructor(public options?: Properties.PropertySet) {
@@ -1473,6 +1480,13 @@ export class MergeTree {
                                     console.log(`${this.getLongClientId(this.collabWindow.clientId)}: append ${prevSegment["text"]} + ${segment["text"]}; cli ${this.getLongClientId(prevSegment.clientId)} + cli ${this.getLongClientId(segment.clientId)}`);
                                 }
                                 prevSegment.append(segment);
+                                if (this.mergeTreeMaintenanceCallback) {
+                                    this.mergeTreeMaintenanceCallback({
+                                        operation: MergeTreeMaintenanceType.APPEND,
+                                        mergeTree: this,
+                                        deltaSegments: [{ segment: prevSegment }, { segment }],
+                                    });
+                                }
                                 segment.parent = undefined;
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
@@ -2337,12 +2351,21 @@ export class MergeTree {
             insertPos += newSegment.cachedLength;
         }
     }
-    private readonly splitLeafSegment = (segment: ISegment, pos: number) => {
-        const segmentChanges: ISegmentChanges = {};
-        if (pos > 0) {
-            segmentChanges.next = segment.splitAt(pos);
+    private readonly splitLeafSegment = (segment: ISegment, pos: number): ISegmentChanges => {
+        if (!(pos > 0)) {
+            return {};
         }
-        return segmentChanges;
+
+        const next = segment.splitAt(pos);
+        if (this.mergeTreeMaintenanceCallback) {
+            this.mergeTreeMaintenanceCallback({
+                operation: MergeTreeMaintenanceType.SPLIT,
+                mergeTree: this,
+                deltaSegments: [{ segment }, { segment: next }],
+            });
+        }
+
+        return { next };
     }
 
     private ensureIntervalBoundary(pos: number, refSeq: number, clientId: number) {

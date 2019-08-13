@@ -26,7 +26,7 @@ import {
     TextSegment,
 } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@prague/sequence";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
 import { emptyArray } from "../util";
 import { Tag } from "../util/tag";
@@ -410,13 +410,17 @@ export class FlowDocument extends PrimedComponent {
         return this.sharedString.getText(start, end);
     }
 
-    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.on("sequenceDelta", listener);
+    public on(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
+    public on(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
+    public on(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
+        this.maybeSharedString.on(event, listener);
         return this;
     }
 
-    public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this {
-        this.maybeSharedString.off("sequenceDelta", listener);
+    public off(event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: SharedString, ...args: any[]) => void): this;
+    public off(event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: SharedString, ...args: any[]) => void): this;
+    public off(event: "maintenance" | "sequenceDelta", listener: (event: any, target: SharedString, ...args: any[]) => void): this {
+        this.maybeSharedString.off(event, listener);
         return this;
     }
 

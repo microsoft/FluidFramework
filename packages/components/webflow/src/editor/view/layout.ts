@@ -5,10 +5,10 @@
 // tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
 import { Dom, Scheduler } from "@prague/flow-util";
-import { ISegment, LocalReference, TextSegment } from "@prague/merge-tree";
-import { SequenceDeltaEvent } from "@prague/sequence";
+import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from "@prague/merge-tree";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "@prague/sequence";
 import * as assert from "assert";
-import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../../document";
+import { FlowDocument } from "../../document";
 import { clamp, getSegmentRange } from "../../util";
 import { extractRef, updateRef } from "../../util/localref";
 import { debug, nodeToString } from "../debug";
@@ -82,6 +82,7 @@ export class Layout {
         this.rootFormatInfo = Object.freeze({ formatter: documentFormatter, state: { root } });
 
         doc.on("sequenceDelta", this.onChange);
+        doc.on("maintenance", this.onChange);
 
         debug("begin: initial sync");
         this.sync(0, doc.length);
@@ -116,25 +117,6 @@ export class Layout {
             const oldEnd = end;
             start = clamp(0, start, length);
             end = clamp(start, end, length);
-
-            {
-                if (start > 0) {
-                    const position = start - 1;
-                    const { segment, offset } = doc.getSegmentAndOffset(position);
-                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
-                        start = getSegmentRange(position, segment, offset).start;
-                    }
-                }
-            }
-
-            {
-                if (end < this.doc.length - 1) {
-                    const { segment, offset } = doc.getSegmentAndOffset(end);
-                    if (getDocSegmentKind(segment) === DocSegmentKind.text) {
-                        end = getSegmentRange(end, segment, offset).end;
-                    }
-                }
-            }
 
             let checkpoint = this.initialCheckpoint;
 
@@ -357,21 +339,30 @@ export class Layout {
         }
     }
 
-    private readonly onChange = (e: SequenceDeltaEvent) => {
+    private removeSegment(segment: ISegment) {
+        const emitted = this.segmentToEmitted.get(segment);
+        if (emitted) {
+            for (const node of emitted) {
+                this.removeNode(node);
+            }
+            this.segmentToEmitted.delete(segment);
+        }
+
+        this.segmentToCheckpoint.delete(segment);
+        this.segmentToTextMap.delete(segment);
+    }
+
+    private readonly onChange = (e: SequenceDeltaEvent | SequenceMaintenanceEvent) => {
         // If the segment was removed, promptly remove any DOM nodes it emitted.
         for (const { segment } of e.ranges) {
             if (segment.removedSeq) {
-                const emitted = this.segmentToEmitted.get(segment);
-                if (emitted) {
-                    for (const node of emitted) {
-                        this.removeNode(node);
-                    }
-                    this.segmentToEmitted.delete(segment);
-                }
-
-                this.segmentToCheckpoint.delete(segment);
-                this.segmentToTextMap.delete(segment);
+                this.removeSegment(segment);
             }
+        }
+
+        // If segments were appended, promptly remove the right hand side.
+        if (e.deltaOperation === MergeTreeMaintenanceType.APPEND) {
+            this.removeSegment(e.deltaArgs.deltaSegments[1].segment);
         }
 
         this.invalidate(e.start, e.end);

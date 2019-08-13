@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import * as fs from "fs";
 import { IMergeBlock, IMergeTreeDeltaOpArgs, Marker, MergeTree, TextSegment} from "..";
 import * as ops from "../ops";
@@ -68,4 +69,29 @@ export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {
         }
     }
     return true;
+}
+
+/**
+ * Returns an object that tallies each delta and maintenance operation observed
+ * for the given 'mergeTree'.
+ */
+export function countOperations(mergeTree: MergeTree) {
+    const counts = {};
+
+    assert.strictEqual(mergeTree.mergeTreeDeltaCallback, undefined);
+    assert.strictEqual(mergeTree.mergeTreeMaintenanceCallback, undefined);
+
+    const fn = (deltaArgs) => {
+        // tslint:disable:no-unsafe-any
+        const previous = counts[deltaArgs.operation] as undefined | number;
+        counts[deltaArgs.operation] = (previous === undefined
+            ? 1
+            : previous + 1);
+        // tslint:enable:no-unsafe-any
+    };
+
+    mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => { fn(deltaArgs); };
+    mergeTree.mergeTreeMaintenanceCallback = fn;
+
+    return counts;
 }

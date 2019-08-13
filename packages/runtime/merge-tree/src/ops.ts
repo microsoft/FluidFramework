@@ -31,11 +31,12 @@ export interface IComponentDef {
     url: string;
 }
 
+// Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 export const enum MergeTreeDeltaType {
-    INSERT,
-    REMOVE,
-    ANNOTATE,
-    GROUP,
+    INSERT      = 0,
+    REMOVE      = 1,
+    ANNOTATE    = 2,
+    GROUP       = 3,
 }
 
 export interface IMergeTreeDelta {
@@ -59,7 +60,7 @@ export interface IRelativePosition {
      */
     before?: boolean;
     /**
-     * A positive number \>= 1.  If before is false, offset is added to the position.
+     * A positive number >= 1.  If before is false, offset is added to the position.
      * If before is true, offset is subtracted from the position.
      */
     offset?: number;

@@ -49,3 +49,18 @@ export interface IMergeTreeClientSequenceArgs {
 
 export type MergeTreeDeltaCallback =
     (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
+
+// Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
+export const enum MergeTreeMaintenanceType {
+    APPEND  = -1,
+    SPLIT   = -2,
+}
+
+export interface IMergeTreeMaintenanceCallbackArgs {
+    readonly mergeTree: MergeTree;
+    readonly operation: MergeTreeMaintenanceType;
+    readonly deltaSegments: IMergeTreeSegmentDelta[];
+}
+
+export type MergeTreeMaintenanceCallback =
+    (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs) => void;

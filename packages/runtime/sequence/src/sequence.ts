@@ -30,7 +30,7 @@ import {
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
-import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 
 const valueTypes: Array<IValueType<any>> = [
     new SharedStringIntervalCollectionValueType(),
@@ -81,6 +81,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                         };
                     }
                     break;
+                case "maintenance":
+                    if (!this.client.mergeTreeMaintenanceCallback) {
+                        this.client.mergeTreeMaintenanceCallback = (args) => {
+                            this.emit("maintenance", new SequenceMaintenanceEvent(args, this.client), this);
+                        };
+                    }
+                    break;
                 default:
             }
         });
@@ -89,6 +96,11 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                 case "sequenceDelta":
                     if (super.listenerCount(event) === 0) {
                         this.client.mergeTreeDeltaCallback = undefined;
+                    }
+                    break;
+                case "maintenance":
+                    if (super.listenerCount(event) === 0) {
+                        this.client.mergeTreeMaintenanceCallback = undefined;
                     }
                     break;
                 default:

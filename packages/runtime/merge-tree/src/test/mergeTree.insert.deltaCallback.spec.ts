@@ -8,12 +8,13 @@ import {
     LocalClientId,
     MergeTree,
     MergeTreeDeltaType,
+    MergeTreeMaintenanceType,
     ReferenceType,
     TextSegment,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "..";
-import { insertMarker, insertText } from "./testUtils";
+import { countOperations, insertMarker, insertText } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -82,12 +83,7 @@ describe("MergeTree", () => {
         });
 
         it("Insert middle text", () => {
-            let eventCalled: number = 0;
-
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             insertText(
                 mergeTree,
@@ -99,18 +95,17 @@ describe("MergeTree", () => {
                 undefined,
                 {op: {type: MergeTreeDeltaType.INSERT}});
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.INSERT]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 1,
+            });
         });
 
         it("Insert text remote", () => {
-            let eventCalled: number = 0;
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             insertText(
                 mergeTree,
@@ -122,17 +117,14 @@ describe("MergeTree", () => {
                 undefined,
                 {op: {type: MergeTreeDeltaType.INSERT}});
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.INSERT]: 1,
+            });
         });
     });
     describe("insertMarker", () => {
         it("Insert marker", () => {
-            let eventCalled: number = 0;
-
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             insertMarker(
                 mergeTree,
@@ -144,7 +136,10 @@ describe("MergeTree", () => {
                 undefined,
                 {op: {type: MergeTreeDeltaType.INSERT}});
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.INSERT]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 1,
+            });
         });
     });
 });

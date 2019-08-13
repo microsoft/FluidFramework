@@ -13,9 +13,7 @@ import { areStringsEquivalent } from "../src/string";
 function test(left: string, right: string) {
     const isLeftEmpty = left === "" || left === null || left === undefined;
     const isRightEmpty = right === "" || right === null || right === undefined;
-    const expected = isLeftEmpty
-        ? isRightEmpty
-        : left === right;
+    const expected = (isLeftEmpty && isRightEmpty) || left === right;
 
     const leftAsString = typeof left === "string" ? `'${left}'` : `${left}`;
     const rightAsString = typeof right === "string" ? `'${right}'` : `${right}`;

@@ -8,7 +8,7 @@ import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definit
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
-import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
+import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs, MergeTreeMaintenanceCallback } from "./index";
 import { LocalReference } from "./localReference";
 import {
     ClientIds,
@@ -52,7 +52,15 @@ export class Client {
     public redoSegments: IUndoInfo[];
 
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
-    set mergeTreeDeltaCallback(mtdcb: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = mtdcb; }
+    set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = callback; }
+
+    get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback {
+        return this.mergeTree.mergeTreeMaintenanceCallback;
+    }
+
+    set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback) {
+        this.mergeTree.mergeTreeMaintenanceCallback = callback;
+    }
 
     private readonly clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     private readonly shortClientIdMap: string[] = [];

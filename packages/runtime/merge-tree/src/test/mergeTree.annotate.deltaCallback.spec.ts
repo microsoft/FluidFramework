@@ -6,11 +6,13 @@
 import * as assert from "assert";
 import {
     MergeTree,
+    MergeTreeDeltaType,
+    MergeTreeMaintenanceType,
     UnassignedSequenceNumber,
 } from "..";
 import { LocalClientId, UniversalSequenceNumber } from "../mergeTree";
 import { TextSegment } from "../textSegment";
-import { insertText } from "./testUtils";
+import { countOperations, insertText } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -36,12 +38,7 @@ describe("MergeTree", () => {
 
     describe("annotateRange", () => {
         it("Event on annotation", () => {
-            let eventCalled: number = 0;
-
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.annotateRange(
                 4,
@@ -55,12 +52,13 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.ANNOTATE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
 
         it("Annotate over local insertion", () => {
-            let eventCalled: number = 0;
-
             insertText(
                 mergeTree,
                 4,
@@ -71,10 +69,7 @@ describe("MergeTree", () => {
                 undefined,
                 undefined);
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.annotateRange(
                 3,
@@ -88,11 +83,13 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.ANNOTATE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
 
         it("Annotate over remote insertion", () => {
-            let eventCalled: number = 0;
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
@@ -106,10 +103,7 @@ describe("MergeTree", () => {
                 undefined,
                 undefined);
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.annotateRange(
                 3,
@@ -123,11 +117,13 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.ANNOTATE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
 
         it("Annotate over remote deletion", () => {
-            let eventCalled: number = 0;
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
@@ -140,10 +136,7 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.annotateRange(
                 3,
@@ -157,7 +150,10 @@ describe("MergeTree", () => {
                 UnassignedSequenceNumber,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.ANNOTATE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
     });
 });

@@ -7,10 +7,13 @@ import * as assert from "assert";
 import {
     LocalClientId,
     MergeTree,
+    MergeTreeDeltaType,
+    MergeTreeMaintenanceType,
     TextSegment,
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "..";
+import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {
     let mergeTree: MergeTree;
@@ -35,12 +38,7 @@ describe("MergeTree", () => {
 
     describe("markRangeRemoved", () => {
         it("Event on Removal", () => {
-            let eventCalled: number = 0;
-
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.markRangeRemoved(
                 4,
@@ -51,12 +49,13 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
 
         it("Remote Before Local", () => {
-            let eventCalled: number = 0;
-
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
@@ -69,10 +68,7 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.markRangeRemoved(
                 3,
@@ -83,11 +79,13 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
 
         it("Local Before Remote", () => {
-            let eventCalled: number = 0;
             const remoteClientId: number = 35;
             let remoteSequenceNumber = currentSequenceNumber;
 
@@ -100,10 +98,7 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            mergeTree.mergeTreeDeltaCallback =
-                (opArgs, deltaArgs) => {
-                    eventCalled++;
-                };
+            const count = countOperations(mergeTree);
 
             mergeTree.markRangeRemoved(
                 3,
@@ -114,7 +109,10 @@ describe("MergeTree", () => {
                 false,
                 undefined);
 
-            assert.equal(eventCalled, 1);
+            assert.deepStrictEqual(count, {
+                [MergeTreeDeltaType.REMOVE]: 1,
+                [MergeTreeMaintenanceType.SPLIT]: 2,
+            });
         });
     });
 });
