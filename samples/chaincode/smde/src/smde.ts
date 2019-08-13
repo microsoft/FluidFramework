@@ -10,6 +10,7 @@ import {
     IResponse,
     IComponentHTMLOptions,
     IComponentHTMLVisual,
+    IComponentHandle,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
@@ -65,12 +66,12 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                 ReferenceType.Tile,
                 { [reservedTileLabelsKey]: ["pg"] });
 
-            this.root.set("text", text);
+            this.root.set("text", text.handle);
             this.root.register();
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
-        this.text = this.root.get("text");
+        this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -156,15 +157,18 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
 
                 const text = changeObj.text as string[];
                 text.forEach((value, index) => {
-                    if (value) {
-                        this.text.insertText(from, value);
-                    }
-
+                    // We insert the paragraph marker first to signal to the receive side the existance of the new
+                    // line
                     if (index !== 0) {
                         this.text.insertMarker(
-                            from + value.length,
+                            from,
                             ReferenceType.Tile,
                             { [reservedTileLabelsKey]: ["pg"] });
+                    }
+
+                    // And then send in the text for the line
+                    if (value) {
+                        this.text.insertText(from, value);
                     }
 
                     from += value.length + 1;
