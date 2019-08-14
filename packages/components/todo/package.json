@@ -59,7 +59,7 @@
     "react-simple-contenteditable": "0.0.5"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
     "@prague/prague-dev-server": "~3.8.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
