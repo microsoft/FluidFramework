@@ -591,9 +591,15 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         // kick off loading in parallel to loading "body" chunk.
         const rawMessages = services.read("tardis");
 
-        const chunk1 = this.loadHeader(minimumSequenceNumber, header, shared, originBranch);
+        // override branch by default which is derived from document id,
+        // as document id isn't stable for spo
+        // which leads to branch id being in correct
+        const branch = this.runtime.options && this.runtime.options.enableBranching
+            ? originBranch : this.runtime.documentId;
+
+        const chunk1 = this.loadHeader(minimumSequenceNumber, header, shared, branch);
         await this.loadBody(chunk1, services);
-        return this.loadTardis(rawMessages, originBranch);
+        return this.loadTardis(rawMessages, branch);
     }
 
     private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
