@@ -94,7 +94,9 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     private setupEditor() {
         this.smde = new SimpleMDE({ element: this.textArea });
 
-        this.smde.value(this.text.getText());
+        const { parallelText } = this.text.getTextAndMarkers("pg");
+        const text = parallelText.join("\n");
+        this.smde.value(text);
 
         let localEdit = false;
 
