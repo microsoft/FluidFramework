@@ -1,0 +1,27 @@
+{
+  "name": "fluid-build",
+  "version": "0.0.1",
+  "description": "Fluid Build tool",
+  "private": true,
+  "main": "dist/fluidBuild.js",
+  "bin": {
+    "fluid-build": "bin/fluid-build"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/async": "^2.4.1",
+    "@types/glob": "^7.1.1",
+    "@types/node": "^11.9.4",
+    "typescript": "^3.3.3"
+  },
+  "dependencies": {
+    "async": "^2.6.2",
+    "chalk": "^2.4.2",
+    "glob": "^7.1.3"
+  }
+}
