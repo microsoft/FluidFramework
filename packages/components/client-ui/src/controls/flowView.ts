@@ -2989,7 +2989,6 @@ interface IWordRange {
 }
 
 function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
-    const mergeTree = sharedString.client.mergeTree;
     let wordStart = -1;
     let wordEnd = -1;
 
@@ -3019,38 +3018,6 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
         return { wordStart: segWordStart, wordEnd: segWordEnd } as IWordRange;
     }
 
-    const expandWordBackward = (segment: MergeTree.ISegment) => {
-        if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.is(segment)) {
-                const innerOffset = segment.text.length - 1;
-                const maxWord = maximalWord(segment, innerOffset);
-                if (maxWord.wordStart < maxWord.wordEnd) {
-                    wordStart -= (maxWord.wordEnd - maxWord.wordStart);
-                    return (maxWord.wordStart === 0);
-                } else {
-                    return false;
-                }
-            }
-            return false;
-        }
-        return true;
-    };
-
-    const expandWordForward = (segment: MergeTree.ISegment) => {
-        if (mergeTree.localNetLength(segment)) {
-            if (MergeTree.TextSegment.is(segment)) {
-                const innerOffset = 0;
-                const maxWord = maximalWord(segment, innerOffset);
-                if (maxWord.wordEnd > innerOffset) {
-                    wordEnd += (maxWord.wordEnd - innerOffset);
-                }
-                return (maxWord.wordEnd === segment.text.length);
-            }
-            return false;
-        }
-        return true;
-    };
-
     const segoff = sharedString.getContainingSegment(pos);
     if (segoff.segment && (MergeTree.TextSegment.is(segoff.segment))) {
         const maxWord = maximalWord(segoff.segment, segoff.offset);
@@ -3059,10 +3026,28 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
             wordStart = segStartPos + maxWord.wordStart;
             wordEnd = segStartPos + maxWord.wordEnd;
             if (maxWord.wordStart === 0) {
-                mergeTree.leftExcursion(segoff.segment, expandWordBackward);
+                // expand word backward
+                let leftPos = segStartPos;
+                while (leftPos > 0 && leftPos === wordStart) {
+                    const leftSeg = sharedString.getContainingSegment(leftPos - 1).segment;
+                    if (MergeTree.TextSegment.is(leftSeg)) {
+                        const mword = maximalWord(leftSeg, leftSeg.cachedLength - 1);
+                        wordStart -= mword.wordEnd - mword.wordStart;
+                    }
+                    leftPos -= leftSeg.cachedLength;
+                }
             }
             if (maxWord.wordEnd === segoff.segment.text.length) {
-                mergeTree.rightExcursion(segoff.segment, expandWordForward);
+                // expand word forward
+                let rightPos = segStartPos + segoff.segment.cachedLength;
+                while (rightPos < sharedString.getLength() && rightPos === wordEnd) {
+                    const rightSeg = sharedString.getContainingSegment(rightPos).segment;
+                    if (MergeTree.TextSegment.is(rightSeg)) {
+                        const mword = maximalWord(rightSeg, 0);
+                        wordEnd += mword.wordEnd;
+                    }
+                    rightPos += rightSeg.cachedLength;
+                }
             }
         }
         if (wordStart >= 0) {
