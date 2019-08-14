@@ -83,20 +83,6 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
         } else {
             this.root = await this.runtime.getChannel("root") as ISharedMap;
         }
-
-        // Example of using built-in services.
-        const response = await this.runtime.request({ url: "/_scheduler" });
-        const rawComponent = response.value as IComponent;
-
-        const scheduler = rawComponent.IAgentScheduler;
-        console.log(scheduler.pickedTasks());
-        if (scheduler.leader) {
-            console.log(`I am leader`);
-        } else {
-            scheduler.on("leader", () => {
-                console.log(`Newly elected leader`);
-            });
-        }
     }
 }
 
