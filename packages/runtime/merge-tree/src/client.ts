@@ -51,6 +51,7 @@ export class Client {
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
 
+    get pendingSegmentCount(): number { return this.mergeTree.pendingSegments.count(); }
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
     set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = callback; }
 
