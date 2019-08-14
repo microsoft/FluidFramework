@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-client",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Isomorphic services for communicating with Prague",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,7 +20,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "concurrently": "^4.1.0",
@@ -29,9 +29,9 @@
     "typescript": "~3.4.5"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.8.0",
-    "@prague/protocol-definitions": "^0.8.0",
-    "@prague/utils": "^0.8.0",
+    "@prague/gitresources": "^0.9.0",
+    "@prague/protocol-definitions": "^0.9.0",
+    "@prague/utils": "^0.9.0",
     "@types/node": "^10.12.12",
     "axios": "^0.18.0",
     "debug": "^4.1.1"

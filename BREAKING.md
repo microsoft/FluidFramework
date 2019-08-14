@@ -1,11 +1,5 @@
 # 0.9 Breaking Changes
 
-- [Deprecate @prague/app-datastore](#deprecate-pragueapp-datastore)
-
-## Deprecate @prague/app-datastore
-
-The package @prague/app-datastore is deprecated. Please switch to use tiny-web-host
-
 # 0.8 Breaking Changes
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)
@@ -19,6 +13,7 @@ The package @prague/app-datastore is deprecated. Please switch to use tiny-web-h
 - [Query and List Removed From IComponent](#query-and-list-removed-from-icomponent)
 - [Value type op change](#value-type-op-change)
 - [`SharedMap.values()` and `.entries()` unpack local values](#sharedmapvalues-and-entries-unpack-local-values)
+- [Deprecate @prague/app-datastore](#deprecate-pragueapp-datastore)
 
 ## `IComponent` not to be derived from
 
@@ -205,6 +200,10 @@ Previously, `SharedMap.values()` and `SharedMap.entries()` would iterate over `I
 contained values.  To retrieve the contained values you would have then extracted the ILocalViewElement.localValue.
 In 0.8 these methods now iterate over the contained values directly, so calls to get the .localValue should be
 removed.
+
+## Deprecate @prague/app-datastore
+
+The package @prague/app-datastore is deprecated. Please switch to use tiny-web-host
 
 # 0.7 Breaking Changes
 

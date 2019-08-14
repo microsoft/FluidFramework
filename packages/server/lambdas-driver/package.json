@@ -1,6 +1,6 @@
 {
   "name": "@prague/lambdas-driver",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Driver components for the prague service lambdas.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,11 +38,11 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/gitresources": "^0.8.0",
-    "@prague/services": "^0.8.0",
-    "@prague/services-core": "^0.8.0",
-    "@prague/services-utils": "^0.8.0",
-    "@prague/utils": "^0.8.0",
+    "@prague/gitresources": "^0.9.0",
+    "@prague/services": "^0.9.0",
+    "@prague/services-core": "^0.9.0",
+    "@prague/services-utils": "^0.9.0",
+    "@prague/utils": "^0.9.0",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
@@ -50,8 +50,8 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.8.0",
-    "@prague/test-utils": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
+    "@prague/test-utils": "^0.9.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

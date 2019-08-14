@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/externalcomponentloader",
   "description": "Loads external components based on their url",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
     "@prague/prague-dev-server": "~3.8.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
@@ -53,18 +53,18 @@
     }
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.8.0",
-    "@prague/component-core-interfaces": "^0.8.0",
-    "@prague/component-runtime": "^0.8.0",
-    "@prague/container-definitions": "^0.8.0",
-    "@prague/container-runtime": "^0.8.0",
-    "@prague/loader-web": "^0.8.0",
-    "@prague/map": "^0.8.0",
-    "@prague/merge-tree": "^0.8.0",
-    "@prague/runtime-definitions": "^0.8.0",
-    "@prague/sequence": "^0.8.0",
-    "@prague/shared-object-common": "^0.8.0",
-    "@prague/utils": "^0.8.0",
+    "@prague/aqueduct": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/component-runtime": "^0.9.0",
+    "@prague/container-definitions": "^0.9.0",
+    "@prague/container-runtime": "^0.9.0",
+    "@prague/loader-web": "^0.9.0",
+    "@prague/map": "^0.9.0",
+    "@prague/merge-tree": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/sequence": "^0.9.0",
+    "@prague/shared-object-common": "^0.9.0",
+    "@prague/utils": "^0.9.0",
     "uuid": "^3.3.2"
   },
   "license": "MIT"

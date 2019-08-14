@@ -1,32 +1,31 @@
 {
   "name": "@prague/react-web-host",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/tiny-web-host": "^0.8.0",
+    "@prague/tiny-web-host": "^0.9.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
-
   },
   "devDependencies": {
-    "@types/react": "^16.7.7",
-    "ts-loader": "^4.5.0",
-    "webpack-dev-server": "^3.1.14",
-    "webpack-cli": "^3.1.2",
-    "webpack": "^4.8.2",
-    "webpack-merge": "^4.1.2",
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
     "@types/isomorphic-fetch": "^0.0.35",
     "@types/node": "^10.12.12",
+    "@types/react": "^16.7.7",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^0.2.4",
+    "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.14",
+    "webpack-merge": "^4.1.2"
   },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",

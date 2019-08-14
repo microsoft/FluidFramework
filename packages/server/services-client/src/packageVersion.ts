@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@prague/services-client";
-export const pkgVersion = "0.8.0";
+export const pkgVersion = "0.9.0";

@@ -1,6 +1,6 @@
 {
   "name": "@prague/map",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Distributed map",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -42,17 +42,17 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.8.0",
-    "@prague/protocol-definitions": "^0.8.0",
-    "@prague/runtime-definitions": "^0.8.0",
-    "@prague/shared-object-common": "^0.8.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/protocol-definitions": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/shared-object-common": "^0.9.0",
     "debug": "^4.1.1",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.8.0",
-    "@prague/runtime-test-utils": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
+    "@prague/runtime-test-utils": "^0.9.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

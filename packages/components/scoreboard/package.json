@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/scoreboard",
   "description": "Scoreboard component",
-  "version": "0.0.4",
+  "version": "0.9.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "license": "MIT",
@@ -26,18 +26,18 @@
     }
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.8.0",
-    "@prague/component-core-interfaces": "^0.8.0",
-    "@prague/component-runtime": "^0.8.0",
-    "@prague/map": "^0.8.0",
-    "@prague/runtime-definitions": "^0.8.0",
-    "@prague/shared-object-common": "^0.8.0",
+    "@prague/aqueduct": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/component-runtime": "^0.9.0",
+    "@prague/map": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/shared-object-common": "^0.9.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
-    "@prague/build-common": "^0.8.0",
+    "@prague/build-common": "^0.9.0",
     "@prague/prague-dev-server": "~3.8.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.12.12",
