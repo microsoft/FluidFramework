@@ -4,15 +4,20 @@
  */
 
 import {
+    IRequest,
+    IResponse,
+ } from "@prague/component-core-interfaces";
+import {
     ISharedMap,
     SharedMap,
 } from "@prague/map";
+import { ITaskManager } from "@prague/runtime-definitions";
 
 import { SharedComponent } from "./sharedComponent";
 
 /**
- * PrimedComponent is a base component that is primed with a root map. It
- * ensures the root map is created and ready before you can access it.
+ * PrimedComponent is a base component that is primed with a root map and task manager. It
+ * ensures that both are created and ready before you can access it.
  *
  * Having a single root map allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
@@ -20,7 +25,17 @@ import { SharedComponent } from "./sharedComponent";
  */
 export abstract class PrimedComponent extends SharedComponent {
     private internalRoot: ISharedMap | undefined;
+    private internalTaskManager: ITaskManager | undefined;
     private readonly rootMapId = "root";
+
+    public async request(request: IRequest): Promise<IResponse> {
+        const url = request.url;
+        if (this.internalTaskManager && url && url.startsWith(this.taskManager.url)) {
+            return this.internalTaskManager.request(request);
+        } else {
+            return super.request(request);
+        }
+    }
 
     /**
      * The root map will either be ready or will return an error. If an error is thrown
@@ -31,20 +46,30 @@ export abstract class PrimedComponent extends SharedComponent {
      */
     public get root(): ISharedMap {
         if (!this.internalRoot) {
-            throw new Error(
-                `root must be initialized before being accessed.
-                Ensure you are calling await super.componentInitializingFirstTime()
-                and/or await super.componentInitializingFromExisting() if you are
-                overriding either.`);
+            throw new Error(this.getUninitializedErrorString(`root`));
         }
 
         return this.internalRoot;
     }
 
     /**
+     * Returns the built-in task manager responsible for scheduling tasks.
+     */
+    public get taskManager(): ITaskManager {
+        if (!this.internalTaskManager) {
+            throw new Error(this.getUninitializedErrorString(`taskManager`));
+        }
+
+        return this.internalTaskManager;
+    }
+
+    /**
      * Calls existing, and opened().  Caller is responsible for ensuring this is only invoked once.
      */
     protected async initializeInternal(props?: any): Promise<void> {
+        // Initialize task manager.
+        this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
+
         if (this.canForge) {
             // Create a root map and register it before calling componentInitializingFirstTime
             this.internalRoot = SharedMap.create(this.runtime, this.rootMapId);
@@ -58,5 +83,12 @@ export abstract class PrimedComponent extends SharedComponent {
 
         // This always gets called at the end of initialize on FirstTime or from existing.
         await this.componentHasInitialized();
+    }
+
+    private getUninitializedErrorString(item: string) {
+        return `${item} must be initialized before being accessed.
+            Ensure you are calling await super.componentInitializingFirstTime()
+            and/or await super.componentInitializingFromExisting() if you are
+            overriding either.`;
     }
 }

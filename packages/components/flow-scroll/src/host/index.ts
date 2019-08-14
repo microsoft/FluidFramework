@@ -11,9 +11,7 @@ import {
     IComponent,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual,
-    IRequest,
-    IResponse } from "@prague/component-core-interfaces";
+    IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { MapFactory, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
@@ -29,24 +27,12 @@ const insightsMapId = "insights";
 export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow-host";
 
-    private taskManager: ITaskManager;
     private intelViewer: FlowIntelViewer;
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
     }
 
     public get IComponentHTMLVisual() { return this; }
-
-    public async request(request: IRequest): Promise<IResponse> {
-        const url = request.url;
-
-        // Note: Aqueduct requests '/' before 'this.taskManager' is initialized.
-        if (url && url !== "/" && url.startsWith(this.taskManager.url)) {
-            return this.taskManager.request(request);
-        } else {
-            return super.request(request);
-        }
-    }
 
     public addView(scope?: IComponent): IComponentHTMLView {
         return new HostView(
@@ -81,9 +67,6 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     protected async componentHasInitialized() {
-        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
-        const component = schedulerResponse.value as IComponent;
-        this.taskManager = component.ITaskManager;
 
         const insights = await this.root.wait(insightsMapId) as SharedMap;
         this.intelViewer = new FlowIntelViewer(insights);
