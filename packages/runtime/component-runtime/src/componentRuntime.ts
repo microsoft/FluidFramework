@@ -132,6 +132,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private isLocal: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
+    private boundhandles: Set<IComponentHandle>;
 
     private constructor(
         private readonly componentContext: IComponentContext,
@@ -270,11 +271,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         if (!this.isLocal) {
             this.attachChannel(channel);
             return;
-        }
+        } else {
+            this.bind(channel.handle);
 
-        // If our Component is local then add the channel to the queue
-        if (!this.attachChannelQueue.has(channel.id)) {
-            this.attachChannelQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
+            // If our Component is local then add the channel to the queue
+            if (!this.attachChannelQueue.has(channel.id)) {
+                this.attachChannelQueue.set(channel.id, this.contexts.get(channel.id) as LocalChannelContext);
+            }
         }
     }
 
@@ -287,6 +290,13 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     public attach() {
         if (!this.isLocal) {
             return;
+        }
+
+        if (this.boundhandles) {
+            this.boundhandles.forEach((handle) => {
+                handle.attach();
+            });
+            this.boundhandles = undefined;
         }
 
         // Attach the runtime to the container via this callback
@@ -305,7 +315,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public bind(handle: IComponentHandle): void {
-        return;
+        if (!this.boundhandles) {
+            this.boundhandles = new Set<IComponentHandle>();
+        }
+
+        this.boundhandles.add(handle);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {
@@ -537,6 +551,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      */
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
+
+        channel.handle.attach();
 
         // Get the object snapshot and include it in the initial attach
         const snapshot = channel.snapshot();

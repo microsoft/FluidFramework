@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
-import { IComponentLoadable } from "@prague/component-core-interfaces";
+import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
 import { SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
@@ -66,7 +66,7 @@ class TestRootComponent extends PrimedComponent {
      */
     public createType<T extends ISharedObject>(id: string, type: string): T {
         const instance = this.runtime.createChannel(id, type) as T;
-        this.root.set(id, instance);
+        this.root.set(id, instance.handle);
         return instance;
     }
 
@@ -75,7 +75,8 @@ class TestRootComponent extends PrimedComponent {
      * @param id - ID of shared object
      */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
-        return this.root.wait(id) as Promise<T>;
+        const handle = await this.root.wait<IComponentHandle>(id);
+        return handle.get<T>();
     }
 
     /**

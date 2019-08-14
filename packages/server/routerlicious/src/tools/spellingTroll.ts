@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as commander from "commander";
 import { Marker, TextSegment } from "@prague/merge-tree";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 
 function clock() {
     return process.hrtime();
@@ -289,9 +290,9 @@ async function initSpell(id: string) {
         { blockUpdateMarkers: true, localMinSeq: 0, encrypted: undefined });
     const root = document.getRoot();
     if (!root.has("text")) {
-        root.set("text", document.createString());
+        root.set("text", document.createString().handle);
     }
-    const sharedString = root.get("text") as Sequence.SharedString;
+    const sharedString = await root.get<IComponentHandle>("text").get<Sequence.SharedString>();
     console.log("partial load fired");
     sharedString.loaded.then(() => {
         theSpeller = new Speller(sharedString);

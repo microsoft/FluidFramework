@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
@@ -36,8 +37,10 @@ export class TranslationWork extends BaseWork implements IWork {
         }
 
         const rootMap = this.document.getRoot();
-        const sharedString = rootMap.get("text") as Sequence.SharedString;
-        const insightsMap = rootMap.get("insights") as ISharedMap;
+        const [sharedString, insightsMap] = await Promise.all([
+            rootMap.get<IComponentHandle>("text").get<Sequence.SharedString>(),
+            rootMap.get<IComponentHandle>("insights").get<ISharedMap>(),
+        ]);
 
         if (sharedString && insightsMap) {
             await insightsMap.wait(sharedString.id);

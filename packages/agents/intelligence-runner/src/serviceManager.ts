@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";
@@ -33,7 +34,9 @@ export class IntelligentServicesManager {
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
                     async () => {
-                        const output = this.documentInsights.get<ISharedMap>(this.sharedString.id);
+                        const output = await this.documentInsights
+                            .get<IComponentHandle>(this.sharedString.id)
+                            .get<ISharedMap>();
 
                         // Run the shared services
                         const text = this.sharedString.getText();

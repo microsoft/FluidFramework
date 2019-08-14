@@ -5,6 +5,7 @@
 
 import {
     IComponent,
+    IComponentHandle,
     IComponentRouter,
     IComponentRunnable,
     IRequest,
@@ -42,10 +43,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             root.register();
             scheduler = ConsensusRegisterCollection.create(runtime);
             scheduler.register();
-            root.set("scheduler", scheduler);
+            root.set("scheduler", scheduler.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            scheduler = await root.wait<ConsensusRegisterCollection<string | null>>("scheduler");
+            const handle = await root.wait<IComponentHandle>("scheduler");
+            scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
         const collection = new AgentScheduler(runtime, scheduler);
         await collection.initialize();

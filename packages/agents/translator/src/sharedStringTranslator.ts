@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import * as map from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
@@ -26,8 +27,8 @@ export class SharedStringTranslator {
     }
 
     public async start(): Promise<void> {
-        await this.insights.wait(this.sharedString.id);
-        this.typeInsights = this.insights.get(this.sharedString.id) as map.ISharedMap;
+        const handle = await this.insights.wait<IComponentHandle>(this.sharedString.id);
+        this.typeInsights = await handle.get<map.ISharedMap>();
 
         this.sharedString.on("op", (op: ISequencedDocumentMessage) => {
             if (this.needsTranslation(op)) {

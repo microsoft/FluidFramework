@@ -11,6 +11,7 @@ import {
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
+  IComponentHandle,
   IComponentHTMLOptions,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
@@ -60,7 +61,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
    */
   protected async componentInitializingFromExisting() {
     this.counter = await this.root.wait<Counter>("clicks");
-    this.ownedMap = await this.root.wait<OwnedSharedMap>("ownedMap");
+    const ownedMapHandle = await this.root.wait<IComponentHandle>("ownedMap");
+    this.ownedMap = await ownedMapHandle.get<OwnedSharedMap>();
   }
 
   /**
@@ -70,7 +72,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
   protected async componentInitializingFirstTime() {
     this.root.set("clicks", 0, CounterValueType.Name);
     this.counter = await this.root.wait<Counter>("clicks");
-    this.root.set("ownedMap", OwnedSharedMap.create(this.runtime));
+    this.root.set("ownedMap", OwnedSharedMap.create(this.runtime).handle);
     this.ownedMap = this.root.get("ownedMap");
     this.ownedMap.set("title", "Default Title");
   }

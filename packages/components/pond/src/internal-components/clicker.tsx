@@ -5,6 +5,7 @@
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import {
+    IComponentHandle,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
@@ -28,6 +29,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
+    private otherMap: ISharedMap | undefined;
+    private counter: Counter | undefined;
+
     /**
      * Do setup work here
      */
@@ -38,21 +42,28 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
         clicks.increment(5);
 
         // Create a second map on the root.
-        this.root.set("secondMap", SharedMap.create(this.runtime));
+        const otherMap = SharedMap.create(this.runtime);
+        this.root.set("secondMap", otherMap.handle);
 
         // Add another clicker to the second map
-        const otherMap = this.root.get<SharedMap>("secondMap");
         otherMap.set("clicks2", 0, CounterValueType.Name);
+    }
+
+    protected async componentHasInitialized() {
+        this.counter = this.root.get<Counter>("clicks");
+        this.otherMap = await this.root.get<IComponentHandle>("secondMap").get<ISharedMap>();
     }
 
     // start IComponentHTMLVisual
 
     public render(div: HTMLElement) {
+        if (!this.otherMap || !this.counter) {
+            throw new Error("componentHasInitialized should be called prior to render");
+        }
+
         // Get our counter object that we set in initialize and pass it in to the view.
-        const counter = this.root.get("clicks");
-        const otherMap = this.root.get("secondMap");
         ReactDOM.render(
-            <CounterReactView map={this.root} otherMap={otherMap} counter={counter} />,
+            <CounterReactView map={this.root} otherMap={this.otherMap} counter={this.counter} />,
             div,
         );
     }

@@ -83,7 +83,7 @@ export async function run(
 
     const start = Date.now();
     const newMap = collabDoc.createMap();
-    root.set("newMap", newMap);
+    root.set("newMap", newMap.handle);
 
     const totalMessages = batches * batchSize;
     send(newMap, 0, batches, randomMessages);

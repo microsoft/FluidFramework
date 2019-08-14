@@ -5,6 +5,7 @@
 
 import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import * as assert from "assert";
 import {
@@ -57,12 +58,12 @@ describe("Cell", () => {
         await documentDeltaEventManager.pauseProcessing();
 
         // Create a cell on the root and propagate it to other documents
-        root1.set(cellId, user1Document.createCell());
+        root1.set(cellId, user1Document.createCell().handle);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        root1Cell = root1.get(cellId);
-        root2Cell = root2.get(cellId);
-        root3Cell = root3.get(cellId);
+        root1Cell = await root1.get<IComponentHandle>(cellId).get<ISharedCell>();
+        root2Cell = await root2.get<IComponentHandle>(cellId).get<ISharedCell>();
+        root3Cell = await root3.get<IComponentHandle>(cellId).get<ISharedCell>();
 
         // Set a starting value in the cell
         root1Cell.set(initialCellValue);

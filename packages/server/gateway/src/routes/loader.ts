@@ -50,7 +50,7 @@ export function create(
     /**
      * Loading of a specific fluid document.
      */
-    router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response, next) => {
+    router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
 
         const jwtToken = jwt.sign(

@@ -4,6 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import {
     ConsensusQueue,
     ConsensusStack,
@@ -68,10 +69,14 @@ function generate(
             for (const item of input) {
                 await collection1.add(item);
             }
-            root1.set("collection", collection1);
+            root1.set("collection", collection1.handle);
 
-            const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
-            const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
+            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
 
             assert.strictEqual(await collection1.remove(), output[0], "Collection not initialize in document 1");
             assert.strictEqual(await collection2.remove(), output[1], "Collection not initialize in document 2");
@@ -82,9 +87,15 @@ function generate(
 
         it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
-            const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
-            const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
+            root1.set("collection", collection1.handle);
+
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
+            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+
             await documentDeltaEventManager.pauseProcessing();
 
             const addP = [];
@@ -116,9 +127,15 @@ function generate(
 
         it("Wait resolves", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
-            const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
-            const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
+            root1.set("collection", collection1.handle);
+
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
+            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
+
             await documentDeltaEventManager.pauseProcessing();
 
             const waitOn2P = collection2.waitAndRemove();
@@ -161,9 +178,13 @@ function generate(
 
         it("Events", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
-            const collection2 = await root2.wait<IConsensusOrderedCollection>("collection");
-            const collection3 = await root3.wait<IConsensusOrderedCollection>("collection");
+            root1.set("collection", collection1.handle);
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusOrderedCollection>();
+            const collection3 = await collection3Handle.get<IConsensusOrderedCollection>();
             await documentDeltaEventManager.pauseProcessing();
 
             let addCount1 = 0;

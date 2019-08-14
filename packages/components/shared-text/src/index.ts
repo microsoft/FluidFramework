@@ -7,11 +7,11 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IRequest } from "@prague/component-core-interfaces";
+import { IComponentHandle, IRequest } from "@prague/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext } from "@prague/runtime-definitions";
-import { IComponentFactory } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
+import { SharedString } from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";
 import { GraphIQLView } from "./graphql";
@@ -139,7 +139,8 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             console.log(request.url);
 
             if (request.url === "/graphiql") {
-                const sharedText = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
+                const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
+                const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
                 return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
             } else {
                 console.log(request.url);

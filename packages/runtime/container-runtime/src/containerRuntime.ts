@@ -770,8 +770,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
 
-        // ... kb Creates the proxy here - which is sync. It has this attachComponent thing
-        // but that's sort of odd because the runtime is already bound??
         const context = new LocalComponentContext(
             id,
             pkg,
@@ -779,15 +777,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.storage,
             (cr: IComponentRuntime) => this.attachComponent(cr));
 
-        // ... kb and then we store off the reference to it locally. It is technically not yet
-        // attached
-
-        // Store off the component
         const deferred = new Deferred<ComponentContext>();
         this.contextsDeferred.set(id, deferred);
         this.contexts.set(id, context);
 
-        // ... and then getComponentRuntimeThing actually starts it up - maybe I do just call it start???
         return context.realize();
     }
 

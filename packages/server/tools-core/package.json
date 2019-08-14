@@ -32,6 +32,7 @@
   "dependencies": {
     "@prague/cell": "^0.9.0",
     "@prague/client-api": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
     "@prague/map": "^0.9.0",
     "@prague/merge-tree": "^0.9.0",
     "@prague/protocol-definitions": "^0.9.0",

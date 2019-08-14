@@ -4,6 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -33,9 +34,9 @@ function setParagraphs(chunks: string[]) {
     sharedString.insertMarker(chunks.length, MergeTree.ReferenceType.Tile, props);
 }
 
-function getParagraphs() {
+async function getParagraphs() {
     const root = document.getRoot();
-    const chunksMap = root.get("chunks");
+    const chunksMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
     if (chunksMap) {
         for (const key of chunksMap.keys()) {
             console.log(key + ": " + chunksMap.get(key));
@@ -46,7 +47,7 @@ function getParagraphs() {
 async function setChunkMap(chunks: string[]) {
     let c = 0;
     const root = await document.getRoot();
-    const chunkMap = root.get("chunks") as ISharedMap;
+    const chunkMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
 
     if (chunks) {
         for (const chunk of chunks) {
@@ -114,13 +115,13 @@ export async function create(
     root.set("text", sharedString);
     root.set("ink", document.createMap());
 
-    await root.set("chunks", document.createMap());
+    await root.set("chunks", document.createMap().handle);
 
     const chunks = author.normalizeText(text).split("\n");
     setParagraphs(chunks);
     await setChunkMap(chunks);
     if (debug) {
-        getParagraphs();
+        await getParagraphs();
     }
 
     return Promise.resolve();

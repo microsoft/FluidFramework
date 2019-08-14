@@ -5,6 +5,8 @@
 
 import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
+import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -248,11 +250,11 @@ async function setMetrics(urlBase: string, doc: api.Document, resolver: Containe
     const root = metricsDoc.getRoot();
 
     const components = metricsDoc.createMap();
-    root.set("components", components);
+    root.set("components", components.handle);
 
     // Create the two chart windows
     const performanceChart = metricsDoc.createMap();
-    components.set("performance", performanceChart);
+    components.set("performance", performanceChart.handle);
     performanceChart.set("type", "chart");
     performanceData = metricsDoc.createCell();
     performanceChart.set("size", { width: 760, height: 480 });
@@ -260,7 +262,7 @@ async function setMetrics(urlBase: string, doc: api.Document, resolver: Containe
     performanceChart.set("data", performanceData);
 
     const histogramChart = metricsDoc.createMap();
-    components.set("histogram", histogramChart);
+    components.set("histogram", histogramChart.handle);
     histogramData = metricsDoc.createCell();
     histogramChart.set("type", "chart");
     histogramChart.set("size", { width: 760, height: 480 });
@@ -340,14 +342,15 @@ export async function typeFile2(
         const host = { resolver };
 
         docList.push(await api.load(`${urlBase}/${doc.id}`, host, {}));
-        ssList.push(await docList[i].getRoot().get("text") as Sequence.SharedString);
+        const sharedString = await docList[i].getRoot().get("text") as Sequence.SharedString;
+        ssList.push(sharedString);
         author = {
             ackCounter: new Counter(),
             doc: await api.load(`${urlBase}/${doc.id}`, host, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
-            ss: await docList[i].getRoot().get("text") as Sequence.SharedString,
+            ss: sharedString,
             typingCounter: new Counter(),
         };
         authors.push(author);
@@ -366,7 +369,7 @@ export async function typeFile2(
             });
     } else {
         const root = doc.getRoot();
-        const chunkMap = root.get("chunks");
+        const chunkMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
         let totalKeys = 0;
         let curKey = 0;
         const startTime = Date.now();

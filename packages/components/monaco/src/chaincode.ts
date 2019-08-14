@@ -6,6 +6,7 @@
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import { PrimedComponent } from "@prague/aqueduct";
 import {
+    IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
@@ -134,7 +135,7 @@ export class MonacoRunner extends PrimedComponent implements
     protected async componentInitializingFirstTime() {
         const codeString = SharedString.create(this.runtime);
         codeString.insertText(0, 'console.log("Hello, world!");');
-        this.root.set("text", codeString);
+        this.root.set("text", codeString.handle);
     }
 
     /**
@@ -166,7 +167,8 @@ export class MonacoRunner extends PrimedComponent implements
         hostWrapper.appendChild(inputDiv);
         // hostWrapper.appendChild(outputDiv);
 
-        const text = await this.root.wait<SharedString>("text");
+        const textHandle = await this.root.wait<IComponentHandle>("text");
+        const text = await textHandle.get<SharedString>();
 
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions(defaultCompilerOptions);
         if (hostDts) {

@@ -4,6 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { CounterValueType, SharedMap } from "@prague/map";
 import {
     ICombiningOp,
@@ -148,19 +149,25 @@ export class TableDocument extends PrimedComponent implements ITable {
 
     protected async componentInitializingFirstTime() {
         const rows = SharedNumberSequence.create(this.runtime, "rows");
-        this.root.set("rows", rows);
+        this.root.set("rows", rows.handle);
 
         const cols = SharedNumberSequence.create(this.runtime, "cols");
-        this.root.set("cols", cols);
+        this.root.set("cols", cols.handle);
 
         const matrix = SparseMatrix.create(this.runtime, "matrix");
-        this.root.set("matrix", matrix);
+        this.root.set("matrix", matrix.handle);
     }
 
     protected async componentHasInitialized() {
-        this.maybeMatrix = await this.root.wait<SparseMatrix>("matrix");
-        this.maybeRows = await this.root.wait<SharedNumberSequence>("rows");
-        this.maybeCols = await this.root.wait<SharedNumberSequence>("cols");
+        const [maybeMatrixHandle, maybeRowsHandle, maybeColsHandle] = await Promise.all([
+            this.root.wait<IComponentHandle>("matrix"),
+            this.root.wait<IComponentHandle>("rows"),
+            this.root.wait<IComponentHandle>("cols"),
+        ]);
+
+        this.maybeMatrix = await maybeMatrixHandle.get<SparseMatrix>();
+        this.maybeRows = await maybeRowsHandle.get<SharedNumberSequence>();
+        this.maybeCols = await maybeColsHandle.get<SharedNumberSequence>();
 
         this.matrix.on("op", (op, local, target) => {
             if (!local) {

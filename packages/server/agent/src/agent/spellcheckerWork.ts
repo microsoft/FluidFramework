@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import * as MergeTree from "@prague/merge-tree";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
@@ -42,7 +43,7 @@ export class SpellcheckerWork extends BaseWork implements IWork {
         }
 
         const rootMap = this.document.getRoot();
-        const sharedString = rootMap.get("text") as Sequence.SharedString;
+        const sharedString = await rootMap.get<IComponentHandle>("text").get<Sequence.SharedString>();
 
         if (sharedString) {
             const speller = new SpellChecker();

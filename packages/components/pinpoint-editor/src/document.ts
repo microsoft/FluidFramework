@@ -7,7 +7,6 @@ import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 
 const rootMapId = "root";
-const insightsMapId = "insights";
 
 /**
  * A document is a collection of collaborative types.
@@ -19,9 +18,6 @@ export class Document {
         if (!runtime.existing) {
             root = SharedMap.create(runtime, rootMapId);
             root.register();
-
-            const insights = SharedMap.create(runtime, insightsMapId);
-            root.set(insightsMapId, insights);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
         }

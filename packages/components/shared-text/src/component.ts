@@ -96,7 +96,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             const insightsMapId = "insights";
 
             const insights = this.collabDoc.createMap(insightsMapId);
-            this.rootView.set(insightsMapId, insights);
+            this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
             this.rootView.set("users", this.collabDoc.createMap());
@@ -124,7 +124,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             this.rootView.set("text", newString);
             this.rootView.set("ink", this.collabDoc.createMap());
 
-            insights.set(newString.id, this.collabDoc.createMap());
+            insights.set(newString.id, this.collabDoc.createMap().handle);
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);

@@ -4,11 +4,11 @@
  */
 
 import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { SharedString } from "@prague/sequence";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { SharedTextRunner } from "./component";
 import { GraphQLService } from "./database";
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
@@ -18,7 +18,7 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
 
     public get IComponentHTMLVisual() { return this; }
 
-    constructor(private realComponent: SharedTextRunner) {
+    constructor(private sharedString: SharedString) {
         super();
     }
 
@@ -35,7 +35,7 @@ export class GraphIQLView extends EventEmitter implements IComponentHTMLVisual {
         styleTag.innerText = css;
         document.head.appendChild(styleTag);
 
-        const graphQLServer = new GraphQLService(this.realComponent.getRoot().get("text"));
+        const graphQLServer = new GraphQLService(this.sharedString);
 
         function graphQLFetcher(graphQLParams) {
             return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);

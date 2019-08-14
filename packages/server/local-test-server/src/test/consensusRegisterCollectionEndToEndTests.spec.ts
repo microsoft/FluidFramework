@@ -4,6 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
@@ -70,12 +71,16 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Should work after attach", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
+            root1.set("collection", collection1.handle);
             await collection1.write("key1", "value1");
             await collection1.write("key2", "value2");
 
-            const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
-            const collection3 = await root3.wait<IConsensusRegisterCollection>("collection");
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
+            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
 
             assert.strictEqual(collection1.read("key1"), "value1", "Collection not initialize in document 1");
             assert.strictEqual(collection2.read("key1"), "value1", "Collection not initialize in document 2");
@@ -91,10 +96,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Should store all concurrent writings on a key in sequenced order", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
+            root1.set("collection", collection1.handle);
 
-            const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
-            const collection3 = await root3.wait<IConsensusRegisterCollection>("collection");
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
+            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
 
             const write1P = collection1.write("key1", "value1");
             const write2P = collection2.write("key1", "value2");
@@ -113,10 +122,14 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 
         it("Happened after updates should overwrite previous versions", async () => {
             const collection1 = ctor.create(user1Document.runtime);
-            root1.set("collection", collection1);
+            root1.set("collection", collection1.handle);
 
-            const collection2 = await root2.wait<IConsensusRegisterCollection>("collection");
-            const collection3 = await root3.wait<IConsensusRegisterCollection>("collection");
+            const [collection2Handle, collection3Handle] = await Promise.all([
+                root2.wait<IComponentHandle>("collection"),
+                root3.wait<IComponentHandle>("collection"),
+            ]);
+            const collection2 = await collection2Handle.get<IConsensusRegisterCollection>();
+            const collection3 = await collection3Handle.get<IConsensusRegisterCollection>();
 
             const write1P = collection1.write("key1", "value1");
             const write2P = collection2.write("key1", "value2");

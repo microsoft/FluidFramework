@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import { ISharedMap, SharedMap } from "@prague/map";
@@ -35,15 +36,17 @@ export class IntelWork extends BaseWork implements IWork {
         }
 
         const rootMap = this.document.getRoot();
-        const sharedString = rootMap.get("text") as Sequence.SharedString;
-        const insightsMap = rootMap.get("insights") as ISharedMap;
+        const [sharedString, insightsMap] = await Promise.all([
+            rootMap.get<IComponentHandle>("text").get<Sequence.SharedString>(),
+            rootMap.get<IComponentHandle>("insights").get<ISharedMap>(),
+        ]);
 
         if (sharedString && insightsMap) {
             // This is a patch up for our legacy stuff when both agents uses the same map key to populate results.
             // To play nice with back-compat, intel runner creates the map and translator waits on the key.
             if (!insightsMap.has(sharedString.id)) {
                 const insightSlot = SharedMap.create(this.document.runtime);
-                insightsMap.set(sharedString.id, insightSlot);
+                insightsMap.set(sharedString.id, insightSlot.handle);
                 const textAnalyzer = new TextAnalyzer(
                     sharedString,
                     insightsMap,

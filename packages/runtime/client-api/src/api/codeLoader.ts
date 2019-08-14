@@ -77,7 +77,7 @@ class Chaincode implements IComponentFactory {
                     root.register();
 
                     const insights = map.SharedMap.create(runtime, insightsMapId);
-                    root.set(insightsMapId, insights);
+                    root.set(insightsMapId, insights.handle);
                 }
 
                 // Create the underlying Document

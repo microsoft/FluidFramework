@@ -4,6 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { MessageType } from "@prague/protocol-definitions";
 import { SharedString } from "@prague/sequence";
 import * as assert from "assert";
@@ -35,13 +36,14 @@ describe("LocalTestServer", () => {
       id, { resolver }, {}, serviceFactory);
     let root = user1Document.getRoot();
     user1SharedString = user1Document.createString();
-    root.set("SharedString", user1SharedString);
+    root.set("SharedString", user1SharedString.handle);
     documentDeltaEventManager.registerDocuments(user1Document);
 
     user2Document = await api.load(
       id, { resolver }, {}, serviceFactory);
     root = user2Document.getRoot();
-    user2SharedString = await root.wait("SharedString") as SharedString;
+    const handle = await root.wait<IComponentHandle>("SharedString");
+    user2SharedString = await handle.get<SharedString>();
     documentDeltaEventManager.registerDocuments(user2Document);
   });
 

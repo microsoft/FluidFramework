@@ -127,7 +127,7 @@ async function displayMap(parentElement: JQuery, key: string, map: ISharedMap,
     if (parent && map.isLocal()) {
         const attach = $("<button>Attach</button>");
         attach.click(() => {
-            parent.set(map.id, map);
+            parent.set(map.id, map.handle);
         });
         parentElement.append(attach);
     }
