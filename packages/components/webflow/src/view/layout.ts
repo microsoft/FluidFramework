@@ -6,7 +6,7 @@
 import { IComponent } from "@prague/component-core-interfaces";
 import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from "@prague/merge-tree";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "@prague/sequence";
+import { SequenceEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
@@ -386,7 +386,7 @@ export class Layout {
         this.segmentToTextMap.delete(segment);
     }
 
-    private readonly onChange = (e: SequenceDeltaEvent | SequenceMaintenanceEvent) => {
+    private readonly onChange = (e: SequenceEvent) => {
         // If the segment was removed, promptly remove any DOM nodes it emitted.
         for (const { segment } of e.ranges) {
             if (segment.removedSeq) {

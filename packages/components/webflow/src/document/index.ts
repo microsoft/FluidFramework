@@ -27,7 +27,7 @@ import {
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
-import { emptyArray } from "../util";
+import { clamp, emptyArray } from "../util";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
@@ -389,7 +389,10 @@ export class FlowDocument extends PrimedComponent {
         return { start, end };
     }
 
-    public visitRange(callback: LeafAction, start = 0, end = +Infinity) {
+    public visitRange(callback: LeafAction, start = 0, end = this.length) {
+        end = clamp(0, end, this.length);
+        start = clamp(0, start, end);
+
         // Early exit if passed an empty or invalid range (e.g., NaN).
         if (!(start < end)) {
             return;
