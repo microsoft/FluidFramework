@@ -2527,7 +2527,9 @@ export class MergeTree {
                         const segmentBranchId = this.getBranchId(segment.clientId);
                         const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
                         // only skipped ack segments above the refSeq of the insert
-                        if (removalInfo && removalInfo.removedSeq >= refSeq) {
+                        if (removalInfo
+                            && removalInfo.removedSeq <= refSeq
+                            && removalInfo.removedSeq !== UnassignedSequenceNumber) {
                             continue;
                         }
                     }

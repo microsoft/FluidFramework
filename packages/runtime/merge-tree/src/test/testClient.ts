@@ -55,7 +55,7 @@ export class TestClient extends Client {
         const snapshotTree = snapshot.emit();
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new TestClient(undefined);
+        const client2 = new TestClient(client1.mergeTree.options);
 
         const headerChunk = await Snapshot.loadChunk(services, "header");
         client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));

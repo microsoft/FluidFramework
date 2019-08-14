@@ -17,10 +17,10 @@ describe("MergeTree.Client", () => {
     // tslint:disable: mocha-no-side-effect-code
 
     // Test config
-    const maxSeed = 10;
-    const maxClients = long ? 64 : 16;
-    const maxOpsPerRound = long ? 1024 : 128;
-    const totalRounds = long ? 100 : 10;
+    const maxMinLength = 10;
+    const maxClients = long ? 32 : 8;
+    const maxOpsPerRound = long ? 512 : 128;
+    const totalRounds = long ? 32 : 8;
     const annotate = true;
 
     // control how many clients to start with for debugging
@@ -40,10 +40,10 @@ describe("MergeTree.Client", () => {
 
     // tslint:enable: mocha-no-side-effect-code
 
-    for (let j = 0; j < maxSeed; j++) {
-        it(`ConflictFarm_${j}`, async () => {
+    for (let minLength = 1; minLength <= maxMinLength; minLength++) {
+        it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
-            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED + j]);
+            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED + minLength]);
 
             const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
             clients.forEach(
@@ -61,11 +61,12 @@ describe("MergeTree.Client", () => {
                     newClient.startCollaboration(clientNames[cc], seq);
                 }
 
-                for (let round = 0; round < totalRounds; round++) {
-                    if (long) {
-                        console.log(`Clients: ${clients.length} Round: ${round}`);
-                    }
-                    for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound *= 2) {
+                for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound *= 2) {
+                    for (let round = 0; round < totalRounds; round++) {
+                        if (long) {
+                            // tslint:disable-next-line: max-line-length
+                            console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
+                        }
                         const minimumSequenceNumber = seq;
                         let tempSeq = seq * -1;
                         const logger = new TestClientLogger(
@@ -80,7 +81,7 @@ describe("MergeTree.Client", () => {
                             const len = client.getLength();
                             const sg = client.mergeTree.pendingSegments.last();
                             let op: IMergeTreeOp;
-                            if (len < 1) {
+                            if (len < minLength) {
                                 op = client.insertTextLocal(
                                     random.integer(0, len)(mt),
                                     client.longClientId.repeat(random.integer(0, 3)(mt)));
