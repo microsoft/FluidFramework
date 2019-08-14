@@ -9,7 +9,7 @@ import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from 
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { FlowDocument } from "../document";
-import { clamp, emptyObject, getSegmentRange } from "../util";
+import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { nodeToString } from "../util/debug";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
@@ -24,14 +24,14 @@ interface IFormatInfo {
 
 class LayoutCheckpoint {
     public readonly formatStack: ReadonlyArray<Readonly<IFormatInfo>>;
-    public readonly cursorStack: ReadonlyArray<Readonly<ILayoutCursor>>;
+    public readonly cursor: Readonly<ILayoutCursor>;
 
     constructor(
         formatStack: ReadonlyArray<IFormatInfo>,
-        cursorStack: ReadonlyArray<ILayoutCursor>,
+        cursor: Readonly<ILayoutCursor>,
     ) {
         this.formatStack = Object.freeze(formatStack.slice(0));
-        this.cursorStack = Object.freeze(cursorStack.map((cursor) => Object.freeze({...cursor})));
+        this.cursor = Object.freeze({...cursor});
     }
 }
 
@@ -76,9 +76,13 @@ export class Layout {
 
     private readonly scheduleRender: () => void;
 
+    private renderPromise = done;
+    private renderResolver: () => void;
+    public get rendered() { return this.renderPromise; }
+
     constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<Formatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
-        this.initialCheckpoint = new LayoutCheckpoint([], [{ parent: this.slot, previous: null }]);
+        this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter, state: emptyObject });
 
         doc.on("sequenceDelta", this.onChange);
@@ -100,27 +104,16 @@ export class Layout {
         const doc = this.doc;
         const length = doc.length;
 
-        // This works around two issues:
-        //   1) If the document shrinks to zero length, the below will early exit w/o
-        //      deleting any left over nodes.
-        //   2) The first thing a user types will cause a <p> tag to appear, resulting
-        //      in the cursor jumping according to margin/padding.
-        // ...unfortunately, if the user hits enter on the first line, this appears to
-        // have no effect.
         if (length === 0) {
-            const empty = "";
-            if (this.root.innerHTML !== empty) {
-                // tslint:disable-next-line:no-inner-html
-                this.root.innerHTML = empty;
-            }
+            Dom.removeAllChildren(this.root);
             return;
         }
 
         console.time("Layout.sync()");
 
+        const oldStart = start;
+        const oldEnd = end;
         {
-            const oldStart = start;
-            const oldEnd = end;
             start = clamp(0, start, length);
             end = clamp(start, end, length);
 
@@ -143,7 +136,7 @@ export class Layout {
 
             this.restoreCheckpoint(checkpoint);
 
-            debug("sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
+            debug("Begin: sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
         }
 
         try {
@@ -167,13 +160,16 @@ export class Layout {
                     }
                 }
             }, start);
+
+            if (this.segment) {
+                this._position += this.segment.cachedLength;
+            }
         } finally {
             this._segment = undefined;
             this._startOffset = NaN;
             this._endOffset = NaN;
 
-            if (this.position >= (length - 1)) {
-                this._position = length;
+            if (this.position >= length) {
                 while (this.formatStack.length > 0) { this.popFormat(); }
             }
 
@@ -181,7 +177,14 @@ export class Layout {
             this.formatStack.length = 0;
             this.cursorStack.length = 0;
 
-            debug("Complete: sync() -> [%d..%d) len: %d", start, this.position + 1, (this.position + 1) - start);
+            debug("End: sync([%d..%d)) -> [%d..%d) len: %d -> %d",
+                oldStart,
+                oldEnd,
+                start,
+                this.position,
+                oldEnd - oldStart,
+                this.position - start);
+
             this._position = NaN;
 
             console.timeEnd("Layout.sync()");
@@ -289,9 +292,8 @@ export class Layout {
 
         const checkpoint = this.segmentToCheckpoint.get(segment);
         if (checkpoint) {
-            const stack = checkpoint.cursorStack;
-            const top = stack[stack.length - 1];
-            const node = top.previous || top.parent.firstChild || top.parent;
+            const cursor = checkpoint.cursor;
+            const node = cursor.previous || cursor.parent.firstChild || cursor.parent;
             return { node, nodeOffset: Math.min(offset, node.childNodes.length) };
         }
 
@@ -313,7 +315,7 @@ export class Layout {
             this.segment,
             new LayoutCheckpoint(
                 this.formatStack,
-                this.cursorStack));
+                this.cursor));
 
         // Continue synchronizing the DOM if we've not yet reached the last segment in the invalidated range.
         if (!previous || this.position < (end - 1)) {
@@ -322,7 +324,14 @@ export class Layout {
 
         // Continue synchronizing the DOM if the DOM structure differs than the previous time we've encountered
         // this checkpoint.
-        const oldStack = previous.cursorStack;
+        const oldStack = this.reconstructCursorStack(previous.cursor);
+
+        // If the stack could not be reconstructed it means that the an ancestor of checkpointed
+        // cursor has been disconnected and layout should continue.
+        if (oldStack === undefined) {
+            return true;
+        }
+
         const newStack = this.cursorStack;
         return oldStack.length !== newStack.length || !oldStack.every(
             (oldCursor, index) => {
@@ -331,10 +340,29 @@ export class Layout {
             });
     }
 
+    private reconstructCursorStack({ previous, parent }: ILayoutCursor): ILayoutCursor[] {
+        const stack: ILayoutCursor[] = [];
+
+        while (parent) {
+            stack.push({ previous, parent });
+
+            if (parent === this.root) {
+                return stack.reverse();
+            }
+
+            previous = parent;
+            parent = parent.parentNode;
+        }
+
+        return undefined;
+    }
+
     private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
-        const { formatStack, cursorStack } = checkpoint;
+        const { formatStack, cursor } = checkpoint;
         this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
-        this.cursorStack = cursorStack.map((cursor) => ({...cursor}));
+        this.cursorStack = this.reconstructCursorStack(cursor);
+
+        assert(this.cursorStack.length > 0);
     }
 
     private removeNode(node: Node) {
@@ -391,6 +419,9 @@ export class Layout {
         this.startInvalid = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
         this.endInvalid   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
         this.scheduleRender();
+
+        // tslint:disable-next-line:promise-must-complete
+        this.renderPromise = new Promise((accept) => { this.renderResolver = accept; });
     }
 
     private render() {
@@ -402,5 +433,6 @@ export class Layout {
         this.endInvalid = undefined;
 
         this.sync(start, end);
+        this.renderResolver();
     }
 }

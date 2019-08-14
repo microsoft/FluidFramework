@@ -5,6 +5,7 @@
 
 export { getSegmentRange } from "./segment";
 
+export const done           = Promise.resolve();
 export const emptyObject    = Object.freeze({});
 export const emptyArray     = Object.freeze([] as any[]);
 
