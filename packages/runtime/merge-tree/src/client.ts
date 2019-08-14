@@ -978,6 +978,10 @@ export class Client {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
+    getStackContext(startPos: number, rangeLabels: string[]) {
+        return this.mergeTree.getStackContext(startPos, this.getCollabWindow().clientId, rangeLabels);
+    }
+
     private getLocalSequenceNumber() {
         let segWindow = this.getCollabWindow();
         if (segWindow.collaborating) {

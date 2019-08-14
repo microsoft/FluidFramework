@@ -1508,9 +1508,7 @@ function renderTable(
 }
 
 function showCell(pos: number, flowView: FlowView) {
-    const client = flowView.client;
-    const startingPosStack =
-        flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["cell"]);
+    const startingPosStack = flowView.sharedString.getStackContext(pos, ["cell"]);
     if (startingPosStack.cell && (!startingPosStack.cell.empty())) {
         const cellMarker = startingPosStack.cell.top() as Table.ICellMarker;
         const start = getPosition(flowView, cellMarker);
@@ -1523,9 +1521,7 @@ function showCell(pos: number, flowView: FlowView) {
 }
 
 function showTable(pos: number, flowView: FlowView) {
-    const client = flowView.client;
-    const startingPosStack =
-        flowView.client.mergeTree.getStackContext(pos, client.getClientId(), ["table"]);
+    const startingPosStack = flowView.sharedString.getStackContext(pos, ["table"]);
     if (startingPosStack.table && (!startingPosStack.table.empty())) {
         const tableMarker = startingPosStack.table.top() as Table.ITableMarker;
         const start = getPosition(flowView, tableMarker);
@@ -1538,7 +1534,6 @@ function showTable(pos: number, flowView: FlowView) {
 
 function renderTree(
     viewportDiv: HTMLDivElement, requestedPosition: number, flowView: FlowView, targetTranslation: string) {
-    const client = flowView.client;
     const docContext = buildDocumentContext(viewportDiv);
     flowView.lastDocContext = docContext;
     const outerViewportHeight = parseInt(viewportDiv.style.height, 10);
@@ -1549,8 +1544,7 @@ function renderTree(
             flowView.movingInclusion.exclu.x, flowView.movingInclusion.exclu.y,
             docContext.defaultLineDivHeight, true);
     }
-    const startingPosStack =
-        client.mergeTree.getStackContext(requestedPosition, client.getClientId(), ["table", "cell", "row"]);
+    const startingPosStack = flowView.sharedString.getStackContext(requestedPosition, ["table", "cell", "row"]);
     const layoutContext = {
         docContext,
         flowView,
@@ -4638,7 +4632,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public tryMoveCell(pos: number, shift = false) {
         const cursorContext =
-            this.client.mergeTree.getStackContext(pos, this.client.getClientId(), ["table", "cell", "row"]);
+            this.sharedString.getStackContext(pos, ["table", "cell", "row"]);
         if (cursorContext.table && (!cursorContext.table.empty())) {
             const tableMarker = cursorContext.table.top() as Table.ITableMarker;
             const tableView = tableMarker.table;
@@ -5085,9 +5079,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public deleteRow() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
@@ -5100,9 +5092,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public deleteCellShiftLeft() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const cellMarker = stack.cell.top() as Table.ICellMarker;
@@ -5115,9 +5105,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public deleteColumn() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
@@ -5131,9 +5119,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public insertRow() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
@@ -5146,9 +5132,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public tableSummary() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const tableMarkerPos = getPosition(this, tableMarker);
@@ -5192,9 +5176,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         let count = 0;
         let rowCount = 0;
         let columnCount = 0;
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const randomTableOp = () => {
@@ -5253,9 +5235,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public insertColumn() {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(this.cursor.pos,
-                this.sharedString.client.getClientId(), ["table", "cell", "row"]);
+        const stack = this.sharedString.getStackContext(this.cursor.pos, ["table", "cell", "row"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             const rowMarker = stack.row.top() as Table.IRowMarker;
@@ -5553,9 +5533,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public updateTableInfo(changePos: number) {
-        const stack =
-            this.sharedString.client.mergeTree.getStackContext(changePos,
-                this.sharedString.client.getClientId(), ["table"]);
+        const stack = this.sharedString.getStackContext(changePos, ["table"]);
         if (stack.table && (!stack.table.empty())) {
             const tableMarker = stack.table.top() as Table.ITableMarker;
             tableMarker.table = undefined;

@@ -1549,8 +1549,7 @@ export class DocumentTree {
                     log(`stacks for [${pos}, ${epos}): ${text}`);
                     printStacks();
                 }
-                let cliStacks = client.mergeTree.getStackContext(pos,
-                    client.getClientId(), ["box", "row"]);
+                let cliStacks = client.getStackContext(pos, ["box", "row"]);
                 for (let name of ["box", "row"]) {
                     let cliStack = cliStacks[name];
                     let treeStack = <MergeTree.Stack<string>>stacks[name];
