@@ -9,3 +9,4 @@ export * from "./restWrapper";
 export * from "./storage";
 export * from "./utils";
 export * from "./scopes";
+export * from "./promiseTimeout";

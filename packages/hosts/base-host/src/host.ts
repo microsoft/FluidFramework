@@ -119,6 +119,7 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
 }
 
 export function getLoader(
+    baseUrl: string,
     url: string,
     resolved: IResolvedUrl,
     cache: IGitCache,
@@ -127,10 +128,9 @@ export function getLoader(
     codeLoader: ICodeLoader,
     errorService: IErrorTrackingService,
 ): Loader {
-
     // URL resolver for routes
     const resolver = new ContainerUrlResolver(
-        document.location.origin,
+        baseUrl,
         jwt,
         new Map<string, IResolvedUrl>([[url, resolved]]));
 
@@ -179,6 +179,7 @@ export async function start(
 
     const errorService = new DefaultErrorTracking();
     const loader = getLoader(
+        document.location.origin,
         url,
         resolved,
         cache,

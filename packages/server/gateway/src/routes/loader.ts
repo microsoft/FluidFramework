@@ -6,6 +6,7 @@
 import { IFluidCodeDetails } from "@prague/container-definitions";
 import { extractDetails, WebLoader } from "@prague/loader-web";
 import { ScopeType } from "@prague/protocol-definitions";
+import { promiseTimeout } from "@prague/services-client";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -18,20 +19,33 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { KeyValueManager } from "../keyValueManager";
+import { KeyValueLoader } from "../keyValueLoader";
 import { getConfig } from "../utils";
 import { defaultPartials } from "./partials";
+
+const cacheLoadTimeoutMS = 10000;
 
 export function create(
     config: Provider,
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
-    keyValueManager: KeyValueManager,
     ensureLoggedIn: any): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
     const webLoader = new WebLoader(config.get(config.get("worker:npm")));
+
+    const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(config));
+    const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
+        return keyValueLoader.cache;
+    }, (err) => {
+        return Promise.reject(err);
+    });
+    cacheP.then((cache) => {
+        winston.info(cache.get(""));
+    }, (err) => {
+        winston.info(err);
+    });
 
     /**
      * Loading of a specific fluid document.
