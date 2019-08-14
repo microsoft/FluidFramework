@@ -9,7 +9,6 @@ import { randomId, TokenList } from "@prague/flow-util";
 import { MapFactory } from "@prague/map";
 import {
     BaseSegment,
-    Client,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
@@ -128,12 +127,9 @@ const endOfTextSegment = undefined as unknown as BaseSegment;
 
 export class FlowDocument extends PrimedComponent {
     private get sharedString() { return this.maybeSharedString; }
-    private get mergeTree() { return this.maybeClient.mergeTree; }
-    private get clientId() { return this.maybeClient.getClientId(); }
-    private get currentSeq() { return this.maybeClient.getCurrentSeq(); }
 
     public get length() {
-        return this.mergeTree.getLength(this.currentSeq, this.clientId);
+        return this.sharedString.getLength();
     }
 
     public static readonly type = "@chaincode/flow-document";
@@ -147,7 +143,6 @@ export class FlowDocument extends PrimedComponent {
     });
 
     private maybeSharedString?: SharedString;
-    private maybeClient?: Client;
 
     constructor(runtime: IComponentRuntime, context: IComponentContext) {
         super(runtime, context);
@@ -186,7 +181,7 @@ export class FlowDocument extends PrimedComponent {
 
         const { segment, offset } = this.getSegmentAndOffset(position);
         const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
-        this.mergeTree.addLocalReference(localRef);
+        this.sharedString.addLocalReference(localRef);
         return localRef;
     }
 
@@ -330,7 +325,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     public getTags(position: number): Readonly<Marker[]> {
-        const tags = this.mergeTree.getStackContext(position, this.clientId, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
+        const tags = this.sharedString.getStackContext(position, [DocSegmentKind.beginTags])[DocSegmentKind.beginTags];
         return (tags && tags.items) || emptyArray;
     }
 
@@ -463,11 +458,10 @@ export class FlowDocument extends PrimedComponent {
 
     protected async componentHasInitialized() {
         this.maybeSharedString = await this.root.wait<SharedString>("text");
-        this.maybeClient = this.sharedString.client;
     }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {
-        return this.mergeTree.idToSegment[`${newPrefix}${marker.getId().slice(oldPrefixLength)}`];
+        return this.sharedString.getMarkerFromId(`${newPrefix}${marker.getId().slice(oldPrefixLength)}`);
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
