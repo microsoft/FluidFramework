@@ -250,11 +250,15 @@ function attach(loader: Loader, url: string, deferred: Deferred<Document>): void
 async function requestDocument(loader: Loader, container: Container, uri: string) {
     const deferred = new Deferred<Document>();
 
+    const errorHandler = (e) => deferred.reject(e);
+    container.on("error", errorHandler);
     attach(loader, uri, deferred);
     container.on("contextChanged", (value) => {
         attach(loader, uri, deferred);
     });
 
+    // tslint:disable-next-line: no-floating-promises
+    deferred.promise.finally(() => container.off("error", errorHandler));
     return deferred.promise;
 }
 

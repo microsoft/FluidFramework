@@ -137,7 +137,6 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         private readonly reconnect: boolean) {
         super();
 
-        /* tslint:disable:strict-boolean-expressions */
         this.clientType = (!this.client || !this.client.type) ? Browser : this.client.type;
 
         // Inbound message queue

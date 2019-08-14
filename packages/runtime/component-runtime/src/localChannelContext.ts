@@ -26,8 +26,8 @@ import { ISharedObjectRegistry } from "./componentRuntime";
 export class LocalChannelContext implements IChannelContext {
     public readonly channel: IChannel;
     private attached = false;
-    private connection: ChannelDeltaConnection;
-    private baseId: string;
+    private connection: ChannelDeltaConnection | undefined;
+    private baseId: string | null = null;
 
     constructor(
         id: string,
@@ -60,12 +60,14 @@ export class LocalChannelContext implements IChannelContext {
             return;
         }
 
-        this.connection.setConnectionState(value);
+        // tslint:disable-next-line: no-non-null-assertion
+        this.connection!.setConnectionState(value);
     }
 
     public async prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         assert(this.attached);
-        return this.connection.prepare(message, local);
+        // tslint:disable-next-line: no-non-null-assertion
+        return this.connection!.prepare(message, local);
     }
 
     public processOp(message: ISequencedDocumentMessage, local: boolean, context: any): void {
@@ -73,7 +75,8 @@ export class LocalChannelContext implements IChannelContext {
 
         // Clear base id since the channel is now dirty
         this.baseId = null;
-        this.connection.process(message, local, context);
+        // tslint:disable-next-line: no-non-null-assertion
+        this.connection!.process(message, local, context);
     }
 
     public async snapshot(): Promise<ITree> {
@@ -93,8 +96,7 @@ export class LocalChannelContext implements IChannelContext {
             this.channel.id,
             this.componentContext.connectionState,
             this.submitFn,
-            this.storageService,
-            undefined);
+            this.storageService);
         this.connection = services.deltaConnection;
         this.channel.connect(services);
 

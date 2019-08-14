@@ -36,7 +36,7 @@ export function createServiceEndpoints(
     connectionState: ConnectionState,
     submitFn: (type: MessageType, content: any) => number,
     storageService: IDocumentStorageService,
-    tree: ISnapshotTree,
+    tree?: ISnapshotTree,
     extraBlobs?: Map<string, string>,
 ) {
     const deltaConnection = new ChannelDeltaConnection(
@@ -54,7 +54,7 @@ export function createServiceEndpoints(
     };
 }
 
-export function snapshotChannel(channel: IChannel, baseId: string) {
+export function snapshotChannel(channel: IChannel, baseId: string | null) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree

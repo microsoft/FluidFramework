@@ -18,11 +18,11 @@ export class LocalChannelStorageService implements IObjectStorageService {
     /**
      * Provides a synchronous access point to locally stored data
      */
-    public readSync(path: string): string {
+    private readSync(path: string): string | undefined {
         return this.readSyncInternal(path, this.tree);
     }
 
-    private readSyncInternal(path: string, tree: ITree): string {
+    private readSyncInternal(path: string, tree: ITree): string | undefined {
         for (const entry of tree.entries) {
             switch (entry.type) {
                 case TreeEntry[TreeEntry.Blob]:

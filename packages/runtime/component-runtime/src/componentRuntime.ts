@@ -57,7 +57,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         registry: ISharedObjectRegistry,
         activeCallback: (runtime: ComponentRuntime) => void,
     ): void {
-        const logger = ChildLogger.create(context.hostRuntime.logger, undefined, {componentId: context.id});
+        const logger = ChildLogger.create(context.hostRuntime.logger, undefined, { componentId: context.id });
         const runtime = new ComponentRuntime(
             context,
             context.documentId,
@@ -128,11 +128,11 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private readonly contextsDeferred = new Map<string, Deferred<IChannelContext>>();
     private closed = false;
     private readonly pendingAttach = new Map<string, IAttachMessage>();
-    private requestHandler: (request: IRequest) => Promise<IResponse>;
+    private requestHandler: ((request: IRequest) => Promise<IResponse>) | undefined;
     private isLocal: boolean;
     private readonly deferredAttached = new Deferred<void>();
     private readonly attachChannelQueue = new Map<string, LocalChannelContext>();
-    private boundhandles: Set<IComponentHandle>;
+    private boundhandles: Set<IComponentHandle> | undefined;
 
     private constructor(
         private readonly componentContext: IComponentContext,
@@ -153,7 +153,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         const tree = componentContext.baseSnapshot;
 
-         // Must always receive the component type inside of the attributes
+        // Must always receive the component type inside of the attributes
+        // tslint:disable-next-line: strict-boolean-expressions
         if (tree && tree.trees) {
             Object.keys(tree.trees).forEach((path) => {
                 const channelContext = new RemoteChannelContext(
@@ -202,7 +203,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
         // Check for a data type reference first
         if (this.contextsDeferred.has(id)) {
-            const value = await this.contextsDeferred.get(id).promise;
+            // tslint:disable-next-line: no-non-null-assertion
+            const value = await this.contextsDeferred.get(id)!.promise;
             const channel = await value.getChannel();
 
             return { mimeType: "prague/component", status: 200, value: channel };
@@ -230,7 +232,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.contextsDeferred.set(id, new Deferred<IChannelContext>());
         }
 
-        const context = await this.contextsDeferred.get(id).promise;
+        // tslint:disable-next-line: no-non-null-assertion
+        const context = await this.contextsDeferred.get(id)!.promise;
         const channel = await context.getChannel();
 
         return channel;
@@ -250,7 +253,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.contexts.set(id, context);
 
         if (this.contextsDeferred.has(id)) {
-            this.contextsDeferred.get(id).resolve(context);
+            // tslint:disable-next-line: no-non-null-assertion
+            this.contextsDeferred.get(id)!.resolve(context);
         } else {
             const deferred = new Deferred<IChannelContext>();
             deferred.resolve(context);
@@ -272,7 +276,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             this.attachChannel(channel);
             return;
         } else {
-            this.bind(channel.handle);
+            // tslint:disable-next-line: no-non-null-assertion
+            this.bind(channel.handle!);
 
             // If our Component is local then add the channel to the queue
             if (!this.attachChannelQueue.has(channel.id)) {
@@ -367,7 +372,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return file;
     }
 
-    public getBlob(blobId: string): Promise<IGenericBlob> {
+    public getBlob(blobId: string): Promise<IGenericBlob | undefined> {
         this.verifyNotClosed();
 
         return this.blobManager.getBlob(blobId);
@@ -400,45 +405,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         this.verifyNotClosed();
-
-        let remoteChannelContext: RemoteChannelContext;
-
-        switch (message.type) {
-            case MessageType.Attach:
-                if (local) {
-                    break;
-                }
-
-                const attachMessage = message.contents as IAttachMessage;
-
-                // create storage service that wraps the attach data
-                const origin = message.origin ? message.origin.id : this.documentId;
-
-                const flatBlobs = new Map<string, string>();
-                const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
-                const snapshotTree = buildHierarchy(flattened);
-
-                remoteChannelContext = new RemoteChannelContext(
-                    this,
-                    this.componentContext,
-                    this.componentContext.storage,
-                    (type, content) => this.submit(type, content),
-                    attachMessage.id,
-                    snapshotTree,
-                    this.registry,
-                    flatBlobs,
-                    origin,
-                    this.deltaManager.minimumSequenceNumber,
-                    {
-                        snapshotFormatVersion: undefined,
-                        type: attachMessage.type,
-                    });
-
-                break;
-
-            default:
-        }
-
         switch (message.type) {
             case MessageType.Attach:
                 const attachMessage = message.contents as IAttachMessage;
@@ -448,9 +414,33 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     assert(this.pendingAttach.has(attachMessage.id));
                     this.pendingAttach.delete(attachMessage.id);
                 } else {
+                    // create storage service that wraps the attach data
+                    const origin = message.origin ? message.origin.id : this.documentId;
+
+                    const flatBlobs = new Map<string, string>();
+                    const flattened = flatten(attachMessage.snapshot.entries, flatBlobs);
+                    const snapshotTree = buildHierarchy(flattened);
+
+                    const remoteChannelContext = new RemoteChannelContext(
+                        this,
+                        this.componentContext,
+                        this.componentContext.storage,
+                        (type, content) => this.submit(type, content),
+                        attachMessage.id,
+                        snapshotTree,
+                        this.registry,
+                        flatBlobs,
+                        origin,
+                        this.deltaManager.minimumSequenceNumber,
+                        {
+                            snapshotFormatVersion: undefined,
+                            type: attachMessage.type,
+                        });
+
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
-                        this.contextsDeferred.get(attachMessage.id).resolve(remoteChannelContext);
+                        // tslint:disable-next-line: no-non-null-assertion
+                        this.contextsDeferred.get(attachMessage.id)!.resolve(remoteChannelContext);
                     } else {
                         const deferred = new Deferred<IChannelContext>();
                         deferred.resolve(remoteChannelContext);
@@ -552,7 +542,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     private attachChannel(channel: IChannel): void {
         this.verifyNotClosed();
 
-        channel.handle.attach();
+        // tslint:disable-next-line: no-non-null-assertion
+        channel.handle!.attach();
 
         // Get the object snapshot and include it in the initial attach
         const snapshot = channel.snapshot();
@@ -596,7 +587,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             type: message.type,
         };
 
-        return context.prepareOp(transformed, local);
+        // tslint:disable-next-line: no-non-null-assertion
+        return context!.prepareOp(transformed, local);
     }
 
     private processOp(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -619,7 +611,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             type: message.type,
         };
 
-        channelContext.processOp(transformed, local, context);
+        // tslint:disable-next-line: no-non-null-assertion
+        channelContext!.processOp(transformed, local, context);
 
         return channelContext;
     }

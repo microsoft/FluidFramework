@@ -174,7 +174,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
         if (!this.isSelectionMade()) {
             this.versionCount--;
             this.ui.updateVersionText(this.versionCount);
-            this.ui.updateVerison(index, version, seqV, -1);
+            this.ui.updateVersion(index, version, seqV, -1);
         }
 
     }

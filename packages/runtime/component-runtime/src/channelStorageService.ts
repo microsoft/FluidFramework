@@ -22,12 +22,11 @@ export class ChannelStorageService implements IObjectStorageService {
     private readonly flattenedTree: { [path: string]: string } = {};
 
     constructor(
-        tree: ISnapshotTree,
+        tree: ISnapshotTree | undefined,
         private readonly storage: IDocumentStorageService,
         private readonly extraBlobs?: Map<string, string>,
     ) {
         // Create a map from paths to blobs
-        /* tslint:disable:strict-boolean-expressions */
         if (tree) {
             ChannelStorageService.flattenTree("", tree, this.flattenedTree);
         }
@@ -37,8 +36,10 @@ export class ChannelStorageService implements IObjectStorageService {
     public read(path: string): Promise<string> {
         const id = this.getIdForPath(path);
 
+        // tslint:disable-next-line: strict-boolean-expressions
         return this.extraBlobs && this.extraBlobs.has(id)
-            ? Promise.resolve(this.extraBlobs.get(id))
+            // tslint:disable-next-line: no-non-null-assertion
+            ? Promise.resolve(this.extraBlobs.get(id)!)
             : this.storage.read(id);
     }
 

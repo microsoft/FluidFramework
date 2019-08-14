@@ -9,7 +9,7 @@ import * as assert from "assert";
 export interface IDebuggerUI {
     /**
      * Version information is provided.
-     * Expect updates (information about seq#, timestamp) through updateVerison() calls
+     * Expect updates (information about seq#, timestamp) through updateVersion() calls
      */
     addVersions(version: IVersion[]): void;
 
@@ -17,7 +17,7 @@ export interface IDebuggerUI {
      * Call when new version is downloaded from storage
      * Expect multiple callbacks.
      */
-    updateVerison(index: number, version: IVersion, seqNumber: number, timeStamp: number): void;
+    updateVersion(index: number, version: IVersion, seqNumber: number, timeStamp: number): void;
 
     /**
      * Called in response to successful onVersionSelection() or onSnapshotFileSelection() call
@@ -214,7 +214,7 @@ export class DebuggerUI {
         }
     }
 
-    public updateVerison(index: number, version: IVersion, seqNumber: number, timeStamp: number) {
+    public updateVersion(index: number, version: IVersion, seqNumber: number, timeStamp: number) {
         if (this.selector) {
             const option = document.createElement("option");
             option.text = `id = ${version.id}   seq = ${seqNumber}`;

@@ -163,7 +163,7 @@ export interface ISequencedDocumentMessage {
 
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
-    origin: IBranchOrigin;
+    origin?: IBranchOrigin;
 
     // Traces related to the packet.
     traces: ITrace[];
@@ -196,7 +196,7 @@ export interface ISummaryContent {
     // handle reference to the summary data
     handle: string;
 
-    // Messge included as part of the summary
+    // Message included as part of the summary
     message: string;
 
     // Handles to parent summaries of the proposed new summary

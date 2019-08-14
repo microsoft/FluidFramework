@@ -12,8 +12,13 @@ import {
 import * as assert from "assert";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
-    private handler: IDeltaHandler;
+    private _handler: IDeltaHandler | undefined;
 
+    private get handler(): IDeltaHandler {
+        assert(this._handler);
+        // tslint:disable-next-line: no-non-null-assertion
+        return this._handler!;
+    }
     public get state(): ConnectionState {
         return this._state;
     }
@@ -25,9 +30,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public attach(handler: IDeltaHandler) {
-        /* tslint:disable:strict-boolean-expressions */
-        assert(!this.handler);
-        this.handler = handler;
+        assert(!this._handler);
+        this._handler = handler;
     }
 
     public setConnectionState(state: ConnectionState) {
@@ -36,12 +40,10 @@ export class ChannelDeltaConnection implements IDeltaConnection {
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        assert(this.handler);
         return this.handler.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        assert(this.handler);
         this.handler.process(message, local, context);
     }
 

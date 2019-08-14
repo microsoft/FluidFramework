@@ -214,11 +214,12 @@ describe("Cell", () => {
     });
 
     afterEach(async () => {
-        await Promise.all([
-            user1Document.close(),
-            user2Document.close(),
-            user3Document.close(),
-        ]);
+        // tslint:disable-next-line: array-type
+        const closeP: Promise<void>[] = [];
+        if (user1Document) { closeP.push(user1Document.close()); }
+        if (user2Document) { closeP.push(user2Document.close()); }
+        if (user3Document) { closeP.push(user3Document.close()); }
+        await Promise.all(closeP);
         await testDeltaConnectionServer.webSocketServer.close();
     });
 });

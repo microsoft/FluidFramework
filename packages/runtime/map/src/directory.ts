@@ -100,7 +100,7 @@ type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | I
  */
 type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
-// Definines the in-memory object structure to be used for the conversion to/from serialized.
+// Defines the in-memory object structure to be used for the conversion to/from serialized.
 // Directly used in JSON.stringify, direct result from JSON.parse
 /**
  * @internal
@@ -335,7 +335,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * Returns the contents of the SharedDirectory as a string which can be rehydrated into a SharedDirectory
+     * Returns the contents of the SharedDirectory as a string which can be rehydrate into a SharedDirectory
      * when loaded using populate().
      * @internal
      */

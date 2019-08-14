@@ -170,7 +170,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
      * Api to get the blob for a particular id.
      * @param blobId - ID of the required blob.
      */
-    getBlob(blobId: string): Promise<IGenericBlob>;
+    getBlob(blobId: string): Promise<IGenericBlob | undefined>;
 
     /**
      * Api to get the blob metadata.
@@ -217,7 +217,7 @@ export interface IComponentContext extends EventEmitter, IComponent {
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
     readonly branch: string;
-    readonly baseSnapshot: ISnapshotTree;
+    readonly baseSnapshot: ISnapshotTree | undefined;
     readonly loader: ILoader;
     readonly hostRuntime: IHostRuntime;
     readonly snapshotFn: (message: string) => Promise<void>;

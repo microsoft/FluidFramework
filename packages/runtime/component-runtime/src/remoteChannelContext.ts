@@ -25,12 +25,12 @@ import { ISharedObjectRegistry } from "./componentRuntime";
 import { debug } from "./debug";
 
 export class RemoteChannelContext implements IChannelContext {
-    private connection: ChannelDeltaConnection;
-    private baseId: string;
+    private connection: ChannelDeltaConnection | undefined;
+    private baseId: string | null = null;
     private isLoaded = false;
-    private pending = new Array<ISequencedDocumentMessage>();
-    private channelP: Promise<IChannel>;
-    private channel: IChannel;
+    private pending: ISequencedDocumentMessage[] | undefined = [];
+    private channelP: Promise<IChannel> | undefined;
+    private channel: IChannel | undefined;
 
     constructor(
         private readonly runtime: IComponentRuntime,
@@ -66,7 +66,8 @@ export class RemoteChannelContext implements IChannelContext {
             return;
         }
 
-        this.connection.setConnectionState(value);
+        // tslint:disable-next-line: no-non-null-assertion
+        this.connection!.setConnectionState(value);
     }
 
     public async prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
@@ -77,7 +78,8 @@ export class RemoteChannelContext implements IChannelContext {
 
         // Then either prepare the message or resolve empty (since we will do it later)
         return this.isLoaded
-            ? this.connection.prepare(message, local)
+            // tslint:disable-next-line: no-non-null-assertion
+            ? this.connection!.prepare(message, local)
             : Promise.resolve();
     }
 
@@ -85,10 +87,12 @@ export class RemoteChannelContext implements IChannelContext {
         if (this.isLoaded) {
             // Clear base id since the channel is now dirty
             this.baseId = null;
-            this.connection.process(message, local, context);
+            // tslint:disable-next-line: no-non-null-assertion
+            this.connection!.process(message, local, context);
         } else {
             assert(!local);
-            this.pending.push(message);
+            // tslint:disable-next-line: no-non-null-assertion
+            this.pending!.push(message);
         }
     }
 
@@ -133,12 +137,15 @@ export class RemoteChannelContext implements IChannelContext {
             this.minimumSequenceNumber,
             services,
             this.branch);
-        this.connection = services.deltaConnection;
+
+        const connection = services.deltaConnection;
+        this.connection = connection;
 
         // Send all pending messages to the channel
-        for (const message of this.pending) {
-            const context = await this.connection.prepare(message, false);
-            this.connection.process(message, false, context);
+        // tslint:disable-next-line: no-non-null-assertion
+        for (const message of this.pending!) {
+            const context = await connection.prepare(message, false);
+            connection.process(message, false, context);
         }
         this.pending = undefined;
         this.isLoaded = true;

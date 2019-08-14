@@ -7,7 +7,6 @@ import { Browser, IClient, IClientJoin, IHelpMessage, IRuntime, MessageType } fr
 
 export function runTaskAnalyzer(runtime: IRuntime) {
     const currentLeader = getLeader(runtime.getQuorum().getMembers());
-    // tslint:disable-next-line:strict-boolean-expressions
     const isLeader = currentLeader && currentLeader.clientId === runtime.clientId;
     if (isLeader) {
         const remoteHelpMessage: IHelpMessage = {
