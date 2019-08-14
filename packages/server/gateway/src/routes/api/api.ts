@@ -28,11 +28,13 @@ async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl
 async function getExternalComponent(
     request: Request,
     hostUrl: string,
-    requestUrl: string): Promise<IResolvedUrl> {
+    requestUrl: string,
+    scopes: ScopeType[]): Promise<IResolvedUrl> {
     winston.info(`Requesting ${requestUrl} to ${hostUrl}`);
     const result = await Axios.post<IResolvedUrl>(
         hostUrl,
         {
+            scopes,
             url: requestUrl,
         },
         {
@@ -49,6 +51,7 @@ async function getInternalComponent(
     config: Provider,
     url: UrlWithStringQuery,
     appTenants: core.IAlfredTenant[],
+    scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
     const regex = url.protocol === "prague:"
         ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
@@ -70,9 +73,8 @@ async function getInternalComponent(
         id: request.user.oid,
         name: request.user.name,
     } : undefined;
-    const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-    const token = getToken(tenantId, documentId, appTenants, scopes, user);
 
+    const token = getToken(tenantId, documentId, appTenants, scopes, user);
     const fluidUrl = `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =
@@ -115,11 +117,17 @@ export function create(
     router.post("/load", passport.authenticate("jwt", { session: false }), (request, response) => {
         const url = parse(request.body.url);
         const urlPrefix = `${url.protocol}//${url.host}`;
+        let scopes: ScopeType[];
+        if (request.body.scopes) {
+            scopes = request.body.scopes;
+        } else {
+            scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
+        }
 
         const resultP = (alfred.host === url.host || gateway.host === url.host)
-            ? getInternalComponent(request, config, url, appTenants)
+            ? getInternalComponent(request, config, url, appTenants, scopes)
             : isExternalComponent(urlPrefix, federatedEndpoints)
-            ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string)
+            ? getExternalComponent(request, `${urlPrefix}/api/v1/load`, request.body.url as string, scopes)
             : getWebComponent(url);
 
         resultP.then(
