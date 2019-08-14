@@ -74,7 +74,7 @@ export function propertyCopy() {
     console.log(`obj prop init time ${perIter} per init; ${perProp} per property`);
 }
 
-function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
+function makeBookmarks(client: TestClient, bookmarkCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let bookmarks = <SharedString.SharedStringInterval[]>[];
@@ -116,7 +116,7 @@ function makeBookmarks(client: MergeTree.Client, bookmarkCount: number) {
     return bookmarks;
 }
 
-function makeReferences(client: MergeTree.Client, referenceCount: number) {
+function makeReferences(client: TestClient, referenceCount: number) {
     let mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
     let refs = <MergeTree.LocalReference[]>[];
@@ -170,7 +170,7 @@ export function TestPack(verbose = true) {
     // let catchUpTime = 0;
     // let catchUps = 0;
 
-    function reportTiming(client: MergeTree.Client) {
+    function reportTiming(client: TestClient) {
         if (!verbose) {
             return;
         }
@@ -1719,7 +1719,7 @@ export class DocumentTree {
         }
     }
 
-    checkStacksAllPositions(client: MergeTree.Client) {
+    checkStacksAllPositions(client: TestClient) {
         let errorCount = 0;
         let pos = 0;
         let verbose = false;
@@ -1923,7 +1923,7 @@ function insertElm(treeLabel: string, elm: Xmldoc.XmlElement, client: TestClient
     return elmId;
 }
 
-function printOverlayTree(client: MergeTree.Client) {
+function printOverlayTree(client: TestClient) {
     let indentAmt = 0;
     const indentDelta = 4;
     let strbuf = "";
