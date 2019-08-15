@@ -36,8 +36,8 @@ class LayoutCheckpoint {
 }
 
 export class Layout {
-    public get cursor(): Readonly<ILayoutCursor> { return this.internalCursor; }
-    private get internalCursor(): ILayoutCursor { return this.cursorStack[this.cursorStack.length - 1]; }
+    public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
+    private _cursor: ILayoutCursor;
 
     private readonly rootFormatInfo: IFormatInfo;
 
@@ -50,7 +50,6 @@ export class Layout {
 
     private get slot() { return this.root; }
     private formatStack: Array<Readonly<IFormatInfo>>;
-    private cursorStack: ILayoutCursor[];
     private emitted: Set<Node>;
     private pending: Set<Node> = new Set();
     private readonly initialCheckpoint: LayoutCheckpoint;
@@ -175,7 +174,7 @@ export class Layout {
 
             this.removePending();
             this.formatStack.length = 0;
-            this.cursorStack.length = 0;
+            this._cursor = undefined;
 
             debug("End: sync([%d..%d)) -> [%d..%d) len: %d -> %d",
                 oldStart,
@@ -237,13 +236,18 @@ export class Layout {
         debug("  pushNode(%s@%d)", nodeToString(node), this.position);
 
         this.emitNode(node);
-        this.cursorStack.push({ parent: node, previous: null });
+
+        {
+            const cursor = this._cursor;
+            cursor.parent = node;
+            cursor.previous = null;
+        }
     }
 
     public emitNode(node: Node) {
         debug("    emitNode(%s@%d)", nodeToString(node), this.position);
 
-        const top = this.internalCursor;
+        const top = this._cursor;
         const { parent, previous } = top;
 
         // Move 'node' to the correct position in the DOM, if it's not there already.
@@ -259,8 +263,18 @@ export class Layout {
     }
 
     public popNode() {
-        debug("  popNode(%s@%d): %d -> %d", nodeToString(this.cursor.parent), this.position, this.cursorStack.length, this.cursorStack.length - 1);
-        this.cursorStack.pop();
+        debug("  popNode(%s@%d)", nodeToString(this.cursor.parent), this.position);
+        {
+            const cursor = this._cursor;
+            assert.notStrictEqual(cursor.parent, this.root);
+
+            const parent = cursor.parent;
+            cursor.previous = parent;
+            cursor.parent = parent.parentNode;
+
+            // Must not pop the root node
+            assert(this.root.contains(cursor.parent));
+        }
     }
 
     public emitText() {
@@ -324,45 +338,17 @@ export class Layout {
 
         // Continue synchronizing the DOM if the DOM structure differs than the previous time we've encountered
         // this checkpoint.
-        const oldStack = this.reconstructCursorStack(previous.cursor);
-
-        // If the stack could not be reconstructed it means that the an ancestor of checkpointed
-        // cursor has been disconnected and layout should continue.
-        if (oldStack === undefined) {
-            return true;
-        }
-
-        const newStack = this.cursorStack;
-        return oldStack.length !== newStack.length || !oldStack.every(
-            (oldCursor, index) => {
-                const newCursor = this.cursorStack[index];
-                return oldCursor.previous === newCursor.previous && oldCursor.parent === newCursor.parent;
-            });
-    }
-
-    private reconstructCursorStack({ previous, parent }: ILayoutCursor): ILayoutCursor[] {
-        const stack: ILayoutCursor[] = [];
-
-        while (parent) {
-            stack.push({ previous, parent });
-
-            if (parent === this.root) {
-                return stack.reverse();
-            }
-
-            previous = parent;
-            parent = parent.parentNode;
-        }
-
-        return undefined;
+        return this.cursor.parent !== previous.cursor.parent
+            || this.cursor.previous !== previous.cursor.previous;
     }
 
     private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
         const { formatStack, cursor } = checkpoint;
         this.formatStack = formatStack.map((formatInfo) => ({ ...formatInfo }));
-        this.cursorStack = this.reconstructCursorStack(cursor);
+        this._cursor     = {...cursor};
 
-        assert(this.cursorStack.length > 0);
+        // The next insertion point must be a descendent of the root node.
+        assert(this.root.contains(cursor.parent));
     }
 
     private removeNode(node: Node) {

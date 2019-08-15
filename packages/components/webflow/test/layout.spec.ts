@@ -111,26 +111,23 @@ describe("Layout", () => {
             await check();
         });
 
-        it("Single paragraph", async () => {
-            doc.insertParagraph(0);
-            await check();
-        });
-
         it("Insert paragraph", async () => {
-            doc.insertText(0, "02");
+            doc.insertText(0, "023");
+            // Force contiguous text segment to split into three segments.
+            doc.annotate(1, 2, { zamboni: false });
             await check();
             doc.insertParagraph(1);
             await check();
         });
 
         it("Remove paragraphs", async () => {
-            doc.insertText(0, "024");
+            doc.insertText(0, "013467");
             await check();
-            doc.insertParagraph(1);
+            doc.insertParagraph(2);
             await check();
-            doc.insertParagraph(3);
+            doc.insertParagraph(5);
             await check();
-            doc.remove(1, 2);
+            doc.remove(5, 6);
             await check();
             doc.remove(2, 3);
             await check();
