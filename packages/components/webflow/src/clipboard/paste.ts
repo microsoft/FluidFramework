@@ -48,6 +48,12 @@ function pasteChildren(doc: FlowDocument, root: Node, position: number) {
                 const emitTag = ignoredTags.indexOf(tag) < 0;
                 if (emitTag) {
                     doc.insertTags([tag as Tag], position);
+                    doc.setAttr(position, position + 1,
+                        [...el.attributes].reduce(
+                            (accumulator, value) => {
+                                accumulator[value.name] = value.textContent;
+                                return accumulator;
+                            }, {}));
                     doc.setCssStyle(position, position + 1, el.style.cssText);
                     position++;
                 }

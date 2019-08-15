@@ -10,6 +10,7 @@ import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
+import { getAttrs, syncAttrs } from "../util/attr";
 import { Tag } from "../util/tag";
 import { Formatter, IFormatterState } from "../view/formatter";
 import { Layout } from "../view/layout";
@@ -124,7 +125,7 @@ class TagsFormatter extends Formatter<ITagsState> {
         state.root = this.pushTag(layout, tags[0], state.root) as HTMLElement;
         const root = state.root;
         syncCss(root, getCss(segment), undefined);
-
+        syncAttrs(root, getAttrs(segment));
         for (let index = 1, existing: Element = root; index < tags.length; index++) {
             existing = this.pushTag(layout, tags[index], existing && existing.firstElementChild);
         }

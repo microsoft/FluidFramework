@@ -28,6 +28,7 @@ import { IComponentContext, IComponentRuntime } from "@prague/runtime-definition
 import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
+import { IHTMLAttributes } from "../util/attr";
 import { Tag } from "../util/tag";
 import { debug } from "./debug";
 import { SegmentSpan } from "./segmentspan";
@@ -373,6 +374,10 @@ export class FlowDocument extends PrimedComponent {
 
         this.removeCssClass(start, end, ...toRemove);
         this.addCssClass(start, end, ...toAdd);
+    }
+
+    public setAttr(start: number, end: number, attr: IHTMLAttributes) {
+        this.sharedString.annotateRange(start, end, { attr });
     }
 
     public findTile(position: number, tileType: DocTile, preceding: boolean): { tile: ReferencePosition, pos: number } {
