@@ -104,16 +104,16 @@ export async function create(
     document = await api.load(`${urlBase}/${id}`, { resolver }, {});
     const root = await document.getRoot();
 
-    root.set("users", document.createMap());
+    root.set("users", document.createMap().handle);
     sharedString = document.createString() as Sequence.SharedString;
     root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
     const seq = Sequence.SharedNumberSequence.create(document.runtime);
-    root.set("sequence-test", seq);
+    root.set("sequence-test", seq.handle);
 
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
-    root.set("text", sharedString);
-    root.set("ink", document.createMap());
+    root.set("text", sharedString.handle);
+    root.set("ink", document.createMap().handle);
 
     await root.set("chunks", document.createMap().handle);
 

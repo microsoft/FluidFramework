@@ -8,6 +8,7 @@ import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import {
     IComponent,
+    IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
     IRequest,
@@ -99,10 +100,10 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
-            this.rootView.set("users", this.collabDoc.createMap());
+            this.rootView.set("users", this.collabDoc.createMap().handle);
             this.rootView.set("calendar", undefined, SharedIntervalCollectionValueType.Name);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
-            this.rootView.set("sequence-test", seq);
+            this.rootView.set("sequence-test", seq.handle);
             const newString = this.collabDoc.createString() as SharedString;
 
             const template = parse(window.location.search.substr(1)).template;
@@ -121,8 +122,8 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
                     newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
                 }
             }
-            this.rootView.set("text", newString);
-            this.rootView.set("ink", this.collabDoc.createMap());
+            this.rootView.set("text", newString.handle);
+            this.rootView.set("ink", this.collabDoc.createMap().handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
         }
@@ -132,8 +133,8 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
 
         await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
 
-        this.sharedString = this.rootView.get("text") as SharedString;
-        this.insightsMap = this.rootView.get("insights") as DistributedMap.ISharedMap;
+        this.sharedString = await this.rootView.get<IComponentHandle>("text").get<SharedString>();
+        this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<DistributedMap.ISharedMap>();
         debug(`Shared string ready - ${performanceNow()}`);
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
@@ -155,6 +156,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
+        const pageInkHandle = this.rootView.get<IComponentHandle | undefined>("pageInk");
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
@@ -162,7 +164,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             this.sharedString,
             inkPlane,
             image,
-            this.rootView.get("pageInk") as IStream,
+            pageInkHandle ? await pageInkHandle.get<IStream>() : undefined,
             {});
         const theFlow = container.flowView;
         browserContainerHost.attach(container);

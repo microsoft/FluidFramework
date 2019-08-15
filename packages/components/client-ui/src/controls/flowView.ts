@@ -10,6 +10,7 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,
+    IComponentHandle,
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
@@ -3374,7 +3375,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (!this.collabDocument.existing) {
             workbookMap = this.collabDocument.createMap();
         } else {
-            workbookMap = await rootMap.wait<types.ISharedMap>("workbook");
+            const workbookHandle = await rootMap.wait<IComponentHandle>("workbook");
+            workbookMap = await workbookHandle.get<types.ISharedMap>();
         }
 
         this.services.set(
@@ -3390,7 +3392,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // Set the map after loading data so it's populated when other clients load it
         if (!this.collabDocument.existing) {
-            rootMap.set("workbook", workbookMap);
+            rootMap.set("workbook", workbookMap.handle);
         }
 
         workbookMap.on("valueChanged", () => {
@@ -5497,7 +5499,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.comments = this.sharedString.getSharedIntervalCollection("comments");
         this.commentsView = await this.comments.getView(onDeserialize, onPrepareDeserialize);
 
-        this.sequenceTest = this.docRoot.get("sequence-test") as Sequence.SharedNumberSequence;
+        this.sequenceTest = await this.docRoot
+            .get<IComponentHandle>("sequence-test")
+            .get<Sequence.SharedNumberSequence>();
         this.sequenceTest.on("op", (op) => {
             this.showSequenceEntries();
         });

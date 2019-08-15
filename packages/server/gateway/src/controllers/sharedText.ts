@@ -8,6 +8,8 @@ import { addTranslation, downloadRawText, getInsights } from "@chaincode/shared-
 import * as agent from "@prague/agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
+import { IComponentHandle } from "@prague/component-core-interfaces";
+import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import {
@@ -145,10 +147,10 @@ async function loadDocument(
     // If a text element already exists load it directly - otherwise load in pride + prejudice
     if (!collabDoc.existing) {
         console.log(`Not existing ${resolved.url} - ${performanceNow()}`);
-        root.set("users", collabDoc.createMap());
+        root.set("users", collabDoc.createMap().handle);
         root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
         const seq = Sequence.SharedNumberSequence.create(collabDoc.runtime);
-        root.set("sequence-test", seq);
+        root.set("sequence-test", seq.handle);
         const newString = collabDoc.createString() as Sequence.SharedString;
 
         const starterText = template ? await downloadRawText(template) : " ";
@@ -163,29 +165,30 @@ async function loadDocument(
                 newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
             }
         }
-        root.set("text", newString);
-        root.set("ink", collabDoc.createMap());
+        root.set("text", newString.handle);
+        root.set("ink", collabDoc.createMap().handle);
 
         if (pageInk) {
-            root.set("pageInk", collabDoc.createStream());
+            root.set("pageInk", collabDoc.createStream().handle);
         }
     } else {
         await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
     }
 
-    const sharedString = root.get("text") as Sequence.SharedString;
+    const sharedString = await root.get<IComponentHandle>("text").get<Sequence.SharedString>();
     console.log(`Shared string ready - ${performanceNow()}`);
     console.log(window.navigator.userAgent);
     console.log(`id is ${resolved.url}`);
     console.log(`Partial load fired - ${performanceNow()}`);
 
     // Higher plane ink
-    const inkPlane = root.get("ink");
+    const inkPlane = await root.get<IComponentHandle>("ink").get<ISharedMap>();
 
     // Bindy for insights
     const image = new controls.Image(
         document.createElement("div"),
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
+    const pageInkHandle = root.get<IComponentHandle | undefined>("pageInk");
 
     const containerDiv = document.createElement("div");
     const container = new controls.FlowContainer(
@@ -194,7 +197,7 @@ async function loadDocument(
         sharedString,
         inkPlane,
         image,
-        root.get("pageInk") as IStream,
+        pageInkHandle ? await pageInkHandle.get<IStream>() : undefined,
         options);
     theFlow = container.flowView;
     host.attach(container);
