@@ -10,7 +10,6 @@ import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import { IStream } from "@prague/stream";
 import * as ui from "../ui";
-import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
 import { Image } from "./image";
@@ -105,10 +104,6 @@ export class FlowContainer extends ui.Component {
                     [MergeTree.reservedMarkerIdKey]: model.id,
                     [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
                 });
-        });
-
-        this.status.on("dry", (value) => {
-            debug("Drying a layer");
         });
 
         // Update the scroll bar
