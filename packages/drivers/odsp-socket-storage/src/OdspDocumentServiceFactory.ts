@@ -51,6 +51,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
                 (socketStorageDiscovery) =>
                     new OdspDocumentService(
                         this.appId,
+                        socketStorageDiscovery.id,
+                        socketStorageDiscovery.snapshotStorageUrl,
                         this.storageFetchWrapper,
                         this.deltasFetchWrapper,
                         socketStorageDiscovery,
@@ -102,6 +104,8 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
         };
         return Promise.resolve(new OdspDocumentService(
             this.appId,
+            documentId,
+            storageUrl,
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             socketStorageDiscoveryFromURL,

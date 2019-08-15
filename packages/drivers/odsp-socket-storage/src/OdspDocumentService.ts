@@ -26,6 +26,8 @@ export class OdspDocumentService implements api.IDocumentService {
 
     /**
      * @param appId - app id used for telemetry for network requests
+     * @param documentId - the id of the document
+     * @param snapshotStorageUrl - the URL where snapshots are stored
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketStorageDiscovery - the initial JoinSession response
@@ -36,6 +38,8 @@ export class OdspDocumentService implements api.IDocumentService {
      */
     constructor(
         private readonly appId: string,
+        private readonly documentId: string,
+        private readonly snapshotStorageUrl: string,
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private socketStorageDiscovery: ISocketStorageDiscovery,
@@ -75,8 +79,8 @@ export class OdspDocumentService implements api.IDocumentService {
         return new OdspDocumentStorageService(
             new OdspDocumentStorageManager(
                 { app_id: this.appId },
-                this.socketStorageDiscovery.id,
-                this.socketStorageDiscovery.snapshotStorageUrl,
+                this.documentId,
+                this.snapshotStorageUrl,
                 latestSha,
                 trees,
                 blobs,
