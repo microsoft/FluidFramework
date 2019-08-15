@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { IComponent, IComponentHTMLOptions } from "@prague/component-core-interfaces";
+import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
 import { MapFactory } from "@prague/map";
 import {
@@ -456,11 +456,12 @@ export class FlowDocument extends PrimedComponent {
         Object.assign(this.runtime, { options: {...(this.runtime.options || {}),  blockUpdateMarkers: true} });
 
         const text = SharedString.create(this.runtime, "text");
-        this.root.set("text", text);
+        this.root.set("text", text.handle);
     }
 
     protected async componentHasInitialized() {
-        this.maybeSharedString = await this.root.wait<SharedString>("text");
+        const handle = await this.root.wait<IComponentHandle>("text");
+        this.maybeSharedString = await handle.get<SharedString>();
     }
 
     private getOppositeMarker(marker: Marker, oldPrefixLength: number, newPrefix: string) {

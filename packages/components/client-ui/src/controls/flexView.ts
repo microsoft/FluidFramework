@@ -4,22 +4,14 @@
  */
 
 // The main app code
-import * as api from "@prague/client-api";
-import { IGenericBlob } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
-import { MessageType } from "@prague/protocol-definitions";
-import { IColor } from "@prague/stream";
-import { blobUploadHandler } from "../blob";
+import { IColor, IStream } from "@prague/stream";
 import * as ui from "../ui";
 import { Button } from "./button";
-import { Chart } from "./chart";
 import { debug } from "./debug";
 import { DockPanel } from "./dockPanel";
-import { Image } from "./image";
 import { InkCanvas } from "./inkCanvas";
 import { Popup } from "./popup";
 import { Orientation, StackPanel } from "./stackPanel";
-import { Video } from "./video";
 
 const colors: IColor[] = [
     { r: 253 / 255, g:   0 / 255, b:  12 / 255, a: 1 },
@@ -51,9 +43,12 @@ export class FlexView extends ui.Component {
     private popup: Popup;
     private colorStack: StackPanel;
     private components: IFlexViewComponent[] = [];
-    private insightsMap: ISharedMap;
 
-    constructor(element: HTMLDivElement, private doc: api.Document, root: ISharedMap, image?: CanvasImageSource) {
+    constructor(
+        element: HTMLDivElement,
+        inkStream: IStream,
+        image?: CanvasImageSource,
+    ) {
         super(element);
 
         const dockElement = document.createElement("div");
@@ -61,27 +56,13 @@ export class FlexView extends ui.Component {
         this.dock = new DockPanel(dockElement);
         this.addChild(this.dock);
 
-        this.addBlobListeners(doc);
-
         // Add the ink canvas to the dock
         // Add blob Upload Handler
         const inkCanvasElement = document.createElement("div");
-        this.ink = new InkCanvas(inkCanvasElement, root.get("ink"), image);
+        this.ink = new InkCanvas(inkCanvasElement, inkStream, image);
         this.dock.addContent(this.ink);
-        blobUploadHandler(inkCanvasElement, doc, (file) => {return; });
 
         this.addButtons();
-
-        // UI components on the flex view
-        if (!root.has("components")) {
-            root.set("components", doc.createMap());
-        }
-
-        if (!root.has("insights")) {
-            root.set("insights", doc.createMap());
-        }
-        this.insightsMap = root.get<ISharedMap>("insights");
-        this.processComponents(root.get("components"));
     }
 
     protected resizeCore(bounds: ui.Rectangle) {
@@ -112,23 +93,6 @@ export class FlexView extends ui.Component {
         this.popup.resize(rect);
     }
 
-    private addBlobListeners(doc: api.Document) {
-
-        doc.on(MessageType.BlobUploaded, async (message) => {
-            const blob = await doc.getBlob(message.sha);
-            this.render(blob);
-        });
-
-        // Load blobs on start
-        doc.getBlobMetadata()
-            .then((blobs) => {
-                for (const blob of blobs) {
-                    this.render(blob);
-                }
-                return blobs;
-            });
-    }
-
     private addButtons() {
         const stackPanelElement = document.createElement("div");
         const buttonSize = { width: 50, height: 50 };
@@ -151,17 +115,17 @@ export class FlexView extends ui.Component {
         stackPanel.addChild(clearButton);
         this.dock.addBottom(stackPanel);
 
-        replayButton.on("click", (event) => {
+        replayButton.on("click", () => {
             debug("Replay button click");
             this.ink.replay();
         });
 
-        clearButton.on("click", (event) => {
+        clearButton.on("click", () => {
             debug("Clear button click");
             this.ink.clear();
         });
 
-        this.colorButton.on("click", (event) => {
+        this.colorButton.on("click", () => {
             debug("Color button click");
             this.popup.toggle();
         });
@@ -174,7 +138,7 @@ export class FlexView extends ui.Component {
             const button = new Button(buttonElement, { width: 200, height: 50 }, ["btn-flat"]);
             this.colorStack.addChild(button);
 
-            button.on("click", (event) => {
+            button.on("click", () => {
                 this.ink.setPenColor(color);
                 this.popup.toggle();
             });
@@ -185,85 +149,5 @@ export class FlexView extends ui.Component {
         this.popup.addContent(this.colorStack);
         this.addChild(this.popup);
         this.element.appendChild(this.popup.element);
-    }
-
-    private async processComponents(components: ISharedMap) {
-        // Pull in all the objects on the canvas
-        // tslint:disable-next-line:forin
-        for (const componentName of components.keys()) {
-            const component = components.get(componentName) as ISharedMap;
-            this.addComponent(component);
-        }
-
-        components.on("valueChanged", (event) => {
-            if (components.has(event.key)) {
-                this.addComponent(components.get(event.key));
-            }
-        });
-    }
-
-    private async addComponent(component: ISharedMap) {
-        if (component.get("type") !== "chart") {
-            return;
-        }
-
-        const size = component.get("size");
-        const position = component.get("position");
-        const chart = new Chart(document.createElement("div"), component.get("data"));
-        this.components.push({ size, position, component: chart });
-
-        this.element.insertBefore(chart.element, this.element.lastChild);
-        this.addChild(chart);
-        this.resizeCore(this.size);
-    }
-
-    private async render(incl: IGenericBlob) {
-        this.renderFunc(incl, this.ink);
-    }
-
-    private renderFunc = async (incl: IGenericBlob, ink: InkCanvas) => {
-
-        if (incl.type === "image") {
-            if (document.getElementById(incl.id) === null) { // Handle blob Processed
-                const imageDiv = document.createElement("div");
-                imageDiv.id = incl.id;
-                imageDiv.style.height = incl.height + 40 + "px";
-                imageDiv.style.width = incl.width + 15 + "px";
-                imageDiv.style.border = "3px solid black";
-
-                const image = new Image(imageDiv, incl.url);
-                ink.addPhoto(image);
-            } else { // handle blob uploaded
-                const imageDiv = document.getElementById(incl.id);
-                const image = imageDiv.getElementsByTagName("img").item(0);
-                if (image.naturalWidth === 0) {
-                    image.src = image.src;
-                }
-            }
-
-        } else if (incl.type === "video") {
-            if (document.getElementById(incl.id) === null) {
-                const videoDiv = document.createElement("div");
-                videoDiv.id = incl.id;
-                videoDiv.style.height = incl.height + 40 + "px";
-                videoDiv.style.width = incl.width + 15 + "px";
-                videoDiv.style.border = "3px solid black";
-
-                if (!this.insightsMap.has(incl.id)) {
-                    this.insightsMap.set(incl.id, this.doc.createMap());
-                }
-                const videoMap = this.insightsMap.get<ISharedMap>(incl.id);
-
-                const video = new Video(videoDiv, videoMap, incl.url);
-                ink.addVideo(video);
-            } else {
-                const videoDiv = document.getElementById(incl.id);
-                const video = videoDiv.getElementsByTagName("video").item(0);
-                if (video.height === 0) {
-                    video.src = video.src;
-                    video.load();
-                }
-            }
-        }
     }
 }

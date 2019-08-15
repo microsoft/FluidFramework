@@ -5,6 +5,7 @@
 
 // tslint:disable:ban-types
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
@@ -95,7 +96,7 @@ export class FlowContainer extends ui.Component {
 
             this.layerCache[model.id] = layer;
             this.activeLayers[model.id] = { layer, active: true, cursorOffset };
-            overlayMap.set(model.id, model);
+            overlayMap.set(model.id, model.handle);
             // Inserts the marker at the flow view's cursor position
             sharedString.insertMarker(
                 position,
@@ -204,7 +205,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get(id) as IStream;
+        const ink = await this.overlayMap.get<IComponentHandle>(id).get<IStream>();
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, ink);

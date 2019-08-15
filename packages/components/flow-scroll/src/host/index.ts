@@ -9,9 +9,11 @@ import { FlowDocument } from "@chaincode/webflow";
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import {
     IComponent,
+    IComponentHandle,
     IComponentHTMLOptions,
     IComponentHTMLView,
-    IComponentHTMLVisual } from "@prague/component-core-interfaces";
+    IComponentHTMLVisual,
+} from "@prague/component-core-interfaces";
 import { MapFactory, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
@@ -57,7 +59,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         ]);
 
         const insights = SharedMap.create(this.runtime, insightsMapId);
-        this.root.set(insightsMapId, insights);
+        this.root.set(insightsMapId, insights.handle);
 
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
@@ -67,8 +69,9 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     }
 
     protected async componentHasInitialized() {
+        const handle = await this.root.wait<IComponentHandle>(insightsMapId);
+        const insights = await handle.get<SharedMap>();
 
-        const insights = await this.root.wait(insightsMapId) as SharedMap;
         this.intelViewer = new FlowIntelViewer(insights);
 
         const flowDocument = await this.getComponent<FlowDocument>(this.docId);
