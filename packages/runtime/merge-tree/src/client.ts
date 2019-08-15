@@ -51,7 +51,6 @@ export class Client {
     public undoSegments: IUndoInfo[];
     public redoSegments: IUndoInfo[];
 
-    get pendingSegmentCount(): number { return this.mergeTree.pendingSegments.count(); }
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback { return this.mergeTree.mergeTreeDeltaCallback; }
     set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback) { this.mergeTree.mergeTreeDeltaCallback = callback; }
 
@@ -136,7 +135,7 @@ export class Client {
      * @param start - The inclusive start postition of the range to annotate
      * @param end - The exclusive end position of the range to annotate
      * @param props - The properties to annotate the range with
-     * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
+     * @param combiningOp - Specifies how to combine values for the property, such as "incr" for increment.
      * @returns The annotate op if valid, otherwise undefined
      */
     public annotateRangeLocal(
