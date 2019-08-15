@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedMap } from '@prague/map';
+import { ISharedDirectory } from '@prague/map';
 import * as React from 'react';
 
 interface WinnerTextProps {
-  map: ISharedMap;
+  directory: ISharedDirectory;
 }
 
 interface WinnerTextState {
@@ -20,13 +20,13 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
 
   constructor(props: WinnerTextProps) {
     super(props);
-    this.state = WinnerText.determineWinner(props.map);
+    this.state = WinnerText.determineWinner(props.directory);
   }
 
   componentWillMount() {
-    // When any of the values of the map change, determine the current winner and re-render
-    this.props.map.on("valueChanged", () => {
-      this.setState(WinnerText.determineWinner(this.props.map));
+    // When any of the values of the directory change, determine the current winner and re-render
+    this.props.directory.on("valueChanged", () => {
+      this.setState(WinnerText.determineWinner(this.props.directory));
     });
   }
 
@@ -45,14 +45,14 @@ export class WinnerText extends React.Component<WinnerTextProps, WinnerTextState
   }
 
   // TODO: This is terrible and should be improved
-  private static determineWinner(map: ISharedMap): WinnerTextState {
+  private static determineWinner(directory: ISharedDirectory): WinnerTextState {
     let teamName = "None";
     let highScore = 0;
     let tied = true;
     let first = true;
     let initialScore: number;
 
-    map.forEach(
+    directory.forEach(
       (counter, key) => {
         if (first) {
           initialScore = counter.value;

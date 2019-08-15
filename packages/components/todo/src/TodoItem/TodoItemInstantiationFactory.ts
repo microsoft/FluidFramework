@@ -10,7 +10,7 @@ import {
 } from "@prague/cell";
 import {
     CounterValueType,
-    SharedMap,
+    SharedDirectory,
 } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
@@ -22,7 +22,7 @@ import { TodoItem } from "./index";
 export const TodoItemInstantiationFactory: IComponentFactory = new SharedComponentFactory(
     TodoItem,
     [
-        SharedMap.getFactory([new CounterValueType()]),
+        SharedDirectory.getFactory([new CounterValueType()]),
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],

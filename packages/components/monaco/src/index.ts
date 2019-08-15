@@ -7,7 +7,7 @@ import { SimpleComponentInstantiationFactory } from "@prague/aqueduct";
 import {
     CounterValueType,
     DistributedSetValueType,
-    SharedMap,
+    SharedDirectory,
 } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
@@ -15,7 +15,7 @@ import { MonacoRunner } from "./chaincode";
 
 export const fluidExport: IComponentFactory = new SimpleComponentInstantiationFactory(
     [
-        SharedMap.getFactory([
+        SharedDirectory.getFactory([
             new DistributedSetValueType(),
             new CounterValueType(),
             new sequence.SharedStringIntervalCollectionValueType(),

@@ -6,7 +6,7 @@ import {
     SharedComponentFactory,
 } from "@prague/aqueduct";
 import {
-    SharedMap,
+    SharedDirectory,
 } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
@@ -18,7 +18,7 @@ import { TextBox } from "./index";
 export const TextBoxInstantiationFactory: IComponentFactory = new SharedComponentFactory(
     TextBox,
     [
-        SharedMap.getFactory(),
+        SharedDirectory.getFactory(),
         SharedString.getFactory(),
     ],
 );

@@ -5,7 +5,7 @@
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { CounterValueType, SharedMap } from "@prague/map";
+import { CounterValueType, SharedDirectory } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
@@ -42,7 +42,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     private static readonly factory = new SharedComponentFactory(
         TableDocument,
         [
-            SharedMap.getFactory([
+            SharedDirectory.getFactory([
                 new CounterValueType(),
                 new SharedStringIntervalCollectionValueType(),
                 new SharedIntervalCollectionValueType(),

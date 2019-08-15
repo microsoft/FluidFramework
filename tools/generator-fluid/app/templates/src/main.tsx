@@ -12,7 +12,7 @@ import {
 } from "@prague/component-core-interfaces";
 import {
   CounterValueType,
-  SharedMap,
+  SharedDirectory,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -33,8 +33,6 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
    * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
    */
   protected async componentInitializingFirstTime() {
-    // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
-    await super.componentInitializingFirstTime();
     this.root.set("clicks", 0, CounterValueType.Name);
   }
 
@@ -84,7 +82,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
  */
 export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
   [
-    SharedMap.getFactory([new CounterValueType()]),
+    SharedDirectory.getFactory([new CounterValueType()]),
   ],
   Clicker.load
 );

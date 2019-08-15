@@ -1,5 +1,13 @@
 # 0.9 Breaking Changes
 
+- [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
+
+## PrimedComponent root is now a SharedDirectory
+
+Previously, the root provided by `PrimedComponent` was a `SharedMap`.  Now it is a `SharedDirectory`.
+
+This should be compatible for usage (e.g. existing calls to `get`, `set`, `wait`, etc. should work as before), but explicit type checks against `SharedMap` or `ISharedMap` should be updated to `SharedDirectory` and `ISharedDirectory` respectively.
+
 # 0.8 Breaking Changes
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)

@@ -8,25 +8,25 @@ import {
     IResponse,
  } from "@prague/component-core-interfaces";
 import {
-    ISharedMap,
-    SharedMap,
+    ISharedDirectory,
+    SharedDirectory,
 } from "@prague/map";
 import { ITaskManager } from "@prague/runtime-definitions";
 
 import { SharedComponent } from "./sharedComponent";
 
 /**
- * PrimedComponent is a base component that is primed with a root map and task manager. It
+ * PrimedComponent is a base component that is primed with a root directory and task manager. It
  * ensures that both are created and ready before you can access it.
  *
- * Having a single root map allows for easier development. Instead of creating
+ * Having a single root directory allows for easier development. Instead of creating
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  */
 export abstract class PrimedComponent extends SharedComponent {
-    private internalRoot: ISharedMap | undefined;
+    private internalRoot: ISharedDirectory | undefined;
     private internalTaskManager: ITaskManager | undefined;
-    private readonly rootMapId = "root";
+    private readonly rootDirectoryId = "root";
 
     public async request(request: IRequest): Promise<IResponse> {
         const url = request.url;
@@ -38,13 +38,13 @@ export abstract class PrimedComponent extends SharedComponent {
     }
 
     /**
-     * The root map will either be ready or will return an error. If an error is thrown
+     * The root directory will either be ready or will return an error. If an error is thrown
      * the root has not been correctly created/set.
      *
      * If you are overriding `componentInitializingFirstTime()` ensure you are calling `await super.componentInitializingFirstTime()` first.
      * If you are overriding `componentInitializingFromExisting()` ensure you are calling `await super.componentInitializingFromExisting()` first.
      */
-    public get root(): ISharedMap {
+    public get root(): ISharedDirectory {
         if (!this.internalRoot) {
             throw new Error(this.getUninitializedErrorString(`root`));
         }
@@ -71,13 +71,13 @@ export abstract class PrimedComponent extends SharedComponent {
         this.internalTaskManager = await this.getComponent<ITaskManager>("_scheduler");
 
         if (this.canForge) {
-            // Create a root map and register it before calling componentInitializingFirstTime
-            this.internalRoot = SharedMap.create(this.runtime, this.rootMapId);
+            // Create a root directory and register it before calling componentInitializingFirstTime
+            this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.register();
             await this.componentInitializingFirstTime(props);
         } else {
-            // Component has a root map so we just need to set it before calling componentInitializingFromExisting
-            this.internalRoot = await this.runtime.getChannel(this.rootMapId) as ISharedMap;
+            // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
+            this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
             await this.componentInitializingFromExisting();
         }
 

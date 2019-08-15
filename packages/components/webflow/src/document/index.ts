@@ -6,7 +6,7 @@
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
-import { MapFactory } from "@prague/map";
+import { DirectoryFactory } from "@prague/map";
 import {
     BaseSegment,
     createInsertSegmentOp,
@@ -497,4 +497,4 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new MapFactory(), new SharedStringFactory()]);
+export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new DirectoryFactory(), new SharedStringFactory()]);

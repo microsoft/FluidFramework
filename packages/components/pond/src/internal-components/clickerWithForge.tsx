@@ -10,8 +10,8 @@ import {
 import {
     Counter,
     CounterValueType,
-    ISharedMap,
-    SharedMap,
+    ISharedDirectory,
+    SharedDirectory,
 } from "@prague/map";
 
 import * as React from "react";
@@ -46,7 +46,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         // Get our counter object that we set in initialize and pass it in to the view.
         const counter = this.root.get("clicks");
         ReactDOM.render(
-            <CounterReactView map={this.root}counter={counter} />,
+            <CounterReactView directory={this.root}counter={counter} />,
             div,
         );
     }
@@ -62,7 +62,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
     private static readonly factory = new SharedComponentFactory(
         ClickerWithInitialValue,
         [
-            SharedMap.getFactory([new CounterValueType()]),
+            SharedDirectory.getFactory([new CounterValueType()]),
         ],
     );
 }
@@ -70,7 +70,7 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 // ----- REACT STUFF -----
 
 interface p {
-    map: ISharedMap;
+    directory: ISharedDirectory;
     counter: Counter;
 }
 
@@ -91,8 +91,8 @@ class CounterReactView extends React.Component<p, s> {
         // set a listener so when the counter increments we will update our state
         // counter is annoying because it only allows you to register one listener.
         // this causes problems when we have multiple views off the same counter.
-        // so we are listening to the map
-        this.props.map.on("valueChanged", () => {
+        // so we are listening to the directory
+        this.props.directory.on("valueChanged", () => {
             this.setState({ value: this.props.counter.value });
         });
     }

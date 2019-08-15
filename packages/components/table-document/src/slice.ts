@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { SharedMap } from "@prague/map";
+import { SharedDirectory } from "@prague/map";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { UnboxedOper } from "@prague/sequence";
@@ -28,7 +28,7 @@ export class TableSlice extends PrimedComponent implements ITable {
     private static readonly factory = new SharedComponentFactory(
         TableSlice,
         [
-            SharedMap.getFactory(),
+            SharedDirectory.getFactory(),
         ],
     );
 

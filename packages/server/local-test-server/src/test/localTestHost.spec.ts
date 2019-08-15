@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { Counter, CounterValueType, SharedMap } from "@prague/map";
+import { Counter, CounterValueType, SharedDirectory, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
@@ -22,6 +22,7 @@ export class TestComponent extends PrimedComponent {
         TestComponent,
         [
             SharedMap.getFactory([new CounterValueType()]),
+            SharedDirectory.getFactory([new CounterValueType()]),
         ],
     );
 

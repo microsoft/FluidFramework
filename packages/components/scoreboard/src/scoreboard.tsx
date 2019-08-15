@@ -5,7 +5,7 @@
 
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
 import { PrimedComponent, SimpleModuleInstantiationFactory, SharedComponentFactory } from '@prague/aqueduct';
-import { CounterValueType, SharedMap } from '@prague/map';
+import { CounterValueType, SharedDirectory } from '@prague/map';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { TeamScore } from './teamScore';
@@ -48,7 +48,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
           </div>
         </div>
         <div>
-          <WinnerText map={this.root} />
+          <WinnerText directory={this.root} />
         </div>
       </div>,
       hostingElement);
@@ -61,7 +61,7 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
 const ScoreboardComponentInstantiationFactory = new SharedComponentFactory(
   Scoreboard,
   [
-    SharedMap.getFactory([new CounterValueType()]),
+    SharedDirectory.getFactory([new CounterValueType()]),
   ],
 );
 

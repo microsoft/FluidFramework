@@ -40,7 +40,6 @@ export class Pond extends SharedComponent implements IComponentHTMLVisual {
    * Do setup work here
    */
   protected async componentInitializingFirstTime() {
-    // This allows the PrimedComponent to create the root map
     await this.createAndAttachComponent("clicker", ClickerName);
     await this.createAndAttachComponent(
       "clicker-with-initial-value",

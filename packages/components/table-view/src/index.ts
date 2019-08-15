@@ -10,7 +10,7 @@ import {
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import { Template } from "@prague/flow-util";
-import { SharedMap } from "@prague/map";
+import { SharedDirectory } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -34,7 +34,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     private static readonly factory = new SharedComponentFactory(
         TableView,
         [
-            SharedMap.getFactory(),
+            SharedDirectory.getFactory(),
         ],
     );
 

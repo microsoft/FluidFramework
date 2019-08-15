@@ -18,7 +18,7 @@ import {
 import {
   Counter,
   CounterValueType,
-  SharedMap,
+  SharedDirectory,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -102,7 +102,7 @@ class CounterReactView extends React.Component<p, s> {
 export const ClickerInstantiationFactory = new SharedComponentFactory(
   Clicker,
   [
-    SharedMap.getFactory([new CounterValueType()]),
+    SharedDirectory.getFactory([new CounterValueType()]),
   ],
 );
 

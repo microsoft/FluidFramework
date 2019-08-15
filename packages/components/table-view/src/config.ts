@@ -4,7 +4,7 @@
  */
 
 import { Template } from "@prague/flow-util";
-import { ISharedMap } from "@prague/map";
+import { ISharedDirectory } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigKeys } from "./configKeys";
 
@@ -81,7 +81,7 @@ export class ConfigView {
 
     constructor(
         private readonly host: IComponentRuntime,
-        private readonly map: ISharedMap,
+        private readonly directory: ISharedDirectory,
         private readonly createCallback: (id: string) => Promise<void>) {
 
         this.caption.innerText = `Table View ${this.host.id}`;
@@ -89,20 +89,20 @@ export class ConfigView {
         this.done = new Promise<void>((accept) => {
             this.createButton.addEventListener("click", async () => {
                 await this.createCallback(this.idBox.value);
-                this.map.set(ConfigKeys.docId, this.idBox.value);
+                this.directory.set(ConfigKeys.docId, this.idBox.value);
                 accept();
             });
 
             this.okButton.addEventListener("click", () => {
-                this.map.set(ConfigKeys.serverUrl, this.serverBox.value);
-                this.map.set(ConfigKeys.userId, this.userBox.value);
-                this.map.set(ConfigKeys.docId, this.idBox.value);
-                // this.map.set(ConfigKeys.numRows, this.rowsBox.value);
-                // this.map.set(ConfigKeys.numCols, this.colsBox.value);
+                this.directory.set(ConfigKeys.serverUrl, this.serverBox.value);
+                this.directory.set(ConfigKeys.userId, this.userBox.value);
+                this.directory.set(ConfigKeys.docId, this.idBox.value);
+                // this.directory.set(ConfigKeys.numRows, this.rowsBox.value);
+                // this.directory.set(ConfigKeys.numCols, this.colsBox.value);
                 accept();
             });
 
-            this.map.wait(ConfigKeys.docId).then(() => {
+            this.directory.wait(ConfigKeys.docId).then(() => {
                 accept();
             });
         });

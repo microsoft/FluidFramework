@@ -6,7 +6,7 @@
 import { PrimedComponent, SharedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
-import { SharedMap } from "@prague/map";
+import { SharedDirectory, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SparseMatrix } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -38,6 +38,7 @@ class TestRootComponent extends PrimedComponent {
     private static readonly factory = new SharedComponentFactory(
         TestRootComponent,
         [
+            SharedDirectory.getFactory(),
             SharedMap.getFactory(),
             SharedString.getFactory(),
             SparseMatrix.getFactory(),
@@ -60,7 +61,7 @@ class TestRootComponent extends PrimedComponent {
 
     /**
      * Creates a channel and returns the instance as a shared object.
-     * This will add the instance to the root map.
+     * This will add the instance to the root directory.
      * @param id - id of channel for new shared object
      * @param type - channel factory type
      */
@@ -71,7 +72,7 @@ class TestRootComponent extends PrimedComponent {
     }
 
     /**
-     * Gets and waits for the shared object with the given ID from the root map.
+     * Gets and waits for the shared object with the given ID from the root directory.
      * @param id - ID of shared object
      */
     public async getType<T extends ISharedObject>(id: string): Promise<T> {
@@ -80,7 +81,7 @@ class TestRootComponent extends PrimedComponent {
     }
 
     /**
-     * Gets and waits for the data with the given fence ID from the root map.
+     * Gets and waits for the data with the given fence ID from the root directory.
      * @param fenceId - fence ID of data
      */
     public async waitFor(fenceId: number) {
@@ -89,7 +90,7 @@ class TestRootComponent extends PrimedComponent {
     }
 
     /**
-     * Sets a true value in the root map for the given fence ID.
+     * Sets a true value in the root directory for the given fence ID.
      * @param fenceId - fence ID to mark
      */
     public mark(fenceId: number) {
@@ -97,7 +98,7 @@ class TestRootComponent extends PrimedComponent {
     }
 
     /**
-     * Removes the fence data from the root map for the given fence ID.
+     * Removes the fence data from the root directory for the given fence ID.
      * @param fenceId - fence ID to unmark
      */
     public unmark(fenceId: number) {
