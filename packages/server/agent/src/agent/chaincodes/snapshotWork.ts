@@ -21,7 +21,7 @@ export class SnapshotWork extends ChaincodeWork implements IWork {
     }
 
     public async start(): Promise<void> {
-        return this.loadChaincode( { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} }, false);
+        return this.loadChaincode( { encrypted: undefined, client: { type: "snapshot"} }, false);
     }
 
     public async stop(): Promise<void> {

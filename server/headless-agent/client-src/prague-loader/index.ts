@@ -96,7 +96,7 @@ export async function startLoading(
         { resolver },
         new RouterliciousDocumentServiceFactory(),
         codeLoader,
-        { encrypted: undefined, localMinSeq: 0, blockUpdateMarkers: true, client: { type: loaderType } });
+        { encrypted: undefined, blockUpdateMarkers: true, client: { type: loaderType } });
 
     const container = await loader.resolve({ url: documentUrl });
     console.log(`Resolved ${documentUrl}`);

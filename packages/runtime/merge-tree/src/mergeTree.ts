@@ -958,8 +958,6 @@ export const NonCollabClient = -2;
 export class CollaborationWindow {
     clientId = LocalClientId;
     collaborating = false;
-    localMinSeq?: number;
-    globalMinSeq?: number;
     // lowest-numbered segment in window; no client can reference a state before this one
     minSeq = 0;
     // highest-numbered segment in window and current
@@ -969,8 +967,6 @@ export class CollaborationWindow {
     loadFrom(a: CollaborationWindow) {
         this.clientId = a.clientId;
         this.collaborating = a.collaborating;
-        this.localMinSeq = a.localMinSeq;
-        this.globalMinSeq = a.globalMinSeq;
         this.minSeq = a.minSeq;
         this.currentSeq = a.currentSeq;
     }
@@ -1260,11 +1256,6 @@ export class MergeTree {
     // TODO: make and use interface describing options
     constructor(public options?: Properties.PropertySet) {
         this.blockUpdateActions = MergeTree.initBlockUpdateActions;
-        if (options) {
-            if (options.localMinSeq !== undefined) {
-                this.collabWindow.localMinSeq = options.localMinSeq;
-            }
-        }
         this.root = this.initialNode();
     }
 
@@ -1286,10 +1277,7 @@ export class MergeTree {
     }
 
     clone() {
-        const options = {
-            localMinSeq: this.collabWindow.localMinSeq,
-        };
-        const b = new MergeTree(options);
+        const b = new MergeTree(this.options);
         // for now assume that b will not collaborate
         b.root = b.blockClone(this.root);
     }
@@ -1416,11 +1404,7 @@ export class MergeTree {
     // for now assume min starts at zero
     startCollaboration(localClientId: number, minSeq: number, branchId: number) {
         this.collabWindow.clientId = localClientId;
-        if (this.collabWindow.localMinSeq !== undefined) {
-            this.collabWindow.minSeq = Math.min(minSeq, this.collabWindow.localMinSeq);
-        } else {
-            this.collabWindow.minSeq = minSeq;
-        }
+        this.collabWindow.minSeq = minSeq;
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = minSeq;
         this.localBranchId = branchId;
@@ -1842,16 +1826,6 @@ export class MergeTree {
         }
     }
 
-    updateLocalMinSeq(localMinSeq: number) {
-        // You can't go down in min seq numbers!
-        if (this.collabWindow.globalMinSeq !== undefined) {
-            this.collabWindow.localMinSeq = Math.min(this.collabWindow.globalMinSeq, localMinSeq);
-        } else {
-            this.collabWindow.localMinSeq = localMinSeq;
-        }
-        this.setMinSeq(this.collabWindow.localMinSeq);
-    }
-
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
         if (!this.minSeqListeners) {
             this.minSeqListeners = new Collections.Heap<MinListener>([],
@@ -1886,22 +1860,6 @@ export class MergeTree {
             if (this.minSeqPending) {
                 this.notifyMinSeqListeners();
             }
-        }
-    }
-
-    commitGlobalMin() {
-        if (this.collabWindow.globalMinSeq !== undefined) {
-            this.collabWindow.localMinSeq = this.collabWindow.globalMinSeq;
-            this.setMinSeq(this.collabWindow.globalMinSeq);
-        }
-    }
-
-    updateGlobalMinSeq(globalMinSeq: number) {
-        if (this.collabWindow.localMinSeq === undefined) {
-            this.setMinSeq(globalMinSeq);
-        } else {
-            this.collabWindow.globalMinSeq = globalMinSeq;
-            this.setMinSeq(Math.min(globalMinSeq, this.collabWindow.localMinSeq));
         }
     }
 

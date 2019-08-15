@@ -231,10 +231,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
-    public setLocalMinSeq(lmseq: number) {
-        this.client.mergeTree.updateLocalMinSeq(lmseq);
-    }
-
     public createPositionReference(
         pos: number,
         refType: MergeTree.ReferenceType): MergeTree.LocalReference {
@@ -388,13 +384,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             this.processMinSequenceNumberChanged(minSeq);
             this.client.updateSeqNumbers(minSeq, this.runtime.deltaManager.referenceSequenceNumber);
 
-            this.client.mergeTree.commitGlobalMin();
-
             // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
             // Not sure why - need to catch it sooner
             assert(this.client.mergeTree.collabWindow.minSeq === minSeq);
-        } else {
-            this.client.mergeTree.commitGlobalMin();
         }
 
         // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
