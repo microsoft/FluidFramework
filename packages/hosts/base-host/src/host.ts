@@ -37,7 +37,7 @@ async function attach(loader: Loader, url: string, host: Host) {
         const renderable =
             viewable.addView ? viewable.addView() : viewable;
 
-        renderable.render(host.div);
+        renderable.render(host.div, {display: "block"});
         return;
     }
 
