@@ -368,7 +368,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * @internal
      */
     public async populate(data: IDirectoryDataObject): Promise<void> {
-        const localValuesP = new Array<Promise<SubDirectory>>();
+        const localValuesP = new Array<Promise<void>>();
 
         // Map the data objects representing each subdirectory to their actual SubDirectory object
         const subdirsToDeserialize = new Map<IDirectoryDataObject, SubDirectory>();
@@ -389,7 +389,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                                           currentSubDir.absolutePath,
                                           serializable,
                                       )
-                                      .then((localValue) => currentSubDir.set(key, localValue.value, localValue.type));
+                                      .then((localValue) => currentSubDir.populateStorage(key, localValue));
                     localValuesP.push(populateP);
                 }
             }
@@ -639,14 +639,14 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             {
                 prepare: async (op: IDirectoryValueTypeOperation, local, message) => {
                     const subdir = this.getWorkingDirectory(op.path);
-                    const localValue = subdir ? subdir.get<ValueTypeLocalValue>(op.key) : undefined;
+                    const localValue = subdir ? subdir.getLocalValue<ValueTypeLocalValue>(op.key) : undefined;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const value = localValue.value;
                     return handler.prepare(value, op.value.value, local, message);
                 },
                 process: (op: IDirectoryValueTypeOperation, context, local, message) => {
                     const subdir = this.getWorkingDirectory(op.path);
-                    const localValue = subdir ? subdir.get<ValueTypeLocalValue>(op.key) : undefined;
+                    const localValue = subdir ? subdir.getLocalValue<ValueTypeLocalValue>(op.key) : undefined;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     handler.process(previousValue, op.value.value, context, local, message);
@@ -714,7 +714,7 @@ export class SubDirectory implements IDirectory {
         return new Promise<T>((resolve, reject) => {
             const callback = (changed: IDirectoryValueChanged) => {
                 if (this.absolutePath === changed.path && key === changed.key) {
-                    resolve(this._storage.get(changed.key).value as T);
+                    resolve(this.get<T>(changed.key));
                     this.directory.removeListener("valueChanged", callback);
                 }
             };
@@ -1065,6 +1065,20 @@ export class SubDirectory implements IDirectory {
                 this.directory.handle);
         }
         return serializedStorage;
+    }
+
+    /**
+     * @internal
+     */
+    public populateStorage(key: string, localValue: ILocalValue) {
+        this._storage.set(key, localValue);
+    }
+
+    /**
+     * @internal
+     */
+    public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
+        return this._storage.get(key) as T;
     }
 
     /**
