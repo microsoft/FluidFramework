@@ -52,7 +52,15 @@ import {
     IHostRuntime,
     IInboundSignalMessage,
 } from "@prague/runtime-definitions";
-import { buildHierarchy, Deferred, flatten, isSystemType, raiseConnectedEvent, readAndParse } from "@prague/utils";
+import {
+    buildHierarchy,
+    ComponentSerializer,
+    Deferred,
+    flatten,
+    isSystemType,
+    raiseConnectedEvent,
+    readAndParse,
+} from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import {
@@ -64,7 +72,6 @@ import { ComponentHandleContext } from "./componentHandleContext";
 import { debug } from "./debug";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { LeaderElector } from "./leaderElection";
-import { ComponentSerializer } from "./serializer";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { analyzeTasks } from "./taskAnalyzer";

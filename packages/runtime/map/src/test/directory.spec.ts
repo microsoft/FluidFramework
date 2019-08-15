@@ -95,11 +95,11 @@ describe("Routerlicious", () => {
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
                 const subMap = mapFactory.create(runtime, "subMap");
-                testDirectory.set("object", subMap);
+                testDirectory.set("object", subMap.handle);
 
                 const serialized = (testDirectory as SharedDirectory).serialize();
                 // tslint:disable-next-line:max-line-length
-                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}}}`;
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}}}`;
                 assert.equal(serialized, expected);
             });
 
@@ -108,7 +108,7 @@ describe("Routerlicious", () => {
                 testDirectory.set("third", "fourth");
                 testDirectory.set("fifth", "sixth");
                 const subMap = mapFactory.create(runtime, "subMap");
-                testDirectory.set("object", subMap);
+                testDirectory.set("object", subMap.handle);
                 const nestedDirectory = testDirectory.createSubDirectory("nested");
                 nestedDirectory.set("deepKey1", "deepValue1");
                 nestedDirectory.createSubDirectory("nested2")
@@ -117,7 +117,7 @@ describe("Routerlicious", () => {
 
                 const serialized = (testDirectory as SharedDirectory).serialize();
                 // tslint:disable-next-line:max-line-length
-                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Shared","value":"subMap"}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
         });

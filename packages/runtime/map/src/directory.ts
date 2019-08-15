@@ -208,7 +208,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         runtime: IComponentRuntime,
     ) {
         super(id, runtime, DirectoryFactory.Type);
-        this.localValueMaker = new LocalValueMaker(runtime, this);
+        this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
     }
 

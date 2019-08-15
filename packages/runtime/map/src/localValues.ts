@@ -90,7 +90,7 @@ export class ValueTypeLocalValue implements ILocalValue {
 export class LocalValueMaker {
     private readonly valueTypes = new Map<string, IValueType<any>>();
 
-    constructor(private readonly runtime: IComponentRuntime, private readonly containingObject: ISharedObject) {
+    constructor(private readonly runtime: IComponentRuntime) {
     }
 
     public registerValueType<T>(type: IValueType<T>) {
@@ -118,17 +118,10 @@ export class LocalValueMaker {
 
     public fromInMemory(value: any) {
         if (SharedObject.is(value)) {
-            // Shared objects need to be registered before we set them, so other clients will know what to do when
-            // they are referenced in incoming ops.  Don't do this unless the containing object is registered though.
-            // If the containing object is registered at a later point in time, it must register all contained objects
-            // in its registerCore.
-            if (this.containingObject.isRegistered()) {
-                value.register();
-            }
-            return new SharedLocalValue(value);
-        } else {
-            return new PlainLocalValue(value);
+            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
+
+        return new PlainLocalValue(value);
     }
 
     public makeValueType(type: string, emitter: IValueOpEmitter, params: any) {

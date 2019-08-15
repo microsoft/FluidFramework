@@ -1,5 +1,4 @@
 # 0.9 Breaking Changes
-
 - [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
 
 ## PrimedComponent root is now a SharedDirectory
@@ -7,6 +6,27 @@
 Previously, the root provided by `PrimedComponent` was a `SharedMap`.  Now it is a `SharedDirectory`.
 
 This should be compatible for usage (e.g. existing calls to `get`, `set`, `wait`, etc. should work as before), but explicit type checks against `SharedMap` or `ISharedMap` should be updated to `SharedDirectory` and `ISharedDirectory` respectively.
+
+## Handles to SharedObjects must be used on map sets
+
+It is no longer allowed to directly set a SharedObject as a map key. Instead its handle must be set. Get also only
+returns handles. You can retrieve the value by calling get on the handle.
+
+i.e. this
+
+```
+const map = SharedMap.create(runtime);
+root.set("test", map);
+const retrievedMap = root.get("test");
+```
+
+Becomes
+
+```
+const map = SharedMap.create(runtime);
+root.set("test", map.handle);
+const retrievedMap = await root.get<IComponentHandle>("test").get<ISharedMap>();
+```
 
 # 0.8 Breaking Changes
 

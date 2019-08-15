@@ -168,7 +168,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         type = MapFactory.Type,
     ) {
         super(id, runtime, type);
-        this.localValueMaker = new LocalValueMaker(runtime, this);
+        this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
     }
 

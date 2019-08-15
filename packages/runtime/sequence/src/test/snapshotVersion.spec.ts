@@ -7,15 +7,20 @@ import * as mocks from "@prague/runtime-test-utils";
 import { GitManager } from "@prague/services-client";
 import * as assert from "assert";
 import * as fs from "fs";
+import * as path from "path";
 import { SharedString } from "../sharedString";
 import { generateStrings } from "./generateSharedStrings";
 /* tslint:disable:non-literal-fs-path */
 
 describe("SharedString Snapshot Version", () => {
-    const filebase: string = "src/test/sequenceTestSnapshot";
+    let filebase: string;
     const message = "SharedString snapshot format has changed." +
         "Please update the snapshotFormatVersion if appropriate " +
         "and then run npm test:newsnapfiles to create new snapshot test files.";
+
+    before(() => {
+        filebase = path.join(__dirname, "../../src/test/sequenceTestSnapshot");
+    });
 
     function generateSnapshotRebuildTest(testString: SharedString, i: number) {
         it(`string ${i + 1}`, async () => {

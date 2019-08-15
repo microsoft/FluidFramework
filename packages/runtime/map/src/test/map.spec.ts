@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { MockRuntime } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import * as map from "..";
@@ -92,10 +93,10 @@ describe("Routerlicious", () => {
                     assert.equal(value, sharedMap.get("test"));
                 });
 
-                it("Should be able to set a shared object as a key", () => {
+                it("Should be able to set a shared object handle as a key", () => {
                     const subMap = factory.create(runtime, "subMap");
-                    sharedMap.set("test", subMap);
-                    assert.equal(sharedMap.get("test"), subMap);
+                    sharedMap.set("test", subMap.handle);
+                    assert.equal(sharedMap.get<IComponentHandle>("test").path, subMap.id);
                 });
             });
 
@@ -129,19 +130,18 @@ describe("Routerlicious", () => {
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", "sixth");
                     const subMap = factory.create(runtime, "subMap");
-                    sharedMap.set("object", subMap);
+                    sharedMap.set("object", subMap.handle);
 
                     const serialized = (sharedMap as SharedMap).serialize();
                     const parsed = JSON.parse(serialized);
 
                     sharedMap.forEach((value, key) => {
-                        const type = parsed[key].type;
-                        if (type === "Plain") {
+                        if (!value.IComponentHandle) {
                             assert.equal(parsed[key].type, "Plain");
                             assert.equal(parsed[key].value, value);
                         } else {
-                            assert.equal(parsed[key].type, "Shared");
-                            assert.equal(parsed[key].value, subMap.id);
+                            assert.equal(parsed[key].type, "Plain");
+                            assert.equal(parsed[key].value.url, subMap.id);
                         }
                     });
                 });

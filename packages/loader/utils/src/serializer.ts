@@ -10,16 +10,15 @@ import {
     IComponentSerializer,
     ISerializedHandle,
 } from "@prague/component-core-interfaces";
-import { isSerializedHandle } from "@prague/utils";
 import { ComponentHandle } from "./componentHandle";
-import { debug } from "./debug";
+import { isSerializedHandle } from "./utils";
 
 /**
  * Retrieves the absolute URL for a handle
  */
 function toAbsoluteUrl(handle: IComponentHandle): string {
     let result = "";
-    let context: IComponentHandleContext = handle;
+    let context: IComponentHandleContext | undefined = handle;
 
     while (context) {
         if (context.path) {
@@ -32,8 +31,10 @@ function toAbsoluteUrl(handle: IComponentHandle): string {
     return result;
 }
 
+/**
+ * Component serializer implementation
+ */
 export class ComponentSerializer implements IComponentSerializer {
-
     public get IComponentSerializer() { return this; }
 
     public stringify(input: any, context: IComponentHandleContext, bind: IComponentHandle): string {
@@ -77,7 +78,6 @@ export class ComponentSerializer implements IComponentSerializer {
         return JSON.parse(
             input,
             (key, value) => {
-                debug(`${key} => ${JSON.stringify(value)}`);
                 if (!isSerializedHandle(value)) {
                     return value;
                 }

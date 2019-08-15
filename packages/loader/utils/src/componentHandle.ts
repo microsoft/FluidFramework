@@ -11,13 +11,16 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 
+/**
+ * Handle to a dynamically loaded component
+ */
 export class ComponentHandle implements IComponentHandle {
     public get IComponentRouter() { return this; }
     public get IComponentHandleContext() { return this; }
     public get IComponentHandle() { return this; }
 
     public readonly isAttached = true;
-    private componentP: Promise<IComponent>;
+    private componentP: Promise<IComponent> | undefined;
 
     constructor(
         public readonly path: string,

@@ -6,6 +6,7 @@
 /* tslint:disable:no-unsafe-any */
 /* tslint:disable:no-backbone-get-set-outside-model  */
 import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@prague/map";
 import { MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
@@ -49,12 +50,13 @@ describe("Directory", () => {
         await documentDeltaEventManager.pauseProcessing();
 
         // Create a directory on the root and propagate it to other documents
-        user1Document.getRoot().set(directoryId, SharedDirectory.create(user1Document.runtime));
+        const directory = SharedDirectory.create(user1Document.runtime);
+        user1Document.getRoot().set(directoryId, directory.handle);
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-        root1Directory = user1Document.getRoot().get(directoryId);
-        root2Directory = user2Document.getRoot().get(directoryId);
-        root3Directory = user3Document.getRoot().get(directoryId);
+        root1Directory = await user1Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
+        root2Directory = await user2Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
+        root3Directory = await user3Document.getRoot().get<IComponentHandle>(directoryId).get<ISharedDirectory>();
     });
 
     function expectAllValues(msg, key, path, value1, value2, value3) {
@@ -262,14 +264,18 @@ describe("Directory", () => {
         describe("Nested map support", () => {
             it("supports setting a map as a value", async () => {
                 const newMap = SharedMap.create(user1Document.runtime);
-                root1Directory.set("mapKey", newMap);
+                root1Directory.set("mapKey", newMap.handle);
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
-                const root1Map = root1Directory.get<ISharedMap>("mapKey");
-                const root2Map = root2Directory.get<ISharedMap>("mapKey");
-                const root3Map = root3Directory.get<ISharedMap>("mapKey");
+                const [root1Map, root2Map, root3Map] = await Promise.all([
+                    root1Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
+                    root2Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
+                    root3Directory.get<IComponentHandle>("mapKey").get<ISharedMap>(),
+                ]);
+
                 assert.ok(root1Map);
                 assert.ok(root2Map);
                 assert.ok(root3Map);
+
                 root2Map.set("testMapKey", "testMapValue");
                 await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
                 assert.equal(root3Map.get("testMapKey"), "testMapValue", "Wrong values in map in document 3");

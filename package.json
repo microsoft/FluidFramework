@@ -30,6 +30,7 @@
     "test:ci:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
     "test:full": "npm run test:ci:coverage",
+    "test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
     "tsc": "lerna run tsc --stream",
     "tslint": "lerna run tslint --no-sort --stream",
     "watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",

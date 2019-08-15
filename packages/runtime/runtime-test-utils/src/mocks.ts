@@ -6,7 +6,6 @@
 import {
     IComponentHandle,
     IComponentHandleContext,
-    IComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -33,7 +32,7 @@ import {
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { IHistorian } from "@prague/services-client";
-import { DebugLogger, Deferred } from "@prague/utils";
+import { ComponentSerializer, DebugLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
@@ -119,11 +118,12 @@ class MockDeltaConnection implements IDeltaConnection {
  * Mock implementation of IRuntime for testing that does nothing
  */
 export class MockRuntime extends EventEmitter
-    implements IComponentRuntime, IComponentHandleContext, IComponentSerializer {
+    implements IComponentRuntime, IComponentHandleContext {
 
-    public get IComponentSerializer(): IComponentSerializer { return this; }
     public get IComponentHandleContext(): IComponentHandleContext { return this; }
     public get IComponentRouter() { return this; }
+
+    public readonly IComponentSerializer = new ComponentSerializer();
 
     public readonly documentId: string;
     public readonly id: string;
@@ -244,14 +244,6 @@ export class MockRuntime extends EventEmitter
 
     public async requestComponent(request: IRequest): Promise<IResponse> {
         return null;
-    }
-
-    public stringify(value: any, context: IComponentHandleContext, bind: IComponentHandle): string {
-        return JSON.stringify(value);
-    }
-
-    public parse(value: string, context: IComponentHandleContext) {
-        return JSON.parse(value);
     }
 
     public error(err: any): void {}
