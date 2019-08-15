@@ -23,13 +23,12 @@ export class OwnedMapFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedMap> {
+        branchId: string): Promise<ISharedMap> {
 
         const map = new OwnedSharedMap(id, runtime, OwnedMapFactory.Type);
         this.registerValueTypes(map);
-        await map.load(minimumSequenceNumber, headerOrigin, services);
+        await map.load(branchId, services);
 
         return map;
     }

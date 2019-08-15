@@ -119,13 +119,11 @@ export class Stream extends SharedObject implements IStream {
     /**
      * Initialize the stream with a snapshot from the given storage.
      *
-     * @param minimumSequenceNumber - Not used
-     * @param headerOrigin - Not used
+     * @param branchId - Branch ID. Not used
      * @param storage - Storage service to read from
      */
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);

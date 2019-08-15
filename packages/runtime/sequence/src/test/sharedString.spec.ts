@@ -75,7 +75,7 @@ describe("SharedString", () => {
             };
 
             const sharedString2 = new SharedString(runtime, documentId);
-            await sharedString2.load(0, null/*headerOrigin*/, services);
+            await sharedString2.load(null/*branchId*/, services);
             await sharedString2.loaded;
 
             assert(sharedString.getText() === sharedString2.getText());

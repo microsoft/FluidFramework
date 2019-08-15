@@ -20,12 +20,11 @@ export class CellFactory implements ISharedObjectFactory {
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedCell> {
+        branchId: string): Promise<ISharedCell> {
 
         const cell = new SharedCell(id, document);
-        await cell.load(minimumSequenceNumber, headerOrigin, services);
+        await cell.load(branchId, services);
         return cell;
     }
 

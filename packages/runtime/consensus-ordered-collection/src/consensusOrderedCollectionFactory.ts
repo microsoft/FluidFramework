@@ -20,12 +20,11 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<IConsensusOrderedCollection> {
+        branchId: string): Promise<IConsensusOrderedCollection> {
 
         const collection = new ConsensusQueue(id, document);
-        await collection.load(minimumSequenceNumber, headerOrigin, services);
+        await collection.load(branchId, services);
         return collection;
     }
 
@@ -48,12 +47,11 @@ export class ConsensusStackFactory implements IConsensusOrderedCollectionFactory
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<IConsensusOrderedCollection> {
+        branchId: string): Promise<IConsensusOrderedCollection> {
 
         const collection = new ConsensusStack(id, document);
-        await collection.load(minimumSequenceNumber, headerOrigin, services);
+        await collection.load(branchId, services);
         return collection;
     }
 

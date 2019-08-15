@@ -351,15 +351,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected async loadContent(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read("header");
         assert(header);
 
         try {
-            await this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage);
+            await this.initialize(header, true, branchId, storage);
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -527,32 +526,20 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private loadHeader(
-        minimumSequenceNumber: number,
         header: string,
         shared: boolean,
-        originBranch: string): MergeTree.MergeTreeChunk {
+        branchId: string): MergeTree.MergeTreeChunk {
 
         const chunk = MergeTree.Snapshot.processChunk(header);
         const segs = this.segmentsFromSpecs(chunk.segmentTexts);
         this.client.mergeTree.reloadFromSegments(segs);
         if (shared) {
             // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.runtime.documentId ? 0 : 1;
+            const branching = branchId === this.runtime.documentId ? 0 : 1;
             this.collabStarted = true;
 
-            // Do not use minimumSequenceNumber - it's from the "future" in case compoennt is delay loaded.
-            // We need the one used when snapshot was created! That's chunk.chunkSequenceNumber
-            let msn = chunk.chunkSequenceNumber;
-
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner!
-            if (msn > minimumSequenceNumber) {
-                this.logger.sendErrorEvent({eventName: "SharedStringMsnTooHigh", msn, minimumSequenceNumber});
-                msn = minimumSequenceNumber;
-            }
-
             this.client.startCollaboration(
-                this.runtime.clientId, msn, branchId);
+                this.runtime.clientId, chunk.chunkSequenceNumber, branching);
         }
         return chunk;
     }
@@ -560,14 +547,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     // If loading from a snapshot load tardis messages
     private async loadTardis(
         rawMessages: Promise<string>,
-        originBranch: string,
+        branchId: string,
     ): Promise<void> {
         const messages = JSON.parse(Buffer.from(await rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
-        if (originBranch !== this.runtime.documentId) {
+        if (branchId !== this.runtime.documentId) {
             for (const message of messages) {
                 // Append branch information when transforming for the case of messages stashed with the snapshot
                 message.origin = {
-                    id: originBranch,
+                    id: branchId,
                     minimumSequenceNumber: message.minimumSequenceNumber,
                     sequenceNumber: message.sequenceNumber,
                 };
@@ -581,10 +568,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     private async initialize(
-        minimumSequenceNumber: number,
         header: string,
         shared: boolean,
-        originBranch: string,
+        branchId: string,
         services: IObjectStorageService): Promise<void> {
 
         // If loading from a snapshot load tardis messages
@@ -595,9 +581,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         // as document id isn't stable for spo
         // which leads to branch id being in correct
         const branch = this.runtime.options && this.runtime.options.enableBranching
-            ? originBranch : this.runtime.documentId;
+            ? branchId : this.runtime.documentId;
 
-        const chunk1 = this.loadHeader(minimumSequenceNumber, header, shared, branch);
+        const chunk1 = this.loadHeader(header, shared, branch);
         await this.loadBody(chunk1, services);
         return this.loadTardis(rawMessages, branch);
     }

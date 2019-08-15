@@ -21,9 +21,8 @@ export interface IConsensusOrderedCollectionFactory extends ISharedObjectFactory
     load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<IConsensusOrderedCollection>;
+        branchId: string): Promise<IConsensusOrderedCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusOrderedCollection;
 }

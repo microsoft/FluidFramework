@@ -16,9 +16,8 @@ export interface IConsensusRegisterCollectionFactory extends ISharedObjectFactor
     load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<IConsensusRegisterCollection>;
+        branchId: string): Promise<IConsensusRegisterCollection>;
 
     create(document: IComponentRuntime, id: string): IConsensusRegisterCollection;
 }

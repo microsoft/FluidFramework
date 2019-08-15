@@ -132,13 +132,12 @@ export class DirectoryFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedDirectory> {
+        branchId: string): Promise<ISharedDirectory> {
 
         const directory = new SharedDirectory(id, runtime);
         this.registerValueTypes(directory);
-        await directory.load(minimumSequenceNumber, headerOrigin, services);
+        await directory.load(branchId, services);
 
         return directory;
     }
@@ -454,8 +453,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService) {
 
         const header = await storage.read(snapshotFileName);

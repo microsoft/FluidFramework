@@ -200,10 +200,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         return this.context.branch;
     }
 
-    public get minimumSequenceNumber(): number {
-        return this.context.minimumSequenceNumber;
-    }
-
     public get submitFn(): (type: MessageType, contents: any) => number {
         return this.submit;
     }

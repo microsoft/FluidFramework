@@ -385,12 +385,11 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string,
+        branchId: string,
     ): Promise<ISharedObject> {
         const sharedObject = new SparseMatrix(document, id);
-        await sharedObject.load(minimumSequenceNumber, headerOrigin, services);
+        await sharedObject.load(branchId, services);
         return sharedObject;
     }
 

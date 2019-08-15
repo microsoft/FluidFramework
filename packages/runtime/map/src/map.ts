@@ -101,13 +101,12 @@ export class MapFactory implements ISharedObjectFactory {
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedMap> {
+        branchId: string): Promise<ISharedMap> {
 
         const map = new SharedMap(id, runtime);
         this.registerValueTypes(map);
-        await map.load(minimumSequenceNumber, headerOrigin, services);
+        await map.load(branchId, services);
 
         return map;
     }
@@ -433,8 +432,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService) {
 
         const header = await storage.read(snapshotFileName);
@@ -445,14 +443,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
-            minimumSequenceNumber,
-            headerOrigin,
+            branchId,
             contentStorage);
     }
 
     protected async loadContent(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         services: IObjectStorageService): Promise<void> {
         return;
     }

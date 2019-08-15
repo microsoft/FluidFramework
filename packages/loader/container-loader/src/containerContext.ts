@@ -103,10 +103,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return this.container.parentBranch;
     }
 
-    public get minimumSequenceNumber(): number | undefined {
-        return this._minimumSequenceNumber;
-    }
-
     public get connectionState(): ConnectionState {
         return this.container.connectionState;
     }
@@ -143,7 +139,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     public legacyMessaging = true;
 
     private runtime: IRuntime | undefined;
-    private readonly _minimumSequenceNumber: number | undefined;
 
     constructor(
         private readonly container: Container,
@@ -165,7 +160,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly version: string,
     ) {
         super();
-        this._minimumSequenceNumber = attributes.minimumSequenceNumber;
         this.logger = container.subLogger;
     }
 

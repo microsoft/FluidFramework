@@ -31,19 +31,17 @@ export class StreamFactory implements ISharedObjectFactory {
      *
      * @param runtime - The ComponentRuntime that this stream will be associated with
      * @param id - Unique ID for the new stream
-     * @param minimumSequenceNumber - Not used
      * @param services - Services with the object storage to load from
-     * @param headerOrigin - Not used
+     * @param branchId - branch ID (not used)
      */
     public async load(
         runtime: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedObject> {
+        branchId: string): Promise<ISharedObject> {
 
         const stream = new Stream(runtime, id);
-        await stream.load(minimumSequenceNumber, headerOrigin, services);
+        await stream.load(branchId, services);
 
         return stream;
     }

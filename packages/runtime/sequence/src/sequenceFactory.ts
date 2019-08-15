@@ -20,12 +20,11 @@ export class SharedStringFactory implements ISharedObjectFactory {
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedObject> {
+        branchId: string): Promise<ISharedObject> {
 
         const sharedString = new SharedString(document, id);
-        await sharedString.load(minimumSequenceNumber, headerOrigin, services);
+        await sharedString.load(branchId, services);
         return sharedString;
     }
 
@@ -45,12 +44,11 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedObject> {
+        branchId: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedObjectSequence<object>(document, id);
-        await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
+        await sharedSeq.load(branchId, services);
         return sharedSeq;
     }
 
@@ -70,12 +68,11 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<ISharedObject> {
+        branchId: string): Promise<ISharedObject> {
 
         const sharedSeq = new SharedNumberSequence(document, id);
-        await sharedSeq.load(minimumSequenceNumber, headerOrigin, services);
+        await sharedSeq.load(branchId, services);
         return sharedSeq;
     }
 

@@ -146,13 +146,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * A shared object, after construction, can either be loaded in the case that it is already part of
      * a shared document. Or later attached if it is being newly added.
      *
-     * @param minimumSequenceNumber - the minimum sequence number at time of load
-     * @param headerOrigin - the document ID
+     * @param branchId - branch ID
      * @param services - services used by the shared object
      */
     public async load(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         services: ISharedObjectServices): Promise<void> {
 
         this.services = services;
@@ -160,8 +158,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         await this.getOwnerSnapshot(services.objectStorage);
 
         await this.loadCore(
-            minimumSequenceNumber,
-            headerOrigin,
+            branchId,
             services.objectStorage);
         this.attachDeltaHandler();
     }
@@ -261,13 +258,11 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Allows the distributed data type to perform custom loading
      *
-     * @param minimumSequenceNumber - the minimum sequence number at time of load
-     * @param headerOrigin - the document ID
+     * @param branchId - branch ID
      * @param services - storage used by the shared object
      */
     protected abstract loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         services: IObjectStorageService): Promise<void>;
 
     /**

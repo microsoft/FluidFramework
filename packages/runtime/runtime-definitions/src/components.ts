@@ -309,7 +309,6 @@ export interface IHostRuntime extends IRuntime {
     readonly storage: IDocumentStorageService;
     readonly connectionState: ConnectionState;
     readonly branch: string;
-    readonly minimumSequenceNumber: number;
     readonly loader: ILoader;
     readonly logger: ITelemetryLogger;
     readonly flushMode: FlushMode;

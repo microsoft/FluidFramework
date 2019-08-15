@@ -42,7 +42,6 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
-        private readonly minimumSequenceNumber: number,
         private readonly attributes: IChannelAttributes | undefined,
     ) {
     }
@@ -134,7 +133,6 @@ export class RemoteChannelContext implements IChannelContext {
         this.channel = await factory.load(
             this.runtime,
             this.id,
-            this.minimumSequenceNumber,
             services,
             this.branch);
 

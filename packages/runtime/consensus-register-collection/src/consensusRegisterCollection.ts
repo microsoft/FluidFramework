@@ -220,8 +220,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);

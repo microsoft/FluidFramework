@@ -188,14 +188,12 @@ export class SharedCell extends SharedObject implements ISharedCell {
     /**
      * Load cell from snapshot
      *
-     * @param minimumSequenceNumber - Not used
-     * @param headerOrigin - Not used
+     * @param branchId - Not used
      * @param storage - the storage to get the snapshot from
      * @returns - promise that resolved when the load is completed
      */
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
         const rawContent = await storage.read(snapshotFileName);

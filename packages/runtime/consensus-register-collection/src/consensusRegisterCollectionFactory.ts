@@ -19,12 +19,11 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
     public async load(
         document: IComponentRuntime,
         id: string,
-        minimumSequenceNumber: number,
         services: ISharedObjectServices,
-        headerOrigin: string): Promise<IConsensusRegisterCollection> {
+        branchId: string): Promise<IConsensusRegisterCollection> {
 
         const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Type);
-        await collection.load(minimumSequenceNumber, headerOrigin, services);
+        await collection.load(branchId, services);
         return collection;
     }
 

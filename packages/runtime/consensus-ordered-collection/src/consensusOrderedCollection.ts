@@ -153,8 +153,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     }
 
     protected async loadCore(
-        minimumSequenceNumber: number,
-        headerOrigin: string,
+        branchId: string,
         storage: IObjectStorageService): Promise<void> {
 
         return this.data.load(this.runtime, storage);

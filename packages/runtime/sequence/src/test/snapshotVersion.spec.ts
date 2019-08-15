@@ -46,7 +46,7 @@ describe("SharedString Snapshot Version", () => {
                 objectStorage: historian,
             };
             const sharedString = new SharedString(runtime, documentId);
-            await sharedString.load(0, null/*headerOrigin*/, services);
+            await sharedString.load(null/*branchId*/, services);
             await sharedString.loaded;
 
             // test rebuilt sharedString

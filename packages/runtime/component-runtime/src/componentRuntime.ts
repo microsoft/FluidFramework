@@ -167,7 +167,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                     this.registry,
                     new Map(),
                     componentContext.branch,
-                    this.deltaManager.minimumSequenceNumber,
                     undefined);
                 const deferred = new Deferred<IChannelContext>();
                 deferred.resolve(channelContext);
@@ -431,7 +430,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.registry,
                         flatBlobs,
                         origin,
-                        this.deltaManager.minimumSequenceNumber,
                         {
                             snapshotFormatVersion: undefined,
                             type: attachMessage.type,
