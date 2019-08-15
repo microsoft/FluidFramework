@@ -23,14 +23,20 @@ export class LesscTask extends LeafTask {
         }
         const srcPath = unquote(args[1]);
         const dstPath = unquote(args[2]);
-        const srcTimeP = statAsync(path.join(this.node.pkg.directory, srcPath));
-        const dstTimeP = statAsync(path.join(this.node.pkg.directory, dstPath));
-        const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
-        const result = srcTime <= dstTime;
-        if (!result) {
-            this.logVerboseNotUpToDate();
+        try {
+            const srcTimeP = statAsync(path.join(this.node.pkg.directory, srcPath));
+            const dstTimeP = statAsync(path.join(this.node.pkg.directory, dstPath));
+            const [srcTime, dstTime] = await Promise.all([srcTimeP, dstTimeP]);
+            const result = srcTime <= dstTime;
+            if (!result) {
+                this.logVerboseNotUpToDate();
+            }
+            return result;
+        } catch (e) {
+            logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
+            this.logVerboseTrigger("failed to get file stats");
+            return false;
         }
-        return result;
     };
 }
 

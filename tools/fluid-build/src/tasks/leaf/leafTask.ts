@@ -10,7 +10,7 @@ import { BuildResult, BuildPackage, summarizeBuildResult } from "../../buildGrap
 import { logStatus, logVerbose } from "../../common/logging";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
-import { getExecutableFromCommand, statAsync, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
+import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
 import * as chalk from "chalk";
 export abstract class LeafTask extends Task {
 
