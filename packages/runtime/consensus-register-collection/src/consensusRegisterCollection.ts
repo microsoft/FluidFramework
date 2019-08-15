@@ -248,10 +248,6 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     protected onDisconnect() {
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
-        while (this.promiseResolveQueue.length > 0) {
-            const pending = this.promiseResolveQueue.shift();
-            pending.reject("Client got disconnected");
-        }
     }
 
     protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
