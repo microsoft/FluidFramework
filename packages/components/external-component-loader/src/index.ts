@@ -3,13 +3,12 @@
 * Licensed under the MIT License.
 */
 
-import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { UrlRegistry } from "./urlRegistry";
 import { WaterParkLoaderInstantiationFactory, WaterParkLoaderName } from "./waterParkLoader";
+import { WaterParkModuleInstantiationFactory } from "./waterParkModuleInstantiationFactory";
 import { WaterParkViewInstantiationFactory, WaterParkViewName } from "./waterParkView";
 
-export const fluidExport = new SimpleModuleInstantiationFactory(
-    WaterParkLoaderName,
+export const fluidExport = new WaterParkModuleInstantiationFactory(
     new UrlRegistry(
         new Map([
             [WaterParkLoaderName, Promise.resolve(WaterParkLoaderInstantiationFactory)],

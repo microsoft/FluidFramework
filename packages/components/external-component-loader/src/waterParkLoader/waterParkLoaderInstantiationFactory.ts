@@ -4,10 +4,13 @@
 */
 
 import {  SharedComponentFactory } from "@prague/aqueduct";
+import { SharedDirectory } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import { ExternalComponentLoader } from "./externalComponentLoader";
 
 export const WaterParkLoaderInstantiationFactory: IComponentFactory = new SharedComponentFactory(
     ExternalComponentLoader,
-    [],
+    [
+        SharedDirectory.getFactory(),
+    ],
 );

@@ -9,9 +9,9 @@ import {
 } from "@prague/component-core-interfaces";
 import {
     IContainerContext,
-    IRuntime,
 } from "@prague/container-definitions";
 import { ComponentRegistryTypes, ContainerRuntime } from "@prague/container-runtime";
+import { IHostRuntime } from "@prague/runtime-definitions";
 
 export class SimpleContainerRuntimeFactory {
     public static readonly defaultComponentId = "default";
@@ -24,7 +24,7 @@ export class SimpleContainerRuntimeFactory {
         chaincode: string,
         registry: ComponentRegistryTypes,
         generateSummaries: boolean = false,
-    ): Promise<IRuntime> {
+    ): Promise<IHostRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler.bind(this), { generateSummaries });
         // debug("runtime loaded.");
@@ -32,30 +32,47 @@ export class SimpleContainerRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             // debug(`createAndAttachComponent(chaincode=${chaincode})`);
-            runtime.createComponent(this.defaultComponentId, chaincode)
-                .then(async (componentRuntime) => {
-
-                    // If the component supports forging we need to forge it.
-                    const result = await componentRuntime.request({ url: "/" });
-                    if (result.status !== 200 || result.mimeType !== "prague/component") {
-                        return Promise.reject("Default component is not a component.");
-                    }
-
-                    const component = result.value as IComponent;
-                    // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
-                    const forge = component.IComponentForge;
-                    if (forge) {
-                        await forge.forge();
-                    }
-
-                    componentRuntime.attach();
-                })
-                .catch((error) => {
-                    context.error(error);
-                });
+            // tslint:disable-next-line: no-floating-promises
+            this.createAndAttachComponent(runtime, this.defaultComponentId, chaincode);
         }
 
         return runtime;
+    }
+
+    /**
+     * Calls create, initialize, and attach on a new component.
+     *
+     * @param runtime - It is the runtime for the container.
+     * @param id - unique component id for the new component
+     * @param pkg - package name for the new component
+     */
+    public static async createAndAttachComponent<T>(
+        runtime: IHostRuntime,
+        id: string,
+        pkg: string): Promise<T> {
+            let component: IComponent;
+            try {
+                const componentRuntime = await runtime.createComponent(id, pkg);
+
+                // If the component supports forging we need to forge it.
+                const result = await componentRuntime.request({ url: "/" });
+                if (result.status !== 200 || result.mimeType !== "prague/component") {
+                    return Promise.reject("Default component is not a component.");
+                }
+
+                component = result.value as IComponent;
+                // We call forge the component if it supports it. Forging is the opportunity to pass props in on creation.
+                const forge = component.IComponentForge;
+                if (forge) {
+                    await forge.forge();
+                }
+
+                componentRuntime.attach();
+            } catch (error) {
+                runtime.error(error);
+                throw error;
+            }
+            return component as T;
     }
 
     /**

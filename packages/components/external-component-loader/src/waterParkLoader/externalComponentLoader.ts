@@ -3,14 +3,14 @@
 * Licensed under the MIT License.
 */
 
-import { SharedComponent } from "@prague/aqueduct";
+import { PrimedComponent } from "@prague/aqueduct";
 import {
   IComponent,
   IComponentHTMLVisual,
+  IComponentLoadable,
 } from "@prague/component-core-interfaces";
 import { IPraguePackage } from "@prague/container-definitions";
 import * as uuid from "uuid";
-import { ExternalComponentView, WaterParkViewName } from "../waterParkView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json") as IPraguePackage;
@@ -19,7 +19,9 @@ export const WaterParkLoaderName = `${pkg.name}-loader`;
 /**
  * Component that loads extneral components via their url
  */
-export class ExternalComponentLoader extends SharedComponent implements IComponentHTMLVisual {
+export class ExternalComponentLoader extends PrimedComponent
+    implements IComponentHTMLVisual {
+
     private static readonly defaultComponents = [
         "@chaincode/pinpoint-editor",
         "@chaincode/todo",
@@ -29,12 +31,18 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
         "@chaincode/pond",
         "@chaincode/clicker",
     ];
-    public get IComponentHTMLVisual() { return this; }
+    private readonly viewComponentMapID: string = "ViewComponentUrl";
+    private viewComponentP: Promise<IComponent>;
 
-    private viewComponent: ExternalComponentView;
-    private readonly viewComponentID = `WaterViewComponentID`;
     private savedElement: HTMLElement;
     private error: string;
+
+    public get IComponentHTMLVisual() { return this; }
+
+    public setViewComponent(component: IComponentLoadable) {
+        this.root.set(this.viewComponentMapID, component.IComponentLoadable.url);
+        this.viewComponentP = Promise.resolve(component);
+    }
 
     public render(element: HTMLElement) {
 
@@ -56,10 +64,6 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
 
             const inputDiv = document.createElement("div");
             mainDiv.appendChild(inputDiv);
-            inputDiv.style.border = "1px solid lightgray";
-            inputDiv.style.maxWidth = "800px";
-            inputDiv.style.margin = "5px";
-            inputDiv.style.padding = "5px";
             const dataList = document.createElement("datalist");
             inputDiv.append(dataList);
             dataList.id = uuid();
@@ -86,18 +90,14 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
                 inputDiv.appendChild(errorDiv);
                 errorDiv.innerText = this.error;
             }
-            const listDiv = document.createElement("div");
-            mainDiv.append(listDiv);
-            this.viewComponent.render(listDiv);
         }
     }
 
-    protected async componentInitializingFirstTime() {
-        await this.createAndAttachComponent(this.viewComponentID, WaterParkViewName);
-    }
-
     protected async componentHasInitialized() {
-        this.viewComponent = await this.getComponent(this.viewComponentID);
+        const viewComponentUrl: string = this.root.get(this.viewComponentMapID);
+        if (viewComponentUrl) {
+            this.viewComponentP = this.getComponent(viewComponentUrl);
+        }
     }
 
     private async inputClick(input: HTMLInputElement) {
@@ -111,14 +111,21 @@ export class ExternalComponentLoader extends SharedComponent implements ICompone
             }
 
             try {
-                const componentId = uuid();
-                let component = await this.createAndAttachComponent<IComponent>(componentId, url);
-                if (component.IComponentCollection !== undefined) {
-                    // tslint:disable-next-line: await-promise
-                    component = await component.IComponentCollection.createCollectionItem();
-                }
-                if (component.IComponentLoadable) {
-                    this.viewComponent.createCollectionItem(component.IComponentLoadable);
+                if (this.viewComponentP) {
+                    const viewComponent = await this.viewComponentP;
+                    if (viewComponent && viewComponent.IComponentCollection) {
+                        const componentId = uuid();
+                        let component = await this.createAndAttachComponent<IComponent>(componentId, url);
+                        if (component.IComponentCollection !== undefined) {
+                            // tslint:disable-next-line: await-promise
+                            component = await component.IComponentCollection.createCollectionItem();
+                        }
+                        viewComponent.IComponentCollection.createCollectionItem(component.IComponentLoadable);
+                    } else {
+                        throw new Error("View component is empty or is not an IComponentCollection!!");
+                    }
+                } else {
+                    throw new Error("View component promise not set!!");
                 }
             } catch (error) {
                 this.error = error;

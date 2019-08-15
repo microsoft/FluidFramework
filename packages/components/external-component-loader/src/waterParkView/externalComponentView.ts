@@ -7,6 +7,7 @@ import { PrimedComponent } from "@prague/aqueduct";
 import {
   IComponent,
   IComponentHTMLVisual,
+  IComponentLoadable,
   IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
 import { IPraguePackage } from "@prague/container-definitions";
@@ -32,12 +33,26 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
 
     public createCollectionItem<T>(options: T): IComponent  {
         // tslint:disable-next-line: no-string-literal
-        const url = options["url"];
+        const url: string = options["url"];
         if (!url) {
             throw new Error("Options do not contain any url!!");
         }
-        this.sequence.insert(this.sequence.getLength(), [url]);
-        return options as IComponent;
+
+        let loadableComponent: IComponentLoadable;
+        // tslint:disable-next-line: no-floating-promises
+        this.getComponent<IComponent>(url)
+            .then((component) => {
+                if (component.IComponentLoadable) {
+                    this.sequence.insert(this.sequence.getLength(), [url]);
+                    loadableComponent = { url, IComponentLoadable: component.IComponentLoadable };
+                } else {
+                    throw new Error("Component is not an instance of IComponentLoadable!!");
+                }
+            })
+            .catch((error) => {
+                throw error;
+            });
+        return loadableComponent;
     }
 
     public removeCollectionItem(instance: IComponent): void {
