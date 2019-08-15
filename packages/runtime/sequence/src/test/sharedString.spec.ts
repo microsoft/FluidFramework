@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TextSegment } from "@prague/merge-tree";
 import { ITree } from "@prague/protocol-definitions";
 import { ISharedObjectServices } from "@prague/runtime-definitions";
 import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@prague/runtime-test-utils";
@@ -139,7 +138,7 @@ describe("SharedString", () => {
             sharedString.initializeLocal();
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
+                sharedString.insertText(0, `${insertText}${i}`);
             }
 
             let tree = sharedString.snapshot();
@@ -154,7 +153,7 @@ describe("SharedString", () => {
             await CreateStringAndCompare(tree);
 
             for (let i = 0; i < segmentCount; i = i + 1) {
-                sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}-${i}`));
+                sharedString.insertText(0, `${insertText}-${i}`);
             }
 
             // TODO: Due to segment packing, we have only "header" and no body

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Snapshot, TextSegment } from "@prague/merge-tree";
+import { Snapshot } from "@prague/merge-tree";
 import * as mocks from "@prague/runtime-test-utils";
 import { SharedString } from "../sharedString";
 
@@ -16,7 +16,7 @@ export function* generateStrings() {
     sharedString.initializeLocal();
     // small enough so snapshot won't have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) / 2; ++i) {
-        sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
+        sharedString.insertText(0, `${insertText}${i}`);
     }
 
     yield sharedString;
@@ -25,7 +25,7 @@ export function* generateStrings() {
     sharedString.initializeLocal();
     // big enough that snapshot will have body
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
+        sharedString.insertText(0, `${insertText}${i}`);
     }
 
     yield sharedString;
@@ -34,7 +34,7 @@ export function* generateStrings() {
     sharedString.initializeLocal();
     // very big sharedString
     for (let i = 0; i < Snapshot.sizeOfFirstChunk; ++i) {
-        sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}-${i}`));
+        sharedString.insertText(0, `${insertText}-${i}`);
     }
 
     yield sharedString;
@@ -43,7 +43,7 @@ export function* generateStrings() {
     sharedString.initializeLocal();
     // sharedString with markers
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
+        sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
         sharedString.insertMarker(i, 1, {
@@ -60,7 +60,7 @@ export function* generateStrings() {
     sharedString.initializeLocal();
     // sharedString with annotations
     for (let i = 0; i < (Snapshot.sizeOfFirstChunk / insertText.length) * 2; ++i) {
-        sharedString.client.insertSegmentLocal(0, new TextSegment(`${insertText}${i}`));
+        sharedString.insertText(0, `${insertText}${i}`);
     }
     for (let i = 0; i < sharedString.getLength(); i += 70) {
        sharedString.annotateRange(i, i + 10, {bold: true});
