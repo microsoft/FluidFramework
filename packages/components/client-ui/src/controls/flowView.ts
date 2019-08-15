@@ -5704,7 +5704,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
-                refseq: this.client.getCurrentSeq(),
+                refseq: this.sharedString.getCurrentSeq(),
                 type: "selection",
             };
             this.presenceSignal.submitPresence(presenceInfo);

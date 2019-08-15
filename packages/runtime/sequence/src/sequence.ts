@@ -339,6 +339,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return this.client.getStackContext(startPos, rangeLabels);
     }
 
+    public getCurrentSeq() {
+        return this.client.getCurrentSeq();
+    }
+
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {
         // insert first, so local references can slide to the inserted seg
         // if any
