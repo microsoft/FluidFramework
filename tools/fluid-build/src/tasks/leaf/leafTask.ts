@@ -12,6 +12,7 @@ import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
 import * as chalk from "chalk";
+import { string } from "prop-types";
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
@@ -68,7 +69,18 @@ export abstract class LeafTask extends Task {
 
         if (ret.error) {
             console.log(`${this.node.pkg.nameColored}: error during command ${this.command}`)
-            console.log(`${this.node.pkg.nameColored}: ${ret.stdout}\n${ret.stderr}`);
+            let errorMessages = ret.stdout;
+            if (ret.stderr) {
+                errorMessages = `${errorMessages}\n${ret.stderr}`;
+            }
+            errorMessages = errorMessages.trim();
+            if (options.vscode) {
+                errorMessages = this.getVsCodeErrorMessages(errorMessages);
+            } else {
+                errorMessages = errorMessages.replace(/\n/g, `\n${this.node.pkg.nameColored}: `);
+                errorMessages = `${this.node.pkg.nameColored}: ${errorMessages}`;
+            }
+            console.error(errorMessages);
             return this.execDone(startTime, BuildResult.Failed);
         }
 
@@ -180,6 +192,8 @@ export abstract class LeafTask extends Task {
 
     // For called when the task has successfully executed
     protected async markExecDone(): Promise<void> { }
+
+    protected getVsCodeErrorMessages(errorMessages: string) { return errorMessages; }
 
     protected logVerboseNotUpToDate() {
         this.logVerboseTrigger("not up to date");

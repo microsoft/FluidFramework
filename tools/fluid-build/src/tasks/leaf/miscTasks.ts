@@ -91,8 +91,8 @@ export class GenVerTask extends LeafTask {
         try {
             const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgVersion = \"([0-9.]+)\";.*/m);
-            return (match !== null && this.node.pkg.version === match[1]);
+            const match = content.match(/.*\nexport const pkgName = \"(.*)\";\nexport const pkgVersion = \"([0-9.]+)\";.*/m);
+            return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
         } catch {
         }
         return false;

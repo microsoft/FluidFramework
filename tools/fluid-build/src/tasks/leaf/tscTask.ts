@@ -101,6 +101,16 @@ export class TscTask extends LeafTask {
         return tsBuildInfoFileRoot;
     }
 
+    protected getVsCodeErrorMessages(errorMessages: string) {
+        const lines = errorMessages.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.length && line[0] !== ' ') {
+                lines[i] = `${this.node.pkg.directory}/${line}`;
+            }
+        }
+        return lines.join("\n");
+    }
     private get tsBuildInfoFileFullPath() {
         return this.getPackageFileFullPath(this.tsBuildInfoFile);
     }

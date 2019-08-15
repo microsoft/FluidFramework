@@ -13,6 +13,7 @@ interface FastBuildOptions {
     clean: boolean;
     buildScript: string;
     build?: boolean;
+    vscode: boolean;
     args: string[];
     root?: string;
 }
@@ -29,6 +30,7 @@ export const options: FastBuildOptions = {
     args: [],
     root: process.env["_FLUID_ROOT_"],
     buildScript: "build",
+    vscode: false
 };
 
 function printUsage() {
@@ -46,6 +48,7 @@ Options:
   -s --script <name>     NPM script to execute (default:build)
      --timer             Time separate phases
   -v --verbose           Verbose messages
+     --vscode            Output error message to work with default problem matcher in vscode
 `);
 }
 
@@ -115,6 +118,11 @@ export function parseOptions(argv: string[]) {
             break;
         }
 
+        if (arg === "--vscode") {
+            options.vscode = true;
+            continue;
+        }
+        
         // These options are not public
         if (arg === "--nolint") {
             options.nolint = true;
