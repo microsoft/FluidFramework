@@ -36,6 +36,8 @@ export interface IProvideKeyValue {
 export interface IKeyValue extends IProvideKeyValue {
     set(key: string, value: any): void;
     get(key: string): any;
+    entries(): IterableIterator<[string, any]>;
+    delete(key: string): boolean;
 }
 
 declare module "@prague/component-core-interfaces" {
@@ -66,6 +68,14 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     public get(key: string): any {
         return this.root.get(key);
+    }
+
+    public entries() {
+        return this.root.entries();
+    }
+
+    public delete(key: string): boolean {
+        return this.root.delete(key);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
