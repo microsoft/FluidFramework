@@ -12,7 +12,8 @@ import {
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
-import { posix } from "path";
+import * as assert from "assert";
+import * as path from "path";
 import { debug } from "./debug";
 import {
     IDirectory,
@@ -26,6 +27,12 @@ import {
 } from "./interfaces";
 import { ILocalValue, LocalValueMaker, ValueTypeLocalValue } from "./localValues";
 
+// path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
+// enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
+// assert here to help protect in case path-browserify changes in the future, because we only want posix path
+// functionality.
+const posix = path.posix || path;
+assert(posix.sep === "/");
 const snapshotFileName = "header";
 
 interface IDirectoryMessageHandler {
@@ -272,10 +279,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Get a SubDirectory within the directory, in order to use relative paths from that location.
-     * @param path - path of the SubDirectory to get, relative to the root
+     * @param rootRelativePath - path of the SubDirectory to get, relative to the root
      */
-    public getWorkingDirectory(path: string): SubDirectory {
-        const absolutePath = this.makeAbsolute(path);
+    public getWorkingDirectory(rootRelativePath: string): SubDirectory {
+        const absolutePath = this.makeAbsolute(rootRelativePath);
         if (absolutePath === posix.sep) {
             return this.root;
         }
@@ -412,12 +419,12 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      */
     public makeDirectoryValueOpEmitter(
         key: string,
-        path: string,
+        absolutePath: string,
     ): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
             const op: IDirectoryValueTypeOperation = {
                 key,
-                path,
+                path: absolutePath,
                 type: "act",
                 value: {
                     opName,
@@ -426,7 +433,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             };
 
             this.submitDirectoryMessage(op);
-            const event: IDirectoryValueChanged = { key, path, previousValue };
+            const event: IDirectoryValueChanged = { key, path: absolutePath, previousValue };
             this.emit("valueChanged", event, true, null);
         };
         return { emit };
@@ -502,10 +509,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
     /**
      * Converts the given relative path to absolute against the root.
-     * @param path - the path to convert
+     * @param relativePath - the path to convert
      */
-    private makeAbsolute(path: string): string {
-        return posix.resolve(posix.sep, path);
+    private makeAbsolute(relativePath: string): string {
+        return posix.resolve(posix.sep, relativePath);
     }
 
     /**
@@ -514,12 +521,12 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
      * is to convert that information into a real object for local usage.
      * @param key - key of element being converted
-     * @param path - path of element being converted
+     * @param absolutePath - path of element being converted
      * @param serializable - the remote information that we can convert into a real object
      */
     private async makeLocal(
         key: string,
-        path: string,
+        absolutePath: string,
         serializable: ISerializableValue,
     ): Promise<ILocalValue> {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
@@ -527,7 +534,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         } else {
             return this.localValueMaker.fromSerializable(
                 serializable,
-                this.makeDirectoryValueOpEmitter(key, path),
+                this.makeDirectoryValueOpEmitter(key, absolutePath),
             );
         }
     }
@@ -935,10 +942,10 @@ export class SubDirectory implements IDirectory {
 
     /**
      * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
-     * @param path - Path of the SubDirectory to get, relative to this SubDirectory
+     * @param relativePath - Path of the SubDirectory to get, relative to this SubDirectory
      */
-    public getWorkingDirectory(path: string): SubDirectory {
-        return this.directory.getWorkingDirectory(this.makeAbsolute(path));
+    public getWorkingDirectory(relativePath: string): SubDirectory {
+        return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
     /**
