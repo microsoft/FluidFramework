@@ -52,7 +52,7 @@ export class TableDocument extends PrimedComponent implements ITable {
         ],
     );
 
-    public  get numCols()    { return this.maybeCols!.client.getLength(); }
+    public  get numCols()    { return this.maybeCols!.getLength(); }
     public  get numRows()    { return this.matrix.numRows; }
 
     private get matrix()        { return this.maybeMatrix!; }
@@ -107,7 +107,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public getRowProperties(row: number): PropertySet {
-        return this.maybeRows.client.getPropertiesAtPosition(row);
+        return this.maybeRows.getPropertiesAtPosition(row);
     }
 
     public annotateCols(startCol: number, endCol: number, properties: PropertySet, op?: ICombiningOp) {
@@ -115,7 +115,7 @@ export class TableDocument extends PrimedComponent implements ITable {
     }
 
     public getColProperties(col: number): PropertySet {
-        return this.maybeCols.client.getPropertiesAtPosition(col);
+        return this.maybeCols.getPropertiesAtPosition(col);
     }
 
     // For internal use by TableSlice: Please do not use.

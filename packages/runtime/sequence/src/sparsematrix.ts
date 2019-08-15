@@ -265,7 +265,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     // }
 
     public get numRows() {
-        return positionToRowCol(this.client.getLength()).row;
+        return positionToRowCol(this.getLength()).row;
     }
 
     public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {

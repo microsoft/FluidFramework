@@ -114,12 +114,12 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             const segments = MergeTree.loadSegments(starterText, 0, true);
             for (const segment of segments) {
                 if (MergeTree.TextSegment.is(segment)) {
-                    newString.insertText(newString.client.getLength(), segment.text,
+                    newString.insertText(newString.getLength(), segment.text,
                     segment.properties);
                 } else {
                     // assume marker
                     const marker = segment as MergeTree.Marker;
-                    newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+                    newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
                 }
             }
             this.rootView.set("text", newString.handle);
@@ -190,7 +190,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
                 container.trackInsights(insightsMap);
             });
 
-        if (this.sharedString.client.getLength() > 0) {
+        if (this.sharedString.getLength() > 0) {
             theFlow.render(0, true);
         }
         theFlow.timeToEdit = theFlow.timeToImpression = performanceNow();

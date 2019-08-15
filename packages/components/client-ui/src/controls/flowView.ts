@@ -3062,7 +3062,7 @@ function getLocalRefPos(flowView: FlowView, localRef: MergeTree.LocalReference) 
 }
 
 function getContainingSegment(flowView: FlowView, pos: number): ISegmentOffset {
-    return flowView.client.getContainingSegment(pos);
+    return flowView.sharedString.getContainingSegment(pos);
 }
 
 function findTile(flowView: FlowView, startPos: number, tileType: string, preceding: boolean) {
@@ -3445,7 +3445,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     /* tslint:disable:insecure-random */
     public createBookmarks(k: number) {
-        const len = this.sharedString.client.getLength();
+        const len = this.sharedString.getLength();
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
@@ -3977,7 +3977,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public cursorFwd() {
-        if (this.cursor.pos < (this.client.getLength() - 1)) {
+        if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
             this.cursor.pos++;
 
             const segoff = this.sharedString.getContainingSegment(this.cursor.pos);
@@ -4370,7 +4370,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.render(FlowView.docStartPosition);
                 } else if (e.keyCode === KeyCode.end) {
                     const halfport = Math.floor(this.viewportCharCount() / 2);
-                    const topChar = this.client.getLength() - halfport;
+                    const topChar = this.sharedString.getLength() - halfport;
                     this.cursor.pos = topChar;
                     if (this.modes.showCursorLocation) {
                         this.cursorLocation();
@@ -4379,7 +4379,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     this.render(topChar);
                 } else if (e.keyCode === KeyCode.rightArrow) {
                     this.undoRedoManager.closeCurrentOperation();
-                    if (this.cursor.pos < (this.client.getLength() - 1)) {
+                    if (this.cursor.pos < (this.sharedString.getLength() - 1)) {
                         if (this.getMathViewMarker()) {
                             const marker = getContainingSegment(this, this.cursor.pos).segment as IMathViewMarker;
                             this.mathComponentViewCursorFwd(marker);
@@ -4429,7 +4429,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     } else {
                         this.clearSelection();
                     }
-                    const maxPos = this.client.getLength() - 1;
+                    const maxPos = this.sharedString.getLength() - 1;
                     if (this.viewportEndPos > maxPos) {
                         this.viewportEndPos = maxPos;
                     }
@@ -5398,7 +5398,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 }
             }
         } else {
-            const len = this.client.getLength();
+            const len = this.sharedString.getLength();
             const halfport = Math.floor(this.viewportCharCount() / 2);
             if ((up && (this.topChar === 0)) || ((!up) && (this.topChar > (len - halfport)))) {
                 return;
@@ -5418,7 +5418,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public render(topChar?: number, changed = false) {
-        const len = this.client.getLength();
+        const len = this.sharedString.getLength();
         if (len === 0) {
             return;
         }
@@ -5455,7 +5455,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         this.emit("render", {
             overlayMarkers: renderOutput.overlayMarkers,
-            range: { min: 1, max: this.client.getLength(), value: this.viewportStartPos },
+            range: { min: 1, max: this.sharedString.getLength(), value: this.viewportStartPos },
             viewportEndPos: this.viewportEndPos,
             viewportStartPos: this.viewportStartPos,
         });
@@ -5508,7 +5508,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.render(0, true);
         if (clockStart > 0) {
             // tslint:disable-next-line:max-line-length
-            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.client.getLength()} - ${performanceNow()}`);
+            console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performanceNow()}`);
         }
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
@@ -5567,7 +5567,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.viewportRect = bounds.inner(0.92);
         if (this.viewportRect.height >= 0) {
             ui.Rectangle.conformElementToRect(this.viewportDiv, this.viewportRect);
-            if (this.client.getLength() > 0) {
+            if (this.sharedString.getLength() > 0) {
                 this.render(this.topChar, true);
             }
             if (this.viewportDiv.style.backgroundSize !== undefined) {

@@ -18,7 +18,7 @@ const assertIntervalsHelper = (
     intervals: SharedIntervalCollectionView<SharedStringInterval>,
     expected: ReadonlyArray<{start: number; end: number}>,
 ) => {
-    const actual = intervals.findOverlappingIntervals(0, sharedString.client.getLength() - 1);
+    const actual = intervals.findOverlappingIntervals(0, sharedString.getLength() - 1);
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);
 

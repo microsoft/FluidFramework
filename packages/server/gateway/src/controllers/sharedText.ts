@@ -154,12 +154,12 @@ async function loadDocument(
         const segments = MergeTree.loadSegments(starterText, 0, true);
         for (const segment of segments) {
             if (MergeTree.TextSegment.is(segment)) {
-                newString.insertText(newString.client.getLength(), segment.text,
+                newString.insertText(newString.getLength(), segment.text,
                 segment.properties);
             } else {
                 // assume marker
                 const marker = segment as MergeTree.Marker;
-                newString.insertMarker(newString.client.getLength(), marker.refType, marker.properties);
+                newString.insertMarker(newString.getLength(), marker.refType, marker.properties);
             }
         }
         root.set("text", newString.handle);
@@ -208,7 +208,7 @@ async function loadDocument(
             container.trackInsights(insightsMap);
         });
 
-    if (sharedString.client.getLength() > 0) {
+    if (sharedString.getLength() > 0) {
         theFlow.render(0, true);
     }
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;
