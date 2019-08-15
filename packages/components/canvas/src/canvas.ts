@@ -56,13 +56,13 @@ export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("ink", Stream.create(this.runtime).handle);
+        this.root.set("pageInk", Stream.create(this.runtime).handle);
     }
 
     protected async componentHasInitialized() {
         // Wait here for the ink - otherwise flexView will try to root.get it before it exists if there hasn't been
         // a summary op yet.  Probably flexView should wait instead.
-        const handle = await this.root.wait<IComponentHandle>("ink");
+        const handle = await this.root.wait<IComponentHandle>("pageInk");
         this.ink = await handle.get<IStream>();
     }
 }

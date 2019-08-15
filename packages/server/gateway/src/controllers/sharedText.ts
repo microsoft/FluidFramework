@@ -25,7 +25,6 @@ import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
-import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { MultiDocumentServiceFactory } from "@prague/base-host";
@@ -41,7 +40,6 @@ export async function load(
     resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
-    pageInk: boolean,
     disableCache: boolean,
     config: any,
     template: string,
@@ -55,7 +53,7 @@ export async function load(
     console.log(`Load Option: ${JSON.stringify(options)}`);
     loadDocument(
         resolved, jwt, seedData,
-        pageInk, disableCache, config,
+        disableCache, config,
         template, options, from, to,
         generateSummaries)
         .catch((error) => {
@@ -67,7 +65,6 @@ async function loadDocument(
     resolved: IFluidResolvedUrl,
     jwt: string,
     seedData: IGitCache,
-    pageInk: boolean,
     disableCache: boolean,
     config: any,
     template: string,
@@ -166,13 +163,11 @@ async function loadDocument(
             }
         }
         root.set("text", newString.handle);
-        root.set("ink", collabDoc.createMap().handle);
 
-        if (pageInk) {
-            root.set("pageInk", collabDoc.createStream().handle);
-        }
+        // We'll give this to the FlowContainer that we're about to create for it to store various data on.
+        root.set("flowContainerMap", collabDoc.createMap().handle);
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
+        await Promise.all([root.wait("text"), root.wait("sequence-test"), root.wait("flowContainerMap")]);
     }
 
     const sharedString = await root.get<IComponentHandle>("text").get<Sequence.SharedString>();
@@ -181,24 +176,20 @@ async function loadDocument(
     console.log(`id is ${resolved.url}`);
     console.log(`Partial load fired - ${performanceNow()}`);
 
-    // Higher plane ink
-    const inkPlane = await root.get<IComponentHandle>("ink").get<ISharedMap>();
-
     // Bindy for insights
     const image = new controls.Image(
         document.createElement("div"),
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
-    const pageInkHandle = root.get<IComponentHandle | undefined>("pageInk");
 
     const containerDiv = document.createElement("div");
     const container = new controls.FlowContainer(
         containerDiv,
         collabDoc,
         sharedString,
-        inkPlane,
+        await root.get<IComponentHandle>("flowContainerMap").get<ISharedMap>(),
         image,
-        pageInkHandle ? await pageInkHandle.get<IStream>() : undefined,
         options);
+    await container.initialize();
     theFlow = container.flowView;
     host.attach(container);
 

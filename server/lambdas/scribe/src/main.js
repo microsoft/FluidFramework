@@ -38,13 +38,11 @@ exports.setup = async function(docId, text, time, startMarker) {
     if (!doc.existing){
         await root.set("text", doc.createString());
         returnBody += "Doc Didn't Exist\n";
-        await root.set("ink", doc.createMap());
-        await root.set("pageInk", doc.createStream());
         await root.set("presence", doc.createMap());
     }
     else {
         returnBody += "Doc Existed\n";
-        await Promise.all([root.wait("text"), root.wait("ink")]);
+        await Promise.all([root.wait("text")]);
     }
 
     const ss = await root.get("text");

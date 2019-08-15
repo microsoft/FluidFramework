@@ -205,13 +205,13 @@ async function loadDocument(
             }
         }
         root.set("text", newString);
-        root.set("ink", collabDoc.createMap());
+        root.set("overlayInk", collabDoc.createMap());
 
         if (pageInk) {
             root.set("pageInk", collabDoc.createStream());
         }
     } else {
-        await Promise.all([root.wait("text"), root.wait("ink"), root.wait("sequence-test")]);
+        await Promise.all([root.wait("text"), root.wait("overlayInk"), root.wait("sequence-test")]);
     }
 
     const sharedString = root.get("text") as Sequence.SharedString;
@@ -221,7 +221,7 @@ async function loadDocument(
     console.log(`Partial load fired - ${performanceNow()}`);
 
     // Higher plane ink
-    const inkPlane = root.get("ink");
+    const inkPlane = root.get("overlayInk");
 
     // Bindy for insights
     const image = new controls.Image(

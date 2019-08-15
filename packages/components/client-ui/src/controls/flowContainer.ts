@@ -34,20 +34,39 @@ export class FlowContainer extends ui.Component {
     private dockPanel: DockPanel;
     private layerPanel: LayerPanel;
     private overlayCanvas: OverlayCanvas;
+    private inkCanvas: InkCanvas;
+
+    private overlayInkMap: ISharedMap;
+    private pageInkStream: IStream;
 
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
+    /**
+     * This determines whether to use an OverlayCanvas or InkCanvas for inking.  Currently will always use an overlay
+     * canvas, but keeping the other option alive for testing purposes for now.
+     */
+    private useOverlayCanvas: boolean = true;
+
     constructor(
         element: HTMLDivElement,
         private collabDocument: api.Document,
-        sharedString: Sequence.SharedString,
-        private overlayMap: ISharedMap,
+        private sharedString: Sequence.SharedString,
+        private flowContainerMap: ISharedMap,
         private image: Image,
-        ink: IStream,
         private options?: Object) {
 
         super(element);
+    }
+
+    public async initialize() {
+        if (!this.collabDocument.existing) {
+            this.flowContainerMap.set("overlayInk", this.collabDocument.createMap());
+            this.flowContainerMap.set("pageInk", this.collabDocument.createStream());
+        }
+
+        this.overlayInkMap = await this.flowContainerMap.wait("overlayInk");
+        this.pageInkStream = await this.flowContainerMap.wait("pageInk");
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
         // a better API model.
@@ -55,8 +74,8 @@ export class FlowContainer extends ui.Component {
         // Title bar at the top
         const titleDiv = document.createElement("div");
         this.title = new Title(titleDiv);
-        this.title.setTitle(collabDocument.id);
-        this.title.setBackgroundColor(collabDocument.id);
+        this.title.setTitle(this.collabDocument.id);
+        this.title.setBackgroundColor(this.collabDocument.id);
 
         // Status bar at the bottom
         const statusDiv = document.createElement("div");
@@ -66,46 +85,46 @@ export class FlowContainer extends ui.Component {
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
-        this.flowView = new FlowView(flowViewDiv, collabDocument, sharedString, this.status, this.options);
+        this.flowView = new FlowView(flowViewDiv, this.collabDocument, this.sharedString, this.status, this.options);
 
-        // Create the optional full ink canvas
-        const inkCanvas = ink ? new InkCanvas(document.createElement("div"), ink) : null;
-        if (inkCanvas) {
-            inkCanvas.enableInkHitTest(false);
-        }
-
-        // Layer panel lets us put the overlay canvas on top of the text
+        // Layer panel lets us put the canvas on top of the text
         const layerPanelDiv = document.createElement("div");
         this.layerPanel = new LayerPanel(layerPanelDiv);
 
-        // Overlay canvas for ink
-        const overlayCanvasDiv = document.createElement("div");
-        overlayCanvasDiv.classList.add("overlay-canvas");
-        this.overlayCanvas = new OverlayCanvas(collabDocument, overlayCanvasDiv, layerPanelDiv);
+        // Create the correct inking canvas
+        if (this.useOverlayCanvas) {
+            // Overlay canvas for ink
+            const overlayCanvasDiv = document.createElement("div");
+            overlayCanvasDiv.classList.add("overlay-canvas");
+            this.overlayCanvas = new OverlayCanvas(this.collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-        this.overlayCanvas.on("ink", (layer: InkLayer, model: IStream, start: ui.IPoint) => {
-            this.overlayCanvas.enableInkHitTest(false);
-            const position = this.flowView.getNearestPosition(start);
-            this.overlayCanvas.enableInkHitTest(true);
+            this.overlayCanvas.on("ink", (layer: InkLayer, model: IStream, start: ui.IPoint) => {
+                this.overlayCanvas.enableInkHitTest(false);
+                const position = this.flowView.getNearestPosition(start);
+                this.overlayCanvas.enableInkHitTest(true);
 
-            const location = this.flowView.getPositionLocation(position);
-            const cursorOffset = {
-                x: start.x - location.x,
-                y: start.y - location.y,
-            };
+                const location = this.flowView.getPositionLocation(position);
+                const cursorOffset = {
+                    x: start.x - location.x,
+                    y: start.y - location.y,
+                };
 
-            this.layerCache[model.id] = layer;
-            this.activeLayers[model.id] = { layer, active: true, cursorOffset };
-            overlayMap.set(model.id, model.handle);
-            // Inserts the marker at the flow view's cursor position
-            sharedString.insertMarker(
-                position,
-                MergeTree.ReferenceType.Simple,
-                {
-                    [MergeTree.reservedMarkerIdKey]: model.id,
-                    [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
-                });
-        });
+                this.layerCache[model.id] = layer;
+                this.activeLayers[model.id] = { layer, active: true, cursorOffset };
+                this.overlayInkMap.set(model.id, model.handle);
+                // Inserts the marker at the flow view's cursor position
+                this.sharedString.insertMarker(
+                    position,
+                    MergeTree.ReferenceType.Simple,
+                    {
+                        [MergeTree.reservedMarkerIdKey]: model.id,
+                        [MergeTree.reservedMarkerSimpleTypeKey]: "inkOverlay",
+                    });
+            });
+        } else {
+            this.inkCanvas = new InkCanvas(document.createElement("div"), this.pageInkStream);
+            this.inkCanvas.enableInkHitTest(false);
+        }
 
         // Update the scroll bar
         this.flowView.on(
@@ -129,12 +148,12 @@ export class FlowContainer extends ui.Component {
                 this.pruneInactiveLayers();
             });
 
-        this.status.addOption("ink", "ink");
-        this.status.on("ink", (value) => {
-            this.overlayCanvas.enableInk(value);
-
-            if (inkCanvas) {
-                inkCanvas.enableInkHitTest(value);
+        this.status.addOption("inkingEnabled", "ink");
+        this.status.on("inkingEnabled", (value) => {
+            if (this.useOverlayCanvas) {
+                this.overlayCanvas.enableInk(value);
+            } else {
+                this.inkCanvas.enableInkHitTest(value);
             }
         });
 
@@ -153,12 +172,13 @@ export class FlowContainer extends ui.Component {
 
         // Add children to the panel once we have both
         this.layerPanel.addChild(this.flowView);
-        this.layerPanel.addChild(this.overlayCanvas);
-        if (inkCanvas) {
-            this.layerPanel.addChild(inkCanvas);
+        if (this.useOverlayCanvas) {
+            this.layerPanel.addChild(this.overlayCanvas);
+        } else {
+            this.layerPanel.addChild(this.inkCanvas);
         }
 
-        this.dockPanel = new DockPanel(element);
+        this.dockPanel = new DockPanel(this.element);
         this.addChild(this.dockPanel);
 
         // Use the dock panel to layout the viewport - layer panel as the content and then status bar at the bottom
@@ -167,9 +187,9 @@ export class FlowContainer extends ui.Component {
         this.dockPanel.addBottom(this.status);
 
         // Intelligence image
-        image.element.style.visibility = "hidden";
-        this.addChild(image);
-        element.appendChild(image.element);
+        this.image.element.style.visibility = "hidden";
+        this.addChild(this.image);
+        this.element.appendChild(this.image.element);
     }
 
     public setTitleVisibility(visible: boolean) {
@@ -199,16 +219,13 @@ export class FlowContainer extends ui.Component {
         const position = marker.position;
         const location = this.flowView.getPositionLocation(position);
 
-        // TODO the async nature of this may cause rendering pauses - and in general the layer should already
-        // exist. Should just make this a sync call.
-        // Mark true prior to the async work
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const ink = await this.overlayMap.get<IComponentHandle>(id).get<IStream>();
+        const inkLayerData = await this.overlayInkMap.get<IComponentHandle>(id).get<IStream>();
 
         if (!(id in this.layerCache)) {
-            const layer = new InkLayer(this.size, ink);
+            const layer = new InkLayer(this.size, inkLayerData);
             this.layerCache[id] = layer;
         }
 

@@ -35,7 +35,7 @@ import {
     SharedString,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
-import { IStream, Stream } from "@prague/stream";
+import { Stream } from "@prague/stream";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires
@@ -123,7 +123,8 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
                 }
             }
             this.rootView.set("text", newString.handle);
-            this.rootView.set("ink", this.collabDoc.createMap().handle);
+
+            this.rootView.set("flowContainerMap", this.collabDoc.createMap().handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
         }
@@ -131,7 +132,11 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
-        await Promise.all([this.rootView.wait("text"), this.rootView.wait("ink"), this.rootView.wait("insights")]);
+        await Promise.all([
+            this.rootView.wait("text"),
+            this.rootView.wait("insights"),
+            this.rootView.wait("flowContainerMap"),
+        ]);
 
         this.sharedString = await this.rootView.get<IComponentHandle>("text").get<SharedString>();
         this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<DistributedMap.ISharedMap>();
@@ -149,23 +154,20 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
 
         const browserContainerHost = new ui.BrowserContainerHost();
 
-        const inkPlane = this.rootView.get("ink");
-
         // Bindy for insights
         const image = new controls.Image(
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
-        const pageInkHandle = this.rootView.get<IComponentHandle | undefined>("pageInk");
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
             new API.Document(this.runtime, this.context, this.rootView),
             this.sharedString,
-            inkPlane,
+            await this.rootView.get<IComponentHandle>("flowContainerMap").get<DistributedMap.ISharedMap>(),
             image,
-            pageInkHandle ? await pageInkHandle.get<IStream>() : undefined,
             {});
+        await container.initialize();
         const theFlow = container.flowView;
         browserContainerHost.attach(container);
 

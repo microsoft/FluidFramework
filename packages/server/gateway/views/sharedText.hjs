@@ -28,7 +28,6 @@
                 resolved,
                 jwt,
                 cache,
-                {{ pageInk }},
                 {{ disableCache }},
                 config,
                 "{{ template }}",

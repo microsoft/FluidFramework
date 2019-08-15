@@ -113,7 +113,6 @@ export async function create(
     // p-start might break something
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString.handle);
-    root.set("ink", document.createMap().handle);
 
     await root.set("chunks", document.createMap().handle);
 
