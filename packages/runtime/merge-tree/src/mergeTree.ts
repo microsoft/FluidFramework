@@ -70,6 +70,7 @@ export type IMergeNode = IMergeBlock | ISegment;
 
 // node with segments as children
 export interface IMergeBlock extends IMergeNodeCommon {
+    needsScour?: boolean;
     childCount: number;
     children: IMergeNode[];
     partialLengths?: PartialSequenceLengths;
@@ -1437,9 +1438,14 @@ export class MergeTree {
     }
 
     private addToLRUSet(segment: ISegment, seq: number) {
-        // sequence should be always above current.
-        assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
-        this.segmentsToScour.add({ segment, maxSeq: seq });
+        // only skip adding segments who's parents are
+        // explitly needing scour, not false or undefined
+        if (segment.parent.needsScour !== true) {
+            // sequence should be always above current.
+            assert(seq > this.collabWindow.currentSeq, "addToLRUSet");
+            segment.parent.needsScour = true;
+            this.segmentsToScour.add({ segment, maxSeq: seq });
+        }
     }
 
     private underflow(node: IMergeBlock) {
@@ -1568,24 +1574,29 @@ export class MergeTree {
         }
     }
 
-    private zamboniSegments() {
+    private zamboniSegments(zamboniSegmentsMaxCount = MergeTree.zamboniSegmentsMaxCount) {
         // console.log(`scour line ${segmentsToScour.count()}`);
         let clockStart;
         if (MergeTree.options.measureWindowTime) {
             clockStart = clock();
         }
 
-        for (let i = 0; i < MergeTree.zamboniSegmentsMaxCount; i++) {
+        for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
             let segmentToScour = this.segmentsToScour.peek();
             if (!segmentToScour || segmentToScour.maxSeq > this.collabWindow.minSeq) {
                 break;
             }
             segmentToScour = this.segmentsToScour.get();
-            if (segmentToScour.segment.parent) {
+            // only skip scouring if needs scour is explicitly false, not true or undefined
+            if (segmentToScour.segment.parent && segmentToScour.segment.parent.needsScour !== false) {
                 const block = segmentToScour.segment.parent;
                 const childrenCopy: IMergeNode[] = [];
                 // console.log(`scouring from ${segmentToScour.segment.seq}`);
                 this.scourNode(block, childrenCopy);
+                // this will avoid the cost of re-scouring nodes
+                // that have recently been scoured
+                block.needsScour = false;
+
                 const newChildCount = childrenCopy.length;
 
                 if (newChildCount < block.childCount) {
@@ -2070,7 +2081,9 @@ export class MergeTree {
             }
             pendingSegmentGroup.segments.map((pendingSegment) => {
                 overwrite = !pendingSegment.ack(pendingSegmentGroup, opArgs, this) || overwrite;
-
+                if (MergeTree.options.zamboniSegments) {
+                    this.addToLRUSet(pendingSegment, seq);
+                }
                 if (nodesToUpdate.indexOf(pendingSegment.parent) < 0) {
                     nodesToUpdate.push(pendingSegment.parent);
                 }
@@ -2080,6 +2093,9 @@ export class MergeTree {
                 this.blockUpdatePathLengths(node, seq, clientId, overwrite);
                 // nodeUpdatePathLengths(node, seq, clientId, true);
             }
+        }
+        if (MergeTree.options.zamboniSegments) {
+            this.zamboniSegments();
         }
     }
 
@@ -2298,24 +2314,24 @@ export class MergeTree {
         };
 
         let segmentGroup: SegmentGroup;
-        const onLeaf = (segment: ISegment, pos: number, context: InsertContext) => {
-            const saveIfLocal = (locSegment: ISegment) => {
-                // save segment so can assign sequence number when acked by server
-                if (this.collabWindow.collaborating) {
-                    if ((locSegment.seq === UnassignedSequenceNumber) &&
-                        (clientId === this.collabWindow.clientId)) {
-                        segmentGroup = this.addToPendingList(locSegment, segmentGroup);
-                    }
-                    // locSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
-                    // In all other cases this has to be true (checked by addToLRUSet):
-                    // locSegment.seq > this.collabWindow.currentSeq
-                    // tslint:disable-next-line: one-line
-                    else if ((locSegment.seq > this.collabWindow.minSeq) &&
-                        MergeTree.options.zamboniSegments) {
-                        this.addToLRUSet(locSegment, locSegment.seq);
-                    }
+        const saveIfLocal = (locSegment: ISegment) => {
+            // save segment so can assign sequence number when acked by server
+            if (this.collabWindow.collaborating) {
+                if ((locSegment.seq === UnassignedSequenceNumber) &&
+                    (clientId === this.collabWindow.clientId)) {
+                    segmentGroup = this.addToPendingList(locSegment, segmentGroup);
                 }
-            };
+                // locSegment.seq === 0 when coming from SharedSegmentSequence.loadBody()
+                // In all other cases this has to be true (checked by addToLRUSet):
+                // locSegment.seq > this.collabWindow.currentSeq
+                // tslint:disable-next-line: one-line
+                else if ((locSegment.seq > this.collabWindow.minSeq) &&
+                    MergeTree.options.zamboniSegments) {
+                    this.addToLRUSet(locSegment, locSegment.seq);
+                }
+            }
+        };
+        const onLeaf = (segment: ISegment, pos: number, context: InsertContext) => {
             const segmentChanges: ISegmentChanges = {};
             if (segment) {
                 // insert before segment
@@ -2324,7 +2340,6 @@ export class MergeTree {
             } else {
                 segmentChanges.next = context.candidateSegment;
             }
-            saveIfLocal(context.candidateSegment);
             return segmentChanges;
         };
 
@@ -2347,6 +2362,7 @@ export class MergeTree {
                 { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
 
             this.updateRoot(splitNode);
+            saveIfLocal(newSegment);
 
             insertPos += newSegment.cachedLength;
         }

@@ -16,7 +16,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
-    "test": "mocha --recursive dist/test",
+    "test": "mocha --recursive dist/test --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },

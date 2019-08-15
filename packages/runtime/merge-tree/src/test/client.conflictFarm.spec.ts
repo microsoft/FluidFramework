@@ -43,7 +43,7 @@ describe("MergeTree.Client", () => {
     for (let minLength = 1; minLength <= maxMinLength; minLength++) {
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
-            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED + minLength]);
+            mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength]);
 
             const clients: TestClient[] = [new TestClient({ blockUpdateMarkers: true })];
             clients.forEach(
@@ -65,7 +65,7 @@ describe("MergeTree.Client", () => {
                     for (let round = 0; round < totalRounds; round++) {
                         if (long) {
                             // tslint:disable-next-line: max-line-length
-                            console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round}`);
+                            console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round} Seq: ${seq}`);
                         }
                         const minimumSequenceNumber = seq;
                         let tempSeq = seq * -1;

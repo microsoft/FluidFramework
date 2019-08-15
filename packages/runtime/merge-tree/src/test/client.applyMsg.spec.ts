@@ -226,7 +226,7 @@ describe("client.applyMsg", () => {
         assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
         assert.equal(segmentInfo.segment.segmentGroups.size, 1);
 
-        client.applyMsg(client.makeOpMessage(removeOp, 17));
+        client.applyMsg(client.makeOpMessage(removeOp, 18));
 
         assert.equal(segmentInfo.segment.removedSeq, remoteMessage.sequenceNumber);
         assert(segmentInfo.segment.segmentGroups.empty);
