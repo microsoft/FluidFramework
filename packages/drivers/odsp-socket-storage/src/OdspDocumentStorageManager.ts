@@ -189,7 +189,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return getWithRetryForTokenRefresh(async (refresh) => {
             const tokenProvider = await this.getTokenProvider(refresh);
 
-            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`);
+            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?Count=${count}`);
 
             // fetch the latest snapshot versions for the document
             const versionsResponse = await this.fetchWrapper
