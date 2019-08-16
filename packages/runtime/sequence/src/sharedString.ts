@@ -145,18 +145,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
         return this.removeRange(start, end);
     }
 
-    public annotateRangeFromPast(
-        start: number,
-        end: number,
-        props: MergeTree.PropertySet,
-        fromSeq: number) {
-
-        const ranges = this.client.mergeTree.tardisRange(start, end, fromSeq, this.client.getCurrentSeq(),
-            this.client.getClientId());
-        ranges.map((range: MergeTree.IIntegerRange) => {
-            this.annotateRange(range.start, range.end, props);
-        });
-    }
     /**
      * Annotates the marker with the provided properties
      * and calls the callback on concensus.
