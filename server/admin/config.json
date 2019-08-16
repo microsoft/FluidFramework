@@ -48,14 +48,10 @@
         "host": "redis",
         "port": 6379
     },
-    "loader": {
-        "orderer": "https://alfred.wu2.prague.office-int.com",
-        "storage": "https://historian.wu2.prague.office-int.com",
-        "tenant": "dreamy-jang",
-        "secret": "70fe794a484bebbfa2b0813745a4450e",
+    "keyValue": {
+        "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-local-0000",
         "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
-        "documentId": "key-value-manager-0000",
-        "package": "@chaincode/key-value@0.3.6901"
+        "gatewayUrl": "http://gateway:3000"
     },
     "express": {
         "session": {

@@ -27,7 +27,7 @@ export class DuplicateKeyModal extends React.Component<IDuplicateKeyProps, {}> {
               onOk={onOk}
               onCancel={onOk}
               footer={[
-                <Button key="ok" type="primary" onClick={onOk}>
+                <Button href="" key="ok" type="primary" onClick={onOk}>
                   Ok
                 </Button>,
               ]}

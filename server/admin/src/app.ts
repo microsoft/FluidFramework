@@ -23,7 +23,6 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
-import { KeyValueManager } from "./keyValueManager";
 import * as appRoutes from "./routes";
 import { TenantManager } from "./tenantManager";
 
@@ -98,28 +97,24 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         config.get("app:alfredUrl"),
         config.get("app:jarvisUrl"));
 
-    const keyValueManager = new KeyValueManager(
-        config.get("loader:orderer"),
-        config.get("loader:storage"),
-        config.get("loader:tenant"),
-        config.get("loader:secret"),
-        config.get("loader:jwtKey"),
-        config.get("loader:documentId"),
-        config.get("loader:package"));
-
     // Create a redis session store.
-    const redisStore = connectRedis(expressSession);
-    const redisHost = config.get("redis:host");
-    const redisPort = config.get("redis:port");
-    const redisPass = config.get("redis:pass");
-    const options: any = { auth_pass: redisPass };
-    if (config.get("redis:tls")) {
-        options.tls = {
-            servername: redisHost,
-        };
+    let sessionStore: any;
+    if (config.get("login:enabled")) {
+        const redisStore = connectRedis(expressSession);
+        const redisHost = config.get("redis:host");
+        const redisPort = config.get("redis:port");
+        const redisPass = config.get("redis:pass");
+        const options: any = { auth_pass: redisPass };
+        if (config.get("redis:tls")) {
+            options.tls = {
+                servername: redisHost,
+            };
+        }
+        const redisClient = redis.createClient(redisPort, redisHost, options);
+        sessionStore = new redisStore({ client: redisClient });
+    } else {
+        sessionStore = new expressSession.MemoryStore();
     }
-    const redisClient = redis.createClient(redisPort, redisHost, options);
-    const sessionStore = new redisStore({ client: redisClient });
 
     const staticMinCache: { [key: string]: string } = {};
 
@@ -199,7 +194,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         }
     });
 
-    const routes = appRoutes.create(config, mongoManager, tenantManager, keyValueManager);
+    const routes = appRoutes.create(config, mongoManager, tenantManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
 

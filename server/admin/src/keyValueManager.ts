@@ -2,75 +2,34 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { ISharedMap } from "@prague/map";
+import { Provider } from "nconf";
 import { IKeyValue } from "./definitions";
-import { KeyValueLoader } from "./keyValueLoader";
-
-// Timeout while waiting to load the key value document.
-const loadTimeoutMSec = 15000;
+import { IKeyValue as IKV, KeyValueLoader } from "./keyValueLoader";
 
 export class KeyValueManager {
-    private keyValueLoader: KeyValueLoader;
-    private readyP: Promise<void>;
-    constructor(
-        orderer: string,
-        storage: string,
-        tenantId: string,
-        secret: string,
-        jwtKey: string,
-        documentId: string,
-        codePackage: string) {
-            this.keyValueLoader = new KeyValueLoader(
-                orderer,
-                storage,
-                tenantId,
-                secret,
-                jwtKey,
-                documentId,
-                codePackage);
-            this.readyP = this.loadContainer(loadTimeoutMSec);
+    public static async load(config: Provider) {
+        const keyValueLoader = await KeyValueLoader.load(config);
+        const cache = await keyValueLoader.cache;
+        return new KeyValueManager(cache);
     }
-    public async getKeyValues(): Promise<IKeyValue[]> {
+    constructor(private readonly cache: IKV) {
+    }
+
+    public getKeyValues(): IKeyValue[] {
         const keyValues: IKeyValue[] = [];
-        const rootMap = await this.getRootMap();
-        rootMap.forEach((value: string, key: string) => {
-            keyValues.push({ key, value});
-        });
+        for (const [key, value] of this.cache.entries()) {
+            keyValues.push({key, value});
+        }
         return keyValues;
     }
 
-    public async addKeyValue(keyValue: IKeyValue): Promise<IKeyValue> {
-        const rootMap = await this.getRootMap();
-        rootMap.set(keyValue.key, keyValue.value);
+    public addKeyValue(keyValue: IKeyValue): IKeyValue {
+        this.cache.set(keyValue.key, keyValue.value);
         return keyValue;
     }
 
-    public async removeKeyValue(key: string): Promise<string> {
-        const rootMap = await this.getRootMap();
-        rootMap.delete(key);
+    public removeKeyValue(key: string): string {
+        this.cache.delete(key);
         return key;
-    }
-
-    private async getRootMap(): Promise<ISharedMap> {
-        await this.readyP;
-        return this.keyValueLoader.rootMap;
-    }
-
-    private loadContainer(timeoutMS: number) {
-        return new Promise<void>((resolve, reject) => {
-            const waitTimer = setTimeout(() => {
-                clearTimeout(waitTimer);
-                reject(`Timeout (${timeoutMS} ms) expired while loading key-value map`);
-            }, timeoutMS);
-
-            this.keyValueLoader.load().then(() => {
-                clearTimeout(waitTimer);
-                resolve();
-            }, (err) => {
-                clearTimeout(waitTimer);
-                reject(err);
-            });
-        });
     }
 }

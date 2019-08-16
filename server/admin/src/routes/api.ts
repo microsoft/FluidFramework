@@ -15,7 +15,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    keyValueManager: KeyValueManager): Router {
+    keyValueManagerP: Promise<any>): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
@@ -28,8 +28,9 @@ export function create(
      * Creates a new tenant
      */
     router.post("/tenants", ensureLoggedIn(), (request, response) => {
+        const oid = request.user ? request.user.oid : "local";
         const tenantInput = request.body as ITenantInput;
-        const tenantP = tenantManager.addTenant(request.user.oid, tenantInput);
+        const tenantP = tenantManager.addTenant(oid, tenantInput);
         returnResponse(tenantP, response);
     });
 
@@ -46,8 +47,12 @@ export function create(
      */
     router.post("/keyValues", ensureLoggedIn(), (request, response) => {
         const keyValueInput = request.body as IKeyValue;
-        const keyValueP = keyValueManager.addKeyValue(keyValueInput);
-        returnResponse(keyValueP, response);
+        const createP = keyValueManagerP.then((kv: KeyValueManager) => {
+            return kv.addKeyValue(keyValueInput);
+        }, (err) => {
+            return Promise.reject(err);
+        });
+        returnResponse(createP, response);
     });
 
     /**
@@ -55,8 +60,12 @@ export function create(
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
         const key = request.params[0] as string;
-        const keyP = keyValueManager.removeKeyValue(key);
-        returnResponse(keyP, response);
+        const deleteP = keyValueManagerP.then((kv: KeyValueManager) => {
+            return kv.removeKeyValue(key);
+        }, (err) => {
+            return Promise.reject(err);
+        });
+        returnResponse(deleteP, response);
     });
 
     return router;

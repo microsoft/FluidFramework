@@ -18,8 +18,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    keyValueManager: KeyValueManager,
-): Router {
+    keyValueManagerP: Promise<any>): Router {
 
     const router: Router = Router();
 
@@ -27,10 +26,12 @@ export function create(
      * Route to retrieve the home page for the app
      */
     router.get("/", ensureLoggedIn(), (request, response, next) => {
-        const tenantsP = tenantManager.getTenantsforUser(request.user.oid);
+        const oid = request.user ? request.user.oid : "local";
+        const user = request.user ? request.user : {displayName: "local"};
+        const tenantsP = tenantManager.getTenantsforUser(oid);
         // Return empty result if the key-value document was not loaded properly.
-        const keyValuesP = keyValueManager.getKeyValues().then((values) => {
-            return values;
+        const keyValuesP = keyValueManagerP.then((kv: KeyValueManager) => {
+            return kv.getKeyValues();
         }, () => {
             return [] as IKeyValue[];
         });
@@ -45,7 +46,7 @@ export function create(
                     data: JSON.stringify(data),
                     partials: defaultPartials,
                     title: "Admin Portal",
-                    user: JSON.stringify(request.user),
+                    user: JSON.stringify(user),
                 },
             );
         }, (error) => {

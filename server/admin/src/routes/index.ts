@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { promiseTimeout } from "@prague/services-client";
 import * as core from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Router } from "express";
@@ -20,10 +21,17 @@ export interface IRoutes {
 export function create(
     config: Provider,
     mongoManager: core.MongoManager,
-    tenantManager: TenantManager,
-    keyValueManager: KeyValueManager): IRoutes {
+    tenantManager: TenantManager): IRoutes {
+
+    const ensureLoggedIn = config.get("login:enabled")
+    ? ensureAuth.ensureLoggedIn
+    : () => {
+        return (req, res, next) => next();
+    };
+
+    const kvManagerP = promiseTimeout(15000, KeyValueManager.load(config));
     return {
-        api: api.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, keyValueManager),
-        home: home.create(config, mongoManager, ensureAuth.ensureLoggedIn, tenantManager, keyValueManager),
+        api: api.create(config, mongoManager, ensureLoggedIn, tenantManager, kvManagerP),
+        home: home.create(config, mongoManager, ensureLoggedIn, tenantManager, kvManagerP),
     };
 }

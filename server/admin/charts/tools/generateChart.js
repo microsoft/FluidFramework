@@ -65,6 +65,7 @@ endpoints:
   tenantsUrl: https://admin.wu2.prague.office-int.com
   historianUrl: https://historian.wu2.prague.office-int.com
   riddlerUrl: http://pesky-platypus-riddler
+  gatewayUrl: http://pesky-platypus-gateway
   gitUrl: http://smelly-wolf-gitrest
   cobaltUrl: http://smelly-wolf-cobalt
   alfredUrl: https://alfred.wu2.prague.office-int.com

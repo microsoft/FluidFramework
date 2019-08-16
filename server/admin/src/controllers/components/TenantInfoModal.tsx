@@ -33,7 +33,7 @@ export class TenantInfoModal extends React.Component<ITenantInfoProps, {}> {
               onOk={onOk}
               onCancel={onOk}
               footer={[
-                <Button key="ok" type="primary" onClick={onOk}>
+                <Button href="" key="ok" type="primary" onClick={onOk}>
                   Ok
                 </Button>,
               ]}
