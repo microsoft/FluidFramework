@@ -125,6 +125,10 @@ export const enum Tag {
     wbr         = "WBR",
 }
 
+export function hasTag(node: Node | Element, tag: Tag): node is HTMLElement {
+    return node && "tagName" in node && node.tagName === tag;
+}
+
 const segmentKindToIdPrefix = {
     [DocSegmentKind.beginTags]: "b:",
     [DocSegmentKind.endTags]:   "e:",

@@ -233,9 +233,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
     }
 
     public end(layout: Layout, state: Readonly<IParagraphState>) {
-        if (!layout.cursor.previous) {
-            this.emitTag(layout, Tag.br, state.root.lastElementChild);
-        }
+        this.emitTag(layout, Tag.br, state.root.lastChild);
         layout.popNode();
     }
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Tag } from "../util/tag";
+import { hasTag, Tag } from "../util/tag";
 import { Layout } from "./layout";
 
 // tslint:disable-next-line:no-empty-interface
@@ -42,8 +42,8 @@ export abstract class Formatter<TState extends IFormatterState> {
     protected elementForTag(layout: Layout, tag: Tag, existing?: Node | Element) {
         // Reuse the existing element if possible, otherwise create a new one.  Note that
         // 'layout.pushNode(..)' will clean up the old node if needed.
-        return existing && "tagName" in existing && existing.tagName === tag && layout.nodeToSegment(existing) === layout.segment
-            ? existing as Element
+        return hasTag(existing, tag) && layout.nodeToSegment(existing) === layout.segment
+            ? existing
             : document.createElement(tag);
     }
 }

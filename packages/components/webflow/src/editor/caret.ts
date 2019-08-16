@@ -10,7 +10,7 @@ import { clamp } from "../util";
 import { domRangeToString, nodeAndOffsetToString, windowSelectionToString } from "../util/debug";
 import { updateRef } from "../util/localref";
 import { Tag } from "../util/tag";
-import { Layout } from "../view/layout";
+import { eotSegment, Layout } from "../view/layout";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
@@ -158,6 +158,9 @@ export class Caret {
 
     private nodeOffsetToPosition(node: Node | Element, nodeOffset: number) {
         const segment = this.layout.nodeToSegment(node);
+        if (segment === eotSegment) {
+            return this.doc.length;
+        }
         const kind = getDocSegmentKind(segment);
         const position = this.doc.getPosition(segment) + nodeOffset;
 

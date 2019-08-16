@@ -120,7 +120,30 @@ describe("Layout", () => {
             await check();
         });
 
-        it("Remove paragraphs", async () => {
+        it("Insert after new paragraph", async () => {
+            doc.insertText(0, "0");
+            await check();
+            doc.insertParagraph(1);
+            await check();
+            // This test tends to detect leaked '<br>' tags.
+            doc.insertText(2, "2");
+            await check();
+        });
+
+        it("Add/remove 3 paragraphs with 1 char spans", async () => {
+            for (const text of ["0", "2", "4"]) {
+                doc.insertText(doc.length, text);
+                await check();
+                doc.insertParagraph(doc.length);
+                await check();
+            }
+            while (doc.length > 0) {
+                doc.remove(doc.length - 1, doc.length);
+                await check();
+            }
+        });
+
+        it("Remove paragraphs 2 with textspans of 2", async () => {
             doc.insertText(0, "013467");
             await check();
             doc.insertParagraph(2);
@@ -132,6 +155,21 @@ describe("Layout", () => {
             doc.remove(2, 3);
             await check();
         });
+
+        // it("Nested tag markers", async () => {
+        //     doc.insertTags([Tag.h1], 0);
+        //     await check();
+        //     doc.insertTags([Tag.p], 1);
+        //     await check();
+        //     doc.insertText(1, "a");
+        //     await check();
+        //     doc.insertText(3, "b");
+        //     await check();
+        //     doc.setFormat(0, Tag.h2);
+        //     await check();
+        //     doc.setFormat(0, Tag.h3);
+        //     await check();
+        // });
     });
 
     describe.skip("structure", () => {

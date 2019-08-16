@@ -10,7 +10,6 @@ import { SequenceEvent } from "@prague/sequence";
 import * as assert from "assert";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
-import { nodeToString } from "../util/debug";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
 import { Formatter, IFormatterState } from "./formatter";
@@ -34,6 +33,9 @@ class LayoutCheckpoint {
         this.cursor = Object.freeze({...cursor});
     }
 }
+
+// tslint:disable-next-line:no-object-literal-type-assertion
+export const eotSegment = { cachedLength: 0 } as ISegment;
 
 export class Layout {
     public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
@@ -69,6 +71,12 @@ export class Layout {
 
     private _endOffset = NaN;
     public get endOffset() { return this._endOffset; }
+
+    private _segmentStart = NaN;
+    public get segmentStart() { return this._segmentStart; }
+
+    private _segmentEnd = NaN;
+    public get segmentEnd() { return this._segmentEnd; }
 
     private startInvalid: LocalReference;
     private endInvalid: LocalReference;
@@ -140,41 +148,31 @@ export class Layout {
 
         try {
             doc.visitRange((position, segment, startOffset, endOffset) => {
-                this._position = position;
-                this._segment = segment;
-                this._startOffset = startOffset;
-                this._endOffset = endOffset;
-
-                this.emitted = this.pending;
-                this.pending = this.segmentToEmitted.get(this._segment) || new Set();
-                this.segmentToEmitted.set(this._segment, this.emitted);
-
-                assert.strictEqual(this.emitted.size, 0);
-                assert.notStrictEqual(this.emitted, this.pending);
+                this.beginSegment(position, segment, startOffset, endOffset);
 
                 while (true) {
                     const { formatter, state } = this.format;
                     if (formatter.visit(this, state)) {
-                        return this.saveCheckpoint(end);
+                        return this.endSegment(/* lastInvalidated: */ end);
                     }
                 }
             }, start);
 
-            if (this.segment) {
-                this._position += this.segment.cachedLength;
-            }
+            // Rendering should progress to the end of the invalidate range, and possibly further.
+            assert(start === end || this.segmentEnd >= end);
         } finally {
-            this._segment = undefined;
-            this._startOffset = NaN;
-            this._endOffset = NaN;
-
-            if (this.position >= length) {
+            // Note: In the case of removal from the end of the document, the invalidated range will be
+            //       [length..length).  'visitRange()' above will not enumerate any segments, and therefore
+            //       this.segmentEnd will be uninitialized (i.e., NaN).
+            //
+            //       To handle this case, we include 'end >= length' in the conditional below.
+            if (end >= length || this.segmentEnd >= length) {
+                debug("Begin EOT: %o@%d (length=%d)", this.segment, this.segmentEnd, doc.length);
+                this.beginSegment(length, eotSegment, 0, 0);
                 this.popFormat(this.formatStack.length);
+                this.endSegment(end);
+                debug("End EOT");
             }
-
-            this.removePending();
-            this.formatStack.length = 0;
-            this._cursor = undefined;
 
             debug("End: sync([%d..%d)) -> [%d..%d) len: %d -> %d",
                 oldStart,
@@ -184,7 +182,13 @@ export class Layout {
                 oldEnd - oldStart,
                 this.position - start);
 
+            this._cursor = undefined;
+            this._segment = undefined;
             this._position = NaN;
+            this._endOffset = NaN;
+            this._startOffset = NaN;
+            this._segmentStart = NaN;
+            this._segmentEnd = NaN;
 
             console.timeEnd("Layout.sync()");
         }
@@ -225,15 +229,15 @@ export class Layout {
     }
 
     public popFormat(count = 1) {
-        debug("  popFormat(%d@%d):", count, this.position);
         while (count-- > 0) {
             const { formatter, state } = this.formatStack.pop();
+            debug("  popFormat(%o@%d):", formatter, this.position);
             formatter.end(this, state);
         }
     }
 
     public pushNode(node: Node) {
-        debug("  pushNode(%s@%d)", nodeToString(node), this.position);
+        debug("    pushNode(%o@%d)", node, this.position);
 
         this.emitNode(node);
 
@@ -245,7 +249,7 @@ export class Layout {
     }
 
     public emitNode(node: Node) {
-        debug("    emitNode(%s@%d)", nodeToString(node), this.position);
+        debug("    emitNode(%o@%d)", node, this.position);
 
         const top = this._cursor;
         const { parent, previous } = top;
@@ -263,10 +267,10 @@ export class Layout {
     }
 
     public popNode(count = 1) {
-        debug("  popNode(%d@%d):", count, this.position);
         while (count-- > 0) {
             const cursor = this._cursor;
             const parent = cursor.parent;
+            debug("    popNode(%o@%d):", parent, this.position);
             cursor.previous = parent;
             cursor.parent = parent.parentNode;
         }
@@ -312,6 +316,26 @@ export class Layout {
         return { node: null, nodeOffset: NaN };
     }
 
+    private beginSegment(position: number, segment: ISegment, startOffset: number, endOffset: number) {
+        assert.strictEqual(this.pending.size, 0);
+
+        this._position = position;
+        this._segment = segment;
+        this._startOffset = startOffset;
+        this._endOffset = endOffset;
+
+        ({ start: this._segmentStart, end: this._segmentEnd } = getSegmentRange(position, segment, startOffset));
+
+        debug("beginSegment(%o@%d,+%d,-%d): [%d..%d)", segment, this.position, this.startOffset, this.endOffset, this.segmentStart, this.segmentEnd);
+
+        this.emitted = this.pending;
+        this.pending = this.segmentToEmitted.get(this._segment) || new Set();
+        this.segmentToEmitted.set(this._segment, this.emitted);
+
+        assert.strictEqual(this.emitted.size, 0);
+        assert.notStrictEqual(this.emitted, this.pending);
+    }
+
     private removePending() {
         for (const node of this.pending) {
             this.removeNode(node);
@@ -319,7 +343,7 @@ export class Layout {
         this.pending.clear();
     }
 
-    private saveCheckpoint(end: number) {
+    private endSegment(lastInvalidated: number) {
         this.removePending();
         const previous = this.segmentToCheckpoint.get(this.segment);
 
@@ -330,14 +354,19 @@ export class Layout {
                 this.cursor));
 
         // Continue synchronizing the DOM if we've not yet reached the last segment in the invalidated range.
-        if (!previous || this.position < (end - 1)) {
+        if (!previous || this.segmentEnd < lastInvalidated) {
             return true;
         }
 
         // Continue synchronizing the DOM if the DOM structure differs than the previous time we've encountered
         // this checkpoint.
-        return this.cursor.parent !== previous.cursor.parent
+        const shouldContinue = this.cursor.parent !== previous.cursor.parent
             || this.cursor.previous !== previous.cursor.previous;
+
+        // Identical structure implies that the node is still attached to the root.
+        assert(shouldContinue || this.root.contains(previous.cursor.parent));
+
+        return shouldContinue;
     }
 
     private restoreCheckpoint(checkpoint: LayoutCheckpoint) {
@@ -350,7 +379,7 @@ export class Layout {
     }
 
     private removeNode(node: Node) {
-        debug("        removed %s@%d", nodeToString(node), this.position);
+        debug("        removed %o@%d", node, this.position);
         this.nodeToSegmentMap.delete(node);
         if (node.parentNode) {
             node.parentNode.removeChild(node);
@@ -371,6 +400,8 @@ export class Layout {
     }
 
     private readonly onChange = (e: SequenceEvent) => {
+        debug("onChange(%o)", e);
+
         // If the segment was removed, promptly remove any DOM nodes it emitted.
         for (const { segment } of e.ranges) {
             if (segment.removedSeq) {
