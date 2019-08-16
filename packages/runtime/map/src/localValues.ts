@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@prague/component-core-interfaces";
+import {
+    IComponentHandle,
+    IComponentHandleContext,
+    IComponentSerializer,
+    ISerializedHandle,
+} from "@prague/component-core-interfaces";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
@@ -70,10 +75,24 @@ export class ValueTypeLocalValue implements ILocalValue {
         return this.valueType.name;
     }
 
-    public makeSerializable(): ISerializableValue {
+    public makeSerializable(
+        serializer: IComponentSerializer,
+        context: IComponentHandleContext,
+        bind: IComponentHandle,
+    ): ISerializableValue {
+        const storedValueType = this.valueType.factory.store(this.value);
+
+        // Stringify to convert to the serialized handle values - and then parse in order to create
+        // a POJO for the op
+        const result = serializer.stringify(
+            storedValueType,
+            context,
+            bind);
+        const value = JSON.parse(result);
+
         return {
             type: this.type,
-            value: this.valueType.factory.store(this.value),
+            value,
         };
     }
 
@@ -97,22 +116,34 @@ export class LocalValueMaker {
         this.valueTypes.set(type.name, type);
     }
 
-    public async fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter) {
-        if (serializable.type === ValueType[ValueType.Shared]) {
-            // even though this is getting an IChannel, we trust it will be a SharedObject because of the type marking
-            const localValue = await this.runtime.getChannel(serializable.value as string) as ISharedObject;
-            return new SharedLocalValue(localValue);
-        } else if (serializable.type === ValueType[ValueType.Plain]) {
+    public fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter): ILocalValue {
+        if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
+            // migrate from old shared value to handles
+            if (serializable.type === ValueType[ValueType.Shared]) {
+                serializable.type = ValueType[ValueType.Plain];
+                const handle: ISerializedHandle = {
+                    type: "__fluid_handle__",
+                    url: serializable.value as string,
+                };
+                serializable.value = handle;
+            }
+
             // stored value comes in already parsed so we stringify again to run through converter
             const translatedValue = this.runtime.IComponentSerializer.parse(
                 JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
             const valueType = this.valueTypes.get(serializable.type);
+
+            if (serializable.value) {
+                serializable.value = this.runtime.IComponentSerializer.parse(
+                    JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
+            }
+
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);
         } else {
-            return Promise.reject(`Unknown value type "${serializable.type}"`);
+            throw new Error(`Unknown value type "${serializable.type}"`);
         }
     }
 

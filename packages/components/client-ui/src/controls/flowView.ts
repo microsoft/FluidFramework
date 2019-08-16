@@ -4812,15 +4812,25 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public showCommentText() {
-        const overlappingComments = this.commentsView.findOverlappingIntervals(this.cursor.pos,
+        const overlappingComments = this.commentsView.findOverlappingIntervals(
+            this.cursor.pos,
             this.cursor.pos + 1);
+
         if (overlappingComments && (overlappingComments.length >= 1)) {
             const commentInterval = overlappingComments[0];
-            const commentText = commentInterval.properties["story"].getText();
-            this.statusMessage("comment", "Comment Text: " + commentText);
-            setTimeout(() => {
-                this.status.remove("comment");
-            }, (10000));
+
+            const commentHandle = commentInterval.properties["story"] as IComponentHandle;
+            commentHandle.get<Sequence.SharedString>().then(
+                (comment) => {
+                    const commentText = comment.getText();
+                    this.statusMessage("comment", "Comment Text: " + commentText);
+                    setTimeout(() => {
+                        this.status.remove("comment");
+                    }, (10000));
+                },
+                () => {
+                    console.log(`Failed to fetch ${commentHandle.path}`);
+                });
         }
     }
 
@@ -4829,12 +4839,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (sel) {
             const commentStory = this.collabDocument.createString();
             commentStory.insertText(0, "a comment...");
-            commentStory.register();
             this.comments.add(
                 sel.start,
                 sel.end,
                 MergeTree.IntervalType.SlideOnRemove,
-                { story: commentStory });
+                { story: commentStory.handle });
             this.cursor.clearSelection();
             this.hostSearchMenu(this.cursor.pos);
         }
@@ -5474,30 +5483,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const bookmarksCollection = this.sharedString.getSharedIntervalCollection("bookmarks");
         this.bookmarks = await bookmarksCollection.getView();
 
-        // Takes a shared Object from OnPrepareDeserialize and inserts back into the interval's "Story" Property
-        const onDeserialize: Sequence.DeserializeCallback = (interval, commentSharedString: ISharedObject) => {
-            if (interval.properties && interval.properties["story"]) {
-                assert(commentSharedString);
-                interval.properties["story"] = commentSharedString;
-            }
-
-            return true;
-        };
-
-        // Fetches the shared object with the key story["value"];
-        const onPrepareDeserialize: Sequence.PrepareDeserializeCallback = (properties) => {
-            if (properties && properties["story"]) {
-                const story = properties["story"];
-                return this.collabDocument.get(story["value"]);
-            } else {
-                return Promise.resolve(null);
-            }
-        };
-
         // For examples of showing the API we do interval adds on the collection with comments. But use
         // the view when doing bookmarks.
         this.comments = this.sharedString.getSharedIntervalCollection("comments");
-        this.commentsView = await this.comments.getView(onDeserialize, onPrepareDeserialize);
+        this.commentsView = await this.comments.getView();
 
         this.sequenceTest = await this.docRoot
             .get<IComponentHandle>("sequence-test")

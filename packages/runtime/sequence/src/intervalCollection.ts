@@ -410,23 +410,13 @@ export class SharedStringIntervalCollectionValueType
         [[
             "add",
             {
-                /* tslint:disable:promise-function-async */
-                prepare: (value, params, local, op) => {
+                process: (value, params, local, op) => {
                     // Local ops were applied when the message was created
                     if (local) {
                         return;
                     }
 
-                    /* tslint:disable:no-unsafe-any */
-                    return value.prepareAddInternal(params, local, op);
-                },
-                process: (value, params, context, local, op) => {
-                    // Local ops were applied when the message was created
-                    if (local) {
-                        return;
-                    }
-
-                    value.addInternal(params, context, local, op);
+                    value.addInternal(params, local, op);
                 },
             },
         ]]);
@@ -486,34 +476,23 @@ export class SharedIntervalCollectionValueType
         [[
             "add",
             {
-                prepare: (value, params, local, op) => {
+                process: (value, params, local, op) => {
                     // Local ops were applied when the message was created
                     if (local) {
                         return;
                     }
 
-                    return value.prepareAddInternal(params, local, op);
-                },
-                process: (value, params, context, local, op) => {
-                    // Local ops were applied when the message was created
-                    if (local) {
-                        return;
-                    }
-
-                    value.addInternal(params, context, local, op);
+                    value.addInternal(params, local, op);
                 },
             },
         ]]);
 }
 
-export type PrepareDeserializeCallback = (properties: MergeTree.PropertySet) => Promise<any>;
-export type DeserializeCallback = (value: ISerializableInterval, context: any) => void;
+export type DeserializeCallback = (properties: MergeTree.PropertySet) => void;
 
 export class SharedIntervalCollectionView<TInterval extends ISerializableInterval> extends EventEmitter {
     private readonly localCollection: LocalIntervalCollection<TInterval>;
-    private onPrepareDeserialize: PrepareDeserializeCallback;
     private onDeserialize: DeserializeCallback;
-    private attachingP = Promise.resolve();
 
     constructor(
         private readonly client: MergeTree.Client,
@@ -536,12 +515,8 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         }
     }
 
-    public async attachDeserializer(
-        onDeserialize: DeserializeCallback,
-        onPrepareDeserialize: PrepareDeserializeCallback): Promise<void> {
-
-        this.attachingP = this.attachDeserializerCore(onDeserialize, onPrepareDeserialize);
-        return this.attachingP;
+    public attachDeserializer(onDeserialize: DeserializeCallback): void {
+        this.attachDeserializerCore(onDeserialize);
     }
 
     public addConflictResolver(conflictResolver: MergeTree.IntervalConflictResolver<TInterval>): void {
@@ -575,8 +550,8 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         start: number,
         end: number,
         intervalType: MergeTree.IntervalType,
-        props?: MergeTree.PropertySet) {
-
+        props?: MergeTree.PropertySet,
+    ) {
         let seq = 0;
         if (this.client) {
             seq = this.client.getCurrentSeq();
@@ -590,16 +565,11 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
             start,
         };
 
-        this.addInternal(serializedInterval, null, true, null);
+        this.addInternal(serializedInterval, true, null);
     }
 
     // TODO: error cases
-    public addInternal(
-        serializedInterval: ISerializedInterval,
-        context: any,
-        local: boolean,
-        op: ISequencedDocumentMessage) {
-
+    public addInternal(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         const interval = this.localCollection.addInterval(
             serializedInterval.start,
             serializedInterval.end,
@@ -612,7 +582,7 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
                 this.emitter.emit("add", undefined, serializedInterval);
             } else {
                 if (this.onDeserialize) {
-                    this.onDeserialize(interval, context);
+                    this.onDeserialize(interval);
                 }
             }
         }
@@ -622,44 +592,23 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
         return this;
     }
 
-    public async prepareAdd(
-        interval: ISerializedInterval,
-        local: boolean,
-        message: ISequencedDocumentMessage): Promise<any> {
-
-        await this.attachingP;
-        return this.onPrepareDeserialize ? this.onPrepareDeserialize(interval.properties) : null;
-    }
-
     public serializeInternal() {
         return this.localCollection.serialize();
     }
 
-    private async attachDeserializerCore(
-        onDeserialize?: DeserializeCallback,
-        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<void> {
-
+    private attachDeserializerCore(onDeserialize?: DeserializeCallback): void {
         // If no deserializer is specified can skip all processing work
-        if (!onDeserialize && !onPrepareDeserialize) {
+        if (!onDeserialize) {
             return;
         }
 
         // Start by storing the callbacks so that any subsequent modifications make use of them
         this.onDeserialize = onDeserialize;
-        this.onPrepareDeserialize = onPrepareDeserialize;
 
         // Trigger the async prepare work across all values in the collection
-        const preparedIntervalsP: Array<Promise<{ context: any, interval: TInterval }>> = [];
         this.localCollection.map((interval) => {
-            const preparedIntervalP = onPrepareDeserialize(interval.properties)
-                .then((context) => ({ context, interval }));
-            preparedIntervalsP.push(preparedIntervalP);
+            this.onDeserialize(interval);
         });
-
-        const preparedIntervals = await Promise.all(preparedIntervalsP);
-        for (const preparedInterval of preparedIntervals) {
-            this.onDeserialize(preparedInterval.interval, preparedInterval.context);
-        }
     }
 }
 
@@ -695,10 +644,10 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         startPosition: number,
         endPosition: number,
         intervalType: MergeTree.IntervalType,
-        props?: MergeTree.PropertySet) {
-
+        props?: MergeTree.PropertySet,
+    ) {
         if (!this.view) {
-            return Promise.reject("attach must be called prior to adding intervals");
+            throw new Error("attach must be called prior to adding intervals");
         }
 
         this.view.add(startPosition, endPosition, intervalType, props);
@@ -708,37 +657,21 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         this.view.addConflictResolver(conflictResolver);
     }
 
-    public async getView(
-        onDeserialize?: DeserializeCallback,
-        onPrepareDeserialize?: PrepareDeserializeCallback): Promise<SharedIntervalCollectionView<TInterval>> {
-
+    public async getView(onDeserialize?: DeserializeCallback): Promise<SharedIntervalCollectionView<TInterval>> {
         if (!this.view) {
             return Promise.reject("attachSharedString must be called prior to retrieving the view");
         }
 
         // Attach custom deserializers if specified
-        if (onDeserialize || onPrepareDeserialize) {
-            await this.view.attachDeserializer(onDeserialize, onPrepareDeserialize);
+        if (onDeserialize) {
+            this.view.attachDeserializer(onDeserialize);
         }
 
         return this.view;
     }
 
-    public prepareAddInternal(
-        interval: ISerializedInterval,
-        local: boolean,
-        message: ISequencedDocumentMessage): Promise<any> {
-
-        if (!this.view) {
-            return Promise.reject("attachSharedString must be called");
-        }
-
-        return this.view.prepareAdd(interval, local, message);
-    }
-
     public addInternal(
         serializedInterval: ISerializedInterval,
-        context: any,
         local: boolean,
         op: ISequencedDocumentMessage) {
 
@@ -746,7 +679,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
             throw new Error("attachSharedString must be called");
         }
 
-        return this.view.addInternal(serializedInterval, context, local, op);
+        return this.view.addInternal(serializedInterval, local, op);
     }
 
     public serializeInternal() {

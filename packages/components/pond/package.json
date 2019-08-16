@@ -15,6 +15,7 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",

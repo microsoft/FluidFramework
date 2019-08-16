@@ -37,14 +37,9 @@ export interface IValueFactory<T> {
 
 export interface IValueOperation<T> {
     /**
-     * Allows the handler to prepare for the operation
-     */
-    prepare(value: T, params: any, local: boolean, message: ISequencedDocumentMessage): Promise<any>;
-
-    /**
      * Performs the actual processing on the operation
      */
-    process(value: T, params: any, context: any, local: boolean, message: ISequencedDocumentMessage);
+    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage);
 }
 
 /**

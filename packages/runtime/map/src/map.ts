@@ -47,8 +47,7 @@ class ContentObjectStorage implements IObjectStorageService {
 }
 
 interface IMapMessageHandler {
-    prepare(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): Promise<ILocalValue | void>;
-    process(op: IMapOperation, context: ILocalValue, local: boolean, message: ISequencedDocumentMessage): void;
+    process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
     submit(op: IMapOperation): void;
 }
 
@@ -291,9 +290,19 @@ export class SharedMap extends SharedObject implements ISharedMap {
             // value is actually initialization params in the value type case
             localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), value);
 
+            // TODO ideally we could use makeSerializable in this case as well. But the interval
+            // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+            // may be possible to remove custom value type serialization entirely.
+            const transformedValue = value
+                ? JSON.parse(this.runtime.IComponentSerializer.stringify(
+                    value,
+                    this.runtime.IComponentHandleContext,
+                    this.handle))
+                : value;
+
             // This is a special form of serialized valuetype only used for set, containing info for initialization.
             // After initialization, the serialized form will need to come from the .store of the value type's factory.
-            serializableValue = { type, value };
+            serializableValue = { type, value: transformedValue };
         } else {
             localValue = this.localValueMaker.fromInMemory(value);
             serializableValue = localValue.makeSerializable(
@@ -452,7 +461,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const data = header ? JSON.parse(Buffer.from(header, "base64")
             .toString("utf-8")) : {};
-        await this.populate(data as IMapDataObject);
+        this.populate(data as IMapDataObject);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
@@ -470,8 +479,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents as IMapOperation;
             if (this.messageHandlers.has(op.type)) {
-                return this.messageHandlers.get(op.type)
-                    .prepare(op, local, message);
+                return;
             }
         }
 
@@ -484,7 +492,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             const op: IMapOperation = message.contents as IMapOperation;
             if (this.messageHandlers.has(op.type)) {
                 this.messageHandlers.get(op.type)
-                    .process(op, context as ILocalValue, local, message);
+                    .process(op, local, message);
                 handled = true;
             }
         }
@@ -544,17 +552,13 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return null;
     }
 
-    private async populate(data: IMapDataObject): Promise<void> {
-        const localValuesP = new Array<Promise<{ key: string, value: ILocalValue }>>();
-
+    private populate(data: IMapDataObject): void {
         for (const [key, serializable] of Object.entries(data)) {
-            const localValueP = this.makeLocal(key, serializable)
-                .then((localValue) => ({ key, value: localValue }));
-            localValuesP.push(localValueP);
-        }
+            const localValue = {
+                key,
+                value: this.makeLocal(key, serializable),
+            };
 
-        const localValues = await Promise.all(localValuesP);
-        for (const localValue of localValues) {
             this.data.set(localValue.key, localValue.value);
         }
     }
@@ -608,7 +612,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * doesn't actually store the local value into that key.  So better not lie!
      * @param serializable - the remote information that we can convert into a real object
      */
-    private async makeLocal(key: string, serializable: ISerializableValue): Promise<ILocalValue> {
+    private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
         if (serializable.type === ValueType[ValueType.Plain] || serializable.type === ValueType[ValueType.Shared]) {
             return this.localValueMaker.fromSerializable(serializable);
         } else {
@@ -646,12 +650,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     private setMessageHandlers() {
-        const defaultPrepare = (op: IMapOperation, local: boolean) => Promise.resolve();
         this.messageHandlers.set(
             "clear",
             {
-                prepare: defaultPrepare,
-                process: (op: IMapClearOperation, context, local, message) => {
+                process: (op: IMapClearOperation, local, message) => {
                     if (local) {
                         if (this.pendingClearClientSequenceNumber === message.clientSequenceNumber) {
                             this.pendingClearClientSequenceNumber = -1;
@@ -671,8 +673,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.messageHandlers.set(
             "delete",
             {
-                prepare: defaultPrepare,
-                process: (op: IMapDeleteOperation, context, local, message) => {
+                process: (op: IMapDeleteOperation, local, message) => {
                     if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
@@ -685,13 +686,13 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.messageHandlers.set(
             "set",
             {
-                prepare: (op: IMapSetOperation, local) => {
-                    return local ? Promise.resolve(null) : this.makeLocal(op.key, op.value);
-                },
-                process: (op: IMapSetOperation, context, local, message) => {
+                process: (op: IMapSetOperation, local, message) => {
                     if (!this.needProcessKeyOperations(op, local, message)) {
                         return;
                     }
+
+                    const context = local ? undefined : this.makeLocal(op.key, op.value);
+
                     this.setCore(op.key, context, local, message);
                 },
                 submit: (op: IMapSetOperation) => {
@@ -706,17 +707,13 @@ export class SharedMap extends SharedObject implements ISharedMap {
         this.messageHandlers.set(
             "act",
             {
-                prepare: async (op: IMapValueTypeOperation, local, message) => {
-                    const localValue = this.data.get(op.key) as ValueTypeLocalValue;
-                    const handler = localValue.getOpHandler(op.value.opName);
-                    const value = localValue.value;
-                    return handler.prepare(value, op.value.value, local, message);
-                },
-                process: (op: IMapValueTypeOperation, context, local, message) => {
+                process: (op: IMapValueTypeOperation, local, message) => {
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    handler.process(previousValue, op.value.value, context, local, message);
+                    const translatedValue = this.runtime.IComponentSerializer.parse(
+                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                    handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.emit("valueChanged", event, local, message);
                 },
@@ -746,12 +743,17 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
+            const translatedParams = JSON.parse(this.runtime.IComponentSerializer.stringify(
+                params,
+                this.runtime.IComponentHandleContext,
+                this.handle));
+
             const op: IMapValueTypeOperation = {
                 key,
                 type: "act",
                 value: {
                     opName,
-                    value: params,
+                    value: translatedParams,
                 },
             };
             this.submitMapMessage(op);

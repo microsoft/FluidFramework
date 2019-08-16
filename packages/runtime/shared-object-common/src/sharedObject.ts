@@ -28,7 +28,6 @@ import * as uuid from "uuid/v4";
 import { debug } from "./debug";
 import { SharedObjectComponentHandle } from "./handle";
 import { ISharedObject } from "./types";
-import { ValueType } from "./valueType";
 
 /**
  *  Base class from which all shared objects derive
@@ -141,10 +140,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
      * @returns a JSON object containing the ValueType (always Shared) and the id of the shared object
      */
     public toJSON() {
-        return {
-            type: ValueType[ValueType.Shared],
-            value: this.id,
-        };
+        throw new Error("Only the handle can be converted to JSON");
     }
 
     /**

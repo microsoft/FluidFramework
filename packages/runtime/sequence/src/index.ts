@@ -9,7 +9,6 @@ export {
     Interval,
     ISerializableInterval,
     ISerializedInterval,
-    PrepareDeserializeCallback,
     SharedIntervalCollection,
     SharedIntervalCollectionValueType,
     SharedIntervalCollectionView,

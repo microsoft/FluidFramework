@@ -124,7 +124,7 @@ describe("Routerlicious", () => {
 
         describe(".populate", () => {
             it("Should populate the directory from an empty JSON object", async () => {
-                await (testDirectory as SharedDirectory).populate(JSON.parse("{}") as IDirectoryDataObject);
+                (testDirectory as SharedDirectory).populate(JSON.parse("{}") as IDirectoryDataObject);
                 assert.equal(testDirectory.size, 0, "Failed to initialize to empty directory storage");
                 testDirectory.set("testKey", "testValue");
                 assert.equal(testDirectory.get("testKey"), "testValue", "Failed to set testKey");
@@ -139,7 +139,7 @@ describe("Routerlicious", () => {
             it("Should populate the directory from a basic JSON object", async () => {
                 // tslint:disable-next-line:max-line-length
                 const jsonValue = `{"storage":{"testKey":{"type":"Plain","value":"testValue4"},"testKey2":{"type":"Plain","value":"testValue5"}},"subdirectories":{"foo":{"storage":{"testKey":{"type":"Plain","value":"testValue"},"testKey2":{"type":"Plain","value":"testValue2"}}},"bar":{"storage":{"testKey3":{"type":"Plain","value":"testValue3"}}}}}`;
-                await (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
+                (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
                 assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
                 assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
                 assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), "testValue2");

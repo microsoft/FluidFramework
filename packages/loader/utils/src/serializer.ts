@@ -44,7 +44,7 @@ export class ComponentSerializer implements IComponentSerializer {
             input,
             (key, value: IComponent) => {
                 // directly return the value unless it's a handle
-                const handle = value.IComponentHandle;
+                const handle = value ? value.IComponentHandle : value;
                 if (!handle) {
                     return value;
                 }
