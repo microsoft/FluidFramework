@@ -58,7 +58,7 @@
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "lerna": "^3.14.1",
-    "nyc": "^13.0.1",
+    "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
     "typescript": "~3.4.5"
   },
