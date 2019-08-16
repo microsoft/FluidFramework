@@ -46,15 +46,6 @@
         },
         {
             "type": "node",
-            "request": "launch",
-            "name": "STroll",
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
-            "program": "${workspaceRoot}/dist/tools/spellingTroll.js",
-            "args": ["aug8-5"]
-        },
-        {
-            "type": "node",
             "request": "attach",
             "name": "Attach to server",
             "address": "localhost",
@@ -80,7 +71,7 @@
             "outFiles": [ "${workspaceRoot}/dist/**/*.js" ],
             "protocol":"inspector",
             "trace": "sm"
-        },    
+        },
         {
             "type": "node",
             "request": "attach",

@@ -163,15 +163,6 @@
         },
         {
             "type": "node",
-            "request": "launch",
-            "name": "STroll",
-            "sourceMaps": true,
-            "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "program": "${workspaceFolder}/dist/tools/spellingTroll.js",
-            "args": ["aug8-5"]
-        },
-        {
-            "type": "node",
             "request": "attach",
             "name": "Attach to alfred",
             "address": "localhost",
