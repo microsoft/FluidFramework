@@ -4,7 +4,7 @@
  */
 
 import { SharedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { SharedMap } from "@prague/map";
+import { SharedDirectory, SharedMap } from "@prague/map";
 import { Stream } from "@prague/stream";
 import { Canvas } from "./canvas";
 
@@ -15,6 +15,7 @@ export const CanvasName = pkg.name as string;
 export const CanvasInstantiationFactory = new SharedComponentFactory(
     Canvas,
     [
+        SharedDirectory.getFactory(),
         SharedMap.getFactory(),
         Stream.getFactory(),
     ],

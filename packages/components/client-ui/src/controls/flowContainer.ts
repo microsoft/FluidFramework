@@ -61,12 +61,17 @@ export class FlowContainer extends ui.Component {
 
     public async initialize() {
         if (!this.collabDocument.existing) {
-            this.flowContainerMap.set("overlayInk", this.collabDocument.createMap());
-            this.flowContainerMap.set("pageInk", this.collabDocument.createStream());
+            this.flowContainerMap.set("overlayInk", this.collabDocument.createMap().handle);
+            this.flowContainerMap.set("pageInk", this.collabDocument.createStream().handle);
         }
 
-        this.overlayInkMap = await this.flowContainerMap.wait("overlayInk");
-        this.pageInkStream = await this.flowContainerMap.wait("pageInk");
+        const [overlayInkMapHandle, pageInkStream] = await Promise.all([
+            this.flowContainerMap.wait<IComponentHandle>("overlayInk"),
+            this.flowContainerMap.wait<IComponentHandle>("pageInk"),
+        ]);
+
+        this.overlayInkMap = await overlayInkMapHandle.get();
+        this.pageInkStream = await pageInkStream.get();
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
         // a better API model.
