@@ -32,13 +32,14 @@ async function main() {
         process.exit(-2);
         return;
     }
-    if (!existsSync(root)) {
-        console.log(`ERROR: Repo root '${root}' not exist.`);
+    const resolvedRoot = path.resolve(root);
+    if (!existsSync(resolvedRoot)) {
+        console.log(`ERROR: Repo root '${resolvedRoot}' not exist.`);
         process.exit(-3);
         return;
     }
 
-    const baseDirectory = path.join(root, "packages");
+    const baseDirectory = path.join(resolvedRoot, "packages");
     
     // Load the package
     const packages = Package.load(baseDirectory);

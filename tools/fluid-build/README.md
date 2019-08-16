@@ -14,7 +14,7 @@ npm run build
 npm link
 ```
 
-## Running the tool
+## Running the tool (Command Line)
 
 ```sh
 Usage: fluid-build <options> [<npm script>] [<package regexp> ...]
@@ -43,6 +43,10 @@ Rebuild (clean and build) any package name matching "merge" and it's dependencie
 ```sh
 fluid-build --rebuild merge
 ```
+
+## Running the tool (Fluid directory workspace in VSCode)
+
+To build fluid within VSCode, use Ctrl-Shift-B to break up the build task list and choose `fluid-build`.
 
 ## Details
 
