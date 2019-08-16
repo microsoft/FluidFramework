@@ -6,6 +6,7 @@
 import { PrimedComponent } from "@prague/aqueduct";
 import {
   IComponent,
+  IComponentHandle,
   IComponentHTMLVisual,
   IComponentLoadable,
   IComponentQueryableLegacy,
@@ -143,11 +144,12 @@ export class ExternalComponentView extends PrimedComponent implements IComponent
     protected async componentInitializingFirstTime() {
         const sequence = SharedObjectSequence.create<string>(this.runtime);
         sequence.register();
-        this.root.set("componentIds", sequence);
+        this.root.set("componentIds", sequence.handle);
     }
 
     protected async componentHasInitialized() {
-        this.sequence = await this.root.wait<SharedObjectSequence<string>>("componentIds");
+        const seqHandle = await this.root.wait<IComponentHandle>("componentIds");
+        this.sequence = await seqHandle.get<SharedObjectSequence<string>>();
         const cacheComponentsByUrl = async (urls: string[]) => {
             const promises =
                 // tslint:disable-next-line: promise-function-async
