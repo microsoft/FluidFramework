@@ -22,6 +22,8 @@ const waitTimeoutMS = 60000;
 export interface IKeyValue {
     set(key: string, value: any): void;
     get(key: string): any;
+    entries(): IterableIterator<[string, any]>;
+    delete(key: string): boolean;
 }
 
 export class KeyValueLoader {
