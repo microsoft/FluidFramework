@@ -5,6 +5,9 @@
 
 import * as API from "@prague/client-api";
 import {
+    IRequest,
+} from "@prague/component-core-interfaces";
+import {
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
 } from "@prague/container-definitions";
@@ -26,28 +29,96 @@ import {
     IResolvedUrl,
     ISequencedDocumentMessage,
     ITree,
-    ScopeType,
+    IUrlResolver,
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@prague/replay-socket-storage";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { generateToken } from "@prague/services-core";
 import { ChildLogger, TelemetryLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as child_process from "child_process";
 import * as fs from "fs";
-import { ReplayArgs } from "./replayTool";
+
+// "worker_threads" does not resolve without --experimental-worker flag on command line
+let threads = { isMainThread: true };
+try {
+    // tslint:disable-next-line:no-require-imports no-var-requires no-unsafe-any
+    threads = require("worker_threads");
+} catch (error) {}
+
+import { ReplayArgs } from "./replayArgs";
 
 // tslint:disable:non-literal-fs-path
+
+function expandTreeForReadability(tree: ITree): ITree {
+    const newTree: ITree = {entries: [], id: undefined};
+    for (const node of tree.entries) {
+        const newNode = {...node};
+        if (node.type === TreeEntry[TreeEntry.Tree]) {
+            newNode.value = expandTreeForReadability(node.value as ITree);
+        }
+        if (node.type === TreeEntry[TreeEntry.Blob]) {
+            const blob = node.value as IBlob;
+            try {
+                newNode.value = {
+                    contents: JSON.parse(blob.contents) as string,
+                    encoding: blob.encoding,
+                };
+            } catch (e) {}
+        }
+        newTree.entries.push(newNode);
+    }
+    return newTree;
+}
+
+/**
+ * Helper class to container information about particular snapshot
+ */
+class ContainerContent {
+    public snapshot?: IFileSnapshot;
+
+    private snapshotSavedString?: string;
+    private snapshotExpandedString?: string;
+
+    public constructor(public readonly op: number) {
+    }
+
+    get snapshotAsString(): string {
+        if (this.snapshotSavedString === undefined) {
+            this.snapshotSavedString = JSON.stringify(this.snapshot, undefined, 2);
+        }
+        return this.snapshotSavedString;
+    }
+
+    get snapshotExpanded(): string {
+        if (this.snapshotExpandedString === undefined) {
+            const snapshotExpanded: IFileSnapshot = {
+                commits: {},
+                tree: expandTreeForReadability(this.snapshot.tree),
+            };
+            for (const commit of Object.keys(this.snapshot.commits)) {
+                snapshotExpanded.commits[commit] = expandTreeForReadability(this.snapshot.commits[commit]);
+            }
+
+            this.snapshotExpandedString = JSON.stringify(snapshotExpanded, undefined, 2);
+        }
+        return this.snapshotExpandedString;
+    }
+}
+
+function sameContent(content1: ContainerContent, content2: ContainerContent): boolean {
+    assert(content1.op === content2.op);
+
+    return content1.snapshotAsString === content2.snapshotAsString;
+}
 
 /**
  * Logger to catch errors in containers
  */
 class Logger implements ITelemetryBaseLogger {
-    public constructor(private readonly containerDescription: string) {
+    public constructor(private readonly containerDescription: string, private readonly errorHandler: () => void) {
     }
 
     // ITelemetryBaseLogger implementation
@@ -56,12 +127,28 @@ class Logger implements ITelemetryBaseLogger {
             // Stack is not output properly (with newlines), if done as part of event
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
+            this.errorHandler();
             console.error(`An error has been logged from ${this.containerDescription}!`);
             console.error(event);
             if (stack) {
                 console.error(stack);
             }
         }
+    }
+}
+
+/**
+ * URL Resolver object
+ */
+class ContainerUrlResolver implements IUrlResolver {
+    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
+    }
+
+    public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (!this.cache.has(request.url)) {
+            return Promise.reject(`ContainerUrlResolver can't resolve ${request}`);
+        }
+        return this.cache.get(request.url);
     }
 }
 
@@ -94,14 +181,17 @@ class Document {
     }
 
     public getFileName() {
-        return this.snapshotFileName;
+        return `${this.snapshotFileName}_${this.currentOp}`;
     }
 
-    public setFileName(filename: string) {
-        this.snapshotFileName = filename;
+    public appendToFileName(suffix: string) {
+        this.snapshotFileName = `${this.snapshotFileName}${suffix}`;
     }
 
-    public async load(deltaStorageService: FileDeltaStorageService, containerDescription: string) {
+    public async load(
+            deltaStorageService: FileDeltaStorageService,
+            containerDescription: string,
+            errorHandler: () => void) {
         const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
         const documentServiceFactory = new FileDocumentServiceFactory(
             this.storage,
@@ -110,7 +200,8 @@ class Document {
 
         this.container = await this.loadContainer(
             documentServiceFactory,
-            containerDescription);
+            containerDescription,
+            errorHandler);
 
         this.from = this.container.deltaManager.referenceSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -145,27 +236,37 @@ class Document {
             !this.args.incremental /*generateFullTreeNoOtimizations*/);
     }
 
+    public extractContent(): ContainerContent {
+        const content = new ContainerContent(this.currentOp);
+
+        // Add here any interesting data extraction code that you want to use for comparison.
+        // We can also write it out to disk, thus giving us an extra validation when
+        // comparing changes "before" and "after", giving us view not just into internal data
+        // representation, but also into observable impact to upper layers.
+        // For example, it would be great to enumerate all shared strings and retrieve their text.
+
+        return content;
+    }
+
     private resolveC = () => {};
 
     private async loadContainer(
             serviceFactory: IDocumentServiceFactory,
             containerDescription: string,
+            errorHandler: () => void,
             ): Promise<Container> {
-        const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
         const resolved: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl: "replay.com",
                 ordererUrl: "replay.com",
                 storageUrl: "replay.com",
             },
-            tokens: { jwt: generateToken("prague", "replay-tool", "replay-tool", scopes) },
+            tokens: {},
             type: "prague",
             url: `prague://localhost:6000/prague/${FileStorageDocumentName}`,
         };
 
         const resolver = new ContainerUrlResolver(
-            "",
-            "",
             new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
         const host = { resolver };
 
@@ -173,7 +274,7 @@ class Document {
         const options = {};
 
         // Load the Fluid document
-        this.docLogger = ChildLogger.create(new Logger(containerDescription));
+        this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
         const loader = new Loader(host, serviceFactory, codeLoader, options, this.docLogger);
         const container: Container = await loader.resolve({ url: resolved.url });
 
@@ -196,10 +297,13 @@ export class ReplayTool {
     private readonly documentsFromStorageSnapshots: Document[] = [];
     private windiffCount = 0;
     private deltaStorageService: FileDeltaStorageService;
+    private errorCount = 0;
 
     public constructor(private readonly args: ReplayArgs) {}
 
-    public async Go() {
+    public async Go(): Promise<boolean> {
+        this.args.checkArgs();
+
         await this.setup();
 
         if (this.args.verbose) {
@@ -210,10 +314,19 @@ export class ReplayTool {
 
         if (this.args.verbose) {
             console.log("\nLast replayed op seq# ", this.mainDocument.currentOp);
-        } else {
+        } else if (threads.isMainThread) {
             process.stdout.write("\n");
         }
         assert(this.documentsFromStorageSnapshots.length === 0);
+
+        return this.errorCount === 0;
+    }
+
+    private loadDoc(doc: Document, containerDescription: string) {
+        return doc.load(
+            this.deltaStorageService,
+            containerDescription,
+            () => { this.errorCount++; });
     }
 
     private async setup() {
@@ -228,9 +341,7 @@ export class ReplayTool {
 
         this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
         this.mainDocument = new Document(this.args, this.storage);
-        await this.mainDocument.load(
-            this.deltaStorageService,
-            this.args.version ? this.args.version : "main container");
+        await this.loadDoc(this.mainDocument, this.args.version ? this.args.version : "main container");
         this.documents.push(this.mainDocument);
 
         if (this.args.version !== undefined) {
@@ -240,18 +351,18 @@ export class ReplayTool {
             }
         }
 
-        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateSotrageSnapshots) {
+        if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
             const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
             this.documentNeverSnapshot = new Document(this.args, storage);
-            await this.documentNeverSnapshot.load(
-                this.deltaStorageService,
+            await this.loadDoc(
+                this.documentNeverSnapshot,
                 this.args.version ? this.args.version : "secondary container");
-            this.documentNeverSnapshot.setFileName(`snapshot_${this.documentNeverSnapshot.fromOp}_noSnapshots`);
+            this.documentNeverSnapshot.appendToFileName("_noSnapshots");
             this.documents.push(this.documentNeverSnapshot);
         }
 
         // Load all snapshots from storage
-        if (this.args.validateSotrageSnapshots) {
+        if (this.args.validateStorageSnapshots) {
             for (const node of fs.readdirSync(this.args.inDirName, {withFileTypes: true})) {
                 if (!node.isDirectory()) {
                     continue;
@@ -259,8 +370,8 @@ export class ReplayTool {
                 const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, node.name);
                 const doc = new Document(this.args, storage);
                 try {
-                    await doc.load(this.deltaStorageService, node.name);
-                    doc.setFileName(`${doc.getFileName()}_storage_${node.name}`);
+                    await this.loadDoc(doc, node.name);
+                    doc.appendToFileName(`_storage_${node.name}`);
 
                     if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
                         console.log(`Skipping snapshots ${node.name} generated at op = ${doc.fromOp}`);
@@ -305,9 +416,7 @@ export class ReplayTool {
             }
 
             const final = this.mainDocument.currentOp < replayTo || this.args.to <= this.mainDocument.currentOp;
-            if (this.args.takeSnapshots()) {
-                await this.generateSnapshot(final);
-            }
+            await this.generateSnapshot(final);
             if (final) {
                 break;
             }
@@ -316,44 +425,38 @@ export class ReplayTool {
 
     private async generateSnapshot(final: boolean) {
         const op = this.mainDocument.currentOp;
-        const dir = `${this.args.outDirName}/op_${op}`;
-        let snapshotSaved: IFileSnapshot | undefined;
-        let snapshotSavedString: string | undefined;
+        const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
-        const createSnapshot = this.args.createAllFiles || (final && this.args.takeSnapshot);
-        if (createSnapshot) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-
-        this.storage.onCommitHandler = (componentName: string, tree: ITree) => {
-            if (this.args.createAllFiles) {
-                const filename = componentName.replace(/(\\|\/)/gm, "_");
-                fs.writeFileSync(
-                    `${dir}/${filename}.json`,
-                    JSON.stringify(tree, undefined, 2),
-                    {encoding: "utf-8"});
-            }
-        };
+        const content = this.mainDocument.extractContent();
 
         this.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
-            snapshotSaved = snapshot;
-            snapshotSavedString = JSON.stringify(snapshot, undefined, 2);
-            if (createSnapshot) {
-                this.expandForReadabilityAndWriteOut(snapshotSaved, `${dir}/${this.mainDocument.getFileName()}`);
+            content.snapshot = snapshot;
+            if (this.args.compare) {
+                this.compareSnapshots(
+                    content,
+                    `${dir}/${this.mainDocument.getFileName()}`);
+
+            } else if (this.args.write) {
+                fs.mkdirSync(dir, { recursive: true });
+                this.expandForReadabilityAndWriteOut(
+                    content,
+                    `${dir}/${this.mainDocument.getFileName()}`);
             }
         };
 
         if (this.args.verbose) {
-            if (this.args.createAllFiles) {
+            if (this.args.write) {
                 console.log(`Writing snapshot at seq# ${op}`);
             } else {
                 console.log(`Validating snapshot at seq# ${op}`);
             }
         }
+
         await this.mainDocument.snapshot();
-        if (snapshotSaved === undefined) {
+        if (content.snapshot === undefined) {
             // Snapshots are not created if there is no "code2" proposal
             if (op >= 4) {
+                this.errorCount++;
                 console.error(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
             }
             return;
@@ -361,45 +464,44 @@ export class ReplayTool {
 
         // Load it back to prove it's correct
         const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
-        const storage2 = new storageClass(snapshotSaved);
+        const storage2 = new storageClass(content.snapshot);
         const document2 = new Document(this.args, storage2);
-        await document2.load(this.deltaStorageService, `Saved & loaded at seq# ${op}`);
-        await this.saveAndVerify(document2, dir, snapshotSaved, snapshotSavedString);
+        await this.loadDoc(document2, `Saved & loaded at seq# ${op}`);
+        await this.saveAndVerify(document2, dir, content);
 
         // Add extra container
         if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
             storage2.reset();
             const document3 = new Document(this.args, storage2);
-            await document3.load(this.deltaStorageService, `Saved & loaded at seq# ${op}`);
+            await this.loadDoc(document3, `Saved & loaded at seq# ${op}`);
             this.documentsWindow.push(document3);
         }
 
         if (final && this.documentNeverSnapshot) {
-            await this.saveAndVerify(this.documentNeverSnapshot, dir, snapshotSaved, snapshotSavedString);
+            await this.saveAndVerify(this.documentNeverSnapshot, dir, content);
         }
 
-        const startOp = op - this.args.opsToSkip;
+        const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
         while (this.documentsWindow.length > 0
                 && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final);
-            await this.saveAndVerify(doc, dir, snapshotSaved, snapshotSavedString);
+            await this.saveAndVerify(doc, dir, content);
         }
-
         const processVersionedSnapshot = this.documentsFromStorageSnapshots.length > 0 &&
             this.documentsFromStorageSnapshots[0].fromOp <= op;
         if (this.documentPriorSnapshot && (processVersionedSnapshot || final)) {
-            await this.saveAndVerify(this.documentPriorSnapshot, dir, snapshotSaved, snapshotSavedString);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content);
             this.documentPriorSnapshot = undefined;
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
             assert(this.documentPriorSnapshot.fromOp === op);
-            await this.saveAndVerify(this.documentPriorSnapshot, dir, snapshotSaved, snapshotSavedString);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content);
         }
 
         /*
-        if (this.args.createAllFiles) {
+        if (this.args.write) {
             // Follow up:
             // Summary needs commits (same way as snapshot), that is available in
             // PragueDumpReaderFileSnapshotWriter.write()
@@ -413,42 +515,33 @@ export class ReplayTool {
     private async saveAndVerify(
             document2: Document,
             dir: string,
-            snapshotSaved: IFileSnapshot,
-            snapshotSavedString: string): Promise<boolean> {
-        let snapshotSaved2: IFileSnapshot | undefined;
-        let snapshotSaved2String: string | undefined;
+            content: ContainerContent): Promise<boolean> {
         const op = document2.currentOp;
 
-        assert(this.mainDocument.currentOp === op);
+        const content2 = document2.extractContent();
 
         const name1 = this.mainDocument.getFileName();
         const name2 = document2.getFileName();
 
-        document2.storage.onCommitHandler = (componentName: string, tree: ITree) => {};
         document2.storage.onSnapshotHandler = (snapshot: IFileSnapshot) => {
-            snapshotSaved2 = snapshot;
-            snapshotSaved2String = JSON.stringify(snapshot, undefined, 2);
-            if (this.args.createAllFiles) {
-                fs.writeFileSync(
-                    `${dir}/${name2}.json`,
-                    snapshotSaved2String,
-                    { encoding: "utf-8" });
-                }
+            content2.snapshot = snapshot;
         };
 
         await document2.snapshot();
-        if (snapshotSaved2String === undefined) {
-            console.error(`\nSnapshot ${document2.getFileName()} was not saved at op # ${op}!`);
+        if (content2.snapshot === undefined) {
+            this.errorCount++;
+            console.error(`\nSnapshot ${name2} was not saved at op # ${op}!`);
             return false;
         }
 
-        if (snapshotSavedString !== snapshotSaved2String) {
+        if (!sameContent(content, content2)) {
+            this.errorCount++;
             // tslint:disable-next-line:max-line-length
             console.error(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`);
             fs.mkdirSync(dir, { recursive: true });
 
-            this.expandForReadabilityAndWriteOut(snapshotSaved, `${dir}/${name1}`);
-            this.expandForReadabilityAndWriteOut(snapshotSaved2, `${dir}/${name2}`);
+            this.expandForReadabilityAndWriteOut(content, `${dir}/${name1}`);
+            this.expandForReadabilityAndWriteOut(content2, `${dir}/${name2}`);
 
             if (this.args.windiff) {
                 console.log(`windiff.exe "${dir}/${name1}_expanded.json" "${dir}/${name2}_expanded.json"`);
@@ -462,50 +555,33 @@ export class ReplayTool {
             return false;
         }
 
-        if (!this.args.verbose) {
+        if (!this.args.verbose && threads.isMainThread) {
             process.stdout.write(".");
         }
         return true;
     }
 
-    private expandForReadabilityAndWriteOut(snapshot: IFileSnapshot, filename: string) {
+    private expandForReadabilityAndWriteOut(content: ContainerContent, filename: string) {
         fs.writeFileSync(
             `${filename}.json`,
-            JSON.stringify(snapshot, undefined, 2),
+            content.snapshotAsString,
             { encoding: "utf-8" });
 
-        const snapshotExpanded: IFileSnapshot = {
-            commits: {},
-            tree: this.expandTreeForReadability(snapshot.tree),
-        };
-        for (const commit of Object.keys(snapshot.commits)) {
-            snapshotExpanded.commits[commit] = this.expandTreeForReadability(snapshot.commits[commit]);
+        if (this.args.expandFiles) {
+            fs.writeFileSync(
+                `${filename}_expanded.json`,
+                content.snapshotExpanded,
+                { encoding: "utf-8" });
         }
-
-        fs.writeFileSync(
-            `${filename}_expanded.json`,
-            JSON.stringify(snapshotExpanded, undefined, 2),
-            { encoding: "utf-8" });
     }
 
-    private expandTreeForReadability(tree: ITree): ITree {
-        const newTree: ITree = {entries: [], id: undefined};
-        for (const node of tree.entries) {
-            const newNode = {...node};
-            if (node.type === TreeEntry[TreeEntry.Tree]) {
-                newNode.value = this.expandTreeForReadability(node.value as ITree);
-            }
-            if (node.type === TreeEntry[TreeEntry.Blob]) {
-                const blob = node.value as IBlob;
-                try {
-                    newNode.value = {
-                        contents: JSON.parse(blob.contents) as string,
-                        encoding: blob.encoding,
-                    };
-                } catch (e) {}
-            }
-            newTree.entries.push(newNode);
+    private compareSnapshots(content: ContainerContent, filename: string) {
+        const snapshotAsString = fs.readFileSync(
+            `${filename}.json`,
+            { encoding: "utf-8" });
+        if (snapshotAsString !== content.snapshotAsString) {
+            this.errorCount++;
+            throw new Error(`Mismatch in snapshot ${filename}.json`);
         }
-        return newTree;
     }
 }

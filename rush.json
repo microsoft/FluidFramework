@@ -345,6 +345,10 @@
     {
       "packageName": "@prague/replay-tool",
       "projectFolder": "packages/tools/replay-tool/"
-    }
+    },
+    {
+      "packageName": "@prague/test-snapshots",
+      "projectFolder": "packages/test/snapshots/"
+    }    
   ]
 }

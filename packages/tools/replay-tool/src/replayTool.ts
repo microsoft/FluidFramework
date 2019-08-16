@@ -3,55 +3,41 @@
  * Licensed under the MIT License.
  */
 
+import { ReplayArgs } from "./replayArgs";
 import { ReplayTool } from "./replayMessages";
 
-const optionsArray =
-    [
+const optionsArray = [
+    "Location:",
         ["--indir <directory>", "Name of the directory containing the output of the prague dumper tool"],
-        ["--from <op#>", "Indicates seq# where to start stress tests / generation of snapshots"],
-        ["--to <op#>", "The last op number to be replayed"],
-        ["--snapshot", "Take snapshot after replaying all the ops"],
-        ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
         ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
-                     "If not specified a directory will be created in current directory with name Output"],
-        ["--version <version>", "Load document from particular snapshot.",
-                     "<Version> is the name of the directory inside the --indir containing the snapshot blobs"],
-        ["--quiet", "Reduces amount of output."],
-        ["--verbose", "Increases amount of output."],
-        ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy."],
-        ["--windiff", "Launch windiff.exe for any mismatch."],
-        ["--storageSnapshots", "Validate storage (PragueDump) snapshots."],
-        ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50"],
-    ];
+            "If not specified a directory will be created in current directory with name Output"],
+    "Modes:",
+        ["--write", "Write out snapshots. Behavior is controlled by --snapfreq & --storageSnapshots"],
+        ["--compare", "Compares snapshots to snapshots previously saved on disk. Used in testing"],
+    "Processing:",
+        ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
+        ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
+            "Writes out only snapshots with consistency issues"],
+        ["--storageSnapshots", "Validate storage (PragueDump) snapshots"],
+        ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
+    "Scoping:",
+        ["--from <op#|version>", "if a number, indicates seq# where to start generation/validation of snapshots",
+            "Else specifies directory inside the --indir - a snapshot to load from"],
+        ["--to <op#>", "The last op number to be replayed"],
+    "Misc:",
+        ["--noexpanded", "Do not write out 'snapshot*_expanded.json' files"],
+        ["--windiff", "Launch windiff.exe for any mismatch"],
+        ["--quiet", "Reduces amount of output"],
+        ["--verbose", "Increases amount of output"],
+];
 
 /**
  * This is the main class used to take user input to replay ops for debugging purposes.
  */
-export class ReplayArgs {
-
-    public inDirName?: string;
-    public outDirName: string = "output";
-    public from: number = 0;
-    public to: number = Number.MAX_SAFE_INTEGER;
-    public takeSnapshot = false;
-    public snapFreq: number = Number.MAX_SAFE_INTEGER;
-    public version?: string;
-    public stressTest = false;
-    public verbose = true;
-    public createAllFiles = true;
-    public opsToSkip = 200;
-    public validateSotrageSnapshots = false;
-    public windiff = false;
-    public incremental = false;
-
+class ReplayProcessArgs extends ReplayArgs {
     constructor() {
+        super();
         this.parseArguments();
-    }
-
-    public takeSnapshots() {
-        return this.takeSnapshot
-            || this.validateSotrageSnapshots
-            || this.snapFreq !== Number.MAX_SAFE_INTEGER;
     }
 
     public parseArguments() {
@@ -69,14 +55,19 @@ export class ReplayArgs {
                     break;
                 case "--from":
                     i += 1;
-                    this.from = this.parseIntArg(i);
+                    const from = this.parseStrArg(i);
+                    const paramNumber = parseInt(from, 10);
+                    this.version = undefined;
+                    this.from = 0;
+                    if (isNaN(paramNumber) || paramNumber < 0) {
+                        this.version = from;
+                    } else {
+                        this.from = paramNumber;
+                    }
                     break;
                 case "--to":
                     i += 1;
                     this.to = this.parseIntArg(i);
-                    break;
-                case "--snapshot":
-                    this.takeSnapshot = true;
                     break;
                 case "--snapfreq":
                     i += 1;
@@ -85,10 +76,6 @@ export class ReplayArgs {
                 case "--outdir":
                     i += 1;
                     this.outDirName = this.parseStrArg(i);
-                    break;
-                case "--version":
-                    i += 1;
-                    this.version = this.parseStrArg(i);
                     break;
                 case "--quiet":
                     this.verbose = false;
@@ -103,36 +90,32 @@ export class ReplayArgs {
                     this.incremental = true;
                     break;
                 case "--storageSnapshots":
-                    this.validateSotrageSnapshots = true;
-                    this.createAllFiles = false;
+                    this.validateStorageSnapshots = true;
                     break;
                 case "--stressTest":
-                    this.stressTest = true;
                     this.verbose = false;
-                    this.createAllFiles = false;
+                    if (this.snapFreq === Number.MAX_SAFE_INTEGER) {
+                        this.snapFreq = 50;
+                    }
+                    break;
+                case "--compare":
+                    this.compare = true;
+                    this.write = false;
+                    this.verbose = false;
+                    break;
+                case "--write":
+                    this.write = true;
+                    this.compare = false;
+                    this.verbose = false;
+                    break;
+                case "--noexpanded":
+                    this.expandFiles = false;
                     break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);
                     this.printUsage();
                     process.exit(-1);
             }
-        }
-
-        if (this.from > this.to) {
-            console.error(`ERROR: --from argument should be less or equal to --to argument`);
-            process.exit(-1);
-        }
-
-        if (this.stressTest && this.snapFreq === Number.MAX_SAFE_INTEGER) {
-            this.snapFreq = 50;
-        }
-
-        if (this.from !== 0 && !this.takeSnapshots()) {
-            console.error(`WARNING: --from argument is ignored as snapshots are not generated`);
-        }
-
-        if (this.snapFreq !== Number.MAX_SAFE_INTEGER) {
-            this.opsToSkip = (Math.floor((this.opsToSkip - 1) / this.snapFreq) + 1) * this.snapFreq;
         }
     }
 
@@ -163,26 +146,28 @@ export class ReplayArgs {
 
     public printUsage() {
         console.log("Usage: replayTool [options]");
-        console.log("Options:");
         const empty = "".padEnd(32);
         for (const rec of optionsArray) {
-            let header = `${rec[0].padEnd(32)}`;
-            for (const el of rec.slice(1)) {
-                console.log(`  ${header}${el}`);
-                header = empty;
+            if (typeof rec === "string") {
+                console.log("");
+                console.log(rec);
+            } else {
+                let header = `${rec[0].padEnd(32)}`;
+                for (const el of rec.slice(1)) {
+                    console.log(`  ${header}${el}`);
+                    header = empty;
+                }
             }
         }
     }
 }
 
-function replayToolMain() {
-   return new ReplayTool(new ReplayArgs()).Go();
-}
-
-replayToolMain()
-    .catch((error: string) => {
-        console.log(`ERROR: ${error}`);
+new ReplayTool(new ReplayProcessArgs())
+    .Go()
+    .then((success) => {
+        process.exit(success ? 0 : 1);
     })
-    .finally(() => {
-        process.exit(0);
+    .catch((error: string) => {
+        console.error(`ERROR: ${error}`);
+        process.exit(2);
     });

@@ -126,8 +126,8 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         }
 
         public onCommitHandler(componentName: string, tree: api.ITree): void {
-            throw new Error("onCommitHandler is not setup! Please provide your handler!");
         }
+
         public onSnapshotHandler(snapshot: IFileSnapshot): void {
             throw new Error("onSnapshotHandler is not setup! Please provide your handler!");
         }
