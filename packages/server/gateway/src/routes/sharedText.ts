@@ -15,7 +15,7 @@ import { parse } from "url";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getToken } from "../utils";
+import { getConfig, getParam, getToken } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultTemplate = "pp.txt";
@@ -37,15 +37,15 @@ export function create(
      * Loads count number of latest commits.
      */
     router.get("/:tenantId?/:id/commits", ensureLoggedIn(), (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        const versionsP = alfred.getVersions(tenantId, request.params.id, 30);
+        const versionsP = alfred.getVersions(tenantId, getParam(request.params, "id"), 30);
         versionsP.then(
             (versions) => {
                 response.render(
                     "commits",
                     {
-                        documentId: request.params.id,
+                        documentId: getParam(request.params, "id"),
                         partials: defaultPartials,
                         pathPostfix: "commit",
                         tenantId,
@@ -62,24 +62,24 @@ export function create(
      * Loads task graph for the document.
      */
     router.get("/:tenantId?/:id/taskGraph", ensureLoggedIn(), (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         const workerConfig = getConfig(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
-        const versionP = alfred.getLatestVersion(tenantId, request.params.id);
-        const token = getToken(tenantId, request.params.id, appTenants, scopes);
+        const versionP = alfred.getLatestVersion(tenantId, getParam(request.params, "id"));
+        const token = getToken(tenantId, getParam(request.params, "id"), appTenants, scopes);
 
         versionP.then((version) => {
             response.render(
                 "taskGraph",
                 {
                     config: workerConfig,
-                    documentId: request.params.id,
+                    documentId: getParam(request.params, "id"),
                     partials: defaultPartials,
                     tenantId,
-                    title: request.params.id,
+                    title: getParam(request.params, "id"),
                     token,
                     version: JSON.stringify(version),
                 });
@@ -92,10 +92,10 @@ export function create(
      * Loading of a specific version of shared text.
      */
     router.get("/:tenantId?/:id/commit", ensureLoggedIn(), async (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         const disableCache = "disableCache" in request.query;
-        const token = getToken(tenantId, request.params.id, appTenants, scopes);
+        const token = getToken(tenantId, getParam(request.params, "id"), appTenants, scopes);
 
         const workerConfig = getConfig(
             config.get("worker"),
@@ -104,20 +104,20 @@ export function create(
         const targetVersionSha = request.query.version;
         const versionP = alfred.getVersion(
             tenantId,
-            request.params.id,
+            getParam(request.params, "id"),
             targetVersionSha);
 
         versionP.then((version) => {
             const pragueUrl = "prague://" +
                 `${parse(config.get("worker:serverUrl")).host}/` +
                 `${encodeURIComponent(tenantId)}/` +
-                `${encodeURIComponent(request.params.id)}` +
+                `${encodeURIComponent(getParam(request.params, "id"))}` +
                 `?version=${version.sha}`;
 
             const deltaStorageUrl =
                 config.get("worker:serverUrl") +
                 "/deltas" +
-                `/${encodeURIComponent(tenantId)}/${encodeURIComponent(request.params.id)}`;
+                `/${encodeURIComponent(tenantId)}/${encodeURIComponent(getParam(request.params, "id"))}`;
 
             const storageUrl =
                 config.get("worker:blobStorageUrl").replace("historian:3000", "localhost:3001") +
@@ -150,7 +150,7 @@ export function create(
                     partials: defaultPartials,
                     resolved: JSON.stringify(resolved),
                     template: undefined,
-                    title: request.params.id,
+                    title: getParam(request.params, "id"),
                     to: Number.NaN,
                     version: JSON.stringify(version),
                 });
@@ -160,9 +160,9 @@ export function create(
     });
 
     router.post("/:tenantId?/:id/fork", ensureLoggedIn(), (request, response, next) => {
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
-        const forkP = alfred.createFork(tenantId, request.params.id);
+        const forkP = alfred.createFork(tenantId, getParam(request.params, "id"));
         forkP.then(
             (fork) => {
                 response.redirect(`/sharedText/${fork}`);
@@ -181,7 +181,7 @@ export function create(
         const disableCache = "disableCache" in request.query;
         const generateSummaries = "generateSummaries" in request.query;
 
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         const from = +request.query.from;
         const to = +request.query.to;
@@ -198,7 +198,7 @@ export function create(
             config.get("error:track"));
 
         const [resolvedP, fullTreeP] =
-            resolveUrl(config, alfred, appTenants, tenantId, request.params.id, scopes, request);
+            resolveUrl(config, alfred, appTenants, tenantId, getParam(request.params, "id"), scopes, request);
         const treeTimeP = fullTreeP.then(() => Date.now() - start);
 
         Promise.all([resolvedP, fullTreeP, treeTimeP]).then(([resolved, fullTree, treeTime]) => {
@@ -229,7 +229,7 @@ export function create(
                     resolved: JSON.stringify(resolved),
                     template,
                     timings: JSON.stringify(timings),
-                    title: request.params.id,
+                    title: getParam(request.params, "id"),
                     to,
                 });
         }, (error) => {

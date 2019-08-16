@@ -6,6 +6,9 @@
 import { IServiceConfiguration, IUser, ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant, ITenantManager } from "@prague/services-core";
 import { generateToken } from "@prague/services-core";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// tslint:disable-next-line:no-implicit-dependencies
+import { Params } from "express-serve-static-core";
 import * as _ from "lodash";
 
 /**
@@ -63,3 +66,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         maxTime: 5000 * 12,
     },
 };
+
+export function getParam(params: Params, key: string) {
+    return Array.isArray(params) ? undefined : params[key];
+}

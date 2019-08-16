@@ -7,6 +7,7 @@ import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { IAlfredTenant, MongoManager } from "@prague/services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
+import { getParam } from "../../utils";
 
 const sequenceNumber = "sequenceNumber";
 
@@ -85,14 +86,14 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
     router.get("/:tenantId?/:id", (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltas(
             mongoManager,
             deltasCollectionName,
             tenantId,
-            request.params.id,
+            getParam(request.params, "id"),
             from,
             to);
 
@@ -112,14 +113,14 @@ export function create(config: Provider, mongoManager: MongoManager, appTenants:
     router.get(["/content/:tenantId?/:id", "/:tenantId?/:id/content"], (request, response, next) => {
         const from = stringToSequenceNumber(request.query.from);
         const to = stringToSequenceNumber(request.query.to);
-        const tenantId = request.params.tenantId || appTenants[0].id;
+        const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
         // Query for the deltas and return a filtered version of just the operations field
         const deltasP = getDeltaContents(
             mongoManager,
             "content",
             tenantId,
-            request.params.id,
+            getParam(request.params, "id"),
             from,
             to);
 

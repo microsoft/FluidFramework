@@ -5,6 +5,7 @@
 
 import { IAlfredTenant, IDocumentStorage } from "@prague/services-core";
 import { Router } from "express";
+import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): Router {
 
@@ -12,8 +13,8 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
 
     router.get("/:tenantId?/:id", (request, response, next) => {
         const documentP = storage.getDocument(
-            request.params.tenantId || appTenants[0].id,
-            request.params.id);
+            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "id"));
         documentP.then(
             (document) => {
                 response.status(200).json(document);
@@ -28,8 +29,8 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
      */
     router.get("/:tenantId?/:id/forks", (request, response, next) => {
         const forksP = storage.getForks(
-            request.params.tenantId || appTenants[0].id,
-            request.params.id);
+            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "id"));
         forksP.then(
             (forks) => {
                 response.status(200).json(forks);
@@ -44,8 +45,8 @@ export function create(storage: IDocumentStorage, appTenants: IAlfredTenant[]): 
      */
     router.post("/:tenantId?/:id/forks", (request, response, next) => {
         const forkIdP = storage.createFork(
-            request.params.tenantId || appTenants[0].id,
-            request.params.id);
+            getParam(request.params, "tenantId") || appTenants[0].id,
+            getParam(request.params, "id"));
         forkIdP.then(
             (forkId) => {
                 response.status(201).json(forkId);

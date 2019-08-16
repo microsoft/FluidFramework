@@ -16,13 +16,15 @@ import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as requestAPI from "request";
+import { getParam } from "../../utils";
 import {
     craftClientJoinMessage,
     craftClientLeaveMessage,
     craftMapSet,
     craftOpMessage,
     IBlobData,
-    IMapSetOperation } from "./restHelper";
+    IMapSetOperation,
+} from "./restHelper";
 
 const Robot = "robot";
 export function create(
@@ -39,8 +41,8 @@ export function create(
         response: Response,
         opBuilder: (request: Request) => any[]) {
         resultP.then(() => {
-            const tenantId = request.params.tenantId;
-            const documentId = request.params.id;
+            const tenantId = getParam(request.params, "tenantId");
+            const documentId = getParam(request.params, "id");
             const clientId = moniker.choose();
             sendJoin(tenantId, documentId, clientId, producer);
             sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
@@ -56,7 +58,7 @@ export function create(
     });
 
     router.post("/:tenantId/:id/blobs", async (request, response) => {
-        const tenantId = request.params.tenantId;
+        const tenantId = getParam(request.params, "tenantId");
         const blobData = request.body as IBlobData;
         const historian = config.get("worker:blobStorageUrl") as string;
         const requestToken = Buffer.from(tenantId).toString("base64");
@@ -137,8 +139,8 @@ async function verifyToken(request: Request, tenantManager: core.ITenantManager)
     if (!token) {
         return Promise.reject("Missing access token");
     }
-    const tenantId = request.params.tenantId;
-    const documentId = request.params.id;
+    const tenantId = getParam(request.params, "tenantId");
+    const documentId = getParam(request.params, "id");
     const claims = jwt.decode(token) as ITokenClaims;
     if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
         return Promise.reject("Invalid access token");
@@ -147,8 +149,8 @@ async function verifyToken(request: Request, tenantManager: core.ITenantManager)
 }
 
 async function checkDocumentExistence(request: Request, storage: core.IDocumentStorage): Promise<any> {
-    const tenantId = request.params.tenantId;
-    const documentId = request.params.id;
+    const tenantId = getParam(request.params, "tenantId");
+    const documentId = getParam(request.params, "id");
     if (!tenantId || !documentId) {
         return Promise.reject("Invalid tenant or document id");
     }

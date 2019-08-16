@@ -17,7 +17,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { getConfig } from "../utils";
+import { getConfig, getParam } from "../utils";
 import { defaultPartials } from "./partials";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkgJson = require("../../package.json") as IPraguePackage;
@@ -53,7 +53,7 @@ export function create(
             },
             jwtKey);
 
-        const documentId = request.params.id;
+        const documentId = getParam(request.params, "id");
         const path = request.params[0];
         const tenantId = appTenants[0].id;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

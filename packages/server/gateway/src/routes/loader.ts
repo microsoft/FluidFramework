@@ -20,7 +20,7 @@ import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
 import { KeyValueLoader } from "../keyValueLoader";
-import { getConfig } from "../utils";
+import { getConfig, getParam } from "../utils";
 import { defaultPartials } from "./partials";
 
 const cacheLoadTimeoutMS = 10000;
@@ -64,7 +64,7 @@ export function create(
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-        const tenantId = request.params.tenantId;
+        const tenantId = getParam(request.params, "tenantId");
 
         const search = parse(request.url).search;
         const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];

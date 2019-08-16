@@ -5,6 +5,10 @@
 
 import { IUser, ScopeType } from "@prague/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@prague/services-core";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// tslint:disable-next-line:no-implicit-dependencies
+import { Params } from "express-serve-static-core";
+
 import * as _ from "lodash";
 
 export interface IAlfredUser extends IUser {
@@ -52,4 +56,8 @@ export function getToken(
     }
 
     throw new Error("Invalid tenant");
+}
+
+export function getParam(params: Params, key: string) {
+    return Array.isArray(params) ? undefined : params[key];
 }

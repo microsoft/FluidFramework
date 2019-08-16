@@ -11,7 +11,7 @@ import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { parse } from "url";
 import * as winston from "winston";
-import { getConfig, getToken, IAlfredUser } from "../utils";
+import { getConfig, getParam, getToken, IAlfredUser } from "../utils";
 import { defaultPartials } from "./partials";
 
 function createLoaderScript(
@@ -67,7 +67,7 @@ export function create(
         const documentId = rawPath.substring(0, slash !== -1 ? slash : rawPath.length);
         const path = rawPath.substring(slash !== -1 ? slash : rawPath.length);
 
-        const tenantId = request.params.tenantId;
+        const tenantId = getParam(request.params, "tenantId");
         const chaincode = request.query.chaincode;
 
         const user: IAlfredUser = (request.user) ? {

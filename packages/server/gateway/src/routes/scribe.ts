@@ -9,7 +9,7 @@ import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { parse } from "url";
-import * as utils from "../utils";
+import { getConfig, getParam } from "../utils";
 import { defaultPartials } from "./partials";
 
 const defaultSpeed = 50;
@@ -39,7 +39,7 @@ export function create(
             },
             config.get("gateway:key"));
 
-        const workerConfig = utils.getConfig(
+        const workerConfig = getConfig(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
@@ -80,7 +80,8 @@ export function create(
         const text = request.query.text || defaultTemplate;
         const languages = request.query.language ? request.query.language : "";
 
-        handleResponse(request, response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
+        handleResponse(
+            request, response, speed, authors, languages, moniker.choose(), text, getParam(request.params, "tenantId"));
     });
 
     router.get("/mercator", ensureLoggedIn(), (request, response, next) => {

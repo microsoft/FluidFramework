@@ -13,6 +13,7 @@ import { Stream } from "stream";
 import * as unzip from "unzip-stream";
 import * as webpack from "webpack";
 import * as winston from "winston";
+import { getParam } from "../utils";
 
 export function create(config: Provider): Router {
 
@@ -79,7 +80,7 @@ export function create(config: Provider): Router {
      */
     router.get("/:id", async (request, response, next) => {
         // Returns the stream.
-        minioClient.getObject(storageBucket, request.params.id, (error: any, stream: Stream) => {
+        minioClient.getObject(storageBucket, getParam(request.params, "id"), (error: any, stream: Stream) => {
             if (error) {
                 // tslint:disable-next-line
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });
@@ -92,9 +93,9 @@ export function create(config: Provider): Router {
      * Webpack a node module and delete the temorary folder.
      */
     router.post("/js/:id", async (request, response, next) => {
-        const moduleFile = request.params.id;
+        const moduleFile = getParam(request.params, "id");
         const moduleName = moduleFile.split(".")[0];
-        minioClient.getObject(storageBucket, request.params.id, (error: any, stream: Stream) => {
+        minioClient.getObject(storageBucket, moduleFile, (error: any, stream: Stream) => {
             if (error) {
                 // tslint:disable-next-line
                 return error.code === "NoSuchKey" ? response.status(200).send(null) : response.status(400).json({ error });

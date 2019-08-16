@@ -5,6 +5,7 @@
 
 import { MongoManager } from "@prague/services-core";
 import { Response, Router } from "express";
+import { getParam } from "../alfred/utils";
 import { TenantManager } from "./tenantManager";
 
 export function create(
@@ -26,7 +27,7 @@ export function create(
      * Clients still need to verify the claims.
      */
     router.post("/tenants/:id/validate", (request, response) => {
-        const validP = manager.validateToken(request.params.id, request.body.token);
+        const validP = manager.validateToken(getParam(request.params, "id"), request.body.token);
         returnResponse(validP, response);
     });
 
@@ -34,7 +35,7 @@ export function create(
      * Retrieves details for the given tenant
      */
     router.get("/tenants/:id", (request, response) => {
-        const tenantP = manager.getTenant(request.params.id);
+        const tenantP = manager.getTenant(getParam(request.params, "id"));
         returnResponse(tenantP, response);
     });
 
@@ -42,7 +43,7 @@ export function create(
      * Retrieves the api key for the tenant
      */
     router.get("/tenants/:id/key", (request, response) => {
-        const tenantP = manager.getTenantKey(request.params.id);
+        const tenantP = manager.getTenantKey(getParam(request.params, "id"));
         returnResponse(tenantP, response);
     });
 
@@ -50,7 +51,7 @@ export function create(
      * Updates the storage provider for the given tenant
      */
     router.put("/tenants/:id/storage", (request, response) => {
-        const storageP = manager.updateStorage(request.params.id, request.body);
+        const storageP = manager.updateStorage(getParam(request.params, "id"), request.body);
         returnResponse(storageP, response);
     });
 
@@ -58,7 +59,7 @@ export function create(
      * Updates the orderer for the given tenant
      */
     router.put("/tenants/:id/orderer", (request, response) => {
-        const storageP = manager.updateOrderer(request.params.id, request.body);
+        const storageP = manager.updateOrderer(getParam(request.params, "id"), request.body);
         returnResponse(storageP, response);
     });
 
