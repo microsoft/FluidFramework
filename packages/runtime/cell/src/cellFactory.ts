@@ -3,19 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { SharedCell } from "./cell";
 import { ISharedCell } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * The factory that defines the map
  */
 export class CellFactory implements ISharedObjectFactory {
-    public static Type = "https://graph.microsoft.com/types/cell";
+    public static readonly Type = "https://graph.microsoft.com/types/cell";
 
-    public type: string = CellFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static readonly Attributes: IChannelAttributes = {
+        type: CellFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return CellFactory.Type;
+    }
+
+    public get attributes() {
+        return CellFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,

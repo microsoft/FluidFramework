@@ -39,7 +39,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedStringFactory.Type);
+        super(document, id, SharedStringFactory.Attributes);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
 

@@ -19,11 +19,6 @@ export interface IProvideSharedObject {
  */
 export interface ISharedObject extends IProvideSharedObject, IChannel {
     /**
-     * The type of the shared object
-     */
-    type: string;
-
-    /**
      * Marker to clearly identify the object as a shared object
      */
     __sharedObject__: boolean;

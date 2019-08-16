@@ -5,10 +5,8 @@
 
 import { IComponentLoadable } from "@prague/component-core-interfaces";
 import { ConnectionState } from "@prague/container-definitions";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-} from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
+import { IChannelAttributes } from "./storage";
 
 declare module "@prague/container-definitions" {
     interface IComponent extends Readonly<Partial<IProvideChannel>> {
@@ -27,9 +25,7 @@ export interface IChannel extends IProvideChannel, IComponentLoadable {
 
     readonly owner?: string;
 
-    readonly type: string;
-
-    readonly snapshotFormatVersion?: string;
+    readonly attributes: IChannelAttributes;
 
     /**
      * Generates snapshot of the shared object.

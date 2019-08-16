@@ -30,7 +30,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedObjectSequenceFactory.Type);
+        super(document, id, SharedObjectSequenceFactory.Attributes);
     }
 
     public getRange(start: number, end?: number) {

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * The factory that defines the consensus queue
@@ -13,8 +14,19 @@ import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } fro
 export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-register-collection";
 
-    public type: string = ConsensusRegisterCollectionFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static readonly Attributes: IChannelAttributes = {
+        type: ConsensusRegisterCollectionFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return ConsensusRegisterCollectionFactory.Type;
+    }
+
+    public get attributes() {
+        return ConsensusRegisterCollectionFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,
@@ -22,13 +34,13 @@ export class ConsensusRegisterCollectionFactory implements IConsensusRegisterCol
         services: ISharedObjectServices,
         branchId: string): Promise<IConsensusRegisterCollection> {
 
-        const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Type);
+        const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Attributes);
         await collection.load(branchId, services);
         return collection;
     }
 
     public create(document: IComponentRuntime, id: string): IConsensusRegisterCollection {
-        const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Type);
+        const collection = new ConsensusRegisterCollection(id, document, ConsensusRegisterCollectionFactory.Attributes);
         collection.initializeLocal();
         return collection;
     }

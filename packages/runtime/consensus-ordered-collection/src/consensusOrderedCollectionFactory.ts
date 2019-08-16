@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ConsensusQueue } from "./consensusQueue";
 import { ConsensusStack } from "./consensusStack";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
+import { pkgVersion } from "./packageVersion";
 
 /**
  * The factory that defines the consensus queue
@@ -14,8 +15,19 @@ import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from 
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-queue";
 
-    public type: string = ConsensusQueueFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: ConsensusQueueFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion : pkgVersion,
+    };
+
+    public get type() {
+        return ConsensusQueueFactory.Type;
+    }
+
+    public get attributes() {
+        return ConsensusQueueFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,
@@ -41,8 +53,19 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 export class ConsensusStackFactory implements IConsensusOrderedCollectionFactory {
     public static Type = "https://graph.microsoft.com/types/consensus-stack";
 
-    public type: string = ConsensusStackFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: ConsensusStackFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return ConsensusStackFactory.Type;
+    }
+
+    public get attributes() {
+        return ConsensusStackFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,

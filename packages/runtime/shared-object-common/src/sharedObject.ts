@@ -15,6 +15,7 @@ import {
     MessageType,
 } from "@prague/protocol-definitions";
 import {
+    IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
@@ -110,9 +111,13 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * @param id - the id of the shared object
      * @param runtime - the IComponentRuntime which contains the shared object
-     * @param type - type of the shared object
+     * @param attributes - attributes of the shared object
      */
-    constructor(public id: string, protected runtime: IComponentRuntime, public type: string) {
+    constructor(
+        public id: string,
+        protected runtime: IComponentRuntime,
+        public readonly attributes: IChannelAttributes) {
+
         super();
 
         this.handle = new SharedObjectComponentHandle(
@@ -123,7 +128,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         // runtime could be null since some package hasn't turn on strictNullChecks yet
         // We should remove the null check once that is done
         this.logger = ChildLogger.create(
-            runtime !== null ? runtime.logger : undefined, type, { SharedObjectId: id });
+            runtime !== null ? runtime.logger : undefined, this.attributes.type, { SharedObjectId: id });
 
         this.on("error", (error: any) => {
             runtime.emit("error", error);
@@ -475,6 +480,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
             }
         }
 
-        this.logger.sendErrorEvent({eventName: "DuplicateAckReceived"});
+        this.logger.sendErrorEvent({ eventName: "DuplicateAckReceived" });
     }
 }

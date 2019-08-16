@@ -11,6 +11,7 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
+    IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
@@ -30,6 +31,7 @@ import {
     LocalValueMaker,
     ValueTypeLocalValue,
 } from "./localValues";
+import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -92,8 +94,19 @@ interface IMapDataObject {
 export class MapFactory implements ISharedObjectFactory {
     public static readonly Type = "https://graph.microsoft.com/types/map";
 
-    public readonly type: string = MapFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static readonly Attributes: IChannelAttributes = {
+        type: MapFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return MapFactory.Type;
+    }
+
+    public get attributes() {
+        return MapFactory.Attributes;
+    }
 
     constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
     }
@@ -164,9 +177,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
     constructor(
         id: string,
         runtime: IComponentRuntime,
-        type = MapFactory.Type,
+        attributes = MapFactory.Attributes,
     ) {
-        super(id, runtime, type);
+        super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
     }

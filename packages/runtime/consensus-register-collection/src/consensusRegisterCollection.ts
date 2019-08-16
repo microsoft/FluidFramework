@@ -11,7 +11,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
@@ -108,8 +108,8 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     public constructor(
         id: string,
         runtime: IComponentRuntime,
-        type: string) {
-        super(id, runtime, type);
+        attributes: IChannelAttributes) {
+        super(id, runtime, attributes);
     }
 
     /**

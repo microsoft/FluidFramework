@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
-import { SharedNumberSequence} from "./sharedNumberSequence";
-import { SharedObjectSequence} from "./sharedObjectSequence";
+import { pkgVersion } from "./packageVersion";
+import { SharedNumberSequence } from "./sharedNumberSequence";
+import { SharedObjectSequence } from "./sharedObjectSequence";
 import { SharedString } from "./sharedString";
 
 export class SharedStringFactory implements ISharedObjectFactory {
@@ -14,8 +15,19 @@ export class SharedStringFactory implements ISharedObjectFactory {
     // load code
     public static Type = "https://graph.microsoft.com/types/mergeTree";
 
-    public type: string = SharedStringFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: SharedStringFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return SharedStringFactory.Type;
+    }
+
+    public get attributes() {
+        return SharedStringFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,
@@ -38,8 +50,19 @@ export class SharedStringFactory implements ISharedObjectFactory {
 export class SharedObjectSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/object-sequence";
 
-    public type: string = SharedObjectSequenceFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: SharedObjectSequenceFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return SharedObjectSequenceFactory.Type;
+    }
+
+    public get attributes() {
+        return SharedObjectSequenceFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,
@@ -62,8 +85,19 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
 export class SharedNumberSequenceFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/number-sequence";
 
-    public type: string = SharedNumberSequenceFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: SharedNumberSequenceFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return SharedNumberSequenceFactory.Type;
+    }
+
+    public get attributes() {
+        return SharedNumberSequenceFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,

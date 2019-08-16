@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import { debug } from "./debug";
@@ -72,10 +72,10 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
     protected constructor(
         id: string,
         runtime: IComponentRuntime,
-        type: string,
+        attributes: IChannelAttributes,
         private readonly data: IOrderedCollection<T>,
     ) {
-        super(id, runtime, type);
+        super(id, runtime, attributes);
     }
 
     /**

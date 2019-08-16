@@ -55,6 +55,6 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
      * be provided
      */
     public constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, ConsensusQueueFactory.Type, new SnapshotableQueue<T>());
+        super(id, runtime, ConsensusQueueFactory.Attributes, new SnapshotableQueue<T>());
     }
 }

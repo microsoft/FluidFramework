@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import { pkgVersion } from "./packageVersion";
 import { Stream } from "./stream";
 
 /**
@@ -16,15 +17,19 @@ export class StreamFactory implements ISharedObjectFactory {
      */
     public static Type = "https://graph.microsoft.com/types/stream";
 
-    /**
-     * Type identifier.
-     */
-    public type = StreamFactory.Type;
+    public static Attributes: IChannelAttributes = {
+        type: StreamFactory.Type,
+        snapshotFormatVersion: "0.2",
+        packageVersion: pkgVersion,
+    };
 
-    /**
-     * Version of the stream snapshot format.
-     */
-    public readonly snapshotFormatVersion: string = "0.2";
+    public get type() {
+        return StreamFactory.Type;
+    }
+
+    public get attributes() {
+        return StreamFactory.Attributes;
+    }
 
     /**
      * Creates a new Stream object and loads it with data from the given services.

@@ -55,6 +55,6 @@ export class ConsensusStack<T = any> extends ConsensusOrderedCollection<T> {
      * be provided
      */
     public constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, ConsensusStackFactory.Type, new SnapshotableStack<T>());
+        super(id, runtime, ConsensusStackFactory.Attributes, new SnapshotableStack<T>());
     }
 }

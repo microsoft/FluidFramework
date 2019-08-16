@@ -24,6 +24,8 @@ import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./componentRuntime";
 import { debug } from "./debug";
 
+type RequiredIChannelAttributes = Pick<IChannelAttributes, "type"> & Partial<IChannelAttributes>;
+
 export class RemoteChannelContext implements IChannelContext {
     private connection: ChannelDeltaConnection | undefined;
     private baseId: string | null = null;
@@ -42,7 +44,7 @@ export class RemoteChannelContext implements IChannelContext {
         private readonly registry: ISharedObjectRegistry,
         private readonly extraBlobs: Map<string, string>,
         private readonly branch: string,
-        private readonly attributes: IChannelAttributes | undefined,
+        private readonly attributes: RequiredIChannelAttributes | undefined,
     ) {
     }
 
@@ -104,9 +106,9 @@ export class RemoteChannelContext implements IChannelContext {
         assert(!this.isLoaded);
 
         // Create the channel if it hasn't already been passed in the constructor
-        const { type, snapshotFormatVersion } = this.attributes
+        const { type, snapshotFormatVersion, packageVersion } = this.attributes
             ? this.attributes
-            : await readAndParse<IChannelAttributes>(
+            : await readAndParse<RequiredIChannelAttributes>(
                 this.storageService,
                 this.tree.blobs[".attributes"]);
 
@@ -117,11 +119,13 @@ export class RemoteChannelContext implements IChannelContext {
         }
 
         // compare snapshot version to collaborative object version
-        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.snapshotFormatVersion) {
+        if (snapshotFormatVersion !== undefined && snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
             debug(`Snapshot version mismatch. Type: ${type}, ` +
                 `Snapshot format version: ${snapshotFormatVersion}, ` +
-                `client format version: ${factory.snapshotFormatVersion}`);
+                `client format version: ${factory.attributes.snapshotFormatVersion}`);
         }
+
+        debug(`Loading channel ${type}@${packageVersion}, snapshot format version: ${snapshotFormatVersion}`);
 
         const services = createServiceEndpoints(
             this.id,

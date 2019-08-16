@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannel, IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 
 /**
  * Definitions of a shared factories. Factories follow a common model but enable custom behavior.
@@ -12,12 +12,12 @@ export interface ISharedObjectFactory {
     /**
      * String representing the type of the factory.
      */
-    type: string;
+    readonly type: string;
 
     /**
-     * String representing the version of the snapshot. This value is updated when the format of snapshots changes.
+     * Attributes of the shared object
      */
-    readonly snapshotFormatVersion: string;
+    readonly attributes: IChannelAttributes;
 
     /**
      * Loads the given shared object. This call is only ever invoked internally as the only thing

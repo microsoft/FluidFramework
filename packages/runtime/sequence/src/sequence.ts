@@ -16,6 +16,7 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import {
+    IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
@@ -58,9 +59,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     constructor(
         document: IComponentRuntime,
         public id: string,
-        factoryType: string,
+        attributes: IChannelAttributes,
     ) {
-        super(id, document, factoryType);
+        super(id, document, attributes);
 
         for (const valueType of valueTypes) {
             this.registerValueType(valueType);

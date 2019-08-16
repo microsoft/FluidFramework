@@ -430,10 +430,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                         this.registry,
                         flatBlobs,
                         origin,
-                        {
-                            snapshotFormatVersion: undefined,
-                            type: attachMessage.type,
-                        });
+                        { type: attachMessage.type });
 
                     this.contexts.set(attachMessage.id, remoteChannelContext);
                     if (this.contextsDeferred.has(attachMessage.id)) {
@@ -549,7 +546,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         const message: IAttachMessage = {
             id: channel.id,
             snapshot,
-            type: channel.type,
+            type: channel.attributes.type,
         };
         this.pendingAttach.set(channel.id, message);
         if (this.connected) {

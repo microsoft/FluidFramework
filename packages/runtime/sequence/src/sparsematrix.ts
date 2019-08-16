@@ -11,12 +11,13 @@ import {
     PropertySet,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 import {
     SharedSegmentSequence,
     SubSequence,
 } from ".";
+import { pkgVersion } from "./packageVersion";
 
 export type UnboxedOper = undefined | boolean | number | string;
 
@@ -208,7 +209,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SparseMatrixFactory.Type);
+        super(document, id, SparseMatrixFactory.Attributes);
     }
 
     // "Replace" ops currently trigger an assert in 'BaseSegment.ack()'
@@ -379,8 +380,19 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
 export class SparseMatrixFactory implements ISharedObjectFactory {
     public static Type = "https://graph.microsoft.com/types/mergeTree/sparse-matrix";
 
-    public type: string = SparseMatrixFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static Attributes: IChannelAttributes = {
+        type: SparseMatrixFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return SparseMatrixFactory.Type;
+    }
+
+    public get attributes() {
+        return SparseMatrixFactory.Attributes;
+    }
 
     public async load(
         document: IComponentRuntime,

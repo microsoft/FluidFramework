@@ -65,7 +65,7 @@ export class Stream extends SharedObject implements IStream {
      * @param id - UUID for the stream
      */
     constructor(runtime: IComponentRuntime, id: string) {
-        super(id, runtime, StreamFactory.Type);
+        super(id, runtime, StreamFactory.Attributes);
     }
 
     /**

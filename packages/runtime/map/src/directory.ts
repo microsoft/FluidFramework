@@ -10,7 +10,12 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService, ISharedObjectServices } from "@prague/runtime-definitions";
+import {
+    IChannelAttributes,
+    IComponentRuntime,
+    IObjectStorageService,
+    ISharedObjectServices,
+} from "@prague/runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
 import * as assert from "assert";
 import * as path from "path";
@@ -26,6 +31,7 @@ import {
     IValueTypeOperationValue,
 } from "./interfaces";
 import { ILocalValue, LocalValueMaker, ValueTypeLocalValue } from "./localValues";
+import { pkgVersion } from "./packageVersion";
 
 // path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
 // enforce posix when using the normal node module on Windows (otherwise it will use path.win32).  Also including an
@@ -113,8 +119,8 @@ type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOp
  * @internal
  */
 export interface IDirectoryDataObject {
-    storage?: {[key: string]: ISerializableValue};
-    subdirectories?: {[subdirName: string]: IDirectoryDataObject};
+    storage?: { [key: string]: ISerializableValue };
+    subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 }
 
 /**
@@ -123,8 +129,19 @@ export interface IDirectoryDataObject {
 export class DirectoryFactory {
     public static readonly Type = "https://graph.microsoft.com/types/directory";
 
-    public readonly type: string = DirectoryFactory.Type;
-    public readonly snapshotFormatVersion: string = "0.1";
+    public static readonly Attributes: IChannelAttributes = {
+        type: DirectoryFactory.Type,
+        snapshotFormatVersion: "0.1",
+        packageVersion: pkgVersion,
+    };
+
+    public get type() {
+        return DirectoryFactory.Type;
+    }
+
+    public get attributes() {
+        return DirectoryFactory.Attributes;
+    }
 
     constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
     }
@@ -206,7 +223,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         id: string,
         runtime: IComponentRuntime,
     ) {
-        super(id, runtime, DirectoryFactory.Type);
+        super(id, runtime, DirectoryFactory.Attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
     }
@@ -1058,11 +1075,11 @@ export class SubDirectory implements IDirectory {
     /**
      * @internal
      */
-    public getSerializableStorage(): {[key: string]: ISerializableValue} {
+    public getSerializableStorage(): { [key: string]: ISerializableValue } {
         if (this._storage.size === 0) {
             return undefined;
         }
-        const serializedStorage: {[key: string]: ISerializableValue} = {};
+        const serializedStorage: { [key: string]: ISerializableValue } = {};
         for (const [key, localValue] of this._storage) {
             serializedStorage[key] = localValue.makeSerializable(
                 this.runtime.IComponentSerializer,

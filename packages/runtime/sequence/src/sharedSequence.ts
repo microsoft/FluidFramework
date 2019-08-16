@@ -11,7 +11,7 @@ import {
     PropertySet,
     UniversalSequenceNumber,
 } from "@prague/merge-tree";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IChannelAttributes, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;
@@ -116,9 +116,9 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     constructor(
         document: IComponentRuntime,
         public id: string,
-        factoryType: string,
+        attributes: IChannelAttributes,
     ) {
-        super(document, id, factoryType);
+        super(document, id, attributes);
     }
 
     /**

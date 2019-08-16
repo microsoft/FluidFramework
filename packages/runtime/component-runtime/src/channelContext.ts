@@ -13,7 +13,7 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IChannel, IChannelAttributes, IEnvelope } from "@prague/runtime-definitions";
+import { IChannel, IEnvelope } from "@prague/runtime-definitions";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 
@@ -58,10 +58,7 @@ export function snapshotChannel(channel: IChannel, baseId: string | null) {
     const snapshot = channel.snapshot();
 
     // Add in the object attributes to the returned tree
-    const objectAttributes: IChannelAttributes = {
-        snapshotFormatVersion: channel.snapshotFormatVersion,
-        type: channel.type,
-    };
+    const objectAttributes = channel.attributes;
     snapshot.entries.push({
         mode: FileMode.File,
         path: ".attributes",

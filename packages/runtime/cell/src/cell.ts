@@ -84,7 +84,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
      * @param id - optional name of the shared map
      */
     constructor(id: string, runtime: IComponentRuntime) {
-        super(id, runtime, CellFactory.Type);
+        super(id, runtime, CellFactory.Attributes);
         this.pendingClientSequenceNumber = -1;
     }
 
