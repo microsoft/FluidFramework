@@ -9,7 +9,7 @@ import { DirectoryFactory } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
 import { WebflowView } from "./host";
-import { importDoc } from "./template";
+import { importDoc } from "./import";
 
 export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     public static readonly type = "@chaincode/webflow";

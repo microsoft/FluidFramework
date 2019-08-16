@@ -7,7 +7,7 @@ import { IComponentHTMLOptions, IComponentHTMLView } from "@prague/component-cor
 import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
-import { documentFormatter as htmlFormatter } from "../html/formatters";
+import { htmlFormatter } from "../html/formatters";
 import { plainTextFormatter } from "../plaintext/formatter";
 import { Tag } from "../util/tag";
 import { Formatter, IFormatterState } from "../view/formatter";

@@ -17,7 +17,7 @@ import { Layout } from "../view/layout";
 import { ICssProps, sameCss, syncCss } from "./css";
 import { debug } from "./debug";
 
-class DocumentFormatter extends Formatter<IFormatterState> {
+class HtmlFormatter extends Formatter<IFormatterState> {
     public begin(): never { throw new Error(); }
     public end(): never { throw new Error(); }
 
@@ -275,7 +275,7 @@ class TextFormatter extends Formatter<ITextState> {
     }
 }
 
-export const documentFormatter = Object.freeze(new DocumentFormatter());
+export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const inclusionFormatter = Object.freeze(new InclusionFormatter());
 const paragraphFormatter = Object.freeze(new ParagraphFormatter(Tag.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());

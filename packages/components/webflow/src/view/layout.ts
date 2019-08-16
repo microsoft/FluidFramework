@@ -18,7 +18,7 @@ import { Formatter, IFormatterState } from "./formatter";
 interface ILayoutCursor { parent: Node; previous: Node; }
 
 interface IFormatInfo {
-    formatter: Readonly<Formatter<IFormatterState>>;
+    readonly formatter: Readonly<Formatter<IFormatterState>>;
     state: IFormatterState;
 }
 
@@ -169,7 +169,7 @@ export class Layout {
             this._endOffset = NaN;
 
             if (this.position >= length) {
-                while (this.formatStack.length > 0) { this.popFormat(); }
+                this.popFormat(this.formatStack.length);
             }
 
             this.removePending();
@@ -224,12 +224,12 @@ export class Layout {
         this.formatStack.push(Object.freeze({ formatter, state: Object.freeze(state) }));
     }
 
-    public popFormat() {
-        const length = this.formatStack.length;
-        debug("  popFormat(%o): %d", this.format.formatter, length - 1);
-        assert(length > 0);
-        const { formatter, state } = this.formatStack.pop();
-        formatter.end(this, state);
+    public popFormat(count = 1) {
+        debug("  popFormat(%d@%d):", count, this.position);
+        while (count-- > 0) {
+            const { formatter, state } = this.formatStack.pop();
+            formatter.end(this, state);
+        }
     }
 
     public pushNode(node: Node) {
@@ -262,19 +262,17 @@ export class Layout {
         this.nodeToSegmentMap.set(node, this.segment);
     }
 
-    public popNode() {
-        debug("  popNode(%s@%d)", nodeToString(this.cursor.parent), this.position);
-        {
+    public popNode(count = 1) {
+        debug("  popNode(%d@%d):", count, this.position);
+        while (count-- > 0) {
             const cursor = this._cursor;
-            assert.notStrictEqual(cursor.parent, this.root);
-
             const parent = cursor.parent;
             cursor.previous = parent;
             cursor.parent = parent.parentNode;
-
-            // Must not pop the root node
-            assert(this.root.contains(cursor.parent));
         }
+
+        // Must not pop the root node
+        assert(this.root.contains(this.cursor.parent));
     }
 
     public emitText() {
