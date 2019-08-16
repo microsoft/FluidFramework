@@ -20,6 +20,7 @@ data:
             "jarvisUrl": "{{ .Values.endpoints.jarvisUrl }}"
         },
         "login": {
+            "enabled": true,
             "microsoft": {
                 "clientId": "{{ .Values.login.microsoft.clientId }}",
                 "secret": "{{ .Values.login.microsoft.secret }}"

@@ -8,6 +8,7 @@
         "jarvisUrl": "http://localhost:3030"
     },
     "login": {
+        "enabled": false,
         "microsoft": {
             "clientId": "",
             "secret": ""
