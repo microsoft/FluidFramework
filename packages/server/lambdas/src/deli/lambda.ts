@@ -59,6 +59,8 @@ export interface ITicketedMessageOutput {
     type: string;
 
     send: SendType;
+
+    nacked: boolean;
 }
 
 const SequenceNumberComparer: IComparer<IClientSequenceNumber> = {
@@ -96,6 +98,7 @@ export class DeliLambda implements IPartitionLambda {
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
+    private canClose = false;
 
     constructor(
         private context: IContext,
@@ -177,24 +180,30 @@ export class DeliLambda implements IPartitionLambda {
                 continue;
             }
 
-            // Check for idle clients.
-            this.checkIdleClients(ticketedMessage);
+            if (!ticketedMessage.nacked) {
+                // Check for idle clients.
+                this.checkIdleClients(ticketedMessage);
 
-            // Check for document inactivity.
-            if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
-                this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
-            }
+                if (this.canClose) {
+                    winston.info(`${this.tenantId}/${this.documentId} can be closed`);
+                }
 
-            // Return early if sending is not required.
-            if (ticketedMessage.send === SendType.Never) {
-                continue;
-            }
+                // Check for document inactivity.
+                if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
+                    this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                }
 
-            // Return early but start a timer to create consolidated message.
-            this.clearNoopConsolidationTimer();
-            if (ticketedMessage.send === SendType.Later) {
-                this.setNoopConsolidationTimer();
-                continue;
+                // Return early if sending is not required.
+                if (ticketedMessage.send === SendType.Never) {
+                    continue;
+                }
+
+                // Return early but start a timer to create consolidated message.
+                this.clearNoopConsolidationTimer();
+                if (ticketedMessage.send === SendType.Later) {
+                    this.setNoopConsolidationTimer();
+                    continue;
+                }
             }
 
             // Update the msn last sent.
@@ -259,6 +268,7 @@ export class DeliLambda implements IPartitionLambda {
                         message.timestamp,
                         true,
                         clientJoinMessage.detail.scopes);
+                    this.canClose = false;
                 } else if (message.operation.type === MessageType.Fork) {
                     winston.info(`Fork ${message.documentId} -> ${systemContent.name}`);
                 }
@@ -380,8 +390,8 @@ export class DeliLambda implements IPartitionLambda {
                     message.timestamp,
                     true);
             } else {
-                // Don't rev for server sent no-ops
-                if (message.operation.type !== MessageType.NoOp) {
+                // Don't rev for server sent no-ops or noClient ops.
+                if (!(message.operation.type === MessageType.NoOp || message.operation.type === MessageType.NoClient)) {
                     sequenceNumber = this.revSequenceNumber();
                 }
             }
@@ -398,7 +408,7 @@ export class DeliLambda implements IPartitionLambda {
             this.noActiveClients = false;
         }
 
-        // Sequence number was never rev'd for NoOps. We will decide now based on heuristics.
+        // Sequence number was never rev'd for NoOps/noClients. We will decide now based on heuristics.
         let sendType = SendType.Immediate;
         if (message.operation.type === MessageType.NoOp) {
             // Set up delay sending of client sent no-ops
@@ -419,6 +429,15 @@ export class DeliLambda implements IPartitionLambda {
                     // Only rev if we need to send a new msn.
                     sequenceNumber = this.revSequenceNumber();
                 }
+            }
+        } else if (message.operation.type === MessageType.NoClient) {
+            // Only rev if no clients have shown up since last noClient was sent to alfred.
+            if (this.noActiveClients) {
+                sequenceNumber = this.revSequenceNumber();
+                this.minimumSequenceNumber = sequenceNumber;
+                this.canClose = true;
+            } else {
+                sendType = SendType.Never;
             }
         }
 
@@ -441,6 +460,7 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: sequencedMessage,
             msn: this.minimumSequenceNumber,
+            nacked: false,
             send: sendType,
             timestamp: message.timestamp,
             type: message.operation.type,
@@ -578,6 +598,7 @@ export class DeliLambda implements IPartitionLambda {
         return {
             message: nackMessage,
             msn: this.minimumSequenceNumber,
+            nacked: true,
             send: SendType.Immediate,
             timestamp: message.timestamp,
             type: message.operation.type,
@@ -744,8 +765,10 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
         this.idleTimer = setTimeout(() => {
-            const noOpMessage = this.createOpMessage(MessageType.NoOp);
-            this.sendToAlfred(noOpMessage);
+            if (!this.noActiveClients) {
+                const noOpMessage = this.createOpMessage(MessageType.NoOp);
+                this.sendToAlfred(noOpMessage);
+            }
         }, this.activityTimeout);
     }
 
@@ -761,8 +784,10 @@ export class DeliLambda implements IPartitionLambda {
             return;
         }
         this.noopTimer = setTimeout(() => {
-            const noOpMessage = this.createOpMessage(MessageType.NoOp);
-            this.sendToAlfred(noOpMessage);
+            if (!this.noActiveClients) {
+                const noOpMessage = this.createOpMessage(MessageType.NoOp);
+                this.sendToAlfred(noOpMessage);
+            }
         }, this.noOpConsolidationTimeout);
     }
 
