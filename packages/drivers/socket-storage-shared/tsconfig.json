@@ -8,7 +8,7 @@
         "strict": true,
         "rootDir": "./src",
         "outDir": "./dist",
-        "types" : [ "socket.io-client" ]
+        "types" : [ "@types/socket.io-client" ]
     },
     "include": [
         "src/**/*"

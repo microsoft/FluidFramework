@@ -18,7 +18,6 @@
   "devDependencies": {
     "@prague/build-common": "^0.9.0",
     "@types/lodash": "^4.14.118",
-    "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",
     "@types/string-hash": "^1.1.1",
     "concurrently": "^4.1.0",
@@ -28,19 +27,15 @@
   },
   "dependencies": {
     "@prague/agent": "^0.9.0",
-    "@prague/client-api": "^0.9.0",
     "@prague/container-definitions": "^0.9.0",
     "@prague/gitresources": "^0.9.0",
     "@prague/protocol-definitions": "^0.9.0",
-    "@prague/routerlicious-socket-storage": "^0.9.0",
-    "@prague/runtime-definitions": "^0.9.0",
     "@prague/services-client": "^0.9.0",
     "@prague/services-core": "^0.9.0",
     "@prague/socket-storage-shared": "^0.9.0",
     "@prague/utils": "^0.9.0",
     "lodash": "^4.17.11",
     "moniker": "^0.1.2",
-    "nconf": "^0.10.0",
     "string-hash": "^1.1.3"
   },
   "browser": {

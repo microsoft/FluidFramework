@@ -7,6 +7,8 @@ import * as chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { logVerbose } from "./common/logging";
+import { globFn, writeFileAsync } from "./common/utils"
+import { NpmDepChecker } from "./npmDepChecker";
 
 interface IPerson {
     name: string;
@@ -80,7 +82,7 @@ export class Package {
         return packages;
     }
 
-    private readonly packageJson: IPackage;
+    public readonly packageJson: Readonly<IPackage>;
     private readonly packageId = Package.packageCount++;
 
     public markForBuild = false;
@@ -103,12 +105,12 @@ export class Package {
     }
 
     public get dependencies() {
-        const it = function * (packageJson: IPackage) {
-            for (const item in packageJson.dependencies) { 
-                yield(item);
+        const it = function* (packageJson: IPackage) {
+            for (const item in packageJson.dependencies) {
+                yield (item);
             }
-            for (const item in packageJson.devDependencies) { 
-                yield(item);
+            for (const item in packageJson.devDependencies) {
+                yield (item);
             }
         }
         return it(this.packageJson);
@@ -120,6 +122,22 @@ export class Package {
 
     public getScript(name: string): string | undefined {
         return this.packageJson.scripts[name];
+    } 
+
+    public async depcheck() {
+        let checkFiles: string[];
+        if (this.packageJson.dependencies) {
+            const tsFiles = await globFn(`${this.directory}/**/*.ts`, { ignore: `${this.directory}/node_modules` });
+            const tsxFiles = await globFn(`${this.directory}/**/*.tsx`, { ignore: `${this.directory}/node_modules` });
+            checkFiles = tsFiles.concat(tsxFiles);
+        } else {
+            checkFiles = [];
+        }
+
+        const npmDepChecker = new NpmDepChecker(this, checkFiles);
+        if (await npmDepChecker.run()) {
+            await writeFileAsync(this.packageJsonFileName, `${JSON.stringify(this.packageJson, undefined, 2)}\n`);
+        }
     }
 
     private get color() {

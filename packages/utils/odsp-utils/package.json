@@ -18,7 +18,6 @@
   "repository": "microsoft/prague",
   "license": "MIT",
   "dependencies": {
-    "@prague/build-common": "^0.9.0",
     "@prague/protocol-definitions": "^0.9.0",
     "request": "^2.88.0"
   },

@@ -40,15 +40,9 @@
     "@prague/protocol-definitions": "^0.9.0",
     "@prague/runtime-definitions": "^0.9.0",
     "@prague/utils": "^0.9.0",
-    "@types/async": "^2.0.50",
     "@types/debug": "^0.0.31",
-    "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",
-    "@types/scriptjs": "^0.0.2",
-    "async": "^2.6.1",
-    "debug": "^4.1.1",
-    "lodash": "^4.17.11",
-    "performance-now": "^2.1.0"
+    "debug": "^4.1.1"
   },
   "license": "MIT"
 }

@@ -7,13 +7,11 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/tiny-web-host": "^0.9.0",
-    "react": "^16.8.3",
-    "react-dom": "^16.8.3"
+    "react": "^16.8.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
     "@prague/build-common": "^0.9.0",
-    "@types/isomorphic-fetch": "^0.0.35",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "concurrently": "^4.1.0",

@@ -34,10 +34,14 @@ export function unquote(str: string) {
 }
 
 export const statAsync = util.promisify(fs.stat);
+export const lstatAsync = util.promisify(fs.lstat);
 export const readFileAsync = util.promisify(fs.readFile);
 export const writeFileAsync = util.promisify(fs.writeFile);
 export const unlinkAsync = util.promisify(fs.unlink);
 export const existsSync = fs.existsSync;
+export const realpathAsync = util.promisify(fs.realpath);
+export const rmdirAsync = util.promisify(fs.rmdir);
+export const symlinkAsync = util.promisify(fs.symlink);
 
 export interface ExecAsyncResult {
     error: child_process.ExecException | null;

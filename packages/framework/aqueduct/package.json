@@ -28,7 +28,6 @@
     "@prague/framework-definitions": "^0.9.0",
     "@prague/map": "^0.9.0",
     "@prague/runtime-definitions": "^0.9.0",
-    "@prague/sequence": "^0.9.0",
     "@prague/shared-object-common": "^0.9.0"
   },
   "devDependencies": {

@@ -37,13 +37,8 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.9.0",
-    "@prague/component-runtime": "^0.9.0",
-    "@prague/framework-definitions": "^0.9.0",
-    "@prague/map": "^0.9.0",
     "@prague/merge-tree": "^0.9.0",
-    "@prague/shared-object-common": "^0.9.0",
-    "@types/node": "^10.12.12",
-    "bootstrap": "^3.3.7"
+    "@types/node": "^10.12.12"
   },
   "devDependencies": {
     "@prague/build-common": "^0.9.0",

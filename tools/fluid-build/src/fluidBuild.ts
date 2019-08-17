@@ -5,11 +5,12 @@
 
 import { Package } from "./npmPackage";
 import { parseOptions, options } from "./options";
-import { BuildGraph } from "./buildGraph";
+import { BuildGraph, BuildResult } from "./buildGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
 import { existsSync } from "./common/utils";
 import * as path from "path";
+import chalk from "chalk";
 
 parseOptions(process.argv);
 
@@ -40,7 +41,7 @@ async function main() {
     }
 
     const baseDirectory = path.join(resolvedRoot, "packages");
-    
+
     // Load the package
     const packages = Package.load(baseDirectory);
     timer.time("Package scan completed");
@@ -65,6 +66,13 @@ async function main() {
         packages.forEach((pkg) => pkg.markForBuild = true);
     }
 
+    if (options.depcheck) {
+        for (const pkg of packages) {
+            await pkg.depcheck();
+        }
+        timer.time("Dependencies check completed")
+    }
+
     // build the graph
     try {
         const buildGraph = new BuildGraph(packages, options.buildScript);
@@ -72,12 +80,18 @@ async function main() {
 
         if (options.clean) {
             await buildGraph.clean();
-            timer.time("Cleaned");
+            timer.time("Clean completed");
+        }
+
+        if (options.symlink) {
+            await buildGraph.symlink();
+            timer.time("Symlink completed");
         }
 
         if (options.build !== false) {
             // Run the build
-            const buildStatus = await buildGraph.build(timer);
+            const buildResult = await buildGraph.build(timer);
+            const buildStatus = buildResultString(buildResult);
             const elapsedTime = timer.time();
             const totalElapsedTime = buildGraph.totalElapsedTime;
             const concurrency = buildGraph.totalElapsedTime / elapsedTime;
@@ -89,9 +103,20 @@ async function main() {
             }
         }
 
-        logStatus(`Total time: ${(timer.getTotalTime()/1000).toFixed(3)}s`);
+        logStatus(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s`);
     } catch (e) {
         logStatus(`ERROR: ${e.message}`);
+    }
+}
+
+function buildResultString(buildResult: BuildResult) {
+    switch (buildResult) {
+        case BuildResult.Success:
+            return chalk.greenBright("succeeded");
+        case BuildResult.Failed:
+            return chalk.redBright("failed");
+        case BuildResult.UpToDate:
+            return chalk.cyanBright("up to date");
     }
 }
 

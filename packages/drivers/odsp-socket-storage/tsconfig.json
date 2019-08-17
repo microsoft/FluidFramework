@@ -5,6 +5,7 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "target": "es2016",
         "strict": true,
         "rootDir": "./src",
         "outDir": "./dist",

@@ -41,13 +41,9 @@
     "@chaincode/table-document": "^0.9.0",
     "@prague/aqueduct": "^0.9.0",
     "@prague/component-core-interfaces": "^0.9.0",
-    "@prague/component-runtime": "^0.9.0",
-    "@prague/container-runtime": "^0.9.0",
     "@prague/flow-util": "^0.9.0",
     "@prague/map": "^0.9.0",
-    "@prague/merge-tree": "^0.9.0",
-    "@prague/runtime-definitions": "^0.9.0",
-    "@prague/utils": "^0.9.0"
+    "@prague/runtime-definitions": "^0.9.0"
   },
   "devDependencies": {
     "@prague/build-common": "^0.9.0",

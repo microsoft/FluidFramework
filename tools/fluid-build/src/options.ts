@@ -16,6 +16,8 @@ interface FastBuildOptions {
     vscode: boolean;
     args: string[];
     root?: string;
+    symlink: boolean;
+    depcheck: boolean;
 }
 
 // defaults
@@ -30,7 +32,9 @@ export const options: FastBuildOptions = {
     args: [],
     root: process.env["_FLUID_ROOT_"],
     buildScript: "build",
-    vscode: false
+    vscode: false,
+    symlink: false,
+    depcheck: false,
 };
 
 function printUsage() {
@@ -120,6 +124,16 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "--vscode") {
             options.vscode = true;
+            continue;
+        }
+
+        if (arg === "--symlink") {
+            options.symlink = true;
+            continue;
+        }
+
+        if (arg === "--depcheck") {
+            options.depcheck = true;
             continue;
         }
         

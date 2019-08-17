@@ -10,8 +10,10 @@ import { Package } from "./npmPackage";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { Timer } from './common/timer';
-import { getExecutableFromCommand, execAsync } from "./common/utils";
+import { getExecutableFromCommand, execAsync, unlinkAsync, rmdirAsync, symlinkAsync } from "./common/utils";
 import { FileHashCache } from "./common/fileHashCache";
+import { existsSync, lstatAsync, realpathAsync } from "./common/utils";
+import chalk from "chalk";
 
 export enum BuildResult {
     Success,
@@ -77,6 +79,7 @@ export class BuildPackage {
         const task = this.task;
         return task ? task.isUpToDate() : true;
     }
+
     public async build(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
         if (!this.buildP) {
             const task = this.task;
@@ -87,6 +90,33 @@ export class BuildPackage {
             }
         }
         return this.buildP;
+    }
+
+    public async symlink(buildPackages: Map<string, BuildPackage>) {
+        for (const dep of this.pkg.dependencies) {
+            const depBuildPackage = buildPackages.get(dep);
+            if (depBuildPackage) {
+                const symlinkPath = path.join(this.pkg.directory, "node_modules", dep);
+                try {
+                    if (existsSync(symlinkPath)) {
+                        const stat = await lstatAsync(symlinkPath);
+                        if (!stat.isSymbolicLink || await realpathAsync(symlinkPath) !== depBuildPackage.pkg.directory) {
+                            if (stat.isDirectory) {
+                                await rmdirAsync(symlinkPath);
+                            } else {
+                                await unlinkAsync(symlinkPath);
+                            }
+                            await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
+                            console.warn(`WARNING: replaced existing package ${symlinkPath}`);
+                        }
+                    } else {
+                        await symlinkAsync(depBuildPackage.pkg.directory, symlinkPath, "junction");
+                    }
+                } catch (e) {
+                    throw new Error(`symlink failed on ${symlinkPath}. ${e}`);
+                }
+            }
+        }
     }
 }
 
@@ -117,17 +147,17 @@ export class BuildGraph {
         return isUpToDateArr.every((isUpToDate) => isUpToDate);
     }
 
-    public async build(timer?: Timer): Promise<string> {
+    public async build(timer?: Timer): Promise<BuildResult> {
         // TODO: This function can only be called once
         const isUpToDate = await this.isUpToDate();
         if (timer) timer.time(`Check up to date completed`);
 
-        logStatus(`Starting build script "${this.buildScriptName}" for ${this.buildPackages.size} packages`);
+        logStatus(`Starting npm script "${chalk.cyanBright(this.buildScriptName)}" for ${this.buildPackages.size} packages`);
         if (this.numSkippedTasks) {
             logStatus(`Skipping ${this.numSkippedTasks} up to date tasks.`);
         }
         if (isUpToDate) {
-            return BuildResult[BuildResult.UpToDate];
+            return BuildResult.UpToDate;
         }
         this.buildContext.fileHashCache.clear();
         const q = Task.createTaskQueue();
@@ -135,7 +165,13 @@ export class BuildGraph {
         this.buildPackages.forEach((node) => {
             p.push(node.build(q));
         });
-        return BuildResult[summarizeBuildResult(await Promise.all(p))];
+        return summarizeBuildResult(await Promise.all(p));
+    }
+
+    public async symlink(): Promise<void> {
+        for (const value of this.buildPackages.values()) {
+            await value.symlink(this.buildPackages);
+        }
     }
 
     public async clean() {

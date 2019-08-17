@@ -11,8 +11,7 @@ import { logStatus, logVerbose } from "../../common/logging";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
-import * as chalk from "chalk";
-import { string } from "prop-types";
+import chalk from "chalk";
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
@@ -93,13 +92,13 @@ export abstract class LeafTask extends Task {
             let statusCharacter: string = " ";
             switch (status) {
                 case BuildResult.Success:
-                    statusCharacter = chalk.default.greenBright("\u2713");
+                    statusCharacter = chalk.greenBright("\u2713");
                     break;
                 case BuildResult.UpToDate:
-                    statusCharacter = chalk.default.yellowBright("-");
+                    statusCharacter = chalk.cyanBright("-");
                     break;
                 case BuildResult.Failed:
-                    statusCharacter = chalk.default.redBright("x");
+                    statusCharacter = chalk.redBright("x");
                     break;
             }
 

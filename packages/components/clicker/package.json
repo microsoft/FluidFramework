@@ -42,13 +42,10 @@
   "license": "MIT",
   "dependencies": {
     "@prague/aqueduct": "^0.9.0",
-    "@prague/build-common": "^0.9.0",
     "@prague/component-core-interfaces": "^0.9.0",
-    "@prague/component-runtime": "^0.9.0",
     "@prague/container-definitions": "^0.9.0",
     "@prague/map": "^0.9.0",
     "@prague/runtime-definitions": "^0.9.0",
-    "@prague/shared-object-common": "^0.9.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },
@@ -64,6 +61,7 @@
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
-    "webpack-merge": "^4.1.2"
+    "webpack-merge": "^4.1.2",
+    "@prague/build-common": "^0.9.0"
   }
 }
