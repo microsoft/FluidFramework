@@ -100,6 +100,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private connectRepeatCount = 0;
     private connectStartTime = 0;
 
+    // collab window tracking.
+    // Start with 50 not to record anything below 50 (= 30 + 20).
+    private collabWindowMax = 30;
+
     public get inbound(): IDeltaQueue<ISequencedDocumentMessage> {
         return this._inbound;
     }
@@ -439,8 +443,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private recordPingTime(latency: number) {
         this.pongCount++;
         this.socketLatency += latency;
-        if (this.pongCount === 10) {
-            this.logger.sendTelemetryEvent({eventName: "DeltaLatency", latency: this.socketLatency / 10});
+        const aggregateCount = 100;
+        if (this.pongCount === aggregateCount) {
+            this.logger.sendTelemetryEvent({eventName: "DeltaLatency", value: this.socketLatency / aggregateCount});
             this.pongCount = 0;
             this.socketLatency = 0;
         }
@@ -735,6 +740,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         assert.equal(message.sequenceNumber, this.baseSequenceNumber + 1);
         this.baseSequenceNumber = message.sequenceNumber;
+
+        // record collab window max size, in 20 increments.
+        const msnDistance = this.baseSequenceNumber - this.minSequenceNumber;
+        if (this.collabWindowMax + 20 < msnDistance) {
+            this.collabWindowMax = msnDistance;
+            this.logger.sendTelemetryEvent({ eventName: "MSNWindow", value: msnDistance });
+        }
 
         this.handler!.process(
             message,
