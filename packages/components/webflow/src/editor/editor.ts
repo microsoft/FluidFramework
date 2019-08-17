@@ -102,7 +102,7 @@ export class Editor {
 
             case KeyCode.F5: {
                 console.clear();
-                debug(`*** RESET ***`);
+                debug("*** RESET ***");
                 this.unlinkChildren(this.layout.root);
                 this.layout.sync();
                 this.caretSync();
@@ -127,7 +127,7 @@ export class Editor {
                 break;
             }
             default: {
-                debug(`Key: ${e.key} (${e.keyCode})`);
+                debug("Key: %s (%d)", e.key, e.keyCode);
             }
         }
     }

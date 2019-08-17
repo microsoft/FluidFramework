@@ -7,7 +7,6 @@ import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } fro
 import { LocalReference } from "@prague/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
-import { domRangeToString, nodeAndOffsetToString, windowSelectionToString } from "../util/debug";
 import { updateRef } from "../util/localref";
 import { Tag } from "../util/tag";
 import { eotSegment, Layout } from "../view/layout";
@@ -15,6 +14,25 @@ import { debug } from "./debug";
 import * as styles from "./index.css";
 
 export class Caret {
+
+    private get doc() { return this.layout.doc; }
+    public get position() { return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length); }
+    public get anchor() { return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length); }
+    public get bounds() {
+        const { focusNode, focusOffset } = window.getSelection();
+        return focusNode === null
+            ? undefined
+            : Dom.getClientRect(focusNode, focusOffset);
+    }
+
+    public get selection() {
+        const start = this.anchor;
+        const end = this.position;
+
+        return start < end
+            ? { start, end }
+            : { start: end, end: start };
+    }
     private startRef: LocalReference;
     private endRef: LocalReference;
 
@@ -65,30 +83,11 @@ export class Caret {
         }) as EventListener);
     }
 
-    private get doc() { return this.layout.doc; }
-    public get position() { return clamp(0, this.doc.localRefToPosition(this.endRef), this.doc.length); }
-    public get anchor() { return clamp(0, this.doc.localRefToPosition(this.startRef), this.doc.length); }
-    public get bounds() {
-        const { focusNode, focusOffset } = window.getSelection();
-        return focusNode === null
-            ? undefined
-            : Dom.getClientRect(focusNode, focusOffset);
-    }
-
-    public get selection() {
-        const start = this.anchor;
-        const end = this.position;
-
-        return start < end
-            ? { start, end }
-            : { start: end, end: start };
-    }
-
     public setSelection(start: number, end: number) {
-        debug(`  Cursor.setSelection(${start},${end}):`);
-        debug(`    start:`);
+        debug("  Cursor.setSelection(%d,%d):", start, end);
+        debug("    start:");
         this.startRef = updateRef(this.doc, this.startRef, start);
-        debug(`    end:`);
+        debug("    end:");
         this.endRef = updateRef(this.doc, this.endRef, end);
     }
 
@@ -100,12 +99,12 @@ export class Caret {
         const selection = window.getSelection();
         const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
         if (endOffset !== focusOffset || endNode !== focusNode || startOffset !== anchorOffset || startNode !== anchorNode) {
-            debug(`    caret set: (${domRangeToString(startNode, startOffset, endNode, endOffset)})`);
-            debug(`          was: (${windowSelectionToString()})`);
+            debug("    caret set: (%o:%d..%o:%d)", startNode, startOffset, endNode, endOffset);
+            this.logWindowSelection("was");
             selection.setBaseAndExtent(startNode, startOffset, endNode, endOffset);
-            debug(`          now: (${windowSelectionToString()})`);
+            this.logWindowSelection("now");
         } else {
-            debug(`    caret unchanged: (${windowSelectionToString()})`);
+            debug("    caret unchanged: (%o)", window.getSelection());
         }
     }
 
@@ -114,11 +113,16 @@ export class Caret {
         this.setSelection(end, end);
     }
 
-    private readonly onSelectionChange = (e) => {
-        debug(`Cursor.onSelectionChange(${windowSelectionToString()})`);
+    private logWindowSelection(title: string) {
         const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
+        debug("          %s: (%o:%d..%o:%d)", title, anchorNode, anchorOffset, focusNode, focusOffset);
+    }
+
+    private readonly onSelectionChange = () => {
+        const { anchorNode, anchorOffset, focusNode, focusOffset } = window.getSelection();
+        debug("Cursor.onSelectionChange(%o:%d..%o:%d)", anchorNode, anchorOffset, focusNode, focusOffset);
         if (!this.layout.root.contains(focusNode)) {
-            debug(` (ignored: outside content)`);
+            debug(" (ignored: outside content)");
             return;
         }
         const start = this.nodeOffsetToPosition(anchorNode, anchorOffset);
@@ -137,7 +141,8 @@ export class Caret {
         // position.  For text nodes, an offset of 0 is "just before" the first character.
         if (position === 0 || rightKind === DocSegmentKind.text) {
             result = this.layout.segmentAndOffsetToNodeAndOffset(rightSegment, rightOffset);
-            debug(`    positionToNodeOffset(@${position},${rightSegment}:${rightOffset}) -> ${nodeAndOffsetToString(result.node, result.nodeOffset)}`);
+            debug("    positionToNodeOffset(@%d,%d:%d) -> %o",
+                position, rightSegment, rightOffset, result);
         } else {
             // For other nodes, the user typical perceives "just before" to be after the preceding segment.
             const { segment: leftSegment, offset: leftOffset } = this.doc.getSegmentAndOffset(position - 1);
@@ -151,7 +156,8 @@ export class Caret {
                 leftSegment,
                 leftOffset + delta);
 
-            debug(`    positionToNodeOffset(@${position} - 1,${leftSegment}:${leftOffset + delta}) -> ${nodeAndOffsetToString(result.node, result.nodeOffset)}`);
+            debug("    positionToNodeOffset(@%d,%o:%d) -> %o",
+                position - 1, leftSegment, leftOffset + delta, result);
         }
         return result;
     }

@@ -86,6 +86,7 @@ dependencies:
   '@rush-temp/table-document': 'file:projects/table-document.tgz'
   '@rush-temp/table-test': 'file:projects/table-test.tgz'
   '@rush-temp/table-view': 'file:projects/table-view.tgz'
+  '@rush-temp/test-snapshots': 'file:projects/test-snapshots.tgz'
   '@rush-temp/test-utils': 'file:projects/test-utils.tgz'
   '@rush-temp/tiny-web-host': 'file:projects/tiny-web-host.tgz'
   '@rush-temp/todo': 'file:projects/todo.tgz'
@@ -119,12 +120,12 @@ dependencies:
   '@types/jsonwebtoken': 8.3.3
   '@types/jwt-decode': 2.2.1
   '@types/keypress.js': 2.1.0
-  '@types/leaflet': 1.5.0
-  '@types/lodash': 4.14.136
+  '@types/leaflet': 1.5.1
+  '@types/lodash': 4.14.137
   '@types/logform': 1.2.0
   '@types/minio': 7.0.2
   '@types/mocha': 5.2.7
-  '@types/mongodb': 3.2.2
+  '@types/mongodb': 3.2.3
   '@types/morgan': 1.7.36
   '@types/nconf': 0.0.37
   '@types/nock': 9.3.1
@@ -137,7 +138,7 @@ dependencies:
   '@types/random-js': 1.0.31
   '@types/randomstring': 1.1.6
   '@types/raven': 2.5.3
-  '@types/react': 16.9.1
+  '@types/react': 16.9.2
   '@types/react-dom': 16.8.5
   '@types/redis': 2.8.13
   '@types/request': 2.48.2
@@ -229,7 +230,7 @@ dependencies:
   node-fetch: 2.6.0
   node-geocoder: 3.23.0
   node-sass: 4.12.0
-  nyc: 13.3.0
+  nyc: 14.1.1
   parallel-webpack: 2.4.0_webpack@4.39.2
   parse-address: 1.1.2
   passport: 0.3.2
@@ -415,18 +416,18 @@ packages:
     dev: false
     resolution:
       integrity: sha512-s63F9nJioLqOlW3UkyMd+BYhXt44YuaFm/VV0VwuteqjYwRrObkU7ra9pY4wAJR3oXi8hJrMcrcJdO/HH33vtw==
-  /@component/agent-scheduler/0.8.11142:
+  /@component/agent-scheduler/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/component-runtime': 0.8.11142
-      '@prague/consensus-register-collection': 0.8.11142
-      '@prague/map': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/shared-object-common': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/component-runtime': 0.8.11482
+      '@prague/consensus-register-collection': 0.8.11482
+      '@prague/map': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/shared-object-common': 0.8.11482
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-eQPUorOGCjMLLxG99r4b9pzqvacvqngzy1r3af9C29xTz+59vge1StU/DavNWnkiaBNqQNdsU6Gu3GpX0SvzNQ==
+      integrity: sha512-bR+QvzPNlFzqN+cn+8hvHaw3Sqy4LCk/0283SaIxn2bC6U1fM/bURSMk2nA4OeNvoXZ4hPml2yh3NkCtlSA7Kg==
   /@fortawesome/fontawesome-free/5.10.1:
     dev: false
     engines:
@@ -437,27 +438,23 @@ packages:
     dev: false
     resolution:
       integrity: sha512-mV6T0IYqb0xL1UALPFplXYQmR0twnXG0M6jUswpquqT2sD12BOiCiLy3EvMp/Fy7s3DZElC4/aPjEjo2jeZpvw==
-  /@hapi/hoek/6.2.4:
+  /@hapi/bourne/1.3.2:
     dev: false
     resolution:
-      integrity: sha512-HOJ20Kc93DkDVvjwHyHawPwPkX44sIrbXazAUDiUXaY2R9JwQGo2PhFfnQtdrsIe4igjG2fPgMra7NYw7qhy0A==
+      integrity: sha512-1dVNHT76Uu5N3eJNTYcvxee+jzX4Z9lfciqRRHCU27ihbUcYi+iSc2iml5Ke1LXe1SyJCLA0+14Jh4tXJgOppA==
   /@hapi/hoek/8.2.1:
     dev: false
     resolution:
       integrity: sha512-JPiBy+oSmsq3St7XlipfN5pNA6bDJ1kpa73PrK/zR29CVClDVqy04AanM/M/qx5bSF+I61DdCfAvRrujau+zRg==
-  /@hapi/joi/15.1.0:
+  /@hapi/joi/15.1.1:
     dependencies:
       '@hapi/address': 2.0.0
-      '@hapi/hoek': 6.2.4
-      '@hapi/marker': 1.0.0
+      '@hapi/bourne': 1.3.2
+      '@hapi/hoek': 8.2.1
       '@hapi/topo': 3.1.3
     dev: false
     resolution:
-      integrity: sha512-n6kaRQO8S+kepUTbXL9O/UOL788Odqs38/VOfoCrATDtTvyfiO3fgjlSRaNkHabpTLgM7qru9ifqXlXbXk8SeQ==
-  /@hapi/marker/1.0.0:
-    dev: false
-    resolution:
-      integrity: sha512-JOfdekTXnJexfE8PyhZFyHvHjt81rBFSAbTIRAhF2vv/2Y1JzoKsGqxH/GpZJoF7aEfYok8JVcAHmSz1gkBieA==
+      integrity: sha512-entf8ZMOK8sc+8YfeOlM8pCfg3b5+WZIKBfUaaJT8UsjAAPjartzxIYm3TIbjvA4u+u++KbcXD38k682nVHDAQ==
   /@hapi/topo/3.1.3:
     dependencies:
       '@hapi/hoek': 8.2.1
@@ -466,7 +463,7 @@ packages:
       integrity: sha512-JmS9/vQK6dcUYn7wc2YZTqzIKubAQcJKu2KCKAru6es482U5RT5fP1EXCPtlXpiK7PR0On/kpQKI4fRKkzpZBQ==
   /@kurtb/pinpoint/0.1.2:
     dependencies:
-      '@types/leaflet': 1.5.0
+      '@types/leaflet': 1.5.1
       leaflet: 1.5.1
       leaflet-minimap: 3.6.1
     dev: false
@@ -543,81 +540,81 @@ packages:
       integrity: sha512-PhoNfqGQoXUMOOs89mDcakyKWrEYRBferd23YiVh4iJshmRb4HOuZcmKGxfQE+MxXp9HwyjastP7dJXcUEdHUQ==
   /@prague/app-datastore/0.8.11061:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/container-loader': 0.8.11142
-      '@prague/loader-web': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/routerlicious-host': 0.8.11142
-      '@prague/routerlicious-socket-storage': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/container-loader': 0.8.11482
+      '@prague/loader-web': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/routerlicious-host': 0.8.11482
+      '@prague/routerlicious-socket-storage': 0.8.11482
       debug: 4.1.1
       jsonwebtoken: 8.5.1
     dev: false
     resolution:
       integrity: sha512-gIn/9nF9dKXSYqP5lpSlk1AbNzrP7fp7JgCVWfILN0e2CZ92xypofl2REiIaQ+oMrbILlngzBGIlDknrX/dSaA==
-  /@prague/base-host/0.8.11142:
+  /@prague/base-host/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/container-loader': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/loader-web': 0.8.11142
-      '@prague/odsp-socket-storage': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/routerlicious-host': 0.8.11142
-      '@prague/routerlicious-socket-storage': 0.8.11142
-      '@prague/services-client': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/container-loader': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/loader-web': 0.8.11482
+      '@prague/odsp-socket-storage': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/routerlicious-host': 0.8.11482
+      '@prague/routerlicious-socket-storage': 0.8.11482
+      '@prague/services-client': 0.8.11482
       chalk: 2.4.2
       isomorphic-fetch: 2.2.1
     dev: false
     resolution:
-      integrity: sha512-E/oZ7QE6awWrYSvVqmZFpAa4QzHllOAfFuE6FSeHMpBTB/Sx9v1lsZkYHoF+GwdzRq+gerz7LuQVxI8cCQlFuA==
-  /@prague/component-core-interfaces/0.8.11142:
+      integrity: sha512-j+7NlycQwVWitnCS3IJOMRpVrtaVlkL3LPwJz8sikSbUmNxJ5aNxeVIjzaMY8pw4zzzvxHA0Z2Kvg2SD339vjA==
+  /@prague/component-core-interfaces/0.8.11482:
     dependencies:
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-mD9ZH6zjtzzBl9vfzRs9Deo/yqxe1Zq9nhELNT1XmVL8oLhwgAfFrU8F7oet3ZkhIfxSsXJHAHsc9FPP3A3XEA==
-  /@prague/component-runtime/0.8.11142:
+      integrity: sha512-o1koeV9AnNISdVGK8b5HKb22hQBnNlxH4si77W4T8GmqPBvV9406CJ+VBFya8Y5nuoflgRrNbG+4hKqzF+2Mfw==
+  /@prague/component-runtime/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/shared-object-common': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/shared-object-common': 0.8.11482
+      '@prague/utils': 0.8.11482
       async: 2.6.3
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-AhrXSbVgE1uoC6BHi5XZthpC4ohXwrbLlqoSbR9atrKcPUquSRw0Di1bZBeeKX7xUM+34dTCpPotIRI66P1j+w==
-  /@prague/consensus-register-collection/0.8.11142:
+      integrity: sha512-oRp/dns+EeIVt2bM9fagbwmrdosvzjmV1xcutqVKJ9KijP/nb345w545AG64syRFrmapT91BGvEyX2nHqWy4HA==
+  /@prague/consensus-register-collection/0.8.11482:
     dependencies:
-      '@prague/container-definitions': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/shared-object-common': 0.8.11142
+      '@prague/container-definitions': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/shared-object-common': 0.8.11482
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-HCxhndgouag0km6gOi26uJB3QzMNqvESbR+c3or4qX20RX4MTHYS0YM7aKkAiriXA/WGgaih90Um1vSDIQ8R+g==
-  /@prague/container-definitions/0.8.11142:
+      integrity: sha512-7nPATBbkmTi4iGcc9q4GMrdQuJbz3+asilHJrQyoSZb6UtUUF5iIER0rUl3byyrHEjOttg/krWiAOq+BLSZUeA==
+  /@prague/container-definitions/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-FCG6cbhviBNe/VK5mMiJbr9MTLS+ChvPd8paF3Rl8fnXpeYE0wnXtR8rjhvId6VV8qnA0n0U5fKuDOkP91LBkg==
-  /@prague/container-loader/0.8.11142:
+      integrity: sha512-y6kVelzQl5zQPFnBqoGv349wpmW0Qw3cvv7vAyHOHbmPzjG0ImxrdxRrTa2prm8b42osrE9tQhb6KElF+GY7Vw==
+  /@prague/container-loader/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/double-ended-queue': 2.1.1
       debug: 4.1.1
       double-ended-queue: 2.1.0-0
@@ -625,18 +622,18 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-VsLoaxzO2Z5XAt8KPogNNTIrBI94i614gcUY5yStUiXayW9+nG8EryNmhpRaP1YrFqxW6iqc8SvdXp8OPx2txw==
-  /@prague/container-runtime/0.8.11142:
+      integrity: sha512-vovSgkMoG0R0+oJAhKw6JAuIn2R+IFpZbs73jec3o42K7X7lme0UjLRJZkRXPCgvJNOeHFFJ9d7dwkqWBI+b/A==
+  /@prague/container-runtime/0.8.11482:
     dependencies:
-      '@component/agent-scheduler': 0.8.11142
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@component/agent-scheduler': 0.8.11482
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/node': 10.14.15
       '@types/scriptjs': 0.0.2
       async: 2.6.3
@@ -645,62 +642,62 @@ packages:
       performance-now: 2.1.0
     dev: false
     resolution:
-      integrity: sha512-ybm8GXQIiWxgDjPgMqbQdOfpQ5Q4mCj2VURe8Z+NiQpcyinpvTxPKKI1GNwmUXn82BE+N0sNDI8YroxfadXZNA==
-  /@prague/gitresources/0.8.11142:
+      integrity: sha512-8sVqyjRnt96er3ckpA9R5E2phGHBh5ohrEEQbez9JzEsHgeVQ3Z5uISsy3VhM2WFabG4Lu6AWqAoRj7Kg3JDeQ==
+  /@prague/gitresources/0.8.11482:
     dev: false
     resolution:
-      integrity: sha512-oDnZ9+WMgRvsiml/0d4i5heDT8P2llMNiOBmC9IOCKpmMWgu349bfrVAM4rhtl+aRWNwv9xdw5oBaD+b8LO5Dg==
-  /@prague/loader-web/0.8.11142:
+      integrity: sha512-xjJU4YiZ5YCeBsQJvmJbyxT7VPv147mSAeLNdCmb8W6O2kPf8/LD7bz9D8eBBhyN7/+Eqr0XSR6J60Mut7bMRw==
+  /@prague/loader-web/0.8.11482:
     dependencies:
-      '@prague/container-definitions': 0.8.11142
-      '@prague/gitresources': 0.8.11142
+      '@prague/container-definitions': 0.8.11482
+      '@prague/gitresources': 0.8.11482
       '@types/node': 10.14.15
       chalk: 2.4.2
       isomorphic-fetch: 2.2.1
       source-map-loader: 0.2.4
     dev: false
     resolution:
-      integrity: sha512-lmzsBb0qw144jPvBIz0BrNwFX4F5ax67IgEpBXstBKzrtahQYlV7/owsoqAPUUbS815diWIxXsDvRHsDMO1qQg==
-  /@prague/map/0.8.11142:
+      integrity: sha512-6HfSJNWn1T5SPPO/rGeqsyE3yc6oJJu2GqHyTc2y/T2Wyi9fYml1mQvabRkGQ4RU9IEsmP7SSp22MwZ3hewzgA==
+  /@prague/map/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/shared-object-common': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/shared-object-common': 0.8.11482
       debug: 4.1.1
       lodash: 4.17.15
     dev: false
     resolution:
-      integrity: sha512-6+TTXZTjitoGB/WS5PCTGnWBtbZhH3OasfZAxfc6sC+nxqVeX7CC2vlDLmS83OnUhWzHDLeirzEXfIRaG0dbUA==
-  /@prague/odsp-socket-storage/0.8.11142:
+      integrity: sha512-0YBCMHQASigAAiRGnW1p+3I8yT1cY421XL1A5BnIcFX0ZtbQR8gri9Wl2OIRj/t/chc7tsnIutLZg1QojKB8cg==
+  /@prague/odsp-socket-storage/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/services-client': 0.8.11142
-      '@prague/socket-storage-shared': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/services-client': 0.8.11482
+      '@prague/socket-storage-shared': 0.8.11482
+      '@prague/utils': 0.8.11482
       axios: 0.18.1
       debug: 4.1.1
       node-fetch: 2.6.0
       socket.io-client: 2.2.0
     dev: false
     resolution:
-      integrity: sha512-KUZHcJSA+ktt4NhOLfyecAMq78OEVK2NQbZFg9jNOU5fE8zyyY/en9KLMHjThF0TSoM1yutZpYCS2YOPcRcM6A==
+      integrity: sha512-tb1AbBIDoez3A70alXVNf+1Btdvp1FH2YZPLDXPHbufGqvjTJSLG80ssxuihzXJVyQSvg0Ebv9YQGeEIWG/wSQ==
   /@prague/prague-dev-server/3.8.1_webpack@4.39.2:
     dependencies:
-      '@prague/base-host': 0.8.11142
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/container-loader': 0.8.11142
-      '@prague/container-runtime': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/loader-web': 0.8.11142
-      '@prague/map': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/routerlicious-host': 0.8.11142
-      '@prague/routerlicious-socket-storage': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
+      '@prague/base-host': 0.8.11482
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/container-loader': 0.8.11482
+      '@prague/container-runtime': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/loader-web': 0.8.11482
+      '@prague/map': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/routerlicious-host': 0.8.11482
+      '@prague/routerlicious-socket-storage': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
       ansi-html: 0.0.7
       axios: 0.18.1
       bonjour: 3.5.0
@@ -744,32 +741,32 @@ packages:
       webpack: ^4.0.0
     resolution:
       integrity: sha512-9KxWQpNxupJ9gqrDSP9VgyYPYky/gzRsc4sryqgqBeKn7i7U0nPsYzYwEVpuaqSpxMfae4oC5XphyxJXoW5w4w==
-  /@prague/protocol-definitions/0.8.11142:
+  /@prague/protocol-definitions/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-JMfN6E6n4H1nAdpmvUw6O46bo8yyXieVt/7G4dA4hTXFlEWG64UskOmIFwQo4L6ip1UcCzku2xTdjqSYzbjmNw==
-  /@prague/routerlicious-host/0.8.11142:
+      integrity: sha512-ANWyrW136ElR6AueYs7Gk0NcZ+LQCtSb0XyD85ES3DSwIYQhTaL3bF+DnorqAoNJwqKTjjP3/Jj9C2a1XqIUZA==
+  /@prague/routerlicious-host/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/debug': 0.0.31
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-/WuUjGHCplmUdv8rMFsAvfH20YhLvB0BYuMmuUKjjRHPDZqE1vL0OfBpD/3U1X43/ucJtZKuYOsQX3xJmLqoxA==
-  /@prague/routerlicious-socket-storage/0.8.11142:
+      integrity: sha512-i1d4n+LoWZVCRzyNWWdtWIp74uFqhI/53s5U0kNS35wE3oem9g5jlXYCYWgSKWKXMV+VPJ5+eRzoAlcDwW7IHQ==
+  /@prague/routerlicious-socket-storage/0.8.11482:
     dependencies:
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/services-client': 0.8.11142
-      '@prague/socket-storage-shared': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/services-client': 0.8.11482
+      '@prague/socket-storage-shared': 0.8.11482
+      '@prague/utils': 0.8.11482
       axios: 0.18.1
       debug: 4.1.1
       isomorphic-ws: 4.0.1_ws@6.2.1
@@ -778,36 +775,36 @@ packages:
       ws: 6.2.1
     dev: false
     resolution:
-      integrity: sha512-9NABDlK+7aDRocoXQuOe2NCuQac1KVp2tQEk3Z9Q+H03RbJRgwC8nwaqmV5IPSY3qS52Omxn+mKAJAaFpkiK9Q==
-  /@prague/runtime-definitions/0.8.11142:
+      integrity: sha512-kaYhUHtibD1o3PS+FDUTsL7q8TmW0cbCOMS7muUzNBQEjuICXV5obRw9TuCz32arLEbYCOUxkH8XKB27V75sIQ==
+  /@prague/runtime-definitions/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/node': 10.14.15
     dev: false
     resolution:
-      integrity: sha512-Jg7MB9CpPbcr0J3B0yDd9VHaw02K4UhGtd+7bYUq7gVOZlfd8Wgon69IXJAitwj5818cqCNCGGm7ywdgpEtvYg==
-  /@prague/services-client/0.8.11142:
+      integrity: sha512-fm1Cv3fi4uLhyvjcNQ3Wul3P0D2Qq5siH30iLbbyRknA/x/OSZU4NE3EHCehaucMZ2iPkyivIo+qKV63RbWrLg==
+  /@prague/services-client/0.8.11482:
     dependencies:
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/node': 10.14.15
       axios: 0.18.1
       debug: 4.1.1
     dev: false
     resolution:
-      integrity: sha512-F/iEqfNXgwQefvUABJscPbgGRngSHD84c/n500AF761K1zdGBbf8+K59HlSlGwpNRsHgERs0vyWp92lba/0hJg==
-  /@prague/shared-object-common/0.8.11142:
+      integrity: sha512-V3FARg/TVEjvbjf21muaGDtk2P1DboRl4HOQzG3PrZV2NC5/OzPr5k8sWn3PBWK9riO6Q8ZeArb5WQoIfEbYtg==
+  /@prague/shared-object-common/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/runtime-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/runtime-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
       '@types/node': 10.14.15
@@ -815,16 +812,16 @@ packages:
       double-ended-queue: 2.1.0-0
     dev: false
     resolution:
-      integrity: sha512-lucQ72wzE1QL3O0sEHs499u5UexqiPj1WmZZ0ZoVUoZ2BhQ6Y2hGfr0UhmW0B0acdaR75KtuDdQPioHMJAWuHg==
-  /@prague/socket-storage-shared/0.8.11142:
+      integrity: sha512-E6ymWKYRmA6dHRyznpLNTtm7abqu0SaPs8+dAfCZNwFZyZ8PpazEzyRpotV6wHea/U/oNoZy+IajcJAQxb+6gg==
+  /@prague/socket-storage-shared/0.8.11482:
     dependencies:
-      '@prague/protocol-definitions': 0.8.11142
-      '@prague/utils': 0.8.11142
+      '@prague/protocol-definitions': 0.8.11482
+      '@prague/utils': 0.8.11482
       debug: 4.1.1
       socket.io-client: 2.2.0
     dev: false
     resolution:
-      integrity: sha512-MSantBol5HDcJEvh/JQVtWlRjiQvOIo/c6WX7WhHQZQ8/JFSN6vUrCGv56xeSwSlQvaXM/qxhShITKKPR8xlxQ==
+      integrity: sha512-isZ2Je1wKiw3nyT87CQj3XqvlVeokBe+A2R9ShRugVpIL1aoH4YNl3AeBypTfsGR5Y62dCLgsqAOl5PTffVORA==
   /@prague/url-generator/1.0.7860:
     dependencies:
       commander: 2.20.0
@@ -832,19 +829,19 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-A2BPgD9BR3H2s48UwOSJJpn1wo3mV1P85/5yPayqm7cb6zu05AOeuE/LrbyGv6fq6aOtQ2LX0mNsMFRsOYmeDg==
-  /@prague/utils/0.8.11142:
+  /@prague/utils/0.8.11482:
     dependencies:
-      '@prague/component-core-interfaces': 0.8.11142
-      '@prague/container-definitions': 0.8.11142
-      '@prague/gitresources': 0.8.11142
-      '@prague/protocol-definitions': 0.8.11142
+      '@prague/component-core-interfaces': 0.8.11482
+      '@prague/container-definitions': 0.8.11482
+      '@prague/gitresources': 0.8.11482
+      '@prague/protocol-definitions': 0.8.11482
       debug: 4.1.1
       lodash: 4.17.15
       performance-now: 2.1.0
       sha.js: 2.4.11
     dev: false
     resolution:
-      integrity: sha512-KYzZUxZiCF0WppMa9VANCEjsBBCbSda3XcEdTbTdcz3jMvOGwsKxRu2cTCYhwEicch67jQ8uqBd8ljKEUxajSA==
+      integrity: sha512-DolyKMtn+F2rSjL8hfz9j8zqDBnIrpJJo/844jPAef7AjEbn288zlKuBF2qeXy/ii5soMtb5WNM9Y92wfG4C4A==
   /@shellscape/koa-send/4.1.3:
     dependencies:
       debug: 2.6.9
@@ -1169,13 +1166,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==
-  /@types/express-serve-static-core/4.16.7:
+  /@types/express-serve-static-core/4.16.8:
     dependencies:
       '@types/node': 10.14.15
       '@types/range-parser': 1.2.3
     dev: false
     resolution:
-      integrity: sha512-847KvL8Q1y3TtFLRTXcVakErLJQgdpFSaq+k043xefz9raEf0C7HalpSY7OW5PyjCnY8P7bPW5t/Co9qqp+USg==
+      integrity: sha512-5iLrUAEje8R1Jw6Em7ryETfZbhGc2CAO51Xphnlw7qmGI79f8sG8qMnvMk3M/IxNdoELYalib7ziuD6kUTk7sQ==
   /@types/express-session/1.15.13:
     dependencies:
       '@types/express': 4.17.0
@@ -1186,7 +1183,7 @@ packages:
   /@types/express/4.17.0:
     dependencies:
       '@types/body-parser': 1.17.0
-      '@types/express-serve-static-core': 4.16.7
+      '@types/express-serve-static-core': 4.16.8
       '@types/serve-static': 1.13.2
     dev: false
     resolution:
@@ -1268,16 +1265,16 @@ packages:
     dev: false
     resolution:
       integrity: sha512-9OsDMd9mVNr5w9ROSO7JzRIQoquRWdVkRjVfT4A1VsxFAPPD+zDzdi0WSBPiXwlSZxojgRv22IqLuzyo1RPXBw==
-  /@types/leaflet/1.5.0:
+  /@types/leaflet/1.5.1:
     dependencies:
       '@types/geojson': 7946.0.7
     dev: false
     resolution:
-      integrity: sha512-il6N/CP31AjvhYkWcQg9RAo/irfA88Qgs4r2AY8mVOU+btF4d60d/nI4M2rFuV+HyByQCItFfwj0yoPRMoMurQ==
-  /@types/lodash/4.14.136:
+      integrity: sha512-E5k+vyE2Tv9wQsO6ZsEy08Pjd8RjHPkCzz3Ubt7feMc+5+VkbXtcZMcciczRWuMN5rFIsVywLxRhvTp7fAbbzg==
+  /@types/lodash/4.14.137:
     dev: false
     resolution:
-      integrity: sha512-0GJhzBdvsW2RUccNHOBkabI8HZVdOXmXbXhuKlDEd5Vv12P7oAVGfomGp3Ne21o5D/qu1WmthlNKFaoZJJeErA==
+      integrity: sha512-g4rNK5SRKloO+sUGbuO7aPtwbwzMgjK+bm9BBhLD7jGUiGR7zhwYEhSln/ihgYQBeIJ5j7xjyaYzrWTcu3UotQ==
   /@types/logform/1.2.0:
     dev: false
     resolution:
@@ -1300,13 +1297,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-NYrtPht0wGzhwe9+/idPaBB+TqkY9AhTvOLMkThm0IoEfLaiVQZwBwyJ5puCkO3AUCWrmcoePjp2mbFocKy4SQ==
-  /@types/mongodb/3.2.2:
+  /@types/mongodb/3.2.3:
     dependencies:
       '@types/bson': 4.0.0
       '@types/node': 10.14.15
     dev: false
     resolution:
-      integrity: sha512-0XBUoXM2yQxagOSIWCczsGmSpZomqWWgM/mH7Xgvr6hkVONflaEuC+OJwIgZm4A5wD6s56n9Re+oXK5Wy3mXMg==
+      integrity: sha512-46ai7KWL5/Ls/x+gzU908hhpkXzB2SlrAh/07wHkMkGUdpRwYjbjxb8/Yq2WEZ33Sn5s/o9BCO+OkBTCS6Cfmw==
   /@types/morgan/1.7.36:
     dependencies:
       '@types/express': 4.17.0
@@ -1400,17 +1397,17 @@ packages:
       integrity: sha512-k6vxiX5I6/GEqJS9mMYPVIgMJf/X26n09NfzuqBpdcEp684RIwpdrwCgSyJGuy8EaSG1wc2rFP7xVEAixPzw7Q==
   /@types/react-dom/16.8.5:
     dependencies:
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
     dev: false
     resolution:
       integrity: sha512-idCEjROZ2cqh29+trmTmZhsBAUNQuYrF92JHKzZ5+aiFM1mlSk3bb23CK7HhYuOY75Apgap5y2jTyHzaM2AJGA==
-  /@types/react/16.9.1:
+  /@types/react/16.9.2:
     dependencies:
       '@types/prop-types': 15.7.1
       csstype: 2.6.6
     dev: false
     resolution:
-      integrity: sha512-jGM2x8F7m7/r+81N/BOaUKVwbC5Cdw6ExlWEUpr77XPwVeNvAppnPEnMMLMfxRDYL8FPEX8MHjwtD2NQMJ0yyQ==
+      integrity: sha512-jYP2LWwlh+FTqGd9v7ynUKZzjj98T8x7Yclz479QdRhHfuW9yQ+0jjnD31eXSXutmBpppj5PYNLYLRfnZJvcfg==
   /@types/redis/2.8.13:
     dependencies:
       '@types/node': 10.14.15
@@ -1448,7 +1445,7 @@ packages:
       integrity: sha512-6bU8cLUb1qYv0YecMRWKxS4L0+mjPMcQq2ZXtsUe0ij4oALCUIvCvy7rsGqWbOKcNwauh6jiuF4V/vCsObmXkw==
   /@types/serve-static/1.13.2:
     dependencies:
-      '@types/express-serve-static-core': 4.16.7
+      '@types/express-serve-static-core': 4.16.8
       '@types/mime': 2.0.1
     dev: false
     resolution:
@@ -1925,6 +1922,14 @@ packages:
       node: '>= 6.0.0'
     resolution:
       integrity: sha512-91IFKeKk7FjfmezPKkwtaRvSpnUc4gDwPAjA1YZ9Gn0q0PPeW+vbeUsZuyDwjI7+QTHhcLen2v25fi/AmhvbJA==
+  /append-transform/1.0.0:
+    dependencies:
+      default-require-extensions: 2.0.0
+    dev: false
+    engines:
+      node: '>=4'
+    resolution:
+      integrity: sha512-P009oYkeHyU742iSZJzZZywj4QRJdnTWffaKuJQLablCZ1uz6/cW4yaRgcDaoQ+uwOxxnt0gRUcwfsNP2ri0gw==
   /aproba/1.2.0:
     dev: false
     resolution:
@@ -1933,6 +1938,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-BLM56aPo9vLLFVa8+/+pJLnrZ7QGGTVHWsCwieAWT9o9K8UeGaQbzZbGoabWLOo2ksBCztoXdqBZBplqLDDCSg==
+  /archy/1.0.0:
+    dev: false
+    resolution:
+      integrity: sha1-+cjBN1fMHde8N5rHeyxipcKGjEA=
   /are-we-there-yet/1.1.5:
     dependencies:
       delegates: 1.0.0
@@ -2713,6 +2722,17 @@ packages:
       webpack: ^2.0.0 || ^3.0.0 || ^4.0.0
     resolution:
       integrity: sha512-enWKEQ4kO3YreDFd7AtVRjtJBmNiqh/X9hVDReu0C4qm8gsGmySkwuWtdc+N5O+vq5FzxL1mIZc30NyXCB7o/Q==
+  /caching-transform/3.0.2:
+    dependencies:
+      hasha: 3.0.0
+      make-dir: 2.1.0
+      package-hash: 3.0.0
+      write-file-atomic: 2.4.3
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-Mtgcv3lh3U0zRii/6qVgQODdPA4G3zhG+jtbCWj39RXuUFTMzH0vcdMtaJS1jPowd+It2Pqr6y3NJMQqOqCE2w==
   /callback-stream/1.1.0:
     dependencies:
       inherits: 2.0.4
@@ -3259,6 +3279,12 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==
+  /convert-source-map/1.6.0:
+    dependencies:
+      safe-buffer: 5.1.2
+    dev: false
+    resolution:
+      integrity: sha512-eFu7XigvxdZ1ETfbgPBohgyQ/Z++C0eEhTor0qRwBw9unw+L0/6V8wkSuGgzdThkiS5lSpdptOQPD8Ak40a+7A==
   /cookie-parser/1.4.4:
     dependencies:
       cookie: 0.3.1
@@ -3361,6 +3387,18 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-H65gsXo1SKjf8zmrJ67eJk8aIRKV5ff2D4uKZIBZShbhGSpEmsQOPW/SKMKYhSTrqR7ufy6RP69rPogdaPh/kA==
+  /cp-file/6.2.0:
+    dependencies:
+      graceful-fs: 4.2.2
+      make-dir: 2.1.0
+      nested-error-stacks: 2.1.0
+      pify: 4.0.1
+      safe-buffer: 5.2.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-fmvV4caBnofhPe8kOcitBwSn2f39QLjnAnGq3gO9dfd75mUytzKNZB1hde6QHunW2Rt+OwuBOMc3i1tNElbszA==
   /create-ecdh/4.0.3:
     dependencies:
       bn.js: 4.11.8
@@ -3419,6 +3457,13 @@ packages:
     dev: false
     resolution:
       integrity: sha1-ElYDfsufDF9549bvE14wdwGEuYI=
+  /cross-spawn/4.0.2:
+    dependencies:
+      lru-cache: 4.1.5
+      which: 1.3.1
+    dev: false
+    resolution:
+      integrity: sha1-e5JHYhwjrf3ThWAEqCPL45dCTUE=
   /cross-spawn/5.1.0:
     dependencies:
       lru-cache: 4.1.5
@@ -3895,6 +3940,14 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-h6sMrVB1VMWVrW13mSc6ia/DwYYw5MN6+exNu1OaJeFac5aSAvwM7lZ0NVfTABuSkQelr4h5oebg3KB1XPdjgA==
+  /default-require-extensions/2.0.0:
+    dependencies:
+      strip-bom: 3.0.0
+    dev: false
+    engines:
+      node: '>=4'
+    resolution:
+      integrity: sha1-9fj7sYp9bVCyH2QfZJ67Uiz+JPc=
   /define-properties/1.1.3:
     dependencies:
       object-keys: 1.1.1
@@ -4836,6 +4889,13 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-gQaNKVqBQuwKxybG4iAMMPttXoA=
+  /foreground-child/1.5.6:
+    dependencies:
+      cross-spawn: 4.0.2
+      signal-exit: 3.0.2
+    dev: false
+    resolution:
+      integrity: sha1-T9ca0t/elnibmApcCilZN8svXOk=
   /forever-agent/0.6.1:
     dev: false
     resolution:
@@ -5368,6 +5428,19 @@ packages:
     dev: false
     resolution:
       integrity: sha512-d4sze1JNC454Wdo2fkuyzCr6aHcbL6PGGuFAz0Li/NcOm1tCHGnWDRmJP85dh9IhQErTc2svWFEX5xHIOo//kQ==
+  /handlebars/4.1.2:
+    dependencies:
+      neo-async: 2.6.1
+      optimist: 0.6.1
+      source-map: 0.6.1
+    dev: false
+    engines:
+      node: '>=0.4.7'
+    hasBin: true
+    optionalDependencies:
+      uglify-js: 3.6.0
+    resolution:
+      integrity: sha512-nvfrjqvt9xQ8Z/w0ijewdD/vvWDTOweBUm96NTr66Wfvo1mJenBLwcYmPs3TIBP5ruzYGD7Hx/DaM9RmhroGPw==
   /har-schema/2.0.0:
     dev: false
     engines:
@@ -5488,6 +5561,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-taOaskGt4z4SOANNseOviYDvjEJinIkRgmp7LbKP2YTTmVxWBl87s/uzK9r+44BclBSp2X7K1hqeNfz9JbBeXA==
+  /hasha/3.0.0:
+    dependencies:
+      is-stream: 1.1.0
+    dev: false
+    engines:
+      node: '>=4'
+    resolution:
+      integrity: sha1-UqMvq4Vp1BymmmH/GiFPjrfIvTk=
   /hashish/0.0.4:
     dependencies:
       traverse: 0.6.6
@@ -6259,6 +6340,14 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-8aXznuEPCJvGnMSRft4udDRDtb1V3pkQkMMI5LI+6HuQz5oQ4J2UFn1H82raA3qJtyOLkkwVqICBQkjnGtn5mA==
+  /istanbul-lib-hook/2.0.7:
+    dependencies:
+      append-transform: 1.0.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-vrRztU9VRRFDyC+aklfLoeXyNdTfga2EI3udDGn4cZ6fpSXpHLV9X6CHvfoMCPtggg8zvDDmC4b9xfu0z6/llA==
   /istanbul-lib-instrument/3.3.0:
     dependencies:
       '@babel/generator': 7.5.5
@@ -6273,6 +6362,36 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-5nnIN4vo5xQZHdXno/YDXJ0G+I3dAm4XgzfSVTPLQpj/zAV2dV6Juy0yaf10/zrJOJeHoN3fraFe+XRq2bFVZA==
+  /istanbul-lib-report/2.0.8:
+    dependencies:
+      istanbul-lib-coverage: 2.0.5
+      make-dir: 2.1.0
+      supports-color: 6.1.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-fHBeG573EIihhAblwgxrSenp0Dby6tJMFR/HvlerBsrCTD5bkUuoNtn3gVh29ZCS824cGGBPn7Sg7cNk+2xUsQ==
+  /istanbul-lib-source-maps/3.0.6:
+    dependencies:
+      debug: 4.1.1
+      istanbul-lib-coverage: 2.0.5
+      make-dir: 2.1.0
+      rimraf: 2.7.1
+      source-map: 0.6.1
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-R47KzMtDJH6X4/YW9XTx+jrLnZnscW4VpNN+1PViSYTejLVPWv7oov+Duf8YQSPyVRUvueQqz1TcsC6mooZTXw==
+  /istanbul-reports/2.2.6:
+    dependencies:
+      handlebars: 4.1.2
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-SKi4rnMyLBKe0Jy2uUdx28h8oG7ph2PPuQPvIAh31d+Ci+lSiEu4C+h3oBPuJ9+mPKhOyW0M8gY4U5NM1WLeXA==
   /iterall/1.2.2:
     dev: false
     resolution:
@@ -6604,7 +6723,7 @@ packages:
       integrity: sha1-JzwH7c3Ljfaiwat9We52SRRR7BQ=
   /koa-webpack/5.2.4_webpack@4.39.2:
     dependencies:
-      '@hapi/joi': 15.1.0
+      '@hapi/joi': 15.1.1
       app-root-path: 2.2.1
       chalk: 2.4.2
       loud-rejection: 2.1.0
@@ -6822,6 +6941,10 @@ packages:
     dev: false
     resolution:
       integrity: sha1-8xwiIlqWMtK7+OSt2+8kCqdlph8=
+  /lodash.flattendeep/4.4.0:
+    dev: false
+    resolution:
+      integrity: sha1-+wMJF/hqMTTlvJvsDWngAT3f7bI=
   /lodash.get/4.4.2:
     dev: false
     resolution:
@@ -7151,6 +7274,12 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-iuPV41VWKWBIOpBsjoxjDZw8/GbSfZ2mk7N1453bwMrfzdrIk7EzBd+8UVR6rkw67th7xnk9Dytl3J+lHPdxvg==
+  /merge-source-map/1.1.0:
+    dependencies:
+      source-map: 0.6.1
+    dev: false
+    resolution:
+      integrity: sha512-Qkcp7P2ygktpMPh2mCQZaf3jhN6D3Z/qVZHSdWvQ+2Ef5HgRAPBO57A77+ENm0CPx2+1Ce/MYKi3ymqdfuqibw==
   /methods/1.1.2:
     dev: false
     engines:
@@ -7275,6 +7404,10 @@ packages:
       node: '>= 4'
     resolution:
       integrity: sha512-FyBrT/d0d4+uiZRbqznPXqw3IpZZG3gl3wKWiX784FycUKVwBt0uLBFkQrtE4tZOrgo78nZp2jnKz3L65T5LdQ==
+  /minimist/0.0.10:
+    dev: false
+    resolution:
+      integrity: sha1-3j+YVD2/lggr5IrRoMfNqDYwHc8=
   /minimist/0.0.8:
     dev: false
     resolution:
@@ -7865,39 +7998,39 @@ packages:
     dev: false
     resolution:
       integrity: sha512-iGfd9Y6SFdTNldEy2L0GUhcarIutFmk+MPWIn9dmj8NMIup03G08uUF2KGbbmv/Ux4RT0VZJoP/sVbWA6d/VIw==
-  /nyc/13.3.0:
-    bundledDependencies:
-      - archy
-      - arrify
-      - caching-transform
-      - convert-source-map
-      - find-cache-dir
-      - find-up
-      - foreground-child
-      - glob
-      - istanbul-lib-coverage
-      - istanbul-lib-hook
-      - istanbul-lib-report
-      - istanbul-lib-source-maps
-      - istanbul-reports
-      - make-dir
-      - merge-source-map
-      - resolve-from
-      - rimraf
-      - signal-exit
-      - spawn-wrap
-      - test-exclude
-      - uuid
-      - yargs
-      - yargs-parser
+  /nyc/14.1.1:
     dependencies:
+      archy: 1.0.0
+      caching-transform: 3.0.2
+      convert-source-map: 1.6.0
+      cp-file: 6.2.0
+      find-cache-dir: 2.1.0
+      find-up: 3.0.0
+      foreground-child: 1.5.6
+      glob: 7.1.4
+      istanbul-lib-coverage: 2.0.5
+      istanbul-lib-hook: 2.0.7
       istanbul-lib-instrument: 3.3.0
+      istanbul-lib-report: 2.0.8
+      istanbul-lib-source-maps: 3.0.6
+      istanbul-reports: 2.2.6
+      js-yaml: 3.13.1
+      make-dir: 2.1.0
+      merge-source-map: 1.1.0
+      resolve-from: 4.0.0
+      rimraf: 2.7.1
+      signal-exit: 3.0.2
+      spawn-wrap: 1.4.2
+      test-exclude: 5.2.3
+      uuid: 3.3.2
+      yargs: 13.3.0
+      yargs-parser: 13.1.1
     dev: false
     engines:
       node: '>=6'
     hasBin: true
     resolution:
-      integrity: sha512-P+FwIuro2aFG6B0Esd9ZDWUd51uZrAEoGutqZxzrVmYl3qSfkLgcQpBPBjtDFsUQLFY1dvTQJPOyeqr8S9GF8w==
+      integrity: sha512-OI0vm6ZGUnoGZv/tLdZ2esSVzDwUC88SNs+6JoSOMVxA+gKMB8Tk7jBwgemLx4O40lhhvZCVw1C+OYLOBOPXWw==
   /oauth-sign/0.9.0:
     dev: false
     resolution:
@@ -8010,6 +8143,13 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha512-PqHpggC9bLV0VeWcdKhkpxY+3JTzetLSqTCWL/z/tFIbI6G8JCjondXklT1JinczLz2Xib62sSp0T/gKT4KksA==
+  /optimist/0.6.1:
+    dependencies:
+      minimist: 0.0.10
+      wordwrap: 0.0.3
+    dev: false
+    resolution:
+      integrity: sha1-2j6nRob6IaGaERwybpDrFaAZZoY=
   /optional/0.1.4:
     dev: false
     resolution:
@@ -8187,6 +8327,17 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==
+  /package-hash/3.0.0:
+    dependencies:
+      graceful-fs: 4.2.2
+      hasha: 3.0.0
+      lodash.flattendeep: 4.4.0
+      release-zalgo: 1.0.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-lOtmukMDVvtkL84rJHI7dpTYq+0rli8N2wlnqUcBuDWCfVhRUfOmnR9SsoHFMLpACvEV60dX7rd0rFaYDZI+FA==
   /package-json/4.0.1:
     dependencies:
       got: 6.7.1
@@ -8975,6 +9126,15 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-PtSWaF26D4/hGNBpHcUfSh/5bwc=
+  /read-pkg-up/4.0.0:
+    dependencies:
+      find-up: 3.0.0
+      read-pkg: 3.0.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-6etQSH7nJGsK0RbG/2TeDzZFa8shjQ1um+SwQQ5cwKy0dhSXdOncEhb1CPpvQG4h7FyOV6EB6YlV0yJvZQNAkA==
   /read-pkg/1.1.0:
     dependencies:
       load-json-file: 1.1.0
@@ -9192,6 +9352,14 @@ packages:
       node: '>= 0.10'
     resolution:
       integrity: sha1-VNvzd+UUQKypCkzSdGANP/LYiKk=
+  /release-zalgo/1.0.0:
+    dependencies:
+      es6-error: 4.1.1
+    dev: false
+    engines:
+      node: '>=4'
+    resolution:
+      integrity: sha1-CXALflB0Mpc5Mw5TXFqQ+2eFFzA=
   /remove-array-items/1.1.1:
     dev: false
     resolution:
@@ -9339,6 +9507,12 @@ packages:
       node: '>=4'
     resolution:
       integrity: sha1-six699nWiBvItuZTM17rywoYh0g=
+  /resolve-from/4.0.0:
+    dev: false
+    engines:
+      node: '>=4'
+    resolution:
+      integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==
   /resolve-path/1.4.0:
     dependencies:
       http-errors: 1.6.3
@@ -9909,6 +10083,17 @@ packages:
     dev: false
     resolution:
       integrity: sha1-YvXpRmmBwbeW3Fkpk34RycaSG9A=
+  /spawn-wrap/1.4.2:
+    dependencies:
+      foreground-child: 1.5.6
+      mkdirp: 0.5.1
+      os-homedir: 1.0.2
+      rimraf: 2.7.1
+      signal-exit: 3.0.2
+      which: 1.3.1
+    dev: false
+    resolution:
+      integrity: sha512-vMwR3OmmDhnxCVxM8M+xO/FtIp6Ju/mNaDfCMMW7FDcLRTPFWUswec4LXJHTJE2hwTI9O0YBfygu4DalFl7Ylg==
   /spdx-correct/3.1.0:
     dependencies:
       spdx-expression-parse: 3.0.0
@@ -10378,6 +10563,17 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-+ZwXJvdSwbd60jG0Illav0F06GDJF0R4ydZ21Q3wGAFKoBGyJGo34F63vzJHgvYxc1ukOtIjvwEvl9MkjzM6Pg==
+  /test-exclude/5.2.3:
+    dependencies:
+      glob: 7.1.4
+      minimatch: 3.0.4
+      read-pkg-up: 4.0.0
+      require-main-filename: 2.0.0
+    dev: false
+    engines:
+      node: '>=6'
+    resolution:
+      integrity: sha512-M+oxtseCFO3EDtAaGH7iiej3CBkzXqFMbzqYAACdzKui4eZA+pq3tZEwChvOdNfa7xxy8BfbmgJSIr43cC/+2g==
   /text-hex/1.0.0:
     dev: false
     resolution:
@@ -10815,6 +11011,17 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-Y2VsbPVs0FIshJztycsO2SfPk7/KAF/T72qzv9u5EpQ4kB2hQoHlhNQTsNyy6ul7lQtqJN/AoWeS23OzEiEFxw==
+  /uglify-js/3.6.0:
+    dependencies:
+      commander: 2.20.0
+      source-map: 0.6.1
+    dev: false
+    engines:
+      node: '>=0.8.0'
+    hasBin: true
+    optional: true
+    resolution:
+      integrity: sha512-W+jrUHJr3DXKhrsS7NUVxn3zqMOFn0hL/Ei6v0anCIMoKC93TjcflTagwIHLW7SfMFfiQuktQyFVCFHGUE0+yg==
   /uglifyjs-webpack-plugin/1.3.0_webpack@4.39.2:
     dependencies:
       cacache: 10.0.4
@@ -11501,6 +11708,12 @@ packages:
       node: '>= 6.4.0'
     resolution:
       integrity: sha512-zU6vgnS9dAWCEKg/QYigd6cgMVVNwyTzKs81XZtTFuRwJOcDdBg7AU0mXVyNbs7O5RH2zdv+BdNZUlx7mXPuOw==
+  /wordwrap/0.0.3:
+    dev: false
+    engines:
+      node: '>=0.4.0'
+    resolution:
+      integrity: sha1-o9XabNXAvAAI03I0u68b7WMFkQc=
   /wordwrap/1.0.0:
     dev: false
     resolution:
@@ -11846,7 +12059,7 @@ packages:
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
@@ -11858,7 +12071,7 @@ packages:
     dev: false
     name: '@rush-temp/agent-scheduler'
     resolution:
-      integrity: sha512-y0xD5zLQIn+EJKPWK9UIasmwJeKkWUBU1WZL4yn8FQbx5RTAEIJw6VvOk/PmEoRZGm1bFq9Z6dZguPjt2m4E0A==
+      integrity: sha512-vRbOiU54wvg7CB/t6couT5bgUkAGvwCUve1PxjIhFqZy8M02sqCdYkKEiFPpdHfjC5G6Hxv7pVO1mtT6tumApA==
       tarball: 'file:projects/agent-scheduler.tgz'
     version: 0.0.0
   'file:projects/agent.tgz':
@@ -11886,7 +12099,7 @@ packages:
     dev: false
     name: '@rush-temp/agent'
     resolution:
-      integrity: sha512-K0h2GwC37W0B1FGNFGhVPIGVLrZcRF5LvdN+iMaDoKVpYXxQMOltOuBVqpgGLh13AyvgMZZ3rld36EXONreUgA==
+      integrity: sha512-OA22rw4HynIdSzuEjAeRQb2j/sHN+b1Z0cDVPJkUYI/6WmLCeP6QBpq2eKFw8c9oCrzojVp9Koc5ZtDtJPxUSA==
       tarball: 'file:projects/agent.tgz'
     version: 0.0.0
   'file:projects/app-ui.tgz':
@@ -11905,7 +12118,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.8
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       '@types/react-dom': 16.8.5
       concurrently: 4.1.1
       react: 16.9.0
@@ -11958,7 +12171,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
       '@types/jquery': 3.3.31
-      '@types/leaflet': 1.5.0
+      '@types/leaflet': 1.5.1
       '@types/node': 10.14.15
       angular: 1.7.8
       angular-route: 1.7.8
@@ -12021,7 +12234,7 @@ packages:
     dependencies:
       '@microsoft/api-extractor': 7.3.8
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/node': 10.14.15
       concurrently: 4.1.1
@@ -12029,14 +12242,14 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
       typescript: 3.4.5
     dev: false
     name: '@rush-temp/cell'
     resolution:
-      integrity: sha512-lFJ+xiqtEzek8//WodSuLaZ5yrV75tJTFYW0ynNuiYJDXJsQ7q+wfLOgUpvKueGgg+LQ3BnXXo3lBXzJh/0h/A==
+      integrity: sha512-qmmd9K7k8t/YiuOvKsanaFV4xe6EfA8l3s1KdJlGRuPXXrlTcf8ELE/zGz/PTfcJUzZ1qEbW3wIQkJSmTjnALg==
       tarball: 'file:projects/cell.tgz'
     version: 0.0.0
   'file:projects/chart-view.tgz':
@@ -12090,7 +12303,7 @@ packages:
     dependencies:
       '@prague/prague-dev-server': 3.8.1_webpack@4.39.2
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       '@types/react-dom': 16.8.5
       concurrently: 4.1.1
       react: 16.9.0
@@ -12127,7 +12340,7 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       performance-now: 2.1.0
       random-js: 1.0.8
       rimraf: 2.7.1
@@ -12140,7 +12353,7 @@ packages:
     dev: false
     name: '@rush-temp/client-api'
     resolution:
-      integrity: sha512-evmpvzE/1GY/EchTrN+cyOSmCUzOSDXBlfOzqca+mRrjuqG0SRNw3XanrhwnNcBXsDh7Mpia6NpfLdjhHru2FA==
+      integrity: sha512-T/VZ3/Y7HMShzs5e0+vCKTQE+S8WNvHV+HGrlxVMw3S2V6s5cRkf1dlMAoZYp+kFWcmpG4K1igUG4YJa1W3rzQ==
       tarball: 'file:projects/client-api.tgz'
     version: 0.0.0
   'file:projects/client-ui.tgz':
@@ -12161,7 +12374,7 @@ packages:
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
       node-geocoder: 3.23.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       parse-address: 1.1.2
       performance-now: 2.1.0
       rimraf: 2.7.1
@@ -12172,7 +12385,7 @@ packages:
     dev: false
     name: '@rush-temp/client-ui'
     resolution:
-      integrity: sha512-55FYezdq0ryJjGBaJj7oD/MAjsFPC4PEUfewrRct+HeN61B0ptvnjflkj8eJNr+SvBnBrZEWR5MIRdmW9tbivg==
+      integrity: sha512-D6RrGLEpL/VpWTgYlD1ZVPfay3qRkgIrLdAqnB0+FNT7dTXO42MLHi5e6ISmJXLYaY8WU6Cba58kdPurF98IKw==
       tarball: 'file:projects/client-ui.tgz'
     version: 0.0.0
   'file:projects/component-core-interfaces.tgz':
@@ -12196,7 +12409,7 @@ packages:
       '@microsoft/api-extractor': 7.3.8
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/node': 10.14.15
       '@types/scriptjs': 0.0.2
@@ -12206,7 +12419,7 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       performance-now: 2.1.0
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
@@ -12214,7 +12427,7 @@ packages:
     dev: false
     name: '@rush-temp/component-runtime'
     resolution:
-      integrity: sha512-+uWvfugJg5rg2LXakwGFJXMfmZzf3mMz7GGIcaIzPCGZNQnev/aSqo7x1WQx574S/h6bm8b17Zt4E5qiOpR5sg==
+      integrity: sha512-rpN6emrBOH/J0Uw6cFJmIiIvi90cz3d8J1B8WGzRbXXlBcCxarzQ9YIgtK6QgK8+AqfYtqTGoQDZYbP36zQ08w==
       tarball: 'file:projects/component-runtime.tgz'
     version: 0.0.0
   'file:projects/consensus-ordered-collection.tgz':
@@ -12227,14 +12440,14 @@ packages:
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
       typescript: 3.4.5
     dev: false
     name: '@rush-temp/consensus-ordered-collection'
     resolution:
-      integrity: sha512-AsBGqSXUmqdAUyz2K53ADpS6/9aq+rmIc1OTHLZnVZnNao8sE6VpEg/jdA1buB+Z8w+JacJYYOaz1kWuCCuOmQ==
+      integrity: sha512-YQ+IknoUmA8ITV+Ndt5v4alKLBJcfg1oBg1xeX/PFdcBn+l5JuMAqb7aq6Z45RjSmkmsgrjqOnoAIfZReWOwnw==
       tarball: 'file:projects/consensus-ordered-collection.tgz'
     version: 0.0.0
   'file:projects/consensus-register-collection.tgz':
@@ -12247,14 +12460,14 @@ packages:
       debug: 4.1.1
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
       typescript: 3.4.5
     dev: false
     name: '@rush-temp/consensus-register-collection'
     resolution:
-      integrity: sha512-v/20h8UD6peFKj3s2d2mfUsQu+KOIDRqJPYdzQDkW/Ma9B32rV6jrjNWJf5zMyokjP82XB7HYCMpgDDYV3wvaA==
+      integrity: sha512-JRHDJnE/H7+zapQ6RwnXXcZtXsjvpP9jnTEtmAV2E3d+xXQLx9t4Nm5QdHJ8IjzIkmkxfqIub6JaLeyQscEZ/g==
       tarball: 'file:projects/consensus-register-collection.tgz'
     version: 0.0.0
   'file:projects/container-definitions.tgz':
@@ -12278,7 +12491,7 @@ packages:
       '@microsoft/api-extractor': 7.3.8
       '@types/debug': 0.0.31
       '@types/double-ended-queue': 2.1.1
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/node': 10.14.15
       concurrently: 4.1.1
@@ -12300,7 +12513,7 @@ packages:
       '@microsoft/api-extractor': 7.3.8
       '@types/async': 2.4.2
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/node': 10.14.15
       '@types/scriptjs': 0.0.2
@@ -12310,7 +12523,7 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       performance-now: 2.1.0
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
@@ -12318,7 +12531,7 @@ packages:
     dev: false
     name: '@rush-temp/container-runtime'
     resolution:
-      integrity: sha512-EntHE9rBzU5QciqIDALLBGx+2k0HIF2HhQ1qYivvPg+yls59O5l1SHkPLA/8e55+iKKNWc576fWBxaac+jPqoQ==
+      integrity: sha512-XwbcEcYunsJnuCevBjO6CvcrD7EGEwbV6LyAAeYnraX+VblrDopTP/SGJShXqQjJxo1QWiQbHxt/SUGA8mp4dw==
       tarball: 'file:projects/container-runtime.tgz'
     version: 0.0.0
   'file:projects/externalcomponentloader.tgz':
@@ -12408,7 +12621,7 @@ packages:
       jsdom-global: 3.0.2_jsdom@12.2.0
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       source-map-loader: 0.2.4
       style-loader: 0.23.1
@@ -12425,7 +12638,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-scroll'
     resolution:
-      integrity: sha512-6jaITRgkp7S/GtJDFGyNAB7Q1gKER9f96mqvLBh1NJ85Xjk+JnKNGouNzrxoxwLWzKI+/sblav49yDCv/OF39A==
+      integrity: sha512-4ZbNeiQpNcdiPfj0wp+AiLaLq5/wypBCKgE0mHb2KtY8A/rWzJgPwaxvapZ56nzgwSxdj5hYyF1STiIam6WSmQ==
       tarball: 'file:projects/flow-scroll.tgz'
     version: 0.0.0
   'file:projects/flow-util.tgz':
@@ -12441,7 +12654,7 @@ packages:
       jsdom-global: 3.0.2_jsdom@12.2.0
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       ts-mocha: 6.0.0_mocha@5.2.0
       ts-node: 7.0.1
@@ -12450,7 +12663,7 @@ packages:
     dev: false
     name: '@rush-temp/flow-util'
     resolution:
-      integrity: sha512-/4DslyCpsajVyHdHuQX6jf7iheTXryCnckxJ3rS151KSScSr0yqwGHCdGqoE9S0yCTq8ZgSu5dplN4+lXvCJ+A==
+      integrity: sha512-mv/cb55e3+WgVOjbcyLJC0z/W0p+ABRnw4Z984VgjoXVNv9rro5plbgeyRtSdayVb6ffWIKs0T2Mx3xsAYv4IA==
       tarball: 'file:projects/flow-util.tgz'
     version: 0.0.0
   'file:projects/fluid-debugger.tgz':
@@ -12500,9 +12713,9 @@ packages:
       '@types/jsdom': 12.2.4
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.3
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
-      '@types/mongodb': 3.2.2
+      '@types/mongodb': 3.2.3
       '@types/morgan': 1.7.36
       '@types/nconf': 0.0.37
       '@types/node': 10.14.15
@@ -12555,7 +12768,7 @@ packages:
       morgan: 1.9.1
       nconf: 0.10.0
       node-sass: 4.12.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       parallel-webpack: 2.4.0_webpack@4.39.2
       passport: 0.3.2
       passport-jwt: 4.0.0
@@ -12592,7 +12805,7 @@ packages:
     dev: false
     name: '@rush-temp/gateway'
     resolution:
-      integrity: sha512-PsEv7QcDBwOzWDRXZxCuNd67ZvRVDR8/JyiJ3ACUfiHl53LNaVs3+JgkaJ64veYI44xsGZaPnNamudTcP25EwQ==
+      integrity: sha512-DR0skvl8CfoSvBZD9sxoRMrhROIFAIJ4GUwpk6B7npbn6lSRJYDtRDlKYa5tag55G1LX2U6upeERW3n1vtCnHg==
       tarball: 'file:projects/gateway.tgz'
     version: 0.0.0
   'file:projects/gitresources.tgz':
@@ -12643,7 +12856,7 @@ packages:
     version: 0.0.0
   'file:projects/kafka-orderer.tgz':
     dependencies:
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/node': 10.14.15
       concurrently: 4.1.1
       lodash: 4.17.15
@@ -12679,7 +12892,7 @@ packages:
   'file:projects/lambdas-driver.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.15
@@ -12702,7 +12915,7 @@ packages:
   'file:projects/lambdas.tgz':
     dependencies:
       '@types/async': 2.4.2
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
       '@types/nconf': 0.0.37
       '@types/node': 10.14.15
@@ -12757,7 +12970,7 @@ packages:
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
       nock: 10.0.6
-      nyc: 13.3.0
+      nyc: 14.1.1
       random-name: 0.1.2
       rimraf: 2.7.1
       semver: 6.3.0
@@ -12769,7 +12982,7 @@ packages:
     dev: false
     name: '@rush-temp/local-test-server'
     resolution:
-      integrity: sha512-RiVQkL2vfBYMJ62T94DVzD2RxwEUzlBadX0sQmp+Ba9ZKRbQ3/Pf5eUMpquFzcMCViYDieS8sJJW/MISbejoaA==
+      integrity: sha512-nn1JZNwa4mCOoOHrghP9WlI02SqLCmvBzxwVvWfbdcBcPTtyybg99KDjE0qt2U+Bk5xwnDL+rnsyapy9yQ7i8A==
       tarball: 'file:projects/local-test-server.tgz'
     version: 0.0.0
   'file:projects/map.tgz':
@@ -12783,14 +12996,14 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
       typescript: 3.4.5
     dev: false
     name: '@rush-temp/map'
     resolution:
-      integrity: sha512-rVG0JkNgppONIkq2bBOXT5Yskn9FN+gIpG5vT4WCE7z4DyN/aHK9lOboDHOCmj2TjmIbELYZnHvE+yAJ1k4sxQ==
+      integrity: sha512-Ip3e9lq+ILC57O0b/4wTt+tPEclsQMURr/otEFz16jRXBsJ2cWVpuQjCTjqdQrkcoHlP+/iWi6E3QtR64/UvIQ==
       tarball: 'file:projects/map.tgz'
     version: 0.0.0
   'file:projects/math.tgz':
@@ -12815,7 +13028,7 @@ packages:
   'file:projects/memory-orderer.tgz':
     dependencies:
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/node': 10.14.15
       '@types/uuid': 3.4.5
       '@types/ws': 6.0.2
@@ -12847,7 +13060,7 @@ packages:
       diff: 3.5.0
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       random-js: 1.0.8
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
@@ -12855,7 +13068,7 @@ packages:
     dev: false
     name: '@rush-temp/merge-tree'
     resolution:
-      integrity: sha512-qa9/csGyz6wOw1plTMhUHBipP400pC+t3Db1xzyz2MNmlEaOm6XIiv5WuK6gn/UumEKU4mmYZ8RuzL82WG/vbA==
+      integrity: sha512-yMg/CJ8GtHKz1kqa3WScFIH5nvzGvPt5EXDHIb8rDNdk/eqM6c1fZwGqIzPWRmgb+nuDmxtUs9f/uheTIung1g==
       tarball: 'file:projects/merge-tree.tgz'
     version: 0.0.0
   'file:projects/monaco.tgz':
@@ -12903,7 +13116,7 @@ packages:
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
       node-fetch: 2.6.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       socket.io-client: 2.2.0
       tslint: 5.18.0_typescript@3.4.5
@@ -12911,7 +13124,7 @@ packages:
     dev: false
     name: '@rush-temp/odsp-socket-storage'
     resolution:
-      integrity: sha512-yiP9D0aKlOqqV+cvD3QgY2GBzhBFyZTVA5AUJsTL+FYBpLjnlz/Rp4iFJ3NWOhYr7kR1xBCk1BlWqI2RadqpZg==
+      integrity: sha512-d9wGY45WHDdEr2WIHfTDkqvpCNHiPPEEPCjKc8z6zrR/jBOKZxi7OykWLvOeZ41tWop2sMEaMWpxwJoEhU9BPw==
       tarball: 'file:projects/odsp-socket-storage.tgz'
     version: 0.0.0
   'file:projects/odsp-utils.tgz':
@@ -12959,7 +13172,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/google-maps': 3.2.1
       '@types/jquery': 3.3.31
-      '@types/leaflet': 1.5.0
+      '@types/leaflet': 1.5.1
       '@types/node': 10.14.15
       angular: 1.7.8
       angular-route: 1.7.8
@@ -12994,7 +13207,7 @@ packages:
     dependencies:
       '@prague/prague-dev-server': 3.8.1_webpack@4.39.2
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       '@types/react-dom': 16.8.5
       concurrently: 4.1.1
       react: 16.9.0
@@ -13064,7 +13277,7 @@ packages:
       '@microsoft/api-extractor': 7.3.8
       '@types/isomorphic-fetch': 0.0.35
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       concurrently: 4.1.1
       react: 16.9.0
       react-dom: 16.9.0_react@16.9.0
@@ -13119,7 +13332,7 @@ packages:
     dev: false
     name: '@rush-temp/replay-tool'
     resolution:
-      integrity: sha512-292dbnCKAi7zt+qnmQlwBmEGUff23jI2ULL0cY20SxHkMqTuaGmmlB9UWd+suEA+t39y+Boc0Du2K6BuGDldUg==
+      integrity: sha512-jMPhzEmwA9h88fuDbmga8eKojRvxfFtoArnrbP0Dx1pU2Kf0lkA3KuYf3G1UuD45vihan3OCH5PgsW4FvowHvQ==
       tarball: 'file:projects/replay-tool.tgz'
     version: 0.0.0
   'file:projects/routerlicious-host.tgz':
@@ -13178,9 +13391,9 @@ packages:
       '@types/express-session': 1.15.13
       '@types/json-stringify-safe': 5.0.0
       '@types/jsonwebtoken': 8.3.3
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/mocha': 5.2.7
-      '@types/mongodb': 3.2.2
+      '@types/mongodb': 3.2.3
       '@types/morgan': 1.7.36
       '@types/nconf': 0.0.37
       '@types/node': 10.14.15
@@ -13231,7 +13444,7 @@ packages:
       morgan: 1.9.1
       nconf: 0.10.0
       node-sass: 4.12.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       passport: 0.3.2
       passport-jwt: 4.0.0
       passport-local: 1.0.0
@@ -13268,7 +13481,7 @@ packages:
     dev: false
     name: '@rush-temp/routerlicious'
     resolution:
-      integrity: sha512-PxhaHU8q87pIDhrsNtxMg75PeDlP0lXP/ekSsMPCNUqLJc69DtEE//1mEltXAjKPi0HdB2dkJCu26XKN0imaTg==
+      integrity: sha512-KNupovE/+bnmlPLjdWPSJoH8PhcKSw8oljX7MufdKmJchwQjckKYtee37bsiCSTL34EEf4CI+UwCzFVsRl6usw==
       tarball: 'file:projects/routerlicious.tgz'
     version: 0.0.0
   'file:projects/runtime-definitions.tgz':
@@ -13306,7 +13519,7 @@ packages:
       '@prague/prague-dev-server': 3.8.1_webpack@4.39.2
       '@prague/url-generator': 1.0.7860
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       '@types/react-dom': 16.8.5
       bulma: 0.7.5
       css-loader: 1.0.1_webpack@4.39.2
@@ -13346,17 +13559,19 @@ packages:
   'file:projects/sequence.tgz':
     dependencies:
       '@microsoft/api-extractor': 7.3.8
+      '@types/debug': 0.0.31
       '@types/diff': 3.5.3
       '@types/mocha': 5.2.7
       '@types/random-js': 1.0.31
       '@types/uuid': 3.4.5
       '@types/xmldoc': 1.1.4
       concurrently: 4.1.1
+      debug: 4.1.1
       diff: 3.5.0
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       random-js: 1.0.8
       rimraf: 2.7.1
       tslint: 5.18.0_typescript@3.4.5
@@ -13366,7 +13581,7 @@ packages:
     dev: false
     name: '@rush-temp/sequence'
     resolution:
-      integrity: sha512-7IyE9VeUkLRslxWOQDgyCCQxczbNDeBxNThIHljY2qlAB+kYtcNob45FUppi4aXRqGiuRJaOB6Qsq02UuKSGXA==
+      integrity: sha512-ziiYXMHKbFcDDZq/FKkPtaGLXqQkyl4wXPPOZ4avjdOl2HDNWBtpfR8zyFRaFJS9GCiHVYikVdksPxKxodg3AA==
       tarball: 'file:projects/sequence.tgz'
     version: 0.0.0
   'file:projects/services-client.tgz':
@@ -13437,9 +13652,9 @@ packages:
       '@azure/event-processor-host': 1.0.6
       '@types/amqplib': 0.5.13
       '@types/debug': 0.0.31
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/minio': 7.0.2
-      '@types/mongodb': 3.2.2
+      '@types/mongodb': 3.2.3
       '@types/node': 10.14.15
       '@types/redis': 2.8.13
       '@types/socket.io': 2.1.2
@@ -13496,7 +13711,7 @@ packages:
       '@types/debug': 0.0.31
       '@types/graphql': 14.2.3
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       axios: 0.18.1
       bootstrap: 3.4.1
       concurrently: 4.1.1
@@ -13616,7 +13831,7 @@ packages:
     dev: false
     name: '@rush-temp/table-document'
     resolution:
-      integrity: sha512-EV0fv6UeDfc+VYVzB7pFAHaSdxieKuqkiPVvNO9TCaSPVrBrr62NX01o76fVwH2PTHe1xfIimFgocRGhwhZGrA==
+      integrity: sha512-wesNTFnJq/5YMmlr1u3oqt23Um3oNSWpWZfe49CKvzxQ72qA0ZmqMg8QtSUzITuojab6fAzIg8wVUXeMLuh/gw==
       tarball: 'file:projects/table-document.tgz'
     version: 0.0.0
   'file:projects/table-test.tgz':
@@ -13625,7 +13840,7 @@ packages:
       '@types/node': 10.14.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       source-map-loader: 0.2.4
       ts-loader: 4.5.0
@@ -13634,7 +13849,7 @@ packages:
     dev: false
     name: '@rush-temp/table-test'
     resolution:
-      integrity: sha512-Cu17L0A0oorfZeMDF9VsC0YdT3wJEBDLdTIezwLLBcH4KPSG0dYCcselxbgOAoPhsezyLHyq8aDQxUkxZ+r2FA==
+      integrity: sha512-5LIqBvDSl9Xcp/2caMky+nzXwNm3r15jWXeuw/qXeWRPdJqFPLjvENlVkhb9d/AHCFMWmtK9WNR3WFv0hdSueA==
       tarball: 'file:projects/table-test.tgz'
     version: 0.0.0
   'file:projects/table-view.tgz':
@@ -13651,9 +13866,24 @@ packages:
       integrity: sha512-qeyeCQtHRipMcA/g9bsgQlClVdg7ctUZfLs1rCwHhvrfpuUeTv8t1zB0TKCErlXs/MkT5JZ3TfLxb9unVHmLPg==
       tarball: 'file:projects/table-view.tgz'
     version: 0.0.0
+  'file:projects/test-snapshots.tgz':
+    dependencies:
+      '@types/mocha': 5.2.7
+      '@types/node': 10.14.15
+      concurrently: 4.1.1
+      mocha: 5.2.0
+      rimraf: 2.7.1
+      tslint: 5.18.0_typescript@3.4.5
+      typescript: 3.4.5
+    dev: false
+    name: '@rush-temp/test-snapshots'
+    resolution:
+      integrity: sha512-hWQk9nuUW63chQxGBpvnwYWquA14vapDEWmzBFUtlS78Hi27/lKKaKFtWl4PtnF0PgCsWqDV4oGOooLzlf5F1A==
+      tarball: 'file:projects/test-snapshots.tgz'
+    version: 0.0.0
   'file:projects/test-utils.tgz':
     dependencies:
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/nconf': 0.0.37
       '@types/node': 10.14.15
       '@types/string-hash': 1.1.1
@@ -13700,7 +13930,7 @@ packages:
     dependencies:
       '@prague/prague-dev-server': 3.8.1_webpack@4.39.2
       '@types/node': 10.14.15
-      '@types/react': 16.9.1
+      '@types/react': 16.9.2
       '@types/react-dom': 16.8.5
       concurrently: 4.1.1
       react: 16.9.0
@@ -13723,7 +13953,7 @@ packages:
     dependencies:
       '@types/debug': 0.0.31
       '@types/jsonwebtoken': 8.3.3
-      '@types/lodash': 4.14.136
+      '@types/lodash': 4.14.137
       '@types/node': 10.14.15
       '@types/randomstring': 1.1.6
       async: 2.6.3
@@ -13738,7 +13968,7 @@ packages:
     dev: false
     name: '@rush-temp/tools-core'
     resolution:
-      integrity: sha512-Cox1E3UJjI+IOMYt0FrS/axCA0XOx5qAYdJJm6QhOMkTdozpMp6iASZyMNZuAldgaCezuPSRrsQ1tA0O5MNWbA==
+      integrity: sha512-9/xq92MaQ0eJKfpnslDvJIRrLfWTwsc59qhrjhQWNAr9b4Pi5mEp5fE+updTbYIJA6FFLP8VoIW/MLmNJb4MJg==
       tarball: 'file:projects/tools-core.tgz'
     version: 0.0.0
   'file:projects/translator.tgz':
@@ -13769,7 +13999,7 @@ packages:
       lodash: 4.17.15
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       performance-now: 2.1.0
       rimraf: 2.7.1
       sha.js: 2.4.11
@@ -13778,7 +14008,7 @@ packages:
     dev: false
     name: '@rush-temp/utils'
     resolution:
-      integrity: sha512-rzlpjnoI2M22xuPpWF2wMBuZYfzzKyZ7a90GNWjive46edCFqg9XZ7zbJxjs1UKbe9T45zEccJli8plbjruUsw==
+      integrity: sha512-zOlkv5+DwhrFo9W/c64hMhGZTnhzahycCquY+GICTaaVtIGI7OdP2w221PGap2Ob0SwWnZ6k9xp944HlfLcw1A==
       tarball: 'file:projects/utils.tgz'
     version: 0.0.0
   'file:projects/video-players.tgz':
@@ -13815,7 +14045,7 @@ packages:
       jsdom-global: 3.0.2_jsdom@12.2.0
       mocha: 5.2.0
       mocha-junit-reporter: 1.23.1_mocha@5.2.0
-      nyc: 13.3.0
+      nyc: 14.1.1
       rimraf: 2.7.1
       source-map-loader: 0.2.4
       style-loader: 0.23.1
@@ -13831,7 +14061,7 @@ packages:
     dev: false
     name: '@rush-temp/webflow'
     resolution:
-      integrity: sha512-iikb3RluovGo6tNwF7v24dBtnNqiROY3HPnDivPK3t68Eb2hUMHWPizOd/caR/3pdn0Quha+QhPSIXt8tl9ZgA==
+      integrity: sha512-rnMlD4oxB82pFxnIM73Kucp6Anv/DfWWqg6TJASTfprcUkP9mXmt7pXImgpTeV95ZVroKPv+IInlhFB2u2w/mA==
       tarball: 'file:projects/webflow.tgz'
     version: 0.0.0
 specifiers:
@@ -13922,6 +14152,7 @@ specifiers:
   '@rush-temp/table-document': 'file:./projects/table-document.tgz'
   '@rush-temp/table-test': 'file:./projects/table-test.tgz'
   '@rush-temp/table-view': 'file:./projects/table-view.tgz'
+  '@rush-temp/test-snapshots': 'file:./projects/test-snapshots.tgz'
   '@rush-temp/test-utils': 'file:./projects/test-utils.tgz'
   '@rush-temp/tiny-web-host': 'file:./projects/tiny-web-host.tgz'
   '@rush-temp/todo': 'file:./projects/todo.tgz'
@@ -14065,7 +14296,7 @@ specifiers:
   node-fetch: ^2.2.1
   node-geocoder: ^3.22.0
   node-sass: ^4.9.3
-  nyc: ^13.0.1
+  nyc: ^14.1.1
   parallel-webpack: ^2.3.0
   parse-address: ^1.1.0
   passport: ^0.3.2

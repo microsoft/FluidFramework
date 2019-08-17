@@ -339,16 +339,16 @@
       "projectFolder": "packages/server/tools-core/"
     },
     {
+      "packageName": "@prague/test-snapshots",
+      "projectFolder": "packages/test/snapshots/"
+    },
+    {
       "packageName": "@prague/prague-dump",
       "projectFolder": "packages/tools/prague-dump/"
     },
     {
       "packageName": "@prague/replay-tool",
       "projectFolder": "packages/tools/replay-tool/"
-    },
-    {
-      "packageName": "@prague/test-snapshots",
-      "projectFolder": "packages/test/snapshots/"
-    }    
+    }
   ]
 }

@@ -18,7 +18,7 @@ import { SearchMenuView } from "./searchmenu";
 const template = new Template(
     { tag: "div", props: { className: styles.host }, children: [
         { tag: "div", ref: "viewport", props: { type: "text", className: styles.viewport }, children: [
-            { tag: "div", ref: "slot", props: { className: styles.slot } },
+            { tag: "p", ref: "slot", props: { className: styles.slot } },
         ]},
         { tag: "div", ref: "search", props: { type: "text", className: styles.search }},
     ]});
