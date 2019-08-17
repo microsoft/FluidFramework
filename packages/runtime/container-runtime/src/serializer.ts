@@ -41,7 +41,12 @@ export class ComponentSerializer implements IComponentSerializer {
 
         const result = JSON.stringify(
             input,
-            (key, value: IComponent) => {
+            (key, value: IComponent | undefined) => {
+                // if the value is nothing there's nothing to serialize
+                if (value === undefined || value === null) {
+                    return value;
+                }
+
                 // directly return the value unless it's a handle
                 const handle = value.IComponentHandle;
                 if (!handle) {
