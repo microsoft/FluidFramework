@@ -39,7 +39,7 @@
     "hjs": "0.0.6",
     "jquery": "^3.3.1",
     "jsonwebtoken": "^8.5.1",
-    "less": "^3.0.4",
+    "less": "~3.9.0",
     "method-override": "^2.3.10",
     "mongodb": "^2.2.30",
     "moniker": "^0.1.2",
