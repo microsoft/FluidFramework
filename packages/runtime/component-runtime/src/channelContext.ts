@@ -22,9 +22,7 @@ export interface IChannelContext {
 
     changeConnectionState(value: ConnectionState, clientId: string);
 
-    prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
-
-    processOp(message: ISequencedDocumentMessage, local: boolean, context: any): void;
+    processOp(message: ISequencedDocumentMessage, local: boolean): void;
 
     snapshot(): Promise<ITree>;
 

@@ -141,9 +141,10 @@ function generate(
             const waitOn2P = collection2.waitAndRemove();
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
             let added = false;
-            waitOn2P.then((value) => {
-                assert(added, "Wait resolved before value is added");
-            })
+            waitOn2P.then(
+                (value) => {
+                    assert(added, "Wait resolved before value is added");
+                })
                 .catch((reason) => {
                     assert(false, "Unexpected promise rejection");
                 });

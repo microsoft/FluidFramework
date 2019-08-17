@@ -112,13 +112,13 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
     //     }
     // }
 
-    protected prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
         if (this.getMessageOwner(message) !== this.owner) {
             debug("A non owner attempted to modify this object");
             return;
             // throw new Error("Client does not have permission to modify this object.");
         } else {
-            return this.prepareCore(message, local);
+            super.processCore(message, local);
         }
     }
 

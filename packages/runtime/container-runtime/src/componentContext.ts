@@ -189,26 +189,13 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.baseId = id;
     }
 
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        this.verifyNotClosed();
-
-        // If in the processing of loading wait until the load completes before preparing new messages
-        if (this.componentRuntimeDeferred) {
-            await this.componentRuntimeDeferred.promise;
-        }
-
-        return this.loaded
-            ? this.componentRuntime.prepare(message, local)
-            : Promise.resolve();
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+    public process(message: ISequencedDocumentMessage, local: boolean): void {
         this.verifyNotClosed();
 
         if (this.loaded) {
             // component has been modified and will need to regenerate its snapshot
             this.baseId = null;
-            return this.componentRuntime.process(message, local, context);
+            return this.componentRuntime.process(message, local);
         } else {
             assert(!local);
             this.pending.push(message);
@@ -319,9 +306,9 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.emit("leader", clientId);
     }
 
-    public async bindRuntime(componentRuntime: IComponentRuntime): Promise<void> {
+    public bindRuntime(componentRuntime: IComponentRuntime): void {
         if (this.componentRuntime) {
-            return Promise.reject("runtime already bound");
+            throw new Error("runtime already bound");
         }
 
         if (this.pending.length > 0) {
@@ -330,8 +317,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
 
             // Apply all pending ops
             for (const op of this.pending) {
-                const context = await componentRuntime.prepare(op, false);
-                componentRuntime.process(op, false, context);
+                componentRuntime.process(op, false);
             }
         }
 
@@ -341,18 +327,8 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         this.loaded = true;
         this.componentRuntime = componentRuntime;
 
-        const boundP = Promise.resolve();
-        // This next chunk of code is temporary until we remove prepare and this method becomes synchronous.
-        // By then'ing on boundP twice we make sure that the caller of bindRuntime's then() executes
-        // prior to resolving the runtime. This gives them time to register request handlers prior to us giving
-        // runtime access to anyone waiting on the deferred. In the future since this is sync the resolution callbacks
-        // won't fire until the turn the bind happens on completes.
-        // tslint:disable-next-line:no-floating-promises
-        boundP.then().then(() => {
-            this.componentRuntimeDeferred.resolve(this.componentRuntime);
-        });
-
-        return boundP;
+        // And notify the pending promise it is now available
+        this.componentRuntimeDeferred.resolve(this.componentRuntime);
     }
 
     public abstract generateAttachMessage(): IAttachMessage;

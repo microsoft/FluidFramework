@@ -16,9 +16,9 @@ import {
     IComponentTokenProvider,
     IContainerContext,
     IDeltaManager,
-    // IMessageScheduler,
     IDeltaSender,
     ILoader,
+    IMessageScheduler,
     IQuorum,
     ITelemetryLogger,
 } from "@prague/container-definitions";
@@ -262,7 +262,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
-    // private readonly scheduler: IMessageScheduler;
+    private readonly scheduler: IMessageScheduler;
     private proposeLeadershipOnConnection = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
@@ -316,12 +316,12 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.contextsDeferred.set(key, deferred);
         }
 
-        // this.scheduler = context.query ? context.query<IMessageScheduler>("IMessageScheduler") : undefined;
-        // if (this.scheduler) {
-        //     this.scheduler.deltaManager.inbound.on("push", (value) => {
-        //         debug("push", value);
-        //     });
-        // }
+        this.scheduler = context.IMessageScheduler;
+        if (this.scheduler) {
+            // this.scheduler.deltaManager.inbound.on("push", (value) => {
+            //     debug("push", value);
+            // });
+        }
         this.deltaSender = this.deltaManager;
 
         this.logger = context.logger;
@@ -590,35 +590,27 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        switch (message.type) {
-            case MessageType.Operation:
-                return this.prepareOperation(message, local);
-
-            // TODO migrate to process once prepare is removed
-            case MessageType.ChunkedOp:
-                const chunkComplete = this.prepareRemoteChunkedMessage(message);
-                if (!chunkComplete) {
-                    return Promise.resolve();
-                } else {
-                    if (local) {
-                        const clientSeqNumber = message.clientSequenceNumber;
-                        if (this.unackedChunkedMessages.has(clientSeqNumber)) {
-                            this.unackedChunkedMessages.delete(clientSeqNumber);
-                        }
-                    }
-
-                    return this.prepare(message, local);
-                }
-
-            default:
-                return Promise.resolve();
-        }
+        return this.scheduler
+            ? Promise.reject("Scheduler assumes only process")
+            : Promise.resolve();
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
         let remotedComponentContext: RemotedComponentContext;
+
+        // Chunk processing must come first given that we will transform the message to the unchunked version
+        // once all pieces are available
+        if (message.type === MessageType.ChunkedOp) {
+            const chunkComplete = this.processRemoteChunkedMessage(message);
+            if (chunkComplete && local) {
+                const clientSeqNumber = message.clientSequenceNumber;
+                if (this.unackedChunkedMessages.has(clientSeqNumber)) {
+                    this.unackedChunkedMessages.delete(clientSeqNumber);
+                }
+            }
+        }
 
         // Old prepare part
         switch (message.type) {
@@ -651,7 +643,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // Process part
         switch (message.type) {
             case MessageType.Operation:
-                this.processOperation(message, local, context);
+                this.processOperation(message, local);
                 break;
 
             default:
@@ -688,13 +680,10 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        // Add back once process is removed
-        // if (this.scheduler) {
-        //     return Promise.reject("Scheduler assumes only process");
-        // }
-
-        return;
+    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        return this.scheduler
+            ? Promise.reject("Scheduler assumes only process")
+            : Promise.resolve();
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {
@@ -907,7 +896,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    private prepareRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
+    private processRemoteChunkedMessage(message: ISequencedDocumentMessage): boolean {
         const clientId = message.clientId;
         const chunkedContent = message.contents as IChunkedOp;
         this.addChunk(clientId, chunkedContent.contents);
@@ -1048,29 +1037,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    private async prepareOperation(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        const envelope = message.contents as IEnvelope;
-        const context = this.contexts.get(envelope.address);
-        assert(context);
-        const innerContents = envelope.contents as { content: any, type: string };
-
-        const transformed: ISequencedDocumentMessage = {
-            clientId: message.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: innerContents.content,
-            minimumSequenceNumber: message.minimumSequenceNumber,
-            origin: message.origin,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: message.sequenceNumber,
-            timestamp: message.timestamp,
-            traces: message.traces,
-            type: innerContents.type,
-        };
-
-        return context.prepare(transformed, local);
-    }
-
-    private processOperation(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    private processOperation(message: ISequencedDocumentMessage, local: boolean) {
         const envelope = message.contents as IEnvelope;
         const componentContext = this.contexts.get(envelope.address);
         assert(componentContext);
@@ -1089,7 +1056,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             type: innerContents.type,
         };
 
-        componentContext.process(transformed, local, context);
+        componentContext.process(transformed, local);
     }
 
     private startLeaderElection() {

@@ -69,14 +69,9 @@ export interface IAttachMessage {
  */
 export interface IDeltaHandler {
     /**
-     * Prepares the op to be processed.
-     */
-    prepare: (message: ISequencedDocumentMessage, local: boolean) => Promise<any>;
-
-    /**
      * Processes the op.
      */
-    process: (message: ISequencedDocumentMessage, local: boolean, context: any) => void;
+    process: (message: ISequencedDocumentMessage, local: boolean) => void;
 
    /**
     * State change events to indicate changes to the delta connection

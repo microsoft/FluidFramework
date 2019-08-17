@@ -114,6 +114,12 @@ export async function create(
     sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
     root.set("text", sharedString.handle);
 
+    // We'll give this to the FlowContainer that we're about to create for it to store various data on.
+    const flowContainerMap = document.createMap();
+    root.set("flowContainerMap", flowContainerMap.handle);
+    flowContainerMap.set("overlayInk", document.createMap().handle);
+    flowContainerMap.set("pageInk", document.createStream().handle);
+
     await root.set("chunks", document.createMap().handle);
 
     const chunks = author.normalizeText(text).split("\n");

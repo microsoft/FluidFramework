@@ -71,25 +71,12 @@ export class RemoteChannelContext implements IChannelContext {
         this.connection!.setConnectionState(value);
     }
 
-    public async prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        // Wait for realization to complete if in process
-        if (this.channelP) {
-            await this.channelP;
-        }
-
-        // Then either prepare the message or resolve empty (since we will do it later)
-        return this.isLoaded
-            // tslint:disable-next-line: no-non-null-assertion
-            ? this.connection!.prepare(message, local)
-            : Promise.resolve();
-    }
-
-    public processOp(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         if (this.isLoaded) {
             // Clear base id since the channel is now dirty
             this.baseId = null;
             // tslint:disable-next-line: no-non-null-assertion
-            this.connection!.process(message, local, context);
+            this.connection!.process(message, local);
         } else {
             assert(!local);
             // tslint:disable-next-line: no-non-null-assertion
@@ -146,8 +133,7 @@ export class RemoteChannelContext implements IChannelContext {
         // Send all pending messages to the channel
         // tslint:disable-next-line: no-non-null-assertion
         for (const message of this.pending!) {
-            const context = await connection.prepare(message, false);
-            connection.process(message, false, context);
+            connection.process(message, false);
         }
         this.pending = undefined;
         this.isLoaded = true;

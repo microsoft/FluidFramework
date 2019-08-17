@@ -143,17 +143,6 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Prepares the given message for processing.  Nothing for Stream
-     *
-     * @param message - the message to prepare
-     * @param local - true if the object is local
-     * @returns resolved when message is prepared
-     */
-    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return Promise.resolve();
-    }
-
-    /**
      * Apply a delta to the snapshot.
      *
      * @param message - The message containing the delta to apply

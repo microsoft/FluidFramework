@@ -22,6 +22,28 @@ export interface ILocalValue {
         bind: IComponentHandle): ISerializableValue;
 }
 
+export function serializeHandles(
+    value: any,
+    serializer: IComponentSerializer,
+    context: IComponentHandleContext,
+    bind: IComponentHandle,
+) {
+    return value !== undefined
+        ? JSON.parse(serializer.stringify(
+            value,
+            context,
+            bind))
+        : value;
+}
+
+export function parseHandles(
+    value: any,
+    serializer: IComponentSerializer,
+    context: IComponentHandleContext,
+) {
+    return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
+}
+
 export class PlainLocalValue implements ILocalValue {
     constructor(public readonly value: any) {
     }
@@ -37,11 +59,7 @@ export class PlainLocalValue implements ILocalValue {
     ): ISerializableValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const result = serializer.stringify(
-            this.value,
-            context,
-            bind);
-        const value = JSON.parse(result);
+        const value = serializeHandles(this.value, serializer, context, bind);
 
         return {
             type: this.type,
@@ -81,14 +99,7 @@ export class ValueTypeLocalValue implements ILocalValue {
         bind: IComponentHandle,
     ): ISerializableValue {
         const storedValueType = this.valueType.factory.store(this.value);
-
-        // Stringify to convert to the serialized handle values - and then parse in order to create
-        // a POJO for the op
-        const result = serializer.stringify(
-            storedValueType,
-            context,
-            bind);
-        const value = JSON.parse(result);
+        const value = serializeHandles(storedValueType, serializer, context, bind);
 
         return {
             type: this.type,
@@ -128,17 +139,19 @@ export class LocalValueMaker {
                 serializable.value = handle;
             }
 
-            // stored value comes in already parsed so we stringify again to run through converter
-            const translatedValue = this.runtime.IComponentSerializer.parse(
-                JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
+            const translatedValue = parseHandles(
+                serializable.value,
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext);
+
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
             const valueType = this.valueTypes.get(serializable.type);
 
-            if (serializable.value) {
-                serializable.value = this.runtime.IComponentSerializer.parse(
-                    JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
-            }
+            serializable.value = parseHandles(
+                serializable.value,
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext);
 
             const localValue = valueType.factory.load(emitter, serializable.value);
             return new ValueTypeLocalValue(localValue, valueType);

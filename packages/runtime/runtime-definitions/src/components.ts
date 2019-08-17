@@ -80,14 +80,9 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
     isAttached: boolean;
 
     /**
-     * Prepares the op to be processed.
-     */
-    prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
-
-    /**
      * Processes the op.
      */
-    process(message: ISequencedDocumentMessage, local: boolean, context: any): void;
+    process(message: ISequencedDocumentMessage, local: boolean): void;
 
     /**
      * Processes the signal.
@@ -202,7 +197,7 @@ export interface IComponentRuntime extends EventEmitter, IComponentRouter {
 /**
  * Represents the context for the component. This context is passed to the component runtime.
  */
-export interface IComponentContext extends EventEmitter, IComponent {
+export interface IComponentContext extends EventEmitter {
     readonly documentId: string;
     readonly id: string;
     readonly existing: boolean;
@@ -267,7 +262,7 @@ export interface IComponentContext extends EventEmitter, IComponent {
     /**
      * Binds a runtime to the context.
      */
-    bindRuntime(componentRuntime: IComponentRuntime): Promise<void>;
+    bindRuntime(componentRuntime: IComponentRuntime): void;
 
     /**
      * Attaches the runtime to the container

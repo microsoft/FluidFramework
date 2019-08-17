@@ -174,7 +174,7 @@ export interface IRuntime extends IProvideComponentSerializer, IProvideComponent
      * Prepares the given message for execution
      * @deprecated being removed and replaced with only process
      */
-    prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
+    prepare?(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
 
     /**
      * Processes the given message
@@ -185,7 +185,7 @@ export interface IRuntime extends IProvideComponentSerializer, IProvideComponent
      * Called immediately after a message has been processed but prior to the next message being executed
      * @deprecated being removed and replaced with only process
      */
-    postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
+    postProcess?(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void>;
 
     /**
      * Processes the given signal
@@ -197,7 +197,11 @@ export interface IMessageScheduler {
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
-export interface IContainerContext extends EventEmitter, IMessageScheduler, IComponent {
+export interface IProvideMessageScheduler {
+    readonly IMessageScheduler: IMessageScheduler;
+}
+
+export interface IContainerContext extends EventEmitter, IMessageScheduler, IProvideMessageScheduler {
     readonly id: string;
     readonly existing: boolean | undefined;
     readonly options: any;
@@ -252,7 +256,8 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 declare module "@prague/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<
-        IProvideRuntimeFactory
-        & IProvideComponentTokenProvider>> {
+        IProvideRuntimeFactory &
+        IProvideComponentTokenProvider &
+        IProvideMessageScheduler>> {
     }
 }

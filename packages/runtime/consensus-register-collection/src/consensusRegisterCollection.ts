@@ -249,19 +249,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
-    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === MessageType.Operation && !local) {
-            const op: IRegisterOperation = message.contents;
-            if (op.type === "write") {
-                /* tslint:disable:no-return-await */
-                return op.value.type === ValueType[ValueType.Shared]
-                    ? await this.runtime.getChannel(op.value.value as string)
-                    : op.value.value;
-            }
-        }
-    }
-
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
             switch (op.type) {

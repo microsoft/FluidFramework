@@ -62,8 +62,7 @@ export class MockDeltaConnectionFactory {
             msg.minimumSequenceNumber = 0;
             for (const dc of this.deltaConnections) {
                 for (const h of dc.handlers) {
-                    await h.prepare(msg, true);
-                    h.process(msg, true, msg.contents);
+                    h.process(msg, true);
                 }
             }
         }
@@ -205,12 +204,7 @@ export class MockRuntime extends EventEmitter
         return;
     }
 
-    // new handler things - maybe not needed
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return null;
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+    public process(message: ISequencedDocumentMessage, local: boolean): void {
         return;
     }
 

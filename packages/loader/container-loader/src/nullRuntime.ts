@@ -56,16 +56,8 @@ class NullRuntime implements IRuntime {
         return Promise.resolve({ status: 404, mimeType: "text/plain", value: null });
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return Promise.reject("Null runtime should not receive messages");
-    }
-
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
         throw new Error("Null runtime should not receive messages");
-    }
-
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        return Promise.reject("Null runtime should not receive messages");
     }
 
     public processSignal(message: any, local: boolean) {

@@ -259,7 +259,7 @@ async function setMetrics(urlBase: string, doc: api.Document, resolver: Containe
     performanceData = metricsDoc.createCell();
     performanceChart.set("size", { width: 760, height: 480 });
     performanceChart.set("position", { x: 10, y: 10 });
-    performanceChart.set("data", performanceData);
+    performanceChart.set("data", performanceData.handle);
 
     const histogramChart = metricsDoc.createMap();
     components.set("histogram", histogramChart.handle);
@@ -267,7 +267,7 @@ async function setMetrics(urlBase: string, doc: api.Document, resolver: Containe
     histogramChart.set("type", "chart");
     histogramChart.set("size", { width: 760, height: 480 });
     histogramChart.set("position", { x: 790, y: 10 });
-    histogramChart.set("data", histogramData);
+    histogramChart.set("data", histogramData.handle);
 }
 
 export async function typeFile2(

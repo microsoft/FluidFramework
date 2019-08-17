@@ -29,6 +29,8 @@ import {
 import {
     ILocalValue,
     LocalValueMaker,
+    parseHandles,
+    serializeHandles,
     ValueTypeLocalValue,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
@@ -293,12 +295,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
             // TODO ideally we could use makeSerializable in this case as well. But the interval
             // collection has assumptions of attach being called prior. Given the IComponentSerializer it
             // may be possible to remove custom value type serialization entirely.
-            const transformedValue = value
-                ? JSON.parse(this.runtime.IComponentSerializer.stringify(
-                    value,
-                    this.runtime.IComponentHandleContext,
-                    this.handle))
-                : value;
+            const transformedValue = serializeHandles(
+                value,
+                this.runtime.IComponentSerializer,
+                this.runtime.IComponentHandleContext,
+                this.handle);
 
             // This is a special form of serialized valuetype only used for set, containing info for initialization.
             // After initialization, the serialized form will need to come from the .store of the value type's factory.
@@ -475,18 +476,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return;
     }
 
-    protected prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === MessageType.Operation) {
-            const op: IMapOperation = message.contents as IMapOperation;
-            if (this.messageHandlers.has(op.type)) {
-                return;
-            }
-        }
-
-        return this.prepareContent(message, local);
-    }
-
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         let handled = false;
         if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents as IMapOperation;
@@ -498,7 +488,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
 
         if (!handled) {
-            this.processContent(message, local, context);
+            this.processContent(message, local);
         }
     }
 
@@ -519,14 +509,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
         return;
     }
 
-    protected async prepareContent(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return Promise.resolve();
-    }
-
     /**
      * Processes a content message
      */
-    protected processContent(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processContent(message: ISequencedDocumentMessage, local: boolean) {
         return;
     }
 
@@ -711,8 +697,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
-                    const translatedValue = this.runtime.IComponentSerializer.parse(
-                        JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
+                    const translatedValue = parseHandles(
+                        op.value.value,
+                        this.runtime.IComponentSerializer,
+                        this.runtime.IComponentHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
                     this.emit("valueChanged", event, local, message);
@@ -743,10 +731,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
     private makeMapValueOpEmitter(key: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
-            const translatedParams = JSON.parse(this.runtime.IComponentSerializer.stringify(
+            const translatedParams = serializeHandles(
                 params,
+                this.runtime.IComponentSerializer,
                 this.runtime.IComponentHandleContext,
-                this.handle));
+                this.handle);
 
             const op: IMapValueTypeOperation = {
                 key,

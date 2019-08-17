@@ -39,12 +39,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
         this.handler.setConnectionState(state);
     }
 
-    public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.handler.prepare(message, local);
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.handler.process(message, local, context);
+    public process(message: ISequencedDocumentMessage, local: boolean) {
+        this.handler.process(message, local);
     }
 
     /**

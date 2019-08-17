@@ -414,11 +414,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return mtSnap;
     }
 
-    /* tslint:disable:promise-function-async */
-    protected prepareContent(): Promise<void> {
-        return this.loadedDeferred.promise;
-    }
-
     protected processContent(message: ISequencedDocumentMessage) {
         this.processMessage(message);
 
@@ -585,6 +580,10 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             ? branchId : this.runtime.documentId;
 
         const chunk1 = this.loadHeader(header, shared, branch);
+
+        // TODO we shouldn't need to wait on the body being complete to finish initialization.
+        // To fully support this we need to be able to process inbound ops for pending segments.
+        // And storing 'blue' segments rather than using Tardis'd ops may be of help.
         await this.loadBody(chunk1, services);
         return this.loadTardis(rawMessages, branch);
     }

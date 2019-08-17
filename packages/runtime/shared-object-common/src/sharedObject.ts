@@ -287,22 +287,13 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Prepares the given message for processing
-     *
-     * @param message - the message to prepare
-     * @param local - true if the object is local
-     * @returns resolved when message is prepared
-     */
-    protected abstract prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any>;
-
-    /**
      * Derived classes must override this to do custom processing on a remote message
      *
      * @param message - the message to prepare
      * @param local - true if the shared object is local
      * @param context - additional context for the message
      */
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, context: any);
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean);
 
     /**
      * Called when the object has disconnected from the delta stream
@@ -351,17 +342,6 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     }
 
     /**
-     * Prepares the given message for processing
-     *
-     * @param message - message to be prepared
-     * @param local - true if the shared object is local
-     * @returns resolved when message is prepared
-     */
-    protected prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.prepareCore(message, local);
-    }
-
-    /**
      * Report ignorable errors in code logic or data integrity to the logger.
      * Hosting app / container may want to optimize out these call sites and make them no-op.
      * It may also show assert dialog in non-production builds of application.
@@ -380,11 +360,8 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
         // attachDeltaHandler is only called after services is assigned
         // tslint:disable-next-line: no-non-null-assertion
         this.services!.deltaConnection.attach({
-            prepare: (message, local) => {
-                return this.prepare(message, local);
-            },
-            process: (message, local, context) => {
-                this.process(message, local, context);
+            process: (message, local) => {
+                this.process(message, local);
             },
             setConnectionState: (state: ConnectionState) => {
                 this.setConnectionState(state);
@@ -446,13 +423,13 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
     /**
      * Handles a message being received from the remote delta server
      */
-    private process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    private process(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && local) {
             this.processPendingOp(message);
         }
 
         this.emit("pre-op", message, local);
-        this.processCore(message, local, context);
+        this.processCore(message, local);
         this.emit("op", message, local);
     }
 

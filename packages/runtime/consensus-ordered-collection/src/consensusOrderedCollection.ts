@@ -167,19 +167,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject implements
         debug(`ConsensusCollection ${this.id} is now disconnected`);
     }
 
-    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === MessageType.Operation && !local) {
-            const op: IConsensusOrderedCollectionOperation = message.contents;
-            if (op.opName === "add") {
-                /* tslint:disable:no-return-await */
-                return op.value.type === ValueType[ValueType.Shared]
-                    ? await this.runtime.getChannel(op.value.value)
-                    : op.value.value;
-            }
-        }
-    }
-
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IConsensusOrderedCollectionOperation = message.contents;
             let value;

@@ -73,13 +73,8 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
             registry,
             logger);
 
-        context.bindRuntime(runtime).then(
-            () => {
-                activeCallback(runtime);
-            },
-            (error) => {
-                context.error(error);
-            });
+        context.bindRuntime(runtime);
+        activeCallback(runtime);
     }
 
     public get IComponentRouter() { return this; }
@@ -393,16 +388,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         this.closeFn();
     }
 
-    public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        switch (message.type) {
-            case MessageType.Operation:
-                return this.prepareOp(message, local);
-            default:
-                return;
-        }
-    }
-
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
         switch (message.type) {
             case MessageType.Attach:
@@ -446,7 +432,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
                 break;
 
             case MessageType.Operation:
-                this.processOp(message, local, context);
+                this.processOp(message, local);
                 break;
             default:
         }
@@ -562,31 +548,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         return this.componentContext.submitMessage(type, content);
     }
 
-    private prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        this.verifyNotClosed();
-
-        const envelope = message.contents as IEnvelope;
-        const context = this.contexts.get(envelope.address);
-        assert(context);
-
-        const transformed: ISequencedDocumentMessage = {
-            clientId: message.clientId,
-            clientSequenceNumber: message.clientSequenceNumber,
-            contents: envelope.contents,
-            minimumSequenceNumber: message.minimumSequenceNumber,
-            origin: message.origin,
-            referenceSequenceNumber: message.referenceSequenceNumber,
-            sequenceNumber: message.sequenceNumber,
-            timestamp: message.timestamp,
-            traces: message.traces,
-            type: message.type,
-        };
-
-        // tslint:disable-next-line: no-non-null-assertion
-        return context!.prepareOp(transformed, local);
-    }
-
-    private processOp(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    private processOp(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
         const envelope = message.contents as IEnvelope;
@@ -607,7 +569,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
         };
 
         // tslint:disable-next-line: no-non-null-assertion
-        channelContext!.processOp(transformed, local, context);
+        channelContext!.processOp(transformed, local);
 
         return channelContext;
     }

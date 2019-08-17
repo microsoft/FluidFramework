@@ -489,18 +489,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
-    protected prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === MessageType.Operation) {
-            const op: IDirectoryOperation = message.contents as IDirectoryOperation;
-            if (this.messageHandlers.has(op.type)) {
-                return;
-            }
-        }
-
-        return Promise.reject();
-    }
-
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
         if (message.type === MessageType.Operation) {
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             if (this.messageHandlers.has(op.type)) {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISerializedHandle } from "@prague/component-core-interfaces";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -100,23 +101,15 @@ export class SharedCell extends SharedObject implements ISharedCell {
      */
     public set(value: any) {
         let operationValue: ICellValue;
-        /* tslint:disable:no-unsafe-any */
-        if (SharedObject.is(value)) {
-            // Convert any local shared objects to our internal storage format
-            if (!this.isLocal()) {
-                value.register();
-            }
 
-            operationValue = {
-                type: ValueType[ValueType.Shared],
-                value: value.id,
-            };
-        } else {
-            operationValue = {
-                type: ValueType[ValueType.Plain],
-                value,
-            };
+        if (SharedObject.is(value)) {
+            throw new Error("SharedObject sets are no longer supported. Instead set the SharedObject handle.");
         }
+
+        operationValue = {
+            type: ValueType[ValueType.Plain],
+            value: this.toSerializable(value),
+        };
 
         const op: ISetCellOperation = {
             type: "setCell",
@@ -153,18 +146,10 @@ export class SharedCell extends SharedObject implements ISharedCell {
      */
     public snapshot(): ITree {
         // Get a serializable form of data
-        let content: ICellValue;
-        if (SharedObject.is(this.data)) {
-            content = {
-                type: ValueType[ValueType.Shared],
-                value: this.data.id, // (this.data as ISharedObject).id,
-            };
-        } else {
-            content = {
+        const content: ICellValue = {
                 type: ValueType[ValueType.Plain],
-                value: this.data,
-            };
-        }
+                value: this.toSerializable(this.data),
+        };
 
         // And then construct the tree for it
         const tree: ITree = {
@@ -204,9 +189,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
                 .toString("utf-8")) as ICellValue
             : { type: ValueType[ValueType.Plain], value: undefined };
 
-        this.data = content.type === ValueType[ValueType.Shared]
-            ? await this.runtime.getChannel(content.value)
-            : content.value;
+        this.data = this.fromSerializable(content);
     }
 
     /**
@@ -233,32 +216,12 @@ export class SharedCell extends SharedObject implements ISharedCell {
     }
 
     /**
-     * Prepare a cell operation
-     *
-     * @param message - the message to prepare
-     * @param local - whether the message was sent by the local client
-     * @returns - promise that resolve the value of the prepare, which will be passed as the context of process
-     */
-    protected async prepareCore(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        if (message.type === MessageType.Operation && !local) {
-            const op: ICellOperation = message.contents;
-            if (op.type === "setCell") {
-                /* tslint:disable:no-return-await */
-                return op.value.type === ValueType[ValueType.Shared]
-                    ? await this.runtime.getChannel(op.value.value)
-                    : op.value.value;
-            }
-        }
-    }
-
-    /**
      * Process a cell operation
      *
      * @param message - the message to prepare
      * @param local - whether the message was sent by the local client
-     * @param context - the value returned by prepareCore
      */
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (this.pendingClientSequenceNumber !== -1) {
             // We are waiting for an ACK on our change to this cell - we will ignore all messages until we get it.
             if (local && message.clientSequenceNumber === this.pendingClientSequenceNumber) {
@@ -269,11 +232,12 @@ export class SharedCell extends SharedObject implements ISharedCell {
         }
 
         if (message.type === MessageType.Operation && !local) {
-            const op: ICellOperation = message.contents;
+            const op = message.contents as ICellOperation;
 
             switch (op.type) {
                 case "setCell":
-                    this.setCore(context);
+                    const value = this.fromSerializable(op.value);
+                    this.setCore(value);
                     break;
 
                 case "deleteCell":
@@ -299,5 +263,36 @@ export class SharedCell extends SharedObject implements ISharedCell {
     private submitCellMessage(op: ICellOperation): void {
         // We might already have a pendingClientSequenceNumber, but it doesn't matter - last one wins.
         this.pendingClientSequenceNumber = this.submitLocalMessage(op);
+    }
+
+    private toSerializable(value: any) {
+        if (value === undefined) {
+            return value;
+        }
+
+        // Stringify to convert to the serialized handle values - and then parse in order to create
+        // a POJO for the op
+        const stringified = this.runtime.IComponentSerializer.stringify(
+            value,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+        return JSON.parse(stringified);
+    }
+
+    private fromSerializable(operation: ICellValue) {
+        let value = operation.value;
+
+        // convert any stored shared object to updated handle
+        if (operation.type === ValueType[ValueType.Shared]) {
+            const handle: ISerializedHandle = {
+                type: "__fluid_handle__",
+                url: operation.value as string,
+            };
+            value = handle;
+        }
+
+        return value !== undefined
+            ? this.runtime.IComponentSerializer.parse(JSON.stringify(value), this.runtime.IComponentHandleContext)
+            : value;
     }
 }

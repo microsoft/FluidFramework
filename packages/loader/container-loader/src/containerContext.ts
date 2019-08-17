@@ -130,6 +130,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         };
         return config as IComponentConfiguration;
     }
+
     public get IMessageScheduler() {
         this.legacyMessaging = false;
         return this;
@@ -188,7 +189,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.runtime!.prepare(message, local);
+        // included for back compat with documents created prior to prepare deprecation
+        if (!this.runtime || !this.runtime.prepare) {
+            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement prepare");
+        }
+
+        this.runtime.prepare(message, local);
     }
 
     public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
@@ -196,7 +202,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     }
 
     public async postProcess(message: ISequencedDocumentMessage, local: boolean, context: any): Promise<void> {
-        return this.runtime!.postProcess(message, local, context);
+        // included for back compat with documents created prior to postProcess deprecation
+        if (!this.runtime || !this.runtime.postProcess) {
+            return Promise.reject("Runtime must query for IMessageHandler to signal it does not implement postProcess");
+        }
+
+        return this.runtime.postProcess(message, local, context);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {

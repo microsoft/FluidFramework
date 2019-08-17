@@ -64,19 +64,13 @@ export class LocalChannelContext implements IChannelContext {
         this.connection!.setConnectionState(value);
     }
 
-    public async prepareOp(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        assert(this.attached);
-        // tslint:disable-next-line: no-non-null-assertion
-        return this.connection!.prepare(message, local);
-    }
-
-    public processOp(message: ISequencedDocumentMessage, local: boolean, context: any): void {
+    public processOp(message: ISequencedDocumentMessage, local: boolean): void {
         assert(this.attached);
 
         // Clear base id since the channel is now dirty
         this.baseId = null;
         // tslint:disable-next-line: no-non-null-assertion
-        this.connection!.process(message, local, context);
+        this.connection!.process(message, local);
     }
 
     public async snapshot(): Promise<ITree> {

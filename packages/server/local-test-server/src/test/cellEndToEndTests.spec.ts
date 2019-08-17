@@ -201,16 +201,23 @@ describe("Cell", () => {
         const detachedCell2: ISharedCell = user1Document.createCell();
         const cellValue = "cell cell cell cell";
         detachedCell2.set(cellValue);
-        detachedCell1.set(detachedCell2);
+        detachedCell1.set(detachedCell2.handle);
         assert(!detachedCell2.isRegistered());
 
-        root1Cell.set(detachedCell1);
+        root1Cell.set(detachedCell1.handle);
         assert(detachedCell2.isRegistered());
 
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+
+        async function getCellComponent(cellP: Promise<ISharedCell>): Promise<ISharedCell> {
+            const cell = await cellP;
+            const handle = cell.get() as IComponentHandle;
+            return handle.get<ISharedCell>();
+        }
+
         // tslint:disable:no-unsafe-any
-        verifyCellValue(root2Cell.get().get(), cellValue, 2);
-        verifyCellValue(root3Cell.get().get(), cellValue, 3);
+        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root2Cell))), cellValue, 2);
+        verifyCellValue(await getCellComponent(getCellComponent(Promise.resolve(root3Cell))), cellValue, 3);
     });
 
     afterEach(async () => {

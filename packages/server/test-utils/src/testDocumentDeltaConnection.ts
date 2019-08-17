@@ -199,8 +199,12 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
      * Submits a new delta operation to the server
      */
     public submit(messages: IDocumentMessage[]): void {
-        this.submitManager.add("submitOp", messages);
-        this.submitManager.drain();
+        // We use a promise resolve to force a turn break given message processing is sync
+        // tslint:disable-next-line:no-floating-promises
+        Promise.resolve().then(() => {
+            this.submitManager.add("submitOp", messages);
+            this.submitManager.drain();
+        });
     }
 
     /**
