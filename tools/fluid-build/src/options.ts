@@ -18,6 +18,7 @@ interface FastBuildOptions {
     root?: string;
     symlink: boolean;
     depcheck: boolean;
+    force: boolean;
 }
 
 // defaults
@@ -35,16 +36,18 @@ export const options: FastBuildOptions = {
     vscode: false,
     symlink: false,
     depcheck: false,
+    force: false,
 };
 
 function printUsage() {
     console.log(
-`
+        `
 Usage: fluid-build <options> [<npm script>] [<package regexp> ...]
   [<npm script>]         Name of the npm script to run (default: build)
   [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-  -c --clean             Same as running build script 'clean'
+  -c --clean             Same as running build script 'clean', implies -f if -s or -r is specified
+  -f --force             Force build everything and ignore dependency check
   -? --help              Print this message
      --logtime           Display the current time on every status message for logging
   -r --rebuild           Clean and build
@@ -85,9 +88,15 @@ export function parseOptions(argv: string[]) {
 
         if (arg === "-c" || arg === "--clean" || arg === "clean") {
             options.clean = true;
+            options.force = true;
             if (options.build === undefined) {
                 options.build = false;
             }
+            continue;
+        }
+
+        if (arg === "-f" || arg === "--force") {
+            options.force = true;
             continue;
         }
 
@@ -136,7 +145,7 @@ export function parseOptions(argv: string[]) {
             options.depcheck = true;
             continue;
         }
-        
+
         // These options are not public
         if (arg === "--nolint") {
             options.nolint = true;

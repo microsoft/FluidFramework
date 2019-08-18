@@ -30,8 +30,11 @@ export class NpmDepChecker {
                 }
                 let packageName = name;
                 if (name.startsWith("@types/")) {
+                    // If we have a type package, we may still import the package, but not necessary depend on the package.
                     packageName = name.substring("@types/".length);
                 }
+                // These regexp doesn't aim to be totally accurate, but try to avoid false positives.
+                // These can definitely be improved
                 this.records.push({
                     name,
                     import: new RegExp(`(import|require)[^;]+[\`'"](blob-url-loader.*)?${packageName}.*[\`'"]`, "m"),

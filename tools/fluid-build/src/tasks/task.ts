@@ -41,7 +41,9 @@ export abstract class Task {
     }
 
     public async isUpToDate(): Promise<boolean> {
-        if (options.clean) { return false; }
+        // Always not up to date if forced
+        if (options.force) { return false; }
+
         if (this.isUpToDateP === undefined) {
             this.isUpToDateP = this.checkIsUpToDate();
         }
