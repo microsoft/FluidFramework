@@ -62,7 +62,7 @@ data:
             "port": 6379
         },
         "keyValue": {
-            "documentUrl": "https://www.wu2.prague.office-int.com/loader/prague/kv-cache-0007",
+            "documentUrl": "{{ .Values.endpoints.keyValueUrl }}",
             "jwtKey": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
             "gatewayUrl": "{{ .Values.endpoints.gatewayUrl }}"
         },
