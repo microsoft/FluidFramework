@@ -10,9 +10,7 @@ import {
     IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
-import {
-    IComponentFactory,
-} from "@prague/runtime-definitions";
+import { IComponentFactory, FlushMode } from "@prague/runtime-definitions";
 import { fluidExport as smde } from "./smde";
 
 class ProgressBarsFactory implements IRuntimeFactory {
@@ -47,6 +45,9 @@ class ProgressBarsFactory implements IRuntimeFactory {
                 };
             },
             { generateSummaries: true });
+
+        // flush mode to manual to batch operations within a turn
+        runtime.setFlushMode(FlushMode.Manual);
 
         // On first boot create the base component
         if (!runtime.existing) {

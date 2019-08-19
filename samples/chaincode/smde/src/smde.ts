@@ -107,8 +107,6 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     return;
                 }
 
-                console.log(ev);
-
                 localEdit = true;
                 for (const range of ev.ranges) {
                     const segment = range.segment;
@@ -159,21 +157,20 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
 
                 const text = changeObj.text as string[];
                 text.forEach((value, index) => {
-                    // We insert the paragraph marker first to signal to the receive side the existance of the new
-                    // line
-                    if (index !== 0) {
+                    // Insert the updated text
+                    if (value) {
+                        this.text.insertText(from, value);
+                        from += value.length;
+                    }
+
+                    // Add in a paragraph marker if this is a multi-line update
+                    if (index !== text.length - 1) {
                         this.text.insertMarker(
                             from,
                             ReferenceType.Tile,
                             { [reservedTileLabelsKey]: ["pg"] });
+                        from++;
                     }
-
-                    // And then send in the text for the line
-                    if (value) {
-                        this.text.insertText(from, value);
-                    }
-
-                    from += value.length + 1;
                 });
             });
     }
