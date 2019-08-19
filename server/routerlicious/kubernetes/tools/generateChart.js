@@ -60,7 +60,7 @@ gateway:
   externalUrl: https://www.wu2.prague.office-int.com
   host: www.wu2.prague.office-int.com
   cert: wu2-tls-certificate
-  keyValueUrl: https://www.wu2.prague.office-int.com/loader/prague/kv-cache-0008
+  keyValueUrl: https://www.wu2.prague.office-int.com/loader/prague/kv-cache-0009
 
 deli:
   name: deli
