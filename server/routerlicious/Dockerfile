@@ -43,6 +43,7 @@ COPY packages/components/external-component-loader/package*.json packages/compon
 COPY packages/components/image-collection/package*.json packages/components/image-collection/
 COPY packages/components/pond/package*.json packages/components/pond/
 COPY packages/components/progress-bars/package*.json packages/components/progress-bars/
+COPY packages/components/shared-map-visualizer/package*.json packages/components/shared-map-visualizer/
 COPY packages/components/video-players/package*.json packages/components/video-players/
 COPY packages/components/flow-scroll/package*.json packages/components/flow-scroll/
 COPY packages/components/flow-util/package*.json packages/components/flow-util/

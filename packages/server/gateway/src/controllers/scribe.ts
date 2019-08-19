@@ -191,8 +191,6 @@ export function initialize(
             const linkList = document.getElementById("link-list") as HTMLDivElement;
 
             addLink(linkList, `/sharedText/${id}`);
-            addLink(linkList, `/canvas/${id}-metrics`);
-            addLink(linkList, `/maps/${id}`);
 
             if (languages) {
                 linkList.appendChild(document.createElement("br"));
