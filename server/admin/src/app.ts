@@ -23,6 +23,7 @@ import * as favicon from "serve-favicon";
 import split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
+import { KeyValueManager } from "./keyValueManager";
 import * as appRoutes from "./routes";
 import { TenantManager } from "./tenantManager";
 
@@ -77,7 +78,7 @@ const stream = split().on("data", (message) => {
     winston.info(message);
 });
 
-export function create(config: Provider, mongoManager: core.MongoManager) {
+export function create(config: Provider, mongoManager: core.MongoManager, keyValueManager: KeyValueManager) {
 
     // We are loading a Prague document that might lead to assertion errors.
     // Handling this so that the whole process is not terminated.
@@ -194,7 +195,7 @@ export function create(config: Provider, mongoManager: core.MongoManager) {
         }
     });
 
-    const routes = appRoutes.create(config, mongoManager, tenantManager);
+    const routes = appRoutes.create(config, mongoManager, tenantManager, keyValueManager);
     app.use("/api", routes.api);
     app.use("/", routes.home);
 

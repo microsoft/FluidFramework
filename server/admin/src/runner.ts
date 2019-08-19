@@ -9,6 +9,7 @@ import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as app from "./app";
+import { KeyValueManager } from "./keyValueManager";
 import { IWebServer, IWebServerFactory } from "./webServer";
 
 export class AdminRunner implements utils.IRunner {
@@ -19,7 +20,8 @@ export class AdminRunner implements utils.IRunner {
         private serverFactory: IWebServerFactory,
         private config: Provider,
         private port: string | number,
-        private mongoManager: core.MongoManager) {
+        private mongoManager: core.MongoManager,
+        private keyValueManager: KeyValueManager) {
     }
 
     public start(): Promise<void> {
@@ -27,7 +29,8 @@ export class AdminRunner implements utils.IRunner {
 
         const admin = app.create(
             this.config,
-            this.mongoManager);
+            this.mongoManager,
+            this.keyValueManager);
         admin.set("port", this.port);
 
         this.server = this.serverFactory.create(admin);

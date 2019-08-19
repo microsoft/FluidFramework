@@ -15,7 +15,7 @@ export function create(
     mongoManager: core.MongoManager,
     ensureLoggedIn: any,
     tenantManager: TenantManager,
-    keyValueManagerP: Promise<any>): Router {
+    cache: KeyValueManager): Router {
     const router: Router = Router();
 
     function returnResponse<T>(resultP: Promise<T>, response: Response) {
@@ -47,12 +47,12 @@ export function create(
      */
     router.post("/keyValues", ensureLoggedIn(), (request, response) => {
         const keyValueInput = request.body as IKeyValue;
-        const createP = keyValueManagerP.then((kv: KeyValueManager) => {
-            return kv.addKeyValue(keyValueInput);
-        }, (err) => {
-            return Promise.reject(err);
-        });
-        returnResponse(createP, response);
+        if (cache === undefined) {
+            response.status(400).end("No cache loaded");
+        } else {
+            const newKeyValue = cache.addKeyValue(keyValueInput);
+            response.status(200).json(newKeyValue);
+        }
     });
 
     /**
@@ -60,12 +60,12 @@ export function create(
      */
     router.delete("/keyValues/*", ensureLoggedIn(), (request, response) => {
         const key = request.params[0] as string;
-        const deleteP = keyValueManagerP.then((kv: KeyValueManager) => {
-            return kv.removeKeyValue(key);
-        }, (err) => {
-            return Promise.reject(err);
-        });
-        returnResponse(deleteP, response);
+        if (cache === undefined) {
+            response.status(400).end("No cache loaded");
+        } else {
+            const deletedKeyValue = cache.removeKeyValue(key);
+            response.status(200).json(deletedKeyValue);
+        }
     });
 
     return router;
