@@ -21,8 +21,9 @@ import {
     ITree,
     SummaryType,
 } from "@prague/protocol-definitions";
+import { EventEmitter } from "events";
 
-class NullRuntime implements IRuntime {
+class NullRuntime extends EventEmitter implements IRuntime {
     public get IComponentSerializer(): IComponentSerializer {
         throw new Error("Not implemented");
     }
@@ -32,6 +33,10 @@ class NullRuntime implements IRuntime {
     }
 
     public ready: Promise<void> | undefined;
+
+    constructor() {
+        super();
+    }
 
     public snapshot(tagMessage: string): Promise<ITree | null> {
         return Promise.resolve(null);

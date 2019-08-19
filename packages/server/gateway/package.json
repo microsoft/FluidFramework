@@ -67,6 +67,7 @@
     "@prague/replay-socket-storage": "^0.9.0",
     "@prague/routerlicious-host": "^0.9.0",
     "@prague/routerlicious-socket-storage": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
     "@prague/sequence": "^0.9.0",
     "@prague/services": "^0.9.0",
     "@prague/services-client": "^0.9.0",

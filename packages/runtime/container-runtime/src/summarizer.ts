@@ -81,7 +81,11 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             return;
         }
 
-        this.runtime.on("op", (op: ISequencedDocumentMessage) => {
+        this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => {
+            if (error) {
+                return;
+            }
+
             this.clearIdleTimer();
 
             // Get the snapshot details for the given op
@@ -101,9 +105,6 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     }
 
     private summarize(message: string, required: boolean) {
-        // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
-        debug(`Snapshotting ${this.runtime.id}@${this.lastOp.sequenceNumber}`);
-
         const snapshotP = this.generateSummary().then(
             () => {
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to

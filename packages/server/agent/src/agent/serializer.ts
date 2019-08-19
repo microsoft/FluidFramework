@@ -73,10 +73,6 @@ export class Serializer extends EventEmitter {
         }
     }
 
-    public get isSnapshotting() {
-        return this.snapshotting;
-    }
-
     public stop() {
         this.clearIdleTimer();
         this.clearRetryTimer();
@@ -87,19 +83,21 @@ export class Serializer extends EventEmitter {
 
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
         debug(`Snapshotting ${this.document.id}@${this.lastOp.sequenceNumber}`);
-        this.document.deltaManager.inbound.pause();
-        const snapshotP = this.document.snapshot(message).then(
-            () => {
+        const pausedP = this.document.deltaManager.inbound.pause();
+        const snapshotP = pausedP.then(async () => {
+            try {
+                await this.document.snapshot(message);
+
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
                 // attempt the snapshot again.
                 this.lastSnapshotTime = Date.now();
                 this.lastSnapshotSeqNumber = this.lastOp.sequenceNumber;
                 return true;
-            },
-            (error) => {
+            } catch (error) {
                 console.error(`Snapshotting error ${this.document.id}`, error);
                 return false;
-            });
+            }
+        });
 
         // If we were able to snapshot - or we failed but the snapshot wasn't required - then resume the inbound
         // message flow. Otherwise attempt the snapshot again
@@ -107,9 +105,9 @@ export class Serializer extends EventEmitter {
             if (!success && required) {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
-                this.document.deltaManager.inbound.resume();
                 this.snapshotting = false;
                 this.emit("snapshotted");
+                this.document.deltaManager.inbound.resume();
             }
         });
     }

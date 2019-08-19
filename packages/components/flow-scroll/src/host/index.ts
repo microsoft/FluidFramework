@@ -16,11 +16,13 @@ import {
 } from "@prague/component-core-interfaces";
 import { DirectoryFactory, MapFactory, SharedMap } from "@prague/map";
 import {
+    FlushMode,
     IComponentCollection,
     IComponentContext,
     IComponentRuntime,
     ITask,
-    ITaskManager } from "@prague/runtime-definitions";
+    ITaskManager,
+} from "@prague/runtime-definitions";
 import { HostView  } from "./host";
 import { importDoc } from "./template";
 
@@ -71,6 +73,40 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     protected async componentHasInitialized() {
         const handle = await this.root.wait<IComponentHandle>(insightsMapId);
         const insights = await handle.get<SharedMap>();
+
+        this.context.hostRuntime.setFlushMode(FlushMode.Manual);
+
+        const runtimeEmitter = this.context.hostRuntime;
+
+        let messages = [];
+        let count = 0;
+        let turnCount = 0;
+        let needReset = true;
+
+        runtimeEmitter.on("batchBegin", () => {
+            count = 0;
+        });
+
+        runtimeEmitter.on("op", (message) => {
+            count++;
+            turnCount++;
+            messages.push(message);
+
+            if (needReset) {
+                needReset = false;
+                Promise.resolve().then(() => {
+                    console.log(`Turn count ${turnCount}`);
+                    turnCount = 0;
+                    needReset = true;
+                });
+            }
+        });
+
+        runtimeEmitter.on("batchEnd", () => {
+            console.log(`Message count: ${count}`);
+            console.log(messages);
+            messages = [];
+        });
 
         this.intelViewer = new FlowIntelViewer(insights);
 

@@ -480,11 +480,13 @@ export class DeliLambda implements IPartitionLambda {
         message: IRawOperationMessage,
         origin: IBranchOrigin,
         sequenceNumber: number,
-        systemContent): ISequencedDocumentMessage {
+        systemContent,
+    ): ISequencedDocumentMessage {
         const outputMessage: ISequencedDocumentMessage = {
             clientId: message.clientId,
             clientSequenceNumber: message.operation.clientSequenceNumber,
             contents: message.operation.contents,
+            metadata: message.operation.metadata,
             minimumSequenceNumber: this.minimumSequenceNumber,
             origin,
             referenceSequenceNumber: message.operation.referenceSequenceNumber,

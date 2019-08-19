@@ -75,27 +75,31 @@ export class Serializer {
 
         // Otherwise pause the processing of inbound ops and then resume once the snapshot is complete
         console.log(`Snapshotting ${this.runtime.id}@${this.lastOp!.sequenceNumber}`);
-        const snapshotP = this.runtime.requestSnapshot(message).then(
-            () => {
+        const pausedP = this.runtime.deltaManager.inbound.pause();
+        const snapshotP = pausedP.then(async () => {
+            try {
+                await this.runtime.requestSnapshot(message);
                 // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
                 // attempt the snapshot again.
                 this.lastSnapshotTime = Date.now();
                 this.lastSnapshotSeqNumber = this.lastOp!.sequenceNumber;
                 return true;
-            },
-            (error) => {
+            } catch (error) {
                 console.error(`Snapshotting error ${this.runtime.id}`, error);
                 return false;
-            });
+            }
+        });
 
         // If we were able to snapshot - or we failed but the snapshot wasn't required - then resume the inbound
         // message flow. Otherwise attempt the snapshot again
         // tslint:disable-next-line: no-floating-promises
-        snapshotP.then((success) => {
+        snapshotP.then(async (success) => {
             if (!success && required) {
                 this.retryTimer = setTimeout(() => this.snapshot(message, required), this.retryTime);
             } else {
                 this.snapshotting = false;
+                // tslint:disable-next-line:no-floating-promises
+                this.runtime.deltaManager.inbound.resume();
             }
         });
     }

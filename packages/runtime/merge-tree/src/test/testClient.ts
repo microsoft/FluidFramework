@@ -217,6 +217,7 @@ export class TestClient extends Client {
             clientId: longClientId === undefined ? this.longClientId : longClientId,
             clientSequenceNumber: 1,
             contents: op,
+            metadata: undefined,
             minimumSequenceNumber: minSeqNumber,
             origin: null,
             referenceSequenceNumber: refSeq,

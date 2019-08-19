@@ -36,7 +36,6 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryTree,
     ITree,
     ITreeEntry,
     IVersion,
@@ -258,11 +257,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         return this.context!.request(path);
-    }
-
-    // Used by tools like replay tool
-    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
-        return this.context!.summarize(generateFullTreeNoOptimizations);
     }
 
     public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<void> {
@@ -523,7 +517,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     loader,
                     storageService,
                     (err) => this.emit("error", err),
-                    (type, contents) => this.submitMessage(type, contents),
+                    (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
                     (message) => this.submitSignal(message),
                     (message) => this.snapshot(message),
                     () => this.close(),
@@ -880,13 +874,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         raiseConnectedEvent(this, value, this.clientId!);
     }
 
-    private submitMessage(type: MessageType, contents: any): number {
+    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
         }
 
-        return this._deltaManager!.submit(type, contents);
+        return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
     private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {

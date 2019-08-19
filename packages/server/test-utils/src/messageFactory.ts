@@ -78,6 +78,7 @@ export class MessageFactory {
         const operation: IDocumentMessage = {
             clientSequenceNumber: this.clientSequenceNumber++,
             contents: null,
+            metadata: undefined,
             referenceSequenceNumber,
             traces: [],
             type: MessageType.Operation,
@@ -151,6 +152,7 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
+            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,
@@ -176,6 +178,7 @@ export class MessageFactory {
             clientId: this.clientId,
             clientSequenceNumber: operation.clientSequenceNumber,
             contents: operation.contents,
+            metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,
             referenceSequenceNumber: operation.referenceSequenceNumber,

@@ -161,6 +161,9 @@ export interface ISequencedDocumentMessage {
     // The contents of the message
     contents: any;
 
+    // App provided metadata about the operation
+    metadata?: any;
+
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
     origin?: IBranchOrigin;

@@ -62,6 +62,10 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     public peek(): T {
         throw new Error("Method not implemented.");
     }
+
+    public toArray(): T[] {
+        throw new Error("Method not implemented.");
+    }
 }
 
 export class TestDeltaManager

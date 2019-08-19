@@ -18,6 +18,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     private _paused = true;
 
+    private error: any | undefined;
     private processing = false;
     private pauseDeferred: Deferred<void> | undefined;
 
@@ -44,6 +45,10 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public peek(): T | undefined {
         return this.q.peekFront();
+    }
+
+    public toArray(): T[] {
+        return this.q.toArray();
     }
 
     public push(task: T) {
@@ -99,7 +104,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     private processDeltas() {
         // Return early if no messages to process, we have become paused, or are already processing a delta
-        if (this.q.length === 0 || this._paused || this.processing) {
+        if (this.q.length === 0 || this._paused || this.processing || this.error) {
             return;
         }
 
@@ -121,6 +126,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
             }
 
             if (error) {
+                this.error = error;
                 this.emit("error", error);
                 this.q.clear();
             } else {

@@ -17,7 +17,6 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISnapshotTree,
-    ISummaryTree,
     ITree,
     MessageType,
 } from "@prague/protocol-definitions";
@@ -142,7 +141,7 @@ export interface IFluidCodeDetails {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime extends IProvideComponentSerializer, IProvideComponentHandleContext {
+export interface IRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
 
     /**
      * Executes a request against the runtime
@@ -153,11 +152,6 @@ export interface IRuntime extends IProvideComponentSerializer, IProvideComponent
      * Snapshots the runtime
      */
     snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null>;
-
-    /**
-     * Returns a summary of the runtime at the current sequence number
-     */
-    summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree>;
 
     /**
      * Notifies the runtime of a change in the connection state

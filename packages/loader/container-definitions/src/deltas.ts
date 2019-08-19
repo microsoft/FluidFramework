@@ -57,7 +57,7 @@ export interface IDeltaSender extends IProvideDeltaSender {
      * in the global sequencing space. The batch will be flushed either when flush is called or when a non-batched
      * op is submitted.
      */
-    submit(type: MessageType, contents: any, batch: boolean, appData: any): number;
+    submit(type: MessageType, contents: any, batch: boolean, metadata: any): number;
 
     flush(): void;
 }
@@ -139,6 +139,11 @@ export interface IDeltaQueue<T> extends EventEmitter {
      * Peeks at the next message in the queue
      */
     peek(): T | undefined;
+
+    /**
+     * Returns all the items in the queue as an array. Does not remove them from the queue.
+     */
+    toArray(): T[];
 
     /**
      * System level pause

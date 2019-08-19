@@ -37,6 +37,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
+        metadata: message.metadata,
         referenceSequenceNumber: message.referenceSequenceNumber,
         traces: message.traces,
         type: message.type,

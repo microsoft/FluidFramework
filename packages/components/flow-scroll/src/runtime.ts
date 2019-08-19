@@ -42,7 +42,7 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
 
 // Included for back compat - can remove in 0.7 once fluidExport is default
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-      return fluidExport.instantiateRuntime(context);
+    return fluidExport.instantiateRuntime(context);
 }
 
 // Included for back compat - can remove in 0.7 once fluidExport is default

@@ -29,6 +29,13 @@ RUN apt-get update \
     # Install eslint globally
     && npm install -g eslint \
     #
+    # zsh
+    # https://jilles.me/badassify-your-terminal-and-shell/
+    # https://billgrant.io/post/2019-05-05-vsremote/
+    && apt-get install -y zsh \ 
+        wget \
+        vim \
+    #
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
@@ -42,5 +49,15 @@ RUN apt-get update && apt-get install -y \
         curl \
         g++
 
+# terminal colors with xterm
+ENV TERM xterm
+
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=dialog
+
+USER node
+RUN echo ${ZSH_CUSTOM}
+RUN sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" \
+    &&  git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting \
+    && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+COPY .zshrc /home/node/.zshrc

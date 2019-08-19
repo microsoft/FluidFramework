@@ -118,6 +118,210 @@ export interface IContainerRuntimeOptions {
     generateSummaries: boolean;
 }
 
+interface IRuntimeMessageMetadata {
+    batch?: boolean;
+}
+
+class ScheduleManager {
+    private readonly messageScheduler: IMessageScheduler | undefined;
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    private pauseSequenceNumber: number | undefined;
+    private pauseClientId: string | undefined;
+
+    private paused = false;
+    private localPaused = false;
+    private batchClientId: string;
+
+    constructor(
+        messageScheduler: IMessageScheduler | undefined,
+        private readonly emitter: EventEmitter,
+        legacyDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    ) {
+        if (!messageScheduler || !("toArray" in messageScheduler.deltaManager.inbound as any)) {
+            this.deltaManager = legacyDeltaManager;
+            return;
+        }
+
+        this.messageScheduler = messageScheduler;
+        this.deltaManager = this.messageScheduler.deltaManager;
+
+        // listen for delta manager sends and add batch metadata to messages
+        this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
+            if (messages.length === 0) {
+                return;
+            }
+
+            // First message will have the batch flag set to true if doing a batched send
+            const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
+            if (!firstMessageMetadata || !firstMessageMetadata.batch) {
+                return;
+            }
+
+            // if only length one then clear
+            if (messages.length === 1) {
+                delete messages[0].metadata;
+                return;
+            }
+
+            // set the batch flag to false on the last message to indicate the end of the send batch
+            const lastMessage = messages[messages.length - 1];
+            lastMessage.metadata = { ...lastMessage.metadata, ...{ batch: false } };
+        });
+
+        // Listen for updates and peek at the inbound
+        this.deltaManager.inbound.on(
+            "push",
+            (message: ISequencedDocumentMessage) => {
+                this.trackPending(message);
+                this.updatePauseState(message.sequenceNumber);
+            });
+
+        const allPending = this.deltaManager.inbound.toArray();
+        for (const pending of allPending) {
+            this.trackPending(pending);
+        }
+
+        // Based on track pending update the pause state
+        this.updatePauseState(this.deltaManager.referenceSequenceNumber);
+    }
+
+    public beginOperation(message: ISequencedDocumentMessage) {
+        // If in legacy mode every operation is a batch
+        if (!this.messageScheduler) {
+            this.emitter.emit("batchBegin", message);
+            return;
+        }
+
+        if (message.metadata === undefined) {
+            // If there is no metadata, and no client ID set, then this is an individual batch. Otherwise it's a
+            // message in the middle of a batch
+            if (!this.batchClientId) {
+                this.emitter.emit("batchBegin", message);
+            }
+
+            return;
+        }
+
+        // Otherwise we need to check for the metadata flag
+        const metadata = message.metadata as IRuntimeMessageMetadata;
+        if (metadata.batch === true) {
+            this.batchClientId = message.clientId;
+            this.emitter.emit("batchBegin", message);
+        }
+    }
+
+    public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
+        if (!this.messageScheduler || error) {
+            this.batchClientId = undefined;
+            this.emitter.emit("batchEnd", error, message);
+            return;
+        }
+
+        this.updatePauseState(message.sequenceNumber);
+
+        // If no batchClientId has been set then we're in an individual batch
+        if (!this.batchClientId) {
+            this.emitter.emit("batchEnd", undefined, message);
+            return;
+        }
+
+        // As a back stop for any bugs marking the end of a batch - if the client ID flipped we consider the batch over
+        if (this.batchClientId !== message.clientId) {
+            this.emitter.emit("batchEnd", undefined, message);
+            this.batchClientId = undefined;
+            return;
+        }
+
+        // Otherwise need to check the metadata flag
+        const batch = message.metadata ? (message.metadata as IRuntimeMessageMetadata).batch : undefined;
+        if (batch === false) {
+            this.batchClientId = undefined;
+            this.emitter.emit("batchEnd", undefined, message);
+        }
+    }
+
+    public pause(): Promise<void> {
+        this.paused = true;
+        return this.deltaManager.inbound.systemPause();
+    }
+
+    public resume() {
+        this.paused = false;
+        if (!this.localPaused) {
+            // resume is only flipping the state but isn't concerned with the promise result
+            // tslint:disable-next-line:no-floating-promises
+            this.deltaManager.inbound.systemResume();
+        }
+    }
+
+    private setPaused(localPaused: boolean) {
+        // return early if no change in value
+        if (this.localPaused === localPaused) {
+            return;
+        }
+
+        this.localPaused = localPaused;
+        localPaused || this.paused
+            ? this.deltaManager.inbound.systemPause()
+            : this.deltaManager.inbound.systemResume();
+    }
+
+    private updatePauseState(sequenceNumber: number) {
+        // If the inbound queue is ever empty we pause it and wait for new events
+        if (this.deltaManager.inbound.length === 0) {
+            this.setPaused(true);
+            return;
+        }
+
+        // If no message has caused the pause flag to be set, or the next message up is not the one we need to pause at
+        // then we simply continue processing
+        if (!this.pauseSequenceNumber || sequenceNumber + 1 < this.pauseSequenceNumber) {
+            this.setPaused(false);
+        } else {
+            // Otherwise the next message requires us to pause
+            this.setPaused(true);
+        }
+    }
+
+    private trackPending(message: ISequencedDocumentMessage) {
+        const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
+
+        // Protocol messages are never part of a runtime batch of messages
+        if (!isRuntimeMessage(message)) {
+            this.pauseSequenceNumber = undefined;
+            this.pauseClientId = undefined;
+            return;
+        }
+
+        const batchMetadata = metadata ? metadata.batch : undefined;
+
+        // If the client ID changes then we can move the pause point. If it stayed the same then we need to check.
+        if (this.pauseClientId === message.clientId) {
+            if (batchMetadata !== undefined) {
+                // If batchMetadata is not undefined then if it's true we've begun a new batch - if false we've ended
+                // the previous one
+                this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
+                this.pauseClientId = batchMetadata ? this.pauseClientId : undefined;
+            }
+        } else {
+            // We check the batch flag for the new clientID - if true we pause otherwise we reset the tracking data
+            this.pauseSequenceNumber = batchMetadata ? message.sequenceNumber : undefined;
+            this.pauseClientId = batchMetadata ? message.clientId : undefined;
+        }
+    }
+}
+
+function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    switch (message.type) {
+        case MessageType.ChunkedOp:
+        case MessageType.Attach:
+        case MessageType.Operation:
+            return true;
+        default:
+            return false;
+    }
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
@@ -238,6 +442,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private version: string;
 
     private _flushMode = FlushMode.Automatic;
+    private needsFlush = false;
+    private flushTrigger = false;
 
     public get connected(): boolean {
         return this.connectionState === ConnectionState.Connected;
@@ -262,7 +468,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private dirtyDocument = false;
     private readonly summarizer: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
-    private readonly scheduler: IMessageScheduler;
+    private readonly scheduleManager: ScheduleManager;
     private proposeLeadershipOnConnection = false;
     private requestHandler: (request: IRequest) => Promise<IResponse>;
 
@@ -316,12 +522,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.contextsDeferred.set(key, deferred);
         }
 
-        this.scheduler = context.IMessageScheduler;
-        if (this.scheduler) {
-            // this.scheduler.deltaManager.inbound.on("push", (value) => {
-            //     debug("push", value);
-            // });
-        }
+        this.scheduleManager = new ScheduleManager(context.IMessageScheduler, this, context.deltaManager);
         this.deltaSender = this.deltaManager;
 
         this.logger = context.logger;
@@ -410,41 +611,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Otherwise defer to the app to handle the request
         return this.requestHandler(request);
-    }
-
-    /**
-     * Returns a summary of the runtime at the current sequence number
-     */
-    public async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
-        const result: ISummaryTree = {
-            tree: {},
-            type: SummaryType.Tree,
-        };
-
-        // Iterate over each component and ask it to snapshot
-        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
-            const snapshot = await value.snapshot();
-
-            if (snapshot.id) {
-                result.tree[key] = {
-                    handle: snapshot.id,
-                    handleType: SummaryType.Tree,
-                    type: SummaryType.Handle,
-                };
-            } else {
-                const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
-                result.tree[key] = tree;
-            }
-        }));
-
-        if (this.chunkMap.size > 0) {
-            result.tree[".chunks"] = {
-                content: JSON.stringify([...this.chunkMap]),
-                type: SummaryType.Blob,
-            };
-        }
-
-        return result;
     }
 
     /**
@@ -590,7 +756,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     }
 
     public prepare(message: ISequencedDocumentMessage, local: boolean): Promise<any> {
-        return this.scheduler
+        return this.context.IMessageScheduler
             ? Promise.reject("Scheduler assumes only process")
             : Promise.resolve();
     }
@@ -598,6 +764,204 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public process(message: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
+        let error: any | undefined;
+
+        // Surround the actual processing of the operation with messages to the schedule manager indicating
+        // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
+        // messages once a batch has been fully processed.
+        this.scheduleManager.beginOperation(message);
+        try {
+            this.processCore(message, local);
+        } catch (e) {
+            error = e;
+            throw e;
+        } finally {
+            this.scheduleManager.endOperation(error, message);
+        }
+    }
+
+    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
+        return this.context.IMessageScheduler
+            ? Promise.reject("Scheduler assumes only process")
+            : Promise.resolve();
+    }
+
+    public processSignal(message: ISignalMessage, local: boolean) {
+        const envelope = message.content as IEnvelope;
+        const context = this.contexts.get(envelope.address);
+        assert(context);
+
+        const innerContent = envelope.contents as { content: any, type: string };
+        const transformed: IInboundSignalMessage = {
+            clientId: message.clientId,
+            content: innerContent.content,
+            type: innerContent.type,
+        };
+
+        context.processSignal(transformed, local);
+    }
+
+    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        if (!this.contextsDeferred.has(id)) {
+            if (!wait) {
+                return Promise.reject(`Process ${id} does not exist`);
+            }
+
+            // Add in a deferred that will resolve once the process ID arrives
+            this.contextsDeferred.set(id, new Deferred<ComponentContext>());
+        }
+
+        const componentContext = await this.contextsDeferred.get(id).promise;
+        return componentContext.realize();
+    }
+
+    public setFlushMode(mode: FlushMode): void {
+        if (mode === this._flushMode) {
+            return;
+        }
+
+        // If switching to manual mode add a warning trace indicating the underlying loader does not support
+        // this feature yet. Can remove in 0.9.
+        if (!this.deltaSender && mode === FlushMode.Manual) {
+            debug("DeltaManager does not yet support flush modes");
+            return;
+        }
+
+        // Flush any pending batches if switching back to automatic
+        if (mode === FlushMode.Automatic) {
+            this.flush();
+        }
+
+        this._flushMode = mode;
+    }
+
+    public flush(): void {
+        if (!this.deltaSender) {
+            debug("DeltaManager does not yet support flush modes");
+            return;
+        }
+
+        // If flush has already been called then exit early
+        if (!this.needsFlush) {
+            return;
+        }
+
+        this.needsFlush = false;
+        return this.deltaSender.flush();
+    }
+
+    public orderSequentially(callback: () => void): void {
+        const savedFlushMode = this.flushMode;
+
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            callback();
+        } finally {
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+        this.verifyNotClosed();
+
+        const context = new LocalComponentContext(
+            id,
+            pkg,
+            this,
+            this.storage,
+            (cr: IComponentRuntime) => this.attachComponent(cr));
+
+        const deferred = new Deferred<ComponentContext>();
+        this.contextsDeferred.set(id, deferred);
+        this.contexts.set(id, context);
+
+        return context.realize();
+    }
+
+    public getQuorum(): IQuorum {
+        return this.context.quorum;
+    }
+
+    public error(error: any) {
+        this.context.error(error);
+    }
+
+    /**
+     * Notifies this object to register tasks to be performed.
+     * @param tasks - List of tasks.
+     * @param version - Version of the fluid package.
+     */
+    public registerTasks(tasks: string[], version?: string) {
+        this.verifyNotClosed();
+        this.tasks = tasks;
+        this.version = version;
+        if (this.leader) {
+            this.runTaskAnalyzer();
+        }
+    }
+
+    /* tslint:disable:no-unnecessary-override */
+    public on(event: string | symbol, listener: (...args: any[]) => void): this {
+        return super.on(event, listener);
+    }
+
+    /**
+     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
+     * local changes. All pending changes are automatically flushed by shared objects on connection.
+     */
+    public notifyPendingMessages(): void {
+        assert(!this.connected);
+        this.updateDocumentDirtyState(true);
+    }
+
+    /**
+     * Returns true of document is dirty, i.e. there are some pending local changes that
+     * either were not sent out to delta stream or were not yet acknowledged.
+     */
+    public isDocumentDirty(): boolean {
+        return this.dirtyDocument;
+    }
+
+    /**
+     * Returns a summary of the runtime at the current sequence number.
+     */
+    private async summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
+        const result: ISummaryTree = {
+            tree: {},
+            type: SummaryType.Tree,
+        };
+
+        // Iterate over each component and ask it to snapshot
+        await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
+            const snapshot = await value.snapshot();
+
+            if (snapshot.id) {
+                result.tree[key] = {
+                    handle: snapshot.id,
+                    handleType: SummaryType.Tree,
+                    type: SummaryType.Handle,
+                };
+            } else {
+                const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
+                result.tree[key] = tree;
+            }
+        }));
+
+        if (this.chunkMap.size > 0) {
+            result.tree[".chunks"] = {
+                content: JSON.stringify([...this.chunkMap]),
+                type: SummaryType.Blob,
+            };
+        }
+
+        return result;
+    }
+
+    private processCore(message: ISequencedDocumentMessage, local: boolean) {
         let remotedComponentContext: RemotedComponentContext;
 
         // Chunk processing must come first given that we will transform the message to the unchunked version
@@ -680,146 +1044,6 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public postProcess(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        return this.scheduler
-            ? Promise.reject("Scheduler assumes only process")
-            : Promise.resolve();
-    }
-
-    public processSignal(message: ISignalMessage, local: boolean) {
-        const envelope = message.content as IEnvelope;
-        const context = this.contexts.get(envelope.address);
-        assert(context);
-
-        const innerContent = envelope.contents as { content: any, type: string };
-        const transformed: IInboundSignalMessage = {
-            clientId: message.clientId,
-            content: innerContent.content,
-            type: innerContent.type,
-        };
-
-        context.processSignal(transformed, local);
-    }
-
-    public async getComponentRuntime(id: string, wait = true): Promise<IComponentRuntime> {
-        this.verifyNotClosed();
-
-        if (!this.contextsDeferred.has(id)) {
-            if (!wait) {
-                return Promise.reject(`Process ${id} does not exist`);
-            }
-
-            // Add in a deferred that will resolve once the process ID arrives
-            this.contextsDeferred.set(id, new Deferred<ComponentContext>());
-        }
-
-        const componentContext = await this.contextsDeferred.get(id).promise;
-        return componentContext.realize();
-    }
-
-    public setFlushMode(mode: FlushMode): void {
-        if (mode === this._flushMode) {
-            return;
-        }
-
-        // If switching to manual mode add a warning trace indicating the underlying loader does not support
-        // this feature yet. Can remove in 0.9.
-        if (!this.deltaSender && mode === FlushMode.Manual) {
-            debug("DeltaManager does not yet support flush modes - ");
-        }
-
-        // Flush any pending batches if switching back to automatic
-        if (mode === FlushMode.Automatic) {
-            this.flush();
-        }
-
-        this._flushMode = mode;
-    }
-
-    public flush(): void {
-        if (!this.deltaSender) {
-            debug("DeltaManager does not yet support flush modes");
-            return;
-        }
-
-        return this.deltaSender.flush();
-    }
-
-    public orderSequentially(callback: () => void): void {
-        const savedFlushMode = this.flushMode;
-
-        this.setFlushMode(FlushMode.Manual);
-
-        try {
-            callback();
-            this.flush();
-            this.setFlushMode(savedFlushMode);
-        } catch (error) {
-            this.error(error);
-        }
-    }
-
-    public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
-        this.verifyNotClosed();
-
-        const context = new LocalComponentContext(
-            id,
-            pkg,
-            this,
-            this.storage,
-            (cr: IComponentRuntime) => this.attachComponent(cr));
-
-        const deferred = new Deferred<ComponentContext>();
-        this.contextsDeferred.set(id, deferred);
-        this.contexts.set(id, context);
-
-        return context.realize();
-    }
-
-    public getQuorum(): IQuorum {
-        return this.context.quorum;
-    }
-
-    public error(error: any) {
-        this.context.error(error);
-    }
-
-    /**
-     * Notifies this object to register tasks to be performed.
-     * @param tasks - List of tasks.
-     * @param version - Version of the fluid package.
-     */
-    public registerTasks(tasks: string[], version?: string) {
-        this.verifyNotClosed();
-        this.tasks = tasks;
-        this.version = version;
-        if (this.leader) {
-            this.runTaskAnalyzer();
-        }
-    }
-
-    /* tslint:disable:no-unnecessary-override */
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
-     * Called by IComponentRuntime (on behalf of distributed data structure) in disconnected state to notify about
-     * local changes. All pending changes are automatically flushed by shared objects on connection.
-     */
-    public notifyPendingMessages(): void {
-        assert(!this.connected);
-        this.updateDocumentDirtyState(true);
-    }
-
-    /**
-     * Returns true of document is dirty, i.e. there are some pending local changes that
-     * either were not sent out to delta stream or were not yet acknowledged.
-     */
-    public isDocumentDirty(): boolean {
-        return this.dirtyDocument;
-    }
-
     private attachComponent(componentRuntime: IComponentRuntime): void {
         this.verifyNotClosed();
 
@@ -852,7 +1076,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
 
         try {
-            await this.deltaManager.inbound.systemPause();
+            await this.scheduleManager.pause();
 
             // TODO in the future we can have stored the latest summary by listening to the summary ack message
             // after loading from the beginning of the snapshot
@@ -882,7 +1106,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             throw ex;
         } finally {
             // Restart the delta manager
-            await this.deltaManager.inbound.systemResume();
+            this.scheduleManager.resume();
         }
     }
 
@@ -992,6 +1216,22 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         let clientSequenceNumber: number;
 
+        // If in manual flush mode we will trigger a flush at the next turn break
+        let batchBegin = false;
+        if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
+            batchBegin = true;
+            this.needsFlush = true;
+
+            // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
+            if (!this.flushTrigger) {
+                // tslint:disable-next-line:no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flushTrigger = false;
+                    this.flush();
+                });
+            }
+        }
+
         // Note: Chunking will increase content beyond maxOpSize because we JSON'ing JSON payload -
         // there will be a lot of escape characters that can make it up to 2x bigger!
         // This is Ok, because DeltaManager.shouldSplit() will have 2 * maxMessageSize limit
@@ -1000,7 +1240,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                 type,
                 content,
                 this._flushMode === FlushMode.Manual,
-                undefined);
+                batchBegin ? { batch: true } : undefined);
         } else {
             clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
             this.unackedChunkedMessages.set(clientSequenceNumber,
@@ -1047,6 +1287,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             clientId: message.clientId,
             clientSequenceNumber: message.clientSequenceNumber,
             contents: innerContents.content,
+            metadata: message.metadata,
             minimumSequenceNumber: message.minimumSequenceNumber,
             origin: message.origin,
             referenceSequenceNumber: message.referenceSequenceNumber,

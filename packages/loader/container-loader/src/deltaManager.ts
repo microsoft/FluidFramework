@@ -286,6 +286,9 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
             return;
         }
 
+        // The prepareFlush event allows listenerse to append metadata to the batch prior to submission.
+        this.emit("prepareSend", this.messageBuffer);
+
         this._outbound.push(this.messageBuffer);
         this.messageBuffer = [];
     }
@@ -319,7 +322,8 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         if (!batch) {
             this.flush();
-            this._outbound.push([outbound]);
+            this.messageBuffer.push(outbound);
+            this.flush();
         } else {
             this.messageBuffer.push(outbound);
         }

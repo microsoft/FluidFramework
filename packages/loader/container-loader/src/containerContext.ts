@@ -27,7 +27,6 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
-    ISummaryTree,
     ITree,
     MessageType,
 } from "@prague/protocol-definitions";
@@ -35,6 +34,7 @@ import { raiseConnectedEvent } from "@prague/utils";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
+import { DeltaManagerProxy } from "./deltaManagerProxy";
 
 export class ContainerContext extends EventEmitter implements IContainerContext {
     public static async load(
@@ -138,6 +138,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     // Back compat flag - can remove in 0.6
     public legacyMessaging = true;
+    public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     private runtime: IRuntime | undefined;
 
@@ -148,7 +149,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
-        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
@@ -161,19 +162,12 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly version: string,
     ) {
         super();
+        this.deltaManager = new DeltaManagerProxy(deltaManager);
         this.logger = container.subLogger;
     }
 
     public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<ITree | null> {
         return this.runtime!.snapshot(tagMessage, generateFullTreeNoOptimizations);
-    }
-
-    public summarize(generateFullTreeNoOptimizations?: boolean): Promise<ISummaryTree> {
-        if (!this.canSummarize) {
-            return Promise.reject("Runtime does not support summaries");
-        }
-
-        return this.runtime!.summarize(generateFullTreeNoOptimizations);
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string, version?: string) {
