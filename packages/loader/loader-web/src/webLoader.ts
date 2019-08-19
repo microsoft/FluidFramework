@@ -40,6 +40,8 @@ export function extractDetails(value: string): IParsedPackage {
     let pkg: string;
     let name: string;
     let version: string | undefined;
+
+    // Two @ symbols === the package has a version. Use alternative RegEx.
     if (value.indexOf("@") !== value.lastIndexOf("@")) {
         const componentsWithVersion = value.match(/(@(.*)\/)?((.*)@(.*))/);
         if ((!componentsWithVersion || componentsWithVersion.length !== 6)) {
@@ -62,13 +64,19 @@ export function extractDetails(value: string): IParsedPackage {
     };
 }
 
-export function normalize(defaultCdn: string, input: string | IFluidCodeDetails): IFluidCodeDetails {
+/**
+ * Normalize any input into IFluidCodeDetails format
+ * @param inputEither - a string, which is pkgName[at]versionNumber or the full code details
+ * @param defaultCdn - If !(input is IFluidCodeDetails), this is where we'll look up the cdn
+ */
+export function normalize(input: string | IFluidCodeDetails, defaultCdn?: string): IFluidCodeDetails {
     let source: IFluidCodeDetails;
     if (typeof input === "string") {
         const details = extractDetails(input);
         source = {
             config: {
-                [`@${details.scope}:cdn`]: defaultCdn,
+                // tslint:disable-next-line: no-non-null-assertion
+                [`@${details.scope}:cdn`]: defaultCdn!,
             },
             package: input,
         };
@@ -86,11 +94,15 @@ class ScriptManager {
     private readonly loadCache = new Map<string, Promise<void>>();
 
     // tslint:disable-next-line:promise-function-async
-    public loadScript(scriptUrl: string): Promise<void> {
+    public loadScript(scriptUrl: string, scriptId?: string): Promise<void> {
         if (!this.loadCache.has(scriptUrl)) {
             const scriptP = new Promise<void>((resolve, reject) => {
                 const script = document.createElement("script");
                 script.src = scriptUrl;
+
+                if (scriptId !== undefined) {
+                    script.id = scriptId;
+                }
 
                 // Dynamically added scripts are async by default. By setting async to false, we are enabling the
                 // scripts to be downloaded in parallel, but executed in order. This ensures that a script is executed
@@ -112,12 +124,31 @@ class ScriptManager {
         // tslint:disable-next-line:no-non-null-assertion
         return this.loadCache.get(scriptUrl)!;
     }
+
+    public loadScripts(
+        umdDetails: { files: string[]; library: string; },
+        packageUrl: string,
+        scriptIds?: string[],
+        // tslint:disable-next-line: array-type
+    ): Promise<void>[] {
+        return umdDetails.files.map(async (bundle, index) => {
+            // Load file as cdn Link (starts with http)
+            // Or create a cdnLink from packageURl
+            const url = bundle.indexOf("http") === 0
+                ? bundle
+                : `${packageUrl}/${bundle}`;
+            return this.loadScript(url, scriptIds !== undefined ? scriptIds[index] : undefined);
+        });
+    }
 }
 
 class FluidPackage {
     private resolveP: Promise<IResolvedPackage> | undefined;
     private loadP: Promise<any> | undefined;
 
+    /**
+     * @param details - Fully Normalized IPackageDetails
+     */
     constructor(private readonly details: IPackageDetails, private readonly scriptManager: ScriptManager) {
     }
 
@@ -138,22 +169,39 @@ class FluidPackage {
         });
 
         const entrypoint = this.details.details.package.fluid.browser.umd.library;
+        const umdDetails = this.details.details.package.fluid.browser.umd;
         this.loadP = new Promise<any>((resolve, reject) => {
             if (entrypoint in window) {
                 resolve(window[entrypoint]);
             }
 
+            const scriptFound = scriptIds.find((scriptId) => {
+                const script = document.getElementById(scriptId) as HTMLScriptElement;
+                return (script !== null);
+            });
+
+            // If the script hasn't been attached, attach it now.
+            // This could cause a double load of the scrip, but scriptManager handles duplicates
+            if (scriptFound === undefined) {
+                this.scriptManager.loadScripts(umdDetails, this.details.packageUrl, scriptIds);
+            }
+
+            // ScriptIds are needed here in case the script hasn't loaded yet
+            // if there's no script, fetch and load it
             scriptIds.forEach((scriptId) => {
                 const script = document.getElementById(scriptId) as HTMLScriptElement;
-                script.onload = () => {
-                    if (entrypoint in window) {
-                        resolve(window[entrypoint]);
-                    }
-                };
 
-                script.onerror = (error) => {
-                    reject(error);
-                };
+                if (script !== undefined && script !== null) {
+                    script.onload = () => {
+                        if (entrypoint in window) {
+                            resolve(window[entrypoint]);
+                        }
+                    };
+
+                    script.onerror = (error) => {
+                        reject(error);
+                    };
+                }
             });
         });
     }
@@ -185,7 +233,7 @@ class FluidPackage {
         }
 
         if (!("fluid" in packageJson || "prague" in packageJson)) {
-            return Promise.reject("Not a fluid pacakge");
+            return Promise.reject("Not a fluid package");
         }
 
         const fluidPackage = packageJson as IFluidPackage;
@@ -215,13 +263,7 @@ class FluidPackage {
         // Currently only support UMD package loads
         const umdDetails = resolved.pkg.fluid.browser.umd;
 
-        await Promise.all(
-            umdDetails.files.map(async (bundle) => {
-                const url = bundle.indexOf("http") === 0
-                    ? bundle
-                    : `${this.details.packageUrl}/${bundle}`;
-                return this.scriptManager.loadScript(url);
-            }));
+        await Promise.all(this.scriptManager.loadScripts(umdDetails, this.details.packageUrl));
 
         // tslint:disable-next-line:no-unsafe-any
         return window[umdDetails.library];
@@ -250,6 +292,11 @@ export class WebLoader implements ICodeLoader {
         return fluidPackage.resolve();
     }
 
+    /**
+     * @param source - New: Details of where to find chaincode
+     *                  Old: a string of packageName[at]versionNumber to be looked up
+     * @param details - Duplicate, Details of where to find chaincode
+     */
     public async load<T>(
         source: string | IFluidCodeDetails,
         details?: IFluidCodeDetails,
@@ -272,16 +319,18 @@ export class WebLoader implements ICodeLoader {
     }
 
     private getPackageDetails(input: string | IFluidCodeDetails): IPackageDetails {
-        const details = normalize(this.baseUrl, input);
+        // Only need input the code details, baseURl is for old input format only
+        const details = normalize(input, (typeof input === "string" ? this.baseUrl : undefined));
 
         const fullPkg = typeof details.package === "string"
-            ? details.package
-            : !details.package.version
-                ? `${details.package.name}`
-                : `${details.package.name}@${details.package.version}`;
+            ? details.package // just return it if it's a string e.g. "@chaincode/clicker@0.1.1"
+            : !details.package.version // if it doesn't exist, let's make it from the packge detals
+                ? `${details.package.name}` // e.g. @chaincode/clicker
+                : `${details.package.name}@${details.package.version}`; // reconstitute e.g. @chaincode/clicker@0.1.1.
         const parsed = extractDetails(fullPkg);
 
-        const cdn = details.config[`${parsed.scope ? `@${parsed.scope}:` : ""}cdn`];
+        const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;
+        const cdn = details.config[scriptCdnTag];
         const scopePath = parsed.scope ? `@${encodeURI(parsed.scope)}/` : "";
         const packageUrl = parsed.version !== undefined
             ? `${cdn}/${scopePath}${encodeURI(`${parsed.name}@${parsed.version}`)}`

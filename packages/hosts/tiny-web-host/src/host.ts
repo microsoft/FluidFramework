@@ -4,6 +4,7 @@
  */
 
 import { start } from "@prague/base-host";
+import { IResolvedPackage } from "@prague/loader-web";
 import * as UrlParse from "url-parse";
 import { resolveUrl } from "./urlResolver";
 import { auth } from "./utils";
@@ -32,6 +33,8 @@ const appTenants = [
  * @param appId - The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
  * @param clientId - The SPO clientId
  * @param clientSecret - The SPO clientSecret
+ * @param pkg - A resolved package with cdn links. Overrides a query paramter.
+ * @param scriptIds - the script tags the chaincode are attached to the view with
  */
 export async function loadPragueComponent(
     url: string,
@@ -40,17 +43,105 @@ export async function loadPragueComponent(
     appId: string,
     clientId: string,
     secret: string,
+    pkg?: IResolvedPackage,
+    scriptIds?: string[],
 ): Promise<any> {
 
     let componentP: Promise<any>;
     if (isRouterliciousUrl(url)) {
-        componentP = startWrapper(url, getToken, div, clientId, secret);
+        componentP = startWrapper(url, getToken, div, clientId, secret, pkg, scriptIds);
     } else if (isSpoUrl(url)) {
         throw new Error("Office.com URLs are not yet supported.");
     } else {
         throw new Error("Non-Compatible Url.");
     }
     return componentP;
+}
+
+async function startWrapper(
+    href: string,
+    getToken: () => Promise<string>,
+    div: HTMLDivElement,
+    clientId: string,
+    secret: string,
+    pkg?: IResolvedPackage,
+    scriptIds?: string[],
+): Promise<any> {
+    const parsedUrl = pragueUrlParser(href);
+    const config = {
+        blobStorageUrl: parsedUrl.storageUrl,
+        clientId,
+        deltaStorageUrl: parsedUrl.deltaStorageUrl,
+        secret,
+        serverUrl: parsedUrl.ordererUrl,
+    };
+
+    // tslint:disable-next-line: no-unsafe-any
+    const [resolvedP, fullTreeP] =
+        resolveUrl(config, appTenants, parsedUrl.tenant, parsedUrl.container, getToken) as any;
+
+    return Promise.all([resolvedP, fullTreeP])
+        .then(async ([resolved, fullTree]) => {
+            // tslint:disable-next-line: no-unsafe-any
+            return start(
+                href,
+                // tslint:disable-next-line: no-unsafe-any
+                resolved, // resolved, IResolvedUrl,
+                undefined, // cache, IGitCache (could be a value)
+                pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
+                scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
+                npm, // string,
+                await auth(parsedUrl.tenant, parsedUrl.container, getToken), // string,
+                div,
+            );
+        }, (error) => {
+            throw error;
+        }).catch((error) => {
+            throw error;
+        });
+}
+
+function pragueUrlParser(href: string) {
+    const url = UrlParse(href, true);
+    const pathParts = url.pathname.split("/");
+
+    const container = pathParts[3];
+    const tenant = pathParts[2];
+    const storageUrl = `https://${url.host.replace("www", "historian")}/repos/${tenant}`;
+    const ordererUrl = `https://${url.host.replace("www", "alfred")}`;
+    const deltaStorageUrl = `${ordererUrl}/deltas/${tenant}/${container}`;
+    return {
+        container,
+        deltaStorageUrl,
+        ordererUrl,
+        storageUrl,
+        tenant,
+    };
+}
+
+const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";
+const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
+
+/**
+ * Simple function to test if a URL is a valid SPO or Routerlicious Prague link
+ *
+ * @param url - Url to Test
+ */
+export function isPragueURL(url: string): boolean {
+    if (isRouterliciousUrl(url)) {
+        return true;
+    } else if (isSpoUrl(url)) {
+        return true;
+    }
+    return false;
+}
+
+export function isRouterliciousUrl(url: string): boolean {
+    return url.match(routerliciousRegex) ? true : false;
+}
+
+export function isSpoUrl(url: string): boolean {
+    return url.match(spoRegex) ? true : false;
 }
 
 /**
@@ -138,88 +229,4 @@ export async function loadIFramedPragueComponent(
     };
 
     return;
-}
-
-async function startWrapper(
-    href: string,
-    getToken: () => Promise<string>,
-    div: HTMLDivElement,
-    clientId: string,
-    secret: string,
-): Promise<any> {
-    const parsedUrl = pragueUrlParser(href);
-    const config = {
-        blobStorageUrl: parsedUrl.storageUrl,
-        clientId,
-        deltaStorageUrl: parsedUrl.deltaStorageUrl,
-        secret,
-        serverUrl: parsedUrl.ordererUrl,
-    };
-
-    // tslint:disable-next-line: no-unsafe-any
-    const [resolvedP, fullTreeP] =
-        resolveUrl(config, appTenants, parsedUrl.tenant, parsedUrl.container, getToken) as any;
-
-    return Promise.all([resolvedP, fullTreeP])
-        .then(async ([resolved, fullTree]) => {
-            // tslint:disable-next-line: no-unsafe-any
-            return start(
-                href,
-                // tslint:disable-next-line: no-unsafe-any
-                resolved, // resolved, IResolvedUrl,
-                undefined, // cache, IGitCache (could be a value)
-                undefined, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
-                undefined, // scriptIds, string[], needed only if pkg is not undefined
-                npm, // string,
-                await auth(parsedUrl.tenant, parsedUrl.container, getToken), // string,
-                div,
-            );
-        }, (error) => {
-            throw error;
-        }).catch((error) => {
-            throw error;
-        });
-}
-
-function pragueUrlParser(href: string) {
-    const url = UrlParse(href, true);
-    const pathParts = url.pathname.split("/");
-
-    const container = pathParts[3];
-    const tenant = pathParts[2];
-    const storageUrl = `https://${url.host.replace("www", "historian")}/repos/${tenant}`;
-    const ordererUrl = `https://${url.host.replace("www", "alfred")}`;
-    const deltaStorageUrl = `${ordererUrl}/deltas/${tenant}/${container}`;
-    return {
-        container,
-        deltaStorageUrl,
-        ordererUrl,
-        storageUrl,
-        tenant,
-    };
-}
-
-const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.*";
-const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
-
-/**
- * Simple function to test if a URL is a valid SPO or Routerlicious Prague link
- *
- * @param url - Url to Test
- */
-export function isPragueURL(url: string): boolean {
-    if (isRouterliciousUrl(url)) {
-        return true;
-    } else if (isSpoUrl(url)) {
-        return true;
-    }
-    return false;
-}
-
-export function isRouterliciousUrl(url: string): boolean {
-    return url.match(routerliciousRegex) ? true : false;
-}
-
-export function isSpoUrl(url: string): boolean {
-    return url.match(spoRegex) ? true : false;
 }

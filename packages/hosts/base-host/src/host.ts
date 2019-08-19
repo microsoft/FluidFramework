@@ -168,12 +168,14 @@ export async function start(
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm);
     if (pkg) {
-        if (pkg.pkg) {
+        if (pkg.pkg) { // this is an IFluidPackage
             codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);
             if (pkg.details.package === pkg.pkg.name) {
                 pkg.details.package = `${pkg.pkg.name}@${pkg.pkg.version}`;
             }
         }
+
+        // The load takes in an IFluidCodeDetails
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 

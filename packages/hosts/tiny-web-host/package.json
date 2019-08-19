@@ -25,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "@prague/base-host": "^0.9.0",
+    "@prague/loader-web": "^0.9.0",
     "@prague/odsp-utils": "^0.9.0",
     "@prague/protocol-definitions": "^0.9.0",
     "@prague/services-core": "^0.9.0",
