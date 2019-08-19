@@ -67,7 +67,7 @@ const DefaultScribe: IScribe = {
 
 const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
-    maxMessageSize:  16 * 1024,
+    maxMessageSize: 16 * 1024,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
@@ -331,10 +331,10 @@ export class LocalOrderer implements IOrderer {
 
         const [protocolHead, messages] = gitManager
             ?
-                await Promise.all([
-                    fetchLatestSummaryState(gitManager, documentId),
-                    scribeDeltasCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1}),
-                ])
+            await Promise.all([
+                fetchLatestSummaryState(gitManager, documentId),
+                scribeDeltasCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 }),
+            ])
             : [0, []];
 
         return new LocalOrderer(
@@ -370,6 +370,7 @@ export class LocalOrderer implements IOrderer {
     private broadcasterLambda: BroadcasterLambda;
 
     private alfredToDeliKafka: InMemoryKafka;
+    private reverseProducerKafka: IProducer;
     private deliToScriptoriumKafka: InMemoryKafka;
 
     private existing: boolean;
@@ -405,6 +406,7 @@ export class LocalOrderer implements IOrderer {
 
         // In memory kafka.
         this.alfredToDeliKafka = new InMemoryKafka(this.existing ? details.value.sequenceNumber : 0);
+        this.reverseProducerKafka = new ReverseProducerKafka(this.alfredToDeliKafka);
         this.deliToScriptoriumKafka = new InMemoryKafka();
 
         // Scriptorium + Broadcaster Lambda
@@ -425,7 +427,7 @@ export class LocalOrderer implements IOrderer {
                 : DefaultScribe;
             const lastState = scribe.protocolState
                 ? scribe.protocolState
-                : { members: [], proposals: [], values: []};
+                : { members: [], proposals: [], values: [] };
             const protocolHandler = new ProtocolOpHandler(
                 documentId,
                 scribe.minimumSequenceNumber,
@@ -458,7 +460,7 @@ export class LocalOrderer implements IOrderer {
             details.value,
             documentCollection,
             this.deliToScriptoriumKafka,
-            this.alfredToDeliKafka,
+            this.reverseProducerKafka,
             clientTimeout,
             ActivityCheckingTimeout,
             NoopConsolidationTimeout);
@@ -503,6 +505,7 @@ export class LocalOrderer implements IOrderer {
     public async close() {
         // close in-memory kafkas
         this.alfredToDeliKafka.close();
+        this.reverseProducerKafka.close();
         this.deliToScriptoriumKafka.close();
 
         // close lambdas
@@ -540,6 +543,7 @@ export class LocalOrderer implements IOrderer {
 // Dumb local in memory kafka.
 // TODO: Make this real.
 class InMemoryKafka extends EventEmitter implements IProducer {
+
     constructor(private offset = 0) {
         super();
     }
@@ -564,4 +568,21 @@ class InMemoryKafka extends EventEmitter implements IProducer {
     public close(): Promise<void> {
         return Promise.resolve();
     }
+}
+
+class ReverseProducerKafka implements IProducer {
+
+    constructor(private readonly parent: InMemoryKafka) {
+    }
+
+    public async send(messages: object[], topic: string): Promise<any> {
+        setImmediate(() => {
+            this.parent.send(messages, topic);
+        });
+    }
+
+    public close(): Promise<void> {
+        return Promise.resolve();
+    }
+
 }
