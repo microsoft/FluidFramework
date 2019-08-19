@@ -4,7 +4,7 @@
  */
 import {
   PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  SharedComponentFactory,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
@@ -107,9 +107,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 /**
  * This is where you define all your Distributed Data Structures
  */
-export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
+export const ClickerInstantiationFactory = new SharedComponentFactory(
+  Clicker,
   [
     SharedDirectory.getFactory([new CounterValueType()]),
   ],
-  Clicker.load
 );

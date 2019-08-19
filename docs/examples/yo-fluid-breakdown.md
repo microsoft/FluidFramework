@@ -73,7 +73,7 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `SimpleComponentInstantiationFactory` from <xref:aqueduct> provides helper functionality.
+`PrimedComponent` and `SharedComponentFactory` from <xref:aqueduct> provides helper functionality.
 `IComponentHTMLVisual` from <xref:container-definitions> provides the interface for enabling rendering.
 `CounterValueType` and `SharedMap` from <xref:map> are Distributed Data Structures.
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
@@ -82,7 +82,7 @@ First we will declare all our imports. Here is a quick description and use cases
 ```typescript
 import {
   PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  SharedComponentFactory,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
@@ -352,7 +352,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:aqueduct.SimpleComponentInstantiationFactory> as a helper to create our
+In the example below we use the <xref:aqueduct.SharedComponentFactory> as a helper to create our
 instantiation factory. As properties we pass in our supported distributed data structures. In this scenario we
 use the `SharedMap` with the `Counter` value type. Value types are currently specific to the SharedMap and are
 collaborative values that can only be set on the map.
@@ -375,11 +375,11 @@ Finally we export this so we can use it in the [index.ts](#index.ts) below for o
 /**
  * This is where you define all your Distributed Data Structures
  */
-export const ExampleFluidComponentInstantiationFactory = new SimpleComponentInstantiationFactory(
+export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
+  ExampleFluidComponent,
   [
     SharedMap.getFactory([new CounterValueType()]),
   ],
-  ExampleFluidComponent.load
 );
 ```
 

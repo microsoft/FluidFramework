@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SimpleComponentInstantiationFactory } from "@prague/aqueduct";
+import { SharedComponentFactory } from "@prague/aqueduct";
 import {
     CounterValueType,
     DistributedSetValueType,
@@ -13,7 +13,8 @@ import { IComponentFactory } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { MonacoRunner } from "./chaincode";
 
-export const fluidExport: IComponentFactory = new SimpleComponentInstantiationFactory(
+export const fluidExport: IComponentFactory = new SharedComponentFactory(
+    MonacoRunner,
     [
         SharedDirectory.getFactory([
             new DistributedSetValueType(),
@@ -25,5 +26,4 @@ export const fluidExport: IComponentFactory = new SimpleComponentInstantiationFa
         sequence.SharedObjectSequence.getFactory(),
         sequence.SharedNumberSequence.getFactory(),
     ],
-    MonacoRunner.load,
 );
