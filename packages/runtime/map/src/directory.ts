@@ -153,8 +153,8 @@ export class DirectoryFactory {
         return directory;
     }
 
-    public create(document: IComponentRuntime, id: string): ISharedDirectory {
-        const directory = new SharedDirectory(id, document);
+    public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
+        const directory = new SharedDirectory(id, runtime);
         this.registerValueTypes(directory);
         directory.initializeLocal();
 

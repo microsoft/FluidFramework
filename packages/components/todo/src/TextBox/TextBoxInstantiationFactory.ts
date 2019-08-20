@@ -7,6 +7,7 @@ import {
 } from "@prague/aqueduct";
 import {
     SharedDirectory,
+    SharedMap,
 } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
@@ -19,6 +20,8 @@ export const TextBoxInstantiationFactory: IComponentFactory = new SharedComponen
     TextBox,
     [
         SharedDirectory.getFactory(),
+        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+        SharedMap.getFactory(),
         SharedString.getFactory(),
     ],
 );

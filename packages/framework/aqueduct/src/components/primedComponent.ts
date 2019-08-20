@@ -9,10 +9,10 @@ import {
  } from "@prague/component-core-interfaces";
 import {
     ISharedDirectory,
+    MapFactory,
     SharedDirectory,
 } from "@prague/map";
 import { ITaskManager } from "@prague/runtime-definitions";
-
 import { SharedComponent } from "./sharedComponent";
 
 /**
@@ -78,6 +78,14 @@ export abstract class PrimedComponent extends SharedComponent {
         } else {
             // Component has a root directory so we just need to set it before calling componentInitializingFromExisting
             this.internalRoot = await this.runtime.getChannel(this.rootDirectoryId) as ISharedDirectory;
+
+            // This will actually be an ISharedMap if the channel was previously created by the older version of
+            // PrimedComponent which used a SharedMap.  Since SharedMap and SharedDirectory are compatible unless
+            // SharedDirectory-only commands are used on SharedMap, this will mostly just work for compatibility.
+            if (this.internalRoot.attributes.type === MapFactory.Type) {
+                this.runtime.logger.send({category: "generic", eventName: "MapPrimedComponent", message: "Legacy document, SharedMap is masquerading as SharedDirectory in PrimedComponent"});
+            }
+
             await this.componentInitializingFromExisting();
         }
 

@@ -12,6 +12,7 @@ import {
     CounterValueType,
     ISharedDirectory,
     SharedDirectory,
+    SharedMap,
 } from "@prague/map";
 
 import * as React from "react";
@@ -63,6 +64,8 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
         ClickerWithInitialValue,
         [
             SharedDirectory.getFactory([new CounterValueType()]),
+            // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+            SharedMap.getFactory([new CounterValueType()]),
         ],
     );
 }

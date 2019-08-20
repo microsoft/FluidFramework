@@ -5,7 +5,7 @@
 
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
 import { PrimedComponent, SimpleModuleInstantiationFactory, SharedComponentFactory } from '@prague/aqueduct';
-import { CounterValueType, SharedDirectory } from '@prague/map';
+import { CounterValueType, SharedDirectory, SharedMap } from '@prague/map';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { TeamScore } from './teamScore';
@@ -62,6 +62,8 @@ const ScoreboardComponentInstantiationFactory = new SharedComponentFactory(
   Scoreboard,
   [
     SharedDirectory.getFactory([new CounterValueType()]),
+    // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+    SharedMap.getFactory([new CounterValueType()]),
   ],
 );
 

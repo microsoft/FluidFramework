@@ -19,7 +19,7 @@ import {
   IContainerContext,
   IRuntime,
 } from "@prague/container-definitions";
-import { Counter, CounterValueType, SharedDirectory } from "@prague/map";
+import { Counter, CounterValueType, SharedDirectory, SharedMap } from "@prague/map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
@@ -34,6 +34,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
     OwnedMap,
     [
       SharedDirectory.getFactory([new CounterValueType()]),
+      // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+      SharedMap.getFactory([new CounterValueType()]),
       OwnedSharedMap.getFactory(),
     ],
   );

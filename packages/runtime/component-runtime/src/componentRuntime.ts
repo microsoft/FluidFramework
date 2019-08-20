@@ -262,7 +262,6 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
      * Registers a channel with the runtime. If the runtime is attached we will attach the channel right away.
      * If the runtime is not attached we will defer the attach until the runtime attaches.
      * @param channel - channel to be registered.
-     * @param onAttach - callback to be called when the channel is attached.
      */
     public registerChannel(channel: IChannel): void {
         // If our Component is not local attach the channel.

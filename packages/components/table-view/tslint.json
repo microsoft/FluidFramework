@@ -7,6 +7,7 @@
         "no-floating-promises": false,
         "no-non-null-assertion": false,
         "no-parameter-reassignment": false,
+        "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "object-literal-sort-keys": false

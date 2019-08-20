@@ -4,6 +4,7 @@
         "completed-docs": false,
         "class-name": false,
         "interface-name": false,
+        "no-suspicious-comment": false,
         "no-unsafe-any": false,
         "member-ordering": false,
         "member-access": false,

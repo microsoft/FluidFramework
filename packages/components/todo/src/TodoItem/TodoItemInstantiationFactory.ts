@@ -11,6 +11,7 @@ import {
 import {
     CounterValueType,
     SharedDirectory,
+    SharedMap,
 } from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
@@ -23,6 +24,8 @@ export const TodoItemInstantiationFactory: IComponentFactory = new SharedCompone
     TodoItem,
     [
         SharedDirectory.getFactory([new CounterValueType()]),
+        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+        SharedMap.getFactory([new CounterValueType()]),
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],

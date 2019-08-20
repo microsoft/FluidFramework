@@ -19,6 +19,7 @@ import {
   Counter,
   CounterValueType,
   SharedDirectory,
+  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -103,6 +104,8 @@ export const ClickerInstantiationFactory = new SharedComponentFactory(
   Clicker,
   [
     SharedDirectory.getFactory([new CounterValueType()]),
+    // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+    SharedMap.getFactory([new CounterValueType()]),
   ],
 );
 
