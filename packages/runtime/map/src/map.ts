@@ -51,7 +51,7 @@ interface IMapMessageHandler {
 }
 
 interface IMapValueTypeOperation {
-    type: "act";
+    type: string;
     key: string;
     value: IValueTypeOperationValue;
 }
@@ -277,7 +277,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         let serializableValue: ISerializableValue;
         if (type) {
             // value is actually initialization params in the value type case
-            localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), value);
+            localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key, type), value);
 
             // This is a special form of serialized valuetype only used for set, containing info for initialization.
             // After initialization, the serialized form will need to come from the .store of the value type's factory.
@@ -424,7 +424,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.messageHandlers.get(message.type);
+            // For back compat we'll assume that any unrecognized message types are for ValueTypes
+            const handler = this.messageHandlers.get(message.type) || this.messageHandlers.get("act");
             handler.submit(message);
         }
 
@@ -463,6 +464,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
             if (this.messageHandlers.has(op.type)) {
                 return this.messageHandlers.get(op.type)
                     .prepare(op, local, message);
+            } else if (this.localValueMaker.hasValueType(op.type)) {
+                // for back compat, accept messages whose type is a registered ValueType
+                return this.messageHandlers.get("act")
+                    .prepare(op, local, message);
             }
         }
 
@@ -475,6 +480,11 @@ export class SharedMap extends SharedObject implements ISharedMap {
             const op: IMapOperation = message.contents as IMapOperation;
             if (this.messageHandlers.has(op.type)) {
                 this.messageHandlers.get(op.type)
+                    .process(op, context as ILocalValue, local, message);
+                handled = true;
+            } else if (this.localValueMaker.hasValueType(op.type)) {
+                // for back compat, accept messages whose type is a registered ValueType
+                this.messageHandlers.get("act")
                     .process(op, context as ILocalValue, local, message);
                 handled = true;
             }
@@ -586,8 +596,10 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     private hasHandlerFor(message: any): boolean {
+        // Back compat - Previously the message type would be the name of the value type.
+        // If it has been registered, accept it as a message.
         // tslint:disable-next-line:no-unsafe-any
-        return this.messageHandlers.has(message.type);
+        return this.messageHandlers.has(message.type) || this.localValueMaker.hasValueType(message.type);
     }
 
     /**
@@ -605,7 +617,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         } else {
             return this.localValueMaker.fromSerializable(
                 serializable,
-                this.makeMapValueOpEmitter(key),
+                this.makeMapValueOpEmitter(key, serializable.type),
             );
         }
     }
@@ -735,11 +747,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
         }
     }
 
-    private makeMapValueOpEmitter(key: string): IValueOpEmitter {
+    // Type is included for back compat - server expects the type to be the value type, rather than "act"
+    private makeMapValueOpEmitter(key: string, type: string): IValueOpEmitter {
         const emit = (opName: string, previousValue: any, params: any) => {
             const op: IMapValueTypeOperation = {
                 key,
-                type: "act",
+                type,
                 value: {
                     opName,
                     value: params,

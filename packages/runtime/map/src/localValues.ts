@@ -97,6 +97,10 @@ export class LocalValueMaker {
         this.valueTypes.set(type.name, type);
     }
 
+    public hasValueType(type: string): boolean {
+        return this.valueTypes.has(type);
+    }
+
     public async fromSerializable(serializable: ISerializableValue, emitter?: IValueOpEmitter) {
         if (serializable.type === ValueType[ValueType.Shared]) {
             // even though this is getting an IChannel, we trust it will be a SharedObject because of the type marking
