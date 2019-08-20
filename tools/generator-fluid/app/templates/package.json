@@ -49,7 +49,6 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.9.0",
     "@prague/aqueduct": "^0.9.0",
     "@prague/build-common": "^0.9.0",
     "@prague/component-core-interfaces": "^0.9.0",
