@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Char } from "@prague/flow-util";
 import { TextSegment } from "@prague/merge-tree";
-import { getDocSegmentKind } from "../document";
 import { Formatter, IFormatterState } from "../view/formatter";
 import { Layout } from "../view/layout";
 
@@ -18,7 +18,7 @@ class PlainTextFormatter extends Formatter<IFormatterState> {
         if (TextSegment.is(segment)) {
             layout.emitText();
         } else {
-            console.warn(`Not 'text/plaintext': '${getDocSegmentKind(segment)}'`);
+            layout.emitNode(document.createTextNode(Char.replacementCharacter));
         }
 
         return true;
