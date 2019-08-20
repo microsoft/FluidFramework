@@ -25,7 +25,7 @@ export class IntelWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { localMinSeq: 0, encrypted: undefined, client: { type: "intel"} },
+            { encrypted: undefined, client: { type: "intel"} },
             this.serviceFactory,
             task);
 

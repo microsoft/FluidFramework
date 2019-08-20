@@ -31,7 +31,7 @@ export class SnapshotWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, localMinSeq: 0, client: { type: "snapshot"} },
+            { encrypted: undefined, client: { type: "snapshot"} },
             this.serviceFactory,
             task);
 

@@ -934,7 +934,7 @@ export class Client {
         if (this.measureOps) {
             clockStart = clock();
         }
-        this.mergeTree.updateGlobalMinSeq(minSeq);
+        this.mergeTree.setMinSeq(minSeq);
         if (this.measureOps) {
             let elapsed = elapsedMicroseconds(clockStart);
             this.accumWindowTime += elapsed;

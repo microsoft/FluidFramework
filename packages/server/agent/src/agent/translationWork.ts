@@ -26,7 +26,7 @@ export class TranslationWork extends BaseWork implements IWork {
 
     public async start(task: string): Promise<void> {
         await this.loadDocument(
-            { encrypted: undefined, localMinSeq: 0, client: { type: "translation"} },
+            { encrypted: undefined, client: { type: "translation"} },
             this.serviceFactory,
             task);
 

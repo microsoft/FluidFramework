@@ -31,7 +31,6 @@ export class SpellcheckerWork extends BaseWork implements IWork {
                 blockUpdateMarkers: true,
                 client: { type: "spell" },
                 encrypted: undefined,
-                localMinSeq: 0,
             },
             this.serviceFactory,
             task);

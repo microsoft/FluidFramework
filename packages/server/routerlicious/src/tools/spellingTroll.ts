@@ -56,7 +56,6 @@ class Speller {
             console.log(this.sharedString.client.mergeTree.collabWindow.minSeq);
             this.sharedString.annotateRangeFromPast(492, 496, { textError: { text: "that", alternates: altSpellings, color: "paul"} }, 0);
             console.log(this.sharedString.client.mergeTree.nodeToString(<MergeTree.IMergeBlock>this.sharedString.client.mergeTree.root.children[0], "", 0));
-            this.sharedString.setLocalMinSeq(0);
         }, 10000);
     }
 

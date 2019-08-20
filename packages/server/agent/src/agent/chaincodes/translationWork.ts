@@ -22,7 +22,7 @@ export class TranslationWork extends ChaincodeWork implements IWork {
     }
 
     public async start(): Promise<void> {
-        return this.loadChaincode({ encrypted: undefined, localMinSeq: 0, client: { type: "translation"} }, true);
+        return this.loadChaincode({ encrypted: undefined, client: { type: "translation"} }, true);
     }
 
     public async stop(): Promise<void> {

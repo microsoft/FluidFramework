@@ -26,7 +26,6 @@ export class SpellcheckerWork extends ChaincodeWork implements IWork {
                 blockUpdateMarkers: true,
                 client: { type: "spell"},
                 encrypted: undefined,
-                localMinSeq: 0,
             },
             true);
     }
