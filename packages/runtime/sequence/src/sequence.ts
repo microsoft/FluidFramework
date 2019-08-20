@@ -48,6 +48,52 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return this.loadedDeferred.promise;
     }
 
+    private static createOpsFromDelta(event: SequenceDeltaEvent): MergeTree.IMergeTreeOp[] {
+        const ops: MergeTree.IMergeTreeOp[] = [];
+        for (const r of event.ranges) {
+            switch (event.deltaOperation) {
+                case MergeTree.MergeTreeDeltaType.ANNOTATE:
+                    const lastAnnotate = ops[ops.length - 1] as MergeTree.IMergeTreeAnnotateMsg;
+                    const props = {};
+                    for (const key of Object.keys(r.propertyDeltas)) {
+                        props[key] =
+                            r.segment.properties[key] === undefined ? null : r.segment.properties[key];
+                    }
+                    if (lastAnnotate && lastAnnotate.pos2 === r.position &&
+                        MergeTree.matchProperties(lastAnnotate.props, props)) {
+                        lastAnnotate.pos2 += r.segment.cachedLength;
+                    } else {
+                        ops.push(MergeTree.createAnnotateRangeOp(
+                            r.position,
+                            r.position + r.segment.cachedLength,
+                            props,
+                            undefined));
+                    }
+                    break;
+
+                case MergeTree.MergeTreeDeltaType.INSERT:
+                    ops.push(MergeTree.createInsertOp(
+                        r.position,
+                        cloneDeep(r.segment.toJSONObject())));
+                    break;
+
+                case MergeTree.MergeTreeDeltaType.REMOVE:
+                    const lastRem = ops[ops.length - 1] as MergeTree.IMergeTreeRemoveMsg;
+                    if (lastRem && lastRem.pos1 === r.position) {
+                        lastRem.pos2 += r.segment.cachedLength;
+                    } else {
+                        ops.push(MergeTree.createRemoveRangeOp(
+                            r.position,
+                            r.position + r.segment.cachedLength));
+                    }
+                    break;
+
+                default:
+            }
+        }
+        return ops;
+    }
+
     public client: MergeTree.Client;
     protected isLoaded = false;
     protected collabStarted = false;
@@ -389,24 +435,17 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             this.client.mergeTree.commitGlobalMin();
         }
 
-        // debug(`Transforming up to ${this.deltaManager.minimumSequenceNumber}`);
-        const transformedMessages: ISequencedDocumentMessage[] = [];
-        for (const message of this.messagesSinceMSNChange) {
-            transformedMessages.push(this.transform(
-                message,
-                minSeq));
-        }
-
         const snap = new MergeTree.Snapshot(this.client.mergeTree, this.logger);
         snap.extractSync();
         const mtSnap = snap.emit();
 
+        this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
         mtSnap.entries.push({
             mode: FileMode.File,
             path: "tardis",
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: JSON.stringify(transformedMessages),
+                contents: JSON.stringify(this.messagesSinceMSNChange),
                 encoding: "utf-8",
             },
         });
@@ -420,15 +459,34 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected processContent(message: ISequencedDocumentMessage) {
+
+        const ops: MergeTree.IMergeTreeOp[] = [];
+        function transfromOps(event: SequenceDeltaEvent) {
+            ops.push(... SharedSegmentSequence.createOpsFromDelta(event));
+        }
+        const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
+        let stashMessage = message;
+        if (needsTransformation) {
+            stashMessage = cloneDeep(message);
+            stashMessage.referenceSequenceNumber = message.sequenceNumber - 1;
+            this.on("sequenceDelta", transfromOps);
+        }
+
         this.processMessage(message);
 
-        this.messagesSinceMSNChange.push(message);
+        if (needsTransformation) {
+            this.removeListener("sequenceDelta", transfromOps);
+            stashMessage.contents = ops.length !== 1 ? MergeTree.createGroupOp(...ops) : ops[0];
+        }
+
+        this.messagesSinceMSNChange.push(stashMessage);
 
         // Do GC every once in a while...
         if (this.messagesSinceMSNChange.length > 20
-                && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
+            && this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber) {
             this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
         }
+
     }
 
     protected registerContent() {
@@ -491,39 +549,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     private processMessage(message: ISequencedDocumentMessage) {
         this.client.applyMsg(message);
-    }
-
-    private transform(
-            originalMessage: ISequencedDocumentMessage,
-            minSequenceNumber: number): ISequencedDocumentMessage {
-        let message = originalMessage;
-
-        assert(message.minimumSequenceNumber <= message.referenceSequenceNumber);
-        // Make sure Merge tree current seq # is up to date!
-        // This is important for check in MergeTree.tardisPositionFromClient() to be correct!
-        assert(minSequenceNumber <= this.client.getCurrentSeq());
-
-        // Allow the distributed data types to perform custom transformations
-        if (message.referenceSequenceNumber < minSequenceNumber) {
-            // Make a copy of original message since we will be modifying in place
-            message = cloneDeep(message);
-            message.contents = this.client.transform(
-                message.contents as MergeTree.IMergeTreeOp,
-                this.client.getShortClientId(message.clientId),
-                message.referenceSequenceNumber,
-                minSequenceNumber);
-            assert(message.contents);
-            message.referenceSequenceNumber = minSequenceNumber;
-            message.minimumSequenceNumber = minSequenceNumber;
-        } else if (message.minimumSequenceNumber < minSequenceNumber) {
-            message.minimumSequenceNumber = minSequenceNumber;
-        }
-
-        // This should be true when we get here (see processMinSequenceNumberChanged()),
-        // and should stay true after transform
-        assert(message.sequenceNumber > minSequenceNumber);
-
-        return message;
     }
 
     private loadHeader(

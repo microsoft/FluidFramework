@@ -21,7 +21,6 @@ import {
     IUndoInfo,
     Marker,
     MergeTree,
-    NonCollabClient,
     RegisterCollection,
     SegmentGroup,
     UnassignedSequenceNumber,
@@ -262,16 +261,6 @@ export class Client {
 
     public getPosition(segment: ISegment): number {
         return this.mergeTree.getPosition(segment, this.getCurrentSeq(), this.getClientId());
-    }
-
-    public transform(
-        op: ops.IMergeTreeOp,
-        clientId: number,
-        referenceSequenceNumber: number,
-        toSequenceNumber: number,
-    ): ops.IMergeTreeOp {
-        assert (referenceSequenceNumber < toSequenceNumber);
-        return this.transformOp(op, clientId, referenceSequenceNumber, toSequenceNumber);
     }
 
     public addLocalReference(lref: LocalReference) {
@@ -605,80 +594,6 @@ export class Client {
             }
         } else {
             ackOp(opArgs);
-        }
-    }
-
-    private transformOp(
-        op: ops.IMergeTreeOp,
-        clientId: number,
-        referenceSequenceNumber: number,
-        toSequenceNumber: number,
-    ): ops.IMergeTreeOp {
-        if (op.type === ops.MergeTreeDeltaType.GROUP) {
-            const tranformedGroupOps: ops.IMergeTreeOp[] = [];
-            op.ops.forEach((subOp) => {
-                const newOp = this.transformOp(subOp, clientId, referenceSequenceNumber, toSequenceNumber);
-                if (newOp.type === ops.MergeTreeDeltaType.GROUP) {
-                    tranformedGroupOps.push(...newOp.ops);
-                } else {
-                    tranformedGroupOps.push(newOp);
-                }
-            });
-            return tranformedGroupOps.length > 1 ?
-                OpBuilder.createGroupOp(...tranformedGroupOps) : tranformedGroupOps[0];
-        }
-
-        // covert relative positions to absolute positions
-        // so they can be transformed
-        const start = op.relativePos1 === undefined ?
-            op.pos1 :
-            this.mergeTree.posFromRelativePos(
-                op.relativePos1,
-                referenceSequenceNumber,
-                clientId);
-
-        const end = op.relativePos2 === undefined ?
-            op.pos2 :
-            this.mergeTree.posFromRelativePos(
-                op.relativePos2,
-                referenceSequenceNumber,
-                clientId);
-
-        switch (op.type) {
-            case ops.MergeTreeDeltaType.ANNOTATE:
-            case ops.MergeTreeDeltaType.REMOVE:
-
-                const ranges = this.mergeTree.tardisRange(
-                    start,
-                    end,
-                    referenceSequenceNumber,
-                    toSequenceNumber,
-                    NonCollabClient);
-                const tranformedOps: ops.IMergeTreeOp[] =
-                    ranges.map((range) => {
-                        if (op.type === ops.MergeTreeDeltaType.ANNOTATE) {
-                            return OpBuilder.createAnnotateRangeOp(
-                                range.start,
-                                range.end,
-                                op.props,
-                                op.combiningOp);
-                        } else {
-                            return OpBuilder.createRemoveRangeOp(range.start, range.end);
-                        }
-                    });
-                return tranformedOps.length > 1 ? OpBuilder.createGroupOp(...tranformedOps) : tranformedOps[0];
-
-            case ops.MergeTreeDeltaType.INSERT:
-                return OpBuilder.createInsertOp(
-                    this.mergeTree.tardisPosition(
-                        start,
-                        referenceSequenceNumber,
-                        toSequenceNumber,
-                        clientId),
-                    op.seg);
-
-            default:
-                throw new Error(`Unrecognized Op Type`);
         }
     }
 
