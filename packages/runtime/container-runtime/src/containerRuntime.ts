@@ -288,8 +288,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         this.IComponentHandleContext = new ComponentHandleContext("", this);
 
         // Extract components stored inside the snapshot
+        const loadedFromSummary = context.baseSnapshot.trees[".protocol"] ? true : false;
         const components = new Map<string, ISnapshotTree | string>();
-        if (context.baseSnapshot.trees[".protocol"]) {
+        if (loadedFromSummary) {
             Object.keys(context.baseSnapshot.trees).forEach((value) => {
                 if (value !== ".protocol") {
                     const tree = context.baseSnapshot.trees[value];
@@ -346,11 +347,13 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may
         // want to be on demand instead.
+        // Don't use optimizations when generating summaries with a document loaded using snapshots.
+        // This will ensure we correctly convert old documents.
         this.summarizer = new Summarizer(
             "/_summarizer",
             this,
             summaryConfiguration,
-            () => this.generateSummary());
+            () => this.generateSummary(!loadedFromSummary));
 
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries);
@@ -421,17 +424,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // Iterate over each component and ask it to snapshot
         await Promise.all(Array.from(this.contexts).map(async ([key, value]) => {
             const snapshot = await value.snapshot();
-
-            if (snapshot.id) {
-                result.tree[key] = {
-                    handle: snapshot.id,
-                    handleType: SummaryType.Tree,
-                    type: SummaryType.Handle,
-                };
-            } else {
-                const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
-                result.tree[key] = tree;
-            }
+            const tree = this.convertToSummaryTree(snapshot, generateFullTreeNoOptimizations);
+            result.tree[key] = tree;
         }));
 
         if (this.chunkMap.size > 0) {
@@ -851,18 +845,21 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         deferred.resolve(context);
     }
 
-    private async generateSummary(): Promise<void> {
+    private async generateSummary(generateFullTreeNoOptimizations?: boolean): Promise<void> {
         const message =
             `Summary @${this.deltaManager.referenceSequenceNumber}:${this.deltaManager.minimumSequenceNumber}`;
 
         // TODO: Issue-2171 Support for Branch Snapshots
         if (this.parentBranch) {
-            debug(`Skipping summary due to being branch of ${this.parentBranch}`);
+            this.logger.sendTelemetryEvent({
+                eventName: "SkipGenerateSummaryParentBranch",
+                parentBranch: this.parentBranch,
+            });
             return;
         }
 
         if (!("uploadSummary" in this.context.storage)) {
-            debug(`Driver does not support summary ops`);
+            this.logger.sendTelemetryEvent({ eventName: "SkipGenerateSummaryNotSupported" });
             return;
         }
 
@@ -875,7 +872,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             const parents = versions.map((version) => version.id);
             const entries: { [path: string]: SummaryObject } = {};
 
-            const componentEntries = await this.summarize();
+            const componentEntries = await this.summarize(generateFullTreeNoOptimizations);
 
             // And then combine
             const root: ISummaryTree = {
@@ -893,7 +890,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
             this.submit(MessageType.Summarize, summary);
         } catch (ex) {
-            debug("Summary error", ex);
+            this.logger.logException({ eventName: "GenerateSummaryExceptionError" }, ex);
             throw ex;
         } finally {
             // Restart the delta manager

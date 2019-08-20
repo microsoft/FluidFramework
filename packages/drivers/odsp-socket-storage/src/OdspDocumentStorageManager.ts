@@ -140,6 +140,13 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             return this.readSummaryTree(tree.sha, commits[".protocol"] as string, commits[".app"] as string);
         }
 
+        if (hierarchicalTree.blobs) {
+            const attributesBlob = hierarchicalTree.blobs[".attributes"];
+            if (attributesBlob) {
+                this.attributesBlobHandles.add(attributesBlob);
+            }
+        }
+
         hierarchicalTree.commits = commits;
 
         return hierarchicalTree;
