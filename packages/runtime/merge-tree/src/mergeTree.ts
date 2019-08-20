@@ -2949,7 +2949,7 @@ export class MergeTree {
     private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber) && (seq !== TreeMaintenanceSequenceNumber)) {
-            if (node.partialLengths !== undefined && MergeTree.options.incrementalUpdate) {
+            if (node.partialLengths !== undefined && MergeTree.options.incrementalUpdate && clientId !== NonCollabClient) {
                 node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
             } else {
                 node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);

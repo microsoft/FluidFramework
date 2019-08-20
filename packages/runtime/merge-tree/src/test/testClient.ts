@@ -4,6 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
@@ -14,12 +15,12 @@ import {
     ISegment,
     Marker,
     UnassignedSequenceNumber,
-    UniversalSequenceNumber,
 } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { Snapshot } from "../snapshot";
+import { SnapshotLoader } from "../snapshotLoader";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -49,32 +50,21 @@ export class TestClient extends Client {
      */
     public static useCheckQ = false;
 
-    public static async createFromSnapshot(client1: TestClient): Promise<TestClient> {
+    public static async createFromSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit();
+        const snapshotTree = snapshot.emit([]);
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(client1.mergeTree.options);
-
-        const headerChunk = await Snapshot.loadChunk(services, "header");
-        client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
-        assert.equal(client2.getText(), client1.getText(0, Snapshot.sizeOfFirstChunk));
-
-        if (client1.getLength() > Snapshot.sizeOfFirstChunk) {
-
-            const bodyChunk = await Snapshot.loadChunk(services, "body");
-            client2.mergeTree.insertSegments(
-                client2.getLength(),
-                bodyChunk.segmentTexts.map(specToSegment),
-                UniversalSequenceNumber,
-                client2.mergeTree.collabWindow.clientId,
-                UniversalSequenceNumber,
-                undefined);
-
-            assert.equal(client2.getLength(), client1.getLength());
-            assert.equal(client2.getText(), client1.getText());
-        }
+        const loader = new SnapshotLoader(
+            // tslint:disable-next-line: no-object-literal-type-assertion
+            {
+                logger: client2.logger,
+                clientId: newLongClientId,
+            } as IComponentRuntime,
+            client2);
+        await loader.initialize(undefined, services);
         return client2;
     }
 

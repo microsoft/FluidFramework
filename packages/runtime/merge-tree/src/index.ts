@@ -19,3 +19,4 @@ export * from "./segmentPropertiesManager";
 export * from "./sortedSegmentSet";
 export * from "./textSegment";
 export * from "./localReference";
+export * from "./snapshotLoader";
