@@ -1205,7 +1205,7 @@ export type LocalReferenceMapper = (id: string) => LocalReference;
 // represents a sequence of text segments
 export class MergeTree {
     // must be an even number
-    static TextSegmentGranularity = 128;
+    static TextSegmentGranularity = 256;
     static zamboniSegmentsMaxCount = 2;
     static options = {
         incrementalUpdate: true,
