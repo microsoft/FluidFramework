@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@prague/container-definitions";
-import { FileMode, ITree, TreeEntry } from "@prague/protocol-definitions";
+import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
 import { ChildLogger } from "@prague/utils";
 import * as MergeTree from "./mergeTree";
@@ -32,7 +32,13 @@ export interface SnapChunk {
     buffer?: Buffer;
 }
 
+
 export class Snapshot {
+
+    public static readonly header = "header";
+    public static readonly body = "body";
+    public static readonly tardis = "tardis";
+
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
     // Please note that this number has no direct relationship to anything other than size of raw text (characters).
     // As we produce json for the blob (and then encode into base64 and send over the wire compressed), this number
@@ -77,7 +83,7 @@ export class Snapshot {
         }
     }
 
-    emit(): ITree {
+    emit(tardisMsgs: ISequencedDocumentMessage[]): ITree {
         let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
@@ -85,7 +91,7 @@ export class Snapshot {
             entries: [
                 {
                     mode: FileMode.File,
-                    path: "header",
+                    path: Snapshot.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
                         contents: JSON.stringify(chunk1),
@@ -103,7 +109,7 @@ export class Snapshot {
             segments += chunk2.chunkSegmentCount;
             tree.entries.push({
                 mode: FileMode.File,
-                path: "body",
+                path: Snapshot.body,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
                     contents: JSON.stringify(chunk2),
@@ -119,6 +125,16 @@ export class Snapshot {
         this.logger.shipAssert(
             segments === chunk1.totalSegmentCount,
             { eventName: "emit: mismatch in totalSegmentCount" });
+
+        tree.entries.push({
+            mode: FileMode.File,
+            path: Snapshot.tardis,
+            type: TreeEntry[TreeEntry.Blob],
+            value: {
+                contents: JSON.stringify(tardisMsgs),
+                encoding: "utf-8",
+            },
+        });
 
         return tree;
     }

@@ -2485,7 +2485,9 @@ export class MergeTree {
                         const segmentBranchId = this.getBranchId(segment.clientId);
                         const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
                         // only skipped ack segments above the refSeq of the insert
-                        if (removalInfo && removalInfo.removedSeq >= refSeq) {
+                        if (removalInfo
+                            && removalInfo.removedSeq <= refSeq
+                            && removalInfo.removedSeq !== UnassignedSequenceNumber) {
                             continue;
                         }
                     }
@@ -2931,7 +2933,7 @@ export class MergeTree {
     private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber) && (seq !== TreeMaintenanceSequenceNumber)) {
-            if (node.partialLengths !== undefined && MergeTree.options.incrementalUpdate) {
+            if (node.partialLengths !== undefined && MergeTree.options.incrementalUpdate && clientId !== NonCollabClient) {
                 node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
             } else {
                 node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);

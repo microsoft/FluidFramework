@@ -10,10 +10,8 @@ import {
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    FileMode,
     ISequencedDocumentMessage,
     ITree,
-    TreeEntry,
 } from "@prague/protocol-definitions";
 import {
     IComponentRuntime,
@@ -392,12 +390,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         minimumSequenceNumber: number,
         headerOrigin: string,
         storage: IObjectStorageService): Promise<void> {
-
-        const header = await storage.read("header");
-        assert(header);
-
+        const loader = new MergeTree.SnapshotLoader(this.runtime, this.client);
         try {
-            await this.initialize(minimumSequenceNumber, header, true, headerOrigin, storage);
+            const msgs = await loader.initialize(
+                headerOrigin,
+                storage,
+                () => this.collabStarted = true);
+            msgs.forEach((m) => this.processContent(m));
             this.loadFinished();
         } catch (error) {
             this.loadFinished(error);
@@ -429,18 +428,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         const snap = new MergeTree.Snapshot(this.client.mergeTree, this.logger);
         snap.extractSync();
-        const mtSnap = snap.emit();
-
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
-        mtSnap.entries.push({
-            mode: FileMode.File,
-            path: "tardis",
-            type: TreeEntry[TreeEntry.Blob],
-            value: {
-                contents: JSON.stringify(this.messagesSinceMSNChange),
-                encoding: "utf-8",
-            },
-        });
+        const mtSnap = snap.emit(this.messagesSinceMSNChange);
 
         return mtSnap;
     }
@@ -541,119 +530,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     private processMessage(message: ISequencedDocumentMessage) {
         this.client.applyMsg(message);
-    }
-
-    private loadHeader(
-        minimumSequenceNumber: number,
-        header: string,
-        shared: boolean,
-        originBranch: string): MergeTree.MergeTreeChunk {
-
-        const chunk = MergeTree.Snapshot.processChunk(header);
-        const segs = this.segmentsFromSpecs(chunk.segmentTexts);
-        this.client.mergeTree.reloadFromSegments(segs);
-        if (shared) {
-            // TODO currently only assumes two levels of branching
-            const branchId = originBranch === this.runtime.documentId ? 0 : 1;
-            this.collabStarted = true;
-
-            // Do not use minimumSequenceNumber - it's from the "future" in case compoennt is delay loaded.
-            // We need the one used when snapshot was created! That's chunk.chunkSequenceNumber
-            let msn = chunk.chunkSequenceNumber;
-
-            // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
-            // Not sure why - need to catch it sooner!
-            if (msn > minimumSequenceNumber) {
-                this.logger.sendErrorEvent({eventName: "SharedStringMsnTooHigh", msn, minimumSequenceNumber});
-                msn = minimumSequenceNumber;
-            }
-
-            this.client.startCollaboration(
-                this.runtime.clientId, msn, branchId);
-        }
-        return chunk;
-    }
-
-    // If loading from a snapshot load tardis messages
-    private async loadTardis(
-        rawMessages: Promise<string>,
-        originBranch: string,
-    ): Promise<void> {
-        const messages = JSON.parse(Buffer.from(await rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
-        if (originBranch !== this.runtime.documentId) {
-            for (const message of messages) {
-                // Append branch information when transforming for the case of messages stashed with the snapshot
-                message.origin = {
-                    id: originBranch,
-                    minimumSequenceNumber: message.minimumSequenceNumber,
-                    sequenceNumber: message.sequenceNumber,
-                };
-            }
-        }
-
-        // Apply all pending messages
-        for (const message of messages) {
-            this.processContent(message);
-        }
-    }
-
-    private async initialize(
-        minimumSequenceNumber: number,
-        header: string,
-        shared: boolean,
-        originBranch: string,
-        services: IObjectStorageService): Promise<void> {
-
-        // If loading from a snapshot load tardis messages
-        // kick off loading in parallel to loading "body" chunk.
-        const rawMessages = services.read("tardis");
-
-        // override branch by default which is derived from document id,
-        // as document id isn't stable for spo
-        // which leads to branch id being in correct
-        const branch = this.runtime.options && this.runtime.options.enableBranching
-            ? originBranch : this.runtime.documentId;
-
-        const chunk1 = this.loadHeader(minimumSequenceNumber, header, shared, branch);
-        await this.loadBody(chunk1, services);
-        return this.loadTardis(rawMessages, branch);
-    }
-
-    private async loadBody(chunk1: MergeTree.MergeTreeChunk, services: IObjectStorageService): Promise<void> {
-        this.logger.shipAssert(
-            chunk1.chunkLengthChars <= chunk1.totalLengthChars,
-            { eventName: "Mismatch in totalLengthChars" });
-
-        this.logger.shipAssert(
-            chunk1.chunkSegmentCount <= chunk1.totalSegmentCount,
-            { eventName: "Mismatch in totalSegmentCount" });
-
-        if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
-            return;
-        }
-
-        const chunk2 = await MergeTree.Snapshot.loadChunk(services, "body");
-
-        this.logger.shipAssert(
-            chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,
-            { eventName: "Mismatch in totalLengthChars" });
-
-        this.logger.shipAssert(
-            chunk1.chunkSegmentCount  + chunk2.chunkSegmentCount === chunk1.totalSegmentCount,
-            { eventName: "Mismatch in totalSegmentCount" });
-
-        const mergeTree = this.client.mergeTree;
-        const clientId = mergeTree.collabWindow.clientId;
-
-        // Deserialize each chunk segment and append it to the end of the MergeTree.
-        mergeTree.insertSegments(
-            mergeTree.root.cachedLength,
-            this.segmentsFromSpecs(chunk2.segmentTexts),
-            MergeTree.UniversalSequenceNumber,
-            clientId,
-            MergeTree.UniversalSequenceNumber,
-            undefined);
-
     }
 
     private initializeIntervalCollections() {

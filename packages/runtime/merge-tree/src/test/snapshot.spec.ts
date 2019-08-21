@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import { MockStorage } from "@prague/runtime-test-utils";
-import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
-import { specToSegment, TestClient } from ".";
-import { UniversalSequenceNumber } from "..";
+import { TestClient } from ".";
 import { Snapshot } from "../snapshot";
+import { SnapshotLoader } from "../snapshotLoader";
 
 describe("snapshot", () => {
     it("header only", async () => {
 
         const client1 = new TestClient();
-        client1.startCollaboration("me");
+        client1.startCollaboration("0");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk; i++) {
             const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
             const msg = client1.makeOpMessage(op, i + 1);
@@ -22,15 +22,18 @@ describe("snapshot", () => {
             client1.applyMsg(msg);
         }
 
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
+        const snapshot = new Snapshot(client1.mergeTree, client1.logger);
         snapshot.extractSync();
-        const snapshotTree = snapshot.emit();
+        const snapshotTree = snapshot.emit([]);
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new TestClient(undefined, specToSegment);
-
-        const headerChunk = await Snapshot.loadChunk(services, "header");
-        client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
+        const client2 = new TestClient(undefined);
+        const runtime: Partial<IComponentRuntime> = {
+            clientId: "1",
+            logger: client2.logger,
+        };
+        const loader = new SnapshotLoader(runtime as IComponentRuntime, client2);
+        await loader.initialize(undefined, services, undefined);
 
         assert.equal(client2.getLength(), client1.getLength());
         assert.equal(client2.getText(), client1.getText());
@@ -40,37 +43,38 @@ describe("snapshot", () => {
 
     it("header and body", async () => {
 
-        const client1 = new TestClient();
-        client1.startCollaboration("me");
+        const clients = [new TestClient(), new TestClient(), new TestClient()];
+        clients[0].startCollaboration("0");
         for (let i = 0; i < Snapshot.sizeOfFirstChunk + 10; i++) {
-            const op = client1.insertTextLocal(client1.getLength(), `${i % 10}`, { segment: i });
-            const msg = client1.makeOpMessage(op, i + 1);
+            const op = clients[0].insertTextLocal(clients[0].getLength(), `${i % 10}`, { segment: i });
+            const msg = clients[0].makeOpMessage(op, i + 1);
             msg.minimumSequenceNumber = i + 1;
-            client1.applyMsg(msg);
+            clients[0].applyMsg(msg);
         }
 
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
-        snapshot.extractSync();
-        const snapshotTree = snapshot.emit();
-        const services = new MockStorage(snapshotTree);
+        for (let i = 0; i < clients.length - 1; i++) {
+            const client1 = clients[i];
+            const client2 = clients[i + 1];
+            const snapshot = new Snapshot(client1.mergeTree, client1.logger);
+            snapshot.extractSync();
+            const snapshotTree = snapshot.emit([]);
+            const services = new MockStorage(snapshotTree);
+            const runtime: Partial<IComponentRuntime> = {
+                clientId: (i + 1).toString(),
+                logger: client2.logger,
+            };
+            const loader = new SnapshotLoader(runtime as IComponentRuntime, client2);
+            await loader.initialize(undefined, services, undefined);
 
-        const client2 = new TestClient(undefined, specToSegment);
+            const client2Len = client2.getLength();
+            assert.equal(
+                client2Len,
+                client1.getLength(),
+                `client${client2.longClientId} and client${client1.longClientId} lengths don't match`);
 
-        const headerChunk = await Snapshot.loadChunk(services, "header");
-        client2.mergeTree.reloadFromSegments(headerChunk.segmentTexts.map(specToSegment));
-        assert.equal(client2.getText(), client1.getText(0, Snapshot.sizeOfFirstChunk));
-
-        const bodyChunk = await Snapshot.loadChunk(services, "body");
-        client2.mergeTree.insertSegments(
-            client2.getLength(),
-            bodyChunk.segmentTexts.map(specToSegment),
-            UniversalSequenceNumber,
-            client2.mergeTree.collabWindow.clientId,
-            UniversalSequenceNumber,
-            undefined);
-
-        assert.equal(client2.getLength(), client1.getLength());
-        assert.equal(client2.getText(Snapshot.sizeOfFirstChunk - 1), client1.getText(Snapshot.sizeOfFirstChunk - 1));
+            assert.equal(
+                client2.getText(Snapshot.sizeOfFirstChunk - 1), client1.getText(Snapshot.sizeOfFirstChunk - 1));
+        }
     })
     // tslint:disable-next-line: mocha-no-side-effect-code
     .timeout(5000);
