@@ -256,7 +256,8 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
 
     protected onConnect(pending: any[]) {
         while (this.promiseResolveQueue.length > 0) {
-            const pendingP = this.promiseResolveQueue.shift();
+            // tslint:disable-next-line: no-non-null-assertion
+            const pendingP = this.promiseResolveQueue.shift()!;
             pendingP.reject(`Client was disconnected before ${pendingP.key} was acked`);
         }
     }
@@ -287,22 +288,23 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private processInboundWrite(message: ISequencedDocumentMessage, op: IRegisterOperation, local: boolean) {
-        if (!this.data.has(op.key)) {
-            this.data.set(op.key, {
-                atomic: undefined,
-                versions: [],
-            });
-        }
-        const data = this.data.get(op.key);
-
+        let data = this.data.get(op.key);
         const refSeq = message.referenceSequenceNumber;
         // Atomic update if it's a new register or the write attempt was not concurrent (ref seq >= sequence number)
-        if (!data.atomic || refSeq >= data.atomic.sequenceNumber) {
+        if (data === undefined || refSeq >= data.atomic.sequenceNumber) {
             const atomicUpdate: ILocalRegister = {
                 sequenceNumber: message.sequenceNumber,
                 value: op.value,
             };
-            data.atomic = atomicUpdate;
+            if (data === undefined) {
+                data = {
+                    atomic: atomicUpdate,
+                    versions: [],
+                };
+                this.data.set(op.key, data);
+            } else {
+                data.atomic = atomicUpdate;
+            }
             this.emit("atomicChanged", { key: op.key }, local, message);
         }
 
@@ -327,7 +329,9 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private processLocalMessage(message: ISequencedDocumentMessage) {
-        const pending = this.promiseResolveQueue.shift();
+        // tslint:disable-next-line: no-non-null-assertion
+        const pending = this.promiseResolveQueue.shift()!;
+        assert(pending);
         assert(message.clientSequenceNumber === -1
             || message.clientSequenceNumber === pending.clientSequenceNumber,
             `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
@@ -378,7 +382,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
                 return fullValue;
             default:
                 assert(false, "Invalid value type");
+                return Promise.reject("Invalid value type");
         }
     }
-
 }
