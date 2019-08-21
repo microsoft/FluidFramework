@@ -89,7 +89,7 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
                 this.emit("pause");
             } else {
                 if (this.pauseDeferred) {
-                    this.pauseDeferred.reject("Resumed while waiting to pause");
+                    this.pauseDeferred.reject(new Error("Resumed while waiting to pause"));
                     this.pauseDeferred = undefined;
                 }
 

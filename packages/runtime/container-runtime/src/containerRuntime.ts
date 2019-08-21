@@ -261,9 +261,12 @@ class ScheduleManager {
         }
 
         this.localPaused = localPaused;
-        localPaused || this.paused
+        const promise = localPaused || this.paused
             ? this.deltaManager.inbound.systemPause()
             : this.deltaManager.inbound.systemResume();
+
+        // we do not care about "Resumed while waiting to pause" rejections.
+        promise.catch((err) => {});
     }
 
     private updatePauseState(sequenceNumber: number) {
