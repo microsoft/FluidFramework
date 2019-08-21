@@ -145,6 +145,28 @@ describe("Routerlicious", () => {
                         }
                     });
                 });
+
+                it("Should serialize and deserialize an undefined value", () => {
+                    sharedMap.set("first", "second");
+                    sharedMap.set("third", "fourth");
+                    sharedMap.set("fifth", undefined);
+                    const subMap = factory.create(runtime, "subMap");
+                    sharedMap.set("object", subMap);
+
+                    const serialized = (sharedMap as SharedMap).serialize();
+                    const parsed = JSON.parse(serialized);
+
+                    sharedMap.forEach((value, key) => {
+                        const type = parsed[key].type;
+                        if (type === "Plain") {
+                            assert.equal(parsed[key].type, "Plain");
+                            assert.equal(parsed[key].value, value);
+                        } else {
+                            assert.equal(parsed[key].type, "Shared");
+                            assert.equal(parsed[key].value, subMap.id);
+                        }
+                    });
+                });
             });
 
             describe(".wait()", () => {

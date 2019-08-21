@@ -32,11 +32,14 @@ export class PlainLocalValue implements ILocalValue {
     ): ISerializableValue {
         // Stringify to convert to the serialized handle values - and then parse in order to create
         // a POJO for the op
-        const result = serializer.stringify(
-            this.value,
-            context,
-            bind);
-        const value = JSON.parse(result);
+        const result = this.value !== undefined ?
+            serializer.stringify(
+                this.value,
+                context,
+                bind,
+            ) :
+            undefined;
+        const value = result !== undefined ? JSON.parse(result) : undefined;
 
         return {
             type: this.type,
@@ -108,8 +111,12 @@ export class LocalValueMaker {
             return new SharedLocalValue(localValue);
         } else if (serializable.type === ValueType[ValueType.Plain]) {
             // stored value comes in already parsed so we stringify again to run through converter
-            const translatedValue = this.runtime.IComponentSerializer.parse(
-                JSON.stringify(serializable.value), this.runtime.IComponentHandleContext);
+            const translatedValue = serializable.value !== undefined ?
+                this.runtime.IComponentSerializer.parse(
+                        JSON.stringify(serializable.value),
+                        this.runtime.IComponentHandleContext,
+                    ) :
+                undefined;
             return new PlainLocalValue(translatedValue);
         } else if (this.valueTypes.has(serializable.type)) {
             const valueType = this.valueTypes.get(serializable.type);
