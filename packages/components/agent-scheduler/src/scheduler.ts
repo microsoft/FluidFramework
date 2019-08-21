@@ -162,7 +162,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                     possibleTasks.push(taskUrl);
                 }
             }
-            return this.pickCore(possibleTasks);
+            try {
+                await this.pickCore(possibleTasks);
+            } catch (err) {
+                debug(err as string); // Just log the error. It will be attempted again.
+            }
         }
     }
 
@@ -252,7 +256,11 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
                 debug(`Clearing ${taskUrl}`);
                 clearP.push(this.writeCore(taskUrl, null));
             }
-            await Promise.all(clearP);
+            try {
+                await Promise.all(clearP);
+            } catch (err) {
+                debug(err as string);
+            }
         }
     }
 
@@ -286,14 +294,16 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         await this.clearTasks(clearCandidates);
 
         // Each client expresses interest to be a leader.
-        await this.pick(LeaderTaskId);
+        try {
+            await this.pick(LeaderTaskId);
 
-        // There must be a leader now.
-        const leaderClientId = this.getTaskClientId(LeaderTaskId);
-        assert(leaderClientId, "No leader present");
-
-        // Set leadership info
-        this._leader = leaderClientId === this.runtime.clientId;
+            // There must be a leader now.
+            const leaderClientId = this.getTaskClientId(LeaderTaskId);
+            assert(leaderClientId, "No leader present");
+            this._leader = leaderClientId === this.runtime.clientId;
+        } catch (err) {
+            debug(err as string);
+        }
 
         // Listeners for new/released tasks. All clients will try to grab at the same time.
         // May be we want a randomized timer (Something like raft) to reduce chattiness?
@@ -387,7 +397,7 @@ export class TaskManager implements ITaskManager {
 
     }
 
-    public async pick(componentUrl: string, ...tasks: ITask[]) {
+    public async pick(componentUrl: string, ...tasks: ITask[]): Promise<void> {
         const urlWithSlash = componentUrl.startsWith("/") ? componentUrl : `/${componentUrl}`;
         const runtimeAsComponent = this.context.hostRuntime as IComponent;
         const configuration = runtimeAsComponent.IComponentConfiguration;
@@ -400,7 +410,12 @@ export class TaskManager implements ITaskManager {
             this.taskMap.set(task.id, task.instance);
             registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));
         }
-        await Promise.all(registersP);
+        try {
+            await Promise.all(registersP);
+        } catch (err) {
+            debug(err as string); // Just log the error. It will be attempted again.
+        }
+
     }
 }
 

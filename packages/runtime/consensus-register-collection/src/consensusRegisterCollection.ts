@@ -69,6 +69,11 @@ interface IPendingRecord {
      * The client sequence number of the operation. For assert only.
      */
     clientSequenceNumber: number;
+
+    /**
+     * Operation key. For assert only.
+     */
+    key: string;
 }
 
 const snapshotFileName = "header";
@@ -249,6 +254,13 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
     }
 
+    protected onConnect(pending: any[]) {
+        while (this.promiseResolveQueue.length > 0) {
+            const pendingP = this.promiseResolveQueue.shift();
+            pendingP.reject(`Client was disconnected before ${pendingP.key} was acked`);
+        }
+    }
+
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation) {
             const op: IRegisterOperation = message.contents;
@@ -317,7 +329,8 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     private processLocalMessage(message: ISequencedDocumentMessage) {
         const pending = this.promiseResolveQueue.shift();
         assert(message.clientSequenceNumber === -1
-            || message.clientSequenceNumber === pending.clientSequenceNumber);
+            || message.clientSequenceNumber === pending.clientSequenceNumber,
+            `${message.clientSequenceNumber} !== ${pending.clientSequenceNumber}`);
         pending.resolve();
     }
 
@@ -328,8 +341,8 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         // False positive - tslint couldn't track that the promise is stored in promiseResolveQueue and resolved later
         // tslint:disable:promise-must-complete
         return new Promise((resolve, reject) => {
-            // Note that clientSequenceNumber and message is only used for asserts and isn't strictly necessary.
-            this.promiseResolveQueue.push({ resolve, reject, clientSequenceNumber });
+            // Note that clientSequenceNumber and key is only used for asserts and isn't strictly necessary.
+            this.promiseResolveQueue.push({ resolve, reject, clientSequenceNumber, key: message.key });
         });
     }
 
