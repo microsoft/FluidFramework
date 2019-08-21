@@ -9,7 +9,6 @@ import {
     ISegment,
     LocalClientId,
     PropertySet,
-    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
@@ -30,7 +29,7 @@ export class PaddingSegment extends BaseSegment {
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "pad" in spec) {
-            const segment = new PaddingSegment(spec.pad, UniversalSequenceNumber, LocalClientId);
+            const segment = new PaddingSegment(spec.pad, LocalClientId);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -40,8 +39,8 @@ export class PaddingSegment extends BaseSegment {
     }
     public readonly type = PaddingSegment.typeString;
 
-    constructor(size: number, seq?: number, clientId?: number) {
-        super(seq, clientId);
+    constructor(size: number, clientId?: number) {
+        super(clientId);
         this.cachedLength = size;
     }
 
@@ -50,7 +49,7 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public clone(start = 0, end?: number) {
-        const b = new PaddingSegment(this.cachedLength, this.seq, this.clientId);
+        const b = new PaddingSegment(this.cachedLength, this.clientId);
         this.cloneInto(b);
         return b;
     }
@@ -86,7 +85,7 @@ export class PaddingSegment extends BaseSegment {
         const rightLength = this.cachedLength - pos;
 
         this.cachedLength = leftLength;
-        return new PaddingSegment(rightLength, this.seq, this.clientId);
+        return new PaddingSegment(rightLength, this.clientId);
     }
 }
 
@@ -97,7 +96,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new RunSegment(spec.items, UniversalSequenceNumber, LocalClientId);
+            const segment = new RunSegment(spec.items, LocalClientId);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -109,13 +108,13 @@ export class RunSegment extends SubSequence<UnboxedOper> {
 
     private tags: any[];
 
-    constructor(public items: UnboxedOper[], seq?: number, clientId?: number) {
-        super(items, seq, clientId);
+    constructor(public items: UnboxedOper[], clientId?: number) {
+        super(items, clientId);
         this.tags = new Array(items.length).fill(undefined);
     }
 
     public clone(start = 0, end?: number) {
-        const b = new RunSegment(this.items.slice(start, end), this.seq, this.clientId);
+        const b = new RunSegment(this.items.slice(start, end), this.clientId);
         if (this.tags) {
             b.tags = this.tags.slice(start, end);
         }
@@ -157,7 +156,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
             this.items = this.items.slice(0, pos);
             this.cachedLength = this.items.length;
 
-            const leafSegment = new RunSegment(remainingItems, this.seq, this.clientId);
+            const leafSegment = new RunSegment(remainingItems, this.clientId);
             leafSegment.tags = this.tags.slice(pos);
             this.tags.length = pos;
 
@@ -362,7 +361,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
             this.removeRange(rowStart + removeColStart, rowStart + removeColEnd);
 
             const insertPos = rowStart + destCol;
-            const segment = new PaddingSegment(numCols, UniversalSequenceNumber, LocalClientId);
+            const segment = new PaddingSegment(numCols, LocalClientId);
 
             const insertOp = this.client.insertSegmentLocal(insertPos, segment);
             if (insertOp) {

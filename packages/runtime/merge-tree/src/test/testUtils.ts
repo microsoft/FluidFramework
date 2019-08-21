@@ -30,7 +30,7 @@ export function insertMarker(
     seq: number,
     behaviors: ops.ReferenceType, props: Properties.PropertySet, opArgs: IMergeTreeDeltaOpArgs,
 ) {
-    mergeTree.insertSegments(pos, [Marker.make(behaviors, props, seq, clientId)], refSeq, clientId, seq, opArgs);
+    mergeTree.insertSegments(pos, [Marker.make(behaviors, props, clientId)], refSeq, clientId, seq, opArgs);
 }
 
 export function insertText(
@@ -43,7 +43,7 @@ export function insertText(
     props: Properties.PropertySet,
     opArgs: IMergeTreeDeltaOpArgs,
 ) {
-    mergeTree.insertSegments(pos, [TextSegment.make(text, props, seq, clientId)], refSeq, clientId, seq, opArgs);
+    mergeTree.insertSegments(pos, [TextSegment.make(text, props, clientId)], refSeq, clientId, seq, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: IMergeBlock): boolean {

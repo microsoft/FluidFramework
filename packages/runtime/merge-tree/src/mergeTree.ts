@@ -426,9 +426,10 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
 
-    constructor(public seq?: number, public clientId?: number) {
+    constructor(public clientId?: number) {
         super();
     }
+    public seq: number = UniversalSequenceNumber;
     index: number;
     ordinal: string;
     removedSeq: number;
@@ -765,17 +766,17 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     nestBuddy: Marker;
     public static make(
-        refType: ops.ReferenceType, props?: Properties.PropertySet, seq?: number, clientId?: number) {
+        refType: ops.ReferenceType, props?: Properties.PropertySet, clientId?: number) {
 
-        const marker = new Marker(refType, seq, clientId);
+        const marker = new Marker(refType, clientId);
         if (props) {
             marker.addProperties(props);
         }
         return marker;
     }
 
-    constructor(public refType: ops.ReferenceType, seq?: number, clientId?: number) {
-        super(seq, clientId);
+    constructor(public refType: ops.ReferenceType, clientId?: number) {
+        super(clientId);
         this.cachedLength = 1;
     }
 
@@ -790,14 +791,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
             return Marker.make(
                 spec.marker.refType,
                 spec.props as Properties.PropertySet,
-                UniversalSequenceNumber,
                 LocalClientId);
         }
         return undefined;
     }
 
     clone() {
-        const b = Marker.make(this.refType, this.properties, this.seq, this.clientId);
+        const b = Marker.make(this.refType, this.properties, this.clientId);
         this.cloneInto(b);
         return b;
     }

@@ -198,8 +198,8 @@ export function makeTextSegment(text: string): MergeTree.IMergeNode {
     return new MergeTree.TextSegment(text);
 }
 
-function makeCollabTextSegment(text: string, seq = MergeTree.UniversalSequenceNumber, clientId = MergeTree.LocalClientId) {
-    return new MergeTree.TextSegment(text, seq, clientId);
+function makeCollabTextSegment(text: string, clientId = MergeTree.LocalClientId) {
+    return new MergeTree.TextSegment(text, clientId);
 }
 
 function editFlat(source: string, s: number, dl: number, nt = "") {

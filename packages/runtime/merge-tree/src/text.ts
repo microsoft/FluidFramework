@@ -10,7 +10,6 @@ import { TextSegment } from "./textSegment";
 export function loadSegments(content: string, segLimit: number, markers: boolean = false, withProps: boolean = true) {
     // tslint:disable-next-line:no-parameter-reassignment
     content = content.replace(/^\uFEFF/, "");
-    const seq = MergeTree.UniversalSequenceNumber;
     const cli = MergeTree.LocalClientId;
 
     const paragraphs = content.split("\r\n");
@@ -29,16 +28,16 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
         let pgMarker: MergeTree.Marker;
         if (markers) {
             pgMarker = MergeTree.Marker.make(ops.ReferenceType.Tile,
-                { [MergeTree.reservedTileLabelsKey]: ["pg"] }, seq, cli);
+                { [MergeTree.reservedTileLabelsKey]: ["pg"] }, cli);
         }
         if (withProps) {
             if ((paragraph.indexOf("Chapter") >= 0) || (paragraph.indexOf("PRIDE AND PREJ") >= 0)) {
                 if (markers) {
                     pgMarker.addProperties({ header: 2 });
-                    segments.push(new TextSegment(paragraph, seq, cli));
+                    segments.push(new TextSegment(paragraph, cli));
                 } else {
                     segments.push(
-                        TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, seq, cli));
+                        TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }, cli));
                 }
             } else {
                 const emphStrings = paragraph.split("_");
@@ -47,17 +46,17 @@ export function loadSegments(content: string, segLimit: number, markers: boolean
                     if (i & 1) {
                         if (emphStrings[i].length > 0) {
                             segments.push(
-                                TextSegment.make(emphStrings[i], { fontStyle: "italic" }, seq, cli));
+                                TextSegment.make(emphStrings[i], { fontStyle: "italic" }, cli));
                         }
                     } else {
                         if (emphStrings[i].length > 0) {
-                            segments.push(new TextSegment(emphStrings[i], seq, cli));
+                            segments.push(new TextSegment(emphStrings[i], cli));
                         }
                     }
                 }
             }
         } else {
-            segments.push(new TextSegment(paragraph, seq, cli));
+            segments.push(new TextSegment(paragraph, cli));
         }
         if (markers) {
             segments.push(pgMarker);

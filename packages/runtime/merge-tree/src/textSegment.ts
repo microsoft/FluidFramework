@@ -11,7 +11,6 @@ import {
     LocalClientId,
     Marker,
     MergeTree,
-    UniversalSequenceNumber,
  } from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -27,8 +26,8 @@ export class TextSegment extends BaseSegment {
         return segment.type === TextSegment.type;
     }
 
-    public static make(text: string, props?: Properties.PropertySet, seq?: number, clientId?: number) {
-        const tseg = new TextSegment(text, seq, clientId);
+    public static make(text: string, props?: Properties.PropertySet, clientId?: number) {
+        const tseg = new TextSegment(text, clientId);
         if (props) {
             tseg.addProperties(props);
         }
@@ -37,21 +36,19 @@ export class TextSegment extends BaseSegment {
 
     public static fromJSONObject(spec: any) {
         if (typeof spec === "string") {
-            return new TextSegment(spec, UniversalSequenceNumber, LocalClientId);
+            return new TextSegment(spec, LocalClientId);
         // tslint:disable-next-line: no-unsafe-any
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
-            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet,
-                UniversalSequenceNumber,
-                LocalClientId);
+            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet, LocalClientId);
         }
         return undefined;
     }
 
     public readonly type = TextSegment.type;
 
-    constructor(public text: string, seq?: number, clientId?: number) {
-        super(seq, clientId);
+    constructor(public text: string, clientId?: number) {
+        super(clientId);
         this.cachedLength = text.length;
     }
 
@@ -70,7 +67,7 @@ export class TextSegment extends BaseSegment {
         } else {
             text = text.substring(start, end);
         }
-        const b = TextSegment.make(text, this.properties, this.seq, this.clientId);
+        const b = TextSegment.make(text, this.properties, this.clientId);
         this.cloneInto(b);
         return b;
     }
@@ -121,7 +118,7 @@ export class TextSegment extends BaseSegment {
             const remainingText = this.text.substring(pos);
             this.text = this.text.substring(0, pos);
             this.cachedLength = this.text.length;
-            const leafSegment = new TextSegment(remainingText, this.seq, this.clientId);
+            const leafSegment = new TextSegment(remainingText, this.clientId);
             return leafSegment;
         }
     }

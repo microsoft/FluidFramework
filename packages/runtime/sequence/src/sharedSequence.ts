@@ -9,7 +9,6 @@ import {
     ISegment,
     LocalClientId,
     PropertySet,
-    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
@@ -28,7 +27,7 @@ export class SubSequence<T> extends BaseSegment {
     public static fromJSONObject(spec: any) {
         // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new SubSequence<any>(spec.items, UniversalSequenceNumber, LocalClientId);
+            const segment = new SubSequence<any>(spec.items, LocalClientId);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -39,8 +38,8 @@ export class SubSequence<T> extends BaseSegment {
 
     public readonly type = SubSequence.typeString;
 
-    constructor(public items: T[], seq?: number, clientId?: number) {
-        super(seq, clientId);
+    constructor(public items: T[], clientId?: number) {
+        super(clientId);
         this.cachedLength = items.length;
     }
 
@@ -57,7 +56,7 @@ export class SubSequence<T> extends BaseSegment {
         } else {
             clonedItems = clonedItems.slice(start, end);
         }
-        const b = new SubSequence(clonedItems, this.seq, this.clientId);
+        const b = new SubSequence(clonedItems, this.clientId);
         this.cloneInto(b);
         return b;
     }
@@ -105,7 +104,7 @@ export class SubSequence<T> extends BaseSegment {
             const remainingItems = this.items.slice(pos);
             this.items = this.items.slice(0, pos);
             this.cachedLength = this.items.length;
-            const leafSegment = new SubSequence(remainingItems, this.seq, this.clientId);
+            const leafSegment = new SubSequence(remainingItems, this.clientId);
             return leafSegment;
         }
     }
@@ -176,7 +175,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     }
 
     public segmentFromSpec(segSpec: IJSONRunSegment<T>) {
-        const seg = new SubSequence<T>(segSpec.items, UniversalSequenceNumber);
+        const seg = new SubSequence<T>(segSpec.items);
         if (segSpec.props) {
             seg.addProperties(segSpec.props);
         }

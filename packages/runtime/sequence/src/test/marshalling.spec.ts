@@ -8,24 +8,23 @@ import {
     Marker,
     ReferenceType,
     TextSegment,
-    UniversalSequenceNumber,
 } from "@prague/merge-tree";
 import * as assert from "assert";
 import { SubSequence } from "../sharedSequence";
 
 const segmentTypes = [
     {
-        ctor: () => new TextSegment("text", UniversalSequenceNumber, LocalClientId),
+        ctor: () => new TextSegment("text", LocalClientId),
         fromJSON: TextSegment.fromJSONObject,
         name: "TextSegment",
     },
     {
-        ctor: () => new Marker(ReferenceType.Simple, UniversalSequenceNumber, LocalClientId),
+        ctor: () => new Marker(ReferenceType.Simple, LocalClientId),
         fromJSON: Marker.fromJSONObject,
         name: "Marker",
     },
     {
-        ctor: () => new SubSequence([0], UniversalSequenceNumber, LocalClientId),
+        ctor: () => new SubSequence([0], LocalClientId),
         fromJSON: SubSequence.fromJSONObject,
         name: "SubSequence",
     },
