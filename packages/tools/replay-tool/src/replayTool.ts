@@ -56,11 +56,18 @@ class ReplayProcessArgs extends ReplayArgs {
                 case "--from":
                     i += 1;
                     const from = this.parseStrArg(i);
+
+                    // Both methods have limitations - first ignores non-number chars at the end.
+                    // Second parses floats.
                     const paramNumber = parseInt(from, 10);
+                    const paramNumber2 = Number(from);
+
                     this.version = undefined;
                     this.from = 0;
-                    if (isNaN(paramNumber) || paramNumber < 0) {
+                    if (isNaN(paramNumber2)) {
                         this.version = from;
+                    } else if (paramNumber < 0 || paramNumber !== paramNumber2) {
+                        console.error(`Warning: ignoring --from argument - does not look like right number: ${from}`);
                     } else {
                         this.from = paramNumber;
                     }
@@ -162,10 +169,25 @@ class ReplayProcessArgs extends ReplayArgs {
     }
 }
 
+let finished = false;
+
+process.on("exit", (code) => {
+    if (code === 0 && !finished) {
+        console.error("Deadlock in ReplayTool!");
+        process.exit(3);
+    }
+});
+
 new ReplayTool(new ReplayProcessArgs())
     .Go()
     .then((success) => {
-        process.exit(success ? 0 : 1);
+        // If we failed, exit with non-zero code
+        // If we succeeded, do not exit process - that will hide errors about unhandled promise rejections!
+        // Node will eventually exit when there is no code to run, and will validate all hanging promises
+        if (!success) {
+            process.exit(1);
+        }
+        finished = true;
     })
     .catch((error: string) => {
         console.error(`ERROR: ${error}`);

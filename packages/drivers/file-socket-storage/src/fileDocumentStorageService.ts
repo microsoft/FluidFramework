@@ -106,6 +106,7 @@ export class PragueDumpReader extends ReadDocumentStorageServiceBase implements 
 export interface ISnapshotWriterStorage extends api.IDocumentStorageService {
     onCommitHandler(componentName: string, tree: api.ITree): void;
     onSnapshotHandler(snapshot: IFileSnapshot): void;
+    reset(): void;
 }
 
 export type ReaderConstructor = new (...args: any[]) => api.IDocumentStorageService;
@@ -157,6 +158,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
                 // PrefetchDocumentStorageService likes to prefetch everything!
                 // Skip, as Container does not really need it.
                 throw new Error("Not supporting commit loading");
+                // return [{id: versionId, treeId: FileStorageVersionTreeId}];
             }
             return super.getVersions(versionId, count);
         }
@@ -164,6 +166,10 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
         public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
             if (this.latestWriterTree && (!version || version.id === "latest")) {
                 return this.latestWriterTree;
+            }
+            if (version && this.commitsWriter[version.id] !== undefined) {
+                const flattened = flatten(this.commitsWriter[version.id].entries, this.blobsWriter);
+                return buildHierarchy(flattened);
             }
             return super.getSnapshotTree(version);
         }

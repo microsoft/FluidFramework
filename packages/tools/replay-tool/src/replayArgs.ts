@@ -26,9 +26,5 @@ export class ReplayArgs {
         if (this.from > this.to) {
             throw new Error(`ERROR: --from argument should be less or equal to --to argument`);
         }
-
-        if (this.from !== 0 && this.snapFreq === Number.MAX_SAFE_INTEGER) {
-            console.error(`WARNING: --from argument has no effect without --snapfreq`);
-        }
     }
 }

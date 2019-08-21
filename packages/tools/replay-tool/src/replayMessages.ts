@@ -118,16 +118,17 @@ function sameContent(content1: ContainerContent, content2: ContainerContent): bo
  * Logger to catch errors in containers
  */
 class Logger implements ITelemetryBaseLogger {
-    public constructor(private readonly containerDescription: string, private readonly errorHandler: () => void) {
+    public constructor(
+            private readonly containerDescription: string,
+            private readonly errorHandler: (event: ITelemetryBaseEvent) => boolean) {
     }
 
     // ITelemetryBaseLogger implementation
     public send(event: ITelemetryBaseEvent) {
-        if (event.category === "error") {
+        if (event.category === "error" && this.errorHandler(event)) {
             // Stack is not output properly (with newlines), if done as part of event
             const stack: string | undefined = event.stack as string | undefined;
             delete event.stack;
-            this.errorHandler();
             console.error(`An error has been logged from ${this.containerDescription}!`);
             console.error(event);
             if (stack) {
@@ -165,7 +166,8 @@ class Document {
 
     public constructor(
             protected readonly args: ReplayArgs,
-            public readonly storage: ISnapshotWriterStorage) {
+            public readonly storage: ISnapshotWriterStorage,
+            public readonly containerDescription: string) {
     }
 
     public get currentOp() {
@@ -181,7 +183,7 @@ class Document {
     }
 
     public getFileName() {
-        return `${this.snapshotFileName}_${this.currentOp}`;
+        return `snapshot_${this.currentOp}_${this.snapshotFileName}`;
     }
 
     public appendToFileName(suffix: string) {
@@ -190,8 +192,7 @@ class Document {
 
     public async load(
             deltaStorageService: FileDeltaStorageService,
-            containerDescription: string,
-            errorHandler: () => void) {
+            errorHandler: (event: ITelemetryBaseEvent) => boolean) {
         const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
         const documentServiceFactory = new FileDocumentServiceFactory(
             this.storage,
@@ -200,7 +201,7 @@ class Document {
 
         this.container = await this.loadContainer(
             documentServiceFactory,
-            containerDescription,
+            this.containerDescription,
             errorHandler);
 
         this.from = this.container.deltaManager.referenceSequenceNumber;
@@ -208,7 +209,7 @@ class Document {
 
         this.replayer.currentReplayedOp = this.from;
 
-        this.snapshotFileName = `snapshot_${this.fromOp}`;
+        this.snapshotFileName = `${this.fromOp}`;
 
         this.container.on("op", (message: ISequencedDocumentMessage) => {
             this.documentSeqNumber = message.sequenceNumber;
@@ -253,7 +254,7 @@ class Document {
     private async loadContainer(
             serviceFactory: IDocumentServiceFactory,
             containerDescription: string,
-            errorHandler: () => void,
+            errorHandler: (event: ITelemetryBaseEvent) => boolean,
             ): Promise<Container> {
         const resolved: IFluidResolvedUrl = {
             endpoints: {
@@ -292,6 +293,7 @@ export class ReplayTool {
     private mainDocument: Document;
     private documentNeverSnapshot?: Document;
     private documentPriorSnapshot?: Document;
+    private documentPriorWindow?: Document;
     private readonly documents: Document[] = [];
     private readonly documentsWindow: Document[] = [];
     private readonly documentsFromStorageSnapshots: Document[] = [];
@@ -303,6 +305,13 @@ export class ReplayTool {
 
     public async Go(): Promise<boolean> {
         this.args.checkArgs();
+
+        // Make unhandled exceptions errors, not just warnings
+        // Also report few of them!
+        const listener = (up) => {
+            this.reportError("UnhandledRejectionPromise", up);
+        };
+        process.on("unhandledRejection", listener);
 
         await this.setup();
 
@@ -319,14 +328,54 @@ export class ReplayTool {
         }
         assert(this.documentsFromStorageSnapshots.length === 0);
 
+        process.removeListener("unhandledRejection", listener);
+
         return this.errorCount === 0;
     }
 
-    private loadDoc(doc: Document, containerDescription: string) {
+    private shouldReportError() {
+        // Report only first 5 errors
+        this.errorCount++;
+        const errorsToReport = 5;
+        if (this.errorCount <= errorsToReport) {
+            return true;
+        }
+        if (this.errorCount === errorsToReport + 1) {
+            console.error("\n!!! Too many errors - stopped reporting errors !!!");
+        }
+        return false;
+    }
+
+    private reportError(description: string, error?: any) {
+        if (this.shouldReportError()) {
+            if (error === undefined) {
+                console.error(description);
+            } else if (error instanceof Error) {
+                console.error(`${description}\n${error.stack}`);
+            } else {
+                console.error(`${description} ${error}`);
+            }
+        }
+    }
+
+    private errorHandler(event: ITelemetryBaseEvent): boolean {
+        // Snapshots errors are both reported to telemetry and propagated to caller
+        // So if we d not filter them out, we report them twice.
+        // Avoid that, but have a safety net - increase error count, so that tool
+        // still fails even if error is not propagated / reported properly.
+        if (event.eventName === "prague:telemetry:Container:SnapshotExceptionError") {
+            if (this.errorCount === 0) {
+                this.errorCount++;
+            }
+            return false;
+        }
+        return this.shouldReportError();
+    }
+
+    private loadDoc(doc: Document) {
         return doc.load(
             this.deltaStorageService,
-            containerDescription,
-            () => { this.errorCount++; });
+            (event) => this.errorHandler(event));
     }
 
     private async setup() {
@@ -340,23 +389,29 @@ export class ReplayTool {
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
         this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-        this.mainDocument = new Document(this.args, this.storage);
-        await this.loadDoc(this.mainDocument, this.args.version ? this.args.version : "main container");
+        let description = this.args.version ? this.args.version : "main container";
+        this.mainDocument = new Document(this.args, this.storage, description);
+        await this.loadDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
+        if (this.args.from < this.mainDocument.fromOp) {
+            this.args.from = this.mainDocument.fromOp;
+        }
 
         if (this.args.version !== undefined) {
             console.log(`Starting from ${this.args.version}, seq# = ${this.mainDocument.currentOp}`);
             if (this.mainDocument.currentOp > this.args.to) {
-                console.log("Warning: --to argument is below snapshot starting op");
+                return Promise.reject("--to argument is below snapshot starting op. Nothing to do!");
             }
         }
 
+        // This does not seem to provide much value, we can disable it for per reasons
+        // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
             const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
-            this.documentNeverSnapshot = new Document(this.args, storage);
+            description = this.args.version ? this.args.version : "secondary container";
+            this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
-                this.documentNeverSnapshot,
-                this.args.version ? this.args.version : "secondary container");
+                this.documentNeverSnapshot);
             this.documentNeverSnapshot.appendToFileName("_noSnapshots");
             this.documents.push(this.documentNeverSnapshot);
         }
@@ -367,10 +422,21 @@ export class ReplayTool {
                 if (!node.isDirectory()) {
                     continue;
                 }
+                // Did we load it already as main doc?
+                if (node.name === this.args.version) {
+                    continue;
+                }
+
+                const file = `${this.args.inDirName}/${node.name}/tree.json`;
+                if (!fs.existsSync(file)) {
+                    console.error(`${file} does not exist, skipping ${node.name} snapshot`);
+                    continue;
+                }
+
                 const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, node.name);
-                const doc = new Document(this.args, storage);
+                const doc = new Document(this.args, storage, node.name);
                 try {
-                    await this.loadDoc(doc, node.name);
+                    await this.loadDoc(doc);
                     doc.appendToFileName(`_storage_${node.name}`);
 
                     if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
@@ -408,9 +474,6 @@ export class ReplayTool {
             for (const doc of this.documents) {
                 await doc.replay(replayTo);
             }
-            if (this.documentPriorSnapshot) {
-                await this.documentPriorSnapshot.replay(replayTo);
-            }
             for (const doc of this.documentsWindow) {
                 await doc.replay(replayTo);
             }
@@ -423,9 +486,8 @@ export class ReplayTool {
         }
     }
 
-    private async generateSnapshot(final: boolean) {
+    private async generateMainSnapshot(dir: string, final: boolean): Promise<ContainerContent> {
         const op = this.mainDocument.currentOp;
-        const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
 
         const content = this.mainDocument.extractContent();
 
@@ -453,32 +515,23 @@ export class ReplayTool {
         }
 
         await this.mainDocument.snapshot();
-        if (content.snapshot === undefined) {
-            // Snapshots are not created if there is no "code2" proposal
-            if (op >= 4) {
-                this.errorCount++;
-                console.error(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
-            }
-            return;
-        }
 
-        // Load it back to prove it's correct
-        const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
-        const storage2 = new storageClass(content.snapshot);
-        const document2 = new Document(this.args, storage2);
-        await this.loadDoc(document2, `Saved & loaded at seq# ${op}`);
-        await this.saveAndVerify(document2, dir, content);
+        return content;
+    }
+
+    private async validateSlidingSnapshots(
+            content: ContainerContent,
+            dir: string,
+            final: boolean) {
+        const op = content.op;
 
         // Add extra container
         if (!final && ((op - this.mainDocument.fromOp) % this.args.snapFreq) === 0) {
-            storage2.reset();
-            const document3 = new Document(this.args, storage2);
-            await this.loadDoc(document3, `Saved & loaded at seq# ${op}`);
+            const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
+            const storage = new storageClass(content.snapshot);
+            const document3 = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+            await this.loadDoc(document3);
             this.documentsWindow.push(document3);
-        }
-
-        if (final && this.documentNeverSnapshot) {
-            await this.saveAndVerify(this.documentNeverSnapshot, dir, content);
         }
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
@@ -488,17 +541,76 @@ export class ReplayTool {
             assert(doc.fromOp === startOp || final);
             await this.saveAndVerify(doc, dir, content);
         }
+    }
+
+    private async validateStorageSnapshots(content: ContainerContent, dir: string, final: boolean) {
+        const op = content.op;
+
         const processVersionedSnapshot = this.documentsFromStorageSnapshots.length > 0 &&
             this.documentsFromStorageSnapshots[0].fromOp <= op;
         if (this.documentPriorSnapshot && (processVersionedSnapshot || final)) {
+            await this.documentPriorSnapshot.replay(op);
             await this.saveAndVerify(this.documentPriorSnapshot, dir, content);
             this.documentPriorSnapshot = undefined;
         }
         if (processVersionedSnapshot) {
             this.documentPriorSnapshot = this.documentsFromStorageSnapshots.shift();
             assert(this.documentPriorSnapshot.fromOp === op);
-            await this.saveAndVerify(this.documentPriorSnapshot, dir, content);
+            await this.saveAndVerify(this.documentPriorSnapshot, dir, content)
+                .catch((e) => {
+                    const from = this.documentPriorSnapshot.containerDescription;
+                    this.reportError(`Error logged from ${from} while generating snapshot`, e);
+                    this.documentPriorSnapshot = undefined;
+                });
         }
+
+    }
+
+    private async validateSaveAndLoad(content: ContainerContent, dir: string) {
+        const op = content.op;
+
+        // Keep doc from previous iteration and validate here - this gives us shortest
+        // distance between load & save, and finds bugs in tardis.
+        // No need to do it if overlappingContainers === 1 - there is container like that
+        // in validateSlidingSnapshots()!
+        if (this.documentPriorWindow && this.args.overlappingContainers !== 1) {
+            await this.documentPriorWindow.replay(op);
+            await this.saveAndVerify(this.documentPriorWindow, dir, content);
+            this.documentPriorWindow = undefined;
+        }
+
+        // Load it back to prove it's correct
+        const storageClass = FileSnapshotWriterClassFactory(FileSnapshotReader);
+        const storage = new storageClass(content.snapshot);
+        this.documentPriorWindow = new Document(this.args, storage, `Saved & loaded at seq# ${op}`);
+        await this.loadDoc(this.documentPriorWindow);
+        await this.saveAndVerify(this.documentPriorWindow, dir, content);
+    }
+
+    private async generateSnapshot(final: boolean) {
+        const op = this.mainDocument.currentOp;
+        const dir = this.args.outDirName; // `${this.args.outDirName}/${op}`;
+
+        const content = await this.generateMainSnapshot(dir, final);
+        if (content.snapshot === undefined) {
+            // Snapshots are not created if there is no "code2" proposal
+            // It takes some number of ops to get there (join, propose)
+            // Do not report a failure if document is almost empty.
+            if (op >= 4) {
+                this.reportError(`\nSnapshot ${this.mainDocument.getFileName()} was not saved for op # ${op}!`);
+            }
+            return;
+        }
+
+        await this.validateSaveAndLoad(content, dir);
+
+        await this.validateSlidingSnapshots(content, dir, final);
+
+        if (final && this.documentNeverSnapshot) {
+            await this.saveAndVerify(this.documentNeverSnapshot, dir, content);
+        }
+
+        await this.validateStorageSnapshots(content, dir, final);
 
         /*
         if (this.args.write) {
@@ -528,16 +640,15 @@ export class ReplayTool {
         };
 
         await document2.snapshot();
+
         if (content2.snapshot === undefined) {
-            this.errorCount++;
-            console.error(`\nSnapshot ${name2} was not saved at op # ${op}!`);
+            this.reportError(`\nSnapshot ${name2} was not saved at op # ${op}!`);
             return false;
         }
 
         if (!sameContent(content, content2)) {
-            this.errorCount++;
             // tslint:disable-next-line:max-line-length
-            console.error(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`);
+            this.reportError(`\nOp ${op}: Discrepancy between ${name1} & ${name2}! Likely a bug in snapshot load-save sequence!`);
             fs.mkdirSync(dir, { recursive: true });
 
             this.expandForReadabilityAndWriteOut(content, `${dir}/${name1}`);
@@ -580,8 +691,7 @@ export class ReplayTool {
             `${filename}.json`,
             { encoding: "utf-8" });
         if (snapshotAsString !== content.snapshotAsString) {
-            this.errorCount++;
-            throw new Error(`Mismatch in snapshot ${filename}.json`);
+            this.reportError(`Mismatch in snapshot ${filename}.json`);
         }
     }
 }

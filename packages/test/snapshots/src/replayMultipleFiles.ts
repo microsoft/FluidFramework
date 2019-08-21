@@ -5,7 +5,6 @@
 
 import { ReplayArgs, ReplayTool } from "@prague/replay-tool";
 import * as fs from "fs";
-import * as threads from "worker_threads";
 
 const fileLocation: string = "content";
 
@@ -36,6 +35,9 @@ export async function processOneFile(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
 
+    // This will speed up test duration by ~17%, at the expense of loosing  a bit on coverage.
+    // replayArgs.overlappingContainers = 1;
+
     const res = await new ReplayTool(replayArgs).Go();
     if (!res) {
         throw new Error(`Error processing ${args.folder}`);
@@ -46,7 +48,13 @@ export async function processContent(mode: Mode, concurrently = true) {
     // tslint:disable-next-line:prefer-array-literal
     const promises: Array<Promise<unknown>> = [];
 
-    threads.Worker.EventEmitter.defaultMaxListeners = 20;
+    // "worker_threads" does not resolve without --experimental-worker flag on command line
+    let threads: typeof import("worker_threads");
+    try {
+        threads = await import("worker_threads");
+        threads.Worker.EventEmitter.defaultMaxListeners = 20;
+    } catch (err) {
+    }
 
     for (const node of fs.readdirSync(fileLocation, { withFileTypes : true })) {
         if (!node.isDirectory()) {
@@ -73,7 +81,7 @@ export async function processContent(mode: Mode, concurrently = true) {
             snapFreq,
         };
 
-        if (!concurrently) {
+        if (!concurrently || !threads) {
             console.log(folder);
             await processOneFile(workerData);
             continue;
