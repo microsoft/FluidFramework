@@ -63,7 +63,7 @@ export abstract class LeafTask extends Task {
         }
         const ret = await execAsync(this.command, {
             cwd: this.node.pkg.directory,
-            env: { path: process.env["PATH"] + ";" + path.join(this.node.pkg.directory, "node_modules", ".bin") }
+            env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(this.node.pkg.directory, "node_modules", ".bin")}` }
         });
 
         if (ret.error) {
