@@ -182,7 +182,7 @@ export class BuildGraph {
             const startTime = Date.now();
             const ret = await execAsync(cleanScript, {
                 cwd: pkg.directory,
-                env: { path: process.env["PATH"] + ";" + path.join(pkg.directory, "node_modules", ".bin") }
+                env: { PATH: `${process.env["PATH"]}${path.delimiter}${path.join(pkg.directory, "node_modules", ".bin")}` }
             });
             if (ret.error) {
                 console.log(`${pkg.nameColored}: error during command ${cleanScript}`)
