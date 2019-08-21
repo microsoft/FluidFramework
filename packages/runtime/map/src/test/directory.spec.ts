@@ -120,6 +120,27 @@ describe("Routerlicious", () => {
                 const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
                 assert.equal(serialized, expected);
             });
+
+            it("Should serialize an undefined value", () => {
+                testDirectory.set("first", "second");
+                testDirectory.set("third", "fourth");
+                testDirectory.set("fifth", undefined);
+                assert.ok(testDirectory.has("fifth"));
+                const subMap = mapFactory.create(runtime, "subMap");
+                testDirectory.set("object", subMap.handle);
+                const nestedDirectory = testDirectory.createSubDirectory("nested");
+                nestedDirectory.set("deepKey1", "deepValue1");
+                nestedDirectory.set("deepKeyUndefined", undefined);
+                assert.ok(nestedDirectory.has("deepKeyUndefined"));
+                nestedDirectory.createSubDirectory("nested2")
+                    .createSubDirectory("nested3")
+                    .set("deepKey2", "deepValue2");
+
+                const serialized = (testDirectory as SharedDirectory).serialize();
+                // tslint:disable-next-line:max-line-length
+                const expected = `{"storage":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"subMap"}}},"subdirectories":{"nested":{"storage":{"deepKey1":{"type":"Plain","value":"deepValue1"},"deepKeyUndefined":{"type":"Plain"}},"subdirectories":{"nested2":{"subdirectories":{"nested3":{"storage":{"deepKey2":{"type":"Plain","value":"deepValue2"}}}}}}}}}`;
+                assert.equal(serialized, expected);
+            });
         });
 
         describe(".populate", () => {
@@ -146,6 +167,28 @@ describe("Routerlicious", () => {
                 assert.equal(testDirectory.getWorkingDirectory("/bar").get("testKey3"), "testValue3");
                 assert.equal(testDirectory.getWorkingDirectory("").get("testKey"), "testValue4");
                 assert.equal(testDirectory.getWorkingDirectory("/").get("testKey2"), "testValue5");
+                testDirectory.set("testKey", "newValue");
+                assert.equal(testDirectory.get("testKey"), "newValue", "Failed to set testKey");
+                testDirectory.createSubDirectory("testSubDir").set("testSubKey", "newSubValue");
+                assert.equal(
+                    testDirectory.getWorkingDirectory("testSubDir").get("testSubKey"),
+                    "newSubValue",
+                    "Failed to set testSubKey",
+                );
+            });
+
+            it("Should populate the directory with undefined values", async () => {
+                // tslint:disable-next-line:max-line-length
+                const jsonValue = `{"storage":{"testKey":{"type":"Plain","value":"testValue4"},"testKey2":{"type":"Plain"}},"subdirectories":{"foo":{"storage":{"testKey":{"type":"Plain","value":"testValue"},"testKey2":{"type":"Plain"}}},"bar":{"storage":{"testKey3":{"type":"Plain","value":"testValue3"}}}}}`;
+                (testDirectory as SharedDirectory).populate(JSON.parse(jsonValue) as IDirectoryDataObject);
+                assert.equal(testDirectory.size, 2, "Failed to initialize directory storage correctly");
+                assert.equal(testDirectory.getWorkingDirectory("/foo").get("testKey"), "testValue");
+                assert.equal(testDirectory.getWorkingDirectory("foo").get("testKey2"), undefined);
+                assert.equal(testDirectory.getWorkingDirectory("/bar").get("testKey3"), "testValue3");
+                assert.equal(testDirectory.getWorkingDirectory("").get("testKey"), "testValue4");
+                assert.equal(testDirectory.getWorkingDirectory("/").get("testKey2"), undefined);
+                assert.ok(testDirectory.has("testKey2"));
+                assert.ok(testDirectory.getWorkingDirectory("/foo").has("testKey2"));
                 testDirectory.set("testKey", "newValue");
                 assert.equal(testDirectory.get("testKey"), "newValue", "Failed to set testKey");
                 testDirectory.createSubDirectory("testSubDir").set("testSubKey", "newSubValue");
