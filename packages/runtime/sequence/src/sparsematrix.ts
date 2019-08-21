@@ -7,7 +7,6 @@ import {
     BaseSegment,
     IJSONSegment,
     ISegment,
-    LocalClientId,
     PropertySet,
 } from "@prague/merge-tree";
 import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
@@ -29,7 +28,7 @@ export class PaddingSegment extends BaseSegment {
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "pad" in spec) {
-            const segment = new PaddingSegment(spec.pad, LocalClientId);
+            const segment = new PaddingSegment(spec.pad);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -39,8 +38,8 @@ export class PaddingSegment extends BaseSegment {
     }
     public readonly type = PaddingSegment.typeString;
 
-    constructor(size: number, clientId?: number) {
-        super(clientId);
+    constructor(size: number) {
+        super();
         this.cachedLength = size;
     }
 
@@ -49,7 +48,7 @@ export class PaddingSegment extends BaseSegment {
     }
 
     public clone(start = 0, end?: number) {
-        const b = new PaddingSegment(this.cachedLength, this.clientId);
+        const b = new PaddingSegment(this.cachedLength);
         this.cloneInto(b);
         return b;
     }
@@ -85,7 +84,7 @@ export class PaddingSegment extends BaseSegment {
         const rightLength = this.cachedLength - pos;
 
         this.cachedLength = leftLength;
-        return new PaddingSegment(rightLength, this.clientId);
+        return new PaddingSegment(rightLength);
     }
 }
 
@@ -96,7 +95,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
     }
     public static fromJSONObject(spec: any) {
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new RunSegment(spec.items, LocalClientId);
+            const segment = new RunSegment(spec.items);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -108,13 +107,13 @@ export class RunSegment extends SubSequence<UnboxedOper> {
 
     private tags: any[];
 
-    constructor(public items: UnboxedOper[], clientId?: number) {
-        super(items, clientId);
+    constructor(public items: UnboxedOper[]) {
+        super(items);
         this.tags = new Array(items.length).fill(undefined);
     }
 
     public clone(start = 0, end?: number) {
-        const b = new RunSegment(this.items.slice(start, end), this.clientId);
+        const b = new RunSegment(this.items.slice(start, end));
         if (this.tags) {
             b.tags = this.tags.slice(start, end);
         }
@@ -156,7 +155,7 @@ export class RunSegment extends SubSequence<UnboxedOper> {
             this.items = this.items.slice(0, pos);
             this.cachedLength = this.items.length;
 
-            const leafSegment = new RunSegment(remainingItems, this.clientId);
+            const leafSegment = new RunSegment(remainingItems);
             leafSegment.tags = this.tags.slice(pos);
             this.tags.length = pos;
 
@@ -361,7 +360,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
             this.removeRange(rowStart + removeColStart, rowStart + removeColEnd);
 
             const insertPos = rowStart + destCol;
-            const segment = new PaddingSegment(numCols, LocalClientId);
+            const segment = new PaddingSegment(numCols);
 
             const insertOp = this.client.insertSegmentLocal(insertPos, segment);
             if (insertOp) {

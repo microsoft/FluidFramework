@@ -8,7 +8,6 @@ import {
     BaseSegment,
     glc,
     ISegment,
-    LocalClientId,
     Marker,
     MergeTree,
  } from "./mergeTree";
@@ -26,8 +25,8 @@ export class TextSegment extends BaseSegment {
         return segment.type === TextSegment.type;
     }
 
-    public static make(text: string, props?: Properties.PropertySet, clientId?: number) {
-        const tseg = new TextSegment(text, clientId);
+    public static make(text: string, props?: Properties.PropertySet) {
+        const tseg = new TextSegment(text);
         if (props) {
             tseg.addProperties(props);
         }
@@ -36,19 +35,19 @@ export class TextSegment extends BaseSegment {
 
     public static fromJSONObject(spec: any) {
         if (typeof spec === "string") {
-            return new TextSegment(spec, LocalClientId);
+            return new TextSegment(spec);
         // tslint:disable-next-line: no-unsafe-any
         } else if (spec && typeof spec === "object" && "text" in spec) {
             const textSpec = spec as IJSONTextSegment;
-            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet, LocalClientId);
+            return TextSegment.make(textSpec.text, textSpec.props as Properties.PropertySet);
         }
         return undefined;
     }
 
     public readonly type = TextSegment.type;
 
-    constructor(public text: string, clientId?: number) {
-        super(clientId);
+    constructor(public text: string) {
+        super();
         this.cachedLength = text.length;
     }
 
@@ -67,7 +66,7 @@ export class TextSegment extends BaseSegment {
         } else {
             text = text.substring(start, end);
         }
-        const b = TextSegment.make(text, this.properties, this.clientId);
+        const b = TextSegment.make(text, this.properties);
         this.cloneInto(b);
         return b;
     }
@@ -118,7 +117,7 @@ export class TextSegment extends BaseSegment {
             const remainingText = this.text.substring(pos);
             this.text = this.text.substring(0, pos);
             this.cachedLength = this.text.length;
-            const leafSegment = new TextSegment(remainingText, this.clientId);
+            const leafSegment = new TextSegment(remainingText);
             return leafSegment;
         }
     }

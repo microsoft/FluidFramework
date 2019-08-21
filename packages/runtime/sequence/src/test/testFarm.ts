@@ -1454,8 +1454,8 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     return result;
 }
 
-function makeCollabTextSegment(text: string, clientId = MergeTree.LocalClientId) {
-    return new MergeTree.TextSegment(text, clientId);
+function makeCollabTextSegment(text: string) {
+    return new MergeTree.TextSegment(text);
 }
 
 export function mergeTreeCheckedTest() {

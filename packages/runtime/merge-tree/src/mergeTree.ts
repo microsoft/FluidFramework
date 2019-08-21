@@ -426,9 +426,10 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 
 export abstract class BaseSegment extends MergeNode implements ISegment {
 
-    constructor(public clientId?: number) {
+    constructor() {
         super();
     }
+    public clientId: number = LocalClientId;
     public seq: number = UniversalSequenceNumber;
     index: number;
     ordinal: string;
@@ -766,17 +767,17 @@ export class Marker extends BaseSegment implements ReferencePosition {
 
     nestBuddy: Marker;
     public static make(
-        refType: ops.ReferenceType, props?: Properties.PropertySet, clientId?: number) {
+        refType: ops.ReferenceType, props?: Properties.PropertySet) {
 
-        const marker = new Marker(refType, clientId);
+        const marker = new Marker(refType);
         if (props) {
             marker.addProperties(props);
         }
         return marker;
     }
 
-    constructor(public refType: ops.ReferenceType, clientId?: number) {
-        super(clientId);
+    constructor(public refType: ops.ReferenceType) {
+        super();
         this.cachedLength = 1;
     }
 
@@ -790,14 +791,13 @@ export class Marker extends BaseSegment implements ReferencePosition {
         if (spec && typeof spec === "object" && "marker" in spec) {
             return Marker.make(
                 spec.marker.refType,
-                spec.props as Properties.PropertySet,
-                LocalClientId);
+                spec.props as Properties.PropertySet);
         }
         return undefined;
     }
 
     clone() {
-        const b = Marker.make(this.refType, this.properties, this.clientId);
+        const b = Marker.make(this.refType, this.properties);
         this.cloneInto(b);
         return b;
     }

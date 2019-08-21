@@ -7,7 +7,6 @@ import {
     BaseSegment,
     IJSONSegment,
     ISegment,
-    LocalClientId,
     PropertySet,
 } from "@prague/merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@prague/runtime-definitions";
@@ -27,7 +26,7 @@ export class SubSequence<T> extends BaseSegment {
     public static fromJSONObject(spec: any) {
         // tslint:disable: no-unsafe-any
         if (spec && typeof spec === "object" && "items" in spec) {
-            const segment = new SubSequence<any>(spec.items, LocalClientId);
+            const segment = new SubSequence<any>(spec.items);
             if (spec.props) {
                 segment.addProperties(spec.props);
             }
@@ -38,8 +37,8 @@ export class SubSequence<T> extends BaseSegment {
 
     public readonly type = SubSequence.typeString;
 
-    constructor(public items: T[], clientId?: number) {
-        super(clientId);
+    constructor(public items: T[]) {
+        super();
         this.cachedLength = items.length;
     }
 
@@ -56,7 +55,7 @@ export class SubSequence<T> extends BaseSegment {
         } else {
             clonedItems = clonedItems.slice(start, end);
         }
-        const b = new SubSequence(clonedItems, this.clientId);
+        const b = new SubSequence(clonedItems);
         this.cloneInto(b);
         return b;
     }
@@ -104,7 +103,7 @@ export class SubSequence<T> extends BaseSegment {
             const remainingItems = this.items.slice(pos);
             this.items = this.items.slice(0, pos);
             this.cachedLength = this.items.length;
-            const leafSegment = new SubSequence(remainingItems, this.clientId);
+            const leafSegment = new SubSequence(remainingItems);
             return leafSegment;
         }
     }

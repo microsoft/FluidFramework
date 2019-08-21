@@ -4,7 +4,6 @@
  */
 
 import {
-    LocalClientId,
     Marker,
     ReferenceType,
     TextSegment,
@@ -14,17 +13,17 @@ import { SubSequence } from "../sharedSequence";
 
 const segmentTypes = [
     {
-        ctor: () => new TextSegment("text", LocalClientId),
+        ctor: () => new TextSegment("text"),
         fromJSON: TextSegment.fromJSONObject,
         name: "TextSegment",
     },
     {
-        ctor: () => new Marker(ReferenceType.Simple, LocalClientId),
+        ctor: () => new Marker(ReferenceType.Simple),
         fromJSON: Marker.fromJSONObject,
         name: "Marker",
     },
     {
-        ctor: () => new SubSequence([0], LocalClientId),
+        ctor: () => new SubSequence([0]),
         fromJSON: SubSequence.fromJSONObject,
         name: "SubSequence",
     },
