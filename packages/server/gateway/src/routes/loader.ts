@@ -42,6 +42,9 @@ export function create(
         return Promise.reject(err);
     });
 
+    /**
+     * Looks up the version of a chaincode in the cache.
+     */
     async function getUrlWithVersion(chaincode: string): Promise<string> {
         return new Promise<string>((resolve) => {
             if (chaincode !== "" && chaincode.indexOf("@") === chaincode.lastIndexOf("@")) {
