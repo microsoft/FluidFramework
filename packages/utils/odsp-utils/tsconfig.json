@@ -1,15 +1,16 @@
-{
-  "extends": "@prague/build-common/ts-common-config.json",
-  "exclude": [
-    "dist",
-    "node_modules"
-  ],
-  "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "strict": true, /* Enable all strict type-checking options. */
-  },
-  "include": [
-    "src/**/*.ts"
-  ]
+{    
+    "extends": "@prague/build-common/ts-common-config.json",
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "strict": true,
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "types": [ "mocha" ],
+    },
+    "include": [
+        "src/**/*"
+    ]
 }
