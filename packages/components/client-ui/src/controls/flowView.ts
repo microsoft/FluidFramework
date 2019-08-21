@@ -1032,9 +1032,9 @@ function reRenderLine(lineDiv: ILineDiv, flowView: FlowView, docContext: IDocume
     }
 }
 
-function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
+function buildIntervalBlockStyle(flowView: FlowView, properties: MergeTree.PropertySet, startX: number, endX: number,
     height: number, leftInBounds: boolean, rightInBounds: boolean,
-    contentDiv: HTMLDivElement, client: MergeTree.Client) {
+    contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
     bookmarkRect = new ui.Rectangle(startX, 0, endX - startX, height);
@@ -1057,8 +1057,8 @@ function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: numb
         if (properties["bgColor"]) {
             bookmarkDiv.style.backgroundColor = properties["bgColor"];
         } else if (properties["clid"]) {
-            const clientId = client.getOrAddShortClientId(properties["clid"]);
-            const bgColor = presenceColors[clientId % presenceColors.length];
+            const clientId: string = properties["clid"];
+            const bgColor = flowView.presenceVector.get(clientId).presenceColor;
             bookmarkDiv.style.backgroundColor = bgColor;
             bookmarkDiv.style.opacity = "0.08";
         }
@@ -1066,9 +1066,9 @@ function buildIntervalBlockStyle(properties: MergeTree.PropertySet, startX: numb
     bookmarkDiv.style.zIndex = "2";
 }
 
-function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number, endX: number,
+function buildIntervalTieStyle(flowView: FlowView, properties: MergeTree.PropertySet, startX: number, endX: number,
     lineDivHeight: number, leftInBounds: boolean, rightInBounds: boolean,
-    contentDiv: HTMLDivElement, client: MergeTree.Client) {
+    contentDiv: HTMLDivElement) {
     const bookmarkDiv = document.createElement("div");
     let bookmarkRect: ui.Rectangle;
     const bookendDiv1 = document.createElement("div");
@@ -1093,8 +1093,8 @@ function buildIntervalTieStyle(properties: MergeTree.PropertySet, startX: number
     bookendDiv1.style.backgroundColor = "lightgray";
     bookendDiv2.style.backgroundColor = "lightgray";
     if (properties && properties["clid"]) {
-        const clientId = client.getOrAddShortClientId(properties["clid"]);
-        const bgColor = presenceColors[clientId % presenceColors.length];
+        const clientId: string = properties["clid"];
+        const bgColor = flowView.presenceVector.get(clientId).presenceColor;
         bookmarkDiv.style.backgroundColor = bgColor;
         bookendDiv1.style.backgroundColor = bgColor;
         bookendDiv2.style.backgroundColor = bgColor;
@@ -1131,10 +1131,10 @@ function getWidthInLine(endPGMarker: Paragraph.IParagraphMarker, breakIndex: num
     return Math.round(w);
 }
 
-function showBookmark(properties: MergeTree.PropertySet, lineText: string,
+function showBookmark(flowView: FlowView, properties: MergeTree.PropertySet, lineText: string,
     start: number, end: number, lineStart: number, endPGMarker: Paragraph.IParagraphMarker,
     computedEnd: number, lineFontstr: string, lineDivHeight: number, lineBreakIndex: number,
-    docContext: IDocumentContext, contentDiv: HTMLDivElement, client: MergeTree.Client, useTie = false) {
+    docContext: IDocumentContext, contentDiv: HTMLDivElement, useTie = false) {
     let startX: number;
     let height = lineDivHeight;
     if (start >= lineStart) {
@@ -1152,11 +1152,11 @@ function showBookmark(properties: MergeTree.PropertySet, lineText: string,
         endX = getWidthInLine(endPGMarker, lineBreakIndex, lineFontstr, computedEnd - lineStart);
     }
     if (useTie) {
-        buildIntervalTieStyle(properties, startX, endX, lineDivHeight,
-            start >= lineStart, end <= computedEnd, contentDiv, client);
+        buildIntervalTieStyle(flowView, properties, startX, endX, lineDivHeight,
+            start >= lineStart, end <= computedEnd, contentDiv);
     } else {
-        buildIntervalBlockStyle(properties, startX, endX, height,
-            start >= lineStart, end <= computedEnd, contentDiv, client);
+        buildIntervalBlockStyle(flowView, properties, startX, endX, height,
+            start >= lineStart, end <= computedEnd, contentDiv);
     }
 }
 
@@ -1165,31 +1165,30 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
     docContext: IDocumentContext, contentDiv: HTMLDivElement, endPGMarker: Paragraph.IParagraphMarker) {
     const sel = flowView.cursor.getSelection();
     let havePresenceSel = false;
-    for (const localPresenceInfo of flowView.presenceVector) {
+    for (const localPresenceInfo of flowView.presenceVector.values()) {
         if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
             havePresenceSel = true;
             break;
         }
     }
     if (flowView.bookmarks || flowView.comments || sel || havePresenceSel) {
-        const client = flowView.client;
         const computedEnd = lineEnd;
         const bookmarks = flowView.bookmarks.findOverlappingIntervals(lineStart, computedEnd);
         const comments = flowView.commentsView.findOverlappingIntervals(lineStart, computedEnd);
         const lineText = flowView.sharedString.getText(lineStart, computedEnd);
         if (sel && ((sel.start < lineEnd) && (sel.end > lineStart))) {
-            showBookmark(undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
-                computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
+            showBookmark(flowView, undefined, lineText, sel.start, sel.end, lineStart, endPGMarker,
+                computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv);
         }
         if (havePresenceSel) {
-            for (const localPresenceInfo of flowView.presenceVector) {
+            for (const localPresenceInfo of flowView.presenceVector.values()) {
                 if (localPresenceInfo && (localPresenceInfo.markXformPos !== localPresenceInfo.xformPos)) {
                     const presenceStart = Math.min(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
                     const presenceEnd = Math.max(localPresenceInfo.markXformPos, localPresenceInfo.xformPos);
                     if ((presenceStart < lineEnd) && (presenceEnd > lineStart)) {
-                        showBookmark({ clid: flowView.client.getLongClientId(localPresenceInfo.clientId) },
+                        showBookmark(flowView, { clid: localPresenceInfo.clientId },
                             lineText, presenceStart, presenceEnd, lineStart, endPGMarker,
-                            computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv, client);
+                            computedEnd, lineFontstr, lineDivHeight, lineBreakIndex, docContext, contentDiv);
                     }
                 }
             }
@@ -1199,9 +1198,9 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                 if (b.overlapsPos(lineStart, lineEnd)) {
                     const start = b.start.toPosition();
                     const end = b.end.toPosition();
-                    showBookmark(b.properties, lineText, start, end, lineStart,
+                    showBookmark(flowView, b.properties, lineText, start, end, lineStart,
                         endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                        docContext, contentDiv, client, true);
+                        docContext, contentDiv, true);
                 }
             }
         }
@@ -1209,9 +1208,9 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
             for (const b of bookmarks) {
                 const start = b.start.toPosition();
                 const end = b.end.toPosition();
-                showBookmark(b.properties, lineText, start, end, lineStart,
+                showBookmark(flowView, b.properties, lineText, start, end, lineStart,
                     endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                    docContext, contentDiv, client, true);
+                    docContext, contentDiv, true);
             }
         }
         if (comments && flowView.modes.showComments) {
@@ -1219,9 +1218,9 @@ function showBookmarks(flowView: FlowView, lineStart: number, lineEnd: number,
                 const start = comment.start.toPosition();
                 const end = comment.end.toPosition();
                 comment.addProperties({ bgColor: "gold" });
-                showBookmark(comment.properties, lineText, start, end, lineStart,
+                showBookmark(flowView, comment.properties, lineText, start, end, lineStart,
                     endPGMarker, computedEnd, lineFontstr, lineDivHeight, lineBreakIndex,
-                    docContext, contentDiv, client);
+                    docContext, contentDiv);
             }
         }
     }
@@ -2768,7 +2767,8 @@ export function clearInclusion(elm: HTMLElement, sha: string) {
 
 const Nope = -1;
 
-const presenceColors = ["darkgreen", "sienna", "olive", "purple"];
+const presenceColors = ["darkgreen", "sienna", "olive", "purple", "lightseagreen"];
+
 export class FlowCursor extends Cursor {
     public presenceDiv: HTMLDivElement;
     public presenceInfo: ILocalPresenceInfo;
@@ -2814,8 +2814,7 @@ export class FlowCursor extends Cursor {
     }
     public addPresenceInfo(presenceInfo: ILocalPresenceInfo) {
         // for now, color
-        const presenceColorIndex = presenceInfo.clientId % presenceColors.length;
-        this.bgColor = presenceColors[presenceColorIndex];
+        this.bgColor = presenceInfo.presenceColor;
         this.presenceInfo = presenceInfo;
         this.makePresenceDiv();
 
@@ -2947,7 +2946,8 @@ export interface ILocalPresenceInfo {
     markLocalRef?: MergeTree.LocalReference;
     xformPos?: number;
     markXformPos?: number;
-    clientId: number;
+    clientId: string;
+    presenceColor: string;
     user: IUser;
     cursor?: FlowCursor;
     fresh: boolean;
@@ -3201,7 +3201,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public persistentComponents: Map<IComponent, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
     public presenceSignal: PresenceSignal;
-    public presenceVector: ILocalPresenceInfo[] = [];
+    public presenceVector: Map<string, ILocalPresenceInfo> = new Map();
     public docRoot: types.ISharedMap;
     public curPG: MergeTree.Marker;
     public modes = {
@@ -3449,14 +3449,14 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.sharedString.client.longClientId };
+            const props = { clid: this.collabDocument.clientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
         }
         this.hostSearchMenu(-1);
     }
 
     public updatePresenceCursors() {
-        for (const presenceInfo of this.presenceVector) {
+        for (const presenceInfo of this.presenceVector.values()) {
             if (presenceInfo && presenceInfo.cursor) {
                 presenceInfo.cursor.refresh();
             }
@@ -3620,8 +3620,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public presenceInfoInRange(start: number, end: number) {
-        for (let i = 0, len = this.presenceVector.length; i < len; i++) {
-            const presenceInfo = this.presenceVector[i];
+        for (const presenceInfo of this.presenceVector.values()) {
             if (presenceInfo) {
                 if ((start <= presenceInfo.xformPos) && (presenceInfo.xformPos <= end)) {
                     return presenceInfo;
@@ -3642,8 +3641,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public updatePresencePositions() {
-        for (let i = 0, len = this.presenceVector.length; i < len; i++) {
-            this.updatePresencePosition(this.presenceVector[i]);
+        for (const presenceInfo of this.presenceVector.values()) {
+            this.updatePresencePosition(presenceInfo);
         }
     }
 
@@ -3670,7 +3669,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         if (localPresenceInfo.markLocalRef) {
             this.sharedString.addLocalReference(localPresenceInfo.localRef);
         }
-        this.presenceVector[localPresenceInfo.clientId] = localPresenceInfo;
+        this.presenceVector.set(localPresenceInfo.clientId, localPresenceInfo);
         if ((localPresenceInfo.xformPos !== tempXformPos) ||
             (localPresenceInfo.markXformPos !== tempMarkXformPos)) {
             const sameLine = localPresenceInfo.cursor &&
@@ -5630,7 +5629,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private remotePresenceFromEdit(
-        longClientId: string,
+        clientId: string,
         refseq: number,
         oldpos: number,
         posAdjust = 0) {
@@ -5642,7 +5641,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             type: "selection",
         };
 
-        this.remotePresenceToLocal(longClientId, remotePosInfo);
+        this.remotePresenceToLocal(clientId, remotePosInfo);
     }
     // TODO: throttle this if local starts moving
     private remoteDragToLocal(remoteDragInfo: IRemoteDragInfo) {
@@ -5654,28 +5653,28 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.hostSearchMenu(Nope);
     }
 
-    private remotePresenceToLocal(longClientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
-        const clientId = this.client.getOrAddShortClientId(longClientId);
+    private remotePresenceToLocal(clientId: string, remotePresenceInfo: IRemotePresenceInfo, posAdjust = 0) {
 
         const rempos = this.sharedString.resolveRemoteClientPosition(
             remotePresenceInfo.origPos,
             remotePresenceInfo.refseq,
-            longClientId);
+            clientId);
         const segoff = this.sharedString.getContainingSegment(rempos);
 
         if (segoff.segment) {
-            const docClient = this.collabDocument.getClient(longClientId);
+            const docClient = this.collabDocument.getClient(clientId);
             if (docClient && docClient.client.type === "browser") {
                 const localPresenceInfo = {
                     clientId,
                     fresh: true,
                     localRef: new MergeTree.LocalReference(this.client, segoff.segment as MergeTree.BaseSegment, segoff.offset,
                         MergeTree.ReferenceType.SlideOnRemove),
+                    presenceColor: this.presenceVector.has(clientId) ?
+                        this.presenceVector.get(clientId).presenceColor :
+                        presenceColors[this.presenceVector.size % presenceColors.length],
                     shouldShowCursor: () => {
-                        return this.client.getClientId() !== clientId &&
-                            Array.from(this.collabDocument.getClients().keys())
-                                .map((k) => this.client.getOrAddShortClientId(k))
-                                .indexOf(clientId) !== -1;
+                        return this.collabDocument.clientId !== clientId &&
+                            Array.from(this.collabDocument.getClients().keys()).indexOf(clientId) !== -1;
                     },
                     user: docClient.client.user,
                 } as ILocalPresenceInfo;
