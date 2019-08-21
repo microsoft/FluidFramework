@@ -4,23 +4,54 @@
  */
 
 import { Char, randomId } from "@prague/flow-util";
-import { TextSegment } from "@prague/merge-tree";
+import { MapLike, TextSegment } from "@prague/merge-tree";
 import { FlowDocument, getDocSegmentKind } from "../document";
+import { emptyArray } from "../util";
 import { Tag } from "../util/tag";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
-import { MarkdownParser } from "./parser";
+import { MarkdownParser, MarkdownToken } from "./parser";
 
 const markdownSym = Symbol();
 
 interface IMarkdownInfo {
-    start?: Tag[];
+    start?: Array<{ token: MarkdownToken, props?: MapLike<string | number> }>;
     pop?: number;
 }
 
+const tokenToTag = Object.freeze({
+    // [MarkdownToken.break]:          Tag.p,       // Emit node, not push.
+    // [MarkdownToken.code]:           Tag.p,       // Emit multiple tags
+    [MarkdownToken.emphasis]:       Tag.em,
+    [MarkdownToken.heading1]:       Tag.h1,
+    [MarkdownToken.heading2]:       Tag.h2,
+    [MarkdownToken.heading3]:       Tag.h3,
+    [MarkdownToken.heading4]:       Tag.h4,
+    [MarkdownToken.heading5]:       Tag.h5,
+    [MarkdownToken.heading6]:       Tag.h6,
+    [MarkdownToken.image]:          Tag.img,
+    [MarkdownToken.inlineCode]:     Tag.code,
+    [MarkdownToken.link]:           Tag.a,
+    [MarkdownToken.listItem]:       Tag.li,
+    [MarkdownToken.orderedlist]:    Tag.ol,
+    [MarkdownToken.paragraph]:      Tag.p,
+    [MarkdownToken.strong]:         Tag.strong,
+    [MarkdownToken.table]:          Tag.table,
+    [MarkdownToken.tableCell]:      Tag.td,
+    [MarkdownToken.tableRow]:       Tag.tr,
+    [MarkdownToken.text]:           Tag.span,       // TODO: ?
+    [MarkdownToken.unorderedlist]:  Tag.ul,
+});
+
 class MarkdownFormatter extends RootFormatter<IFormatterState> {
-    public begin() { }
-    public end() { }
+    public begin(layout: Layout) {
+        const span = this.pushTag(layout, Tag.span);
+        span.style.whiteSpace = "pre-wrap";
+    }
+
+    public end(layout: Layout) {
+        layout.popNode();
+    }
 
     public visit(layout: Layout) {
         const segment = layout.segment;
@@ -31,13 +62,12 @@ class MarkdownFormatter extends RootFormatter<IFormatterState> {
             layout.popNode();
         }
 
-        const start = md && md.start;
-        if (start) {
-            for (const tag of start) {
-                const element = this.pushTag(layout, tag);
-                if (tag === Tag.span) {
-                    element.className = "text";
-                }
+        const start = (md && md.start) || emptyArray;
+        for (const { token, props } of start) {
+            const tag = tokenToTag[token];
+            const element = this.pushTag(layout, tag);
+            if (props) {
+                Object.assign(element, props);
             }
         }
 
@@ -55,8 +85,8 @@ class MarkdownFormatter extends RootFormatter<IFormatterState> {
     public prepare(layout: Layout, start: number, end: number) {
         const { doc } = layout;
         const parser = new MarkdownParser(
-            (tag, position) => { this.enter(doc, tag, position); },
-            (_, position) => { this.leave(doc, position); });
+            (position, token, props) => { this.enter(doc, position, token, props); },
+            (position, token) => { this.leave(doc, position, token); });
         parser.parse(this.getTextAndResetMDInfo(doc));
         return { start: 0, end: doc.length };
     }
@@ -79,18 +109,21 @@ class MarkdownFormatter extends RootFormatter<IFormatterState> {
         return tags;
     }
 
-    private enter(doc: FlowDocument, tag: Tag, position: number) {
+    private enter(doc: FlowDocument, position: number, token: MarkdownToken, props: MapLike<string | number>) {
+        // TODO: To reduce allocation, consider changing the type of 'md.start' to:
+        //       token | { token, props } | (token | { token, props })[]
+        //
+        //       Otherwise, we might as well have the parser always alloc an object.
         const md = this.getEnsuredTags(doc, position);
         md.start = md.start || [];
-        md.start.push(tag);
+        md.start.push({ token, props });
     }
 
-    private leave(doc: FlowDocument, position: number) {
+    private leave(doc: FlowDocument, position: number, token: MarkdownToken) {
         if (position < doc.length) {
             const md = this.getEnsuredTags(doc, position);
-            // tslint:disable-next-line:strict-boolean-expressions
-            md.pop = md.pop || 0;
-            md.pop++;
+            // tslint:disable-next-line:no-bitwise
+            md.pop = (md.pop | 0) + 1;        // Coerce 'undefined' to 0
         }
     }
 
