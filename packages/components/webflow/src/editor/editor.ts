@@ -7,7 +7,7 @@ import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
 import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
-import { Formatter, IFormatterState } from "../view/formatter";
+import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
@@ -19,7 +19,7 @@ export class Editor {
     private readonly caretSync: () => void;
     private get doc() { return this.layout.doc; }
 
-    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<Formatter<IFormatterState>>, scope?: IComponent) {
+    constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: IComponent) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
@@ -150,14 +150,11 @@ export class Editor {
 
         switch (e.code) {
             case KeyCode.enter: {
-                const caret = this.caret;
-                const position = caret.position;
                 if (e.shiftKey) {
-                    this.doc.insertLineBreak(position);
+                    this.insertText(e, "\n");
                 } else {
-                    this.doc.insertParagraph(position);
+                    this.insertText(e, "\n\n");
                 }
-                this.caretSync();
                 break;
             }
             default: {
@@ -166,12 +163,12 @@ export class Editor {
         }
     }
 
-    private insertText(e: KeyboardEvent) {
+    private insertText(e: KeyboardEvent, text = e.key) {
         const { start, end } = this.caret.selection;
         if (start === end) {
-            this.doc.insertText(end, e.key);
+            this.doc.insertText(end, text);
         } else {
-            this.doc.replaceWithText(start, end, e.key);
+            this.doc.replaceWithText(start, end, text);
         }
         this.caret.collapseForward();
         this.caretSync();

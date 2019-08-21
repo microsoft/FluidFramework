@@ -52,7 +52,8 @@
     "@prague/merge-tree": "^0.9.0",
     "@prague/runtime-definitions": "^0.9.0",
     "@prague/sequence": "^0.9.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "remark": "^11.0.1"
   },
   "devDependencies": {
     "@prague/build-common": "^0.9.0",

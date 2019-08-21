@@ -12,7 +12,7 @@ import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
-import { Formatter, IFormatterState } from "./formatter";
+import { Formatter, IFormatterState, RootFormatter } from "./formatter";
 
 interface ILayoutCursor { parent: Node; previous: Node; }
 
@@ -87,7 +87,7 @@ export class Layout {
     private renderResolver: () => void;
     public get rendered() { return this.renderPromise; }
 
-    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<Formatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
+    constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter, state: emptyObject });
@@ -121,8 +121,8 @@ export class Layout {
         const oldStart = start;
         const oldEnd = end;
         {
-            start = clamp(0, start, length);
-            end = clamp(start, end, length);
+            ({ start, end } = (this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).prepare(
+                this, clamp(0, start, length), clamp(start, end, length)));
 
             let checkpoint = this.initialCheckpoint;
 
@@ -150,6 +150,11 @@ export class Layout {
             doc.visitRange((position, segment, startOffset, endOffset) => {
                 this.beginSegment(position, segment, startOffset, endOffset);
 
+                if (position === 0) {
+                    const { formatter, state } = this.format;
+                    formatter.begin(this, state);
+                }
+
                 while (true) {
                     const { formatter, state } = this.format;
                     if (formatter.visit(this, state)) {
@@ -170,6 +175,8 @@ export class Layout {
                 debug("Begin EOT: %o@%d (length=%d)", this.segment, this.segmentEnd, doc.length);
                 this.beginSegment(length, eotSegment, 0, 0);
                 this.popFormat(this.formatStack.length);
+                const { formatter, state } = this.format;
+                formatter.end(this, state);
                 this.endSegment(end);
                 debug("End EOT");
             }
@@ -401,6 +408,8 @@ export class Layout {
 
     private readonly onChange = (e: SequenceEvent) => {
         debug("onChange(%o)", e);
+
+        (this.rootFormatInfo.formatter as RootFormatter<IFormatterState>).onChange(this, e);
 
         // If the segment was removed, promptly remove any DOM nodes it emitted.
         for (const { segment } of e.ranges) {

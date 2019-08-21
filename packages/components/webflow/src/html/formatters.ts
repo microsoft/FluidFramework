@@ -12,16 +12,16 @@ import * as styles from "../editor/index.css";
 import { emptyObject } from "../util";
 import { getAttrs, syncAttrs } from "../util/attr";
 import { Tag } from "../util/tag";
-import { Formatter, IFormatterState } from "../view/formatter";
+import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 import { ICssProps, sameCss, syncCss } from "./css";
 import { debug } from "./debug";
 
-class HtmlFormatter extends Formatter<IFormatterState> {
-    public begin(): never { throw new Error(); }
-    public end(): never { throw new Error(); }
+class HtmlFormatter extends RootFormatter<IFormatterState> {
+    public begin() { }
+    public end() { }
 
-    public visit(layout: Layout, state: IFormatterState) {
+    public visit(layout: Layout) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
@@ -57,6 +57,8 @@ class HtmlFormatter extends Formatter<IFormatterState> {
                 assert.fail(`Unhandled DocSegmentKind '${kind}' @${layout.position}`);
         }
     }
+
+    public onChange() { }
 }
 
 interface IInclusionState {

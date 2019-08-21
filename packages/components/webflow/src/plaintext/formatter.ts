@@ -5,12 +5,19 @@
 
 import { Char } from "@prague/flow-util";
 import { TextSegment } from "@prague/merge-tree";
-import { Formatter, IFormatterState } from "../view/formatter";
+import { Tag } from "../util/tag";
+import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 
-class PlainTextFormatter extends Formatter<IFormatterState> {
-    public begin(): never { throw new Error(); }
-    public end(): never { throw new Error(); }
+class PlainTextFormatter extends RootFormatter<IFormatterState> {
+    public begin(layout: Layout) {
+        const e = this.pushTag(layout, Tag.pre);
+        e.style.whiteSpace = "pre-wrap";
+    }
+
+    public end(layout: Layout) {
+        layout.popNode();
+    }
 
     public visit(layout: Layout) {
         const segment = layout.segment;
@@ -23,6 +30,8 @@ class PlainTextFormatter extends Formatter<IFormatterState> {
 
         return true;
     }
+
+    public onChange() { }
 }
 
 export const plainTextFormatter = Object.freeze(new PlainTextFormatter());

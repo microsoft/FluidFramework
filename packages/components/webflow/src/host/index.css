@@ -26,10 +26,6 @@ html, body {
     outline: 1px dotted #ccc;
 }
 
-.slot {
-    white-space: pre-wrap;
-}
-
 .slot:focus-within {
     outline: none;
 }

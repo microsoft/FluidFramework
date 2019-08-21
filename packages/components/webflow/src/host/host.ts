@@ -8,9 +8,10 @@ import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
+import { markdownFormatter } from "../markdown/formatters";
 import { plainTextFormatter } from "../plaintext/formatter";
 import { Tag } from "../util/tag";
-import { Formatter, IFormatterState } from "../view/formatter";
+import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 import { SearchMenuView } from "./searchmenu";
@@ -51,7 +52,7 @@ export class WebflowView implements IComponentHTMLView {
 
         this.docP.then((doc) => {
             const slot = template.get(this.root, "slot") as HTMLElement;
-            let editor = new Editor(doc, slot, htmlFormatter);
+            let editor = new Editor(doc, slot, markdownFormatter);
 
             this.searchMenu = new SearchMenuView();
 
@@ -79,7 +80,7 @@ export class WebflowView implements IComponentHTMLView {
                 doc.toggleCssClass(start, end, className);
             };
 
-            const switchFormatter = (formatter: Readonly<Formatter<IFormatterState>>) => {
+            const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>) => {
                 editor.remove();
                 editor = new Editor(doc, slot, formatter);
             };
@@ -95,6 +96,7 @@ export class WebflowView implements IComponentHTMLView {
                     { name: "h4",           enabled: () => true,    exec: () => { setFormat(Tag.h4); }},
                     { name: "h5",           enabled: () => true,    exec: () => { setFormat(Tag.h5); }},
                     { name: "h6",           enabled: () => true,    exec: () => { setFormat(Tag.h6); }},
+                    { name: "markdown",     enabled: () => true,    exec: () => { switchFormatter(markdownFormatter); }},
                     { name: "ol",           enabled: () => true,    exec: () => { insertTags([Tag.ol, Tag.li]); }},
                     { name: "p",            enabled: () => true,    exec: () => { setFormat(Tag.p); }},
                     { name: "plaintext",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
