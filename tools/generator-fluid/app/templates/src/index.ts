@@ -4,7 +4,7 @@
  */
 
 import {
-  SimpleModuleInstantiationFactory
+    SimpleModuleInstantiationFactory
 } from "@prague/aqueduct";
 
 import {} from "./main";
@@ -22,8 +22,8 @@ const chaincodeName = pkg.name as string;
  * 2. Map of string to factory for all components
  */
 export const fluidExport = new SimpleModuleInstantiationFactory(
-  chaincodeName,
-  new Map([
-      [chaincodeName, Promise.resolve(ComponentInstantiationFactory)],
-  ]),
+    chaincodeName,
+    new Map([
+            [chaincodeName, Promise.resolve(ComponentInstantiationFactory)],
+    ]),
 );
