@@ -85,6 +85,14 @@ describe("Map", () => {
         expectAllAfterValues("testKey1", "testValue");
     });
 
+    it("should set key value to undefined in three documents correctly", async () => {
+        root2.set("testKey1", undefined);
+        root2.set("testKey2", undefined);
+        await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+        expectAllAfterValues("testKey1", undefined);
+        expectAllAfterValues("testKey2", undefined);
+    });
+
     it("Should delete values in 3 documents correctly", async () => {
         root2.delete("testKey1");
         await documentDeltaEventManager.process(user1Document, user2Document, user3Document);

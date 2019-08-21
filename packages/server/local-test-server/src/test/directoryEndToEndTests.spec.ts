@@ -135,6 +135,14 @@ describe("Directory", () => {
             expectAllSize(2);
         });
 
+        it("should set key value to undefined in three documents correctly", async () => {
+            root2Directory.set("testKey1", undefined);
+            root2Directory.set("testKey2", undefined);
+            await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
+            expectAllAfterValues("testKey1", "/", undefined);
+            expectAllAfterValues("testKey2", "/", undefined);
+        });
+
         it("should update value and trigger onValueChanged on other two documents", async () => {
             let user1ValueChangedCount: number = 0;
             let user2ValueChangedCount: number = 0;
