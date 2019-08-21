@@ -7,7 +7,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
-    "build:compile": "tsc",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
@@ -19,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@prague/build-common": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
     "@prague/protocol-definitions": "^0.8.0",
     "request": "^2.88.0"
   },
