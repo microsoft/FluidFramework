@@ -431,7 +431,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             assert(this.client.mergeTree.collabWindow.minSeq === minSeq);
         }
 
-        const snap = new MergeTree.Snapshot(this.client.mergeTree, this.logger);
+        const snap = this.client.createSnapshotter();
         snap.extractSync();
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
         const mtSnap = snap.emit(this.messagesSinceMSNChange);
@@ -485,18 +485,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.sendNACKed();
 
         return;
-    }
-
-    protected segmentsFromSpecs(segSpecs: MergeTree.IJSONSegment[]): MergeTree.ISegment[] {
-        const segToSpec = this.segmentFromSpec.bind(this);
-        return segSpecs.map((spec) => {
-            const seg = segToSpec(spec);
-            if (seg.seq === undefined) {
-                this.logger.sendErrorEvent({eventName: "SegmentHasUndefinedSeq"});
-                seg.seq = MergeTree.UniversalSequenceNumber;
-            }
-            return seg;
-        });
     }
 
     private getSharedIntervalCollectionInternal<TInterval extends ISerializableInterval>(

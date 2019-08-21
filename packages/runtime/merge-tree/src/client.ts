@@ -30,6 +30,7 @@ import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
+import { Snapshot } from "./snapshot";
 import { MergeTreeTextHelper } from "./textSegment";
 
 export class Client {
@@ -890,6 +891,10 @@ export class Client {
 
     public createTextHelper() {
         return new MergeTreeTextHelper(this.mergeTree);
+    }
+
+    public createSnapshotter() {
+        return new Snapshot(this.mergeTree, this.logger);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {
