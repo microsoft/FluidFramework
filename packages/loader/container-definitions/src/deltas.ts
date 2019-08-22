@@ -89,6 +89,9 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender {
     // Max message size allowed to the delta manager
     maxMessageSize: number;
 
+    // Service configuration provided by the service.
+    serviceConfiguration: IServiceConfiguration;
+
     /**
      * Puts the delta manager in read only mode
      */

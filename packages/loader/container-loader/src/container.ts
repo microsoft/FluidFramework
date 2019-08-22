@@ -506,7 +506,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                     this._existing = details!.existing;
                     this._parentBranch = details!.parentBranch;
-                    this._serviceConfiguration = details!.serviceConfiguration;
 
                     perfEvent.reportProgress({ stage: "AfterSocketConnect" });
                 }
@@ -597,7 +596,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     `joined @ ${details.sequenceNumber}`,
                     this.pendingClientId,
                     this._deltaManager!.version,
-                    details.client.scopes);
+                    details.client.scopes,
+                    this._deltaManager!.serviceConfiguration);
             }
         });
 
@@ -777,7 +777,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     "websocket established",
                     details.clientId,
                     details.version,
-                    details.claims.scopes);
+                    details.claims.scopes,
+                    details.serviceConfiguration);
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
@@ -841,13 +842,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         reason: string,
         clientId: string,
         version: string,
-        scopes: string[]);
+        scopes: string[],
+        configuration: IServiceConfiguration);
     private setConnectionState(
         value: ConnectionState,
         reason: string,
         context?: string,
         version?: string,
-        scopes?: string[]) {
+        scopes?: string[],
+        configuration?: IServiceConfiguration) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             return;
@@ -863,6 +866,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         this._connectionState = value;
         this._version = version;
         this._scopes = scopes;
+        this._serviceConfiguration = configuration;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)

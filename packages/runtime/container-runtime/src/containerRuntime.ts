@@ -565,10 +565,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries);
         if (this.context.connectionState === ConnectionState.Connected) {
-            // TODO can remove in 0.6 - legacy drivers may be missing version
-            if (this.context.deltaManager.version && this.context.deltaManager.version.indexOf("^0.2") === 0) {
-                this.summaryManager.setConnected(this.context.clientId);
-            }
+            this.summaryManager.setConnected(this.context.clientId);
         }
     }
     public get IComponentTokenProvider() {
@@ -751,11 +748,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             if (this.proposeLeadershipOnConnection) {
                 this.proposeLeadership();
             }
-
-            // TODO can remove in 0.6 - legacy drivers may be missing version
-            if (version && version.indexOf("^0.2") === 0) {
-                this.summaryManager.setConnected(clientId);
-            }
+            this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
         }

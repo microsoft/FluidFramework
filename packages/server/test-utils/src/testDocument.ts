@@ -13,6 +13,7 @@ import {
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
     MessageType,
 } from "@prague/protocol-definitions";
@@ -86,6 +87,8 @@ export class TestDeltaManager
     public clientType = "Browser";
 
     public version = "^0.1.0";
+
+    public serviceConfiguration: IServiceConfiguration;
 
     public get IDeltaSender() { return this; }
 

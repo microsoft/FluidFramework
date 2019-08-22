@@ -13,6 +13,7 @@ import {
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
     MessageType,
 } from "@prague/protocol-definitions";
@@ -126,6 +127,10 @@ export class DeltaManagerProxy
 
     public get maxMessageSize(): number {
         return this.deltaManager.maxMessageSize;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.deltaManager.serviceConfiguration;
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {

@@ -19,6 +19,7 @@ import {
     IDocumentService,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
+    IServiceConfiguration,
     ISignalMessage,
     ITrace,
     MessageType,
@@ -132,6 +133,10 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public get version(): string {
         return this.connection!.details.version;
+    }
+
+    public get serviceConfiguration(): IServiceConfiguration {
+        return this.connection!.details.serviceConfiguration;
     }
 
     constructor(
