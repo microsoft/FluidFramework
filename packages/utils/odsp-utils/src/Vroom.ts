@@ -107,7 +107,15 @@ export async function getSocketStorageDiscovery(
   getVroomToken: (siteUrl: string) => Promise<string | undefined>,
   getPushToken: () => Promise<string | undefined>,
 ): Promise<ISocketStorageDiscovery> {
+  logger.send({
+    category: "performance",
+    eventName: "joinSessionStart",
+    perfType: "start",
+    tick: performance.now(),
+  });
+
   const pushTokenPromise = isPushAuthV2 ? getPushToken() : Promise.resolve(undefined);
+
   const joinSessionPromise = fetchOpStream(
     appId,
     driveId,
@@ -147,6 +155,13 @@ export async function getSocketStorageDiscovery(
     // tslint:disable-next-line: no-non-null-assertion
     socketStorageDiscovery.socketToken = pushToken!;
   }
+
+  logger.send({
+    category: "performance",
+    eventName: "joinSessionEnd",
+    perfType: "end",
+    tick: performance.now(),
+  });
 
   return socketStorageDiscovery;
 }
