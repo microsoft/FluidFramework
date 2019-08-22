@@ -8,7 +8,6 @@ import { MockStorage } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { TestClient } from ".";
 import { Snapshot } from "../snapshot";
-import { SnapshotLoader } from "../snapshotLoader";
 
 describe("snapshot", () => {
     it("header only", async () => {
@@ -32,7 +31,7 @@ describe("snapshot", () => {
             logger: client2.logger,
             clientId: "1",
         };
-        const loader = new SnapshotLoader(runtime as IComponentRuntime, client2);
+        const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
         await loader.initialize(undefined, services);
 
         assert.equal(client2.getLength(), client1.getLength());
@@ -63,7 +62,7 @@ describe("snapshot", () => {
                 logger: client2.logger,
                 clientId: (i + 1).toString(),
             };
-            const loader = new SnapshotLoader(runtime as IComponentRuntime, client2);
+            const loader = client2.createSnapshotLoader(runtime as IComponentRuntime);
             await loader.initialize(undefined, services);
 
             const client2Len = client2.getLength();

@@ -398,7 +398,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     protected async loadContent(
         branchId: string,
         storage: IObjectStorageService): Promise<void> {
-        const loader = new MergeTree.SnapshotLoader(this.runtime, this.client);
+        const loader = this.client.createSnapshotLoader(this.runtime);
         try {
             const msgs = await loader.initialize(branchId, storage);
             this.collabStarted = true;
@@ -429,7 +429,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
             // One of the snapshots (from SPO) I observed to have chunk.chunkSequenceNumber > minSeq!
             // Not sure why - need to catch it sooner
-            assert(this.client.mergeTree.collabWindow.minSeq === minSeq);
+            assert(this.client.getCollabWindow().minSeq === minSeq);
         }
 
         const snap = this.client.createSnapshotter();

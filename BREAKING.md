@@ -28,6 +28,9 @@ root.set("test", map.handle);
 const retrievedMap = await root.get<IComponentHandle>("test").get<ISharedMap>();
 ```
 
+## `mergeTree` is now protected on `MergeTree.Client`
+The merge tree in Client should be interacted with indirectly through Client or Sequence methods, rather than directly as was possible before. See "[Updated sequence API to provide richer access to the underlying merge tree](#updated-sequence-api-to-provide-richer-access-to-the-underlying-merge-tree)" from 0.8 breaking changes for more info.
+
 # 0.8 Breaking Changes
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)

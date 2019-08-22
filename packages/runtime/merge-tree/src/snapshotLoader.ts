@@ -6,7 +6,7 @@ import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { Client } from "./client";
-import { NonCollabClient, UniversalSequenceNumber } from "./mergeTree";
+import { MergeTree, NonCollabClient, UniversalSequenceNumber } from "./mergeTree";
 import { MergeTreeChunk } from "./ops";
 import { Snapshot } from "./snapshot";
 
@@ -14,7 +14,8 @@ export class SnapshotLoader {
 
     constructor(
         private readonly runtime: IComponentRuntime,
-        private readonly client: Client) { }
+        private readonly client: Client,
+        private readonly mergeTree: MergeTree) { }
 
     public async initialize(
         branchId: string,
@@ -53,7 +54,7 @@ export class SnapshotLoader {
             seg.seq = UniversalSequenceNumber;
             return seg;
         });
-        this.client.mergeTree.reloadFromSegments(segs);
+        this.mergeTree.reloadFromSegments(segs);
 
         // tslint:disable-next-line: no-suspicious-comment
         // TODO currently only assumes two levels of branching
@@ -88,11 +89,9 @@ export class SnapshotLoader {
             chunk1.chunkSegmentCount + chunk2.chunkSegmentCount === chunk1.totalSegmentCount,
             { eventName: "Mismatch in totalSegmentCount" });
 
-        const mergeTree = this.client.mergeTree;
-
         // Deserialize each chunk segment and append it to the end of the MergeTree.
-        mergeTree.insertSegments(
-            mergeTree.root.cachedLength,
+        this.mergeTree.insertSegments(
+            this.mergeTree.root.cachedLength,
             chunk2.segmentTexts.map((s) => this.client.specToSegment(s)),
             UniversalSequenceNumber,
             NonCollabClient,

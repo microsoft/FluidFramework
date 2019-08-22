@@ -14,13 +14,13 @@ import * as Collections from "../collections";
 import {
     ISegment,
     Marker,
+    MergeTree,
     UnassignedSequenceNumber,
 } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { Snapshot } from "../snapshot";
-import { SnapshotLoader } from "../snapshotLoader";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -57,16 +57,17 @@ export class TestClient extends Client {
         const services = new MockStorage(snapshotTree);
 
         const client2 = new TestClient(client1.mergeTree.options);
-        const loader = new SnapshotLoader(
+        const loader = client2.createSnapshotLoader(
             // tslint:disable-next-line: no-object-literal-type-assertion
             {
                 logger: client2.logger,
                 clientId: newLongClientId,
-            } as IComponentRuntime,
-            client2);
+            } as IComponentRuntime);
         await loader.initialize(undefined, services);
         return client2;
     }
+
+    public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
     protected readonly q: Collections.List<ISequencedDocumentMessage> =

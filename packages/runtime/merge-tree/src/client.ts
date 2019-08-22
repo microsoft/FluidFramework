@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
@@ -31,11 +32,10 @@ import * as OpBuilder from "./opBuilder";
 import * as ops from "./ops";
 import * as Properties from "./properties";
 import { Snapshot } from "./snapshot";
+import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 
 export class Client {
-    public readonly mergeTree: MergeTree;
-
     public verboseOps = false;
     public noVerboseRemoteAnnote = false;
     public measureOps = false;
@@ -61,6 +61,8 @@ export class Client {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback) {
         this.mergeTree.mergeTreeMaintenanceCallback = callback;
     }
+
+    protected readonly mergeTree: MergeTree;
 
     private readonly clientNameToIds = new Collections.RedBlackTree<string, ClientIds>(compareStrings);
     private readonly shortClientIdMap: string[] = [];
@@ -895,6 +897,10 @@ export class Client {
 
     public createSnapshotter() {
         return new Snapshot(this.mergeTree, this.logger);
+    }
+
+    public createSnapshotLoader(runtime: IComponentRuntime) {
+        return new SnapshotLoader(runtime, this, this.mergeTree);
     }
 
     getStackContext(startPos: number, rangeLabels: string[]) {
