@@ -4,7 +4,9 @@
   "description": "A tool that lets the user to replay ops.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": "./dist/replayTool.js",
+  "bin": {
+	"replayTool": "bin/replayTool.js"
+  },
   "sideEffects": "false",
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",
