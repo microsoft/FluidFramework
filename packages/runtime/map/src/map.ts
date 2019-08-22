@@ -553,12 +553,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.emit("valueChanged", event, local, op);
+        this.emit("valueChanged", event, local, op, this);
     }
 
     private clearCore(local: boolean, op: ISequencedDocumentMessage) {
         this.data.clear();
-        this.emit("clear", local, op);
+        this.emit("clear", local, op, this);
     }
 
     private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
@@ -566,7 +566,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.emit("valueChanged", event, local, op);
+            this.emit("valueChanged", event, local, op, this);
         }
         return successfullyRemoved;
     }
@@ -703,7 +703,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                         this.runtime.IComponentHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
-                    this.emit("valueChanged", event, local, message);
+                    this.emit("valueChanged", event, local, message, this);
                 },
                 submit: (op) => {
                     this.submitLocalMessage(op);
@@ -748,7 +748,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             this.submitMapMessage(op);
 
             const event: IValueChanged = { key, previousValue };
-            this.emit("valueChanged", event, true, null);
+            this.emit("valueChanged", event, true, null, this);
         };
 
         return { emit };

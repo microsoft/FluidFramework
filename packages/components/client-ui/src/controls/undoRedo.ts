@@ -5,8 +5,6 @@
 
 import { ISharedMap, IValueChanged, SharedMap } from "@prague/map";
 import {
-    createGroupOp,
-    IMergeTreeOp,
     ISegment,
     matchProperties,
     MergeTreeDeltaType,
@@ -61,12 +59,10 @@ export class UndoRedoStackManager {
 
     public attachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
         sequence.on("sequenceDelta", this.sequenceDeltaHandler);
-        this.attachMap(sequence);
     }
 
     public detachSequence<T extends ISegment>(sequence: SharedSegmentSequence<T>) {
         sequence.removeListener("sequenceDelta", this.sequenceDeltaHandler);
-        this.detachMap(sequence);
     }
 
     public attachMap(map: ISharedMap) {
@@ -112,7 +108,7 @@ export class UndoRedoStackManager {
         }
     }
 
-    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, target: SharedMap) => {
+    private readonly mapDeltaHandler = (changed: IValueChanged, local: boolean, op, target: SharedMap) => {
         if (local) {
             this.handleLocalRevertableOperation(new MapUndoRedo(changed, target));
         }
@@ -186,7 +182,6 @@ class SequenceUndoRedo implements IRevertable {
 
     public revert() {
         const sequence = this.sequence;
-        const ops: IMergeTreeOp[] = [];
 
         this.tracking.forEach((tracked) => {
             while (tracked.trackingGroup.size > 0) {
@@ -195,14 +190,8 @@ class SequenceUndoRedo implements IRevertable {
                 switch (this.event.deltaOperation) {
                     case MergeTreeDeltaType.INSERT:
                         if (!sg.removedSeq) {
-                            const start =
-                                sequence.getPosition(sg);
-                            const removeOp = this.sequence.client.removeRangeLocal(
-                                start,
-                                start + sg.cachedLength);
-                            if (removeOp) {
-                                ops.push(removeOp);
-                            }
+                            const start = sequence.getPosition(sg);
+                            this.sequence.removeRange(start, start + sg.cachedLength);
                         }
                         break;
 
@@ -210,7 +199,7 @@ class SequenceUndoRedo implements IRevertable {
                         const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
                         const insertOp = this.sequence.client.insertSiblingSegment(sg, insertSegment);
                         if (insertOp) {
-                            ops.push(insertOp);
+                            this.sequence.submitSequenceMessage(insertOp);
                         }
                         sg.trackingCollection.trackingGroups.forEach((tg) => {
                             tg.link(insertSegment);
@@ -220,26 +209,17 @@ class SequenceUndoRedo implements IRevertable {
 
                     case MergeTreeDeltaType.ANNOTATE:
                         if (!sg.removedSeq) {
-                            const start =
-                                sequence.getPosition(sg);
-                            const annnotateOp =
-                                this.sequence.client.annotateRangeLocal(
+                            const start = sequence.getPosition(sg);
+                            this.sequence.annotateRange(
                                     start,
                                     start + sg.cachedLength,
                                     tracked.propertyDelta,
                                     undefined);
-                            if (annnotateOp) {
-                                ops.push(annnotateOp);
-                            }
                         }
                         break;
                 }
             }
         });
-
-        if (ops.length > 0) {
-            this.sequence.submitSequenceMessage(createGroupOp(...ops));
-        }
     }
 
     public disgard() {
