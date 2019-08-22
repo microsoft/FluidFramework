@@ -35,7 +35,7 @@ import {
     SharedString,
     SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
-import { Stream } from "@prague/stream";
+import { IStream, Stream } from "@prague/stream";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires
@@ -67,12 +67,19 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
     private rootView: ISharedMap;
     private collabDoc: Document;
     private taskManager: ITaskManager;
+    private uiInitialized = false;
 
     private constructor(private runtime: ComponentRuntime, private context: IComponentContext) {
         super();
     }
 
     public render(element: HTMLElement) {
+        if (this.uiInitialized) {
+            return;
+        }
+
+        this.initializeUI().catch(debug);
+        this.uiInitialized = true;
     }
 
     public getRoot(): ISharedMap {
@@ -124,7 +131,10 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             }
             this.rootView.set("text", newString.handle);
 
-            this.rootView.set("flowContainerMap", this.collabDoc.createMap().handle);
+            const flowContainerMap = this.collabDoc.createMap();
+            flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
+            flowContainerMap.set("pageInk", Stream.create(this.runtime).handle);
+            this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
         }
@@ -144,6 +154,31 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
         debug(`id is ${this.runtime.id}`);
         debug(`Partial load fired: ${performanceNow()}`);
 
+        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
+        const schedulerComponent = schedulerResponse.value as IComponent;
+        this.taskManager = schedulerComponent.ITaskManager;
+
+        const options = parse(window.location.search.substr(1));
+        addTranslation(
+            this.collabDoc,
+            this.sharedString.id,
+            options.translationFromLanguage as string,
+            options.translationToLanguage as string)
+            .catch((error) => {
+                console.error("Problem adding translation", error);
+            });
+
+        const taskScheduler = new TaskScheduler(
+            this.context,
+            this.taskManager,
+            this.url,
+            this.sharedString,
+            this.insightsMap,
+        );
+        taskScheduler.start();
+    }
+
+    private async initializeUI(): Promise<void> {
         // tslint:disable
         require("bootstrap/dist/css/bootstrap.min.css");
         require("bootstrap/dist/css/bootstrap-theme.min.css");
@@ -159,31 +194,25 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             document.createElement("div"),
             url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
+        const overlayMap = await this.rootView
+            .get<IComponentHandle>("flowContainerMap")
+            .get<DistributedMap.ISharedMap>();
+        const [overlayInkMap, pageInk] = await Promise.all([
+            overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>(),
+            overlayMap.get<IComponentHandle>("pageInk").get<IStream>(),
+        ]);
+
         const containerDiv = document.createElement("div");
         const container = new controls.FlowContainer(
             containerDiv,
             new API.Document(this.runtime, this.context, this.rootView),
             this.sharedString,
-            await this.rootView.get<IComponentHandle>("flowContainerMap").get<DistributedMap.ISharedMap>(),
+            overlayInkMap,
+            pageInk,
             image,
             {});
-        await container.initialize();
         const theFlow = container.flowView;
         browserContainerHost.attach(container);
-
-        const schedulerResponse = await this.runtime.request({ url: "/_scheduler" });
-        const schedulerComponent = schedulerResponse.value as IComponent;
-        this.taskManager = schedulerComponent.ITaskManager;
-
-        const options = parse(window.location.search.substr(1));
-        addTranslation(
-            this.collabDoc,
-            this.sharedString.id,
-            options.translationFromLanguage as string,
-            options.translationToLanguage as string)
-            .catch((error) => {
-                console.error("Problem adding translation", error);
-            });
 
         getInsights(this.rootView, this.sharedString.id).then(
             (insightsMap) => {
@@ -201,15 +230,6 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
             theFlow.loadFinished(performanceNow());
             debug(`${this.runtime.id} fully loaded: ${performanceNow()} `);
         });
-
-        const taskScheduler = new TaskScheduler(
-            this.context,
-            this.taskManager,
-            this.url,
-            this.sharedString,
-            this.insightsMap,
-        );
-        taskScheduler.start();
     }
 }
 

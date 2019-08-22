@@ -36,9 +36,6 @@ export class FlowContainer extends ui.Component {
     private overlayCanvas: OverlayCanvas;
     private inkCanvas: InkCanvas;
 
-    private overlayInkMap: ISharedMap;
-    private pageInkStream: IStream;
-
     private layerCache: { [key: string]: Layer } = {};
     private activeLayers: { [key: string]: IOverlayLayerStatus } = {};
 
@@ -52,26 +49,12 @@ export class FlowContainer extends ui.Component {
         element: HTMLDivElement,
         private collabDocument: api.Document,
         private sharedString: Sequence.SharedString,
-        private flowContainerMap: ISharedMap,
+        private readonly overlayInkMap: ISharedMap,
+        private readonly pageInkStream: IStream,
         private image: Image,
         private options?: Object) {
 
         super(element);
-    }
-
-    public async initialize() {
-        if (!this.collabDocument.existing) {
-            this.flowContainerMap.set("overlayInk", this.collabDocument.createMap().handle);
-            this.flowContainerMap.set("pageInk", this.collabDocument.createStream().handle);
-        }
-
-        const [overlayInkMapHandle, pageInkStream] = await Promise.all([
-            this.flowContainerMap.wait<IComponentHandle>("overlayInk"),
-            this.flowContainerMap.wait<IComponentHandle>("pageInk"),
-        ]);
-
-        this.overlayInkMap = await overlayInkMapHandle.get();
-        this.pageInkStream = await pageInkStream.get();
 
         // TODO the below code is becoming controller like and probably doesn't belong in a constructor. Likely
         // a better API model.

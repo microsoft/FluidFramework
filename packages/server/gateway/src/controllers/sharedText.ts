@@ -25,6 +25,7 @@ import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
 import { IGitCache } from "@prague/services-client";
+import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { MultiDocumentServiceFactory } from "@prague/base-host";
@@ -165,7 +166,10 @@ async function loadDocument(
         root.set("text", newString.handle);
 
         // We'll give this to the FlowContainer that we're about to create for it to store various data on.
-        root.set("flowContainerMap", collabDoc.createMap().handle);
+        const flowContainerMap = collabDoc.createMap();
+        flowContainerMap.set("overlayInk", collabDoc.createMap().handle);
+        flowContainerMap.set("pageInk", collabDoc.createStream().handle);
+        root.set("flowContainerMap", flowContainerMap.handle);
     } else {
         await Promise.all([root.wait("text"), root.wait("sequence-test"), root.wait("flowContainerMap")]);
     }
@@ -181,15 +185,23 @@ async function loadDocument(
         document.createElement("div"),
         url.resolve(document.baseURI, "/public/images/bindy.svg"));
 
+    const overlayMap = await root
+        .get<IComponentHandle>("flowContainerMap")
+        .get<ISharedMap>();
+    const [overlayInkMap, pageInk] = await Promise.all([
+        overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>(),
+        overlayMap.get<IComponentHandle>("pageInk").get<IStream>(),
+    ]);
+
     const containerDiv = document.createElement("div");
     const container = new controls.FlowContainer(
         containerDiv,
         collabDoc,
         sharedString,
-        await root.get<IComponentHandle>("flowContainerMap").get<ISharedMap>(),
+        overlayInkMap,
+        pageInk,
         image,
         options);
-    await container.initialize();
     theFlow = container.flowView;
     host.attach(container);
 
