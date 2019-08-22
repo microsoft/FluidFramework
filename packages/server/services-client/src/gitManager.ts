@@ -234,7 +234,7 @@ export class GitManager implements IGitManager {
         }
 
         // Kick off the work to create all the tree values
-        const entriesP: Array<Promise<resources.ICreateBlobResponse | resources.ITree>> = [];
+        const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
         for (const entry of files.entries) {
             switch (api.TreeEntry[entry.type]) {
                 case api.TreeEntry.Blob:

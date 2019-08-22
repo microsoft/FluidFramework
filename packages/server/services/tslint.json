@@ -11,7 +11,6 @@
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "prefer-array-literal": false,
         "prefer-readonly": false,
         "promise-function-async": false,
         "promise-must-complete": false

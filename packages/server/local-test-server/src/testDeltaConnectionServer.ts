@@ -59,7 +59,7 @@ export interface ITestDeltaConnectionServer {
  * Implementation of order manager for testing.
  */
 class TestOrderManager implements IOrdererManager {
-    private readonly orderersP = new Array<Promise<IOrderer>>();
+    private readonly orderersP: Promise<IOrderer>[] = [];
 
     /**
      * @param orderer - instance of in-memory orderer for the manager to provide
@@ -287,7 +287,7 @@ export function register(
         // Message sent when a new operation is submitted to the router
         socket.on(
             "submitOp",
-            (clientId: string, messageBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
+            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has connected on this object id
                 if (!connectionsMap.has(clientId)) {
                     return response("Invalid client ID", null);

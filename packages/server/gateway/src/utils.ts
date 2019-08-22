@@ -18,7 +18,7 @@ export interface IAlfredUser extends IUser {
 
 export interface ICachedPackage {
     entrypoint: string;
-    scripts: Array<{ id: string, url: string }>;
+    scripts: { id: string, url: string }[];
 }
 
 /**

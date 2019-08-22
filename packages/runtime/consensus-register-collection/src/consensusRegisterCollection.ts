@@ -104,7 +104,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
     }
 
     private readonly data = new Map<string, ILocalData>();
-    private readonly promiseResolveQueue = new Array<IPendingRecord>();
+    private readonly promiseResolveQueue: IPendingRecord[] = [];
 
     /**
      * Constructs a new consensus register collection. If the object is non-local an id and service interfaces will

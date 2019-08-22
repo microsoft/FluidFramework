@@ -51,7 +51,7 @@ export class Layout {
     }
 
     private get slot() { return this.root; }
-    private formatStack: Array<Readonly<IFormatInfo>>;
+    private formatStack: Readonly<IFormatInfo>[];
     private emitted: Set<Node>;
     private pending: Set<Node> = new Set();
     private readonly initialCheckpoint: LayoutCheckpoint;

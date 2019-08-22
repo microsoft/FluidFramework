@@ -159,13 +159,13 @@ interface IRevertable {
 
 class SequenceUndoRedo implements IRevertable {
 
-    private readonly tracking: Array<{ trackingGroup: TrackingGroup, propertyDelta: PropertySet }>;
+    private readonly tracking: { trackingGroup: TrackingGroup, propertyDelta: PropertySet }[];
 
     constructor(
         public readonly event: SequenceDeltaEvent,
         public readonly sequence: SharedSegmentSequence<ISegment>,
     ) {
-        const tracking: Array<{ trackingGroup: TrackingGroup, propertyDelta: PropertySet }> = [];
+        const tracking: { trackingGroup: TrackingGroup, propertyDelta: PropertySet }[] = [];
         if (event.ranges.length > 0) {
             let current = { trackingGroup: new TrackingGroup(), propertyDelta: event.ranges[0].propertyDeltas };
             tracking.push(current);

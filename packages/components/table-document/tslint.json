@@ -10,7 +10,6 @@
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "object-literal-sort-keys": false,
-        "prefer-array-literal": false
+        "object-literal-sort-keys": false
     }
 }

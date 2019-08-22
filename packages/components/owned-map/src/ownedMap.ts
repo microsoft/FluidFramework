@@ -39,7 +39,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      *
      * @returns a factory that creates and load OwnedSharedMap
      */
-    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []) {
+    public static getFactory(defaultValueTypes: IValueType<any>[] = []) {
         return new OwnedMapFactory(defaultValueTypes);
     }
 

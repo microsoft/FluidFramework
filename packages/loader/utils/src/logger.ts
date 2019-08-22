@@ -247,7 +247,7 @@ export class ChildLogger extends TelemetryLogger {
  * Implements ITelemetryBaseLogger (through static create() method)
  */
 export class MultiSinkLogger extends TelemetryLogger {
-    protected loggers: ITelemetryBaseLogger[] = new Array<ITelemetryBaseLogger>();
+    protected loggers: ITelemetryBaseLogger[] = [];
 
     /**
      * Create multiple sink logger (i.e. logger that sends events to multiple sinks)

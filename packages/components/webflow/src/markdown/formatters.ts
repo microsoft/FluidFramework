@@ -15,7 +15,7 @@ import { MarkdownParser, MarkdownToken } from "./parser";
 const markdownSym = Symbol();
 
 interface IMarkdownInfo {
-    start?: Array<{ token: MarkdownToken, props?: MapLike<string | number> }>;
+    start?: { token: MarkdownToken, props?: MapLike<string | number> }[];
     pop?: number;
 }
 

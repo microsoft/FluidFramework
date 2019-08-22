@@ -65,7 +65,7 @@ export async function readAndParse<T>(storage: IDocumentStorageService, id: stri
 }
 
 function flattenCore(path: string, treeEntries: ITreeEntry[], blobMap: Map<string, string>): git.ITreeEntry[] {
-    const entries = new Array<git.ITreeEntry>();
+    const entries: git.ITreeEntry[] = [];
     for (const treeEntry of treeEntries) {
         const subPath = `${path}${treeEntry.path}`;
 

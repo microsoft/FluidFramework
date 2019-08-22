@@ -90,7 +90,7 @@ export class PrefetchDocumentStorageService implements IDocumentStorageService {
     }
 
     private prefetchTree(tree: ISnapshotTree) {
-        const secondary = new Array<string>();
+        const secondary: string[] = [];
         this.prefetchTreeCore(tree, secondary);
 
         for (const blob of secondary) {

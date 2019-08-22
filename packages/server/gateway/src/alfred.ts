@@ -15,7 +15,7 @@ export class Alfred implements IAlfred {
     private tenants = new Map<string, GitManager>();
 
     constructor(
-        tenants: Array<{ id: string, key: string }>,
+        tenants: { id: string, key: string }[],
         private ordererUrl: string,
         private historianUrl: string,
         private riddlerUrl: string,
@@ -56,7 +56,7 @@ export class Alfred implements IAlfred {
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
                     quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
-                        Array<[string, { value: string }]>;
+                        [string, { value: string }][];
 
                     for (const quorumValue of quorumValues) {
                         if (quorumValue[0] === "code") {

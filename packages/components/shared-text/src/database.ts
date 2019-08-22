@@ -80,7 +80,7 @@ export class GraphQLService {
                     },
                     resolve: (obj, { id }) => {
                         let lastStart = 0;
-                        const pgs = new Array<any>();
+                        const pgs: any[] = [];
 
                         function leaf(
                             segment: MergeTree.ISegment,
@@ -305,7 +305,7 @@ export class GraphQLService {
     }
 
     private getAllHeroes(): Hero[] {
-        const heroes = new Array<Hero>();
+        const heroes: Hero[] = [];
         for (const key of this.root.keys()) {
             if (key.indexOf(prefix) === 0) {
                 heroes.push({

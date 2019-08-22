@@ -45,7 +45,7 @@ export class PartitionManager extends EventEmitter {
 
     public async stop(): Promise<void> {
         // Drain all pending messages from the partitions
-        const partitionsStoppedP: Array<Promise<void>> = [];
+        const partitionsStoppedP: Promise<void>[] = [];
         for (const [, partition] of this.partitions) {
             const stopP = partition.drain();
             partitionsStoppedP.push(stopP);

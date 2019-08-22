@@ -127,7 +127,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
     protected componentRuntime: IComponentRuntime;
     private closed = false;
     private loaded = false;
-    private pending = new Array<ISequencedDocumentMessage>();
+    private pending: ISequencedDocumentMessage[] = [];
     private componentRuntimeDeferred: Deferred<IComponentRuntime>;
     private _baseSnapshot: ISnapshotTree;
 

@@ -31,7 +31,7 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 
-const valueTypes: Array<IValueType<any>> = [
+const valueTypes: IValueType<any>[] = [
     new SharedStringIntervalCollectionValueType(),
     new SharedIntervalCollectionValueType(),
 ];
@@ -98,7 +98,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     protected collabStarted = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
-    private messagesSinceMSNChange = new Array<ISequencedDocumentMessage>();
+    private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 
     constructor(
         document: IComponentRuntime,

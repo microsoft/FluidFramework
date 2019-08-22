@@ -347,7 +347,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         const chunkId = context.baseSnapshot.blobs[".chunks"];
         const chunks = chunkId
-            ? await readAndParse<Array<[string, string[]]>>(context.storage, chunkId)
+            ? await readAndParse<[string, string[]][]>(context.storage, chunkId)
             : [];
 
         const runtime = new ContainerRuntime(context, componentRegistry, chunks, runtimeOptions);
@@ -490,7 +490,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IComponentRegistry,
-        readonly chunks: Array<[string, string[]]>,
+        readonly chunks: [string, string[]][],
         private readonly runtimeOptions: IContainerRuntimeOptions = { generateSummaries: false },
     ) {
         super();

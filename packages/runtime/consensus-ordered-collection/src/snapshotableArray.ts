@@ -19,10 +19,10 @@ import { IConsensusOrderedCollectionValue } from "./values";
 const snapshotFileName = "header";
 
 export class SnapshotableArray<T> extends Array {
-    protected readonly data = new Array<T>();
+    protected readonly data: T[] = [];
     public snapshot(): ITree {
         // Get a serializable form of data
-        const content = new Array<IConsensusOrderedCollectionValue>();
+        const content: IConsensusOrderedCollectionValue[] = [];
         for (const item of this.data) {
             if (SharedObject.is(item)) {
                 content.push({

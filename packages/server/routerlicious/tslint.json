@@ -16,7 +16,6 @@
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "non-literal-fs-path": false,
-        "prefer-array-literal": false,
         "prefer-readonly": false,
         "prefer-template": false,
         "promise-function-async": false,

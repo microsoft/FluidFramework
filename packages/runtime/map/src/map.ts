@@ -109,7 +109,7 @@ export class MapFactory implements ISharedObjectFactory {
         return MapFactory.Attributes;
     }
 
-    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    constructor(private readonly defaultValueTypes: IValueType<any>[] = []) {
     }
 
     public async load(
@@ -160,7 +160,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectFactory {
+    public static getFactory(defaultValueTypes: IValueType<any>[] = []): ISharedObjectFactory {
         return new MapFactory(defaultValueTypes);
     }
 

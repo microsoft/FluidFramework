@@ -12,7 +12,7 @@ const MaxBatchSize = 32;
 
 class PendingBoxcar implements IPendingBoxcar {
     public deferred = new utils.Deferred<void>();
-    public messages = new Array<EventData>();
+    public messages: EventData[] = [];
 
     constructor(public tenantId: string, public documentId: string) {
     }

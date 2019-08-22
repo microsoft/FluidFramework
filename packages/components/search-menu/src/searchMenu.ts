@@ -53,7 +53,7 @@ export interface ISearchMenuCommand<TContext = any> {
     enabled?: (context?: TContext) => boolean;
     iconHTML?: string;
     key: string;
-    parameters?: Array<ISearchMenuParam<TContext>>;
+    parameters?: ISearchMenuParam<TContext>[];
 }
 
 export function namesToItems(names: string[]): ISearchMenuCommand[] {

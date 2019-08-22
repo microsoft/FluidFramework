@@ -137,7 +137,7 @@ export class DirectoryFactory {
         return DirectoryFactory.Attributes;
     }
 
-    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    constructor(private readonly defaultValueTypes: IValueType<any>[] = []) {
     }
 
     public async load(
@@ -193,7 +193,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      *
      * @returns a factory that creates and load SharedDirectory
      */
-    public static getFactory(defaultValueTypes: Array<IValueType<any>> = []): ISharedObjectFactory {
+    public static getFactory(defaultValueTypes: IValueType<any>[] = []): ISharedObjectFactory {
         return new DirectoryFactory(defaultValueTypes);
     }
 

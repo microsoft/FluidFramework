@@ -16,8 +16,7 @@ export class UrlRegistry implements IComponentRegistry {
     private static readonly WindowKeyPrefix = "FluidExternalComponent";
 
     private readonly urlRegistryMap = new Map<string, Promise<ComponentFactoryTypes>>();
-    // tslint:disable-next-line: prefer-array-literal
-    private readonly subRegistries: Array<Promise<ComponentRegistryTypes>> = [];
+    private readonly subRegistries: Promise<ComponentRegistryTypes>[] = [];
     private readonly loadingPackages: Map<string, Promise<any>>;
     private readonly loadingEntrypoints: Map<string, Promise<unknown>>;
 

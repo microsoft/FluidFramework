@@ -132,7 +132,7 @@ export function create(
     }));
 
     // Get local accounts - used primarily for automated testing
-    const localAccounts = config.get("login:accounts") as Array<{ username: string, password: string }>;
+    const localAccounts = config.get("login:accounts") as { username: string, password: string }[];
     passport.use(new passportLocal.Strategy(
         (username, password, done) => {
             for (const localAccount of localAccounts) {

@@ -31,7 +31,7 @@ class Speller {
     private static readonly idleTimeMS = 500;
     private idleTimer: NodeJS.Timeout | null = null;
     private currentIdleTime: number = 0;
-    private pendingMarkers: IPgMarker[] = new Array<IPgMarker>();
+    private pendingMarkers: IPgMarker[] = [];
     private readonly tileMap: Map<MergeTree.ReferencePosition, IRange> = new Map<MergeTree.ReferencePosition, IRange>();
     private readonly verbose = false;
 

@@ -60,9 +60,9 @@ class PendingProposal implements IPendingProposal, ISequencedProposal {
 }
 
 export interface IQuorumSnapshot {
-    members: Array<[string, ISequencedClient]>;
-    proposals: Array<[number, ISequencedProposal, string[]]>;
-    values: Array<[string, ICommittedProposal]>;
+    members: [string, ISequencedClient][];
+    proposals: [number, ISequencedProposal, string[]][];
+    values: [string, ICommittedProposal][];
 }
 
 /**
@@ -82,9 +82,9 @@ export class Quorum extends EventEmitter implements IQuorum {
 
     constructor(
         private minimumSequenceNumber: number  | undefined,
-        members: Array<[string, ISequencedClient]>,
-        proposals: Array<[number, ISequencedProposal, string[]]>,
-        values: Array<[string, ICommittedProposal]>,
+        members: [string, ISequencedClient][],
+        proposals: [number, ISequencedProposal, string[]][],
+        values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
         private readonly sendReject: (sequenceNumber: number) => void,
         private readonly logger?: ITelemetryLogger,
@@ -301,7 +301,7 @@ export class Quorum extends EventEmitter implements IQuorum {
 
         // Return a sorted list of approved proposals. We sort so that we apply them in their sequence number order
         // TODO this can be optimized if necessary to avoid the linear search+sort
-        const completed = new Array<PendingProposal>();
+        const completed: PendingProposal[] = [];
         for (const [sequenceNumber, proposal] of this.proposals) {
             if (sequenceNumber <= this.minimumSequenceNumber) {
                 debug(`Quorum proposal SN# ${sequenceNumber} Completed`);

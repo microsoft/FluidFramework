@@ -7,7 +7,6 @@
         "no-object-literal-type-assertion": false,
         "no-require-imports": false,
         "no-unsafe-any": false,
-        "prefer-array-literal": false,
         "prefer-readonly": false,
         "promise-function-async": false,
         "space-within-parens": false

@@ -18,7 +18,7 @@ import {
 import * as _ from "lodash";
 
 class BroadcasterBatch {
-    public messages: Array<ISequencedDocumentMessage | INack> = [];
+    public messages: (ISequencedDocumentMessage | INack)[] = [];
 
     constructor(
         public documentId: string,

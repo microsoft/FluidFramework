@@ -26,9 +26,9 @@ import { Quorum } from "./quorum";
 export interface IScribeProtocolState {
     sequenceNumber: number;
     minimumSequenceNumber: number;
-    members: Array<[string, ISequencedClient]>;
-    proposals: Array<[number, ISequencedProposal, string[]]>;
-    values: Array<[string, ICommittedProposal]>;
+    members: [string, ISequencedClient][];
+    proposals: [number, ISequencedProposal, string[]][];
+    values: [string, ICommittedProposal][];
 }
 
 export function isSystemMessage(message: ISequencedDocumentMessage) {
@@ -54,9 +54,9 @@ export class ProtocolOpHandler {
         private readonly branchId: string,
         public minimumSequenceNumber: number,
         public sequenceNumber: number,
-        members: Array<[string, ISequencedClient]>,
-        proposals: Array<[number, ISequencedProposal, string[]]>,
-        values: Array<[string, ICommittedProposal]>,
+        members: [string, ISequencedClient][],
+        proposals: [number, ISequencedProposal, string[]][],
+        values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void,
         private readonly logger?: ITelemetryLogger,

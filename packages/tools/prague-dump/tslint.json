@@ -5,7 +5,6 @@
         "no-floating-promises": false,
         "no-suspicious-comment": false,
         "no-unsafe-any": false,
-        "prefer-array-literal": false,
         "strict-boolean-expressions": false,
         "switch-final-break": false
     }

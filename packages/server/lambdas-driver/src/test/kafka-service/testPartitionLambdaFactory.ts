@@ -38,7 +38,7 @@ export class TestPartitionLambdaFactory extends EventEmitter implements IPartiti
     public handleCount = 0;
     private failCreate = false;
     private throwHandler = false;
-    private lambdas = new Array<TestLambda>();
+    private lambdas: TestLambda[] = [];
 
     constructor() {
         super();

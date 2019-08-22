@@ -102,7 +102,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 doc.toggleCssClass(start, end, className);
             };
 
-            const commands: Array<SearchMenu.ISearchMenuCommand<HostView>> = [
+            const commands: SearchMenu.ISearchMenuCommand<HostView>[] = [
                 { key: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); } },
                 { key: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
                 { key: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); } },

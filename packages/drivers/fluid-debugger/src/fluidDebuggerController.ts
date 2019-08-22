@@ -206,8 +206,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
         // Download all versions - do 10 downloads in parallel to avoid being throttled
         const buckets = 10;
-        // tslint:disable-next-line:prefer-array-literal
-        const work: Array<Promise<void>> = [];
+        const work: Promise<void>[] = [];
         for (let i = 0; i < buckets; i++) {
             let prevRequest = Promise.resolve();
             for (let index = i; index < this.versions.length; index += buckets) {

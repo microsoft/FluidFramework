@@ -33,7 +33,7 @@ async function fetchSnapshotTreeBlobs(
         console.log(tree);
     }
 
-    let result = new Array<{ path: string, blobId: string, blob: Promise<string | undefined> }>();
+    let result: { path: string, blobId: string, blob: Promise<string | undefined> }[] = [];
     const itemPrefix = prefix !== "" ? prefix : "!CONTAINER!/";
     for (const item of Object.keys(tree.blobs)) {
         const path = `${itemPrefix}${item}`;
@@ -161,7 +161,7 @@ export async function pragueDumpSnapshot(documentService: IDocumentService) {
                     await saveSnapshot(storage, version);
                 }
             } else if (paramSave !== undefined) {
-                const batch: Array<Promise<void>> = [];
+                const batch: Promise<void>[] = [];
                 let i = 0;
                 for (const v of versions) {
                     batch.push(saveSnapshot(storage, v, i++));

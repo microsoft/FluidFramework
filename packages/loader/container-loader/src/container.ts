@@ -547,16 +547,16 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         storage: IDocumentStorageService,
         tree: ISnapshotTree,
     ): Promise<ProtocolOpHandler> {
-        let members: Array<[string, ISequencedClient]>;
-        let proposals: Array<[number, ISequencedProposal, string[]]>;
-        let values: Array<[string, any]>;
+        let members: [string, ISequencedClient][];
+        let proposals: [number, ISequencedProposal, string[]][];
+        let values: [string, any][];
 
         if (tree) {
             const baseTree = ".protocol" in tree.trees ? tree.trees[".protocol"] : tree;
             const snapshot = await Promise.all([
-                readAndParse<Array<[string, ISequencedClient]>>(storage, baseTree.blobs.quorumMembers!),
-                readAndParse<Array<[number, ISequencedProposal, string[]]>>(storage, baseTree.blobs.quorumProposals!),
-                readAndParse<Array<[string, ICommittedProposal]>>(storage, baseTree.blobs.quorumValues!),
+                readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers!),
+                readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals!),
+                readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues!),
             ]);
 
             members = snapshot[0];

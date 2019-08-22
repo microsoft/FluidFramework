@@ -16,7 +16,7 @@ export class RouteMasterLambda extends SequencedLambda {
     protected async handlerCore(rawMessage: core.IKafkaMessage): Promise<void> {
         const boxcar = core.extractBoxcar(rawMessage);
 
-        const boxcarProcessed = new Array<Promise<void>>();
+        const boxcarProcessed: Promise<void>[] = [];
         for (const message of boxcar.contents) {
             if (message.type === core.SequencedOperationType) {
                 const sequencedOpMessage = message as core.ISequencedOperationMessage;
@@ -80,7 +80,7 @@ export class RouteMasterLambda extends SequencedLambda {
         const document = this.document;
         const forks = document.getActiveForks();
 
-        const maps = new Array<Promise<void>>();
+        const maps: Promise<void>[] = [];
         for (const fork of forks) {
             const routeP = this.routeToDeli(fork, message);
             maps.push(routeP);

@@ -26,7 +26,7 @@ import {
 async function loadAllSequencedMessages(
     documentService: IDocumentService): Promise<ISequencedDocumentMessage[]> {
     const deltaStorage = await documentService.connectToDeltaStorage();
-    const sequencedMessages = new Array<ISequencedDocumentMessage>();
+    const sequencedMessages: ISequencedDocumentMessage[] = [];
     let curr = 0;
     const batch = 2000;
     while (true) {

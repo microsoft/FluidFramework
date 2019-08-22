@@ -18,6 +18,8 @@
         ],
         "newline-per-chained-call": false,
         "max-classes-per-file": false,
+        "prefer-array-literal": false,
+        "array-type": [true, "array"],
         "linebreak-style": false,
         "export-name": false,
         "no-console": [

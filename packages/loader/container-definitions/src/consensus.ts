@@ -58,7 +58,7 @@ export interface IQuorum extends EventEmitter {
 export interface IProtocolState {
     sequenceNumber: number;
     minimumSequenceNumber: number;
-    members: Array<[string, ISequencedClient]>;
-    proposals: Array<[number, ISequencedProposal, string[]]>;
-    values: Array<[string, ICommittedProposal]>;
+    members: [string, ISequencedClient][];
+    proposals: [number, ISequencedProposal, string[]][];
+    values: [string, ICommittedProposal][];
 }

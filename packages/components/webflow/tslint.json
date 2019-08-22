@@ -12,7 +12,6 @@
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
         "object-literal-sort-keys": false,
-        "prefer-array-literal": false,
         "prefer-method-signature": false
     }
 }

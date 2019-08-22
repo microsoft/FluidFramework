@@ -130,7 +130,7 @@ export class Historian implements IHistorian {
 
         const includeBlobs = [".attributes", ".blobs", ".messages", "header"];
 
-        const blobsP: Array<Promise<git.IBlob>> = [];
+        const blobsP: Promise<git.IBlob>[] = [];
         for (const entry of tree.tree) {
             if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
                 const blobP = this.getBlob(entry.sha);

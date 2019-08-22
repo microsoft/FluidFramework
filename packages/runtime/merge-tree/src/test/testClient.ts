@@ -75,7 +75,7 @@ export class TestClient extends Client {
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
         options?: PropertySet,
-        ...handlers: Array<(spec: any) => ISegment>) {
+        ...handlers: ((spec: any) => ISegment)[]) {
         super(
             (spec: any) => {
                 for (const handler of handlers.concat(specToSegment)) {

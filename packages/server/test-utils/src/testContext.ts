@@ -15,7 +15,7 @@ interface IWaitOffset {
 
 export class TestContext extends EventEmitter implements IContext {
     public offset: number = Number.NEGATIVE_INFINITY;
-    private waits = new Array<IWaitOffset>();
+    private waits: IWaitOffset[] = [];
 
     public checkpoint(offset: number) {
         assert(offset > this.offset, `${offset} > ${this.offset}`);

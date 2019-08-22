@@ -63,7 +63,7 @@ interface IRemoveFullResult {
  * operations, provides the asynchronous API and manage the promise resolution.
  */
 export class ConsensusOrderedCollection<T = any> extends SharedObject implements IConsensusOrderedCollection<T> {
-    private readonly promiseResolveQueue = new Array<IPendingRecord>();
+    private readonly promiseResolveQueue: IPendingRecord[] = [];
 
     /**
      * Constructs a new consensus collection. If the object is non-local an id and service interfaces will

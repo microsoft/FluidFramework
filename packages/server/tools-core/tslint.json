@@ -12,7 +12,6 @@
         "no-unnecessary-callback-wrapper": false,
         "no-unnecessary-type-assertion": false,
         "no-unsafe-any": false,
-        "prefer-array-literal": false,
         "prefer-template": false,
         "promise-must-complete": false,
         "restrict-plus-operands": false

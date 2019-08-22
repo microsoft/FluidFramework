@@ -3,7 +3,6 @@
     "rules": {
         "no-console": false,
         "no-suspicious-comment": false,
-        "prefer-array-literal": false,
         "prefer-method-signature": false
     }
 }

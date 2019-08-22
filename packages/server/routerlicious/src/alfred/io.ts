@@ -169,7 +169,7 @@ export function register(
         // Message sent when a new operation is submitted to the router
         socket.on(
             "submitOp",
-            (clientId: string, messageBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
+            (clientId: string, messageBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // TODO validate message size within bounds
 
                 // Verify the user has an orderer connection.
@@ -245,7 +245,7 @@ export function register(
         // Message sent when a new signal is submitted to the router
         socket.on(
             "submitSignal",
-            (clientId: string, contentBatches: Array<IDocumentMessage | IDocumentMessage[]>, response) => {
+            (clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[], response) => {
                 // Verify the user has an orderer connection and subscription to the room.
                 if (!connectionsMap.has(clientId) || !roomMap.has(clientId)) {
                     return response("Invalid client ID or readonly client", null);

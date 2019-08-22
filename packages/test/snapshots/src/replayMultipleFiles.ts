@@ -46,7 +46,7 @@ export async function processOneFile(args: IWorkerArgs) {
 
 export async function processContent(mode: Mode, concurrently = true) {
     // tslint:disable-next-line:prefer-array-literal
-    const promises: Array<Promise<unknown>> = [];
+    const promises: Promise<unknown>[] = [];
 
     // "worker_threads" does not resolve without --experimental-worker flag on command line
     let threads: typeof import("worker_threads");

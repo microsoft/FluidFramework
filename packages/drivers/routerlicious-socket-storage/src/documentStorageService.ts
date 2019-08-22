@@ -90,7 +90,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     private async writeSummaryObject(
         value: SummaryObject,
-        submodule: Array<{ path: string; sha: string }>,
+        submodule: { path: string; sha: string }[],
         path: string,
     ): Promise<string> {
         switch (value.type) {

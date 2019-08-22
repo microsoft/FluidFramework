@@ -95,7 +95,7 @@ export class DocumentStorage implements IDocumentStorage {
             for (const blob of fullTree.blobs) {
                 if (blob.sha === fullTree.quorumValues) {
                     quorumValues = JSON.parse(Buffer.from(blob.content, blob.encoding).toString()) as
-                        Array<[string, { value: string }]>;
+                        [string, { value: string }][];
 
                     for (const quorumValue of quorumValues) {
                         if (quorumValue[0] === "code2") {

@@ -474,8 +474,7 @@ export class FlowDocument extends PrimedComponent {
     }
 
     private updateCssClassList(start: number, end: number, callback: (classList: string) => string) {
-        // tslint:disable-next-line:prefer-array-literal
-        const updates: Array<{span: SegmentSpan, classList: string}> = [];
+        const updates: {span: SegmentSpan, classList: string}[] = [];
 
         this.visitRange((position, segment, startOffset, endOffset) => {
             const oldList = getCss(segment).classList;

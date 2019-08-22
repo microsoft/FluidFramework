@@ -11,7 +11,6 @@
         "no-suspicious-comment": false,
         "no-unnecessary-class": false,
         "no-unnecessary-type-assertion": false,
-        "prefer-array-literal": false,
         "prefer-method-signature": false,
         "prefer-type-cast": false,
         "use-simple-attributes": false,

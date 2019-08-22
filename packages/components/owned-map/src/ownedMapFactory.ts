@@ -27,7 +27,7 @@ export class OwnedMapFactory implements ISharedObjectFactory {
         return OwnedMapFactory.Attributes;
     }
 
-    constructor(private readonly defaultValueTypes: Array<IValueType<any>> = []) {
+    constructor(private readonly defaultValueTypes: IValueType<any>[] = []) {
     }
 
     public async load(

@@ -4,7 +4,6 @@
         "completed-docs": false,
         "no-suspicious-comment": false,
         "no-unnecessary-type-assertion": false,
-        "object-literal-sort-keys": false,
-        "prefer-array-literal": false
+        "object-literal-sort-keys": false
     }
 }

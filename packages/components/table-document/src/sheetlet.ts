@@ -450,7 +450,7 @@ function extractNumberFromProperty<O>(trace: Trace, origin: O, arg: CalcValue<O>
     }
 }
 
-function reduceNumbers<O>(args: Array<Delayed<CalcValue<O>>>, fn: (prev: number, current: number) => number, init: number) {
+function reduceNumbers<O>(args: Delayed<CalcValue<O>>[], fn: (prev: number, current: number) => number, init: number) {
     let total = init;
     for (const arg of args) {
         if (typeof arg !== "number") {

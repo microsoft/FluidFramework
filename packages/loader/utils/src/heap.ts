@@ -51,7 +51,7 @@ export interface IHeapNode<T> {
  */
 export class Heap<T> {
     // TODO temporarily public while validating bug fix. Make private once fixed.
-    public L: Array<IHeapNode<T>>;
+    public L: IHeapNode<T>[];
 
     /**
      * Creates an instance of Heap with comparer

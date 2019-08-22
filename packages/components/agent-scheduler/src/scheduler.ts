@@ -172,7 +172,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async registerCore(taskUrls: string[]): Promise<void> {
         if (taskUrls.length > 0) {
-            const registersP: Array<Promise<void>> = [];
+            const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Registering ${taskUrl}`);
                 // tslint:disable no-null-keyword
@@ -198,7 +198,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async pickCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const picksP: Array<Promise<void>> = [];
+            const picksP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Requesting ${taskUrl}`);
                 picksP.push(this.writeCore(taskUrl, this.runtime.clientId));
@@ -206,7 +206,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             await Promise.all(picksP);
 
             // The registers should have up to date results now. Start the respective task if this client was chosen.
-            const runningP: Array<Promise<IComponentRunnable | void>> = [];
+            const runningP: Promise<IComponentRunnable | void>[] = [];
             for (const taskUrl of taskUrls) {
                 const pickedClientId = this.getTaskClientId(taskUrl);
 
@@ -232,7 +232,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async releaseCore(taskUrls: string[]) {
         if (taskUrls.length > 0) {
-            const releasesP: Array<Promise<void>> = [];
+            const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
@@ -251,7 +251,7 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
 
     private async clearTasks(taskUrls: string[]) {
         if (this.runtime.connected && taskUrls.length > 0) {
-            const clearP: Array<Promise<void>> = [];
+            const clearP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
                 debug(`Clearing ${taskUrl}`);
                 clearP.push(this.writeCore(taskUrl, null));
@@ -405,7 +405,7 @@ export class TaskManager implements ITaskManager {
         if (configuration && !configuration.canReconnect) {
             return Promise.reject("Picking now allowed on secondary copy");
         }
-        const registersP: Array<Promise<void>> = [];
+        const registersP: Promise<void>[] = [];
         for (const task of tasks) {
             this.taskMap.set(task.id, task.instance);
             registersP.push(this.scheduler.pick(`${urlWithSlash}${this.url}/${task.id}`));

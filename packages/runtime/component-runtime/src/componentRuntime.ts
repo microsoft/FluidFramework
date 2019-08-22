@@ -467,7 +467,7 @@ export class ComponentRuntime extends EventEmitter implements IComponentRuntime,
     }
 
     public getAttachSnapshot(): ITreeEntry[] {
-        const entries = new Array<ITreeEntry>();
+        const entries: ITreeEntry[] = [];
 
         // Craft the .attributes file for each shared object
         for (const [objectId, value] of this.contexts) {

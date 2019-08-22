@@ -90,7 +90,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     private readonly contentCache = new ContentCache(DefaultContentBufferSize);
 
-    private messageBuffer = new Array<IDocumentMessage>();
+    private messageBuffer: IDocumentMessage[] = [];
 
     private pongCount: number = 0;
     private socketLatency = 0;

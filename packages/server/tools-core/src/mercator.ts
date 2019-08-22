@@ -12,7 +12,7 @@ import * as jwt from "jsonwebtoken";
 import * as randomstring from "randomstring";
 
 export function generateRandomBatchMessages(length: number, payloadSize: number): string[] {
-    const messages = new Array<string>();
+    const messages: string[] = [];
 
     for (let i = 0; i < length; i++) {
         const str = randomstring.generate(payloadSize);
