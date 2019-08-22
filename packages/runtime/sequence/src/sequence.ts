@@ -401,6 +401,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const loader = new MergeTree.SnapshotLoader(this.runtime, this.client);
         try {
             const msgs = await loader.initialize(branchId, storage);
+            this.collabStarted = true;
             msgs.forEach((m) => this.processContent(m));
             this.loadFinished();
         } catch (error) {
