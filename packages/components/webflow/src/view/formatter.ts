@@ -4,6 +4,7 @@
  */
 
 import { SequenceEvent } from "@prague/sequence";
+import { emptyObject } from "../util";
 import { hasTag, Tag } from "../util/tag";
 import { Layout } from "./layout";
 
@@ -20,13 +21,14 @@ function getNext(layout: Layout) {
 export abstract class Formatter<TState extends IFormatterState> {
     public abstract begin(
         layout: Layout,
-        state: TState,
-    ): void;
+        init: Readonly<Partial<TState>>,
+        prevState: Readonly<TState> | undefined,
+    ): Readonly<TState>;
 
     public abstract visit(
         layout: Layout,
         state: Readonly<TState>,
-    ): boolean;
+    ): { consumed: boolean, state: Readonly<TState> };
 
     public abstract end(
         layout: Layout,
@@ -62,4 +64,20 @@ export abstract class RootFormatter<TState extends IFormatterState> extends Form
     public prepare(layout: Layout, start: number, end: number) {
         return { start, end };
     }
+}
+
+export class BootstrapFormatter<TFormatter extends RootFormatter<TState>, TState extends IFormatterState> extends RootFormatter<IFormatterState> {
+    constructor(private readonly formatter: Readonly<TFormatter>) { super(); }
+
+    public begin(): never { throw new Error(); }
+
+    public visit(layout: Layout, state: Readonly<IFormatterState>) {
+        layout.pushFormat(this.formatter, emptyObject);
+        return { state, consumed: false };
+    }
+
+    public end(): never { throw new Error(); }
+
+    public onChange(layout: Layout, e: SequenceEvent) { this.formatter.onChange(layout, e); }
+    public prepare(layout: Layout, start: number, end: number) { return this.formatter.prepare(layout, start, end); }
 }

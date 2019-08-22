@@ -10,16 +10,17 @@ import { IFormatterState, RootFormatter } from "../view/formatter";
 import { Layout } from "../view/layout";
 
 class PlainTextFormatter extends RootFormatter<IFormatterState> {
-    public begin(layout: Layout) {
+    public begin(layout: Layout, init: Readonly<Partial<IFormatterState>>) {
         const e = this.pushTag(layout, Tag.pre);
         e.style.whiteSpace = "pre-wrap";
+        return init;
     }
 
     public end(layout: Layout) {
         layout.popNode();
     }
 
-    public visit(layout: Layout) {
+    public visit(layout: Layout, state: IFormatterState) {
         const segment = layout.segment;
 
         if (TextSegment.is(segment)) {
@@ -28,7 +29,7 @@ class PlainTextFormatter extends RootFormatter<IFormatterState> {
             layout.emitNode(document.createTextNode(Char.replacementCharacter));
         }
 
-        return true;
+        return { state, consumed: true };
     }
 
     public onChange() { }

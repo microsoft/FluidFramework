@@ -18,39 +18,39 @@ import { ICssProps, sameCss, syncCss } from "./css";
 import { debug } from "./debug";
 
 class HtmlFormatter extends RootFormatter<IFormatterState> {
-    public begin() { }
+    public begin() { return emptyObject; }
     public end() { }
 
-    public visit(layout: Layout) {
+    public visit(layout: Layout, state: Readonly<IFormatterState>) {
         const segment = layout.segment;
         const kind = getDocSegmentKind(segment);
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.pushFormat(paragraphFormatter);
-                return false;
+                layout.pushFormat(paragraphFormatter, emptyObject);
+                return { state, consumed: false };
             }
 
             case DocSegmentKind.paragraph: {
-                layout.pushFormat(paragraphFormatter);
-                return true;
+                layout.pushFormat(paragraphFormatter, emptyObject);
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter);
-                return false;
+                layout.pushFormat(inclusionFormatter, emptyObject);
+                return { state, consumed: false };
             }
 
             case DocSegmentKind.beginTags: {
-                layout.pushFormat(tagsFormatter);
-                return true;
+                layout.pushFormat(tagsFormatter, emptyObject);
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.endTags: {
                 // If the DocumentFormatter encounters an 'endRange', presumably this is because the 'beginTag'
                 // has not yet been inserted.  Ignore it.
                 assert.strictEqual(layout.doc.getStart(segment as Marker), undefined);
-                return true;
+                return { state, consumed: true };
             }
 
             default:
@@ -68,8 +68,11 @@ interface IInclusionState {
 }
 
 export class InclusionFormatter extends Formatter<IInclusionState> {
-    public begin(layout: Layout, state: IInclusionState) {
+    public begin(layout: Layout, init: Readonly<Partial<IInclusionState>>, prevState?: Readonly<IInclusionState>) {
         const segment = layout.segment;
+
+        const state: IInclusionState = prevState || {};
+
         if (!state.root) {
             const marker = segment as Marker;
 
@@ -102,12 +105,13 @@ export class InclusionFormatter extends Formatter<IInclusionState> {
         syncCss(state.root, getCss(segment), styles.inclusion);
         layout.pushNode(state.root);
         layout.emitNode(state.slot);
+        return state;
     }
 
-    public visit(layout: Layout) {
+    public visit(layout: Layout, state: Readonly<IInclusionState>) {
         assert.strictEqual(getDocSegmentKind(layout.segment), DocSegmentKind.inclusion);
         layout.popFormat();
-        return true;
+        return { state, consumed: true };
     }
 
     public end(layout: Layout) {
@@ -119,7 +123,11 @@ interface ITagsState extends IFormatterState { root?: HTMLElement; pTag: Tag; po
 interface ITagsProps { tags?: Tag[]; }
 
 class TagsFormatter extends Formatter<ITagsState> {
-    public begin(layout: Layout, state: ITagsState) {
+    public begin(layout: Layout, init: Readonly<Partial<ITagsState>>, prevState: Readonly<ITagsState>) {
+        const state: Partial<ITagsState> = prevState
+            ? {...prevState}
+            : {};
+
         const segment = layout.segment;
         const props: ITagsProps = (segment && segment.properties) || emptyObject;
         const tags = props.tags;
@@ -134,6 +142,7 @@ class TagsFormatter extends Formatter<ITagsState> {
 
         state.popCount = tags.length;
         state.pTag = tags[tags.length - 1];
+        return state as ITagsState;
     }
 
     public visit(layout: Layout, state: Readonly<ITagsState>) {
@@ -143,7 +152,7 @@ class TagsFormatter extends Formatter<ITagsState> {
         switch (kind) {
             case DocSegmentKind.text: {
                 layout.emitText();
-                return true;
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.paragraph: {
@@ -151,28 +160,28 @@ class TagsFormatter extends Formatter<ITagsState> {
                 const previous = layout.cursor.previous;
                 const pg = this.pushTag(layout, state.pTag, previous && previous.nextSibling);
                 syncCss(pg as HTMLElement, getCss(segment), undefined);
-                return true;
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.inclusion: {
-                layout.pushFormat(inclusionFormatter);
-                return false;
+                layout.pushFormat(inclusionFormatter, emptyObject);
+                return { state, consumed: false };
             }
 
             case DocSegmentKind.beginTags: {
-                layout.pushFormat(tagsFormatter);
-                return true;
+                layout.pushFormat(tagsFormatter, emptyObject);
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.endTags: {
                 layout.popFormat();
-                return true;
+                return { state, consumed: true };
             }
 
             default:
                 debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
                 layout.popFormat();
-                return false;
+                return { state, consumed: false };
         }
     }
 
@@ -188,12 +197,18 @@ interface IParagraphState extends IFormatterState { root?: HTMLElement; }
 class ParagraphFormatter extends Formatter<IParagraphState> {
     constructor(private readonly defaultTag: Tag) { super(); }
 
-    public begin(layout: Layout, state: IParagraphState) {
+    public begin(layout: Layout, init: IParagraphState, prevState: IParagraphState) {
+        const state: Partial<IParagraphState> = prevState
+            ? { ...prevState }
+            : {};
+
         const segment = layout.segment;
         // tslint:disable-next-line:strict-boolean-expressions
         const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
         state.root = this.pushTag(layout, tag, state.root) as HTMLElement;
         syncCss(state.root, getCss(segment), undefined);
+
+        return state;
     }
 
     public visit(layout: Layout, state: Readonly<IParagraphState>) {
@@ -202,19 +217,19 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.pushFormat(textFormatter);
-                return false;
+                layout.pushFormat(textFormatter, emptyObject);
+                return { state, consumed: false };
             }
 
             case DocSegmentKind.paragraph: {
                 layout.popFormat();
-                layout.pushFormat(this);
-                return true;
+                layout.pushFormat(this, emptyObject);
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.beginTags: {
-                layout.pushFormat(tagsFormatter);
-                return true;
+                layout.pushFormat(tagsFormatter, emptyObject);
+                return { state, consumed: true };
             }
 
             case DocSegmentKind.inclusion: {
@@ -223,14 +238,14 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
                     layout.popFormat();
                 }
 
-                layout.pushFormat(inclusionFormatter);
-                return false;
+                layout.pushFormat(inclusionFormatter, emptyObject);
+                return { state, consumed: false };
             }
 
             default:
                 debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
                 layout.popFormat();
-                return false;
+                return { state, consumed: false };
         }
     }
 
@@ -243,10 +258,14 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
 interface ITextState extends IFormatterState { root?: HTMLElement; css?: ICssProps; }
 
 class TextFormatter extends Formatter<ITextState> {
-    public begin(layout: Layout, state: ITextState) {
+    public begin(layout: Layout, init: Readonly<Partial<ITextState>>, prevState: Readonly<ITextState>) {
+        const state: Partial<ITextState> = prevState
+            ? { ...prevState }
+            : {};
         state.root = this.pushTag(layout, Tag.span, state.root) as HTMLElement;
         state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
+        return state;
     }
 
     public visit(layout: Layout, state: Readonly<ITextState>) {
@@ -257,16 +276,16 @@ class TextFormatter extends Formatter<ITextState> {
             case DocSegmentKind.text: {
                 if (!sameCss(segment, state.css)) {
                     layout.popFormat();
-                    return false;
+                    return { state, consumed: false };
                 }
                 layout.emitText();
-                return true;
+                return { state, consumed: true };
             }
 
             default:
                 debug("%s@%d: Unhanded DocSegmentKind '%s'.", this, layout.position, kind);
                 layout.popFormat();
-                return false;
+                return { state, consumed: false };
         }
     }
 

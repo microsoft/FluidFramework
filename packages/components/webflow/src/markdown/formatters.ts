@@ -43,27 +43,35 @@ const tokenToTag = Object.freeze({
     [MarkdownToken.unorderedlist]:  Tag.ul,
 });
 
-class MarkdownFormatter extends RootFormatter<IFormatterState> {
-    public begin(layout: Layout) {
+interface IMarkdownState extends IFormatterState {
+    active?: Readonly<MarkdownToken[]>;
+}
+
+class MarkdownFormatter extends RootFormatter<IMarkdownState> {
+    public begin(layout: Layout, init: Readonly<Partial<IMarkdownState>>) {
         const span = this.pushTag(layout, Tag.span);
         span.style.whiteSpace = "pre-wrap";
+        return init;
     }
 
     public end(layout: Layout) {
         layout.popNode();
     }
 
-    public visit(layout: Layout) {
-        const segment = layout.segment;
+    public visit(layout: Layout, state: Readonly<IMarkdownState>) {
+        const active = state.active ? [...state.active] : [];
+        const { segment } = layout;
         const md = segment[markdownSym] as IMarkdownInfo;
 
         const pop = md && md.pop;
         for (let i = 0; i < pop; i++) {
+            active.pop();
             layout.popNode();
         }
 
         const start = (md && md.start) || emptyArray;
         for (const { token, props } of start) {
+            active.push(token);
             const tag = tokenToTag[token];
             const element = this.pushTag(layout, tag);
             if (props) {
@@ -71,13 +79,24 @@ class MarkdownFormatter extends RootFormatter<IFormatterState> {
             }
         }
 
+        const top = active[active.length - 1];
+
         if (TextSegment.is(segment)) {
-            layout.emitText();
+            if (top === MarkdownToken.text) {
+                layout.emitText();
+            }
         } else {
             console.warn(`Not 'markdown': '${getDocSegmentKind(segment)}'`);
         }
 
-        return true;
+        return {
+            state: {
+                active: active.length > 0
+                    ? Object.freeze(active)
+                    : emptyArray,
+            },
+            consumed: true,
+        };
     }
 
     public onChange() { }

@@ -12,13 +12,13 @@ import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
 import { debug } from "./debug";
-import { Formatter, IFormatterState, RootFormatter } from "./formatter";
+import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
 
 interface ILayoutCursor { parent: Node; previous: Node; }
 
 interface IFormatInfo {
     readonly formatter: Readonly<Formatter<IFormatterState>>;
-    state: IFormatterState;
+    readonly state: IFormatterState;
 }
 
 class LayoutCheckpoint {
@@ -90,7 +90,7 @@ export class Layout {
     constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
-        this.rootFormatInfo = Object.freeze({ formatter, state: emptyObject });
+        this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });
 
         doc.on("sequenceDelta", this.onChange);
         doc.on("maintenance", this.onChange);
@@ -141,6 +141,10 @@ export class Layout {
                 start = range.start;
             }
 
+            if (start === 0) {
+                checkpoint = this.initialCheckpoint;
+            }
+
             this.restoreCheckpoint(checkpoint);
 
             debug("Begin: sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
@@ -150,14 +154,27 @@ export class Layout {
             doc.visitRange((position, segment, startOffset, endOffset) => {
                 this.beginSegment(position, segment, startOffset, endOffset);
 
-                if (position === 0) {
-                    const { formatter, state } = this.format;
-                    formatter.begin(this, state);
-                }
-
                 while (true) {
-                    const { formatter, state } = this.format;
-                    if (formatter.visit(this, state)) {
+                    const index = this.formatStack.length - 1;
+                    const formatInfo = this.format;
+                    const { formatter, state } = formatInfo;
+                    const { consumed, state: newState } = formatter.visit(this, state);
+
+                    if (newState !== state && this.formatStack[index] === formatInfo) {
+                        // If the same 'FormatInfo' object is on the stack, it implies the stack wasn't popped.
+                        // Sanity check that the FormatInfo frame contains the same contents as before.
+                        assert.deepStrictEqual(this.formatStack[index].state, state);
+                        assert.deepStrictEqual(this.formatStack[index].formatter, formatter);
+
+                        this.formatStack[index] = Object.freeze({ formatter, state: Object.freeze(newState) });
+                    }
+
+                    // If the segment was consumed:
+                    //      1.  call 'endSegment()'
+                    //      2.  break out of the inner while
+                    //      3.  return the value of 'endSegment()' to 'doc.visitRange(...)' to determine
+                    //          if we need to continue layout.
+                    if (consumed) {
                         return this.endSegment(/* lastInvalidated: */ end);
                     }
                 }
@@ -175,8 +192,6 @@ export class Layout {
                 debug("Begin EOT: %o@%d (length=%d)", this.segment, this.segmentEnd, doc.length);
                 this.beginSegment(length, eotSegment, 0, 0);
                 this.popFormat(this.formatStack.length);
-                const { formatter, state } = this.format;
-                formatter.end(this, state);
                 this.endSegment(end);
                 debug("End EOT");
             }
@@ -201,7 +216,7 @@ export class Layout {
         }
     }
 
-    public pushFormat<TState extends IFormatterState>(formatter: Readonly<Formatter<TState>>) {
+    public pushFormat<TState extends IFormatterState>(formatter: Readonly<Formatter<TState>>, init: Readonly<Partial<TState>>) {
         const depth = this.formatStack.length;
 
         const segment = this.segment;
@@ -225,12 +240,13 @@ export class Layout {
         const stack = checkpoint && checkpoint.formatStack;
         const candidate = stack && stack[this.formatStack.length];
 
-        // If we find the same kind of formatter at the expected depth, clone it's state for reuse.
-        const state = (
+        // If we find the same kind of formatter at the expected depth, pass the previous output state.
+        const prevOut = (
             candidate && candidate.formatter === formatter
-                ? {...candidate.state}
-                : {}) as TState;
-        formatter.begin(this, state);
+                ? candidate.state
+                : undefined) as TState;
+
+        const state = formatter.begin(this, init, prevOut);
 
         this.formatStack.push(Object.freeze({ formatter, state: Object.freeze(state) }));
     }
