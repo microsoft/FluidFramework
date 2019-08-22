@@ -5,9 +5,10 @@
 
 import * as stream from "@prague/stream";
 import * as ui from "../ui";
+import { getShapes } from "./canvasCommon";
 import { Image } from "./image";
 import { SegmentCircleInclusive } from "./overlayCanvas";
-import { Circle, IShape, Polygon } from "./shapes/index";
+import { IShape } from "./shapes/index";
 import { Video } from "./video";
 
 interface IPtrEvtPoint {
@@ -234,15 +235,15 @@ export class InkCanvas extends ui.Component {
                 throw new Error("Non-stylus event");
 
             case "down":
-                shapes = this.getShapes(currentOperation, currentOperation, pen, SegmentCircleInclusive.End);
+                shapes = getShapes(currentOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
             case "move":
-                shapes = this.getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
+                shapes = getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
             case "up":
-                shapes = this.getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
+                shapes = getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
                 break;
 
             default:
@@ -290,107 +291,5 @@ export class InkCanvas extends ui.Component {
 
             this.lastStrokeRenderOp[id] = index;
         }
-    }
-
-    /***
-     * given start point and end point, get MixInk shapes to render. The returned MixInk
-     * shapes may contain one or two circles whose center is either start point or end point.
-     * Enum SegmentCircleInclusive determins whether circle is in the return list.
-     * Besides circles, a trapezoid that serves as a bounding box of two stroke point is also returned.
-     */
-    private getShapes(
-        startPoint: stream.IStylusOperation,
-        endPoint: stream.IStylusOperation,
-        pen: stream.IPen,
-        circleInclusive: SegmentCircleInclusive): IShape[] {
-
-        const dirVector = new ui.Vector(
-            endPoint.point.x - startPoint.point.x,
-            endPoint.point.y - startPoint.point.y);
-        const len = dirVector.length();
-
-        const shapes = new Array<IShape>();
-        let trapezoidP0: ui.IPoint;
-        let trapezoidP1: ui.IPoint;
-        let trapezoidP2: ui.IPoint;
-        let trapezoidP3: ui.IPoint;
-        let normalizedLateralVector: ui.IVector;
-
-        // Scale by a power curve to trend towards thicker values
-        const widthAtStart = pen.thickness * Math.pow(startPoint.pressure, 0.5) / 2;
-        const widthAtEnd = pen.thickness * Math.pow(endPoint.pressure, 0.5) / 2;
-
-        // Just draws a circle on small values??
-        if (len + Math.min(widthAtStart, widthAtEnd) <= Math.max(widthAtStart, widthAtEnd)) {
-            const center = widthAtStart >= widthAtEnd ? startPoint : endPoint;
-            shapes.push(new Circle({ x: center.point.x, y: center.point.y }, widthAtEnd));
-            return shapes;
-        }
-
-        if (len === 0) {
-            return null;
-        }
-
-        if (widthAtStart !== widthAtEnd) {
-            let angle = Math.acos(Math.abs(widthAtStart - widthAtEnd) / len);
-
-            if (widthAtStart < widthAtEnd) {
-                angle = Math.PI - angle;
-            }
-
-            normalizedLateralVector = ui.Vector.normalize(ui.Vector.rotate(dirVector, -angle));
-            trapezoidP0 = new ui.Point(
-                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
-            trapezoidP3 = new ui.Point(
-                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
-
-            normalizedLateralVector = ui.Vector.normalize(ui.Vector.rotate(dirVector, angle));
-            trapezoidP2 = new ui.Point(
-                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
-            trapezoidP1 = new ui.Point(
-                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
-        } else {
-            normalizedLateralVector = new ui.Vector(-dirVector.y / len, dirVector.x / len);
-
-            trapezoidP0 = new ui.Point(
-                startPoint.point.x + widthAtStart * normalizedLateralVector.x,
-                startPoint.point.y + widthAtStart * normalizedLateralVector.y);
-            trapezoidP1 = new ui.Point(
-                startPoint.point.x - widthAtStart * normalizedLateralVector.x,
-                startPoint.point.y - widthAtStart * normalizedLateralVector.y);
-
-            trapezoidP2 = new ui.Point(
-                endPoint.point.x - widthAtEnd * normalizedLateralVector.x,
-                endPoint.point.y - widthAtEnd * normalizedLateralVector.y);
-            trapezoidP3 = new ui.Point(
-                endPoint.point.x + widthAtEnd * normalizedLateralVector.x,
-                endPoint.point.y + widthAtEnd * normalizedLateralVector.y);
-        }
-
-        const polygon = new Polygon([trapezoidP0, trapezoidP3, trapezoidP2, trapezoidP1]);
-        shapes.push(polygon);
-
-        switch (circleInclusive) {
-            case SegmentCircleInclusive.None:
-                break;
-            case SegmentCircleInclusive.Both:
-                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
-                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
-                break;
-            case SegmentCircleInclusive.Start:
-                shapes.push(new Circle({ x: startPoint.point.x, y: startPoint.point.y }, widthAtStart));
-                break;
-            case SegmentCircleInclusive.End:
-                shapes.push(new Circle({ x: endPoint.point.x, y: endPoint.point.y }, widthAtEnd));
-                break;
-            default:
-                break;
-        }
-
-        return shapes;
     }
 }
