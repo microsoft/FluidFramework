@@ -127,6 +127,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     public get configuration(): IComponentConfiguration {
         const config: Partial<IComponentConfiguration> = {
             canReconnect: this.container.canReconnect,
+            scopes: this.container.scopes,
         };
         return config as IComponentConfiguration;
     }

@@ -46,6 +46,7 @@ export class DeltaConnection extends EventEmitter {
         super();
 
         this._details = {
+            claims: connection.claims,
             clientId: connection.clientId,
             existing: connection.existing,
             initialContents: connection.initialContents,

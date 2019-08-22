@@ -11,6 +11,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
+    ITokenClaims,
 } from "@prague/protocol-definitions";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";
@@ -194,6 +195,15 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the claims of the client who is sending the message
+     *
+     * @returns client claims
+     */
+    public get claims(): ITokenClaims {
+        return this.details.claims;
     }
 
     /**

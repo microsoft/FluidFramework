@@ -8,12 +8,14 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
+    ITokenClaims,
     MessageType,
 } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 
 export interface IConnectionDetails {
     clientId: string;
+    claims: ITokenClaims;
     existing: boolean;
     parentBranch: string | null;
     version: string;

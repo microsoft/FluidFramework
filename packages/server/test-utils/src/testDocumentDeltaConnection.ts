@@ -11,6 +11,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
+    ITokenClaims,
 } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
 import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
@@ -125,6 +126,10 @@ export class TestDocumentDeltaConnection extends EventEmitter implements IDocume
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get claims(): ITokenClaims {
+        return this.details.claims;
     }
 
     public get existing(): boolean {

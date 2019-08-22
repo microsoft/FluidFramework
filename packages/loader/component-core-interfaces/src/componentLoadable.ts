@@ -33,4 +33,5 @@ export interface IProvideComponentConfiguration {
 
 export interface IComponentConfiguration extends IProvideComponentConfiguration {
     canReconnect: boolean;
+    scopes: string[];
 }

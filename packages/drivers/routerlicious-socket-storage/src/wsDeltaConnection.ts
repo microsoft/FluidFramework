@@ -11,6 +11,7 @@ import {
     ISequencedDocumentMessage,
     IServiceConfiguration,
     ISignalMessage,
+    ITokenClaims,
 } from "@prague/protocol-definitions";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { BatchManager } from "@prague/utils";
@@ -66,6 +67,10 @@ export class WSDeltaConnection extends EventEmitter implements IDocumentDeltaCon
 
     public get clientId(): string {
         return this.details!.clientId;
+    }
+
+    public get claims(): ITokenClaims {
+        return this.details!.claims;
     }
 
     public get existing(): boolean {

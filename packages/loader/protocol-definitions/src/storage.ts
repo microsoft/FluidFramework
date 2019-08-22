@@ -13,7 +13,7 @@ import {
     ISignalMessage,
 } from "./protocol";
 import { ISummaryHandle, ISummaryTree } from "./summary";
-import { ITokenProvider } from "./tokens";
+import { ITokenClaims, ITokenProvider } from "./tokens";
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDocumentAttributes {
@@ -202,6 +202,11 @@ export interface IDocumentDeltaConnection extends EventEmitter {
      * ClientID for the connection
      */
     clientId: string;
+
+    /**
+     * claims for the connection
+     */
+    claims: ITokenClaims;
 
     /**
      * Whether the connection was made to a new or existing document

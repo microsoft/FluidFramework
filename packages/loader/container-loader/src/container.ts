@@ -128,6 +128,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     private _version: string | undefined;
     private _clientId: string | undefined;
+    private _scopes: string[] | undefined;
     private _deltaManager: DeltaManager | undefined;
     private _existing: boolean | undefined;
     private readonly _id: string;
@@ -170,6 +171,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
      */
     public get clientId(): string | undefined {
         return this._clientId;
+    }
+
+    /**
+     * The server provided claims of the client.
+     * Set once this.connected is true, otherwise undefined
+     */
+    public get scopes(): string[] | undefined {
+        return this._scopes;
     }
 
     public get clientType(): string {
@@ -587,7 +596,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connected,
                     `joined @ ${details.sequenceNumber}`,
                     this.pendingClientId,
-                    this._deltaManager!.version);
+                    this._deltaManager!.version,
+                    details.client.scopes);
             }
         });
 
@@ -766,7 +776,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     ConnectionState.Connecting,
                     "websocket established",
                     details.clientId,
-                    details.version);
+                    details.version,
+                    details.claims.scopes);
             });
 
             this._deltaManager.on("disconnect", (reason: string) => {
@@ -829,8 +840,14 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         value: ConnectionState.Connecting | ConnectionState.Connected,
         reason: string,
         clientId: string,
-        version: string);
-    private setConnectionState(value: ConnectionState, reason: string, context?: string, version?: string) {
+        version: string,
+        scopes: string[]);
+    private setConnectionState(
+        value: ConnectionState,
+        reason: string,
+        context?: string,
+        version?: string,
+        scopes?: string[]) {
         if (this.connectionState === value) {
             // Already in the desired state - exit early
             return;
@@ -845,6 +862,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         this._connectionState = value;
         this._version = version;
+        this._scopes = scopes;
 
         // Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
         // (have received the join message for the client ID)

@@ -232,6 +232,10 @@ export class ReplayDocumentDeltaConnection extends EventEmitter implements IDocu
         return this.details.clientId;
     }
 
+    public get claims(): ITokenClaims {
+        return this.details.claims;
+    }
+
     public get existing(): boolean {
         return this.details.existing;
     }
