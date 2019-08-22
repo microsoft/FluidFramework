@@ -182,9 +182,9 @@ export class MarkdownParser {
         }
 
         if (token === undefined) {
-            fn(position, token, props);
-        } else {
             console.warn(token, `Unknown markdown node type: '${type}'`);
+        } else {
+            fn(position, token, props);
         }
     }
 }
