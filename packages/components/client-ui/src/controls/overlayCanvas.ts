@@ -55,7 +55,7 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: stream.IInkOperation = null;
+    private lastOperation: stream.IStylusOperation = null;
     private pen: stream.IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
@@ -78,35 +78,15 @@ export class DrawingContext {
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: stream.IInkOperation) {
-        let shapes: IShape[];
+    public drawStroke(current: stream.IStylusOperation) {
+        const previous = this.lastOperation || current;
 
-        // Assume these are IStylusOperations at this point, we'll throw if it's a clear.
-        const currentOperation = (current as stream.IStylusOperation);
-        const previousOperation = ((this.lastOperation || current) as stream.IStylusOperation);
-
-        switch (current.type) {
-            case "clear":
-                throw new Error("Non-stylus event");
-
-            case "down":
-                this.pen = (current as stream.IStylusDownOperation).pen;
-                shapes = getShapes(currentOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
-                break;
-
-            case "move":
-                assert(this.pen);
-                shapes = getShapes(previousOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
-                break;
-
-            case "up":
-                assert(this.pen);
-                shapes = getShapes(previousOperation, currentOperation, this.pen, SegmentCircleInclusive.End);
-                break;
-
-            default:
-                break;
+        if (current.type === "down") {
+            this.pen = (current as stream.IStylusDownOperation).pen;
         }
+        assert(this.pen);
+
+        const shapes = getShapes(previous, current, this.pen, SegmentCircleInclusive.End);
 
         if (shapes) {
             // Update canvas bounds
@@ -229,7 +209,11 @@ export class InkLayer extends Layer {
 
             const delta = op.contents as stream.IInkDelta;
             for (const operation of delta.operations) {
-                this.drawingContext.drawStroke(operation);
+                if (operation.type === "clear") {
+                    throw new Error("Clear not supported in OverlayCanvas");
+                } else {
+                    this.drawingContext.drawStroke(operation);
+                }
             }
         });
 
@@ -242,9 +226,13 @@ export class InkLayer extends Layer {
     }
 
     public drawDelta(delta: stream.IInkDelta) {
-        this.model.submitOp(delta);
+        this.model.submitDelta(delta);
         for (const operation of delta.operations) {
-            this.drawingContext.drawStroke(operation);
+            if (operation.type === "clear") {
+                throw new Error("Clear not supported in OverlayCanvas");
+            } else {
+                this.drawingContext.drawStroke(operation);
+            }
         }
     }
 }

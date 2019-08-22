@@ -5,10 +5,10 @@
 
 import {
     IInkDelta,
-    IInkOperation,
     IInkStroke,
     IStylusDownOperation,
     IStylusMoveOperation,
+    IStylusOperation,
     IStylusUpOperation,
 } from "./interfaces";
 
@@ -51,38 +51,40 @@ export class InkSnapshot implements IInkSnapshot {
     }
 
     /**
-     * Apply each operation in the provided delta to the snapshot.
+     * Process each operation in the provided delta to the snapshot.
      *
-     * @param delta - The delta to apply
+     * @param delta - The delta to process
      */
-    public apply(delta: IInkDelta) {
+    public processDelta(delta: IInkDelta) {
         for (const operation of delta.operations) {
-            this.applyOperation(operation);
+            switch (operation.type) {
+                case "clear":
+                    this.processClearOperation();
+                    break;
+                case "up":
+                    this.processStylusUpOperation(operation);
+                    break;
+                case "down":
+                    this.processStylusDownOperation(operation);
+                    break;
+                case "move":
+                    this.processStylusMoveOperation(operation);
+                    break;
+                default:
+                    throw new Error("Unknown action type");
+            }
         }
     }
 
-    /**
-     * Apply a single operation to the snapshot.
-     *
-     * @param operation - The operation to apply
-     */
-    public applyOperation(operation: IInkOperation) {
-        switch (operation.type) {
-            case "clear":
-                this.processClearOperation();
-                break;
-            case "up":
-                this.processStylusUpOperation(operation);
-                break;
-            case "down":
-                this.processStylusDownOperation(operation);
-                break;
-            case "move":
-                this.processStylusMoveOperation(operation);
-                break;
-            default:
-                throw new Error("Unknown action type");
-        }
+    private createNewStroke(id: string) {
+        const stroke: IInkStroke = {
+            id,
+            operations: [],
+        };
+
+        this.strokes.push(stroke);
+
+        return stroke;
     }
 
     /**
@@ -98,9 +100,9 @@ export class InkSnapshot implements IInkSnapshot {
      *
      * @param operation - The stylus up operation
      */
-    private processStylusUpOperation(operation: IInkOperation) {
+    private processStylusUpOperation(operation: IStylusUpOperation) {
         // TODO - longer term on ink up - or possibly earlier - we can attempt to smooth the provided ink
-        this.addOperationToStroke((operation as IStylusUpOperation).id, operation);
+        this.addOperationToStroke(operation);
     }
 
     /**
@@ -108,14 +110,8 @@ export class InkSnapshot implements IInkSnapshot {
      *
      * @param operation - The stylus down operation
      */
-    private processStylusDownOperation(operation: IInkOperation) {
-        const stylusOperation = operation as IStylusDownOperation;
-        const stroke = {
-            id: stylusOperation.id,
-            operations: [],
-        };
-
-        this.strokes.push(stroke);
+    private processStylusDownOperation(operation: IStylusDownOperation) {
+        const stroke = this.createNewStroke(operation.id);
 
         // Create a reference to the specified stroke
         let strokeIndex = this.strokes.length - 1;
@@ -128,7 +124,7 @@ export class InkSnapshot implements IInkSnapshot {
         }
 
         // And save the stylus down
-        this.addOperationToStroke(stylusOperation.id, operation);
+        this.addOperationToStroke(operation);
     }
 
     /**
@@ -136,20 +132,19 @@ export class InkSnapshot implements IInkSnapshot {
      *
      * @param operation - The stylus move operation
      */
-    private processStylusMoveOperation(operation: IInkOperation) {
-        this.addOperationToStroke((operation as IStylusMoveOperation).id, operation);
+    private processStylusMoveOperation(operation: IStylusMoveOperation) {
+        this.addOperationToStroke(operation);
     }
 
     /**
      * Adds a given operation to a given stroke.
      *
-     * @param id - The id of the stroke the operation should be added to
      * @param operation - The operation to add
      */
-    private addOperationToStroke(id: string, operation: IInkOperation) {
+    private addOperationToStroke(operation: IStylusOperation) {
         // TODO: Why is this operation sometimes undefined?
-        if (this.strokeIndex[id] !== undefined) {
-            const strokeIndex = this.strokeIndex[id];
+        if (this.strokeIndex[operation.id] !== undefined) {
+            const strokeIndex = this.strokeIndex[operation.id];
             if (this.strokes[strokeIndex].operations === undefined) {
                 this.strokes[strokeIndex].operations = [];
             }

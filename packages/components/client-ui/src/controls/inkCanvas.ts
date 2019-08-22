@@ -39,7 +39,7 @@ export class InkCanvas extends ui.Component {
     private context: CanvasRenderingContext2D;
     private penID: number = -1;
     private canvasWrapper: HTMLElement;
-    private currentStylusActionId: string;
+    private currentStrokeId: string;
     private currentPen: stream.IPen;
     private lastStrokeRenderOp: { [key: string]: number } = {};
 
@@ -138,7 +138,7 @@ export class InkCanvas extends ui.Component {
             const pt = new EventPoint(this.canvas, evt);
 
             const delta = new stream.InkDelta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStylusActionId = (delta.operations[0] as stream.IStylusDownOperation).id;
+            this.currentStrokeId = (delta.operations[0] as stream.IStylusDownOperation).id;
             this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
@@ -151,7 +151,7 @@ export class InkCanvas extends ui.Component {
             const delta = new stream.InkDelta().stylusMove(
                 pt.rawPosition,
                 evt.pressure,
-                this.currentStylusActionId);
+                this.currentStrokeId);
             this.addAndDrawStroke(delta, true);
 
             evt.returnValue = false;
@@ -169,8 +169,8 @@ export class InkCanvas extends ui.Component {
             const delta = new stream.InkDelta().stylusUp(
                 pt.rawPosition,
                 evt.pressure,
-                this.currentStylusActionId);
-            this.currentStylusActionId = undefined;
+                this.currentStrokeId);
+            this.currentStrokeId = undefined;
 
             this.addAndDrawStroke(delta, true);
         }
@@ -184,14 +184,14 @@ export class InkCanvas extends ui.Component {
         }
 
         // Draw the requested stroke
-        const currentOperation = stroke.operations[operationIndex];
-        const previousOperation = stroke.operations[Math.max(0, operationIndex - 1)];
+        const current = stroke.operations[operationIndex];
+        const previous = stroke.operations[Math.max(0, operationIndex - 1)];
         const time = operationIndex === 0
-            ? currentOperation.time - startTime
-            : currentOperation.time - previousOperation.time;
+            ? current.time - startTime
+            : current.time - previous.time;
 
         setTimeout(() => {
-            this.drawStroke(stroke, currentOperation, previousOperation);
+            this.drawStroke(stroke, current, previous);
             this.animateStroke(stroke, operationIndex + 1, startTime);
         }, time);
     }
@@ -211,44 +211,22 @@ export class InkCanvas extends ui.Component {
 
         const strokes = this.model.getStrokes();
         for (const stroke of strokes) {
-            let previous: stream.IInkOperation = stroke.operations[0];
-            for (const operation of stroke.operations) {
-                this.drawStroke(stroke, operation, previous);
-                previous = operation;
+            let previous = stroke.operations[0];
+            for (const current of stroke.operations) {
+                // current === previous === stroke.operations[0] for the down
+                this.drawStroke(stroke, current, previous);
+                previous = current;
             }
         }
     }
 
     private drawStroke(
         stroke: stream.IInkStroke,
-        current: stream.IInkOperation,
-        previous: stream.IInkOperation) {
-        let shapes: IShape[];
-
-        // Assume these are IStylusOperations at this point, we'll throw if it's a clear
-        const currentOperation = (current as stream.IStylusOperation);
-        const previousOperation = (previous as stream.IStylusOperation);
+        current: stream.IStylusOperation,
+        previous: stream.IStylusOperation,
+    ) {
         const pen = (stroke.operations[0] as stream.IStylusDownOperation).pen;
-
-        switch (current.type) {
-            case "clear":
-                throw new Error("Non-stylus event");
-
-            case "down":
-                shapes = getShapes(currentOperation, currentOperation, pen, SegmentCircleInclusive.End);
-                break;
-
-            case "move":
-                shapes = getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
-                break;
-
-            case "up":
-                shapes = getShapes(previousOperation, currentOperation, pen, SegmentCircleInclusive.End);
-                break;
-
-            default:
-                break;
-        }
+        const shapes = getShapes(previous, current, pen, SegmentCircleInclusive.End);
 
         if (shapes) {
             this.context.fillStyle = ui.toColorStringNoAlpha(pen.color);
@@ -263,7 +241,7 @@ export class InkCanvas extends ui.Component {
 
     private addAndDrawStroke(delta: stream.IInkDelta, submit: boolean) {
         if (submit) {
-            this.model.submitOp(delta);
+            this.model.submitDelta(delta);
         }
 
         const dirtyStrokeIds: Set<string> = new Set();

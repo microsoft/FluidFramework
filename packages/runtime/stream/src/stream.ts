@@ -85,13 +85,13 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Send the op and apply.
+     * Send the delta and process it.
      *
-     * @param op - Op to submit
+     * @param delta - Collection of one or more ops to submit - only one is supported currently
      */
-    public submitOp(op: IInkDelta) {
-        this.submitLocalMessage(op);
-        this.inkSnapshot.apply(op);
+    public submitDelta(delta: IInkDelta) {
+        this.submitLocalMessage(delta);
+        this.inkSnapshot.processDelta(delta);
     }
 
     /**
@@ -143,14 +143,14 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Apply a delta to the snapshot.
+     * Process a delta to the snapshot.
      *
-     * @param message - The message containing the delta to apply
+     * @param message - The message containing the delta to process
      * @param local - Whether the message is local
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && !local) {
-            this.inkSnapshot.apply(message.contents as IInkDelta);
+            this.inkSnapshot.processDelta(message.contents as IInkDelta);
         }
     }
 
