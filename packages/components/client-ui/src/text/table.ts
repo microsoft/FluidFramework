@@ -152,19 +152,19 @@ function createRowCellOp(opList: MergeTree.IMergeTreeOp[], sharedString: SharedS
     createCellRelative(opList, idBase, { id: endRowId, before: true }, props);
 }
 
-function createColumnCellOp(sharedString: SharedString, opList: MergeTree.IMergeTreeOp[], row: Row,
+function createColumnCellOp(idBase: string, opList: MergeTree.IMergeTreeOp[], row: Row,
     prevCell: Cell, columnId: string, extraProperties?: MergeTree.PropertySet) {
     let id = prevCell.endMarker.getId();
-    createCellRelative(opList, sharedString.client.longClientId,
+    createCellRelative(opList, idBase,
         { id }, { columnId });
 }
 
-function insertColumnCellForRow(sharedString: SharedString, opList: MergeTree.IMergeTreeOp[], row: Row,
+function insertColumnCellForRow(idBase: string, opList: MergeTree.IMergeTreeOp[], row: Row,
     prevColId: string, colId: string) {
     for (let i = 0; i < row.cells.length; i++) {
         let prevCell = row.cells[i];
         if (prevCell.columnId === prevColId) {
-            createColumnCellOp(sharedString, opList, row, prevCell, colId);
+            createColumnCellOp(idBase, opList, row, prevCell, colId);
         }
     }
 }
@@ -172,11 +172,10 @@ function insertColumnCellForRow(sharedString: SharedString, opList: MergeTree.IM
 let traceOps = true;
 
 // TODO: non-grid case
-export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Row,
+export function insertColumn(sharedString: SharedString, idBase: string, prevCell: Cell, row: Row,
     table: Table) {
-    let idbase = sharedString.client.longClientId;
     let prevColumnId = prevCell.columnId;
-    let columnId = `${idbase}Col${columnIdSuffix++}`;
+    let columnId = `${idBase}Col${columnIdSuffix++}`;
     if (traceOps) {
         console.log(`insert col prev ${prevCell.marker.toString()} id: ${columnId}`);
     }
@@ -193,7 +192,7 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
     };
     opList.push(insertColMarkerOp);
     for (let row of table.rows) {
-        insertColumnCellForRow(sharedString, opList, row, prevColumnId, columnId);
+        insertColumnCellForRow(idBase, opList, row, prevColumnId, columnId);
     }
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
         ops: opList,
@@ -206,13 +205,13 @@ export function insertColumn(sharedString: SharedString, prevCell: Cell, row: Ro
 }
 
 export function insertRowCellForColumn(sharedString: SharedString, opList: MergeTree.IMergeTreeOp[], prevCell: Cell,
-    idbase: string, endRowId: string) {
-    createRowCellOp(opList, sharedString, idbase, endRowId, prevCell.columnId);
+    idBase: string, endRowId: string) {
+    createRowCellOp(opList, sharedString, idBase, endRowId, prevCell.columnId);
 }
 
 // TODO: non-grid
 // TODO: GC using consensus remove
-export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
+export function deleteColumn(sharedString: SharedString, clientId: string, cell: Cell, row: Row,
     table: Table) {
     if (traceOps) {
         console.log(`delete column from cell ${cell.marker.toString()}`);
@@ -221,7 +220,6 @@ export function deleteColumn(sharedString: SharedString, cell: Cell, row: Row,
     for (let row of table.rows) {
         for (let cell of row.cells) {
             if (cell.columnId === columnId) {
-                const clientId = sharedString.client.longClientId;
                 sharedString.annotateMarkerNotifyConsensus(cell.marker, { moribund: clientId }, (m) => {
                     sharedString.removeRange(
                         sharedString.getPosition(cell.marker),
@@ -285,9 +283,8 @@ export function deleteRow(sharedString: SharedString, row: Row, table: Table) {
     table.tableMarker.table = undefined;
 }
 
-export function insertRow(sharedString: SharedString, prevRow: Row, table: Table) {
-    let idbase = sharedString.client.longClientId;
-    let rowId = `${idbase}row${rowIdSuffix++}`;
+export function insertRow(sharedString: SharedString, idBase: string, prevRow: Row, table: Table) {
+    let rowId = `${idBase}row${rowIdSuffix++}`;
     if (traceOps) {
         console.log(`insert row id: ${rowId} prev: ${prevRow.rowMarker.getId()}`);
     }
@@ -295,7 +292,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
     createEmptyRowAfter(opList, sharedString, prevRow, rowId);
     let endRowId = endPrefix + rowId;
     for (let i = 0, len = prevRow.cells.length; i < len; i++) {
-        insertRowCellForColumn(sharedString, opList, prevRow.cells[i], idbase, endRowId);
+        insertRowCellForColumn(sharedString, opList, prevRow.cells[i], idBase, endRowId);
     }
     let groupOp = <MergeTree.IMergeTreeGroupMsg>{
         ops: opList,
@@ -308,7 +305,7 @@ export function insertRow(sharedString: SharedString, prevRow: Row, table: Table
 }
 
 // Table Column* (Row (Cell EndCell)* EndRow)* EndTable
-export function createTable(pos: number, sharedString: SharedString, nrows = 3, ncells = 3) {
+export function createTable(pos: number, sharedString: SharedString, idBase: string, nrows = 3, ncells = 3) {
     let pgAtStart = true;
     if (pos > 0) {
         let segoff = sharedString.getContainingSegment(pos - 1);
@@ -318,7 +315,6 @@ export function createTable(pos: number, sharedString: SharedString, nrows = 3, 
             }
         }
     }
-    let idBase = sharedString.client.longClientId;
     let tableId = `T${tableIdSuffix++}`;
     let opList = <MergeTree.IMergeTreeInsertMsg[]>[];
     let endTableId = endPrefix + tableId;

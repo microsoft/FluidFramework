@@ -255,7 +255,7 @@ async function loadDocument(
             container.trackInsights(insightsMap);
         });
 
-    if (sharedString.client.getLength() > 0) {
+    if (sharedString.getLength() > 0) {
         theFlow.render(0, true);
     }
     theFlow.timeToEdit = theFlow.timeToImpression = Date.now() - clockStart;

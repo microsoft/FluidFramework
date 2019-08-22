@@ -489,7 +489,7 @@ const commands: IFlowViewCmd[] = [
     {
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString);
+            Table.createTable(f.cursor.pos, f.sharedString, f.collabDocument.clientId);
             f.hostSearchMenu(f.cursor.pos);
         },
         key: "table test",
@@ -5109,7 +5109,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
+            Table.deleteColumn(this.sharedString, this.collabDocument.clientId,
+                cellMarker.cell, rowMarker.row, tableMarker.table);
         }
     }
 
@@ -5122,7 +5123,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertRow(this.sharedString, rowMarker.row, tableMarker.table);
+            Table.insertRow(this.sharedString, this.collabDocument.clientId, rowMarker.row, tableMarker.table);
         }
     }
 
@@ -5239,7 +5240,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertColumn(this.sharedString, cellMarker.cell, rowMarker.row, tableMarker.table);
+            Table.insertColumn(this.sharedString, this.collabDocument.clientId, cellMarker.cell, rowMarker.row, tableMarker.table);
         }
     }
 
@@ -5284,7 +5285,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTable(this.cursor.pos, this.sharedString);
+                Table.createTable(this.cursor.pos, this.sharedString, this.collabDocument.clientId);
                 break;
             }
             case CharacterCodes.M: {
