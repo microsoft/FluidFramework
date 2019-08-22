@@ -4,7 +4,15 @@
  */
 
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
-import { IOrderer } from "@prague/services-core";
+import {
+    ICollection,
+    IContext,
+    IDocument,
+    IDocumentDetails,
+    IKafkaMessage,
+    IOrderer,
+    ISequencedOperationMessage,
+} from "@prague/services-core";
 import { EventEmitter } from "events";
 
 export interface IConcreteNode extends EventEmitter {
@@ -54,4 +62,19 @@ export interface INodeMessage {
     type: "order" | "op" | "connect" | "disconnect" | "connected";
 
     payload: IDocumentMessage | string | IOpMessage | IConnectMessage | IConnectedMessage;
+}
+
+export interface ILocalOrdererSetup {
+    documentP(): Promise<IDocumentDetails>;
+    documentCollectionP(): Promise<ICollection<IDocument>>;
+    deltaCollectionP(): Promise<ICollection<any>>;
+    scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>>;
+    protocolHeadP(): Promise<number>;
+    scribeMessagesP(): Promise<ISequencedOperationMessage[]>;
+}
+
+export interface IKafkaSubscriber {
+    readonly context: IContext;
+
+    process(message: IKafkaMessage): void;
 }
