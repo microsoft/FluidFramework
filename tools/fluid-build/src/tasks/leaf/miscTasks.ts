@@ -66,12 +66,12 @@ export class CopyfilesTask extends LeafTask {
             const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
             for (let i = 0; i < srcTimes.length; i++) {
-                if (srcTimes[i].mtimeMs != dstTimes[i].mtimeMs) {
+                if (srcTimes[i].mtimeMs !== dstTimes[i].mtimeMs) {
                     this.logVerboseNotUpToDate();
                     return false;
                 }
 
-                if (srcTimes[i].size != dstTimes[i].size) {
+                if (srcTimes[i].size !== dstTimes[i].size) {
                     this.logVerboseNotUpToDate();
                     return false;
                 }

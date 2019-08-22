@@ -8,11 +8,59 @@ import { parseOptions, options } from "./options";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { Timer } from "./common/timer";
 import { logStatus } from "./common/logging";
-import { existsSync } from "./common/utils";
+import { existsSync, readFileAsync } from "./common/utils";
 import * as path from "path";
 import chalk from "chalk";
 
 parseOptions(process.argv);
+
+async function isFluidRootLerna(dir: string) {
+    const filename = path.join(dir, "lerna.json");
+    if (!existsSync(filename)) {
+        return false;
+    }
+
+    const content = await readFileAsync(filename, "utf-8");
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed.packages) && parsed.packages.length == 1 && parsed.packages[0] === "packages/**") {
+        return true;
+    }
+    return false;
+}
+
+async function isFluidRootPackage(dir: string) {
+    const filename = path.join(dir, "package.json");
+    if (!existsSync(filename)) {
+        return false;
+    }
+
+    const content = await readFileAsync(filename, "utf-8");
+    const parsed = JSON.parse(content);
+    if (parsed.name === "root" && parsed.private === true) {
+        return true;
+    }
+    return false;
+}
+
+async function inferRoot() {
+    let curr = process.cwd();
+    while (true) {
+        try {
+            if (await isFluidRootLerna(curr) && await isFluidRootPackage(curr)) {
+                console.log(`Build fluid repo @ ${curr}`)
+                return curr;
+            }
+        } catch {
+        }
+
+        const up = path.resolve(curr, "..");
+        if (up === curr) {
+            break;
+        }
+        curr = up;
+    }
+    return undefined;
+}
 
 function versionCheck() {
     const pkg = require(path.join(__dirname, "..", "package.json"));
@@ -26,6 +74,10 @@ async function main() {
     const timer = new Timer(options.timer);
 
     versionCheck();
+
+    if (!options.root) {
+        options.root = await inferRoot();
+    }
 
     const root = options.root;
     if (!root) {

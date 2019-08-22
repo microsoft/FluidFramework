@@ -19,10 +19,10 @@ export function logStatus(msg: string) {
     }
     const date = new Date();
     let hours = date.getHours().toString();
-    if (hours.length == 1) { hours = '0' + hours; }
+    if (hours.length === 1) { hours = '0' + hours; }
     let mins = date.getMinutes().toString();
-    if (mins.length == 1) { mins = '0' + mins; }
+    if (mins.length === 1) { mins = '0' + mins; }
     let secs = date.getSeconds().toString();
-    if (secs.length == 1) { secs = '0' + secs; }
+    if (secs.length === 1) { secs = '0' + secs; }
     console.log(chalk.default.yellow(`[${hours}:${mins}:${secs}] `) + msg);
 }

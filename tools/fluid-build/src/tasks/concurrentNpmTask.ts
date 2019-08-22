@@ -27,7 +27,7 @@ export class ConcurrentNPMTask extends NPMTask {
                 return BuildResult.Failed;
             }
 
-            if (result == BuildResult.Success) {
+            if (result === BuildResult.Success) {
                 retResult = BuildResult.Success;
             }
         }

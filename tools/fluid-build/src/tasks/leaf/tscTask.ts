@@ -7,11 +7,14 @@ import { LeafTask } from "./leafTask";
 import { logVerbose } from "../../common/logging";
 import { readFileAsync, existsSync } from "../../common/utils";
 import path from "path";
+import * as ts from "typescript";
+const isEqual = require("lodash.isequal");
 
 interface ITsBuildInfo {
     program: {
         fileInfos: { [key: string]: { version: string, signature: string } },
         semanticDiagnosticsPerFile: any[],
+        options: any
     }
 }
 
@@ -54,7 +57,35 @@ export class TscTask extends LeafTask {
             }
         }
 
-        // TODO: Needs to check if the tsconfig.json or the flags setting has changed
+        // Check tsconfig.json
+        return this.checkTsConfig(tsBuildInfo);
+    }
+
+    protected checkTsConfig(tsBuildInfo: ITsBuildInfo) {
+        const args = this.command.split(" ");
+
+        const parsedCommand = ts.parseCommandLine(args);
+        if (parsedCommand.errors.length) {
+            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+            return false;
+        }
+
+        const configFileFullPath = this.configFileFullPath;
+        const configFile = ts.readConfigFile(configFileFullPath, ts.sys.readFile);
+        if (configFile.error) {
+            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
+            return false;
+        }
+        const options = ts.parseJsonConfigFileContent(configFile.config, ts.sys, this.node.pkg.directory, parsedCommand.options, configFileFullPath);
+        if (options.errors.length) {
+            logVerbose(`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`);
+            return false;
+        }
+
+        if (!isEqual(options.options, tsBuildInfo.program.options)) {
+            logVerbose(`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`);
+            return false;
+        }
         return true;
     }
 
@@ -62,25 +93,29 @@ export class TscTask extends LeafTask {
         return true;
     }
 
-    private get configFile() {
+    private get configFileFullPath() {
         // TODO: parse the command line for real, split space for now.
         const args = this.command.split(" ");
-        for (let i = 0; i < args.length - 1; i++) {
-            if (args[i] === "--project" || args[i] === "-p") {
-                return args[i + 1];
-            }
-        }
-        return "tsconfig.json";
-    }
 
-    private get configFileFullPath() {
-        return path.join(this.node.pkg.directory, this.configFile);
+        const parsedCommand = ts.parseCommandLine(args);
+        const project = parsedCommand.options.project;
+        if (project !== undefined) {
+            return path.resolve(this.node.pkg.directory, project);
+        }
+        const foundConfigFile = ts.findConfigFile(this.node.pkg.directory, ts.sys.fileExists, "tsconfig.json");
+        if (foundConfigFile) {
+            return foundConfigFile;
+        }
+        return path.join(this.node.pkg.directory, "tsconfig.json");
     }
 
     private get tsBuildInfoFileName() {
-        const configFile = this.configFile;
-        const configName = configFile.endsWith(".json") ? configFile.substring(0, configFile.length - 5) : configFile;
-        return `${configName}.tsbuildinfo`;
+        const configFileFullPath = this.configFileFullPath;
+        const configFileParsed = path.parse(configFileFullPath);
+        if (configFileParsed.ext === ".json") {
+            return `${configFileParsed.name}.tsbuildinfo`;
+        }
+        return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
     }
 
     public get tsBuildInfoFile() {

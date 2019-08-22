@@ -4,7 +4,6 @@
  */
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { logVerbose } from "../../common/logging";
 import { globFn, toPosixPath } from "../../common/utils";
 
 export class WebpackTask extends LeafWithDoneFileTask {
@@ -28,7 +27,6 @@ export class WebpackTask extends LeafWithDoneFileTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
-        const executable = this.executable;
         for (const child of this.node.dependentPackages) {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "npm run build:esnext")) {
