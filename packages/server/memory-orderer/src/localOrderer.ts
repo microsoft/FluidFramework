@@ -17,7 +17,6 @@ import {
 import {
     IClient,
     IClientJoin,
-    IDocumentAttributes,
     IDocumentMessage,
     IDocumentSystemMessage,
     IServiceConfiguration,
@@ -26,20 +25,17 @@ import {
 import {
     BoxcarType,
     IBoxcarMessage,
-    ICollection,
     IContext,
     IDatabaseManager,
     IDocument,
     IDocumentDetails,
     IDocumentStorage,
-    IKafkaMessage,
     IOrderer,
     IOrdererConnection,
     IProducer,
     IPublisher,
     IRawOperationMessage,
     IScribe,
-    ISequencedOperationMessage,
     ITaskMessageSender,
     ITenantManager,
     ITopic,
@@ -47,8 +43,11 @@ import {
     RawOperationType,
 } from "@prague/services-core";
 import * as assert from "assert";
-import { EventEmitter } from "events";
 import { IGitManager } from "../../services-client/dist";
+import { ILocalOrdererSetup } from "./interfaces";
+import { LocalKafka } from "./localKafka";
+import { LocalLambdaController } from "./localLambdaController";
+import { LocalOrdererSetup } from "./localOrdererSetup";
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");
 
@@ -287,18 +286,6 @@ class LocalOrdererConnection implements IOrdererConnection {
     }
 }
 
-async function fetchLatestSummaryState(gitManager: IGitManager, documentId: string): Promise<number> {
-    const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-    if (!existingRef) {
-        return -1;
-    }
-
-    const content = await gitManager.getContent(existingRef.object.sha, ".protocol/attributes");
-    const attributes = JSON.parse(Buffer.from(content.content, content.encoding).toString()) as IDocumentAttributes;
-
-    return attributes.sequenceNumber;
-}
-
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
@@ -313,6 +300,12 @@ export class LocalOrderer implements IOrderer {
         permission: any,
         maxMessageSize: number,
         gitManager?: IGitManager,
+        setup: ILocalOrdererSetup = new LocalOrdererSetup(
+            tenantId,
+            documentId,
+            storage,
+            databaseManager,
+            gitManager),
         pubSub: IPubSub = new PubSub(),
         broadcasterContext: IContext = new LocalContext(),
         scriptoriumContext: IContext = new LocalContext(),
@@ -322,28 +315,13 @@ export class LocalOrderer implements IOrderer {
         clientTimeout: number = ClientSequenceTimeout,
         serviceConfiguration = DefaultServiceConfiguration,
     ) {
-        const [details, documentCollection, deltasCollection, scribeDeltasCollection] = await Promise.all([
-            storage.getOrCreateDocument(tenantId, documentId),
-            databaseManager.getDocumentCollection(),
-            databaseManager.getDeltaCollection(tenantId, documentId),
-            databaseManager.getScribeDeltaCollection(tenantId, documentId),
-        ]);
-
-        const [protocolHead, messages] = gitManager
-            ?
-            await Promise.all([
-                fetchLatestSummaryState(gitManager, documentId),
-                scribeDeltasCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 }),
-            ])
-            : [0, []];
+        const documentDetails = await setup.documentP();
 
         return new LocalOrderer(
-            details,
+            setup,
+            documentDetails,
             tenantId,
             documentId,
-            documentCollection,
-            deltasCollection,
-            scribeDeltasCollection,
             taskMessageSender,
             tenantManager,
             gitManager,
@@ -356,35 +334,30 @@ export class LocalOrderer implements IOrderer {
             scribeContext,
             deliContext,
             clientTimeout,
-            protocolHead,
-            messages,
             serviceConfiguration);
     }
 
     private socketPublisher: LocalSocketPublisher;
 
-    private scriptoriumLambda: ScriptoriumLambda;
-    private foremanLambda: ForemanLambda;
-    private scribeLambda: ScribeLambda | undefined;
-    private deliLambda: DeliLambda;
-    private broadcasterLambda: BroadcasterLambda;
+    private scriptoriumLambda: LocalLambdaController | undefined;
+    private foremanLambda: LocalLambdaController | undefined;
+    private scribeLambda: LocalLambdaController | undefined;
+    private deliLambda: LocalLambdaController | undefined;
+    private broadcasterLambda: LocalLambdaController | undefined;
 
-    private alfredToDeliKafka: InMemoryKafka;
-    private reverseProducerKafka: IProducer;
-    private deliToScriptoriumKafka: InMemoryKafka;
+    private rawDeltasKafka: LocalKafka;
+    private deltasKafka: LocalKafka;
 
     private existing: boolean;
 
     constructor(
-        private details: IDocumentDetails,
-        private tenantId: string,
-        private documentId: string,
-        documentCollection: ICollection<IDocument>,
-        deltasCollection: ICollection<any>,
-        scribeMessagesCollection: ICollection<ISequencedOperationMessage>,
-        private taskMessageSender: ITaskMessageSender,
-        private tenantManager: ITenantManager,
-        gitManager: IGitManager | undefined,
+        private readonly setup: ILocalOrdererSetup,
+        private readonly details: IDocumentDetails,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+        private readonly taskMessageSender: ITaskMessageSender,
+        private readonly tenantManager: ITenantManager,
+        private readonly gitManager: IGitManager | undefined,
         private permission: any,
         private maxMessageSize: number,
         private pubSub: IPubSub,
@@ -393,77 +366,15 @@ export class LocalOrderer implements IOrderer {
         private foremanContext: IContext,
         private scribeContext: IContext,
         private deliContext: IContext,
-        clientTimeout: number,
-        protocolHead: number,
-        scribeMessages: ISequencedOperationMessage[],
+        private clientTimeout: number,
         private serviceConfiguration: IServiceConfiguration,
     ) {
         this.existing = details.existing;
         this.socketPublisher = new LocalSocketPublisher(this.pubSub);
 
-        // TODO I want to maintain an inbound queue. On lambda failures I need to recreate all of them. Just
-        // like what happens when the service goes down.
+        this.setupKafkas();
 
-        // In memory kafka.
-        this.alfredToDeliKafka = new InMemoryKafka(this.existing ? details.value.sequenceNumber : 0);
-        this.reverseProducerKafka = new ReverseProducerKafka(this.alfredToDeliKafka);
-        this.deliToScriptoriumKafka = new InMemoryKafka();
-
-        // Scriptorium + Broadcaster Lambda
-        this.scriptoriumLambda = new ScriptoriumLambda(deltasCollection, undefined, this.scriptoriumContext);
-        this.broadcasterLambda = new BroadcasterLambda(this.socketPublisher, this.broadcasterContext);
-
-        // Foreman lambda
-        this.foremanLambda = new ForemanLambda(
-            this.taskMessageSender,
-            this.tenantManager,
-            this.permission,
-            this.foremanContext);
-
-        if (gitManager) {
-            // Scribe lambda
-            const scribe = details.value.scribe
-                ? typeof details.value.scribe === "string" ? JSON.parse(details.value.scribe) : details.value.scribe
-                : DefaultScribe;
-            const lastState = scribe.protocolState
-                ? scribe.protocolState
-                : { members: [], proposals: [], values: [] };
-            const protocolHandler = new ProtocolOpHandler(
-                documentId,
-                scribe.minimumSequenceNumber,
-                scribe.sequenceNumber,
-                lastState.members,
-                lastState.proposals,
-                lastState.values,
-                () => -1,
-                () => { return; });
-
-            this.scribeLambda = new ScribeLambda(
-                this.scribeContext,
-                documentCollection,
-                scribeMessagesCollection,
-                scribe.tenantId,
-                scribe.documentId,
-                scribe,
-                gitManager,
-                this.alfredToDeliKafka,
-                protocolHandler,
-                protocolHead,
-                scribeMessages);
-        }
-
-        // Deli lambda
-        this.deliLambda = new DeliLambda(
-            this.deliContext,
-            tenantId,
-            documentId,
-            details.value,
-            documentCollection,
-            this.deliToScriptoriumKafka,
-            this.reverseProducerKafka,
-            clientTimeout,
-            ActivityCheckingTimeout,
-            NoopConsolidationTimeout);
+        this.setupLambdas();
 
         this.startLambdas();
     }
@@ -488,7 +399,7 @@ export class LocalOrderer implements IOrderer {
             subscriber,
             this.existing,
             this.details.value,
-            this.alfredToDeliKafka,
+            this.rawDeltasKafka,
             this.tenantId,
             this.documentId,
             clientId,
@@ -503,86 +414,175 @@ export class LocalOrderer implements IOrderer {
     }
 
     public async close() {
-        // close in-memory kafkas
-        this.alfredToDeliKafka.close();
-        this.reverseProducerKafka.close();
-        this.deliToScriptoriumKafka.close();
-
-        // close lambdas
-        this.broadcasterLambda.close();
-        this.scriptoriumLambda.close();
-        this.foremanLambda.close();
-
-        if (this.scribeLambda) {
-            this.scribeLambda.close();
-        }
-
-        this.deliLambda.close();
+        await this.closeKafkas();
+        this.closeLambdas();
     }
 
     public hasPendingWork(): boolean {
-        return this.broadcasterLambda.hasPendingWork();
+        if (this.broadcasterLambda && this.broadcasterLambda.lambda) {
+            return (this.broadcasterLambda.lambda as BroadcasterLambda).hasPendingWork();
+        }
+
+        return false;
     }
+
+    private setupKafkas() {
+        this.rawDeltasKafka = new LocalKafka(this.existing ? this.details.value.sequenceNumber : 0);
+        this.deltasKafka = new LocalKafka();
+    }
+
+    private setupLambdas() {
+        this.scriptoriumLambda = new LocalLambdaController(
+            this.deltasKafka,
+            this.setup,
+            this.scriptoriumContext,
+            async (lambdaSetup, context) => {
+                const deltasCollection = await lambdaSetup.deltaCollectionP();
+                return new ScriptoriumLambda(deltasCollection, undefined, context);
+            });
+
+        this.broadcasterLambda = new LocalLambdaController(
+            this.deltasKafka,
+            this.setup,
+            this.broadcasterContext,
+            async (_, context) => new BroadcasterLambda(this.socketPublisher, context));
+
+        this.foremanLambda = new LocalLambdaController(
+            this.deltasKafka,
+            this.setup,
+            this.foremanContext,
+            async (_, context) => new ForemanLambda(
+                this.taskMessageSender,
+                this.tenantManager,
+                this.permission,
+                context));
+
+        if (this.gitManager) {
+            this.scribeLambda = new LocalLambdaController(
+                this.deltasKafka,
+                this.setup,
+                this.scribeContext,
+                async (lambdaSetup, context) => {
+                    // Scribe lambda
+                    const [
+                        documentCollection,
+                        scribeMessagesCollection,
+                        protocolHead,
+                        scribeMessages,
+                    ] = await Promise.all([
+                        lambdaSetup.documentCollectionP(),
+                        lambdaSetup.scribeDeltaCollectionP(),
+                        lambdaSetup.protocolHeadP(),
+                        lambdaSetup.scribeMessagesP(),
+                    ]);
+
+                    const scribe = this.details.value.scribe
+                        ? typeof this.details.value.scribe === "string" ?
+                            JSON.parse(this.details.value.scribe) :
+                            this.details.value.scribe
+                        : DefaultScribe;
+                    const lastState = scribe.protocolState
+                        ? scribe.protocolState
+                        : { members: [], proposals: [], values: [] };
+
+                    const protocolHandler = new ProtocolOpHandler(
+                        this.documentId,
+                        scribe.minimumSequenceNumber,
+                        scribe.sequenceNumber,
+                        lastState.members,
+                        lastState.proposals,
+                        lastState.values,
+                        () => -1,
+                        () => { return; });
+
+                    return new ScribeLambda(
+                        context,
+                        documentCollection,
+                        scribeMessagesCollection,
+                        scribe.tenantId,
+                        scribe.documentId,
+                        scribe,
+                        this.gitManager,
+                        this.rawDeltasKafka,
+                        protocolHandler,
+                        protocolHead,
+                        scribeMessages);
+                });
+        }
+
+        this.deliLambda = new LocalLambdaController(
+            this.rawDeltasKafka,
+            this.setup,
+            this.deliContext,
+            async (lambdaSetup, context) => {
+                const documentCollection = await lambdaSetup.documentCollectionP();
+                return new DeliLambda(
+                    context,
+                    this.tenantId,
+                    this.documentId,
+                    this.details.value,
+                    documentCollection,
+                    this.deltasKafka,
+                    this.rawDeltasKafka,
+                    this.clientTimeout,
+                    ActivityCheckingTimeout,
+                    NoopConsolidationTimeout);
+            });
+    }
+
     private startLambdas() {
-        this.alfredToDeliKafka.on("message", (message: IKafkaMessage) => {
-            this.deliLambda.handler(message);
-        });
+        if (this.deliLambda) {
+            this.deliLambda.start();
+        }
 
-        this.deliToScriptoriumKafka.on("message", (message: IKafkaMessage) => {
-            this.broadcasterLambda.handler(message);
-            this.scriptoriumLambda.handler(message);
-            this.foremanLambda.handler(message);
+        if (this.scriptoriumLambda) {
+            this.scriptoriumLambda.start();
+        }
 
-            if (this.scribeLambda) {
-                this.scribeLambda.handler(message);
-            }
-        });
-    }
-}
+        if (this.foremanLambda) {
+            this.foremanLambda.start();
+        }
 
-// Dumb local in memory kafka.
-// TODO: Make this real.
-class InMemoryKafka extends EventEmitter implements IProducer {
+        if (this.scribeLambda) {
+            this.scribeLambda.start();
+        }
 
-    constructor(private offset = 0) {
-        super();
+        if (this.broadcasterLambda) {
+            this.broadcasterLambda.start();
+        }
     }
 
-    public async send(messages: object[], topic: string): Promise<any> {
-        messages.forEach((message) => {
-            const kafkaMessage: IKafkaMessage = {
-                highWaterOffset: this.offset,
-                key: topic,
-                offset: this.offset,
-                partition: 0,
-                topic,
-                value: JSON.stringify(message),
-            };
-
-            this.offset++;
-
-            this.emit("message", kafkaMessage);
-        });
+    private async closeKafkas() {
+        await Promise.all([
+            this.rawDeltasKafka.close(),
+            this.deltasKafka.close(),
+        ]);
     }
 
-    public close(): Promise<void> {
-        return Promise.resolve();
+    private closeLambdas() {
+        if (this.deliLambda) {
+            this.deliLambda.close();
+            this.deliLambda = undefined;
+        }
+
+        if (this.scriptoriumLambda) {
+            this.scriptoriumLambda.close();
+            this.scriptoriumLambda = undefined;
+        }
+
+        if (this.foremanLambda) {
+            this.foremanLambda.close();
+            this.foremanLambda = undefined;
+        }
+
+        if (this.scribeLambda) {
+            this.scribeLambda.close();
+            this.scribeLambda = undefined;
+        }
+
+        if (this.broadcasterLambda) {
+            this.broadcasterLambda.close();
+            this.broadcasterLambda = undefined;
+        }
     }
-}
-
-class ReverseProducerKafka implements IProducer {
-
-    constructor(private readonly parent: InMemoryKafka) {
-    }
-
-    public async send(messages: object[], topic: string): Promise<any> {
-        setImmediate(() => {
-            this.parent.send(messages, topic);
-        });
-    }
-
-    public close(): Promise<void> {
-        return Promise.resolve();
-    }
-
 }
