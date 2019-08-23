@@ -4,6 +4,7 @@
  */
 
 import {
+    IComponent,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
@@ -20,6 +21,7 @@ import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { EventEmitter } from "events";
 import * as SimpleMDE from "simplemde";
+import { Viewer } from "./marked";
 
 import 'simplemde/dist/simplemde.min.css';
 
@@ -41,7 +43,7 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     private textArea: HTMLTextAreaElement;
     private smde: SimpleMDE;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(private runtime: IComponentRuntime, private context: IComponentContext) {
         super();
 
         this.url = context.id;
@@ -75,19 +77,24 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
-        // create base textarea
-        if (!this.textArea) {
-            this.textArea = document.createElement("textarea");
-        }
+        if (this.isReadonly()) {
+            const viewer = new Viewer(elm, this.text);
+            viewer.render();
+        } else {
+            // create base textarea
+            if (!this.textArea) {
+                this.textArea = document.createElement("textarea");
+            }
 
-        // reparent if needed
-        if (this.textArea.parentElement !== elm) {
-            this.textArea.remove();
-            elm.appendChild(this.textArea);
-        }
+            // reparent if needed
+            if (this.textArea.parentElement !== elm) {
+                this.textArea.remove();
+                elm.appendChild(this.textArea);
+            }
 
-        if (!this.smde) {
-            this.setupEditor();
+            if (!this.smde) {
+                this.setupEditor();
+            }
         }
     }
 
@@ -173,6 +180,13 @@ export class Smde extends EventEmitter implements IComponentLoadable, IComponent
                     }
                 });
             });
+    }
+
+    // TODO: this should be an utility.
+    private isReadonly() {
+        const runtimeAsComponent = this.context.hostRuntime as IComponent;
+        const scopes = runtimeAsComponent.IComponentConfiguration.scopes;
+        return scopes.indexOf("doc:write") === -1;
     }
 }
 
