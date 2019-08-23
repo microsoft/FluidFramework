@@ -18,7 +18,4 @@ export { commits };
 import * as taskGraph from "./taskGraph";
 export { taskGraph };
 
-import * as mercator from "./mercator";
-export { mercator };
-
 export * from "./utils";

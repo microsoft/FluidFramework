@@ -83,14 +83,5 @@ export function create(
         handleResponse(request, response, speed, authors, languages, moniker.choose(), text, request.params.tenantId);
     });
 
-    router.get("/mercator", ensureLoggedIn(), (request, response, next) => {
-        response.render(
-            "mercator",
-            {
-                partials: defaultPartials,
-                title: "Mercator",
-            });
-    });
-
     return router;
 }
