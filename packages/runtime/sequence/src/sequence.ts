@@ -95,7 +95,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public client: MergeTree.Client;
     protected isLoaded = false;
-    protected collabStarted = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
     private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
@@ -400,8 +399,9 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         storage: IObjectStorageService): Promise<void> {
         const loader = this.client.createSnapshotLoader(this.runtime);
         try {
-            const msgs = await loader.initialize(branchId, storage);
-            this.collabStarted = true;
+            const msgs = await loader.initialize(
+                branchId,
+                storage);
             msgs.forEach((m) => this.processContent(m));
             this.loadFinished();
         } catch (error) {
@@ -473,13 +473,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     protected registerContent() {
         this.client.startCollaboration(this.runtime.clientId, 0);
-        this.collabStarted = true;
     }
 
     // Need some comment on why we are not using 'pending' content
     protected onConnectContent(pending: any[]) {
         // Update merge tree collaboration information with new client ID and then resend pending ops
-        if (this.collabStarted) {
+        if (this.client.getCollabWindow().collaborating) {
             this.client.updateCollaboration(this.runtime.clientId);
         }
 

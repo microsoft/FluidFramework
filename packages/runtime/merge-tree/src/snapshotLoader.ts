@@ -21,12 +21,13 @@ export class SnapshotLoader {
         branchId: string,
         services: IObjectStorageService): Promise<ISequencedDocumentMessage[]> {
 
-        const header = await services.read(Snapshot.header);
-        assert(header);
+        const headerP = services.read(Snapshot.header);
         // If loading from a snapshot load tardis messages
         // kick off loading in parallel to loading "body" chunk.
         const rawMessages = services.read(Snapshot.tardis);
 
+        const header = await headerP;
+        assert(header);
         // override branch by default which is derived from document id,
         // as document id isn't stable for spo
         // which leads to branch id being in correct
@@ -77,7 +78,7 @@ export class SnapshotLoader {
 
         if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
             return;
-        }
+       }
 
         const chunk2 = await Snapshot.loadChunk(services, Snapshot.body);
 
