@@ -30,7 +30,7 @@ import {
     IValueType,
     IValueTypeOperationValue,
 } from "./interfaces";
-import { ILocalValue, LocalValueMaker, ValueTypeLocalValue } from "./localValues";
+import { ILocalValue, LocalValueMaker, ValueTypeLocalValue, valueTypes } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
 // path-browserify only supports posix functionality but doesn't have a path.posix to enforce it.  But we need to
@@ -137,9 +137,6 @@ export class DirectoryFactory {
         return DirectoryFactory.Attributes;
     }
 
-    constructor(private readonly defaultValueTypes: IValueType<any>[] = []) {
-    }
-
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -162,7 +159,7 @@ export class DirectoryFactory {
     }
 
     private registerValueTypes(directory: SharedDirectory): void {
-        for (const type of this.defaultValueTypes) {
+        for (const type of valueTypes) {
             directory.registerValueType(type);
         }
     }
@@ -193,8 +190,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      *
      * @returns a factory that creates and load SharedDirectory
      */
-    public static getFactory(defaultValueTypes: IValueType<any>[] = []): ISharedObjectFactory {
-        return new DirectoryFactory(defaultValueTypes);
+    public static getFactory(): ISharedObjectFactory {
+        return new DirectoryFactory();
     }
 
     public [Symbol.toStringTag]: string = "SharedDirectory";

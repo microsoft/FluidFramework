@@ -267,18 +267,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.addCalendarEntries();
-        },
-        key: "cal create",
-    },
-    {
-        exec: (c, p, f) => {
-            f.showCalendarEntries();
-        },
-        key: "cal show",
-    },
-    {
-        exec: (c, p, f) => {
             f.addSequenceEntry();
         },
         key: "seq +",
@@ -3195,8 +3183,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public tempBookmarks: Sequence.SharedStringInterval[];
     public comments: Sequence.SharedIntervalCollection<Sequence.SharedStringInterval>;
     public commentsView: Sequence.SharedIntervalCollectionView<Sequence.SharedStringInterval>;
-    public calendarIntervals: Sequence.SharedIntervalCollection<Sequence.Interval>;
-    public calendarIntervalsView: Sequence.SharedIntervalCollectionView<Sequence.Interval>;
     public sequenceTest: Sequence.SharedNumberSequence;
     public persistentComponents: Map<IComponent, PersistentComponent>;
     public sequenceObjTest: Sequence.SharedObjectSequence<ISeqTestItem>;
@@ -3570,17 +3556,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    // assumes docRoot ready
-    public addCalendarMap() {
-        this.calendarIntervals =
-            this.docRoot.get<Sequence.SharedIntervalCollection<Sequence.Interval>>("calendar");
-        if (this.calendarIntervals) {
-            this.calendarIntervals.getView().then((v) => {
-                this.calendarIntervalsView = v;
-            });
-        }
-    }
-
     public addSeqObjEntry() {
         const len = this.sequenceObjTest.getItemCount();
         const pos = Math.floor(Math.random() * len);
@@ -3598,17 +3573,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public showSequenceEntries() {
         const items = this.sequenceTest.getItems(0);
         this.statusMessage("seq", `seq: ${items.toString()}`);
-    }
-
-    public addCalendarEntries() {
-        this.calendarIntervalsView.add(0, 10, MergeTree.IntervalType.Simple, { text: "picnic" });
-    }
-
-    public showCalendarEntries() {
-        const intervals = this.calendarIntervalsView.findOverlappingIntervals(5, 6);
-        if (intervals && (intervals.length > 0)) {
-            this.statusMessage("cal", intervals[0].properties["text"]);
-        }
     }
 
     public addPresenceSignal(presenceSignal: PresenceSignal) {
@@ -5501,7 +5465,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
         this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
-        this.addCalendarMap();
 
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
             this.queueRender(undefined, true);

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { CounterValueType, SharedDirectory, SharedMap } from "@prague/map";
 import {
     ICombiningOp,
     IntervalType,
@@ -16,9 +15,7 @@ import { IComponentContext, IComponentRuntime } from "@prague/runtime-definition
 import {
     positionToRowCol,
     rowColToPosition,
-    SharedIntervalCollectionValueType,
     SharedNumberSequence,
-    SharedStringIntervalCollectionValueType,
     SparseMatrix,
     UnboxedOper,
 } from "@prague/sequence";
@@ -39,20 +36,9 @@ export const cellSym = Symbol("TableDocument.cell");
 export class TableDocument extends PrimedComponent implements ITable {
     public static getFactory() { return TableDocument.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         TableDocument,
         [
-            SharedDirectory.getFactory([
-                new CounterValueType(),
-                new SharedStringIntervalCollectionValueType(),
-                new SharedIntervalCollectionValueType(),
-            ]),
-            // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-            SharedMap.getFactory([
-                new CounterValueType(),
-                new SharedStringIntervalCollectionValueType(),
-                new SharedIntervalCollectionValueType(),
-            ]),
             SparseMatrix.getFactory(),
             SharedNumberSequence.getFactory(),
         ],

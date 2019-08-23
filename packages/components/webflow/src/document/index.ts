@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
-import { DirectoryFactory, MapFactory } from "@prague/map";
 import {
     BaseSegment,
     createInsertSegmentOp,
@@ -496,5 +495,4 @@ export class FlowDocument extends PrimedComponent {
     }
 }
 
-// TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-export const flowDocumentFactory = new SharedComponentFactory(FlowDocument, [new DirectoryFactory(), new MapFactory(), new SharedStringFactory()]);
+export const flowDocumentFactory = new PrimedComponentFactory(FlowDocument, [new SharedStringFactory()]);

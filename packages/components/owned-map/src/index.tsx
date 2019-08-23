@@ -6,7 +6,7 @@
 // tslint:disable:no-console
 import {
   PrimedComponent,
-  SharedComponentFactory,
+  PrimedComponentFactory,
   SimpleContainerRuntimeFactory,
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
@@ -19,7 +19,7 @@ import {
   IContainerContext,
   IRuntime,
 } from "@prague/container-definitions";
-import { Counter, CounterValueType, SharedDirectory, SharedMap } from "@prague/map";
+import { Counter, CounterValueType } from "@prague/map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";
@@ -30,12 +30,9 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
 
   public get IComponentHTMLVisual() { return this; }
 
-  private static readonly factory = new SharedComponentFactory(
+  private static readonly factory = new PrimedComponentFactory(
     OwnedMap,
     [
-      SharedDirectory.getFactory([new CounterValueType()]),
-      // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-      SharedMap.getFactory([new CounterValueType()]),
       OwnedSharedMap.getFactory(),
     ],
   );

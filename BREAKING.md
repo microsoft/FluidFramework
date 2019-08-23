@@ -1,5 +1,8 @@
 # 0.9 Breaking Changes
 - [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
+- [Handles to SharedObjects must be used on map sets](#handles-to-sharedobjects-must-be-used-on-map-sets)
+- [`mergeTree` is now protected on `MergeTree.Client`](#mergetree-is-now-protected-on-mergetree.client)
+- [No more Value Type registration](#no-more-value-type-registration)
 
 ## PrimedComponent root is now a SharedDirectory
 
@@ -30,6 +33,10 @@ const retrievedMap = await root.get<IComponentHandle>("test").get<ISharedMap>();
 
 ## `mergeTree` is now protected on `MergeTree.Client`
 The merge tree in Client should be interacted with indirectly through Client or Sequence methods, rather than directly as was possible before. See "[Updated sequence API to provide richer access to the underlying merge tree](#updated-sequence-api-to-provide-richer-access-to-the-underlying-merge-tree)" from 0.8 breaking changes for more info.
+
+## No more Value Type registration
+
+Previously, you would register for value types on `SharedMap` and `SharedDirectory` either by passing an argument to the `MapFactory` or `DirectoryFactory` or by calling `registerValueType` on the map/directory itself.  Now all valid ValueTypes are registered by default.  You should remove these arguments/calls as they are no longer necessary and may cause compile errors.
 
 # 0.8 Breaking Changes
 

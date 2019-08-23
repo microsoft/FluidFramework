@@ -106,7 +106,6 @@ export async function create(
 
     root.set("users", document.createMap().handle);
     sharedString = document.createString() as Sequence.SharedString;
-    root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
     const seq = Sequence.SharedNumberSequence.create(document.runtime);
     root.set("sequence-test", seq.handle);
 

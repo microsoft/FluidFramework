@@ -4,13 +4,12 @@
  */
 
 import { TableDocument, TableDocumentType } from "@chaincode/table-document";
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import { Template } from "@prague/flow-util";
-import { SharedDirectory, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { ConfigView } from "./config";
 import { ConfigKeys } from "./configKeys";
@@ -31,13 +30,9 @@ const template = new Template({
 export class TableView extends PrimedComponent implements IComponentHTMLVisual {
     public static getFactory() { return TableView.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         TableView,
-        [
-            SharedDirectory.getFactory(),
-            // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-            SharedMap.getFactory(),
-        ],
+        [],
     );
 
     public get IComponentHTMLVisual() { return this; }

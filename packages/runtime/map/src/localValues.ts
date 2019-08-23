@@ -11,7 +11,9 @@ import {
 } from "@prague/component-core-interfaces";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
+import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
+import { DistributedSetValueType } from "./set";
 
 export interface ILocalValue {
     readonly type: string;
@@ -43,6 +45,11 @@ export function parseHandles(
 ) {
     return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
 }
+
+export const valueTypes: ReadonlyArray<IValueType<any>> = [
+    new CounterValueType(),
+    new DistributedSetValueType(),
+];
 
 export class PlainLocalValue implements ILocalValue {
     constructor(public readonly value: any) {

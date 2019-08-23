@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 import {
-    SharedComponentFactory,
+    PrimedComponentFactory,
 } from "@prague/aqueduct";
 import {
     SharedCell,
 } from "@prague/cell";
-import {
-    CounterValueType,
-    SharedDirectory,
-    SharedMap,
-} from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
     SharedString,
@@ -20,12 +15,9 @@ import {
 
 import { TodoItem } from "./index";
 
-export const TodoItemInstantiationFactory: IComponentFactory = new SharedComponentFactory(
+export const TodoItemInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
     TodoItem,
     [
-        SharedDirectory.getFactory([new CounterValueType()]),
-        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-        SharedMap.getFactory([new CounterValueType()]),
         SharedString.getFactory(),
         SharedCell.getFactory(),
     ],

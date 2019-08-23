@@ -282,14 +282,8 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
     }
 
     public instantiateComponent(context: IComponentContext): void {
-        // Map value types to register as defaults
-        const mapValueTypes = [
-            new DistributedSetValueType(),
-            new CounterValueType(),
-        ];
-
         const dataTypes = new Map<string, ISharedObjectFactory>();
-        const mapFactory = SharedMap.getFactory(mapValueTypes);
+        const mapFactory = SharedMap.getFactory();
         dataTypes.set(mapFactory.type, mapFactory);
 
         ComponentRuntime.load(

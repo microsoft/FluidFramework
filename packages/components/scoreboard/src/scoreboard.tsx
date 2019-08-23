@@ -4,8 +4,8 @@
  */
 
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
-import { PrimedComponent, SimpleModuleInstantiationFactory, SharedComponentFactory } from '@prague/aqueduct';
-import { CounterValueType, SharedDirectory, SharedMap } from '@prague/map';
+import { PrimedComponent, SimpleModuleInstantiationFactory, PrimedComponentFactory } from '@prague/aqueduct';
+import { CounterValueType } from '@prague/map';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { TeamScore } from './teamScore';
@@ -58,13 +58,9 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
 /**
  * This is where we define the Distributed Data Structures this component uses
  */
-const ScoreboardComponentInstantiationFactory = new SharedComponentFactory(
+const ScoreboardComponentInstantiationFactory = new PrimedComponentFactory(
   Scoreboard,
-  [
-    SharedDirectory.getFactory([new CounterValueType()]),
-    // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-    SharedMap.getFactory([new CounterValueType()]),
-  ],
+  [],
 );
 
 /**

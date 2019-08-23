@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
@@ -11,8 +11,6 @@ import {
     Counter,
     CounterValueType,
     ISharedDirectory,
-    SharedDirectory,
-    SharedMap,
 } from "@prague/map";
 
 import * as React from "react";
@@ -60,13 +58,9 @@ export class ClickerWithInitialValue extends PrimedComponent implements ICompone
 
     public static getFactory() { return ClickerWithInitialValue.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         ClickerWithInitialValue,
-        [
-            SharedDirectory.getFactory([new CounterValueType()]),
-            // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-            SharedMap.getFactory([new CounterValueType()]),
-        ],
+        [],
     );
 }
 

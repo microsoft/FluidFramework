@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { Counter, CounterValueType, SharedDirectory, SharedMap } from "@prague/map";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { Counter, CounterValueType } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
@@ -18,12 +18,9 @@ export class TestComponent extends PrimedComponent {
 
     public static getFactory() { return TestComponent.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         TestComponent,
-        [
-            SharedMap.getFactory([new CounterValueType()]),
-            SharedDirectory.getFactory([new CounterValueType()]),
-        ],
+        [],
     );
 
     private counter: Counter;

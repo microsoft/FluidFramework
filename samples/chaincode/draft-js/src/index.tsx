@@ -73,7 +73,7 @@ export class DraftJsExample extends PrimedComponent implements IComponentHTMLVis
 
 // ----- COMPONENT SETUP STUFF -----
 export const ClickerInstantiationFactory = new SimpleComponentInstantiationFactory(
-  [SharedMap.getFactory([new CounterValueType()]), SharedString.getFactory()],
+  [SharedMap.getFactory(), SharedString.getFactory()],
   DraftJsExample.load,
 );
 

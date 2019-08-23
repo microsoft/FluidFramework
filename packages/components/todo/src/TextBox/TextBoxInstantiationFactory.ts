@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 import {
-    SharedComponentFactory,
+    PrimedComponentFactory,
 } from "@prague/aqueduct";
-import {
-    SharedDirectory,
-    SharedMap,
-} from "@prague/map";
 import { IComponentFactory } from "@prague/runtime-definitions";
 import {
     SharedString,
@@ -16,12 +12,9 @@ import {
 
 import { TextBox } from "./index";
 
-export const TextBoxInstantiationFactory: IComponentFactory = new SharedComponentFactory(
+export const TextBoxInstantiationFactory: IComponentFactory = new PrimedComponentFactory(
     TextBox,
     [
-        SharedDirectory.getFactory(),
-        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-        SharedMap.getFactory(),
         SharedString.getFactory(),
     ],
 );

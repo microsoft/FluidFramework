@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { DirectoryFactory, MapFactory } from "@prague/map";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
 import { WebflowView } from "./host";
@@ -43,5 +42,4 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     private get docId() { return `${this.runtime.id}-doc`; }
 }
 
-// TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-export const webFlowFactory = new SharedComponentFactory(WebFlow, [new DirectoryFactory(), new MapFactory()]);
+export const webFlowFactory = new PrimedComponentFactory(WebFlow, []);

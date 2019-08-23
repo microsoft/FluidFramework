@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponentHandle,
     IComponentHTMLVisual,
@@ -13,7 +13,6 @@ import {
     CounterValueType,
     ISharedDirectory,
     ISharedMap,
-    SharedDirectory,
     SharedMap,
 } from "@prague/map";
 
@@ -76,12 +75,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 
     public static getFactory() { return Clicker.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         Clicker,
-        [
-            SharedDirectory.getFactory([new CounterValueType()]),
-            SharedMap.getFactory([new CounterValueType()]),
-        ],
+        [SharedMap.getFactory()],
     );
 }
 

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
-import { SharedDirectory, SharedMap } from "@prague/map";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { ICombiningOp, PropertySet } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { UnboxedOper } from "@prague/sequence";
@@ -25,13 +24,9 @@ export interface ITableSliceConfig {
 export class TableSlice extends PrimedComponent implements ITable {
     public static getFactory() { return TableSlice.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         TableSlice,
-        [
-            SharedDirectory.getFactory(),
-            // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-            SharedMap.getFactory(),
-        ],
+        [],
     );
 
     public get name() { return this.root.get(ConfigKey.name); }

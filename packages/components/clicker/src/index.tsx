@@ -5,7 +5,7 @@
 
 import {
   PrimedComponent,
-  SharedComponentFactory,
+  PrimedComponentFactory,
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
@@ -18,8 +18,6 @@ import {
 import {
   Counter,
   CounterValueType,
-  SharedDirectory,
-  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -100,13 +98,9 @@ class CounterReactView extends React.Component<p, s> {
 
 // ----- COMPONENT SETUP STUFF -----
 
-export const ClickerInstantiationFactory = new SharedComponentFactory(
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
   Clicker,
-  [
-    SharedDirectory.getFactory([new CounterValueType()]),
-    // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
-    SharedMap.getFactory([new CounterValueType()]),
-  ],
+  [],
 );
 
 export const fluidExport = new SimpleModuleInstantiationFactory(

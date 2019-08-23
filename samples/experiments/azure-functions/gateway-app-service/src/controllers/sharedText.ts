@@ -185,7 +185,6 @@ async function loadDocument(
     if (!collabDoc.existing) {
         console.log(`Not existing ${resolved.url} - ${performanceNow()}`);
         root.set("users", collabDoc.createMap());
-        root.set("calendar", undefined, Sequence.SharedIntervalCollectionValueType.Name);
         const seq = collabDoc.create(Sequence.SharedNumberSequenceExtension.Type) as
             Sequence.SharedNumberSequence;
         root.set("sequence-test", seq);

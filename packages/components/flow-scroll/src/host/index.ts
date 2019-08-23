@@ -6,7 +6,7 @@
 import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
 import { FlowDocument } from "@chaincode/webflow";
-import { PrimedComponent, SharedComponentFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponent,
     IComponentHandle,
@@ -14,7 +14,7 @@ import {
     IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
-import { DirectoryFactory, MapFactory, SharedMap } from "@prague/map";
+import { SharedMap } from "@prague/map";
 import {
     FlushMode,
     IComponentCollection,
@@ -162,4 +162,4 @@ class TaskScheduler {
     }
 }
 
-export const webFlowHostFactory = new SharedComponentFactory(WebFlowHost, [new DirectoryFactory(), new MapFactory()]);
+export const webFlowHostFactory = new PrimedComponentFactory(WebFlowHost, [SharedMap.getFactory()]);

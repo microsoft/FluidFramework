@@ -32,6 +32,7 @@ import {
     parseHandles,
     serializeHandles,
     ValueTypeLocalValue,
+    valueTypes,
 } from "./localValues";
 import { pkgVersion } from "./packageVersion";
 
@@ -109,9 +110,6 @@ export class MapFactory implements ISharedObjectFactory {
         return MapFactory.Attributes;
     }
 
-    constructor(private readonly defaultValueTypes: IValueType<any>[] = []) {
-    }
-
     public async load(
         runtime: IComponentRuntime,
         id: string,
@@ -134,7 +132,7 @@ export class MapFactory implements ISharedObjectFactory {
     }
 
     private registerValueTypes(map: SharedMap) {
-        for (const type of this.defaultValueTypes) {
+        for (const type of valueTypes) {
             map.registerValueType(type);
         }
     }
@@ -160,8 +158,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
      *
      * @returns a factory that creates and load SharedMap
      */
-    public static getFactory(defaultValueTypes: IValueType<any>[] = []): ISharedObjectFactory {
-        return new MapFactory(defaultValueTypes);
+    public static getFactory(): ISharedObjectFactory {
+        return new MapFactory();
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedMap";

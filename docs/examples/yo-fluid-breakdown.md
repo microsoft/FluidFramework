@@ -73,23 +73,22 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `SharedComponentFactory` from <xref:aqueduct> provides helper functionality.
+`PrimedComponent` and `PrimedComponentFactory` from <xref:aqueduct> provides helper functionality.
 `IComponentHTMLVisual` from <xref:container-definitions> provides the interface for enabling rendering.
-`CounterValueType` and `SharedMap` from <xref:map> are Distributed Data Structures.
+`CounterValueType` from <xref:map> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for React* and enable React use.
 
 ```typescript
 import {
   PrimedComponent,
-  SharedComponentFactory,
+  PrimedComponentFactory,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
 } from "@prague/container-definitions";
 import {
   CounterValueType,
-  SharedMap,
 } from "@prague/map";
 import {
   IComponentContext,
@@ -111,7 +110,7 @@ helpers to make development easier.
 
 #### Key Benefits
 
-1. Setup a `root` SharedMap that we can use to store collaborative content and other
+1. Setup a `root` SharedDirectory (a Distributed Data Structure) that we can use to store collaborative content and other
 distributed data structures.
 2. Provide `this.createAndAttachComponent(...)` and `this.getComponent(...)` functions for easier creation and access
 to other components.
@@ -154,9 +153,9 @@ and `opened()`. We want to `await` this call because it could perform asynchrono
 a component.
 
 `componentInitializingFirstTime()` will be called only the first time the `initialize()` is called. In here we perform setup operations that we only
-want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`. In here we create and
-set the `root` SharedMap. We need to call this first to ensure the root is available later. Next we create a new counter,
-called `"clicks"` on our root map `this.root.set("clicks", 0, CounterValueType.Name);`
+want to happen once. `await super.componentInitializingFirstTime()` calls the `componentInitializingFirstTime()` function on the `PrimedComponent`.
+In here we create and set the `root` SharedDirectory. We need to call this first to ensure the root is available later. Next we create a new counter,
+called `"clicks"` on our root directory `this.root.set("clicks", 0, CounterValueType.Name);`
 
 ```typescript
 private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
@@ -166,7 +165,7 @@ private static readonly supportedInterfaces = ["IComponentHTMLVisual"];
  * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
  */
 protected async componentInitializingFirstTime() {
-  // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
+  // Calling super.componentInitializingFirstTime() creates a root SharedDirectory that you can work off.
   await super.componentInitializingFirstTime();
   this.root.set("clicks", 0, CounterValueType.Name);
 }
@@ -352,15 +351,12 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:aqueduct.SharedComponentFactory> as a helper to create our
-instantiation factory. As properties we pass in our supported distributed data structures. In this scenario we
-use the `SharedMap` with the `Counter` value type. Value types are currently specific to the SharedMap and are
-collaborative values that can only be set on the map.
+In the example below we use the <xref:aqueduct.PrimedComponentFactory> as a helper to create our
+instantiation factory. As properties we pass in our supported distributed data structures.
+In this scenario we don't use any additional distributed data structures, so we pass an empty array.
 
 ```typescript
-[
-    SharedMap.getFactory([new CounterValueType()]),
-]
+[],
 ```
 
 The second property is an entry point into our component.
@@ -377,9 +373,7 @@ Finally we export this so we can use it in the [index.ts](#index.ts) below for o
  */
 export const ExampleFluidComponentInstantiationFactory = new SharedComponentFactory(
   ExampleFluidComponent,
-  [
-    SharedMap.getFactory([new CounterValueType()]),
-  ],
+  [],
 );
 ```
 

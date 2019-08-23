@@ -278,7 +278,7 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
  */
 export const TyperaceInstantiationFactory = new SimpleComponentInstantiationFactory(
   [
-    SharedMap.getFactory([]),
+    SharedMap.getFactory(),
   ],
   TypeRace.load
 );

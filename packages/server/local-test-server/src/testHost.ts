@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, SharedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
+import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
 import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
-import { SharedDirectory, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SparseMatrix } from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
@@ -35,11 +34,9 @@ class TestRootComponent extends PrimedComponent {
      */
     public static getFactory() { return TestRootComponent.factory; }
 
-    private static readonly factory = new SharedComponentFactory(
+    private static readonly factory = new PrimedComponentFactory(
         TestRootComponent,
         [
-            SharedDirectory.getFactory(),
-            SharedMap.getFactory(),
             SharedString.getFactory(),
             SparseMatrix.getFactory(),
         ],

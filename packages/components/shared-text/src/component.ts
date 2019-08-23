@@ -17,8 +17,6 @@ import { ComponentRuntime } from "@prague/component-runtime";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
-    CounterValueType,
-    DistributedSetValueType,
     ISharedMap,
     SharedMap,
 } from "@prague/map";
@@ -29,11 +27,9 @@ import {
     ITaskManager,
 } from "@prague/runtime-definitions";
 import {
-    SharedIntervalCollectionValueType,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
-    SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import { IStream, Stream } from "@prague/stream";
 import { EventEmitter } from "events";
@@ -108,7 +104,6 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
 
             debug(`Not existing ${this.runtime.id} - ${performanceNow()}`);
             this.rootView.set("users", this.collabDoc.createMap().handle);
-            this.rootView.set("calendar", undefined, SharedIntervalCollectionValueType.Name);
             const seq = SharedNumberSequence.create(this.collabDoc.runtime);
             this.rootView.set("sequence-test", seq.handle);
             const newString = this.collabDoc.createString() as SharedString;
@@ -264,16 +259,8 @@ class TaskScheduler {
 export function instantiateComponent(context: IComponentContext): void {
     const modules = new Map<string, any>();
 
-    // Map value types to register as defaults
-    const mapValueTypes = [
-        new DistributedSetValueType(),
-        new CounterValueType(),
-        new SharedStringIntervalCollectionValueType(),
-        new SharedIntervalCollectionValueType(),
-    ];
-
     // Create channel factories
-    const mapFactory = SharedMap.getFactory(mapValueTypes);
+    const mapFactory = SharedMap.getFactory();
     const sharedStringFactory = SharedString.getFactory();
     const streamFactory = Stream.getFactory();
     const cellFactory = SharedCell.getFactory();

@@ -19,8 +19,6 @@ import {
 import { ComponentRuntime } from "@prague/component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
-    CounterValueType,
-    DistributedSetValueType,
     ISharedMap,
     SharedMap,
 } from "@prague/map";
@@ -701,34 +699,26 @@ export class MathFactoryComponent implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-    // Map value types to register as defaults
-    const mapValueTypes = [
-        new DistributedSetValueType(),
-        new CounterValueType(),
-        new Sequence.SharedStringIntervalCollectionValueType(),
-        new Sequence.SharedIntervalCollectionValueType(),
-    ];
+        // tslint:disable:no-require-imports no-submodule-imports
+        require("katex/dist/katex.min.css");
+        require("./index.css");
+        const mapFactory = SharedMap.getFactory();
+        const sharedStringFactory = Sequence.SharedString.getFactory();
 
-    // tslint:disable:no-require-imports no-submodule-imports
-    require("katex/dist/katex.min.css");
-    require("./index.css");
-    const mapFactory = SharedMap.getFactory(mapValueTypes);
-    const sharedStringFactory = Sequence.SharedString.getFactory();
+        const dataTypes = new Map<string, ISharedObjectFactory>();
+        dataTypes.set(mapFactory.type, mapFactory);
+        dataTypes.set(sharedStringFactory.type, sharedStringFactory);
 
-    const dataTypes = new Map<string, ISharedObjectFactory>();
-    dataTypes.set(mapFactory.type, mapFactory);
-    dataTypes.set(sharedStringFactory.type, sharedStringFactory);
-
-    ComponentRuntime.load(
-        context,
-        dataTypes,
-        (runtime) => {
-            const mathCollectionP = MathCollection.load(runtime, context);
-            runtime.registerRequestHandler(async (request: IRequest) => {
-                const mathCollection = await mathCollectionP;
-                return mathCollection.request(request);
+        ComponentRuntime.load(
+            context,
+            dataTypes,
+            (runtime) => {
+                const mathCollectionP = MathCollection.load(runtime, context);
+                runtime.registerRequestHandler(async (request: IRequest) => {
+                    const mathCollection = await mathCollectionP;
+                    return mathCollection.request(request);
+                });
             });
-        });
     }
 }
 

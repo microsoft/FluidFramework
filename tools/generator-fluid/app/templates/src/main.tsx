@@ -5,14 +5,13 @@
 
 import {
     PrimedComponent,
-    SharedComponentFactory,
+    PrimedComponentFactory,
 } from "@prague/aqueduct";
 import {
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
     CounterValueType,
-    SharedDirectory,
 } from "@prague/map";
 import {
     IComponentContext,
@@ -78,11 +77,9 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
 }
 
 /**
- * This is where you define all your Distributed Data Structures
+ * This is where you define all your Distributed Data Structures and Value Types
  */
-export const ClickerInstantiationFactory = new SharedComponentFactory(
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
     Clicker,
-    [
-        SharedDirectory.getFactory([new CounterValueType()]),
-    ],
+    [],
 );

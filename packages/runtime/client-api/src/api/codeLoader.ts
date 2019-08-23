@@ -31,16 +31,8 @@ class Chaincode implements IComponentFactory {
     public get IComponentFactory() { return this; }
 
     public instantiateComponent(context: IComponentContext): void {
-        // Map value types to register as defaults
-        const mapValueTypes = [
-            new map.DistributedSetValueType(),
-            new map.CounterValueType(),
-            new sequence.SharedStringIntervalCollectionValueType(),
-            new sequence.SharedIntervalCollectionValueType(),
-        ];
-
         // Create channel factories
-        const mapFactory = map.SharedMap.getFactory(mapValueTypes);
+        const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
         const streamFactory = stream.Stream.getFactory();
         const cellFactory = cell.SharedCell.getFactory();
@@ -50,7 +42,7 @@ class Chaincode implements IComponentFactory {
         const consensusStackFactory = ConsensusStack.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const sparseMatrixFactory = sequence.SparseMatrix.getFactory();
-        const directoryFactory = map.SharedDirectory.getFactory(mapValueTypes);
+        const directoryFactory = map.SharedDirectory.getFactory();
 
         // Register channel factories
         const modules = new Map<string, any>();
