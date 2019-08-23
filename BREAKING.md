@@ -8,7 +8,27 @@
 
 Previously, the root provided by `PrimedComponent` was a `SharedMap`.  Now it is a `SharedDirectory`.
 
-This should be compatible for usage (e.g. existing calls to `get`, `set`, `wait`, etc. should work as before), but explicit type checks against `SharedMap` or `ISharedMap` should be updated to `SharedDirectory` and `ISharedDirectory` respectively.
+This should be compatible for usage (e.g. existing calls to `get`, `set`, `wait`, etc. should work as before), but explicit type checks against `SharedMap` or `ISharedMap` should be updated to `SharedDirectory` and `ISharedDirectory` respectively.  Additionally, if your component is currently using a `SharedComponentFactory` you'll want to instead use a `PrimedComponentFactory` which will register the correct root factories on your behalf.
+
+Before:
+```typescript
+export const ClickerInstantiationFactory = new SharedComponentFactory(
+  Clicker,
+  [
+    SharedMap.getFactory([new CounterValueType()]),
+  ],
+);
+```
+
+After:
+```typescript
+export const ClickerInstantiationFactory = new PrimedComponentFactory(
+  Clicker,
+  [],
+);
+```
+
+Alternatively you can register the `SharedDirectory` factory yourself (similar to how you were already registering the `SharedMap` factory), but the `PrimedComponentFactory` is recommended.
 
 ## Handles to SharedObjects must be used on map sets
 
