@@ -6,6 +6,13 @@
 import * as assert from "assert";
 import * as Base from "./base";
 import * as Collections from "./collections";
+import {
+    LocalClientId,
+    NonCollabClient,
+    TreeMaintenanceSequenceNumber,
+    UnassignedSequenceNumber,
+    UniversalSequenceNumber,
+} from "./constants";
 import { LocalReference } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
@@ -944,16 +951,6 @@ export class IncrementalMapState<TContext> {
     ) {
     }
 }
-
-/**
- * Sequence numbers for shared segments start at 1 or greater.  Every segment marked
- * with sequence number zero will be counted as part of the requested string.
- */
-export const UniversalSequenceNumber = 0;
-export const UnassignedSequenceNumber = -1;
-export const TreeMaintenanceSequenceNumber = -2;
-export const LocalClientId = -1;
-export const NonCollabClient = -2;
 
 export class CollaborationWindow {
     clientId = LocalClientId;

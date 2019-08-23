@@ -4,6 +4,7 @@
  */
 
 import * as assert from "assert";
+import { UnassignedSequenceNumber } from "../constants";
 import * as MergeTree from "../mergeTree";
 import { TrackingGroup } from "../mergeTreeTracking";
 import { TextSegment } from "../textSegment";
@@ -26,7 +27,7 @@ describe("MergeTree.tracking", () => {
                 [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
-                MergeTree.UnassignedSequenceNumber,
+                UnassignedSequenceNumber,
                 undefined);
 
             assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 3);
@@ -51,7 +52,7 @@ describe("MergeTree.tracking", () => {
                 [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
-                MergeTree.UnassignedSequenceNumber,
+                UnassignedSequenceNumber,
                 {op: undefined});
 
             assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 3);
@@ -78,7 +79,7 @@ describe("MergeTree.tracking", () => {
                 [TextSegment.make("abc")],
                 referenceSequenceNumber,
                 localClientId,
-                MergeTree.UnassignedSequenceNumber,
+                UnassignedSequenceNumber,
                 {op: undefined});
 
             mergeTree.mergeTreeDeltaCallback = undefined;
@@ -89,7 +90,7 @@ describe("MergeTree.tracking", () => {
                 [TextSegment.make("z")],
                 referenceSequenceNumber,
                 localClientId,
-                MergeTree.UnassignedSequenceNumber,
+                UnassignedSequenceNumber,
                 {op: undefined});
 
             assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 4);

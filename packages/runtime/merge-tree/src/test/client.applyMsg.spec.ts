@@ -5,7 +5,8 @@
 
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
-import { SegmentGroup, UnassignedSequenceNumber } from "..";
+import { SegmentGroup } from "..";
+import { UnassignedSequenceNumber } from "../constants";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 

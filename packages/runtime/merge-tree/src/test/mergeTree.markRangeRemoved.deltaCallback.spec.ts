@@ -5,14 +5,12 @@
 
 import * as assert from "assert";
 import {
-    LocalClientId,
     MergeTree,
     MergeTreeDeltaType,
     MergeTreeMaintenanceType,
     TextSegment,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber,
 } from "..";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {

@@ -6,14 +6,12 @@
 import * as assert from "assert";
 import {
     IMergeBlock,
-    LocalClientId,
     MaxNodesInBlock,
     MergeTree,
     MergeTreeTextHelper,
     TextSegment,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber,
 } from "..";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {

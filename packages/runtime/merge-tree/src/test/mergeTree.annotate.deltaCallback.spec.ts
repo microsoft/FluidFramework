@@ -8,9 +8,8 @@ import {
     MergeTree,
     MergeTreeDeltaType,
     MergeTreeMaintenanceType,
-    UnassignedSequenceNumber,
 } from "..";
-import { LocalClientId, UniversalSequenceNumber } from "../mergeTree";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
 import { countOperations, insertText } from "./testUtils";
 

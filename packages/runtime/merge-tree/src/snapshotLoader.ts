@@ -6,7 +6,8 @@ import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { Client } from "./client";
-import { MergeTree, NonCollabClient, UniversalSequenceNumber } from "./mergeTree";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants";
+import { MergeTree } from "./mergeTree";
 import { MergeTreeChunk } from "./ops";
 import { Snapshot } from "./snapshot";
 

@@ -9,6 +9,7 @@ import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs, MergeTreeMaintenanceCallback } from "./index";
 import { LocalReference } from "./localReference";
 import {
@@ -24,8 +25,6 @@ import {
     MergeTree,
     RegisterCollection,
     SegmentGroup,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import * as OpBuilder from "./opBuilder";

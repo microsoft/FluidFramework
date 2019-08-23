@@ -7,13 +7,11 @@
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { TextSegment } from "..";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
     BaseSegment,
-    LocalClientId,
     Marker,
     MergeTree,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber ,
 } from "../mergeTree";
 import { ICombiningOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 

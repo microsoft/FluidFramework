@@ -6,6 +6,7 @@ import * as assert from "assert";
 // tslint:disable: no-suspicious-comment
 import { Property } from "./base";
 import { RedBlackTree } from "./collections";
+import { UnassignedSequenceNumber } from "./constants";
 import {
     CollaborationWindow,
     compareNumbers,
@@ -14,7 +15,6 @@ import {
     IRemovalInfo,
     ISegment,
     MergeTree,
-    UnassignedSequenceNumber,
 } from "./mergeTree";
 
 interface IOverlapClient {

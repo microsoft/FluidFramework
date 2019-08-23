@@ -7,6 +7,7 @@ import { ITelemetryLogger } from "@prague/container-definitions";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
 import { ChildLogger } from "@prague/utils";
+import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
 import * as Properties from "./properties";
@@ -144,7 +145,7 @@ export class Snapshot {
         this.seq = collabWindow.minSeq;
         this.header = {
             segmentsTotalLength: this.mergeTree.getLength(this.mergeTree.collabWindow.minSeq,
-                MergeTree.NonCollabClient),
+                NonCollabClient),
             seq: this.mergeTree.collabWindow.minSeq,
         };
 
@@ -152,8 +153,8 @@ export class Snapshot {
         let prev: MergeTree.ISegment | undefined;
         let extractSegment = (segment: MergeTree.ISegment, pos: number, refSeq: number, clientId: number,
             start: number, end: number) => {
-            if ((segment.seq != MergeTree.UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
-                ((segment.removedSeq === undefined) || (segment.removedSeq == MergeTree.UnassignedSequenceNumber) ||
+            if ((segment.seq != UnassignedSequenceNumber) && (segment.seq <= this.seq) &&
+                ((segment.removedSeq === undefined) || (segment.removedSeq == UnassignedSequenceNumber) ||
                     (segment.removedSeq > this.seq))) {
                 if (prev && prev.canAppend(segment) && Properties.matchProperties(prev.properties, segment.properties)) {
                     prev = prev.clone();
@@ -168,7 +169,7 @@ export class Snapshot {
             return true;
         }
 
-        this.mergeTree.map({ leaf: extractSegment }, this.seq, MergeTree.NonCollabClient);
+        this.mergeTree.map({ leaf: extractSegment }, this.seq, NonCollabClient);
         if (prev) {
             segs.push(prev);
         }

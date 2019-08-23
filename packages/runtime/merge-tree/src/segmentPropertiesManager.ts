@@ -4,11 +4,8 @@
  */
 
 import * as assert from "assert";
-import {
-    CollaborationWindow,
-    ISegment,
-    UnassignedSequenceNumber,
-} from "./mergeTree";
+import { UnassignedSequenceNumber } from "./constants";
+import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 

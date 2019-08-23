@@ -11,11 +11,11 @@ import * as assert from "assert";
 import * as random from "random-js";
 import { Client } from "../client";
 import * as Collections from "../collections";
+import { UnassignedSequenceNumber } from "../constants";
 import {
     ISegment,
     Marker,
     MergeTree,
-    UnassignedSequenceNumber,
 } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
 import { IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
