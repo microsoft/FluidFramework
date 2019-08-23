@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { } from "@prague/component-core-interfaces";
 import * as MergeTree from "@prague/merge-tree";
 import { IComponentRuntime } from "@prague/runtime-definitions";
+import { EventEmitter } from "events";
 import {
     SharedSegmentSequence,
 } from "./sequence";
@@ -12,9 +14,29 @@ import {
     SharedStringFactory,
 } from "./sequenceFactory";
 
+declare module "@prague/component-core-interfaces" {
+    export interface IComponent extends Readonly<Partial<IProvideSharedString>> {
+    }
+}
+
+export interface IProvideSharedString {
+    readonly ISharedString: ISharedString;
+}
+
+/**
+ * Component interface describing access methods on a SharedString
+ */
+export interface ISharedString extends EventEmitter, IProvideSharedString {
+    insertText(pos: number, text: string, props?: MergeTree.PropertySet);
+
+    insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
+
+    posFromRelativePos(relativePos: MergeTree.IRelativePosition);
+}
+
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker | MergeTree.ExternalSegment;
 
-export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
+export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
      * Create a new shared string
      *
@@ -34,6 +56,10 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> {
      */
     public static getFactory() {
         return new SharedStringFactory();
+    }
+
+    public get ISharedString(): ISharedString {
+        return this;
     }
 
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;

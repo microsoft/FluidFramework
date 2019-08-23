@@ -3,28 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedCell } from "@prague/cell";
 import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import { IComponent } from "@prague/component-core-interfaces";
+import { ILoader } from "@prague/container-definitions";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as Sequence from "@prague/sequence";
+import Counter = api.RateCounter;
+import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedString } from "@prague/sequence";
 // tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-submodule-imports
 import clone = require("lodash/clone");
-import Counter = api.RateCounter;
 
 let play: boolean = false;
 
-const saveLineFrequency = 5;
-
-const ChartSamples = 10;
-
-let histogramData: ISharedCell;
-let performanceData: ISharedCell;
 let metrics: IScribeMetrics;
 
 const ackCounter = new Counter();
@@ -34,29 +28,13 @@ const processCounter = new Counter();
 const typingCounter = new Counter();
 const serverOrderCounter = new Counter();
 
-function padTime(value: number) {
-    return `0${value}`.slice(-2);
-}
-
-interface IChartData {
-    minimum: number[];
-    maximum: number[];
-    mean: number[];
-    stdDev: number[];
-    label: string[];
-    index: number;
-}
-
 export interface IAuthor {
     ackCounter: Counter;
     latencyCounter: Counter;
     typingCounter: Counter;
     pingCounter: Counter;
-
     metrics: IScribeMetrics;
-
-    doc: api.Document;
-    ss: Sequence.SharedString;
+    ss: ISharedString;
 }
 
 /**
@@ -114,171 +92,17 @@ export interface IScribeMetrics {
 export declare type ScribeMetricsCallback = (metrics: IScribeMetrics) => void;
 export declare type QueueCallback = (metrics: IScribeMetrics, author: IAuthor) => void;
 
-/**
- * Initializes empty chart data
- */
-function createChartData(length: number): IChartData {
-    const empty = [];
-    const emptyLabel = [];
-    for (let i = 0; i < length; i++) {
-        empty.push(0);
-        emptyLabel.push("");
-    }
-
-    return {
-        index: 0,
-        label: emptyLabel,
-        maximum: clone(empty),
-        mean: clone(empty),
-        minimum: clone(empty),
-        stdDev: clone(empty),
-    };
-}
-
-function getChartConfiguration(data: IChartData) {
-    const mean = rearrange(data.mean, data.index);
-    const stddev = rearrange(data.stdDev, data.index);
-    const plusStddev = combine(mean, stddev, (a, b) => a + b);
-    const negStddev = combine(mean, stddev, (a, b) => a - b);
-
-    return {
-        legend: {
-            position: {
-                edge: "Top",
-                edgePosition: "Minimum",
-            },
-        },
-        series: [
-            {
-                data: {
-                    categoryNames: rearrange(data.label, data.index),
-                    values: mean,
-                },
-                id: "mean",
-                layout: "Line",
-                title: "Mean",
-            },
-            {
-                data: {
-                    values: plusStddev,
-                },
-                id: "plusstddev",
-                layout: "Line",
-                title: "+StdDev",
-            },
-            {
-                data: {
-                    values: negStddev,
-                },
-                id: "negstddev",
-                layout: "Line",
-                title: "-StdDev",
-            },
-            {
-                data: {
-                    values: rearrange(data.minimum, data.index),
-                },
-                id: "minimum",
-                layout: "Line",
-                title: "Minimum",
-            },
-            {
-                data: {
-                    values: rearrange(data.maximum, data.index),
-                },
-                id: "maximum",
-                layout: "Line",
-                title: "Maximum",
-            },
-        ],
-        title: {
-            position: {
-                edge: "Top",
-                edgePosition: "Minimum",
-            },
-            text: "Performance",
-        },
-    };
-}
-
-function getHistogramConfiguration(histogram: api.Histogram) {
-    return {
-        series: [
-            {
-                data: {
-                    categoryNames: histogram.buckets.map((bucket, index) => (index * histogram.increment).toString()),
-                    values: histogram.buckets,
-                },
-                id: "buckets",
-                layout: "Column Clustered",
-                title: "Buckets",
-            },
-        ],
-        title: {
-            position: {
-                edge: "Top",
-                edgePosition: "Minimum",
-            },
-            text: "Histogram",
-        },
-    };
-}
-
-function rearrange(array: any[], index: number): any[] {
-    const arrayClone = clone(array);
-    const spliced = arrayClone.splice(0, index + 1);
-    return arrayClone.concat(spliced);
-}
-
-function combine(first: number[], second: number[], combineCb: (a, b) => number): number[] {
-    const result = [];
-    for (let i = 0; i < first.length; i++) {
-        result.push(combineCb(first[i], second[i]));
-    }
-
-    return result;
-}
-
-async function setMetrics(urlBase: string, doc: api.Document, resolver: ContainerUrlResolver) {
-    const host = { resolver };
-
-    // And also load a canvas document where we will place the metrics
-    const metricsDoc = await api.load(
-        `${urlBase}/${doc.id}-metrics`,
-        host,
-        {});
-    const root = metricsDoc.getRoot();
-
-    const components = metricsDoc.createMap();
-    root.set("components", components.handle);
-
-    // Create the two chart windows
-    const performanceChart = metricsDoc.createMap();
-    components.set("performance", performanceChart.handle);
-    performanceChart.set("type", "chart");
-    performanceData = metricsDoc.createCell();
-    performanceChart.set("size", { width: 760, height: 480 });
-    performanceChart.set("position", { x: 10, y: 10 });
-    performanceChart.set("data", performanceData.handle);
-
-    const histogramChart = metricsDoc.createMap();
-    components.set("histogram", histogramChart.handle);
-    histogramData = metricsDoc.createCell();
-    histogramChart.set("type", "chart");
-    histogramChart.set("size", { width: 760, height: 480 });
-    histogramChart.set("position", { x: 790, y: 10 });
-    histogramChart.set("data", histogramData.handle);
-}
-
-export async function typeFile2(
+export async function typeFile(
+    loader: ILoader,
     urlBase: string,
-    doc: api.Document,
-    resolver: ContainerUrlResolver,
-    ss: Sequence.SharedString,
+    runtime: IComponentRuntime,
+    ss: ISharedString,
+    chunkMap: ISharedMap,
     fileText: string,
     intervalTime: number,
     writers: number,
-    scribeCallback: ScribeMetricsCallback): Promise<IScribeMetrics> {
+    scribeCallback: ScribeMetricsCallback,
+): Promise<IScribeMetrics> {
 
     const metricsArray: IScribeMetrics[] = [];
     let q: any;
@@ -303,8 +127,6 @@ export async function typeFile2(
         writers,
     };
 
-    await setMetrics(urlBase, doc, resolver);
-
     const m: IScribeMetrics = {
         ackProgress: undefined,
         ackRate: undefined,
@@ -327,7 +149,6 @@ export async function typeFile2(
 
     let author: IAuthor = {
         ackCounter: new Counter(),
-        doc,
         latencyCounter: new Counter(),
         metrics: clone(m),
         pingCounter: new Counter(),
@@ -335,22 +156,24 @@ export async function typeFile2(
         typingCounter: new Counter(),
     };
     const authors: IAuthor[] = [author];
-    const docList: api.Document[] = [doc];
-    const ssList: Sequence.SharedString[] = [ss];
 
     for (let i = 1; i < writers; i++) {
-        const host = { resolver };
+        const response = await loader.request({ url: urlBase });
+        if (response.status !== 200 || response.mimeType !== "prague/component") {
+            return Promise.reject("Invalid document");
+        }
 
-        docList.push(await api.load(`${urlBase}/${doc.id}`, host, {}));
-        const sharedString = await docList[i].getRoot().get("text") as Sequence.SharedString;
-        ssList.push(sharedString);
+        const component = response.value as IComponent;
+        if (!component.ISharedString) {
+            return Promise.reject("Cannot type into document");
+        }
+
         author = {
             ackCounter: new Counter(),
-            doc: await api.load(`${urlBase}/${doc.id}`, host, {}),
             latencyCounter: new Counter(),
             metrics: clone(m),
             pingCounter: new Counter(),
-            ss: sharedString,
+            ss: component.ISharedString,
             typingCounter: new Counter(),
         };
         authors.push(author);
@@ -362,14 +185,15 @@ export async function typeFile2(
         ackCounter.reset();
         latencyCounter.reset();
         pingCounter.reset();
-        return typeChunk(authors[0], "p-0", fileText, intervalTime, scribeCallback, scribeCallback)
-            .then((metric) => {
-                metric.time = Date.now() - startTime;
-                return metric;
-            });
+
+        // wait a second before beginning to allow for quiescing
+        await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+
+        const metric = await typeChunk(
+            authors[0], runtime, "p-0", fileText, intervalTime, scribeCallback, scribeCallback);
+        metric.time = Date.now() - startTime;
+        return metric;
     } else {
-        const root = doc.getRoot();
-        const chunkMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
         let totalKeys = 0;
         let curKey = 0;
         const startTime = Date.now();
@@ -384,7 +208,7 @@ export async function typeFile2(
                 const a = authors.shift();
                 curKey++;
                 metrics.typingProgress = curKey / totalKeys;
-                typeChunk(a, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
+                typeChunk(a, runtime, chunkKey, chunk, intervalTime, scribeCallback, queueCallback);
             }, writers);
 
             for (const chunkKey of chunkMap.keys()) {
@@ -409,6 +233,7 @@ export async function typeFile2(
  */
 export async function typeChunk(
     a: IAuthor,
+    runtime: IComponentRuntime,
     chunkKey: string,
     chunk: string,
     intervalTime: number,
@@ -417,7 +242,6 @@ export async function typeChunk(
 
     return new Promise<IScribeMetrics>((resolve, reject) => {
         let readPosition = 0;
-        let lineNumber = 0;
         let totalOps = 0;
 
         const histogramRange = 5;
@@ -429,42 +253,22 @@ export async function typeChunk(
         let mean = 0;
         let stdDev = 0;
 
-        // Compute and update the metrics as time progresses
-        const chartData = createChartData(ChartSamples);
-        const metricsInterval = setInterval(() => {
-            if (metrics && metrics.latencyStdDev !== undefined) {
-                const now = new Date();
-                const index = chartData.index;
-                chartData.label[index] =
-                    `${padTime(now.getHours())}:${padTime(now.getMinutes())}:${padTime(now.getSeconds())}`;
-                chartData.maximum[index] = metrics.latencyMaximum;
-                chartData.mean[index] = metrics.latencyAverage;
-                chartData.minimum[index] = metrics.latencyMinimum;
-                chartData.stdDev[index] = metrics.latencyStdDev;
-
-                performanceData.set(getChartConfiguration(chartData));
-                histogramData.set(getHistogramConfiguration(histogram));
-
-                chartData.index = (chartData.index + 1) % chartData.maximum.length;
-            }
-        }, 1000);
-
-        a.doc.on("pong", (latency) => {
+        runtime.deltaManager.on("pong", (latency) => {
             pingCounter.increment(latency);
         });
 
-        a.doc.on("op", () => {
+        runtime.deltaManager.on("op", () => {
             totalOps++;
         });
 
-        a.doc.on("processTime", (time) => {
+        runtime.deltaManager.on("processTime", (time) => {
             processCounter.increment(time);
         });
 
         a.ss.on("op", (message: ISequencedDocumentMessage, local) => {
             if (message.traces &&
                 message.clientSequenceNumber &&
-                message.clientSequenceNumber > 25 &&
+                message.clientSequenceNumber > 100 &&
                 local) {
 
                 ackCounter.increment(1);
@@ -533,7 +337,6 @@ export async function typeChunk(
                 const rate = typingCounter.getRate() * 1000;
                 metrics.typingRate = rate;
 
-                clearInterval(metricsInterval);
                 resolve(metrics);
                 queueCallback(metrics, a);
                 return false;
@@ -564,10 +367,6 @@ export async function typeChunk(
                     a.ss.insertMarker(pos, MergeTree.ReferenceType.Tile,
                         { [MergeTree.reservedTileLabelsKey]: ["pg"] });
                     readPosition++;
-                    ++lineNumber;
-                    if (lineNumber % saveLineFrequency === 0) {
-                        a.doc.save(`Line ${lineNumber}`);
-                    }
                     metrics.typingProgress = readPosition / chunk.length;
                 } else {
                     a.ss.insertText(pos, char);

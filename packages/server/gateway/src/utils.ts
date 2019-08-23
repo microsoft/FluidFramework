@@ -61,3 +61,11 @@ export function getToken(
 export function getParam(params: Params, key: string) {
     return Array.isArray(params) ? undefined : params[key];
 }
+
+/**
+ * Helper function to return a relative range (if local) or the specific chaincode package version
+ */
+export function getVersion() {
+    const version = require("../package.json").version;
+    return `${version.endsWith(".0") ? "^" : ""}${version}`;
+}

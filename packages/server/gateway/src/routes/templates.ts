@@ -9,6 +9,7 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as path from "path";
 import { promisify } from "util";
+import { getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 
 const readDir = promisify(fs.readdir);
@@ -23,7 +24,7 @@ async function getTemplates(): Promise<ITemplate[]> {
     // Empty template for starting with a blank document
     const result: ITemplate[] = [{
         ext: null,
-        full: "empty",
+        full: null,
         name: "empty",
     }];
 
@@ -33,7 +34,7 @@ async function getTemplates(): Promise<ITemplate[]> {
         const parsed = path.parse(name);
         return {
             ext: parsed.ext,
-            full: name,
+            full: `&template=${name}`,
             name: parsed.name,
         };
     });
@@ -59,6 +60,7 @@ export function create(config: Provider): Router {
                         partials: defaultPartials,
                         templates,
                         title: "Templates",
+                        version: getVersion(),
                     });
             },
             (error) => {

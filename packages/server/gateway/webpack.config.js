@@ -103,12 +103,6 @@ module.exports = env => {
             errorDetails: false,
             publicPath: false
         },
-        resolveLoader: {
-            alias: {
-                'blob-url-loader': require.resolve('./loaders/blobUrl'),
-                'compile-loader': require.resolve('./loaders/compile'),
-            },
-        },
         plugins: [
             new ForkTsCheckerWebpackPlugin({
                 checkSyntacticErrors: true,
@@ -120,14 +114,7 @@ module.exports = env => {
     const bundles = [
         {
             entry: {
-                controller: "./src/controllers/index.ts",
-            },
-            node: {
-                dgram: 'empty',
-                fs: 'empty',
-                net: 'empty',
-                tls: 'empty',
-                child_process: 'empty',
+                commits: "./src/controllers/commits.ts",
             },
             externals: {
                 jquery: '$',

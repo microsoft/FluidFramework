@@ -217,13 +217,10 @@ export function create(
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
     app.use(routes.api);
     app.use("/templates", routes.templates);
-    app.use("/maps", routes.maps);
-    app.use("/sharedText", routes.sharedText);
     app.use("/loader", routes.loader);
     app.use("/frontpage", routes.frontpage);
     app.use("/waterpark", routes.waterpark);
     app.use("/fastloader", routes.fastLoader);
-    app.use("/scribe", routes.scribe);
     app.use("/democreator", routes.demoCreator);
     app.use("/versions", routes.versions);
     app.use("/fork", routes.fork);

@@ -3,28 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
+import { IComponent } from "@prague/component-core-interfaces";
+import { ILoader } from "@prague/container-definitions";
+import { ISharedMap, SharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as Sequence from "@prague/sequence";
+import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ISharedString } from "@prague/sequence";
 import * as childProcess from "child_process";
 import * as path from "path";
 import * as author from "./author";
 
-let document: api.Document;
-let sharedString: Sequence.SharedString;
-
-function setParagraphs(chunks: string[]) {
+function setParagraphs(chunks: string[], sharedString: ISharedString) {
     let props;
-    for (let c = 0; c < chunks.length; c++) {
+    chunks.forEach((chunk, index) => {
         props = {
-            [MergeTree.reservedMarkerIdKey]: ["p-" + c],
+            [MergeTree.reservedMarkerIdKey]: [`p-${index}`],
             [MergeTree.reservedTileLabelsKey]: ["pg"],
         };
-        sharedString.insertMarker(c, MergeTree.ReferenceType.Tile, props);
-    }
+        sharedString.insertMarker(index, MergeTree.ReferenceType.Tile, props);
+    });
 
     // Insert final pg marker. All text must be before a pg marker or it won't display!
     props = {
@@ -34,51 +31,48 @@ function setParagraphs(chunks: string[]) {
     sharedString.insertMarker(chunks.length, MergeTree.ReferenceType.Tile, props);
 }
 
-async function getParagraphs() {
-    const root = document.getRoot();
-    const chunksMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
-    if (chunksMap) {
-        for (const key of chunksMap.keys()) {
-            console.log(key + ": " + chunksMap.get(key));
-        }
-    }
-}
-
-async function setChunkMap(chunks: string[]) {
-    let c = 0;
-    const root = await document.getRoot();
-    const chunkMap = await root.get<IComponentHandle>("chunks").get<ISharedMap>();
-
-    if (chunks) {
-        for (const chunk of chunks) {
-            const chunkKey = "p-" + c;
-            if (chunk !== "") {
-                chunkMap.set(chunkKey, chunk);
-            }
-            c++;
-        }
-    }
-}
-
 async function conductor(
-    urlBase: string,
-    resolver: ContainerUrlResolver,
+    loader: ILoader,
+    url: string,
+    scribeMap: ISharedMap,
+    runtime: IComponentRuntime,
     text,
     intervalTime,
     writers,
     processes,
-    callback): Promise<author.IScribeMetrics> {
-
+    callback,
+): Promise<author.IScribeMetrics> {
     const process = 0;
     const docId = "";
     const chunks = author.normalizeText(text).split("\n");
 
+    const response = await loader.request({ url });
+    if (response.status !== 200 || response.mimeType !== "prague/component") {
+        return Promise.reject("Invalid document");
+    }
+
+    const component = response.value as IComponent;
+    if (!component.ISharedString) {
+        return Promise.reject("Cannot type into document");
+    }
+
+    const chunksMap = SharedMap.create(runtime);
+    scribeMap.set("chunks", chunksMap.handle);
+
+    setParagraphs(chunks, component.ISharedString);
+
+    chunks.forEach((chunk, index) => {
+        const chunkKey = `p-${index}`;
+        chunksMap.set(chunkKey, chunk);
+    });
+
     if (processes === 1) {
-        return await author.typeFile2(
-            urlBase,
-            document,
-            resolver,
-            sharedString,
+        return await author.typeFile(
+            loader,
+            url,
+            runtime,
+            component.ISharedString,
+            chunksMap,
             text,
             intervalTime,
             writers,
@@ -94,59 +88,28 @@ async function conductor(
     }, 500);
 }
 
-export async function create(
-    urlBase: string,
-    id: string,
-    resolver: ContainerUrlResolver,
-    text: string,
-    debug = false): Promise<void> {
-
-    document = await api.load(`${urlBase}/${id}`, { resolver }, {});
-    const root = await document.getRoot();
-
-    root.set("users", document.createMap().handle);
-    sharedString = document.createString() as Sequence.SharedString;
-    const seq = Sequence.SharedNumberSequence.create(document.runtime);
-    root.set("sequence-test", seq.handle);
-
-    // p-start might break something
-    sharedString.insertMarker(0, MergeTree.ReferenceType.Tile, { [MergeTree.reservedTileLabelsKey]: ["pg"] });
-    root.set("text", sharedString.handle);
-
-    // We'll give this to the FlowContainer that we're about to create for it to store various data on.
-    const flowContainerMap = document.createMap();
-    root.set("flowContainerMap", flowContainerMap.handle);
-    flowContainerMap.set("overlayInk", document.createMap().handle);
-    flowContainerMap.set("pageInk", document.createStream().handle);
-
-    await root.set("chunks", document.createMap().handle);
-
-    const chunks = author.normalizeText(text).split("\n");
-    setParagraphs(chunks);
-    await setChunkMap(chunks);
-    if (debug) {
-        await getParagraphs();
-    }
-
-    return Promise.resolve();
-}
-
 export async function type(
+    loader: ILoader,
     urlBase: string,
+    scribeMap: ISharedMap,
+    runtime: IComponentRuntime,
     intervalTime: number,
     text: string,
     writers: number,
     processes: number,
-    resolver: ContainerUrlResolver,
     callback: author.ScribeMetricsCallback,
-    distributed = false): Promise<author.IScribeMetrics> {
+    distributed = false,
+): Promise<author.IScribeMetrics> {
 
     if (distributed) {
         console.log("distributed");
     }
+
     return conductor(
+        loader,
         urlBase,
-        resolver,
+        scribeMap,
+        runtime,
         text,
         intervalTime,
         writers,

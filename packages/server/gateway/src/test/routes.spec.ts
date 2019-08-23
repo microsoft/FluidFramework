@@ -46,32 +46,6 @@ describe("Gateway", () => {
                     return testServer.get("/").expect(200);
                 });
             });
-
-            describe("Maps", () => {
-                it("Should be able to retrieve document", () => {
-                    return testServer.get("/maps/test").expect(200);
-                });
-
-                it("Should be called with a document id", () => {
-                    return testServer.get("/maps").expect(404);
-                });
-            });
-
-            describe("Scribe", () => {
-                it("Should return page", () => {
-                    return testServer.get("/scribe").expect(200);
-                });
-            });
-
-            describe("SharedText", () => {
-                it.skip("Should be able to retrieve document", () => {
-                    return testServer.get("/sharedText/test").expect(200);
-                });
-
-                it("Should be called with a document id", () => {
-                    return testServer.get("/sharedText").expect(404);
-                });
-            });
         });
     });
 });

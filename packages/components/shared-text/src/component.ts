@@ -27,6 +27,7 @@ import {
     ITaskManager,
 } from "@prague/runtime-definitions";
 import {
+    IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
@@ -46,7 +47,10 @@ import {
     getInsights,
 } from "./utils";
 
-export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisual, IComponentLoadable {
+export class SharedTextRunner
+    extends EventEmitter
+    implements IComponentHTMLVisual, IComponentLoadable, IProvideSharedString {
+
     public static async load(runtime: ComponentRuntime, context: IComponentContext): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
         await runner.initialize();
@@ -56,6 +60,7 @@ export class SharedTextRunner extends EventEmitter implements IComponentHTMLVisu
 
     public get IComponentLoadable() { return this; }
     public get IComponentHTMLVisual() { return this; }
+    public get ISharedString() { return this.sharedString; }
 
     public readonly url = "/text";
     private sharedString: SharedString;

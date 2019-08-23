@@ -5,6 +5,7 @@
 
 import { Router } from "express";
 import * as moniker from "moniker";
+import { getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(ensureLoggedIn: any): Router {
@@ -22,9 +23,11 @@ export function create(ensureLoggedIn: any): Router {
                 emptyMoniker: moniker.choose(),
                 noComposeMoniker: moniker.choose(),
                 partials: defaultPartials,
+                scribeMoniker: moniker.choose(),
                 sharedTextMoniker: moniker.choose(),
                 sharedTextPageInkMoniker: moniker.choose(),
                 title: "Prague Demos",
+                version: getVersion(),
                 videoMoniker: moniker.choose(),
             });
     });
@@ -39,8 +42,10 @@ export function create(ensureLoggedIn: any): Router {
                 emptyMoniker: moniker.choose(),
                 partials: defaultPartials,
                 sharedTextMoniker: moniker.choose(),
+                scribeMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
+                version: getVersion(),
             });
     });
 
@@ -59,6 +64,7 @@ export function create(ensureLoggedIn: any): Router {
                 pinpointMoniker: moniker.choose(),
                 pollMoniker: moniker.choose(),
                 title: "Prague Demos",
+                version: getVersion(),
             });
     });
 
@@ -74,9 +80,11 @@ export function create(ensureLoggedIn: any): Router {
                 newsMoniker: moniker.choose(),
                 partials: defaultPartials,
                 pinpointMoniker: moniker.choose(),
+                scribeMoniker: moniker.choose(),
                 sharedTextMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
+                version: getVersion(),
             });
     });
 
@@ -93,6 +101,7 @@ export function create(ensureLoggedIn: any): Router {
                 partials: defaultPartials,
                 sharedTextMoniker: moniker.choose(),
                 title: "Fluid Demos",
+                version: getVersion(),
             });
     });
 

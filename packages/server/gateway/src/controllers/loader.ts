@@ -16,7 +16,8 @@ export function initialize(
     scriptIds: string[],
     npm: string,
     jwt: string,
-    config: any) {
+    config: any,
+) {
     console.log(`Loading ${url}`);
     const startP = start(
         url,

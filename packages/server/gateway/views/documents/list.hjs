@@ -8,7 +8,9 @@
             <h1>Templates</h1>
             <ul class="list-unstyled">
                 {{#templates}}
-                    <li><a href="/sharedText/{{documentId}}?template={{full}}">{{name}}</a></li>  
+                <li>
+                    <a href="/loader/prague/{{documentId}}?chaincode=@chaincode/shared-text@{{version}}{{full}}">{{name}}</a>
+                </li>  
                 {{/templates}}
             </ul>
         </div>

@@ -14,10 +14,10 @@
     {{/content}}
 
     {{$scripts}}
-        <script src="{{#hfurl}}/public/scripts/dist/controller.js{{/hfurl}}"></script>
+        <script src="{{#hfurl}}/public/scripts/dist/commits.js{{/hfurl}}"></script>
         <script>
             var versions = {{{ versions }}};
-            controller.commits.load(
+            commits.load(
                 "{{ type }}",
                 "{{ pathPostfix }}",
                 "{{ tenantId }}",

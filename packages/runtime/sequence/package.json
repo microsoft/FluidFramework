@@ -46,6 +46,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
     "@prague/build-common": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
     "@prague/gitresources": "^0.9.0",
     "@prague/runtime-test-utils": "^0.9.0",
     "@prague/services-client": "^0.9.0",
