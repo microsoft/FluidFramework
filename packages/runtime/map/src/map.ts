@@ -692,7 +692,12 @@ export class SharedMap extends SharedObject implements ISharedMap {
             "act",
             {
                 process: (op: IMapValueTypeOperation, local, message) => {
+                    // Local value might not exist if we deleted it
                     const localValue = this.data.get(op.key) as ValueTypeLocalValue;
+                    if (!localValue) {
+                        return;
+                    }
+
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     const translatedValue = parseHandles(

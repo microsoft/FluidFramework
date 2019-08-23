@@ -628,7 +628,17 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             {
                 process: (op: IDirectoryValueTypeOperation, local, message) => {
                     const subdir = this.getWorkingDirectory(op.path);
-                    const localValue = subdir ? subdir.getLocalValue<ValueTypeLocalValue>(op.key) : undefined;
+                    // Subdir might not exist if we deleted it
+                    if (!subdir) {
+                        return;
+                    }
+
+                    const localValue = subdir.getLocalValue<ValueTypeLocalValue>(op.key);
+                    // Local value might not exist if we deleted it
+                    if (!localValue) {
+                        return;
+                    }
+
                     const handler = localValue.getOpHandler(op.value.opName);
                     const previousValue = localValue.value;
                     const translatedValue = this.runtime.IComponentSerializer.parse(
