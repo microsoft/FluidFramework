@@ -201,7 +201,7 @@ function initialize(
     const ackProgress = div.getElementsByClassName("ack-progress")[0] as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
 
-    const url = `http://localhost:3000/loader/prague/${context.documentId}-text`;
+    const url = `${window.location.origin}/loader/prague/${context.documentId}-text`;
 
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
