@@ -220,6 +220,7 @@ export function create(
     app.use("/maps", routes.maps);
     app.use("/sharedText", routes.sharedText);
     app.use("/loader", routes.loader);
+    app.use("/frontpage", routes.frontpage);
     app.use("/waterpark", routes.waterpark);
     app.use("/fastloader", routes.fastLoader);
     app.use("/scribe", routes.scribe);

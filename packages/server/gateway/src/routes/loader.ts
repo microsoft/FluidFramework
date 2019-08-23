@@ -6,7 +6,6 @@
 import { IFluidCodeDetails } from "@prague/container-definitions";
 import { extractDetails, WebLoader } from "@prague/loader-web";
 import { ScopeType } from "@prague/protocol-definitions";
-import { promiseTimeout } from "@prague/services-client";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
@@ -19,28 +18,20 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { KeyValueLoader } from "../keyValueLoader";
+import { IKeyValue } from "../keyValueLoader";
 import { getConfig, getParam } from "../utils";
 import { defaultPartials } from "./partials";
-
-const cacheLoadTimeoutMS = 10000;
 
 export function create(
     config: Provider,
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
-    ensureLoggedIn: any): Router {
+    ensureLoggedIn: any,
+    cacheP: Promise<IKeyValue>): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
     const webLoader = new WebLoader(config.get(config.get("worker:npm")));
-
-    const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(config));
-    const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
-        return keyValueLoader.cache;
-    }, (err) => {
-        return Promise.reject(err);
-    });
 
     /**
      * Looks up the version of a chaincode in the cache.
@@ -63,7 +54,7 @@ export function create(
     /**
      * Loading of a specific fluid document.
      */
-    router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), async (request, response) => {
+    router.get("/:tenantId/*", spoEnsureLoggedIn(), ensureLoggedIn(), (request, response) => {
         const start = Date.now();
         const chaincode: string = request.query.chaincode ? request.query.chaincode : "";
         getUrlWithVersion(chaincode).then((version: string) => {
