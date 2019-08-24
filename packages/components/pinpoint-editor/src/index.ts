@@ -28,7 +28,7 @@ class PinpointMapsFactory implements IComponentFactory {
                     const runner = await runnerP;
                     return request.url && request.url !== "/"
                         ? { status: 404, mimeType: "text/plain", value: `${request.url} not found` }
-                        : { status: 200, mimeType: "prague/component", value: runner };
+                        : { status: 200, mimeType: "fluid/component", value: runner };
                 });
             });
     }

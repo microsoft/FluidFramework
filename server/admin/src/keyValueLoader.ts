@@ -86,7 +86,7 @@ export class KeyValueLoader {
 
     private async attach(loader: Loader, docUrl: string) {
         const response = await loader.request({ url: docUrl });
-        if (response.status !== 200 || response.mimeType !== "prague/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return;
         }
         const component = response.value as IComponent;

@@ -97,7 +97,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     public async request(req: IRequest): Promise<IResponse> {
         if (req.url === "/" || req.url === this.url || req.url === "") {
             return {
-                mimeType: "prague/component",
+                mimeType: "fluid/component",
                 status: 200,
                 value: this,
             };
@@ -193,7 +193,7 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
     private async asComponent<T>(response: Promise<IResponse>): Promise<T> {
         const result = await response;
 
-        if (result.status === 200 && result.mimeType === "prague/component") {
+        if (result.status === 200 && result.mimeType === "fluid/component") {
             return result.value as T;
         }
 

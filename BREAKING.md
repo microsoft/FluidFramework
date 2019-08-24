@@ -58,6 +58,9 @@ The merge tree in Client should be interacted with indirectly through Client or 
 
 Previously, you would register for value types on `SharedMap` and `SharedDirectory` either by passing an argument to the `MapFactory` or `DirectoryFactory` or by calling `registerValueType` on the map/directory itself.  Now all valid ValueTypes are registered by default.  You should remove these arguments/calls as they are no longer necessary and may cause compile errors.
 
+## `prague/*` -> `fluid/*` MIME type
+The `prague/component`, `prague/container`, and `prague/dataType` MIME types have been changed to `fluid/component`, `fluid/container`, and `fluid/dataType` respectively in requests/responses.
+
 # 0.8 Breaking Changes
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)

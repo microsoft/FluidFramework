@@ -22,7 +22,7 @@ import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 async function attach(loader: Loader, url: string, host: Host) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType !== "prague/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/component") {
         return;
     }
 

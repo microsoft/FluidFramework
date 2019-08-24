@@ -37,7 +37,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
         // If there is a trailing slash forward to the component. Otherwise handle directly.
         if (trailingSlash === -1) {
-            return { status: 200, mimeType: "prague/component", value: component };
+            return { status: 200, mimeType: "fluid/component", value: component };
         } else {
             return component.request({ url: requestUrl.substr(trailingSlash) });
         }

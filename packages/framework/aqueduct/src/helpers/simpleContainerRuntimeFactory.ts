@@ -56,7 +56,7 @@ export class SimpleContainerRuntimeFactory {
 
                 // If the component supports forging we need to forge it.
                 const result = await componentRuntime.request({ url: "/" });
-                if (result.status !== 200 || result.mimeType !== "prague/component") {
+                if (result.status !== 200 || result.mimeType !== "fluid/component") {
                     return Promise.reject("Default component is not a component.");
                 }
 

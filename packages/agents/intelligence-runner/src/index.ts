@@ -33,7 +33,7 @@ export class TextAnalyzer implements IComponentRouter, IComponentRunnable {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "prague/component",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };

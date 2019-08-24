@@ -118,8 +118,8 @@ async function attach<T>(
     const mimeType = response.mimeType;
     debug(`loader.request(url=${url}) -> ${mimeType}`);
     switch (mimeType) {
-        case "prague/component":
-        case "prague/dataType":
+        case "fluid/component":
+        case "fluid/dataType":
             resultOut(response.value as T);
             break;
         default:

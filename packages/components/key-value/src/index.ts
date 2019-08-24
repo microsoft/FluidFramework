@@ -80,7 +80,7 @@ export class KeyValue implements IKeyValue, IComponent, IComponentRouter {
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "prague/component",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };

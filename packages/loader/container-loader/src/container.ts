@@ -262,7 +262,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
     public async request(path: IRequest): Promise<IResponse> {
         if (!path) {
-            return { mimeType: "prague/container", status: 200, value: this };
+            return { mimeType: "fluid/container", status: 200, value: this };
         }
 
         return this.context!.request(path);

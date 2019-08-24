@@ -152,7 +152,7 @@ export class SummaryManager extends EventEmitter {
 
         const response = await loader.request(request);
 
-        if (response.status !== 200 || response.mimeType !== "prague/component") {
+        if (response.status !== 200 || response.mimeType !== "fluid/component") {
             return Promise.reject<ISummarizer>("Invalid summarizer route");
         }
 

@@ -27,7 +27,7 @@ export async function instantiateRuntime(context: IContainerContext): Promise<Ru
   const runtime = await Runtime.load(context);
 
   runtime.registerRequestHandler(async (request) => {
-    return { status: 200, mimeType: "prague/component", value: new ChatRunner(runtime) };
+    return { status: 200, mimeType: "fluid/component", value: new ChatRunner(runtime) };
   });
 
   return runtime;

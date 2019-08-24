@@ -32,7 +32,7 @@ export class ComponentHandle implements IComponentHandle {
         if (!this.componentP) {
             this.componentP = this.routeContext.request({ url: this.path })
                 .then<IComponent>((response) => {
-                    return response.mimeType === "prague/component"
+                    return response.mimeType === "fluid/component"
                         ? response.value as IComponent
                         : Promise.reject("Not found");
                 });

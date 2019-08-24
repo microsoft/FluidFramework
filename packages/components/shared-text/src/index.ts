@@ -141,7 +141,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
             if (request.url === "/graphiql") {
                 const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
                 const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
-                return { status: 200, mimeType: "prague/component", value: new GraphIQLView(sharedText) };
+                return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
             } else {
                 console.log(request.url);
                 const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"

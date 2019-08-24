@@ -199,7 +199,7 @@ export class ProgressCollection
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "prague/component",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };

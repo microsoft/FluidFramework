@@ -127,7 +127,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
         const runtime = await this.context.getComponentRuntime(id, true);
         const request = await runtime.request({ url: "/" });
 
-        if (request.status !== 200 || request.mimeType !== "prague/component") {
+        if (request.status !== 200 || request.mimeType !== "fluid/component") {
             return Promise.reject("Not found");
         }
 

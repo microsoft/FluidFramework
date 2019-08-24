@@ -27,7 +27,7 @@ async function attach(loader: Loader, baseUrl: string, platform: LocalPlatform) 
     console.log(response.mimeType);
     console.log(response.status);
     switch (response.mimeType) {
-        case "prague/component":
+        case "fluid/component":
             const component = response.value as IComponentRuntime;
             component.attach(platform);
             console.log(component.id);

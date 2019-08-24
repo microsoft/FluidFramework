@@ -293,7 +293,7 @@ export class Playback extends Document {
         }
 
         switch (response.mimeType) {
-            case "prague/component":
+            case "fluid/component":
                 const component = response.value as IComponentRuntime;
                 component.attach(platform);
                 break;

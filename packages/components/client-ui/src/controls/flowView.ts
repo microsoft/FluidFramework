@@ -890,7 +890,7 @@ function renderSegmentIntoLine(
                         componentMarker.instanceP = lineContext.flowView.collabDocument.context.hostRuntime
                             .request({ url: `/${componentMarker.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "prague/component") {
+                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
                                     return Promise.reject(response);
                                 }
 
@@ -2406,7 +2406,7 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                         newBlock.instanceP = layoutContext.flowView.collabDocument.context.hostRuntime
                             .request({ url: `/${newBlock.properties.leafId}` })
                             .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "prague/component") {
+                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
                                     return Promise.reject(response);
                                 }
 
@@ -4970,7 +4970,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
         const request = await runtime.request({ url: "/" });
 
-        if (request.status !== 200 || request.mimeType !== "prague/component") {
+        if (request.status !== 200 || request.mimeType !== "fluid/component") {
             return Promise.reject("Not found");
         }
 
@@ -4983,7 +4983,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
         const component = await runtime.request({ url: "/" });
 
-        if (component.status !== 200 || component.mimeType !== "prague/component") {
+        if (component.status !== 200 || component.mimeType !== "fluid/component") {
             return Promise.reject("Not found");
         }
 

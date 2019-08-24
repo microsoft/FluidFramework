@@ -43,7 +43,7 @@ async function attachCore(loader: Loader, url: string, platform: IPlatform) {
     }
 
     switch (response.mimeType) {
-        case "prague/component":
+        case "fluid/component":
             const component = response.value;
             component.attach(platform);
             break;

@@ -208,12 +208,12 @@ export async function instantiateRuntime(context: IContainerContext): Promise<IR
 
         // Root entry we will use the full component. Otherwise we will proxy to a view
         if (!request.url) {
-            return { status: 200, mimeType: "prague/component", value: tourOfHeroes };
+            return { status: 200, mimeType: "fluid/component", value: tourOfHeroes };
         } else if (request.url === "/graphiql") {
-            return { status: 200, mimeType: "prague/component", value: new GraphIQLView(tourOfHeroes) };
+            return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(tourOfHeroes) };
         } else {
             const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
-            return { status: 200, mimeType: "prague/component", value: view };
+            return { status: 200, mimeType: "fluid/component", value: view };
         }
     });
 

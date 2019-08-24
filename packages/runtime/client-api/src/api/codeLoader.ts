@@ -83,7 +83,7 @@ class Chaincode implements IComponentFactory {
                 runtime.registerRequestHandler(async (request) => {
                     const document = await documentP;
                     return {
-                        mimeType: "prague/component",
+                        mimeType: "fluid/component",
                         status: 200,
                         value: document,
                     };

@@ -599,7 +599,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
     public async request(request: IRequest): Promise<IResponse> {
         // system routes
         if (request.url === this.summarizer.url) {
-            return { status: 200, mimeType: "prague/component", value: this.summarizer };
+            return { status: 200, mimeType: "fluid/component", value: this.summarizer };
         }
 
         if (request.url === "/_scheduler") {

@@ -37,7 +37,7 @@ export async function attach(loader: Loader, url: string, platform: IPlatform) {
 
     // tslint:disable-next-line: switch-default
     switch (response.mimeType) {
-        case "prague/component":
+        case "fluid/component":
             const component = response.value;
             // tslint:disable-next-line: no-unsafe-any
             component.attach(platform);
