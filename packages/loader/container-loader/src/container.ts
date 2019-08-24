@@ -36,6 +36,7 @@ import {
     IServiceConfiguration,
     ISignalMessage,
     ISnapshotTree,
+    ITokenClaims,
     ITree,
     ITreeEntry,
     IVersion,
@@ -53,6 +54,7 @@ import {
     readAndParse,
 } from "@prague/utils";
 import * as assert from "assert";
+import * as jwtDecode from "jwt-decode";
 import { BlobCacheStorageService } from "./blobCacheStorageService";
 import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
@@ -217,6 +219,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         const [, documentId] = id.split("/");
         this._id = decodeURI(documentId);
+        this._scopes = this.getScopes(options);
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
@@ -968,5 +971,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private processSignal(message: ISignalMessage) {
         const local = this._clientId === message.clientId;
         this.context!.processSignal(message, local);
+    }
+
+    // tslint:disable no-unsafe-any
+    private getScopes(options: any): string[] {
+        return options && options.tokens && options.tokens.jwt ?
+            (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
     }
 }
