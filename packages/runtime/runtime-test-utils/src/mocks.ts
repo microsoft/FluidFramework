@@ -136,7 +136,7 @@ export class MockRuntime extends EventEmitter
     public readonly leader: boolean;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     public readonly loader: ILoader;
-    public readonly logger: ITelemetryLogger = DebugLogger.create("prague:MockRuntime");
+    public readonly logger: ITelemetryLogger = DebugLogger.create("fluid:MockRuntime");
     public services: ISharedObjectServices;
     private readonly activeDeferred = new Deferred<void>();
 

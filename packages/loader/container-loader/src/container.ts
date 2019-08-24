@@ -220,7 +220,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         // create logger for components to use
         this.subLogger = DebugLogger.mixinDebugLogger(
-            "prague:telemetry",
+            "fluid:telemetry",
             { documentId: this.id, [pkgName]: pkgVersion },
             logger);
 

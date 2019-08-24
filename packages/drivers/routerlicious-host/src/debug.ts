@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("prague:routerlicious-host");
+export const debug = registerDebug("fluid:routerlicious-host");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

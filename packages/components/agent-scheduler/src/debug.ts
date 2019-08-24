@@ -5,4 +5,4 @@
 
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("prague:agent-scheduler");
+export const debug = registerDebug("fluid:agent-scheduler");

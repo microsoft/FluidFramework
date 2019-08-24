@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("prague:services");
+export const debug = registerDebug("fluid:services");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

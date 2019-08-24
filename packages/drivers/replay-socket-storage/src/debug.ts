@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("prague:replay-socket-storage");
+export const debug = registerDebug("fluid:replay-socket-storage");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

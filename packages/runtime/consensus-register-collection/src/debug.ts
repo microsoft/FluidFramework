@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("prague:consensus-register-collection");
+export const debug = registerDebug("fluid:consensus-register-collection");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

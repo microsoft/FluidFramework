@@ -6,5 +6,5 @@
 import * as registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("prague:memory-orderer");
+export const debug = registerDebug("fluid:memory-orderer");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

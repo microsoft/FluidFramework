@@ -51,7 +51,7 @@ export class TestClient extends Client {
     public static useCheckQ = false;
 
     public static async createFromSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
-        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("prague:snapshot"));
+        const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit([]);
         const services = new MockStorage(snapshotTree);
@@ -86,7 +86,7 @@ export class TestClient extends Client {
                     }
                 }
             },
-        DebugLogger.create("prague:testClient"),
+        DebugLogger.create("fluid:testClient"),
         options);
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 

@@ -54,7 +54,7 @@ async function loginAndInitialize(
 
     // Turn on verbose debugging across all pages
     await page.evaluate(() => {
-        localStorage.debug = "prague:*";
+        localStorage.debug = "fluid:*";
     });
 
     // await page.type("#username", username);

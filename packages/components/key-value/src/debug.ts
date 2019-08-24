@@ -5,4 +5,4 @@
 
 import * as registerDebug from "debug";
 
-export const debug = registerDebug("prague:key-value");
+export const debug = registerDebug("fluid:key-value");

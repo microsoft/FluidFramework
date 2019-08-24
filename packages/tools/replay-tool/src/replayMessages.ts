@@ -363,7 +363,7 @@ export class ReplayTool {
         // So if we d not filter them out, we report them twice.
         // Avoid that, but have a safety net - increase error count, so that tool
         // still fails even if error is not propagated / reported properly.
-        if (event.eventName === "prague:telemetry:Container:SnapshotExceptionError") {
+        if (event.eventName === "fluid:telemetry:Container:SnapshotExceptionError") {
             if (this.errorCount === 0) {
                 this.errorCount++;
             }

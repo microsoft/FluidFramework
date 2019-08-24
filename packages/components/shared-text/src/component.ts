@@ -37,7 +37,7 @@ import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
-const debug = require("debug")("prague:shared-text");
+const debug = require("debug")("fluid:shared-text");
 // tslint:enable:no-var-requires
 import * as url from "url";
 import { Document } from "./document";
