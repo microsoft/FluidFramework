@@ -64,6 +64,10 @@ export class ProtocolOpHandler {
         this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
     }
 
+    public close() {
+        this.quorum.close();
+    }
+
     public processMessage(message: ISequencedDocumentMessage, local: boolean) {
         switch (message.type) {
             case MessageType.ClientJoin:
@@ -140,7 +144,7 @@ export class ProtocolOpHandler {
         };
     }
 
-    public captureSummary(): ISummaryTree  {
+    public captureSummary(): ISummaryTree {
         // These fields can easily be tracked on the server
         const quorumSnapshot = this.quorum.snapshot();
 

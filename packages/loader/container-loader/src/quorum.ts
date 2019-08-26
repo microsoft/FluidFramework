@@ -109,6 +109,10 @@ export class Quorum extends EventEmitter implements IQuorum {
             .filter((value) => value[1].commitSequenceNumber === -1));
     }
 
+    public close() {
+        this.removeAllListeners();
+    }
+
     public snapshot(): IQuorumSnapshot {
         const serializedProposals = Array.from(this.proposals).map(
             ([sequenceNumber, proposal]) => {

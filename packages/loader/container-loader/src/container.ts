@@ -260,6 +260,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             this._deltaManager.close();
         }
 
+        if (this.protocolHandler) {
+            this.protocolHandler.close();
+        }
+
         this.removeAllListeners();
     }
 

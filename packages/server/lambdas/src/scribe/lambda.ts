@@ -123,7 +123,7 @@ export class ScribeLambda extends SequencedLambda {
     }
 
     public close() {
-        return;
+        this.protocolHandler.close();
     }
 
     private processFromPending(target: number) {
