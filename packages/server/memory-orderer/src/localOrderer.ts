@@ -16,40 +16,29 @@ import {
 } from "@prague/lambdas";
 import {
     IClient,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
     IServiceConfiguration,
-    MessageType,
 } from "@prague/protocol-definitions";
 import {
-    BoxcarType,
-    IBoxcarMessage,
     IContext,
     IDatabaseManager,
-    IDocument,
     IDocumentDetails,
     IDocumentStorage,
     IOrderer,
     IOrdererConnection,
-    IProducer,
     IPublisher,
-    IRawOperationMessage,
     IScribe,
     ITaskMessageSender,
     ITenantManager,
     ITopic,
     IWebSocket,
-    RawOperationType,
 } from "@prague/services-core";
 import * as assert from "assert";
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 import { LocalLambdaController } from "./localLambdaController";
+import { LocalOrdererConnection } from "./localOrdererConnection";
 import { LocalOrdererSetup } from "./localOrdererSetup";
-// tslint:disable-next-line:no-var-requires
-const now = require("performance-now");
 
 export interface ISubscriber {
     id: string;
@@ -168,124 +157,6 @@ class LocalContext implements IContext {
     }
 }
 
-class LocalOrdererConnection implements IOrdererConnection {
-    public readonly parentBranch: string;
-
-    constructor(
-        private pubsub: IPubSub,
-        public socket: ISubscriber,
-        public readonly existing: boolean,
-        document: IDocument,
-        private producer: IProducer,
-        public readonly tenantId: string,
-        public readonly documentId: string,
-        public readonly clientId: string,
-        private client: IClient,
-        public readonly maxMessageSize: number,
-        public readonly serviceConfiguration: IServiceConfiguration,
-    ) {
-        this.parentBranch = document.parent ? document.parent.documentId : null;
-
-        // Subscribe to the message channels
-        // Todo: We probably don't need this.
-        this.pubsub.subscribe(`${this.tenantId}/${this.documentId}`, this.socket);
-        this.pubsub.subscribe(`client#${this.clientId}`, this.socket);
-
-        // Send the connect message
-        const clientDetail: IClientJoin = {
-            clientId: this.clientId,
-            detail: this.client,
-        };
-
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(clientDetail),
-            referenceSequenceNumber: -1,
-            traces: [],
-            type: MessageType.ClientJoin,
-        };
-
-        const message: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-
-        // Submit on next tick to sequence behind connect response
-        this.submitRawOperation([message]);
-    }
-
-    public order(messages: IDocumentMessage[]): void {
-        const rawMessages = messages.map((message) => {
-            const rawMessage: IRawOperationMessage = {
-                clientId: this.clientId,
-                documentId: this.documentId,
-                operation: message,
-                tenantId: this.tenantId,
-                timestamp: Date.now(),
-                type: RawOperationType,
-            };
-
-            return rawMessage;
-        });
-
-        this.submitRawOperation(rawMessages);
-    }
-
-    public disconnect() {
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(this.clientId),
-            referenceSequenceNumber: -1,
-            traces: [],
-            type: MessageType.ClientLeave,
-        };
-        const message: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-        this.submitRawOperation([message]);
-
-        // Todo: We probably don't need this either.
-        this.pubsub.unsubscribe(`${this.tenantId}/${this.documentId}`, this.socket);
-        this.pubsub.unsubscribe(`client#${this.clientId}`, this.socket);
-    }
-
-    private submitRawOperation(messages: IRawOperationMessage[]) {
-        // Add trace
-        messages.forEach((message) => {
-            const operation = message.operation as IDocumentMessage;
-            if (operation && operation.traces) {
-                operation.traces.push(
-                    {
-                        action: "start",
-                        service: "alfred",
-                        timestamp: now(),
-                    });
-            }
-        });
-
-        const boxcar: IBoxcarMessage = {
-            contents: messages,
-            documentId: this.documentId,
-            tenantId: this.tenantId,
-            type: BoxcarType,
-        };
-
-        // Submits the message.
-        this.producer.send([boxcar], this.tenantId, this.documentId);
-    }
-}
-
 /**
  * Performs local ordering of messages based on an in-memory stream of operations.
  */
@@ -337,17 +208,16 @@ export class LocalOrderer implements IOrderer {
             serviceConfiguration);
     }
 
+    public rawDeltasKafka: LocalKafka;
+    public deltasKafka: LocalKafka;
+
+    public scriptoriumLambda: LocalLambdaController | undefined;
+    public foremanLambda: LocalLambdaController | undefined;
+    public scribeLambda: LocalLambdaController | undefined;
+    public deliLambda: LocalLambdaController | undefined;
+    public broadcasterLambda: LocalLambdaController | undefined;
+
     private socketPublisher: LocalSocketPublisher;
-
-    private scriptoriumLambda: LocalLambdaController | undefined;
-    private foremanLambda: LocalLambdaController | undefined;
-    private scribeLambda: LocalLambdaController | undefined;
-    private deliLambda: LocalLambdaController | undefined;
-    private broadcasterLambda: LocalLambdaController | undefined;
-
-    private rawDeltasKafka: LocalKafka;
-    private deltasKafka: LocalKafka;
-
     private existing: boolean;
 
     constructor(

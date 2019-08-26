@@ -4,13 +4,14 @@
  */
 
 import { IContext, IKafkaMessage, IPartitionLambda } from "@prague/services-core";
+import { EventEmitter } from "events";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
 /**
  * Controls lambda startups and subscriptions for localOrderer
  */
-export class LocalLambdaController implements IKafkaSubscriber {
+export class LocalLambdaController extends EventEmitter implements IKafkaSubscriber {
 
     public lambda: IPartitionLambda | undefined;
 
@@ -22,6 +23,7 @@ export class LocalLambdaController implements IKafkaSubscriber {
         private readonly setup: ILocalOrdererSetup,
         public readonly context: IContext,
         private readonly starter: (setup: ILocalOrdererSetup, context: IContext) => Promise<IPartitionLambda>) {
+        super();
         this.kafaka.subscribe(this);
     }
 
@@ -32,6 +34,8 @@ export class LocalLambdaController implements IKafkaSubscriber {
 
         try {
             this.lambda = await this.starter(this.setup, this.context);
+
+            this.emit("started", this.lambda);
 
             if (this.closed) {
                 // close was probably called while starting
@@ -60,6 +64,8 @@ export class LocalLambdaController implements IKafkaSubscriber {
             clearTimeout(this.startTimer);
             this.startTimer = undefined;
         }
+
+        this.removeAllListeners();
     }
 
     public process(message: IKafkaMessage): void {
