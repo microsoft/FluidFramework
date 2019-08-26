@@ -257,14 +257,17 @@ export class ScribeLambda extends SequencedLambda {
             if (!existingRef || existingRef.object.sha !== content.head) {
                 await this.sendSummaryNack(
                     summarySequenceNumber,
-                    `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef}".`,
+                    // tslint:disable-next-line:max-line-length
+                    `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
                 );
                 return;
             }
+
         } else if (existingRef) {
             await this.sendSummaryNack(
                 summarySequenceNumber,
-                `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef}".`,
+                // tslint:disable-next-line:max-line-length
+                `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
             );
             return;
         }
