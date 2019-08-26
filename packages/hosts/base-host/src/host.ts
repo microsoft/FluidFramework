@@ -22,7 +22,11 @@ import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 async function attach(loader: Loader, url: string, host: Host) {
     const response = await loader.request({ url });
 
-    if (response.status !== 200 || response.mimeType !== "fluid/component") {
+    if (response.status !== 200 ||
+        !(
+            response.mimeType === "fluid/component" ||
+            response.mimeType === "prague/component"
+        )) {
         return;
     }
 
@@ -37,7 +41,7 @@ async function attach(loader: Loader, url: string, host: Host) {
         const renderable =
             viewable.addView ? viewable.addView() : viewable;
 
-        renderable.render(host.div, {display: "block"});
+        renderable.render(host.div, { display: "block" });
         return;
     }
 
