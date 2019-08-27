@@ -4,7 +4,6 @@
  */
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { logVerbose } from "../../common/logging";
 import { TscTask } from "./tscTask";
 import { readFileAsync } from "../../common/utils";
 
@@ -20,12 +19,13 @@ export class TsLintTask extends LeafWithDoneFileTask {
 
     protected async getDoneFileContent() {
         try {
-            const doneFileContent = { tsBuildInfoFile: "", tslintJson: "" };
+            const doneFileContent = { tsBuildInfoFile: {}, tslintJson: "" };
             if (this.tscTask) {
-                const tsBuildInfoFile = this.tscTask.tsBuildInfoFile;
-                if (tsBuildInfoFile) {
-                    doneFileContent.tsBuildInfoFile = await readFileAsync(this.getPackageFileFullPath(tsBuildInfoFile), "utf8");
+                const tsBuildInfo = await this.tscTask.readTsBuildInfo();
+                if (tsBuildInfo === undefined) {
+                    return undefined;
                 }
+                doneFileContent.tsBuildInfoFile = tsBuildInfo;
                 doneFileContent.tslintJson = await readFileAsync(this.configFileFullPath, "utf8");
             }
             return JSON.stringify(doneFileContent);
@@ -35,7 +35,6 @@ export class TsLintTask extends LeafWithDoneFileTask {
     }
 
     protected addDependentTasks(dependentTasks: LeafTask[]) {
-        const executable = this.executable;
         for (const child of this.node.dependentPackages) {
             // TODO: Need to look at the output from tsconfig
             if (this.addChildTask(dependentTasks, child, "tsc")) {

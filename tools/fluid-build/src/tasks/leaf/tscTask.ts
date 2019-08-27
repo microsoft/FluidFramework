@@ -19,8 +19,10 @@ interface ITsBuildInfo {
 }
 
 export class TscTask extends LeafTask {
+    private _tsBuildInfoFullPath: string | undefined;
+    private _tsBuildInfo: ITsBuildInfo | undefined;
+
     protected addDependentTasks(dependentTasks: LeafTask[]) {
-        const executable = this.executable;
         if (this.addChildTask(dependentTasks, this.node, "npm run build:genver")) {
             this.logVerboseDependency(this.node, "build:genver");
         }
@@ -118,7 +120,7 @@ export class TscTask extends LeafTask {
         return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
     }
 
-    public get tsBuildInfoFile() {
+    private get tsBuildInfoFile() {
         // TODO: should read the ts config to figure out where this is instead of guessing
         // https://github.com/Microsoft/TypeScript/issues/30925
         const tsBuildInfoFileRoot = this.tsBuildInfoFileName;
@@ -136,6 +138,13 @@ export class TscTask extends LeafTask {
         return tsBuildInfoFileRoot;
     }
 
+    private get tsBuildInfoFileFullPath() {
+        if (this._tsBuildInfoFullPath === undefined) {
+            this._tsBuildInfoFullPath = this.getPackageFileFullPath(this.tsBuildInfoFile);
+        }
+        return this._tsBuildInfoFullPath;
+    }
+
     protected getVsCodeErrorMessages(errorMessages: string) {
         const lines = errorMessages.split("\n");
         for (let i = 0; i < lines.length; i++) {
@@ -146,17 +155,20 @@ export class TscTask extends LeafTask {
         }
         return lines.join("\n");
     }
-    private get tsBuildInfoFileFullPath() {
-        return this.getPackageFileFullPath(this.tsBuildInfoFile);
+
+    public async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
+        if (this._tsBuildInfo === undefined) {
+            const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
+            try {
+                this._tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
+            } catch {
+                logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`)
+            }
+        }
+        return this._tsBuildInfo;
     }
 
-    private async readTsBuildInfo(): Promise<ITsBuildInfo | undefined> {
-        const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-        try {
-            return JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
-        } catch {
-            logVerbose(`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`)
-            return undefined;
-        }
+    protected async markExecDone() {
+        this._tsBuildInfo = undefined;
     }
 };

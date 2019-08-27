@@ -12,6 +12,7 @@ import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync } from "../../common/utils";
 import chalk from "chalk";
+
 export abstract class LeafTask extends Task {
 
     private dependentTasks?: LeafTask[];
@@ -158,7 +159,7 @@ export abstract class LeafTask extends Task {
         return true;
     }
 
-    private getDependentTasks(): Task[] {
+    private getDependentTasks(): LeafTask[] {
         assert.notStrictEqual(this.dependentTasks, undefined);
         return this.dependentTasks!;
     }
@@ -174,6 +175,25 @@ export abstract class LeafTask extends Task {
 
     protected getPackageFileFullPath(filePath: string): string {
         return path.join(this.node.pkg.directory, filePath);
+    }
+
+    protected get allDependentTasks()  {
+        return (function * (dependentTasks) {
+            const pending: LeafTask[] = [...dependentTasks];
+            const seen = new Set<LeafTask>();
+            while (true) {
+                const leafTask = pending.pop();
+                if (!leafTask) { 
+                    return;
+                }
+                if (seen.has(leafTask)) {
+                    continue;
+                }
+                seen.add(leafTask);
+                yield leafTask;
+                pending.push(...leafTask.getDependentTasks());
+            }
+        })(this.getDependentTasks());
     }
 
     /**

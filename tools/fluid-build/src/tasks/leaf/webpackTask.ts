@@ -4,8 +4,13 @@
  */
 
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-import { globFn, toPosixPath } from "../../common/utils";
+import { globFn, toPosixPath, } from "../../common/utils";
+import { TscTask } from "./tscTask";
 
+interface DoneFileContent {
+    sources: { [srcFile: string]: string },
+    dependencies: { [pkgName: string]: { [command: string]: any } },
+}
 export class WebpackTask extends LeafWithDoneFileTask {
     protected get doneFile() {
         // TODO: This assume there is only one webpack task per package
@@ -14,11 +19,24 @@ export class WebpackTask extends LeafWithDoneFileTask {
 
     protected async getDoneFileContent() {
         try {
-            const content: any = {};
+            const content: DoneFileContent = { sources: {}, dependencies: {}};
             const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
             const srcFiles = await globFn(srcGlob);
             for (const srcFile of srcFiles) {
-                content[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(srcFile);
+                content.sources[srcFile] = await this.node.buildContext.fileHashCache.getFileHash(srcFile);
+            }
+
+            for (const dep of this.allDependentTasks) {
+                if (dep.executable === "tsc") {
+                    if (!content.dependencies[dep.package.name]) {
+                        content.dependencies[dep.package.name] = {};
+                    }
+                    const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
+                    if (tsBuildInfo === undefined) {
+                        return undefined;
+                    }
+                    content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
+                }
             }
             return JSON.stringify(content);
         } catch {

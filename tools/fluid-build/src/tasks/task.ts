@@ -27,7 +27,11 @@ export abstract class Task {
     private runP?: Promise<BuildResult>;
     private isUpToDateP?: Promise<boolean>;
 
-    protected constructor(protected readonly node: BuildPackage, protected readonly command: string) {
+    protected constructor(protected readonly node: BuildPackage, public readonly command: string) {
+    }
+
+    public get package() {
+        return this.node.pkg;
     }
 
     public async run(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
