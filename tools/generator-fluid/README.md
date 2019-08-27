@@ -15,7 +15,7 @@ npm link
 
 You can now bootstrap a new counter chaincode at any time. 
 
-Try it now.
+Go back to your root directory and try it now.
 ````bash
 yo fluid
 ````
