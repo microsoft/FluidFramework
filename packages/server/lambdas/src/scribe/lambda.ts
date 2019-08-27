@@ -78,45 +78,41 @@ export class ScribeLambda extends SequencedLambda {
             return;
         }
 
-        try {
-            const boxcar = extractBoxcar(message);
+        const boxcar = extractBoxcar(message);
 
-            for (const baseMessage of boxcar.contents) {
-                if (baseMessage.type === SequencedOperationType) {
-                    const value = baseMessage as ISequencedOperationMessage;
+        for (const baseMessage of boxcar.contents) {
+            if (baseMessage.type === SequencedOperationType) {
+                const value = baseMessage as ISequencedOperationMessage;
 
-                    // Add the message to the list of pending for this document and those that we need
-                    // to include in the checkpoint
-                    this.pendingMessages.push(value.operation);
-                    this.pendingCheckpointMessages.push(value);
+                // Add the message to the list of pending for this document and those that we need
+                // to include in the checkpoint
+                this.pendingMessages.push(value.operation);
+                this.pendingCheckpointMessages.push(value);
 
-                    // Update the current sequence and min sequence numbers
-                    const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
-                    this.sequenceNumber = value.operation.sequenceNumber;
-                    this.minSequenceNumber = value.operation.minimumSequenceNumber;
+                // Update the current sequence and min sequence numbers
+                const msnChanged = this.minSequenceNumber !== value.operation.minimumSequenceNumber;
+                this.sequenceNumber = value.operation.sequenceNumber;
+                this.minSequenceNumber = value.operation.minimumSequenceNumber;
 
-                    if (msnChanged) {
-                        // When the MSN changes we can process up to it to save space
-                        // winston.info(`MSN changed to ${this.minSequenceNumber}@${this.sequenceNumber}`);
-                        this.processFromPending(this.minSequenceNumber);
-                    }
+                if (msnChanged) {
+                    // When the MSN changes we can process up to it to save space
+                    // winston.info(`MSN changed to ${this.minSequenceNumber}@${this.sequenceNumber}`);
+                    this.processFromPending(this.minSequenceNumber);
+                }
 
-                    if (value.operation.type === MessageType.Summarize) {
-                        const content = JSON.parse(value.operation.contents) as ISummaryContent;
+                if (value.operation.type === MessageType.Summarize) {
+                    const content = JSON.parse(value.operation.contents) as ISummaryContent;
 
-                        // Process up to the summary op value to get the protocol state at the summary op
-                        this.processFromPending(value.operation.referenceSequenceNumber);
-                        await this.summarize(
-                            content,
-                            this.protocolHandler.minimumSequenceNumber,
-                            this.protocolHandler.sequenceNumber,
-                            this.protocolHandler.quorum.snapshot(),
-                            value.operation.sequenceNumber);
-                    }
+                    // Process up to the summary op value to get the protocol state at the summary op
+                    this.processFromPending(value.operation.referenceSequenceNumber);
+                    await this.summarize(
+                        content,
+                        this.protocolHandler.minimumSequenceNumber,
+                        this.protocolHandler.sequenceNumber,
+                        this.protocolHandler.quorum.snapshot(),
+                        value.operation.sequenceNumber);
                 }
             }
-        } catch (e) {
-            winston.error(`${this.tenantId}/${this.documentId}`, e);
         }
 
         this.checkpoint(message.offset);
@@ -223,7 +219,7 @@ export class ScribeLambda extends SequencedLambda {
         await this.messageCollection
             .deleteMany({
                 "documentId": this.documentId,
-                "operation.sequenceNumber": { $lte : checkpoint.protocolState.sequenceNumber },
+                "operation.sequenceNumber": { $lte: checkpoint.protocolState.sequenceNumber },
                 "tenantId": this.tenantId,
             });
     }
