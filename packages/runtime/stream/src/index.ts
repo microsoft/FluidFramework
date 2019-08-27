@@ -5,5 +5,4 @@
 
 export * from "./streamFactory";
 export * from "./interfaces";
-export * from "./snapshot";
 export * from "./stream";

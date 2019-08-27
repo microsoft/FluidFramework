@@ -37,11 +37,6 @@ import { StreamFactory } from "./streamFactory";
 const snapshotFileName = "header";
 
 /**
- * An empty ISnapshot (used for initializing to empty).
- */
-const emptySnapshot: IInkSnapshot = { strokes: [], strokeIndex: {} };
-
-/**
  * Inking data structure.
  */
 export class Stream extends SharedObject implements IStream {
@@ -63,6 +58,15 @@ export class Stream extends SharedObject implements IStream {
      */
     public static getFactory() {
         return new StreamFactory();
+    }
+
+    public static createNewStroke(id: string = uuid()) {
+        const stroke: IInkStroke = {
+            id,
+            operations: [],
+        };
+
+        return stroke;
     }
 
     /**
@@ -143,7 +147,7 @@ export class Stream extends SharedObject implements IStream {
     /**
      * The current ink snapshot.
      */
-    private inkSnapshot: InkSnapshot = InkSnapshot.clone(emptySnapshot);
+    private inkSnapshot: InkSnapshot = new InkSnapshot();
 
     /**
      * Create a new Stream.
@@ -159,7 +163,7 @@ export class Stream extends SharedObject implements IStream {
      * Get the ink strokes from the snapshot.
      */
     public getStrokes(): IInkStroke[] {
-        return this.inkSnapshot.strokes;
+        return this.inkSnapshot.getStrokes();
     }
 
     /**
@@ -168,7 +172,7 @@ export class Stream extends SharedObject implements IStream {
      * @param key - The UUID for the stroke
      */
     public getStroke(key: string): IInkStroke {
-        return this.inkSnapshot.strokes[this.inkSnapshot.strokeIndex[key]];
+        return this.inkSnapshot.getStroke(key);
     }
 
     /**
@@ -177,7 +181,7 @@ export class Stream extends SharedObject implements IStream {
      */
     public submitOperation(operation: IInkOperation) {
         this.submitLocalMessage(operation);
-        this.inkSnapshot.processOperation(operation);
+        this.processOperation(operation);
     }
 
     /**
@@ -213,19 +217,11 @@ export class Stream extends SharedObject implements IStream {
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        /* tslint:disable:no-unsafe-any */
-        const snapshot: IInkSnapshot = header
-            ? JSON.parse(Buffer.from(header, "base64")
-                .toString("utf-8"))
-            : emptySnapshot;
-        this.loadInkSnapshot(snapshot);
-    }
-
-    /**
-     * Initialize an empty stream.
-     */
-    protected initializeLocalCore() {
-        this.loadInkSnapshot(emptySnapshot);
+        if (header) {
+            this.inkSnapshot = new InkSnapshot(
+                JSON.parse(Buffer.from(header, "base64").toString("utf-8")) as IInkSnapshot,
+            );
+        }
     }
 
     /**
@@ -236,7 +232,7 @@ export class Stream extends SharedObject implements IStream {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && !local) {
-            this.inkSnapshot.processOperation(message.contents as IInkOperation);
+            this.processOperation(message.contents as IInkOperation);
         }
     }
 
@@ -254,12 +250,20 @@ export class Stream extends SharedObject implements IStream {
         return;
     }
 
-    /**
-     * Initialize the stream with data from an existing snapshot.
-     *
-     * @param snapshot - The snapshot to initialize from
-     */
-    private loadInkSnapshot(snapshot: IInkSnapshot) {
-        this.inkSnapshot = InkSnapshot.clone(snapshot);
+    private processOperation(operation: IInkOperation) {
+        if (operation.type === "clear") {
+            this.inkSnapshot.clear();
+            return;
+        }
+
+        if (operation.type === "down") {
+            this.inkSnapshot.addStroke(Stream.createNewStroke(operation.id));
+        }
+
+        // Need to make sure the stroke is still there (hasn't been cleared) before appending the down/move/up.
+        const stroke = this.getStroke(operation.id);
+        if (stroke !== undefined) {
+            stroke.operations.push(operation);
+        }
     }
 }
