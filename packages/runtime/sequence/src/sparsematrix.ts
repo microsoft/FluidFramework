@@ -5,6 +5,7 @@
 
 import {
     BaseSegment,
+    createGroupOp,
     IJSONSegment,
     ISegment,
     PropertySet,
@@ -210,59 +211,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         super(document, id, SparseMatrixFactory.Attributes);
     }
 
-    // "Replace" ops currently trigger an assert in 'BaseSegment.ack()'
-    // (See https://github.com/Microsoft/Prague/issues/1783)
-    //
-    // public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {
-    //     const start = rowColToPosition(row, col);
-    //     const end = start + values.length;
-    //     const segment = new RunSegment(values);
-    //     if (props) {
-    //         segment.addProperties(props);
-    //     }
-
-    //     const insertMessage = {
-    //         pos1: start,
-    //         pos2: end,
-    //         seg: segment.toJSONObject(),
-    //         type: MergeTreeDeltaType.INSERT,
-    //     } as IMergeTreeInsertMsg;
-
-    //     this.client.insertSegmentLocal(start, segment, { op: insertMessage });
-    //     this.submitSequenceMessage(insertMessage);
-    // }
-
-    // "Group" ops are currently not correctly handled by 'BaseSegment.ack()'
-    // (See https://github.com/Microsoft/Prague/issues/1839)
-    //
-    // public setItems(row: number, col: number, values: UnboxedOper[], props?: PropertySet) {
-    //     const start = rowColToPosition(row, col);
-    //     const end = start + values.length;
-    //     const segment = new RunSegment(values);
-    //     if (props) {
-    //         segment.addProperties(props);
-    //     }
-
-    //     const removeMessage = {
-    //         pos1: start,
-    //         pos2: end,
-    //         type: MergeTreeDeltaType.REMOVE,
-    //     } as IMergeTreeRemoveMsg;
-
-    //     const insertMessage = {
-    //         pos1: start,
-    //         seg: segment.toJSONObject(),
-    //         type: MergeTreeDeltaType.INSERT,
-    //     } as IMergeTreeInsertMsg;
-
-    //     const replaceMessage = {
-    //         ops: [ removeMessage, insertMessage ],
-    //         type: MergeTreeDeltaType.GROUP,
-    //     } as IMergeTreeGroupMsg;
-
-    //     this.groupOperation(replaceMessage);
-    // }
-
     public get numRows() {
         return positionToRowCol(this.getLength()).row;
     }
@@ -352,21 +300,16 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
         const removeColStart = srcCol;
         const removeColEnd = srcCol + numCols;
+        const ops = [];
 
-        // Note: The removes/inserts need to be made atomic:
-        // (See https://github.com/Microsoft/Prague/issues/1840)
-
-        for (let r = 0, rowStart = 0; r < this.numRows; r++ , rowStart += maxCols) {
-            this.removeRange(rowStart + removeColStart, rowStart + removeColEnd);
-
+        for (let r = 0, rowStart = 0; r < this.numRows; r++, rowStart += maxCols) {
+            ops.push(this.client.removeRangeLocal(rowStart + removeColStart, rowStart + removeColEnd));
             const insertPos = rowStart + destCol;
             const segment = new PaddingSegment(numCols);
-
-            const insertOp = this.client.insertSegmentLocal(insertPos, segment);
-            if (insertOp) {
-                this.submitSequenceMessage(insertOp);
-            }
+            ops.push(this.client.insertSegmentLocal(insertPos, segment));
         }
+
+        this.submitSequenceMessage(createGroupOp(...ops));
     }
 
     private getSegment(row: number, col: number) {
