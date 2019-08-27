@@ -1,0 +1,61 @@
+{
+  "name": "@chaincode/drawer",
+  "description": "Fluid document collection",
+  "version": "0.9.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "webpack --env=\"production\" && npm run tsc",
+    "dev": "webpack --env=\"development\"",
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "getUrl -p",
+    "tsc": "tsc",
+    "webpack": "npm run build",
+    "webpack:dev": "npm run dev"
+  },
+  "devDependencies": {
+    "@prague/prague-dev-server": "~3.9.0",
+    "@prague/url-generator": "^1.0.4",
+    "@types/node": "^10.14.6",
+    "css-loader": "^3.2.0",
+    "style-loader": "^1.0.0",
+    "ts-loader": "^4.5.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-merge": "4.1.4"
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "dependencies": {
+    "@prague/build-common": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/component-runtime": "^0.9.0",
+    "@prague/container-definitions": "^0.9.0",
+    "@prague/container-runtime": "^0.9.0",
+    "@prague/map": "^0.9.0",
+    "@prague/merge-tree": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/sequence": "^0.9.0",
+    "@prague/shared-object-common": "^0.9.0",
+    "@types/react": "^16.9.2",
+    "@types/react-dom": "^16.9.0",
+    "office-ui-fabric-react": "^7.28.0",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0"
+  },
+  "license": "MIT"
+}
