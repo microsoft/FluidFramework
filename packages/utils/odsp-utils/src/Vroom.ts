@@ -61,7 +61,7 @@ export async function fetchOpStream(
   retryPolicy: RetryPolicy<Response>,
   nameForLogging: string,
   logger: ITelemetryBaseLogger,
-  getVroomToken: (siteUrl: string) => Promise<string | undefined>,
+  getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
 ): Promise<FetchWithRetryResponse> {
   const token = await getVroomToken(siteUrl);
   if (!token) {
@@ -104,8 +104,8 @@ export async function getSocketStorageDiscovery(
   siteUrl: string,
   logger: ITelemetryBaseLogger,
   isPushAuthV2: boolean,
-  getVroomToken: (siteUrl: string) => Promise<string | undefined>,
-  getPushToken: () => Promise<string | undefined>,
+  getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
+  getPushToken: () => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
   logger.send({
     category: "performance",
