@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import * as moniker from "moniker";
-import { getVersion } from "../utils";
+import { getUserDetails, getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(ensureLoggedIn: any): Router {
@@ -27,6 +27,7 @@ export function create(ensureLoggedIn: any): Router {
                 sharedTextMoniker: moniker.choose(),
                 sharedTextPageInkMoniker: moniker.choose(),
                 title: "Prague Demos",
+                user: getUserDetails(request),
                 version: getVersion(),
                 videoMoniker: moniker.choose(),
             });
@@ -44,6 +45,7 @@ export function create(ensureLoggedIn: any): Router {
                 sharedTextMoniker: moniker.choose(),
                 scribeMoniker: moniker.choose(),
                 title: "Prague Demos",
+                user: getUserDetails(request),
                 translateMoniker: moniker.choose(),
                 version: getVersion(),
             });
@@ -64,6 +66,7 @@ export function create(ensureLoggedIn: any): Router {
                 pinpointMoniker: moniker.choose(),
                 pollMoniker: moniker.choose(),
                 title: "Prague Demos",
+                user: getUserDetails(request),
                 version: getVersion(),
             });
     });
@@ -84,6 +87,7 @@ export function create(ensureLoggedIn: any): Router {
                 sharedTextMoniker: moniker.choose(),
                 title: "Prague Demos",
                 translateMoniker: moniker.choose(),
+                user: getUserDetails(request),
                 version: getVersion(),
             });
     });
@@ -101,6 +105,7 @@ export function create(ensureLoggedIn: any): Router {
                 partials: defaultPartials,
                 sharedTextMoniker: moniker.choose(),
                 title: "Fluid Demos",
+                user: getUserDetails(request),
                 version: getVersion(),
             });
     });

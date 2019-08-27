@@ -19,7 +19,7 @@ import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
 import { IKeyValue } from "../keyValueLoader";
-import { getConfig, getParam } from "../utils";
+import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(
@@ -177,6 +177,7 @@ export function create(
                             scripts,
                             timings: JSON.stringify(timings),
                             title: documentId,
+                            user: getUserDetails(request),
                         });
                 }, (error) => {
                     response.status(400).end(safeStringify(error, undefined, 2));

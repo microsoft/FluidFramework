@@ -17,7 +17,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { getConfig, getParam } from "../utils";
+import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkgJson = require("../../package.json") as IPraguePackage;
@@ -138,6 +138,7 @@ export function create(
                     scripts,
                     timings: JSON.stringify(timings),
                     title: documentId,
+                    user: getUserDetails(request),
                 });
         }, (error) => {
             response.status(400).end(safeStringify(error, undefined, 2));

@@ -15,6 +15,8 @@ describe("Gateway", () => {
 
         beforeEach(() => {
             const defaultConfig = nconf.file(path.join(__dirname, "../../config.json")).use("memory");
+            defaultConfig.set("gateway:sessionStore", "memory");
+
             const alf = new Alfred(
                 [{ id: "git", key: "git" }],
                 defaultConfig.get("worker:alfredUrl"),

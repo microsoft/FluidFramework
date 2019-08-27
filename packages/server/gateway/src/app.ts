@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, ICache } from "@prague/services-core";
+import { getRandomName, IAlfredTenant, ICache } from "@prague/services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -77,10 +77,11 @@ export function create(
     tenants: IAlfredTenant[],
     cache: ICache,
 ) {
-    // Authentication is disabled for local run and test. Only use redis when authentication is enabled.
-    let sessionStore: any;
-    if (config.get("login:enabled")) {
-        // Create a redis session store.
+    // Create a redis session store.
+    let sessionStore;
+    if (config.get("gateway:sessionStore") === "memory") {
+        sessionStore = new expressSession.MemoryStore();
+    } else {
         const redisStore = connectRedis(expressSession);
         const redisHost = config.get("redis:host");
         const redisPort = config.get("redis:port");
@@ -93,8 +94,6 @@ export function create(
         }
         const redisClient = redis.createClient(redisPort, redisHost, options);
         sessionStore = new redisStore({ client: redisClient });
-    } else {
-        sessionStore = new expressSession.MemoryStore();
     }
 
     // Maximum REST request size
@@ -118,6 +117,7 @@ export function create(
             },
             (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
                 saveSpoTokens(req, params, accessToken, refreshToken);
+
                 return done(null, jwtClaims);
             },
         ),
@@ -215,6 +215,15 @@ export function create(
 
     // bind routes
     const routes = gatewayRoutes.create(config, cache, alfred, tenants, getFingerprintUrl);
+
+    app.use((request, response, next) => {
+        if (!request.session.guest) {
+            request.session.guest = { name: getRandomName(" ", true) };
+        }
+
+        next();
+    });
+
     app.use(routes.api);
     app.use("/templates", routes.templates);
     app.use("/loader", routes.loader);

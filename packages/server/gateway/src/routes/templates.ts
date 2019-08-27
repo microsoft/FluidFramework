@@ -9,7 +9,7 @@ import * as moniker from "moniker";
 import { Provider } from "nconf";
 import * as path from "path";
 import { promisify } from "util";
-import { getVersion } from "../utils";
+import { getUserDetails, getVersion } from "../utils";
 import { defaultPartials } from "./partials";
 
 const readDir = promisify(fs.readdir);
@@ -60,6 +60,7 @@ export function create(config: Provider): Router {
                         partials: defaultPartials,
                         templates,
                         title: "Templates",
+                        user: getUserDetails(request),
                         version: getVersion(),
                     });
             },

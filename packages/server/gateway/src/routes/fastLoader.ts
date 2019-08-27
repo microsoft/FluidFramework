@@ -11,7 +11,7 @@ import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
 import { parse } from "url";
 import * as winston from "winston";
-import { getConfig, getParam, getToken, IAlfredUser } from "../utils";
+import { getConfig, getParam, getToken, getUserDetails, IAlfredUser } from "../utils";
 import { defaultPartials } from "./partials";
 
 function createLoaderScript(
@@ -152,6 +152,7 @@ export function create(
                             resolved: JSON.stringify(null),
                             timings: JSON.stringify(null),
                             title: documentId,
+                            user: getUserDetails(request),
                             token,
                         });
                 }

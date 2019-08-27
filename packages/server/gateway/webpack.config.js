@@ -114,32 +114,15 @@ module.exports = env => {
     const bundles = [
         {
             entry: {
-                commits: "./src/controllers/commits.ts",
-            },
-            externals: {
-                jquery: '$',
+                controllers: "./src/controllers/index.ts"
             },
             plugins: [
                 new BundleAnalyzerPlugin({
                     analyzerMode: 'static',
-                    reportFilename: 'routerlicious.stats.html',
+                    reportFilename: 'controllers.stats.html',
                     openAnalyzer: false,
                     generateStatsFile: true,
-                    statsFilename: 'routerlicious.stats.json'
-                  })
-            ],
-        },
-        {
-            entry: {
-                loader: "./src/controllers/loader.ts"
-            },
-            plugins: [
-                new BundleAnalyzerPlugin({
-                    analyzerMode: 'static',
-                    reportFilename: 'loader.stats.html',
-                    openAnalyzer: false,
-                    generateStatsFile: true,
-                    statsFilename: 'loader.stats.json'
+                    statsFilename: 'controllers.stats.json'
                   })
             ],
         }];

@@ -12,10 +12,14 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 
-	"runArgs": ["-u", "node"],
+	"runArgs": ["-v","/var/run/docker.sock:/var/run/docker.sock"],
 
 	"extensions": [
 		"dbaeumer.vscode-eslint",
 		"ms-vscode.vscode-typescript-tslint-plugin"
-	]
+	],
+
+	"remote.extensionKind": {
+        "ms-azuretools.vscode-docker": "workspace"
+    }
 }

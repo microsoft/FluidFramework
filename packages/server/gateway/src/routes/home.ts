@@ -6,6 +6,7 @@
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as passport from "passport";
+import { getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(config: Provider, ensureLoggedIn: any): Router {
@@ -18,6 +19,7 @@ export function create(config: Provider, ensureLoggedIn: any): Router {
         response.render("home", {
             partials: defaultPartials,
             title: "Routerlicious",
+            user: getUserDetails(request),
         });
     });
 

@@ -5,6 +5,7 @@
 
 import { IUser, ScopeType } from "@prague/protocol-definitions";
 import { generateToken, IAlfredTenant } from "@prague/services-core";
+import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
 import { Params } from "express-serve-static-core";
@@ -68,4 +69,8 @@ export function getParam(params: Params, key: string) {
 export function getVersion() {
     const version = require("../package.json").version;
     return `${version.endsWith(".0") ? "^" : ""}${version}`;
+}
+
+export function getUserDetails(request: Request): string {
+    return JSON.stringify(request.user ? request.user : request.session.guest);
 }

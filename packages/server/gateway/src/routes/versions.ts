@@ -6,7 +6,7 @@
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import { IAlfred } from "../interfaces";
-import { getParam } from "../utils";
+import { getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
 export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
@@ -30,6 +30,7 @@ export function create(alfred: IAlfred, ensureLoggedIn: any): Router {
                         pathPostfix: "",
                         tenantId,
                         type: "loader",
+                        user: getUserDetails(request),
                         versions: JSON.stringify(versions),
                     });
             },

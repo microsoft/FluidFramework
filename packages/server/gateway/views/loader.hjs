@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{{<layout}}
 
-    <title>{{ title }}</title>
-</head>
-<body class="{{ optionalBodyClass }}">
+{{$content}}
     <div id="content"></div>
+{{/content}}
 
-    <script src="{{#hfurl}}/public/scripts/dist/loader.js{{/hfurl}}"></script>
+{{$scripts}}
     {{#scripts}}
         {{#scripts}}
         <script id="{{id}}" src="{{url}}" async></script>
@@ -43,7 +37,7 @@
         var scriptIds = [];
         {{/scripts}}
   
-        loader.initialize(
+        controllers.loader.initialize(
             window.location.href,
             resolved,
             cache,
@@ -53,5 +47,6 @@
             jwt,
             config);
     </script>
-</body>
-</html>
+{{/scripts}}
+
+{{/layout}}
