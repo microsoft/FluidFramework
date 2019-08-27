@@ -83,7 +83,7 @@ describe("MergeTree.Client", () => {
                             if (len < minLength) {
                                 op = client.insertTextLocal(
                                     random.integer(0, len)(mt),
-                                    client.longClientId.repeat(random.integer(0, 3)(mt)));
+                                    client.longClientId.repeat(random.integer(1, 3)(mt)));
                             } else {
                                 const start = random.integer(0, len - 1)(mt);
                                 const end = random.integer(start + 1, len)(mt);

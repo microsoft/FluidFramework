@@ -1970,7 +1970,11 @@ export class MergeTree {
     private backwardSearch<TClientData>(
         pos: number, refSeq: number, clientId: number,
         actions?: SegmentActions<TClientData>, clientData?: TClientData): ISegment {
-        return this.backwardSearchBlock(this.root, pos, this.getLength(refSeq, clientId), refSeq, clientId, actions, clientData);
+        const len = this.getLength(refSeq, clientId);
+        if (pos > len) {
+            return undefined;
+        }
+        return this.backwardSearchBlock(this.root, pos, len, refSeq, clientId, actions, clientData);
     }
 
     private backwardSearchBlock<TClientData>(
@@ -2303,23 +2307,24 @@ export class MergeTree {
         for (const newSegment of newSegments) {
 
             segIsLocal = false;
-
-            newSegment.seq = seq;
-            newSegment.clientId = clientId;
-            if (Marker.is(newSegment)) {
-                const markerId = newSegment.getId();
-                if (markerId) {
-                    this.mapIdToSegment(markerId, newSegment);
+            if (newSegment.cachedLength > 0) {
+                newSegment.seq = seq;
+                newSegment.clientId = clientId;
+                if (Marker.is(newSegment)) {
+                    const markerId = newSegment.getId();
+                    if (markerId) {
+                        this.mapIdToSegment(markerId, newSegment);
+                    }
                 }
+
+                const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq,
+                    { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
+
+                this.updateRoot(splitNode);
+                saveIfLocal(newSegment);
+
+                insertPos += newSegment.cachedLength;
             }
-
-            const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq,
-                { leaf: onLeaf, candidateSegment: newSegment, continuePredicate: continueFrom });
-
-            this.updateRoot(splitNode);
-            saveIfLocal(newSegment);
-
-            insertPos += newSegment.cachedLength;
         }
     }
     private readonly splitLeafSegment = (segment: ISegment, pos: number): ISegmentChanges => {

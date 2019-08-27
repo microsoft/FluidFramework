@@ -180,7 +180,9 @@ export class Client {
      * @param segment - The segment to insert
      */
     public insertSegmentLocal(pos: number, segment: ISegment): ops.IMergeTreeInsertMsg {
-
+        if (segment.cachedLength <= 0) {
+            return undefined;
+        }
         const insertOp = OpBuilder.createInsertSegmentOp(pos, segment);
         if (this.applyInsertOp({op: insertOp})) {
             return insertOp;
