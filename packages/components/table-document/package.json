@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/table-document",
   "description": "Chaincode component containing a table's data",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -37,17 +37,17 @@
     }
   },
   "dependencies": {
-    "@prague/aqueduct": "^0.9.0",
-    "@prague/component-core-interfaces": "^0.9.0",
-    "@prague/map": "^0.9.0",
-    "@prague/merge-tree": "^0.9.0",
-    "@prague/runtime-definitions": "^0.9.0",
-    "@prague/sequence": "^0.9.0",
+    "@prague/aqueduct": "^0.10.0",
+    "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/map": "^0.10.0",
+    "@prague/merge-tree": "^0.10.0",
+    "@prague/runtime-definitions": "^0.10.0",
+    "@prague/sequence": "^0.10.0",
     "@tiny-calc/nano": "^0.0.8199",
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.9.0",
+    "@prague/build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",

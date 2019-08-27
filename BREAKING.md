@@ -1,4 +1,7 @@
-# 0.9 Breaking Changes
+# 0.10 Breaking Changes
+
+# 0.9 Breaking Changes (August 26, 2019)
+
 - [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
 - [Handles to SharedObjects must be used on map sets](#handles-to-sharedobjects-must-be-used-on-map-sets)
 - [`mergeTree` is now protected on `MergeTree.Client`](#mergetree-is-now-protected-on-mergetree.client)
@@ -61,7 +64,7 @@ Previously, you would register for value types on `SharedMap` and `SharedDirecto
 ## `prague/*` -> `fluid/*` MIME type
 The `prague/component`, `prague/container`, and `prague/dataType` MIME types have been changed to `fluid/component`, `fluid/container`, and `fluid/dataType` respectively in requests/responses.
 
-# 0.8 Breaking Changes
+# 0.8 Breaking Changes (August 13, 2019)
 
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)
 - [`sequence.annotateRange()` argument order changed](#sequenceannotaterange-argument-order-changed)
@@ -267,7 +270,7 @@ removed.
 
 The package @prague/app-datastore is deprecated. Please switch to use tiny-web-host
 
-# 0.7 Breaking Changes
+# 0.7 Breaking Changes (July 30, 2019)
 
 - [instantiateComponent changes](#instantiatecomponent-changes)
 
@@ -306,7 +309,7 @@ ComponentRuntime.load(
 
 `instantiateComponent` is now a void return type.
 
-# 0.6 Breaking Changes
+# 0.6 Breaking Changes (July 17, 2019)
 
 - [Interface renames](#interface-renames)
 - [defaultValueTypes is no longer global](#defaultvaluetypes-is-no-longer-global)

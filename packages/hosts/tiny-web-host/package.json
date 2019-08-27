@@ -1,6 +1,6 @@
 {
   "name": "@prague/tiny-web-host",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Loader client app",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -24,17 +24,17 @@
   "repository": "microsoft/prague",
   "license": "MIT",
   "dependencies": {
-    "@prague/base-host": "^0.9.0",
-    "@prague/loader-web": "^0.9.0",
-    "@prague/odsp-utils": "^0.9.0",
-    "@prague/protocol-definitions": "^0.9.0",
-    "@prague/services-core": "^0.9.0",
+    "@prague/base-host": "^0.10.0",
+    "@prague/loader-web": "^0.10.0",
+    "@prague/odsp-utils": "^0.10.0",
+    "@prague/protocol-definitions": "^0.10.0",
+    "@prague/services-core": "^0.10.0",
     "jsonwebtoken": "^8.4.0",
     "url-parse": "^1.4.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.9.0",
+    "@prague/build-common": "^0.10.0",
     "@types/node": "^10.12.12",
     "@types/url-parse": "^1.4.1",
     "concurrently": "^4.1.0",

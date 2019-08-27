@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@prague/agent";
-export const pkgVersion = "0.9.0";
+export const pkgVersion = "0.10.0";

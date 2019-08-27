@@ -1,6 +1,6 @@
 {
   "name": "@prague/component-core-interfaces",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Prague component interfaces",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -20,10 +20,9 @@
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
-  "dependencies": {},
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.9.0",
+    "@prague/build-common": "^0.10.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",

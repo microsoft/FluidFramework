@@ -1,6 +1,6 @@
 {
   "name": "@prague/services-utils",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/protocol-definitions": "^0.9.0",
+    "@prague/protocol-definitions": "^0.10.0",
     "debug": "^4.1.1",
     "moniker": "^0.1.2",
     "nconf": "^0.10.0",
@@ -26,7 +26,7 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.9.0",
+    "@prague/build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/nconf": "^0.0.37",
     "@types/node": "^10.12.12",
