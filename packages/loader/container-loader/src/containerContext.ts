@@ -4,6 +4,7 @@
  */
 
 import {
+    IComponent,
     IComponentConfiguration,
     IRequest,
     IResponse,
@@ -39,6 +40,7 @@ import { DeltaManagerProxy } from "./deltaManagerProxy";
 export class ContainerContext extends EventEmitter implements IContainerContext {
     public static async load(
         container: Container,
+        scope: IComponent,
         codeLoader: ICodeLoader,
         chaincode: IRuntimeFactory,
         baseSnapshot: ISnapshotTree | null,
@@ -57,6 +59,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
     ): Promise<ContainerContext> {
         const context = new ContainerContext(
             container,
+            scope,
             codeLoader,
             chaincode,
             baseSnapshot,
@@ -145,6 +148,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     constructor(
         private readonly container: Container,
+        public readonly scope: IComponent,
         public readonly codeLoader: ICodeLoader,
         public readonly chaincode: IRuntimeFactory,
         public readonly baseSnapshot: ISnapshotTree | null,

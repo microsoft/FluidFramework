@@ -219,6 +219,12 @@ export interface IContainerContext extends EventEmitter, IMessageScheduler, IPro
     readonly logger: ITelemetryLogger;
     readonly serviceConfiguration: IServiceConfiguration | undefined;
     readonly version: string;
+
+    /**
+     * Ambient services provided with the context
+     */
+    readonly scope: IComponent;
+
     error(err: any): void;
     requestSnapshot(tagMessage: string): Promise<void>;
 }

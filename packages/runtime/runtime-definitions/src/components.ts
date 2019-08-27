@@ -219,6 +219,11 @@ export interface IComponentContext extends EventEmitter {
     readonly closeFn: () => void;
 
     /**
+     * Ambient services provided with the context
+     */
+    readonly scope: IComponent;
+
+    /**
      * Returns the current quorum.
      */
     getQuorum(): IQuorum;

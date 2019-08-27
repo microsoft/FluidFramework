@@ -518,7 +518,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
 
         // Create a context for each of them
         for (const [key, value] of components) {
-            const componentContext = new RemotedComponentContext(key, value, this, this.storage);
+            const componentContext = new RemotedComponentContext(key, value, this, this.storage, this.context.scope);
             const deferred = new Deferred<ComponentContext>();
             deferred.resolve(componentContext);
 
@@ -872,6 +872,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             pkg,
             this,
             this.storage,
+            this.context.scope,
             (cr: IComponentRuntime) => this.attachComponent(cr));
 
         const deferred = new Deferred<ComponentContext>();
@@ -987,6 +988,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
                     snapshotTree,
                     this,
                     new DocumentStorageServiceProxy(this.storage, flatBlobs),
+                    this.context.scope,
                     attachMessage.type);
 
                 break;

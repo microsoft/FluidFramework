@@ -1,0 +1,6 @@
+echo "Welcome to the Fluid dev container!"
+echo "-----------------------------------"
+echo "Since this runs as root (to get Docker access) you need to use the --unsafe-perm flag when doing an npm install"
+echo ""
+echo "i.e. npm install --unsafe-perm"
+echo ""

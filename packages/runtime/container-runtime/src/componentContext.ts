@@ -4,6 +4,7 @@
  */
 
 import {
+    IComponent,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -47,7 +48,6 @@ interface ISnapshotDetails {
  * Represents the context for the component. This context is passed to the component runtime.
  */
 export abstract class ComponentContext extends EventEmitter implements IComponentContext {
-
     public get documentId(): string {
         return this._hostRuntime.id;
     }
@@ -136,6 +136,7 @@ export abstract class ComponentContext extends EventEmitter implements IComponen
         public readonly id: string,
         public readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
+        public readonly scope: IComponent,
         public readonly attach: (componentRuntime: IComponentRuntime) => void,
     ) {
         super();
@@ -362,6 +363,7 @@ export class RemotedComponentContext extends ComponentContext {
         private readonly snapshotValue: ISnapshotTree | string,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
+        scope: IComponent,
         private readonly type?: string,
     ) {
         super(
@@ -369,6 +371,7 @@ export class RemotedComponentContext extends ComponentContext {
             id,
             true,
             storage,
+            scope,
             () => {
                 throw new Error("Already attached");
             });
@@ -417,9 +420,10 @@ export class LocalComponentContext extends ComponentContext {
         private readonly pkg: string,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
+        scope: IComponent,
         attachCb: (componentRuntime: IComponentRuntime) => void,
     ) {
-        super(runtime, id, false, storage, attachCb);
+        super(runtime, id, false, storage, scope, attachCb);
     }
 
     public generateAttachMessage(): IAttachMessage {

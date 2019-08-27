@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    IComponent,
     IComponentQueryableLegacy,
     IRequest,
     IResponse,
@@ -93,6 +94,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         service: IDocumentService,
         codeLoader: ICodeLoader,
         options: any,
+        scope: IComponent,
         connection: string,
         loader: Loader,
         request: IRequest,
@@ -104,6 +106,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             options,
             canReconnect,
             service,
+            scope,
             codeLoader,
             loader,
             request,
@@ -210,6 +213,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         public readonly options: any,
         public readonly canReconnect: boolean,
         private readonly service: IDocumentService,
+        private readonly scope: IComponent,
         private readonly codeLoader: ICodeLoader,
         private readonly loader: Loader,
         private readonly originalRequest: IRequest,
@@ -522,6 +526,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 const loader = new RelativeLoader(this.loader, this.originalRequest);
                 this.context = await ContainerContext.load(
                     this,
+                    this.scope,
                     this.codeLoader,
                     chaincode.chaincode,
                     tree!,
@@ -686,6 +691,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const loader = new RelativeLoader(this.loader, this.originalRequest);
         const newContext = await ContainerContext.load(
             this,
+            this.scope,
             this.codeLoader,
             chaincode,
             snapshotTree,

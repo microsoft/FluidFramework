@@ -59,6 +59,7 @@ export class KeyValueLoader {
             undefined,
             hostToken,
             config,
+            {},
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
             undefined,
         );

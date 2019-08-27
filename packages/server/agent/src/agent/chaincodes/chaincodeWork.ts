@@ -41,7 +41,8 @@ export class ChaincodeWork extends EventEmitter {
             this.host,
             this.serviceFactory,
             this.codeLoader,
-            options);
+            options,
+            {});
 
         const url =
             `prague://${parse(this.alfred).host}/` +

@@ -69,4 +69,6 @@ ENV DEBIAN_FRONTEND=dialog
 RUN sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" \
     &&  git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting \
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-COPY .zshrc ~/.zshrc
+COPY .zshrc /root/.zshrc
+COPY welcome.sh /root/welcome.sh
+RUN echo "~/welcome.sh" >> /root/.zshrc

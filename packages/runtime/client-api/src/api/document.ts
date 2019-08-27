@@ -276,7 +276,7 @@ export async function load(
 
     // Load the Fluid document
     // For legacy purposes we currently fill in a default domain
-    const loader = new Loader(host, serviceFactory, codeLoader, options);
+    const loader = new Loader(host, serviceFactory, codeLoader, options, {});
     const container = await loader.resolve({ url });
 
     if (!container.existing) {

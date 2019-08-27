@@ -92,6 +92,8 @@ async function startWrapper(
                 scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
                 npm, // string,
                 await auth(parsedUrl.tenant, parsedUrl.container, getToken), // string,
+                {},
+                {},
                 div,
             );
         }, (error) => {

@@ -43,7 +43,8 @@ export class TestDataStore {
             { resolver },
             this.documentServiceFactory,
             this.codeLoader,
-            { blockUpdateMarkers: true });
+            { blockUpdateMarkers: true },
+            {});
         const baseUrl = `https://test.com/tenantId/documentId/${encodeURIComponent(componentId)}`;
         const url = `${baseUrl}${
             // Ensure '/' separator when concatenating 'baseUrl' and 'path'.

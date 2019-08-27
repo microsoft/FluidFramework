@@ -129,6 +129,7 @@ export function getLoader(
     cache: IGitCache,
     jwt: string,
     config: any,
+    scope: IComponent,
     codeLoader: ICodeLoader,
     errorService: IErrorTrackingService,
 ): Loader {
@@ -154,7 +155,8 @@ export function getLoader(
             blockUpdateMarkers: true,
             config,
             tokens: (resolved as IFluidResolvedUrl).tokens,
-        });
+        },
+        scope);
 }
 
 export let lastLoaded: Container;
@@ -168,7 +170,8 @@ export async function start(
     npm: string,
     jwt: string,
     config: any,
-    div?: HTMLDivElement,
+    scope: IComponent,
+    div: HTMLDivElement,
 ): Promise<void> {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm);
@@ -192,12 +195,13 @@ export async function start(
         cache,
         jwt,
         config,
+        scope,
         codeLoader,
         errorService);
     const container = await loader.resolve({ url });
     lastLoaded = container;
 
-    const platform = new Host(div ? div : document.getElementById("content"));
+    const platform = new Host(div);
     registerAttach(
         loader,
         container,

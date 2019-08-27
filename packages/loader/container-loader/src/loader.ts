@@ -4,6 +4,7 @@
  */
 
 import {
+    IComponent,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -107,6 +108,7 @@ export class Loader extends EventEmitter implements ILoader {
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
+        private readonly scope: IComponent,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
         super();
@@ -279,6 +281,7 @@ export class Loader extends EventEmitter implements ILoader {
             documentService,
             this.codeLoader,
             this.options,
+            this.scope,
             connection,
             this,
             request,
