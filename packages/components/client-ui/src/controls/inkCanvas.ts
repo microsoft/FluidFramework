@@ -49,7 +49,7 @@ export class InkCanvas extends ui.Component {
 
         this.model.on("op", (op) => {
             // Update the canvas
-            this.addAndDrawStroke(op.contents as stream.IInkDelta, false);
+            this.submitAndApplyOp(op.contents, false);
         });
 
         this.model.on("load", () => {
@@ -112,8 +112,8 @@ export class InkCanvas extends ui.Component {
     }
 
     public clear() {
-        const delta = new stream.InkDelta().clear();
-        this.addAndDrawStroke(delta, true);
+        const operation = stream.Stream.makeClearOperation();
+        this.submitAndApplyOp(operation, true);
     }
 
     /**
@@ -137,9 +137,9 @@ export class InkCanvas extends ui.Component {
             // Anchor and clear any current selection.
             const pt = new EventPoint(this.canvas, evt);
 
-            const delta = new stream.InkDelta().stylusDown(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStrokeId = (delta.operations[0] as stream.IStylusDownOperation).id;
-            this.addAndDrawStroke(delta, true);
+            const operation = stream.Stream.makeDownOperation(pt.rawPosition, evt.pressure, this.currentPen);
+            this.currentStrokeId = operation.id;
+            this.submitAndApplyOp(operation, true);
 
             evt.returnValue = false;
         }
@@ -148,11 +148,11 @@ export class InkCanvas extends ui.Component {
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
             const pt = new EventPoint(this.canvas, evt);
-            const delta = new stream.InkDelta().stylusMove(
+            const operation = stream.Stream.makeMoveOperation(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStrokeId);
-            this.addAndDrawStroke(delta, true);
+            this.submitAndApplyOp(operation, true);
 
             evt.returnValue = false;
         }
@@ -166,13 +166,13 @@ export class InkCanvas extends ui.Component {
             const pt = new EventPoint(this.canvas, evt);
             evt.returnValue = false;
 
-            const delta = new stream.InkDelta().stylusUp(
+            const operation = stream.Stream.makeUpOperation(
                 pt.rawPosition,
                 evt.pressure,
                 this.currentStrokeId);
             this.currentStrokeId = undefined;
 
-            this.addAndDrawStroke(delta, true);
+            this.submitAndApplyOp(operation, true);
         }
 
         return false;
@@ -239,35 +239,34 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private addAndDrawStroke(delta: stream.IInkDelta, submit: boolean) {
+    private submitAndApplyOp(operation: stream.IInkOperation, submit: boolean) {
         if (submit) {
-            this.model.submitDelta(delta);
+            this.model.submitOperation(operation);
         }
 
-        const dirtyStrokeIds: Set<string> = new Set();
-        for (const operation of delta.operations) {
-            if (operation.type === "clear") {
-                this.clearCanvas();
-                this.lastStrokeRenderOp = {};
-                dirtyStrokeIds.clear();
-            } else {
-                // Get the stroke the delta applies to
-                const strokeId = operation.id;
-                dirtyStrokeIds.add(strokeId);
-            }
+        if (operation.type === "clear") {
+            this.handleClearOp();
+        } else {
+            this.handleStylusOp(operation);
+        }
+    }
+
+    private handleClearOp() {
+        this.clearCanvas();
+        this.lastStrokeRenderOp = {};
+    }
+
+    private handleStylusOp(operation: stream.IStylusOperation) {
+        // Render the dirty stroke
+        const dirtyStrokeId = operation.id;
+        let index = this.lastStrokeRenderOp[dirtyStrokeId] ? this.lastStrokeRenderOp[dirtyStrokeId] : 0;
+
+        const stroke = this.model.getStroke(dirtyStrokeId);
+        for (; index < stroke.operations.length; index++) {
+            // render the stroke
+            this.drawStroke(stroke, stroke.operations[index], stroke.operations[Math.max(0, index - 1)]);
         }
 
-        // Render all the dirty strokes
-        for (const id of dirtyStrokeIds) {
-            let index = this.lastStrokeRenderOp[id] ? this.lastStrokeRenderOp[id] : 0;
-
-            const stroke = this.model.getStroke(id);
-            for (; index < stroke.operations.length; index++) {
-                // render the stroke
-                this.drawStroke(stroke, stroke.operations[index], stroke.operations[Math.max(0, index - 1)]);
-            }
-
-            this.lastStrokeRenderOp[id] = index;
-        }
+        this.lastStrokeRenderOp[dirtyStrokeId] = index;
     }
 }

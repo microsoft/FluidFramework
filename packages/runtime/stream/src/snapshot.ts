@@ -4,7 +4,7 @@
  */
 
 import {
-    IInkDelta,
+    IInkOperation,
     IInkStroke,
     IStylusDownOperation,
     IStylusMoveOperation,
@@ -51,28 +51,25 @@ export class InkSnapshot implements IInkSnapshot {
     }
 
     /**
-     * Process each operation in the provided delta to the snapshot.
-     *
-     * @param delta - The delta to process
+     * Process the operation on the snapshot
+     * @param operation - The op to process
      */
-    public processDelta(delta: IInkDelta) {
-        for (const operation of delta.operations) {
-            switch (operation.type) {
-                case "clear":
-                    this.processClearOperation();
-                    break;
-                case "up":
-                    this.processStylusUpOperation(operation);
-                    break;
-                case "down":
-                    this.processStylusDownOperation(operation);
-                    break;
-                case "move":
-                    this.processStylusMoveOperation(operation);
-                    break;
-                default:
-                    throw new Error("Unknown action type");
-            }
+    public processOperation(operation: IInkOperation) {
+        switch (operation.type) {
+            case "clear":
+                this.processClearOperation();
+                break;
+            case "up":
+                this.processStylusUpOperation(operation);
+                break;
+            case "down":
+                this.processStylusDownOperation(operation);
+                break;
+            case "move":
+                this.processStylusMoveOperation(operation);
+                break;
+            default:
+                throw new Error("Unknown action type");
         }
     }
 

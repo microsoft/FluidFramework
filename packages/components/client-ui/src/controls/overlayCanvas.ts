@@ -9,7 +9,6 @@ import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import * as recognizer from "./shapeRecognizer";
-import { IShape } from "./shapes/index";
 
 export enum SegmentCircleInclusive {
     None,
@@ -79,13 +78,13 @@ export class DrawingContext {
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
     public drawStroke(current: stream.IStylusOperation) {
-        const previous = this.lastOperation || current;
-
         if (current.type === "down") {
             this.pen = (current as stream.IStylusDownOperation).pen;
+            this.lastOperation = null;
         }
         assert(this.pen);
 
+        const previous = this.lastOperation || current;
         const shapes = getShapes(previous, current, this.pen, SegmentCircleInclusive.End);
 
         if (shapes) {
@@ -207,13 +206,11 @@ export class InkLayer extends Layer {
                 return;
             }
 
-            const delta = op.contents as stream.IInkDelta;
-            for (const operation of delta.operations) {
-                if (operation.type === "clear") {
-                    throw new Error("Clear not supported in OverlayCanvas");
-                } else {
-                    this.drawingContext.drawStroke(operation);
-                }
+            const operation = op.contents as stream.IInkOperation;
+            if (operation.type === "clear") {
+                throw new Error("Clear not supported in OverlayCanvas");
+            } else {
+                this.drawingContext.drawStroke(operation);
             }
         });
 
@@ -225,14 +222,12 @@ export class InkLayer extends Layer {
         }
     }
 
-    public drawDelta(delta: stream.IInkDelta) {
-        this.model.submitDelta(delta);
-        for (const operation of delta.operations) {
-            if (operation.type === "clear") {
-                throw new Error("Clear not supported in OverlayCanvas");
-            } else {
-                this.drawingContext.drawStroke(operation);
-            }
+    public drawOperation(operation: stream.IInkOperation) {
+        this.model.submitOperation(operation);
+        if (operation.type === "clear") {
+            throw new Error("Clear not supported in OverlayCanvas");
+        } else {
+            this.drawingContext.drawStroke(operation);
         }
     }
 }
@@ -375,12 +370,12 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            const delta = new stream.InkDelta().stylusDown(
+            const operation = stream.Stream.makeDownOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.activePen);
-            this.currentStylusActionId = (delta.operations[0] as stream.IStylusDownOperation).id;
-            this.activeLayer.drawDelta(delta);
+            this.currentStylusActionId = operation.id;
+            this.activeLayer.drawOperation(operation);
 
             evt.returnValue = false;
         }
@@ -390,11 +385,11 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            const delta = new stream.InkDelta().stylusMove(
+            const operation = stream.Stream.makeMoveOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
-            this.activeLayer.drawDelta(delta);
+            this.activeLayer.drawOperation(operation);
 
             evt.returnValue = false;
         }
@@ -408,13 +403,13 @@ export class OverlayCanvas extends ui.Component {
             this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
-            const delta = new stream.InkDelta().stylusUp(
+            const operation = stream.Stream.makeUpOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
             this.currentStylusActionId = undefined;
 
-            this.activeLayer.drawDelta(delta);
+            this.activeLayer.drawOperation(operation);
 
             // Release the event
             this.element.releasePointerCapture(this.activePointerId);

@@ -61,11 +61,10 @@ export interface IStream extends ISharedObject {
     getStroke(key: string): IInkStroke;
 
     /**
-     * Send the delta and apply.
-     *
-     * @param delta - Collection of one or more ops to submit - only one is supported currently
+     * Send the op and process it
+     * @param operation - op to submit
      */
-    submitDelta(delta: IInkDelta);
+    submitOperation(operation: IInkOperation);
 }
 
 /**
@@ -166,14 +165,4 @@ export interface IInkStroke {
      * The operations contained within the stroke.
      */
     operations: IStylusOperation[];
-}
-
-/**
- * Represents a collection of ink operations to apply.
- */
-export interface IInkDelta {
-    /**
-     * Operations to include in this delta (only one operation per delta is currently supported).
-     */
-    operations: IInkOperation[];
 }

@@ -15,7 +15,19 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { SharedObject } from "@prague/shared-object-common";
-import { IInkDelta, IInkStroke, IStream } from "./interfaces";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
+import {
+    IClearOperation,
+    IInkOperation,
+    IInkStroke,
+    IPen,
+    IPoint,
+    IStream,
+    IStylusDownOperation,
+    IStylusMoveOperation,
+    IStylusUpOperation,
+} from "./interfaces";
 import { IInkSnapshot, InkSnapshot } from "./snapshot";
 import { StreamFactory } from "./streamFactory";
 
@@ -54,6 +66,81 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
+     * @param time - Time, in milliseconds, that the operation occurred on the originating device
+     */
+    public static makeClearOperation(time: number = new Date().getTime()): IClearOperation {
+        return {
+            time,
+            type: "clear",
+        };
+    }
+
+    /**
+     * @param point - Location of the down
+     * @param pressure - The ink pressure applied
+     * @param pen - Drawing characteristics of the pen
+     */
+    public static makeDownOperation(
+        point: IPoint,
+        pressure: number,
+        pen: IPen,
+    ): IStylusDownOperation {
+        const id: string = uuid();
+        const time: number = new Date().getTime();
+
+        return {
+            id,
+            pen,
+            point,
+            pressure,
+            time,
+            type: "down",
+        };
+    }
+
+    /**
+     * @param point - Location of the move
+     * @param pressure - The ink pressure applied
+     * @param id - Unique ID for the stroke
+     */
+    public static makeMoveOperation(
+        point: IPoint,
+        pressure: number,
+        id: string,
+    ): IStylusMoveOperation {
+        const time: number = new Date().getTime();
+
+        return {
+            id,
+            point,
+            pressure,
+            time,
+            type: "move",
+        };
+    }
+
+    /**
+     * @param point - Location of the up
+     * @param pressure - The ink pressure applied
+     * @param id - Unique ID for the stroke
+     */
+    public static makeUpOperation(
+        point: IPoint,
+        pressure: number,
+        id: string,
+    ): IStylusUpOperation {
+        const time: number = new Date().getTime();
+
+        return {
+            id,
+            point,
+            pressure,
+            time,
+            type: "up",
+        };
+    }
+
+    /**
      * The current ink snapshot.
      */
     private inkSnapshot: InkSnapshot = InkSnapshot.clone(emptySnapshot);
@@ -85,13 +172,12 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Send the delta and process it.
-     *
-     * @param delta - Collection of one or more ops to submit - only one is supported currently
+     * Send the op and process it
+     * @param operation - op to submit
      */
-    public submitDelta(delta: IInkDelta) {
-        this.submitLocalMessage(delta);
-        this.inkSnapshot.processDelta(delta);
+    public submitOperation(operation: IInkOperation) {
+        this.submitLocalMessage(operation);
+        this.inkSnapshot.processOperation(operation);
     }
 
     /**
@@ -150,7 +236,7 @@ export class Stream extends SharedObject implements IStream {
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         if (message.type === MessageType.Operation && !local) {
-            this.inkSnapshot.processDelta(message.contents as IInkDelta);
+            this.inkSnapshot.processOperation(message.contents as IInkOperation);
         }
     }
 
