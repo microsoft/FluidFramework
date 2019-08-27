@@ -8,15 +8,20 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     Usage: pragueDump [options] URL
     URL: <ODSP joinSession URL>|<Routerlicious URL>
     Options:
-      --dump:rawmessage             : dump all messages
-      --dump:snapshotTree           : dump the snapshot trees
-      --dump:snapshotBlob           : dump the contents of snapshot blobs
-      --stat:message                : show a table of message type counts and size
-      --stat:snapshot               : show a table of snapshot path and blob size
-      --stat:dataType               : show a table of data type
-      --stat:channel                : show a table of channel
-      --filter:messageType <type>   : filter message by <type>
-      --jwt <token>                 : token to be used for routerlicious URLs
+      --dump:rawmessage               : dump all messages
+      --dump:snapshotVersion          : dump a list of snapshot version
+      --dump:snapshotTree             : dump the snapshot trees
+      --dump:snapshotBlob             : dump the contents of snapshot blobs
+      --forceRefreshToken             : Force refresh token (SPO only)
+      --stat:message                  : show a table of message type counts and size
+      --stat:snapshot                 : show a table of snapshot path and blob size
+      --stat:dataType                 : show a table of data type
+      --stat:channel                  : show a table of channel
+      --filter:messageType <type>     : filter message by <type>
+      --jwt <token>                   : token to be used for routerlicious URLs
+      --numSnapshotVersions <number>  : Number of versions to load (default:10)
+      --snapshotVersionIndex <number> : Index of the version to dump
+      --saveDir <outdir>              : Save data of the snapshots and messages
 
 ## Example Output
 
