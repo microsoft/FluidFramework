@@ -6,7 +6,7 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 import { buildHierarchy } from "@prague/utils";
-import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
+import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, IOdspSnapshot, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { TokenProvider } from "./tokenProvider";
@@ -196,31 +196,47 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return getWithRetryForTokenRefresh(async (refresh) => {
             const tokenProvider = await this.getTokenProvider(refresh);
 
-            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?Count=${count}`);
+            // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
+            if (count === 1) {
+                const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?channels=1&blobs=2`);
 
-            // fetch the latest snapshot versions for the document
-            const versionsResponse = await this.fetchWrapper
-                .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers)
-                .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
-            if (versionsResponse) {
-                if (Array.isArray(versionsResponse.value)) {
-                    return versionsResponse.value.map((version) => {
-                        return {
-                            id: version.sha,
-                            treeId: undefined!,
-                        };
-                    });
+                const {trees, blobs, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+
+                if (trees) {
+                    this.initTreesCache(trees);
                 }
 
-                if ((versionsResponse as any).error) {
-                    // If the URL have error, the server might not response with an error code, but an error object
-                    const e = new Error("getVersions fetch error");
-                    (e as any).data = versionsResponse;
-                    return Promise.reject(JSON.stringify(versionsResponse));
+                if (blobs) {
+                    this.initBlobsCache(blobs);
                 }
+
+                return sha ? [{ id: sha, treeId: undefined! }] : [];
+            } else {
+                const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?Count=${count}`);
+
+                // fetch the latest snapshot versions for the document
+                const versionsResponse = await this.fetchWrapper
+                    .get<IDocumentStorageGetVersionsResponse>(url, this.documentId, headers)
+                    .catch<IDocumentStorageGetVersionsResponse>((error) => (error === 400 || error === 404) ? error : Promise.reject(error));
+                if (versionsResponse) {
+                    if (Array.isArray(versionsResponse.value)) {
+                        return versionsResponse.value.map((version) => {
+                            return {
+                                id: version.sha,
+                                treeId: undefined!,
+                            };
+                        });
+                    }
+
+                    if ((versionsResponse as any).error) {
+                        // If the URL have error, the server might not response with an error code, but an error object
+                        const e = new Error("getVersions fetch error");
+                        (e as any).data = versionsResponse;
+                        return Promise.reject(JSON.stringify(versionsResponse));
+                    }
+                }
+                return [];
             }
-
-            return [];
         });
     }
 
