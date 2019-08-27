@@ -3,20 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@prague/gitresources";
 import { IDocumentService, IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
 import { parse } from "url";
-import { ISequencedDeltaOpMessage, ISocketStorageDiscovery } from "./contracts";
+import { IOdspSnapshot, ISocketStorageDiscovery } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
 import { OdspDocumentService } from "./OdspDocumentService";
-
-export interface IOdspSnapshot {
-    id: string;
-    sha: string;
-    trees: resources.ITree[];
-    blobs: resources.IBlob[];
-    ops: ISequencedDeltaOpMessage[];
-}
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
