@@ -1,0 +1,44 @@
+html, body {
+	height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+.host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0.75in;   
+}
+
+.page {
+}
+
+.title h1 {
+    margin-bottom: 0;
+}
+.title hr {
+    margin-top: 0;
+    margin-bottom: 0.1in;
+}
+
+.viewport {
+    outline: 1px dotted #eee;
+    padding: 0.1in;
+}
+
+.viewport:focus-within {
+    background: white;
+    outline: 1px dotted #ccc;
+}
+
+.slot:focus-within {
+    outline: none;
+}
+
+.search {
+
+}

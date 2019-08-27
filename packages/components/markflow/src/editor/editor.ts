@@ -5,25 +5,36 @@
 
 import { IComponent } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
-import { paste } from "../clipboard/paste";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
-import { IFormatterState, RootFormatter } from "../view/formatter";
-import { Layout } from "../view/layout";
+import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
+import { eotSegment, Layout } from "../view/layout";
 import { Caret } from "./caret";
 import { debug } from "./debug";
 import * as styles from "./index.css";
 
+const onKeyDownThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
+    return format.onKeyDown(layout, state, caret, e);
+};
+
+const onKeyPressThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: KeyboardEvent) => {
+    return format.onKeyPress(layout, state, caret, e);
+};
+
+const onPasteThunk = (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: ClipboardEvent) => {
+    return format.onPaste(layout, state, caret, e);
+};
+
 export class Editor {
+    private get doc() { return this.layout.doc; }
+
+    public get selection() { return this.caret.selection; }
     private readonly layout: Layout;
     private readonly caret: Caret;
-    private readonly caretSync: () => void;
-    private get doc() { return this.layout.doc; }
 
     constructor(doc: FlowDocument, private readonly root: HTMLElement, formatter: Readonly<RootFormatter<IFormatterState>>, scope?: IComponent) {
         const scheduler = new Scheduler();
         this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
-        this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
 
         root.tabIndex = 0;
         root.contentEditable = "true";
@@ -32,36 +43,12 @@ export class Editor {
         root.addEventListener("keypress", this.onKeyPress);
     }
 
-    public get selection() { return this.caret.selection; }
-
     public remove() {
         this.root.contentEditable = "false";
         this.root.removeEventListener("paste", this.onPaste);
         this.root.removeEventListener("keydown", this.onKeyDown);
         this.root.removeEventListener("keypress", this.onKeyPress);
         this.layout.remove();
-    }
-
-    private delete(e: Event, direction: Direction) {
-        this.consume(e);
-
-        const caret = this.caret;
-        let { start, end } = caret.selection;
-
-        if (start === end) {
-            // If no range is currently selected, delete the preceding character (if any).
-            const dx = getDeltaX(direction);
-            if (dx < 0) {
-                start--;
-            } else {
-                end++;
-            }
-        }
-
-        const doc = this.doc;
-        doc.remove(Math.max(0, start), Math.min(end, doc.length));
-        caret.collapseForward();
-        this.caretSync();
     }
 
     private unlinkChildren(node: Node | HTMLElement) {
@@ -95,17 +82,25 @@ export class Editor {
         }
 
         switch (e.code) {
-            case KeyCode.F4: {
+            case KeyCode.F1: {
                 console.clear();
                 break;
             }
 
-            case KeyCode.F5: {
+            case KeyCode.F6: {
+                this.doc.remove(0, this.doc.length);
+                // Fall through to reset
+            }
+
+            case KeyCode.F3: {
                 console.clear();
                 debug("*** RESET ***");
                 this.unlinkChildren(this.layout.root);
+                // Fall through to sync
+            }
+
+            case KeyCode.F2 : {
                 this.layout.sync();
-                this.caretSync();
                 break;
             }
 
@@ -117,63 +112,42 @@ export class Editor {
                 this.enterIfInclusion(e, this.caret.position, Direction.right);
                 break;
 
-            // Note: Chrome 69 delivers backspace on 'keydown' only (i.e., 'keypress' is not fired.)
-            case KeyCode.backspace: {
-                this.delete(e, Direction.left);
-                break;
-            }
-            case KeyCode.delete: {
-                this.delete(e, Direction.right);
-                break;
-            }
             default: {
-                debug("Key: %s (%d)", e.key, e.keyCode);
+                if (this.delegateEvent(e, onKeyDownThunk)) {
+                    this.consume(e);
+                }
             }
         }
     }
 
     private readonly onPaste = (e: ClipboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
+        if (this.shouldHandleEvent(e)) {
+            this.consume(e);
+            this.delegateEvent(e, onPasteThunk);
         }
-
-        this.consume(e);
-        paste(this.doc, e.clipboardData, this.caret.position);
     }
 
     private readonly onKeyPress = (e: KeyboardEvent) => {
-        if (!this.shouldHandleEvent(e)) {
-            return;
-        }
-
-        this.consume(e);
-
-        switch (e.code) {
-            case KeyCode.enter: {
-                if (e.shiftKey) {
-                    this.doc.insertLineBreak(this.caret.position);
-                    this.caretSync();
-                } else {
-                    this.doc.insertParagraph(this.caret.position);
-                    this.caretSync();
-                }
-                break;
-            }
-            default: {
-                this.insertText(e);
-            }
+        if (this.shouldHandleEvent(e)) {
+            this.consume(e);
+            this.delegateEvent(e, onKeyPressThunk);
         }
     }
 
-    private insertText(e: KeyboardEvent, text = e.key) {
-        const { start, end } = this.caret.selection;
-        if (start === end) {
-            this.doc.insertText(end, text);
-        } else {
-            this.doc.replaceWithText(start, end, text);
+    private delegateEvent<TEvent extends Event>(e: TEvent, thunk: (format: Readonly<Formatter<IFormatterState>>, state: Readonly<IFormatterState>, layout: Layout, caret: Caret, e: TEvent) => boolean) {
+        const { doc, caret, layout } = this;
+        const position = caret.position;
+        const segment = caret.position >= doc.length
+            ? eotSegment
+            : doc.getSegmentAndOffset(position).segment;
+
+        for (const { formatter, state } of layout.getFormats(segment)) {
+            if (thunk(formatter, state, layout, caret, e)) {
+                return true;
+            }
         }
-        this.caret.collapseForward();
-        this.caretSync();
+
+        return false;
     }
 
     private consume(e: Event) {

@@ -1,0 +1,90 @@
+{
+  "name": "@chaincode/markflow",
+  "version": "0.9.0",
+  "description": "Collaborative markdown editor.",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "fluid": {
+    "browser": {
+      "umd": {
+        "files": [
+          "dist/main.bundle.js"
+        ],
+        "library": "main"
+      }
+    }
+  },
+  "scripts": {
+    "build": "npm run build:compile",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack npm:build:copy",
+    "build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/ && copyfiles -u 1 \"src/**/*.css\" lib/",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile && npm run webpack",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "dev": "npm run build:esnext -- --watch",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
+    "test:disabled": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
+    "test:coverage:disabled": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\""
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "license": "MIT",
+  "dependencies": {
+    "@prague/aqueduct": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/container-definitions": "^0.9.0",
+    "@prague/flow-util": "^0.9.0",
+    "@prague/map": "^0.9.0",
+    "@prague/merge-tree": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/sequence": "^0.9.0",
+    "debug": "^4.1.1",
+    "remark": "^11.0.1"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.9.0",
+    "@prague/local-test-server": "^0.9.0",
+    "@prague/prague-dev-server": "~3.9.0",
+    "@types/debug": "^0.0.31",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "copyfiles": "^2.1.0",
+    "css-loader": "^1.0.0",
+    "file-loader": "^2.0.0",
+    "html-loader": "^0.5.5",
+    "ignore-styles": "^5.0.1",
+    "jsdom": "^12.0.0",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^14.1.1",
+    "rimraf": "^2.6.2",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.0",
+    "ts-loader": "^4.5.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.8.2",
+    "webpack-bundle-analyzer": "^2.13.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-merge": "^4.1.2",
+    "webpack-visualizer-plugin": "^0.1.11"
+  }
+}
