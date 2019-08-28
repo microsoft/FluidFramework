@@ -57,7 +57,8 @@ export class ComponentSerializer implements IComponentSerializer {
                     bind.bind(handle);
                 }
 
-                // URL is provided relative to the given context
+                // If the handle contexts match then we can store a relative path. Otherwise we convert to an
+                // absolute path.
                 const url = context === handle.routeContext
                     ? handle.path
                     : toAbsoluteUrl(handle);
@@ -75,6 +76,8 @@ export class ComponentSerializer implements IComponentSerializer {
 
     // parses the serialized data - context must match the context with which the JSON was stringified
     public parse(input: string, context: IComponentHandleContext) {
+        let root: IComponentHandleContext;
+
         return JSON.parse(
             input,
             (key, value) => {
@@ -82,7 +85,21 @@ export class ComponentSerializer implements IComponentSerializer {
                     return value;
                 }
 
-                const handle = new ComponentHandle(value.url, context);
+                // If the stored URL is absolute then we need to adjust the context from which we load. For
+                // absolute URLs we load from the root context. Given this is not always needed we delay looking
+                // up the root component until needed.
+                const absoluteUrl = value.url.indexOf("/") === 0;
+                if (absoluteUrl && !root) {
+                    // Find the root context to use for absolute requests
+                    root = context;
+                    while (root.routeContext) {
+                        root = root.routeContext;
+                    }
+                }
+
+                const handle = new ComponentHandle(
+                    absoluteUrl ? value.url.substr(1) : value.url,
+                    absoluteUrl ? root : context);
 
                 return handle;
             });

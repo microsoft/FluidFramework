@@ -42,7 +42,9 @@
     "@prague/utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
-    "debug": "^4.1.1"
+    "@types/uuid": "^3.4.4",
+    "debug": "^4.1.1",
+    "uuid": "^3.3.2"
   },
   "license": "MIT"
 }

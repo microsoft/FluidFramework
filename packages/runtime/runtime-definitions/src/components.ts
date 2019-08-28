@@ -246,10 +246,10 @@ export interface IComponentContext extends EventEmitter {
 
     /**
      * Creates a new component.
-     * @param id - ID of the chaincode package.
-     * @param pkg - Package name of the component.
+     * @param pkgOrId - Package name if a second parameter is not provided. Otherwise an explicit ID.
+     * @param pkg - Package name of the component. Optional and only required if specifying an explicit ID.
      */
-    createComponent(id: string, pkg: string): Promise<IComponentRuntime>;
+    createComponent(pkgOrId: string, pkg?: string): Promise<IComponentRuntime>;
 
     /**
      * Returns the runtime of the component.

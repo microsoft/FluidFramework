@@ -63,6 +63,8 @@ import {
 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
+// tslint:disable-next-line:no-submodule-imports
+import * as uuid from "uuid/v4";
 import {
     ComponentContext,
     LocalComponentContext,
@@ -864,8 +866,11 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
         }
     }
 
-    public async createComponent(id: string, pkg: string): Promise<IComponentRuntime> {
+    public async createComponent(idOrPkg: string, maybePkg?: string): Promise<IComponentRuntime> {
         this.verifyNotClosed();
+
+        const id = maybePkg === undefined ? uuid() : idOrPkg;
+        const pkg = maybePkg === undefined ? idOrPkg : maybePkg;
 
         const context = new LocalComponentContext(
             id,

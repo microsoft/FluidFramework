@@ -4,3 +4,4 @@
  */
 
 export * from "./componentRuntime";
+export * from "./componentHandle";
