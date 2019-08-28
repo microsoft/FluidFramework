@@ -10,7 +10,7 @@ import {
 } from "@prague/component-core-interfaces";
 import { ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { IResolvedPackage, WebLoader } from "@prague/loader-web";
+import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { IErrorTrackingService, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
@@ -127,7 +127,7 @@ export function createWebLoader(
     scope: IComponent,
 ): Loader {
     // Create the web loader and prefetch the chaincode we will need
-    const codeLoader = new WebLoader(npm);
+    const codeLoader = new WebCodeLoader(npm);
     if (pkg) {
         if (pkg.pkg) { // this is an IFluidPackage
             codeLoader.seed(pkg.pkg, pkg.details.config, scriptIds);

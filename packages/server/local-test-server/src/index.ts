@@ -5,7 +5,7 @@
 
 export * from "./testDocumentService";
 export * from "./testDeltaConnectionServer";
-export * from "./testLoader";
+export * from "./testCodeLoader";
 export * from "./testResolver";
 export * from "./documentEventManager";
 export * from "./testHost";

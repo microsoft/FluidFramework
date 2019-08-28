@@ -12,14 +12,13 @@ import { ISharedObject } from "@prague/shared-object-common";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,
+    TestCodeLoader,
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
-    TestLoader,
     TestResolver,
 } from ".";
 import { TestDataStore } from "./testDataStore";
 
-// tslint:disable:array-type
 /**
  * Basic component implementation for testing.
  */
@@ -155,8 +154,6 @@ export class TestHost {
             storeComponentRegistry = new Map(componentRegistry.concat([
                 [
                     TestRootComponent.type,
-                    // tslint:disable:no-function-expression
-                    // tslint:disable:only-arrow-functions
                     Promise.resolve(TestRootComponent.getFactory()),
                 ],
             ]));
@@ -168,7 +165,7 @@ export class TestHost {
         }
 
         const store = new TestDataStore(
-            new TestLoader([
+            new TestCodeLoader([
                 [TestRootComponent.type,
                     {
                     IRuntimeFactory: undefined,

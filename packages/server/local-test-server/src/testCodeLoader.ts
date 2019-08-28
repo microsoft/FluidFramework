@@ -10,7 +10,7 @@ import { ICodeLoader, IRuntimeFactory } from "@prague/container-definitions";
  * an array of keys to runtime factories will be provided at construction time, which can
  * then be loaded by providing the key as the load source.
  */
-export class TestLoader implements ICodeLoader {
+export class TestCodeLoader implements ICodeLoader {
     private readonly typeToFactory: Map<string, Promise<IRuntimeFactory> | IRuntimeFactory>;
 
     /**
@@ -30,7 +30,7 @@ export class TestLoader implements ICodeLoader {
         const factory = this.typeToFactory.get(source);
 
         if (factory === undefined) {
-            throw new Error(`TestLoader: Missing IChainCodeFactory for '${source}'.`);
+            throw new Error(`TestCodeLoader: Missing IRuntimeFactory for '${source}'.`);
         }
 
         return Promise.resolve(factory as any);

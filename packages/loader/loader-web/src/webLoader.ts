@@ -270,7 +270,7 @@ class FluidPackage {
     }
 }
 
-export class WebLoader implements ICodeLoader {
+export class WebCodeLoader implements ICodeLoader {
     // Cache goes CDN -> package -> entrypoint
     private readonly resolvedCache = new Map<string, FluidPackage>();
     private readonly scriptManager = new ScriptManager();

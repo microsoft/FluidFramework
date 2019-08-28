@@ -4,7 +4,7 @@
  */
 
 import { IFluidCodeDetails } from "@prague/container-definitions";
-import { extractDetails, WebLoader } from "@prague/loader-web";
+import { extractDetails, WebCodeLoader } from "@prague/loader-web";
 import { ScopeType } from "@prague/protocol-definitions";
 import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
@@ -31,7 +31,7 @@ export function create(
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
-    const webLoader = new WebLoader(config.get(config.get("worker:npm")));
+    const webLoader = new WebCodeLoader(config.get(config.get("worker:npm")));
 
     /**
      * Looks up the version of a chaincode in the cache.
