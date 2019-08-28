@@ -6,21 +6,26 @@
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import * as random from "random-js";
-import { TestClient } from ".";
-import { IMergeTreeOp } from "..";
+import { IMergeTreeOp } from "../ops";
+import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 describe("MergeTree.Client", () => {
-
+    /* enables:
+        incremental logging
+        incremental growth
+        more rounds
+    */
+    const debug = false;
     // short runs about 3s per seed, long runs about 4 mins per seed
     const long = false;
     // tslint:disable: mocha-no-side-effect-code
 
     // Test config
-    const maxMinLength = 10;
+    const maxMinLength = 512;
     const maxClients = long ? 32 : 8;
     const maxOpsPerRound = long ? 512 : 128;
-    const totalRounds = long ? 32 : 8;
+    const totalRounds = (long ? 32 : 8) * (debug ? 10 : 1);
     const annotate = true;
 
     // control how many clients to start with for debugging
@@ -34,13 +39,15 @@ describe("MergeTree.Client", () => {
             clientNames.push(String.fromCharCode(startCode + i));
         }
     }
+
+    const growthFunc = (input: number) => debug ? input + 1 : input * 2;
+
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
 
-    // tslint:enable: mocha-no-side-effect-code
-
-    for (let minLength = 1; minLength <= maxMinLength; minLength++) {
+    for (let minLength = 1; minLength <= maxMinLength; minLength = growthFunc(minLength)) {
+        // tslint:enable: mocha-no-side-effect-code
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
             mt.seedWithArray([0xDEADBEEF, 0xFEEDBED, minLength]);
@@ -54,18 +61,18 @@ describe("MergeTree.Client", () => {
                 clients.forEach((c) => c.updateMinSeq(seq));
 
                 // Add double the number of clients each iteration
-                const targetClients = Math.max(minClients, clients.length * 2);
+                const targetClients = Math.max(minClients, growthFunc(clients.length));
                 for (let cc = clients.length; cc < targetClients; cc++) {
                     const newClient = await TestClient.createFromSnapshot(clients[0], clientNames[cc]);
                     clients.push(newClient);
                 }
 
-                for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound *= 2) {
+                for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound = growthFunc(opsPerRound)) {
+                    if (long || debug) {
+                        // tslint:disable-next-line: max-line-length
+                        console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
+                    }
                     for (let round = 0; round < totalRounds; round++) {
-                        if (long) {
-                            // tslint:disable-next-line: max-line-length
-                            console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Round: ${round} Seq: ${seq}`);
-                        }
                         const minimumSequenceNumber = seq;
                         let tempSeq = seq * -1;
                         const logger = new TestClientLogger(
@@ -81,9 +88,11 @@ describe("MergeTree.Client", () => {
                             const sg = client.mergeTree.pendingSegments.last();
                             let op: IMergeTreeOp;
                             if (len < minLength) {
+                                const pos = random.integer(0, len)(mt);
                                 op = client.insertTextLocal(
-                                    random.integer(0, len)(mt),
+                                    pos,
                                     client.longClientId.repeat(random.integer(1, 3)(mt)));
+
                             } else {
                                 const start = random.integer(0, len - 1)(mt);
                                 const end = random.integer(start + 1, len)(mt);

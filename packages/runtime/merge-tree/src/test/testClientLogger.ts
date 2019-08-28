@@ -29,9 +29,12 @@ export class TestClientLogger {
 
     public log(msg?: ISequencedDocumentMessage, preAction?: (c: TestClient) => void) {
         const seq = msg ? msg.sequenceNumber.toString() : "";
-        const opType = msg ? (msg.contents as IMergeTreeOp).type.toString() : "";
         const client = msg ? msg.clientId : "";
-        const clientOp = `${client}${opType}`;
+        const op = msg ? (msg.contents as IMergeTreeOp) : undefined;
+        const opType = op ? op.type.toString() : "";
+        // tslint:disable-next-line: no-string-literal
+        const opPos = op && op["pos1"] ? `@${op["pos1"]}${op["pos2"] ? `,${op["pos2"]}` : ""}` : "";
+        const clientOp = ` ${client}${opType}${opPos};`;
         const line: string[] = [
             seq,
             clientOp,
