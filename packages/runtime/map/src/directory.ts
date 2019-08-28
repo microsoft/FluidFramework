@@ -25,7 +25,6 @@ import {
     IDirectoryValueChanged,
     ISerializableValue,
     ISharedDirectory,
-    IValueChanged,
     IValueOpEmitter,
     IValueType,
     IValueTypeOperationValue,
@@ -397,7 +396,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         for (const [currentSubDirObject, currentSubDir] of subdirsToDeserialize) {
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
-                    const newSubDir = currentSubDir.createSubDirectory(subdirName) as SubDirectory;
+                    const newSubDir = new SubDirectory(
+                        this,
+                        this.runtime,
+                        posix.join(currentSubDir.absolutePath, subdirName),
+                    );
+                    currentSubDir.populateSubDirectory(subdirName, newSubDir);
+
                     subdirsToDeserialize.set(subdirObject, newSubDir);
                 }
             }
@@ -652,7 +657,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     const translatedValue = this.runtime.IComponentSerializer.parse(
                         JSON.stringify(op.value.value), this.runtime.IComponentHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
-                    const event: IValueChanged = { key: op.key, previousValue };
+                    const event: IDirectoryValueChanged = { key: op.key, path: op.path, previousValue };
                     this.emit("valueChanged", event, local, message);
                 },
                 submit: (op) => {
@@ -1080,6 +1085,13 @@ class SubDirectory implements IDirectory {
      */
     public populateStorage(key: string, localValue: ILocalValue) {
         this._storage.set(key, localValue);
+    }
+
+    /**
+     * @internal
+     */
+    public populateSubDirectory(subdirName: string, newSubDir: SubDirectory) {
+        this._subdirectories.set(subdirName, newSubDir);
     }
 
     /**
