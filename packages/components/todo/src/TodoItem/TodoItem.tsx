@@ -17,6 +17,7 @@ import {
   SharedCell,
 } from "@prague/cell";
 import {
+  IComponentHandle,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
@@ -56,6 +57,11 @@ export class TodoItem extends PrimedComponent
     IComponentReactViewable,
     IComponentForge {
 
+  // tslint:disable:prefer-readonly
+  private text: SharedString;
+  private innerIdCell: ISharedCell;
+  // tslint:enable:prefer-readonly
+
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
 
@@ -73,7 +79,7 @@ export class TodoItem extends PrimedComponent
     const text = SharedString.create(this.runtime);
     text.insertText(0, newItemText);
     // create a cell that will be use for the text entry
-    this.root.set("text", text);
+    this.root.set("text", text.handle);
 
     // create a counter that will be used for the checkbox
     // we use a counter so if both users press the button at the same time it will result
@@ -84,7 +90,20 @@ export class TodoItem extends PrimedComponent
     // user choose the component they want to embed. We store it in a cell for easier event handling.
     const innerIdCell = SharedCell.create(this.runtime);
     innerIdCell.set("");
-    this.root.set("innerId", innerIdCell);
+    this.root.set("innerId", innerIdCell.handle);
+  }
+
+  protected async componentHasInitialized() {
+    const text = this.root.get<IComponentHandle>("text").get<SharedString>();
+    const innerIdCell = this.root.get<IComponentHandle>("innerId").get<ISharedCell>();
+
+    [
+      this.text,
+      this.innerIdCell,
+    ] = await Promise.all([
+      text,
+      innerIdCell,
+    ]);
   }
 
   // start IComponentHTMLVisual
@@ -105,16 +124,13 @@ export class TodoItem extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const text = this.root.get<SharedString>("text");
       const checkedCounter = this.root.get<Counter>("checked");
       const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
-
-      const innerIdCell = this.root.get<ISharedCell>("innerId");
       return (
         <TodoItemView
-          sharedString={text}
+          sharedString={this.text}
           id={this.url}
-          innerIdCell={innerIdCell}
+          innerIdCell={this.innerIdCell}
           checkedCounter={checkedCounter}
           getComponentView={(id) => factory.create(id)}
           createComponent={this.createComponent.bind(this)}/>
@@ -145,7 +161,6 @@ export class TodoItem extends PrimedComponent
     }
 
     // Update the inner component id
-    const innerIdCell = this.root.get<ISharedCell>("innerId");
-    innerIdCell.set(id);
+    this.innerIdCell.set(id);
   }
 }

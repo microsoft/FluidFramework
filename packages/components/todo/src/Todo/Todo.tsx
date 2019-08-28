@@ -15,6 +15,7 @@ import {
   SharedCell,
 } from "@prague/cell";
 import {
+  IComponentHandle,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
@@ -45,6 +46,13 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   // DDS ids stored as variables to minimize simple string mistakes
   private readonly innerCellIds = "innerCellIds";
   private readonly titleId = "title";
+  private readonly sharedStringTitleId = "sharedString-title";
+
+  // tslint:disable:prefer-readonly
+  private innerCellIdsMap: ISharedMap;
+  private titleTextCell: ISharedCell;
+  private titleTextSharedString: SharedString;
+  // tslint:enable:prefer-readonly
 
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -55,18 +63,35 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
   protected async componentInitializingFirstTime() {
     // create a list for of all inner todo item components
     // we will use this to know what components to load.
-    this.root.set(this.innerCellIds, SharedMap.create(this.runtime));
+    const map = SharedMap.create(this.runtime);
+    this.root.set(this.innerCellIds, map.handle);
 
     // create a cell that we will use for the title
     // we use a cell because we pass it directly to the contentEditable
     const cell = SharedCell.create(this.runtime);
     // Set the default title
     cell.set("My New Todo");
-    this.root.set(this.titleId, cell);
+    this.root.set(this.titleId, cell.handle);
 
     const text = SharedString.create(this.runtime);
     text.insertText(0, "Title");
-    this.root.set("sharedString-title", text);
+    this.root.set(this.sharedStringTitleId, text.handle);
+  }
+
+  protected async componentHasInitialized() {
+    const innerCellIdsMap = this.root.get<IComponentHandle>(this.innerCellIds).get<ISharedMap>();
+    const titleTextCell = this.root.get<IComponentHandle>(this.titleId).get<ISharedCell>();
+    const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleId).get<SharedString>();
+
+    [
+      this.innerCellIdsMap,
+      this.titleTextCell,
+      this.titleTextSharedString,
+    ] = await Promise.all([
+      innerCellIdsMap,
+      titleTextCell,
+      titleTextSharedString,
+    ]);
   }
 
   // start IComponentHTMLVisual
@@ -94,8 +119,6 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-    const innerCellIdsMap = this.root.get<ISharedMap>(this.innerCellIds);
-
     // callback that allows for creation of new Todo Items
     const createComponent = async (props?: any) => {
       // create a new ID for our component
@@ -105,21 +128,19 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
       await this.createAndAttachComponent(id, TodoItemName, props);
 
       // Store the id of the component in our ids map so we can reference it later
-      innerCellIdsMap.set(id, "");
+      this.innerCellIdsMap.set(id, "");
     };
 
     // The factory allows us to create new embedded component without having to pipe the
     // getComponent call throughout the app.
     const factory = new EmbeddedReactComponentFactory(this.getComponent.bind(this));
-    const titleTextCell = this.root.get<ISharedCell>(this.titleId);
-    const titleTextSharedString = this.root.get<SharedString>("sharedString-title");
     return(
       <TodoView
           getComponentView = {(id: string) => factory.create(id)}
           createComponent={createComponent.bind(this)}
-          map={innerCellIdsMap}
-          textSharedString={titleTextSharedString}
-          textCell={titleTextCell}/>
+          map={this.innerCellIdsMap}
+          textSharedString={this.titleTextSharedString}
+          textCell={this.titleTextCell}/>
     );
   }
 

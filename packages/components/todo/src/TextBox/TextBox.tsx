@@ -10,6 +10,7 @@ import {
   IComponentReactViewable,
 } from "@prague/aqueduct-react";
 import {
+  IComponentHandle,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
@@ -39,6 +40,8 @@ export class TextBox extends PrimedComponent
   public get IComponentHTMLVisual() { return this; }
   public get IComponentReactViewable() { return this; }
 
+  private text: SharedString;
+
   /**
    * Do creation work
    */
@@ -53,7 +56,11 @@ export class TextBox extends PrimedComponent
     // create a SharedString that will be use for the text entry
     const text = SharedString.create(this.runtime);
     text.insertText(0, newItemText);
-    this.root.set("text", text);
+    this.root.set("text", text.handle);
+  }
+
+  protected async componentHasInitialized() {
+    this.text = await this.root.get<IComponentHandle>("text").get<SharedString>();
   }
 
   // start IComponentHTMLVisual
@@ -74,9 +81,8 @@ export class TextBox extends PrimedComponent
    * Since this returns a JSX.Element it allows for an easier model.
    */
   public createJSXElement(): JSX.Element {
-      const text = this.root.get<SharedString>("text");
       return (
-        <CollaborativeTextArea sharedString={text}/>
+        <CollaborativeTextArea sharedString={this.text}/>
       );
   }
 
