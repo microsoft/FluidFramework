@@ -40,3 +40,8 @@ To view the output of a job pod instance
 kubectl logs <pod_name>
 ```
 
+To delete an existing job
+```
+kubectl delete cronjob service-monitoring
+```
+

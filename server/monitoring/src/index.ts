@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import * as Sentry from "@sentry/node";
 import * as nconf from "nconf";
 import * as path from "path";
-import * as raven from "raven";
 import * as winston from "winston";
 import { configureLogging } from "./logger";
 import { testPragueService } from "./testService";
@@ -16,7 +16,7 @@ function getConfig(configFile: string): nconf.Provider {
 
 function setup(): nconf.Provider {
     const config = getConfig(path.join(__dirname, "../config.json"));
-    raven.config(config.get("notification:endpoint")).install();
+    Sentry.init({ dsn: config.get("notification:endpoint") });
     configureLogging(config.get("logger"));
     return config;
 }
@@ -43,7 +43,7 @@ async function run() {
         winston.info("Success running test");
         process.exit(0);
     } catch (err) {
-        raven.captureException(err);
+        Sentry.captureMessage(err);
         winston.error(err);
         // Wait to make sure that the exception is logged in sentry.
         setTimeout(() => {

@@ -14,10 +14,10 @@
     "@prague/container-loader": "^0.3.6760",
     "@prague/routerlicious-host": "^0.3.6760",
     "@prague/routerlicious-socket-storage": "^0.3.6760",
+    "@sentry/node": "^5.6.2",
     "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "nconf": "^0.10.0",
-    "raven": "^2.6.4",
     "uuid": "^3.3.2",
     "winston": "3.2.1"
   },
@@ -26,7 +26,6 @@
     "@types/jsonwebtoken": "^8.3.2",
     "@types/nconf": "^0.10.0",
     "@types/node": "^10.12.12",
-    "@types/raven": "^2.5.3",
     "@types/uuid": "^3.4.4",
     "tslint": "^5.10.0",
     "typescript": "~3.4.5"
