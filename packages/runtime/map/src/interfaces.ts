@@ -78,6 +78,11 @@ export interface IValueTypeSupporter {
  */
 export interface IDirectory extends Map<string, any> {
     /**
+     * The absolute path of the directory.
+     */
+    readonly absolutePath: string;
+
+    /**
      * Retrieves the given key from the directory
      */
     get<T = any>(key: string): T;

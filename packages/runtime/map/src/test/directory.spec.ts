@@ -34,6 +34,10 @@ describe("Routerlicious", () => {
             assert.ok(testDirectory);
         });
 
+        it("Knows its absolute path", () => {
+            assert.equal(rootDirectory.absolutePath, "/");
+        });
+
         it("Can set and get keys one level deep", () => {
             testDirectory.set("testKey", "testValue");
             testDirectory.set("testKey2", "testValue2");
@@ -233,6 +237,13 @@ describe("Routerlicious", () => {
                 barDirectory.set("testKey3", "testValue3");
                 const testSubdir = testDirectory.getWorkingDirectory("/foo");
                 assert.ok(testSubdir);
+            });
+
+            it("Knows its absolute path", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = fooDirectory.createSubDirectory("bar");
+                assert.equal(fooDirectory.absolutePath, "/foo");
+                assert.equal(barDirectory.absolutePath, "/foo/bar");
             });
 
             it("Can get and set keys from a subdirectory using relative paths", () => {

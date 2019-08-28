@@ -195,6 +195,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     public [Symbol.toStringTag]: string = "SharedDirectory";
+    public get absolutePath(): string {
+        return this.root.absolutePath;
+    }
+
     /**
      * @internal
      */
@@ -268,11 +272,11 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.values();
     }
 
-    public createSubDirectory(subdirName: string): SubDirectory {
+    public createSubDirectory(subdirName: string): IDirectory {
         return this.root.createSubDirectory(subdirName);
     }
 
-    public getSubDirectory(subdirName: string): SubDirectory {
+    public getSubDirectory(subdirName: string): IDirectory {
         return this.root.getSubDirectory(subdirName);
     }
 
@@ -284,7 +288,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.deleteSubDirectory(subdirName);
     }
 
-    public subdirectories(): IterableIterator<[string, SubDirectory]> {
+    public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this.root.subdirectories();
     }
 
@@ -292,7 +296,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
      * Get a SubDirectory within the directory, in order to use relative paths from that location.
      * @param rootRelativePath - path of the SubDirectory to get, relative to the root
      */
-    public getWorkingDirectory(rootRelativePath: string): SubDirectory {
+    public getWorkingDirectory(rootRelativePath: string): IDirectory {
         const absolutePath = this.makeAbsolute(rootRelativePath);
         if (absolutePath === posix.sep) {
             return this.root;
@@ -301,7 +305,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         let currentSubDir = this.root;
         const subdirs = absolutePath.substr(1).split(posix.sep);
         for (const subdir of subdirs) {
-            currentSubDir = currentSubDir.getSubDirectory(subdir);
+            currentSubDir = currentSubDir.getSubDirectory(subdir) as SubDirectory;
             if (!currentSubDir) {
                 return undefined;
             }
@@ -375,7 +379,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     currentSubDirObject.subdirectories = {};
                 }
                 currentSubDirObject.subdirectories[subdirName] = {};
-                subdirsToSerialize.set(subdir, currentSubDirObject.subdirectories[subdirName]);
+                subdirsToSerialize.set(subdir as SubDirectory, currentSubDirObject.subdirectories[subdirName]);
             }
         }
 
@@ -393,7 +397,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         for (const [currentSubDirObject, currentSubDir] of subdirsToDeserialize) {
             if (currentSubDirObject.subdirectories) {
                 for (const [subdirName, subdirObject] of Object.entries(currentSubDirObject.subdirectories)) {
-                    const newSubDir = currentSubDir.createSubDirectory(subdirName);
+                    const newSubDir = currentSubDir.createSubDirectory(subdirName) as SubDirectory;
                     subdirsToDeserialize.set(subdirObject, newSubDir);
                 }
             }
@@ -485,7 +489,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             }
 
             for (const [, subdir] of currentSubDir.subdirectories()) {
-                subdirsToRegisterFrom.push(subdir);
+                subdirsToRegisterFrom.push(subdir as SubDirectory);
             }
         }
     }
@@ -538,13 +542,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "clear",
             {
                 process: (op: IDirectoryClearOperation, local, message) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         subdir.processClearMessage(op, local, message);
                     }
                 },
                 submit: (op: IDirectoryClearOperation) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         subdir.submitClearMessage(op);
                     }
@@ -555,13 +559,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "delete",
             {
                 process: (op: IDirectoryDeleteOperation, local, message) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         subdir.processDeleteMessage(op, local, message);
                     }
                 },
                 submit: (op: IDirectoryDeleteOperation) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         subdir.submitKeyMessage(op);
                     }
@@ -572,14 +576,14 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "set",
             {
                 process: (op: IDirectorySetOperation, local, message) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
                         subdir.processSetMessage(op, context, local, message);
                     }
                 },
                 submit: (op: IDirectorySetOperation) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (subdir) {
                         subdir.submitKeyMessage(op);
                     }
@@ -591,13 +595,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "createSubDirectory",
             {
                 process: (op: IDirectoryCreateSubDirectoryOperation, local, message) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
                         parentSubdir.processCreateSubDirectoryMessage(op, local, message);
                     }
                 },
                 submit: (op: IDirectoryCreateSubDirectoryOperation) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
@@ -609,13 +613,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "deleteSubDirectory",
             {
                 process: (op: IDirectoryDeleteSubDirectoryOperation, local, message) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
                         parentSubdir.processDeleteSubDirectoryMessage(op, local, message);
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path);
+                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     if (parentSubdir) {
                         parentSubdir.submitSubDirectoryMessage(op);
                     }
@@ -631,7 +635,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             "act",
             {
                 process: (op: IDirectoryValueTypeOperation, local, message) => {
-                    const subdir = this.getWorkingDirectory(op.path);
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory;
                     // Subdir might not exist if we deleted it
                     if (!subdir) {
                         return;
@@ -662,7 +666,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 /**
  * Node of the directory tree.
  */
-export class SubDirectory implements IDirectory {
+class SubDirectory implements IDirectory {
     public [Symbol.toStringTag]: string = "SubDirectory";
 
     private readonly _storage: Map<string, ILocalValue> = new Map();
@@ -679,7 +683,7 @@ export class SubDirectory implements IDirectory {
     constructor(
         private readonly directory: SharedDirectory,
         private readonly runtime: IComponentRuntime,
-        public absolutePath: string) {
+        public readonly absolutePath: string) {
     }
 
     /**
@@ -781,7 +785,7 @@ export class SubDirectory implements IDirectory {
      * Creates a SubDirectory with the given name as a child of this SubDirectory.
      * @param subdirName - name of the SubDirectory
      */
-    public createSubDirectory(subdirName: string): SubDirectory {
+    public createSubDirectory(subdirName: string): IDirectory {
         if (subdirName.indexOf(posix.sep) !== -1) {
             throw new Error(`SubDirectory names may not contain ${posix.sep}`);
         }
@@ -802,7 +806,7 @@ export class SubDirectory implements IDirectory {
      * Retrieves the given SubDirectory from within this SubDirectory.
      * @param subdirName - the name of the SubDirectory to retrieve
      */
-    public getSubDirectory(subdirName: string): SubDirectory {
+    public getSubDirectory(subdirName: string): IDirectory {
         return this._subdirectories.get(subdirName);
     }
 
@@ -833,7 +837,7 @@ export class SubDirectory implements IDirectory {
     /**
      * Get an iterator over the SubDirectories contained within this SubDirectory.
      */
-    public subdirectories(): IterableIterator<[string, SubDirectory]> {
+    public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this._subdirectories.entries();
     }
 
@@ -841,7 +845,7 @@ export class SubDirectory implements IDirectory {
      * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
      * @param relativePath - Path of the SubDirectory to get, relative to this SubDirectory
      */
-    public getWorkingDirectory(relativePath: string): SubDirectory {
+    public getWorkingDirectory(relativePath: string): IDirectory {
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
