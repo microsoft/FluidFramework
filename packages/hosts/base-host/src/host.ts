@@ -16,10 +16,9 @@ import { IErrorTrackingService, IFluidResolvedUrl, IResolvedUrl } from "@prague/
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
-import { EventEmitter } from "events";
 import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
-async function attach(loader: Loader, url: string, host: Host) {
+async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
 
     if (response.status !== 200 ||
@@ -41,51 +40,8 @@ async function attach(loader: Loader, url: string, host: Host) {
         const renderable =
             viewable.addView ? viewable.addView() : viewable;
 
-        renderable.render(host.div, { display: "block" });
+        renderable.render(div, { display: "block" });
         return;
-    }
-
-    // TODO included for back compat - continued to be included to support very old components
-    // tslint:disable-next-line: no-unsafe-any
-    if ("attach" in response.value) {
-        const legacy = response.value as { attach(platform: LocalPlatform): void };
-        legacy.attach(new LocalPlatform(host.div));
-        return;
-    }
-}
-
-class LocalPlatform extends EventEmitter {
-    constructor(private readonly div: HTMLElement) {
-        super();
-    }
-
-    /**
-     * Queries the platform for an interface of the given ID.
-     * @param id - id of the interface for which the query is made.
-     */
-    public async queryInterface<T>(id: string): Promise<any> {
-        switch (id) {
-            case "dom":
-                return document;
-            case "div":
-                return this.div;
-            default:
-                return null;
-        }
-    }
-
-    // Temporary measure to indicate the UI changed
-    public update() {
-        this.emit("update");
-    }
-
-    public detach() {
-        return;
-    }
-}
-
-class Host {
-    constructor(public readonly div: HTMLElement) {
     }
 }
 
@@ -115,14 +71,14 @@ export async function initializeChaincode(document: Container, pkg: IResolvedPac
     console.log(`Code is ${quorum.get("code2")}`);
 }
 
-async function registerAttach(loader: Loader, container: Container, uri: string, host: Host) {
-    attach(loader, uri, host);
+export async function registerAttach(loader: Loader, container: Container, uri: string, div: HTMLDivElement) {
+    attach(loader, uri, div);
     container.on("contextChanged", (value) => {
-        attach(loader, uri, host);
+        attach(loader, uri, div);
     });
 }
 
-export function getLoader(
+export function createLoader(
     baseUrl: string,
     url: string,
     resolved: IResolvedUrl,
@@ -159,9 +115,7 @@ export function getLoader(
         scope);
 }
 
-export let lastLoaded: Container;
-
-export async function start(
+export function createWebLoader(
     url: string,
     resolved: IResolvedUrl,
     cache: IGitCache,
@@ -171,8 +125,7 @@ export async function start(
     jwt: string,
     config: any,
     scope: IComponent,
-    div: HTMLDivElement,
-): Promise<void> {
+): Loader {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebLoader(npm);
     if (pkg) {
@@ -188,7 +141,7 @@ export async function start(
     }
 
     const errorService = new DefaultErrorTracking();
-    const loader = getLoader(
+    const loader = createLoader(
         document.location.origin,
         url,
         resolved,
@@ -198,15 +151,30 @@ export async function start(
         scope,
         codeLoader,
         errorService);
-    const container = await loader.resolve({ url });
-    lastLoaded = container;
 
-    const platform = new Host(div);
+    return loader;
+}
+
+export async function start(
+    url: string,
+    resolved: IResolvedUrl,
+    cache: IGitCache,
+    pkg: IResolvedPackage,
+    scriptIds: string[],
+    npm: string,
+    jwt: string,
+    config: any,
+    scope: IComponent,
+    div: HTMLDivElement,
+): Promise<Container> {
+    const loader = createWebLoader(url, resolved, cache, pkg, scriptIds, npm, jwt, config, scope);
+
+    const container = await loader.resolve({ url });
     registerAttach(
         loader,
         container,
         url,
-        platform);
+        div);
 
     // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
     // package.
@@ -214,4 +182,6 @@ export async function start(
         await initializeChaincode(container, pkg)
             .catch((error) => console.error("chaincode error", error));
     }
+
+    return container;
 }

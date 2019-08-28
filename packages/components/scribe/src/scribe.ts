@@ -19,6 +19,7 @@ import {
     IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ContainerRuntime } from "@prague/container-runtime";
+import { IDocumentFactory } from "@prague/host-service-interfaces";
 import {
     ISharedMap,
     SharedMap,
@@ -38,7 +39,8 @@ import { resolve } from "url";
 require("bootstrap/dist/css/bootstrap.min.css");
 
 // tslint:disable-next-line:no-var-requires
-const version = require("../package.json").version;
+const pkgVersion = require("../package.json").version;
+const version = `${pkgVersion.endsWith(".0") ? "^" : ""}${pkgVersion}`;
 
 // Text represents the loaded file text
 let text: string;
@@ -137,7 +139,6 @@ function handleFiles(createButton: HTMLButtonElement,
     reader.onload = (event) => {
         // After loading the file show the create button
         text = reader.result as string;
-        createButton.classList.remove("hidden");
     };
 
     // Read the selected file
@@ -152,26 +153,6 @@ function addLink(element: HTMLDivElement, link: string) {
     anchor.target = "_blank";
     element.appendChild(anchor);
     element.appendChild(document.createElement("br"));
-}
-
-async function loadTextEditor(
-    url: string,
-    context: IComponentContext,
-    details: IFluidCodeDetails,
-) {
-    const resolved = await context.loader.resolve({ url });
-
-    // TODO need connected flag on the IContainer
-    if (!(resolved as any).connected) {
-        await new Promise((r) => resolved.once("connected", r));
-    }
-
-    const quorum = resolved.getQuorum();
-
-    // And then make the proposal if a code proposal has not yet been made
-    if (!quorum.has("code")) {
-        quorum.propose("code", details);
-    }
 }
 
 function initialize(
@@ -190,6 +171,7 @@ function initialize(
     const textForm = div.getElementsByClassName("text-form")[0] as HTMLFormElement;
     const startForm = div.getElementsByClassName("start-form")[0] as HTMLFormElement;
     const createButton = div.getElementsByClassName("create")[0] as HTMLButtonElement;
+    const createWarning = div.getElementsByClassName("create-warning")[0] as HTMLButtonElement;
     const startButton = div.getElementsByClassName("start")[0] as HTMLButtonElement;
     const createDetails = div.getElementsByClassName("create-details")[0] as HTMLElement;
     const typingDetails = div.getElementsByClassName("typing-details")[0] as HTMLElement;
@@ -200,8 +182,6 @@ function initialize(
     const typingProgressBar = typingProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
     const ackProgress = div.getElementsByClassName("ack-progress")[0] as HTMLElement;
     const ackProgressBar = ackProgress.getElementsByClassName("progress-bar")[0] as HTMLElement;
-
-    const url = `${window.location.origin}/loader/prague/${context.documentId}-text`;
 
     // Set the speed and translation elements
     intervalElement.value = speed.toString();
@@ -221,11 +201,19 @@ function initialize(
     } else {
         downloadRawText(template).then((rawText) => {
             text = rawText;
-            createButton.classList.remove("hidden");
         }, (error) => {
             console.log(`Error downloading document ${error}`);
         });
     }
+
+    const documentFactory: IDocumentFactory = context.scope ? context.scope.IDocumentFactory : undefined;
+    if (documentFactory) {
+        createButton.classList.remove("hidden");
+    } else {
+        createWarning.classList.remove("hidden");
+    }
+
+    let url: string;
 
     textForm.addEventListener("submit", (event) => {
         intervalTime = Number.parseInt(intervalElement.value, 10);
@@ -237,10 +225,11 @@ function initialize(
             },
             package: `@chaincode/shared-text@${version}`,
         };
+        const createP = documentFactory.create(details);
+        createP.then(
+            (createUrl) => {
+                url = createUrl;
 
-        const scribeP = loadTextEditor(url, context, details);
-        scribeP.then(
-            () => {
                 const linkList = div.getElementsByClassName("link-list")[0] as HTMLDivElement;
 
                 addLink(linkList, url);
@@ -332,6 +321,7 @@ const html =
             <input type="checkbox" class="form-control distributed">
         </div>
         <button class="btn btn-default hidden create" style="margin-bottom: 10px;">Create</button>
+        <p class="hidden create-warning">Host does not support creating new documents</p>
     </form>
 
     <form class="start-form">
@@ -410,7 +400,7 @@ export class Scribe
 
     public async request(request: IRequest): Promise<IResponse> {
         return {
-            mimeType: "prague/component",
+            mimeType: "fluid/component",
             status: 200,
             value: this,
         };

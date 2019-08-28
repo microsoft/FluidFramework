@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getLoader } from "@prague/base-host";
+import { createLoader } from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
@@ -52,7 +52,7 @@ export class KeyValueLoader {
                 headers,
             });
 
-        const loader = getLoader(
+        const loader = createLoader(
             config.get("worker:gatewayUrl"),
             documentUrl,
             result.data,

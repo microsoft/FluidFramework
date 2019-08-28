@@ -8,6 +8,7 @@ import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
+import * as moniker from "moniker";
 import { Provider } from "nconf";
 import passport = require("passport");
 import { parse, UrlWithStringQuery } from "url";
@@ -133,6 +134,15 @@ export function create(
         resultP.then(
             (result) => response.status(200).json(result),
             (error) => response.status(400).end(safeStringify(error)));
+    });
+
+    router.get("/moniker", (request, response) => {
+        response
+            .header("Cache-Control", "no-cache, no-store, must-revalidate")
+            .header("Pragma", "no-cache")
+            .header("Expires", "0")
+            .status(200)
+            .json(moniker.choose());
     });
 
     return router;

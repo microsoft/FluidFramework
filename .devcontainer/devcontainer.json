@@ -12,7 +12,12 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 
-	"runArgs": ["-v","/var/run/docker.sock:/var/run/docker.sock"],
+	"runArgs": [
+		"-v",
+		"/var/run/docker.sock:/var/run/docker.sock",
+		"-u",
+		"node"
+	],
 
 	"extensions": [
 		"dbaeumer.vscode-eslint",

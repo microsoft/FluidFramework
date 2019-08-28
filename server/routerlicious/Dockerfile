@@ -80,6 +80,7 @@ COPY packages/loader/loader-web/package*.json packages/loader/loader-web/
 COPY packages/loader/protocol-definitions/package*.json packages/loader/protocol-definitions/
 COPY packages/loader/utils/package*.json packages/loader/utils/
 COPY packages/hosts/base-host/package*.json packages/hosts/base-host/
+COPY packages/hosts/host-service-interfaces/package*.json packages/hosts/host-service-interfaces/
 COPY packages/hosts/tiny-web-host/package*.json packages/hosts/tiny-web-host/
 COPY packages/hosts/react-web-host/package*.json packages/hosts/react-web-host/
 COPY packages/runtime/shared-object-common/package*.json packages/runtime/shared-object-common/

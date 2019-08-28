@@ -60,15 +60,21 @@ RUN apt-get update && apt-get install -y \
         curl \
         g++
 
+# For Linux the docker group's GID must match the local GID to avoid permission issues Update USER_UID / USER_GID if yours is not 1000. See
+# https://aka.ms/vscode-remote/containers/non-root-user for details.
+ARG DOCKER_GID=999
+RUN addgroup --gid $DOCKER_GID docker
+RUN usermod -aG docker node
+
 # terminal colors with xterm
 ENV TERM xterm
 
 # Switch back to dialog for any ad-hoc use of apt-get
 ENV DEBIAN_FRONTEND=dialog
 
+USER node
+
 RUN sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" \
     &&  git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting \
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-COPY .zshrc /root/.zshrc
-COPY welcome.sh /root/welcome.sh
-RUN echo "~/welcome.sh" >> /root/.zshrc
+COPY .zshrc /home/node/.zshrc

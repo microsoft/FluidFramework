@@ -47,7 +47,7 @@ async function conductor(
     const chunks = author.normalizeText(text).split("\n");
 
     const response = await loader.request({ url });
-    if (response.status !== 200 || response.mimeType !== "prague/component") {
+    if (response.status !== 200 || response.mimeType !== "fluid/component") {
         return Promise.reject("Invalid document");
     }
 
