@@ -1,7 +1,7 @@
 {
-  "name": "@chaincode/collaborative-textarea-noreact",
-  "description": "No react version of collaborative HTML <textarea>.",
-  "version": "0.9.4",
+  "name": "@chaincode/textarea-noreact",
+  "description": "Collaborative HTML <textarea> that uses aqueduct but no React.",
+  "version": "0.10.2",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -25,14 +25,14 @@
     "webpack:dev": "webpack --env=\"development\""
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "~3.8.0",
-    "tslint-microsoft-contrib": "^6.0.0",
     "@prague/build-common": "^0.9.0",
+    "@prague/prague-dev-server": "~3.9.1",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "concurrently": "^4.1.0",
     "ts-loader": "^4.5.0",
     "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
     "typescript": "~3.4.5",
     "webpack": "4.16.5",
     "webpack-cli": "3.1.0",
@@ -51,11 +51,11 @@
     "@prague/component-core-interfaces": "^0.9.0",
     "@prague/component-runtime": "^0.9.0",
     "@prague/container-definitions": "^0.9.0",
+    "@prague/framework-definitions": "^0.9.0",
     "@prague/map": "^0.9.0",
     "@prague/runtime-definitions": "^0.9.0",
     "@prague/sequence": "^0.9.0",
     "@prague/shared-object-common": "^0.9.0",
-    "@prague/framework-definitions": "^0.9.0",
     "@prague/utils": "^0.9.0"
   },
   "license": "MIT"

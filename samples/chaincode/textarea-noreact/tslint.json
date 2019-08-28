@@ -1,0 +1,18 @@
+{
+    "extends": ["@prague/build-common/tslint.json"],
+    "linterOptions": {
+        "exclude": [
+            "src/main.tsx"
+        ]
+    },
+    "rules": {
+        "completed-docs": false,
+        "class-name": false,
+        "interface-name": false,
+        "no-unsafe-any": false,
+        "member-ordering": false,
+        "member-access": false,
+        "react-this-binding-issue": false,
+        "strict-boolean-expressions": false
+    }
+}

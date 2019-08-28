@@ -7,7 +7,7 @@ import {
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 
-import { CollaborativeTextAreaNoReactInstantiationFactory } from "./main";
+import { TextareaNoReactInstantiationFactory } from "./main";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../package.json");
@@ -25,12 +25,12 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
   chaincodeName,
   new Map([
       [chaincodeName,
-       Promise.resolve(CollaborativeTextAreaNoReactInstantiationFactory)],
+       Promise.resolve(TextareaNoReactInstantiationFactory)],
   ]),
 );
 
 // Export necessary members from main.tsx:
 export {
-  CollaborativeTextAreaNoReact,
-  CollaborativeTextAreaNoReactInstantiationFactory,
+  TextareaNoReact,
+  TextareaNoReactInstantiationFactory,
 } from "./main";

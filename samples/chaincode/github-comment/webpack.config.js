@@ -20,10 +20,27 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".js"],
         },
         module: {
-            rules: [{ 
-                test: /\.tsx?$/,
-                loader: "ts-loader"
-            }]
+            rules: [
+                { 
+                    test: /\.tsx?$/,
+                    loader: "ts-loader"
+                },
+                {
+                    test: /\.html$/,
+                    loader: "html-loader"
+                },
+                {
+                    test: /\.css$/,
+                    use: [
+                        { loader: 'style-loader' },
+                        { loader: 'css-loader' }
+                    ]
+                },
+                {
+                    test: /\.(png|jpg|gif)$/,
+                    loader: "url-loader"
+                }
+            ]
         },
         output: {
             filename: "[name].bundle.js",

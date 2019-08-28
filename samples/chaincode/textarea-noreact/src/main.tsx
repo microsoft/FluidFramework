@@ -13,16 +13,13 @@
 /******************************************************************************/
 import {
   PrimedComponent,
-  SharedComponentFactory,
+  PrimedComponentFactory,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
   IComponentHandle,
   IComponentHTMLRender,
 } from "@prague/component-core-interfaces";
-import {
-    SharedDirectory,
-  } from "@prague/map";
 import {
   IComponentContext,
   IComponentRuntime,
@@ -39,7 +36,7 @@ import {
  * without this interface and just use manual calls, but having a private
  * variable to help keep track makes the logic
  */
-interface ITextAreaState {
+interface ITextareaState {
   selectionStart: number;
   selectionEnd: number;
   text: string;
@@ -50,26 +47,30 @@ interface ITextAreaState {
  * allow collaborative editing. Heavily based on Skyler Jokiel's React-infused
  * CollaborativeTextArea in `packages/framework/aqueductreact`.
  */
-export class CollaborativeTextAreaNoReact
+export class TextareaNoReact
              extends PrimedComponent
              implements IComponentHTMLVisual, IComponentHTMLRender {
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
 
-  private textAreaState: ITextAreaState;
+  protected textareaState: ITextareaState;
+  protected textareaRootKey: string;
+  protected textareaID: string;
 
   constructor(runtime: IComponentRuntime,
               context: IComponentContext) {
     super(runtime, context);
-    console.log("constructor call");
+    console.log("textarea-noreact: constructor call");
 
-    this.textAreaState = {
+    this.textareaState = {
       selectionEnd: 0,
       selectionStart: 0,
       text: "",
     };
-  }
 
+    this.textareaID = "<unset dom ID>";
+    this.textareaRootKey = "textareaString";
+  }
 
 
 /******************************************************************************/
@@ -83,9 +84,10 @@ export class CollaborativeTextAreaNoReact
   protected async componentInitializingFirstTime() {
     // Calling super.componentInitializingFirstTime() creates a root SharedMap.
     await super.componentInitializingFirstTime();
-    console.log("first time call");
+    console.log("textarea-noreact: first time call");
 
-    this.root.set("textAreaString", SharedString.create(this.runtime).handle);
+    this.root.set(this.textareaRootKey, 
+                  SharedString.create(this.runtime).handle);
   }
 /******************************************************************************/
 
@@ -97,18 +99,18 @@ export class CollaborativeTextAreaNoReact
   /**
    * Helper method to force a DOM refresh of the <textarea>.
    */
-  private forceDOMUpdate(newText: string,
+  protected forceDOMUpdate(newText: string,
                          newSelectionStart?: number,
                          newSelectionEnd?: number) {
-    const textAreaElement =
-      document.getElementById("textAreaElement") as HTMLTextAreaElement;
-    textAreaElement.value = newText;
+    const textareaElement =
+      document.getElementById(this.textareaID) as HTMLTextAreaElement;
+    textareaElement.value = newText;
 
     if (newSelectionStart !== undefined) {
-      textAreaElement.selectionStart = newSelectionStart;
+      textareaElement.selectionStart = newSelectionStart;
     }
     if (newSelectionEnd !== undefined) {
-      textAreaElement.selectionEnd = newSelectionEnd;
+      textareaElement.selectionEnd = newSelectionEnd;
     }
   }
 
@@ -118,25 +120,25 @@ export class CollaborativeTextAreaNoReact
    * lost our cursor position and not be able to accurately update the shared
    * string.
    */
-  private updateSelection() {
+  protected updateSelection() {
     // No access to React style refs, so a manual call is made to the DOM to
     // retrieve the current <textarea> (and more importantly the caret positions
     // for the current selection):
-    const currentTextAreaElement =
-      document.getElementById("textAreaElement") as HTMLTextAreaElement;
+    const currentTextareaElement =
+      document.getElementById(this.textareaID) as HTMLTextAreaElement;
 
-    if (currentTextAreaElement === undefined) {
+    if (currentTextareaElement === undefined) {
         return;
     }
 
     const selectionEnd =
-      currentTextAreaElement.selectionEnd ?
-      currentTextAreaElement.selectionEnd : 0;
+      currentTextareaElement.selectionEnd ?
+      currentTextareaElement.selectionEnd : 0;
     const selectionStart =
-      currentTextAreaElement.selectionStart ?
-      currentTextAreaElement.selectionStart : 0;
-    this.textAreaState.selectionEnd = selectionEnd;
-    this.textAreaState.selectionStart = selectionStart;
+      currentTextareaElement.selectionStart ?
+      currentTextareaElement.selectionStart : 0;
+    this.textareaState.selectionEnd = selectionEnd;
+    this.textareaState.selectionStart = selectionStart;
   }
 
   /**
@@ -151,19 +153,19 @@ export class CollaborativeTextAreaNoReact
    *
    * @param event Incoming delta on a SharedString
    */
-  private async handleIncomingChange(event: SequenceDeltaEvent) {
-    console.log("incoming change to shared string!");
+  protected async handleIncomingChange(event: SequenceDeltaEvent) {
+    console.log("textarea-noreact: incoming change to shared string!");
 
     // Initial data requests. After the space, the remainder of the code is
     // lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
     // these sources instead of React.
     const newText =
-      (await this.root.get<IComponentHandle>("textAreaString")
+      (await this.root.get<IComponentHandle>(this.textareaRootKey)
                       .get<SharedString>())
                       .getText();
 
     // We only need to insert if the text changed.
-    if (newText === this.textAreaState.text) {
+    if (newText === this.textareaState.text) {
       return;
     }
 
@@ -171,7 +173,7 @@ export class CollaborativeTextAreaNoReact
     // positions the same.
     if (event.isLocal) {
       this.forceDOMUpdate(newText);
-      this.textAreaState.text = newText;
+      this.textareaState.text = newText;
       return;
     }
 
@@ -180,11 +182,11 @@ export class CollaborativeTextAreaNoReact
     const remoteCaretStart = event.start;
     const remoteCaretEnd = event.end;
     const charactersModifiedCount =
-      newText.length - this.textAreaState.text.length;
+      newText.length - this.textareaState.text.length;
 
     this.updateSelection();
-    const currentCaretStart = this.textAreaState.selectionStart;
-    const currentCaretEnd = this.textAreaState.selectionEnd;
+    const currentCaretStart = this.textareaState.selectionStart;
+    const currentCaretEnd = this.textareaState.selectionEnd;
 
     let newCaretStart = 0;
     let newCaretEnd = 0;
@@ -228,9 +230,9 @@ export class CollaborativeTextAreaNoReact
         }
     }
 
-    this.textAreaState.text = newText;
-    this.textAreaState.selectionEnd = newCaretEnd;
-    this.textAreaState.selectionStart = newCaretStart;
+    this.textareaState.text = newText;
+    this.textareaState.selectionEnd = newCaretEnd;
+    this.textareaState.selectionStart = newCaretStart;
 
     this.forceDOMUpdate(newText, newCaretStart, newCaretEnd);
   }
@@ -246,41 +248,41 @@ export class CollaborativeTextAreaNoReact
    *
    * @param ev An outgoing Event on the titular <textarea>
    */
-  private async handleOutgoingChange(ev: Event) {
-    console.log("outgoing change to shared string!");
+  protected async handleOutgoingChange(ev: Event) {
+    console.log("textarea-noreact: outgoing change to shared string!");
 
     // Initial data requests. After the space, the remainder of the code is
     // lightly edited from `collaborativeTextArea.tsx` from `aqueduct` to use
     // these sources instead of React.
     const evctAsHTML = (ev.currentTarget as HTMLTextAreaElement);
-    const textAreaString = 
-      await this.root.get<IComponentHandle>("textAreaString")
+    const textareaString = 
+      await this.root.get<IComponentHandle>(this.textareaRootKey)
                      .get<SharedString>();
 
     // We need to set the value here to keep the input responsive to the user
     const newText = evctAsHTML.value;
     const charactersModifiedCount =
-      this.textAreaState.text.length - newText.length;
+      this.textareaState.text.length - newText.length;
 
     // Get the new caret position and use that to get the text that was inserted
     const newPosition = evctAsHTML.selectionStart
                         ? evctAsHTML.selectionStart : 0;
-    const isTextInserted = newPosition - this.textAreaState.selectionStart > 0;
+    const isTextInserted = newPosition - this.textareaState.selectionStart > 0;
     if (isTextInserted) {
         const insertedText =
-          newText.substring(this.textAreaState.selectionStart, newPosition);
+          newText.substring(this.textareaState.selectionStart, newPosition);
         const changeRangeLength =
-          this.textAreaState.selectionEnd - this.textAreaState.selectionStart;
+          this.textareaState.selectionEnd - this.textareaState.selectionStart;
         if (changeRangeLength === 0) {
-            textAreaString.insertText(this.textAreaState.selectionStart,
+            textareaString.insertText(this.textareaState.selectionStart,
                                       insertedText);
         } else {
-            textAreaString.replaceText(this.textAreaState.selectionStart,
-                                       this.textAreaState.selectionEnd,
+            textareaString.replaceText(this.textareaState.selectionStart,
+                                       this.textareaState.selectionEnd,
                                        insertedText);
         }
     } else {
-        textAreaString.removeText(newPosition,
+        textareaString.removeText(newPosition,
                                   newPosition + charactersModifiedCount);
     }
   }
@@ -299,7 +301,10 @@ export class CollaborativeTextAreaNoReact
    * function properly after such an event.
    */
   public async render(div: HTMLElement) {
-    console.log("render call");
+    console.log("textarea-noreact: render call");
+
+    // Change to whatever:
+    this.textareaID = "textareaElement";
     
     // Bind the `this` referring to the class instance for each of these private
     // methods. Without doing so, you cannot guarantee that usage of `this`
@@ -314,17 +319,18 @@ export class CollaborativeTextAreaNoReact
 
     // Add handler for incoming (from other component views) SharedString
     // changes. The handler is added here because any (re)rendered component
-    // view needs to "know" when to update its own instance of the <textArea>
+    // view needs to "know" when to update its own instance of the <textarea>
     // (which is what this handler will take care of). You could not add this,
     // say, in the `componentInitializingFirstTime` method because that is only 
     // called once - it is not called for every view, so there would be no way
     // to inform another client to update on a new change.
-    const textAreaString = 
-      await this.root.get<IComponentHandle>("textAreaString")
+    const textareaString = 
+      await this.root.get<IComponentHandle>(this.textareaRootKey)
                      .get<SharedString>();
 
-    textAreaString.on("sequenceDelta", this.handleIncomingChange);
-    this.textAreaState.text = textAreaString.getText();
+    textareaString.on("sequenceDelta", this.handleIncomingChange);
+    this.textareaState.text = textareaString.getText();
+    console.log("textarea-noreact: " + this.textareaState.text);
 
     // Do the actual HTML page setup off the given div:
     this.createComponentDom(div);
@@ -334,24 +340,24 @@ export class CollaborativeTextAreaNoReact
    * Set up the HTML elements inside the provided host HTML element (usually a
    * div).
    */
-  private createComponentDom(host: HTMLElement) {
-    const textAreaElement: HTMLTextAreaElement =
+  protected createComponentDom(host: HTMLElement) {
+    const textareaElement: HTMLTextAreaElement =
       document.createElement("textarea");
-    textAreaElement.id = "textAreaElement";
-    textAreaElement.style.width = "300px";
-    textAreaElement.style.height = "150px";
+    textareaElement.id = this.textareaID;
+    textareaElement.style.width = "300px";
+    textareaElement.style.height = "150px";
 
-    textAreaElement.value = this.textAreaState.text;
+    textareaElement.value = this.textareaState.text;
 
-    textAreaElement.oninput = this.handleOutgoingChange;
+    textareaElement.oninput = this.handleOutgoingChange;
 
-    textAreaElement.selectionStart = this.textAreaState.selectionStart;
-    textAreaElement.selectionEnd = this.textAreaState.selectionEnd;
+    textareaElement.selectionStart = this.textareaState.selectionStart;
+    textareaElement.selectionEnd = this.textareaState.selectionEnd;
 
-    textAreaElement.onclick = this.updateSelection;
-    textAreaElement.onkeydown = this.updateSelection;
+    textareaElement.onclick = this.updateSelection;
+    textareaElement.onkeydown = this.updateSelection;
 
-    host.appendChild(textAreaElement);
+    host.appendChild(textareaElement);
   }
 /******************************************************************************/
 
@@ -368,15 +374,17 @@ export class CollaborativeTextAreaNoReact
    */
   public static async load(runtime: IComponentRuntime,
                            context: IComponentContext):
-    Promise<CollaborativeTextAreaNoReact> {
-    console.log("load call");
-    const fluidComponent =
-      new CollaborativeTextAreaNoReact(
-        runtime,
-        context);
+    Promise<TextareaNoReact> {
+    console.log("textarea-noreact: load call");
+    const fluidComponent = new TextareaNoReact(runtime, context);
     await fluidComponent.initialize();
 
     return fluidComponent;
+  }
+
+
+  public componentHasInitialized(): Promise<void> {
+    return super.componentHasInitialized();
   }
 } // end class
 
@@ -396,11 +404,10 @@ export class CollaborativeTextAreaNoReact
  *
  * Primarily boilerplate code.
  */
-export const CollaborativeTextAreaNoReactInstantiationFactory =
-  new SharedComponentFactory(
-    CollaborativeTextAreaNoReact,
+export const TextareaNoReactInstantiationFactory =
+  new PrimedComponentFactory(
+    TextareaNoReact,
     [
-      SharedDirectory.getFactory(),
       SharedString.getFactory(),
     ],
 );

@@ -1,0 +1,71 @@
+{
+  "name": "@chaincode/github-comment",
+  "description": "A GitHub-style textarea that extends the CollaborativeTextAreaNoReact component",
+  "version": "0.9.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:docs": "api-extractor run --local",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --pragueHost https://www.wu2.prague.office-int.com --tenantId cocky-ramanujan --tenantSecret 3e439fcb58228d3f8f7deb55399d978c",
+    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
+    "post-deploy": "getUrl -p",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.9.0",
+    "@prague/prague-dev-server": "~3.9.1",
+    "@prague/url-generator": "^1.0.4",
+    "@types/node": "^10.14.6",
+    "concurrently": "^4.1.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "tslint-microsoft-contrib": "^6.0.0",
+    "typescript": "~3.4.5",
+    "webpack": "4.16.5",
+    "webpack-cli": "3.1.0",
+    "webpack-merge": "4.1.4",
+    "css-loader": "^3.2.0",
+    "style-loader": "^1.0.0",
+    "html-loader": "^0.5.5",
+    "url-loader": "^2.1.0"
+  },
+  "prague": {
+    "browser": {
+      "entrypoint": "main",
+      "bundle": [
+        "dist/main.bundle.js"
+      ]
+    }
+  },
+  "dependencies": {
+    "@chaincode/textarea-noreact": "^0.10.2",
+    "@prague/aqueduct": "^0.9.0",
+    "@prague/component-core-interfaces": "^0.9.0",
+    "@prague/component-runtime": "^0.9.0",
+    "@prague/container-definitions": "^0.9.0",
+    "@prague/container-runtime": "^0.9.0",
+    "@prague/framework-definitions": "^0.9.0",
+    "@prague/map": "^0.9.0",
+    "@prague/merge-tree": "^0.9.0",
+    "@prague/protocol-definitions": "^0.9.0",
+    "@prague/runtime-definitions": "^0.9.0",
+    "@prague/sequence": "^0.9.0",
+    "@prague/shared-object-common": "^0.9.0",
+    "@prague/utils": "^0.9.0",
+    "markdown-it": "^9.1.0"
+  },
+  "license": "MIT"
+}

@@ -65,7 +65,6 @@ const ctanrIDUnderContainerRuntime = "textarea";
  * HTML, CSS, etc.) is found, instead, in `main.tsx`.
  */
 class GithubPRCommentRuntimeFactory implements IRuntimeFactory {
-
   public get IRuntimeFactory() { return this; }
 
   public async instantiateRuntime(
@@ -74,7 +73,7 @@ class GithubPRCommentRuntimeFactory implements IRuntimeFactory {
     const containerRegistry = new Map<string, Promise<IComponentFactory>>([
       [thisPackageRegistryID, 
        Promise.resolve(GithubPRCommentComponentFactory)],
-      [ctanrRegistryID, Promise.resolve(ctanrComponentFactory)],
+      [ctanrRegistryID, Promise.resolve(ctanrComponentFactory)], // registers making another component in this container runtime
     ]);
 
     // Create a request handler for the container runtime that will route
@@ -127,15 +126,17 @@ class GithubPRCommentRuntimeFactory implements IRuntimeFactory {
     // And attach each component:
     if (!loadedContainerRuntime.existing) {
       await Promise.all([
+        // take this promise, get the shared string
         loadedContainerRuntime
           .createComponent(ctanrIDUnderContainerRuntime, 
-                           thisPackageRegistryID)
+                           ctanrRegistryID)
           .then((componentRuntime) => {
             componentRuntime.attach();
         }),
+        // hack the result of this, so that it has a way of accepting the shared string
         loadedContainerRuntime
           .createComponent(thisIDUnderContainerRuntime, 
-                            thisPackageRegistryID)
+                           thisPackageRegistryID)
           .then((componentRuntime) => {
             componentRuntime.attach();
           }),          
