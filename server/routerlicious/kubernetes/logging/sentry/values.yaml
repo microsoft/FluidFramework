@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 image:
   repository: sentry
-  tag: "8.20"
+  tag: "9.1.1"
   pullPolicy: IfNotPresent
 
 # How many web UI instances to run
@@ -35,11 +35,11 @@ cron:
   replicacount: 1
   resources:
     limits:
+      cpu: 400m
+      memory: 400Mi
+    requests:
       cpu: 200m
       memory: 200Mi
-    requests:
-      cpu: 100m
-      memory: 100Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -49,24 +49,24 @@ worker:
   replicacount: 2
   resources:
     limits:
-      cpu: 300m
+      cpu: 500m
       memory: 500Mi
     requests:
-      cpu: 100m
-      memory: 100Mi
+      cpu: 200m
+      memory: 200Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
 
 # Initial admin user to create
 user:
-  email: admin@prague
+  email: admin@fluid
 
 # BYO Email server
 # TODO: Add exim4 template
 # https://docs.sentry.io/server/installation/docker/#outbound-email
 email:
-  from_address: admin@prague.local
+  from_address: admin@fluid.local
   host: smtp
   port: 25
   use_tls: false
@@ -101,7 +101,7 @@ persistence:
   ##
   # storageClass: "-"
   accessMode: ReadWriteOnce
-  size: 128Gi
+  size: 512Gi
 
   # Where to store sentry files
   # https://docs.sentry.io/server/filestore/

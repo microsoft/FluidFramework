@@ -5,3 +5,5 @@
 ```console
 $ helm install --name sentry --wait -f values.yaml stable/sentry --timeout=600
 ```
+
+Update the 'GITHUB_APP_ID' and 'GITHUB_API_SECRET' before deployment.
