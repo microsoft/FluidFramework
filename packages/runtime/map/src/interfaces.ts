@@ -118,6 +118,11 @@ export interface IDirectory extends Map<string, any> {
     deleteSubDirectory(subdirName: string): boolean;
 
     /**
+     * Returns an iterator over the IDirectory children of this IDirectory.
+     */
+    subdirectories(): IterableIterator<[string, IDirectory]>;
+
+    /**
      * Get an IDirectory within the directory, in order to use relative paths from that location.
      * @param path - Path of the IDirectory to get, relative to this IDirectory
      */

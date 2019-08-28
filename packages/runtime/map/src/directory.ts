@@ -284,6 +284,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return this.root.deleteSubDirectory(subdirName);
     }
 
+    public subdirectories(): IterableIterator<[string, SubDirectory]> {
+        return this.root.subdirectories();
+    }
+
     /**
      * Get a SubDirectory within the directory, in order to use relative paths from that location.
      * @param rootRelativePath - path of the SubDirectory to get, relative to the root
@@ -827,6 +831,21 @@ export class SubDirectory implements IDirectory {
     }
 
     /**
+     * Get an iterator over the SubDirectories contained within this SubDirectory.
+     */
+    public subdirectories(): IterableIterator<[string, SubDirectory]> {
+        return this._subdirectories.entries();
+    }
+
+    /**
+     * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
+     * @param relativePath - Path of the SubDirectory to get, relative to this SubDirectory
+     */
+    public getWorkingDirectory(relativePath: string): SubDirectory {
+        return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
+    }
+
+    /**
      * Deletes the given key from within this SubDirectory.
      * @param key - the key to delete
      */
@@ -902,13 +921,6 @@ export class SubDirectory implements IDirectory {
     }
 
     /**
-     * Get an iterator over the SubDirectories contained within this SubDirectory.
-     */
-    public subdirectories(): IterableIterator<[string, SubDirectory]> {
-        return this._subdirectories.entries();
-    }
-
-    /**
      * Get an iterator over the values under this Subdirectory.
      */
     public values(): IterableIterator<any> {
@@ -935,14 +947,6 @@ export class SubDirectory implements IDirectory {
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
-    }
-
-    /**
-     * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
-     * @param relativePath - Path of the SubDirectory to get, relative to this SubDirectory
-     */
-    public getWorkingDirectory(relativePath: string): SubDirectory {
-        return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
     /**

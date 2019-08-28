@@ -84,6 +84,17 @@ describe("Routerlicious", () => {
             assert.equal(testDirectory.get("testKey2"), undefined);
         });
 
+        it("Can iterate over the subdirectories in the root", () => {
+            testDirectory.createSubDirectory("foo");
+            testDirectory.createSubDirectory("bar");
+            const expectedDirectories = new Set(["foo", "bar"]);
+            for (const [subDirName] of testDirectory.subdirectories()) {
+                assert.ok(expectedDirectories.has(subDirName));
+                expectedDirectories.delete(subDirName);
+            }
+            assert.ok(expectedDirectories.size === 0);
+        });
+
         describe(".serialize", () => {
             it("Should serialize an empty directory as a JSON object", () => {
                 const serialized = (testDirectory as SharedDirectory).serialize();
@@ -448,6 +459,18 @@ describe("Routerlicious", () => {
                     expectedEntries.delete(entry[0]);
                 }
                 assert.ok(expectedEntries.size === 0);
+            });
+
+            it("Can iterate over its subdirectories", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                fooDirectory.createSubDirectory("bar");
+                fooDirectory.createSubDirectory("baz");
+                const expectedDirectories = new Set(["bar", "baz"]);
+                for (const [subDirName] of fooDirectory.subdirectories()) {
+                    assert.ok(expectedDirectories.has(subDirName));
+                    expectedDirectories.delete(subDirName);
+                }
+                assert.ok(expectedDirectories.size === 0);
             });
         });
     });
