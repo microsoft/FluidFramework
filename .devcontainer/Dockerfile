@@ -46,6 +46,10 @@ RUN apt-get update \
     # Install Docker Compose
     && curl -sSL "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
     && chmod +x /usr/local/bin/docker-compose \
+    # Add sudo support for the non-root user
+    && apt-get install -y sudo \
+    && echo node ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/node\
+    && chmod 0440 /etc/sudoers.d/node \
     #
     # Clean up
     && apt-get autoremove -y \
@@ -59,12 +63,6 @@ RUN apt-get update && apt-get install -y \
         git \
         curl \
         g++
-
-# For Linux the docker group's GID must match the local GID to avoid permission issues Update USER_UID / USER_GID if yours is not 1000. See
-# https://aka.ms/vscode-remote/containers/non-root-user for details.
-ARG DOCKER_GID=999
-RUN addgroup --gid $DOCKER_GID docker
-RUN usermod -aG docker node
 
 # terminal colors with xterm
 ENV TERM xterm

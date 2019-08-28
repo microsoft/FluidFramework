@@ -1,7 +1,17 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
 	"name": "Node.js 10",
-	"dockerFile": "Dockerfile",
+	// "dockerFile": "Dockerfile",
+
+	"dockerComposeFile": "docker-compose.yml",
+
+	"service": "development",
+
+	"workspaceFolder": "/workspace",
+
+	"settings": { 
+		"terminal.integrated.shell.linux": "/usr/bin/zsh"
+	},
 	
 	// Uncomment the next line if you want to publish any ports.
 	// "appPort": [],
@@ -12,12 +22,12 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 
-	"runArgs": [
-		"-v",
-		"/var/run/docker.sock:/var/run/docker.sock",
-		"-u",
-		"node"
-	],
+	// "runArgs": [
+	// 	"-v",
+	// 	"/var/run/docker.sock:/var/run/docker.sock",
+	// 	"-u",
+	// 	"node"
+	// ],
 
 	"extensions": [
 		"dbaeumer.vscode-eslint",
