@@ -4,22 +4,8 @@
  */
 
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
-import { fetchWithRetry, FetchWithRetryResponse, linearBackoff, RetryPolicy, whitelist } from "./fetchWithRetry";
-
-/**
- * Socket storage discovery api response
- */
-export interface ISocketStorageDiscovery {
-  id: string;
-  tenantId: string;
-
-  snapshotStorageUrl: string;
-  deltaStorageUrl: string;
-  storageToken: string;
-
-  deltaStreamSocketUrl: string;
-  socketToken: string;
-}
+import { ISocketStorageDiscovery } from "./contracts";
+import { fetchWithRetry, IFetchWithRetryResponse, IRetryPolicy, linearBackoff, whitelist } from "./utils";
 
 function getOrigin(url: string) {
   return new URL(url).origin;
@@ -58,11 +44,9 @@ export async function fetchOpStream(
   path: string,
   additionalParams: string,
   method: string,
-  retryPolicy: RetryPolicy<Response>,
-  nameForLogging: string,
-  logger: ITelemetryBaseLogger,
+  retryPolicy: IRetryPolicy,
   getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
-): Promise<FetchWithRetryResponse> {
+): Promise<IFetchWithRetryResponse> {
   const token = await getVroomToken(siteUrl);
   if (!token) {
     throw new Error("Failed to acquire Vroom token");
@@ -81,8 +65,6 @@ export async function fetchOpStream(
     `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/${path}?${queryParams}`,
     { method, headers },
     retryPolicy,
-    nameForLogging,
-    logger,
   );
 }
 
@@ -130,8 +112,6 @@ export async function getSocketStorageDiscovery(
       backoffFn: linearBackoff(500),
       filter: whitelist([408, 409, 429, 500, 503]),
     },
-    "JoinSession",
-    logger,
     getVroomToken,
   );
 
@@ -141,11 +121,11 @@ export async function getSocketStorageDiscovery(
     throw new Error("Failed to acquire Push token");
   }
 
-  if (joinSessionResponse.result.status !== 200) {
-    throw new JoinSessionError(joinSessionResponse.result.status);
+  if (joinSessionResponse.response.status !== 200) {
+    throw new JoinSessionError(joinSessionResponse.response.status);
   }
 
-  const responseJson = await joinSessionResponse.result.json();
+  const responseJson = await joinSessionResponse.response.json();
   if (responseJson.runtimeTenantId && !responseJson.tenantId) {
     responseJson.tenantId = responseJson.runtimeTenantId;
   }

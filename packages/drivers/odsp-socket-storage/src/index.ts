@@ -12,3 +12,5 @@ export * from "./OdspDeltaStorageService";
 export * from "./contracts";
 export * from "./tokenProvider";
 export * from "./OdspUrlResolver";
+export * from "./Vroom";
+export { BackoffFunction, IFetchWithRetryResponse, IRetryPolicy, RetryFilter } from "./utils";

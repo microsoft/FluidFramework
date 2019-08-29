@@ -56,14 +56,14 @@
   },
   "dependencies": {
     "@prague/component-core-interfaces": "^0.8.0",
-    "@prague/protocol-definitions": "^0.8.0",
     "@prague/gitresources": "^0.8.0",
-    "@prague/services-client": "^0.8.0",
+    "@prague/container-definitions": "^0.8.0",
+    "@prague/protocol-definitions": "^0.8.0",
     "@prague/socket-storage-shared": "^0.8.0",
     "@prague/utils": "^0.8.0",
-    "axios": "^0.18.0",
     "debug": "^4.1.1",
     "node-fetch": "^2.2.1",
+    "sha.js": "^2.4.11",
     "socket.io-client": "^2.1.1"
   },
   "license": "MIT"
