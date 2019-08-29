@@ -170,8 +170,8 @@ class TenantManager implements core.ITenantManager {
             false,
             false,
             {
-                password: "8d043006d0a2704d4dd9972f848f1982026672a1",
-                user: "praguegit",
+                password: "",
+                user: "",
             });
         const gitManager = new GitManager(historian);
         this.tenant = new Tenant(config, gitManager);

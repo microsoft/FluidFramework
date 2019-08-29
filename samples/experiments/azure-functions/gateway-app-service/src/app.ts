@@ -178,7 +178,7 @@ export function create(
     app.use(expressSession({
         resave: true,
         saveUninitialized: true,
-        secret: "bAq0XuQWqoAZzaAkQT5EXPCHBkeIEZqi",
+        secret: "ChangeThisValue",
         store: sessionStore,
     }));
 

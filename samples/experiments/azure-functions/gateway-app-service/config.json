@@ -10,12 +10,12 @@
     "gateway": {
         "maxMessageSize": "16KB",
         "restJsonSize": "50mb",
-        "key": "VBQyoGpEYrTn3XQPtXW3K8fFDd",
+        "key": "ChangeThisValue",
         "url": "http://localhost:3000",
         "tenants": [
             {
                 "id": "eventhub",
-                "key": "0bea3f87c186991a936c7e7e9c79478c"
+                "key": ""
             }
         ],
         "federation": {
@@ -41,9 +41,9 @@
         ]
     },
     "redis": {
-        "host": "praguelambdas.redis.cache.windows.net",
-        "key": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
-        "pass": "tyro1IMxDj3n2mSBULmJWBKywuLKLlp9cRw+bcfsUZs=",
+        "host": "",
+        "key": "",
+        "pass": "",
         "port": 6380,
         "tls": true
     },

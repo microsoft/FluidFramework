@@ -12,7 +12,7 @@ alfred:
   host: alfredfn.wu2-2.prague.office-int.com
   cert: wu2-2-tls-certificate
   tenants: []
-  key: VBQyoGpEYrTn3XQPtXW3K8fFDd
+  key: ""
 
 gateway:
   image: praguefunctions.azurecr.io/gateway-app-service:0.1.2
