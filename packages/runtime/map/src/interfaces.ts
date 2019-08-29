@@ -78,6 +78,11 @@ export interface IValueTypeSupporter {
  */
 export interface IDirectory extends Map<string, any> {
     /**
+     * The absolute path of the directory.
+     */
+    readonly absolutePath: string;
+
+    /**
      * Retrieves the given key from the directory
      */
     get<T = any>(key: string): T;
@@ -116,6 +121,11 @@ export interface IDirectory extends Map<string, any> {
      * @param subdirName - Name of the child directory to delete
      */
     deleteSubDirectory(subdirName: string): boolean;
+
+    /**
+     * Returns an iterator over the IDirectory children of this IDirectory.
+     */
+    subdirectories(): IterableIterator<[string, IDirectory]>;
 
     /**
      * Get an IDirectory within the directory, in order to use relative paths from that location.

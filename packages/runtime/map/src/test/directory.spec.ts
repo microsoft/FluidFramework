@@ -34,6 +34,10 @@ describe("Routerlicious", () => {
             assert.ok(testDirectory);
         });
 
+        it("Knows its absolute path", () => {
+            assert.equal(rootDirectory.absolutePath, "/");
+        });
+
         it("Can set and get keys one level deep", () => {
             testDirectory.set("testKey", "testValue");
             testDirectory.set("testKey2", "testValue2");
@@ -82,6 +86,17 @@ describe("Routerlicious", () => {
             assert.equal(testDirectory.getWorkingDirectory("bar").get("testKey3"), "testValue3");
             assert.equal(testDirectory.get("testKey"), "testValue4");
             assert.equal(testDirectory.get("testKey2"), undefined);
+        });
+
+        it("Can iterate over the subdirectories in the root", () => {
+            testDirectory.createSubDirectory("foo");
+            testDirectory.createSubDirectory("bar");
+            const expectedDirectories = new Set(["foo", "bar"]);
+            for (const [subDirName] of testDirectory.subdirectories()) {
+                assert.ok(expectedDirectories.has(subDirName));
+                expectedDirectories.delete(subDirName);
+            }
+            assert.ok(expectedDirectories.size === 0);
         });
 
         describe(".serialize", () => {
@@ -222,6 +237,13 @@ describe("Routerlicious", () => {
                 barDirectory.set("testKey3", "testValue3");
                 const testSubdir = testDirectory.getWorkingDirectory("/foo");
                 assert.ok(testSubdir);
+            });
+
+            it("Knows its absolute path", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                const barDirectory = fooDirectory.createSubDirectory("bar");
+                assert.equal(fooDirectory.absolutePath, "/foo");
+                assert.equal(barDirectory.absolutePath, "/foo/bar");
             });
 
             it("Can get and set keys from a subdirectory using relative paths", () => {
@@ -448,6 +470,18 @@ describe("Routerlicious", () => {
                     expectedEntries.delete(entry[0]);
                 }
                 assert.ok(expectedEntries.size === 0);
+            });
+
+            it("Can iterate over its subdirectories", () => {
+                const fooDirectory = testDirectory.createSubDirectory("foo");
+                fooDirectory.createSubDirectory("bar");
+                fooDirectory.createSubDirectory("baz");
+                const expectedDirectories = new Set(["bar", "baz"]);
+                for (const [subDirName] of fooDirectory.subdirectories()) {
+                    assert.ok(expectedDirectories.has(subDirName));
+                    expectedDirectories.delete(subDirName);
+                }
+                assert.ok(expectedDirectories.size === 0);
             });
         });
     });
