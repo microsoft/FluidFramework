@@ -17,6 +17,13 @@ import {
 import {
     IGenericBlob,
 } from "@prague/container-definitions";
+import {
+    ComponentCursorDirection,
+    IComponentCollection,
+    IComponentCursor,
+    IComponentKeyHandlers,
+    IComponentLayout,
+} from "@prague/framework-definitions";
 import * as types from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -24,8 +31,7 @@ import {
     IUser,
 } from "@prague/protocol-definitions";
 import {
-    ComponentCursorDirection, IComponentCollection, IComponentCursor, IComponentKeyHandlers,
-    IComponentLayout, IInboundSignalMessage,
+    IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
 // tslint:disable-next-line:no-var-requires

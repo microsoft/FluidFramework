@@ -7,8 +7,9 @@ import * as SearchMenu from "@chaincode/search-menu";
 import { Editor, FlowDocument, htmlFormatter, Tag } from "@chaincode/webflow";
 import { IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
+import { IComponentCollection } from "@prague/framework-definitions";
 import { TST } from "@prague/merge-tree";
-import { IComponentCollection, IComponentContext } from "@prague/runtime-definitions";
+import { IComponentContext } from "@prague/runtime-definitions";
 import * as styles from "./index.css";
 
 const template = new Template(

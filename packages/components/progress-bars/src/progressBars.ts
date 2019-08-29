@@ -15,11 +15,13 @@ import {
 } from "@prague/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import {
+    IComponentCollection,
+} from "@prague/framework-definitions";
+import {
     ISharedMap,
     SharedMap,
 } from "@prague/map";
 import {
-    IComponentCollection,
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,

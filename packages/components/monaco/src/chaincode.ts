@@ -11,6 +11,9 @@ import {
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
+    IComponentLayout,
+} from "@prague/framework-definitions";
+import {
     IMergeTreeGroupMsg,
     IMergeTreeInsertMsg,
     IMergeTreeOp,
@@ -19,7 +22,6 @@ import {
 } from "@prague/merge-tree";
 import {
     IComponentContext,
-    IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";

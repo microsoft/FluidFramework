@@ -10,10 +10,12 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
 } from "@prague/component-core-interfaces";
+import {
+    IComponentLayout,
+} from "@prague/framework-definitions";
 import { ISharedMap } from "@prague/map";
 import {
     IComponentContext,
-    IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as angular from "angular";

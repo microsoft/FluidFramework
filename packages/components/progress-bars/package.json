@@ -44,6 +44,7 @@
     "@prague/map": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",
     "@prague/shared-object-common": "^0.10.0",
+    "@prague/framework-definitions": "^0.10.0",
     "@types/node": "^10.12.12",
     "bootstrap": "^3.3.7"
   },

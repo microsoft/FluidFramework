@@ -26,6 +26,7 @@
     "@prague/component-runtime": "^0.10.0",
     "@prague/map": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",
+    "@prague/framework-definitions": "^0.10.0",
     "@types/angular": "^1.6.50",
     "@types/angular-route": "^1.7.0",
     "@types/google-maps": "^3.2.0",

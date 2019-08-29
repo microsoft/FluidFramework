@@ -59,6 +59,7 @@
     "@prague/container-runtime": "^0.10.0",
     "@prague/map": "^0.10.0",
     "@prague/merge-tree": "^0.10.0",
+    "@prague/framework-definitions": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",
     "@prague/sequence": "^0.10.0",
     "@prague/utils": "^0.10.0",

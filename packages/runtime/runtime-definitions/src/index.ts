@@ -5,6 +5,7 @@
 
 export * from "./agent";
 export * from "./channel";
+export * from "./componentFactory";
 export * from "./components";
 export * from "./protocol";
 export * from "./storage";

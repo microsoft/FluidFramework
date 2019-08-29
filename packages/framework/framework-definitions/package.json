@@ -20,7 +20,8 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@prague/component-core-interfaces": "^0.10.0"
+    "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",

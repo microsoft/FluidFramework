@@ -51,6 +51,7 @@
     "@prague/runtime-definitions": "^0.10.0",
     "@prague/sequence": "^0.10.0",
     "@prague/shared-object-common": "^0.10.0",
+    "@prague/framework-definitions": "^0.10.0",
     "debug": "^4.1.1",
     "katex": "^0.10.2"
   },

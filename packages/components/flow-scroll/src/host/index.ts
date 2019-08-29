@@ -14,10 +14,12 @@ import {
     IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
+import {
+    IComponentCollection,
+} from "@prague/framework-definitions";
 import { SharedMap } from "@prague/map";
 import {
     FlushMode,
-    IComponentCollection,
     IComponentContext,
     IComponentRuntime,
     ITask,

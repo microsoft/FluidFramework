@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { } from "@prague/component-core-interfaces";
-
 declare module "@prague/component-core-interfaces" {
     export interface IComponent extends Readonly<Partial<IProvideComponentForge>> {
     }

@@ -68,6 +68,7 @@
     "@prague/shared-object-common": "^0.10.0",
     "@prague/stream": "^0.10.0",
     "@prague/utils": "^0.10.0",
+    "@prague/framework-definitions": "^0.10.0",
     "debug": "^4.1.1",
     "geocoder": "^0.2.3",
     "performance-now": "^2.1.0",

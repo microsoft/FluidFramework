@@ -20,17 +20,19 @@ import {
 import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
+    ComponentCursorDirection,
+    IComponentCollection,
+    IComponentCursor,
+    IComponentLayout,
+} from "@prague/framework-definitions";
+import {
     ISharedMap,
     SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
-    ComponentCursorDirection,
-    IComponentCollection,
     IComponentContext,
-    IComponentCursor,
     IComponentFactory,
-    IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";

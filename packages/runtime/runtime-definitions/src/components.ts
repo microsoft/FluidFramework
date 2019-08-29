@@ -30,17 +30,7 @@ import {
 } from "@prague/protocol-definitions";
 
 import { EventEmitter } from "events";
-import { IChannel } from "./channel";
-
-declare module "@prague/component-core-interfaces" {
-    export interface IComponent extends Readonly<Partial<
-        IProvideComponentFactory
-        & IProvideComponentCollection
-        & IProvideComponentLayout
-        & IProvideComponentCursor
-        & IProvideComponentKeyHandlers>> {
-    }
-}
+import { ComponentFactoryTypes, IChannel } from ".";
 
 /**
  * Represents the runtime for the component. Contains helper functions/state of the component.
@@ -281,7 +271,7 @@ export interface IComponentContext extends EventEmitter {
  */
 export enum FlushMode {
     /**
-     * In automatic flush mode the runtime will immediatley send all operations to the driver layer.
+     * In automatic flush mode the runtime will immediately send all operations to the driver layer.
      */
     Automatic,
 
@@ -374,88 +364,4 @@ export interface IHostRuntime extends IRuntime {
      * sequentially. Total size of all messages must be less than maxOpSize.
      */
     orderSequentially(callback: () => void): void;
-}
-
-export interface IProvideComponentFactory {
-    readonly IComponentFactory: IComponentFactory;
-}
-
-/**
- * The interface implemented by a component module.
- */
-export interface IComponentFactory extends IProvideComponentFactory {
-    /**
-     * Generates runtime for the component from the component context. Once created should be bound to the context.
-     * @param context - Conext for the component.
-     */
-    instantiateComponent(context: IComponentContext): void;
-}
-
-export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(context: IComponentContext): void; };
-
-// following are common conventions
-
-export interface IProvideComponentCollection {
-    readonly IComponentCollection: IComponentCollection;
-}
-
-/**
- * A component that implements a collection of components.  Typically, the
- * components in the collection would be like-typed.
- */
-export interface IComponentCollection extends IProvideComponentCollection {
-    createCollectionItem<TOpt = object>(options?: TOpt): IComponent;
-    removeCollectionItem(instance: IComponent): void;
-    // need iteration
-}
-
-export interface IProvideComponentLayout {
-    readonly IComponentLayout: IComponentLayout;
-}
-/**
- * Provide information about component preferences for layout.
- */
-export interface IComponentLayout extends IProvideComponentLayout {
-    aspectRatio?: number;
-    minimumWidth?: number;
-    minimumHeight?: number;
-    variableHeight?: boolean;
-    requestedWidthPercentage?: number;
-    canInline?: boolean;
-    preferInline?: boolean;
-    preferPersistentElement?: boolean;
-}
-
-/**
- * Direction from which the cursor has entered or left a component.
- */
-export enum ComponentCursorDirection {
-    Left,
-    Right,
-    Up,
-    Down,
-    Airlift,
-    Focus,
-}
-
-export interface IProvideComponentCursor {
-    readonly IComponentCursor: IComponentCursor;
-}
-
-export interface IComponentCursor extends IProvideComponentCursor {
-    enter(direction: ComponentCursorDirection): void;
-    leave(direction: ComponentCursorDirection): void;
-    // returns true if cursor leaves the component
-    fwd(): boolean;
-    rev(): boolean;
-}
-
-export interface IProvideComponentKeyHandlers {
-    readonly IComponentKeyHandlers: IComponentKeyHandlers;
-}
-
-// used when another component will forward keyboard events to this component
-export interface IComponentKeyHandlers extends IProvideComponentKeyHandlers {
-    onKeypress(e: KeyboardEvent): void;
-    onKeydown(e: KeyboardEvent): void;
 }

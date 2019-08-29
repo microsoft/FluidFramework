@@ -13,12 +13,14 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
-import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
+    IComponentLayout,
+} from "@prague/framework-definitions";
+import { ISharedMap, SharedMap } from "@prague/map";
+import {
     IComponentContext,
     IComponentFactory,
-    IComponentLayout,
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectFactory } from "@prague/shared-object-common";

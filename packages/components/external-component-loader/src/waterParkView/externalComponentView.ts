@@ -12,8 +12,8 @@ import {
   IComponentQueryableLegacy,
 } from "@prague/component-core-interfaces";
 import { IPraguePackage } from "@prague/container-definitions";
+import { IComponentCollection } from "@prague/framework-definitions";
 import { MergeTreeDeltaType } from "@prague/merge-tree";
-import { IComponentCollection } from "@prague/runtime-definitions";
 import { SharedObjectSequence, SubSequence } from "@prague/sequence";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
