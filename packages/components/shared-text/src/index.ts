@@ -7,19 +7,19 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IComponentHandle, IRequest } from "@prague/component-core-interfaces";
+import { IRequest } from "@prague/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
 import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
+// import { SharedString } from "@prague/sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";
-import { GraphIQLView } from "./graphql";
+// import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
 
-const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
+// const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@chaincode/math");
-const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@chaincode/monaco");
+// const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@chaincode/monaco");
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
 const progressBars = import(
     /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/progress-bars");
@@ -31,19 +31,19 @@ const images = import(
 const DefaultComponentName = "text";
 
 // tslint:disable
-(self as any).MonacoEnvironment = {
-	getWorkerUrl: function (moduleId, label) {
-		switch (label) {
-			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
-			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
-			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
-			case 'typescript':
-			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
-			default:
-				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
-		}
-	}
-};
+// (self as any).MonacoEnvironment = {
+// 	getWorkerUrl: function (moduleId, label) {
+// 		switch (label) {
+// 			case 'json': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/json/json.worker');
+// 			case 'css': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/css/css.worker');
+// 			case 'html': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/html/html.worker');
+// 			case 'typescript':
+// 			case 'javascript': return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/language/typescript/ts.worker');
+// 			default:
+// 				return require('blob-url-loader?type=application/javascript!compile-loader?target=worker&emit=false!monaco-editor/esm/vs/editor/editor.worker');
+// 		}
+// 	}
+// };
 // tslint:enable
 
 class MyRegistry implements IComponentRegistry {
@@ -57,16 +57,16 @@ class MyRegistry implements IComponentRegistry {
             return this.sharedTextFactory;
         } else if (name === "@chaincode/math") {
             return math.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/charts") {
-            return charts.then((m) => m.fluidExport);
+        // } else if (name === "@chaincode/charts") {
+        //     return charts.then((m) => m.fluidExport);
         } else if (name === "@chaincode/progress-bars") {
             return progressBars.then((m) => m.fluidExport);
         } else if (name === "@chaincode/video-players") {
             return videoPlayers.then((m) => m.fluidExport);
         } else if (name === "@chaincode/image-collection") {
             return images.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/monaco") {
-            return monaco.then((m) => m.fluidExport);
+        // } else if (name === "@chaincode/monaco") {
+        //     return monaco.then((m) => m.fluidExport);
         } else if (name === "@chaincode/pinpoint-editor") {
             return pinpoint.then((m) => m.fluidExport);
         } else {
@@ -111,15 +111,7 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         // On first boot create the base component
         if (!runtime.existing) {
             await Promise.all([
-                runtime.createComponent("progress-bars", "@chaincode/progress-bars")
-                    .then((componentRuntime) => componentRuntime.attach()),
                 runtime.createComponent(DefaultComponentName, "@chaincode/shared-text")
-                    .then((componentRuntime) => componentRuntime.attach()),
-                runtime.createComponent("math", "@chaincode/math")
-                    .then((componentRuntime) => componentRuntime.attach()),
-                runtime.createComponent("video-players", "@chaincode/video-players")
-                    .then((componentRuntime) => componentRuntime.attach()),
-                runtime.createComponent("images", "@chaincode/image-collection")
                     .then((componentRuntime) => componentRuntime.attach()),
             ])
             .catch((error) => {
@@ -138,28 +130,28 @@ class SharedTextFactoryComponent implements IComponentFactory, IRuntimeFactory {
         return async (request: IRequest) => {
             console.log(request.url);
 
-            if (request.url === "/graphiql") {
-                const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
-                const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
-                return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
-            } else {
-                console.log(request.url);
-                const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
-                    ? request.url.substr(1)
-                    : request.url;
-                const trailingSlash = requestUrl.indexOf("/");
+            // if (request.url === "/graphiql") {
+            //     const runner = (await runtime.request({ url: "/" })).value as sharedTextComponent.SharedTextRunner;
+            //     const sharedText = await runner.getRoot().get<IComponentHandle>("text").get<SharedString>();
+            //     return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(sharedText) };
+            // }
 
-                const componentId = requestUrl
-                    ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
-                    : "text";
-                const component = await runtime.getComponentRuntime(componentId, true);
+            console.log(request.url);
+            const requestUrl = request.url.length > 0 && request.url.charAt(0) === "/"
+                ? request.url.substr(1)
+                : request.url;
+            const trailingSlash = requestUrl.indexOf("/");
 
-                return component.request(
-                    {
-                        headers: request.headers,
-                        url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
-                    });
-            }
+            const componentId = requestUrl
+                ? requestUrl.substr(0, trailingSlash === -1 ? requestUrl.length : trailingSlash)
+                : "text";
+            const component = await runtime.getComponentRuntime(componentId, true);
+
+            return component.request(
+                {
+                    headers: request.headers,
+                    url: trailingSlash === -1 ? "" : requestUrl.substr(trailingSlash),
+                });
         };
     }
 }

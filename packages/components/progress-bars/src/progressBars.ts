@@ -5,6 +5,7 @@
 
 import {
     IComponent,
+    IComponentHandleContext,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -12,12 +13,13 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import {
     ISharedMap,
     SharedMap,
 } from "@prague/map";
 import {
+    IComponentCollection,
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
@@ -77,15 +79,19 @@ class ProgressBarView implements IComponentHTMLView {
 
 // The "model" side of a progress bar
 export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IComponentRouter {
-
     private views = new Set<ProgressBarView>();
     private defaultView: ProgressBarView;
+
+    public handle: ComponentHandle;
 
     constructor(
         public value: number,
         public url: string,
         private keyId: string,
-        private collection: ProgressCollection) {
+        context: IComponentHandleContext,
+        private collection: ProgressCollection,
+    ) {
+        this.handle = new ComponentHandle(this, keyId, context);
     }
 
     public get IComponentLoadable() { return this; }
@@ -131,7 +137,9 @@ export class ProgressBar implements IComponentLoadable, IComponentHTMLVisual, IC
     }
 }
 
-export class ProgressCollection extends EventEmitter implements IComponentLoadable, IComponentRouter {
+export class ProgressCollection
+    extends EventEmitter
+    implements IComponentLoadable, IComponentRouter, IComponentCollection {
 
     public static async load(runtime: IComponentRuntime, context: IComponentContext) {
         const collection = new ProgressCollection(runtime, context);
@@ -142,8 +150,10 @@ export class ProgressCollection extends EventEmitter implements IComponentLoadab
 
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
+    public get IComponentCollection() { return this; }
 
     public url: string;
+    public handle: ComponentHandle;
 
     private progressBars = new Map<string, ProgressBar>();
     private root: ISharedMap;
@@ -152,17 +162,22 @@ export class ProgressCollection extends EventEmitter implements IComponentLoadab
         super();
 
         this.url = context.id;
+        this.handle = new ComponentHandle(this, "", this.runtime.IComponentHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {
         this.root.set(key, newValue);
     }
 
-    public create(): ProgressBar {
+    public createCollectionItem(): ProgressBar {
         const id = `progress-${Date.now()}`;
         this.root.set(id, 50);
         // Relying on valueChanged event to create the bar is error prone
         return this.progressBars.get(id);
+    }
+
+    public removeCollectionItem(instance: IComponent): void {
+        throw new Error("Method not implemented.");
     }
 
     public getProgress(): string[] {
@@ -201,7 +216,12 @@ export class ProgressCollection extends EventEmitter implements IComponentLoadab
         for (const key of this.root.keys()) {
             this.progressBars.set(
                 key,
-                new ProgressBar(this.root.get(key), `${this.url}/${key}`, key, this));
+                new ProgressBar(
+                    this.root.get(key),
+                    `${this.url}/${key}`,
+                     key,
+                     this.runtime.IComponentHandleContext,
+                     this));
         }
 
         this.root.on("valueChanged", (changed, local) => {
@@ -211,7 +231,11 @@ export class ProgressCollection extends EventEmitter implements IComponentLoadab
                 this.progressBars.set(
                     changed.key,
                     new ProgressBar(
-                        this.root.get(changed.key), `${this.url}/${changed.key}`, changed.key, this));
+                        this.root.get(changed.key),
+                        `${this.url}/${changed.key}`,
+                        changed.key,
+                        this.runtime.IComponentHandleContext,
+                        this));
                 this.emit("progressAdded", `/${changed.key}`);
             }
         });

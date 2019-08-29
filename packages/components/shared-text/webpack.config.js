@@ -74,6 +74,9 @@ module.exports = env => {
                 tls: 'empty',
                 child_process: 'empty',
             },
+            devServer: {
+                host: '0.0.0.0',
+            },
             resolveLoader: {
                 alias: {
                     'blob-url-loader': require.resolve('./loaders/blobUrl'),

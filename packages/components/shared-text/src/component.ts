@@ -23,6 +23,7 @@ import {
 import * as MergeTree from "@prague/merge-tree";
 import {
     IComponentContext,
+    IComponentRuntime,
     ITask,
     ITaskManager,
 } from "@prague/runtime-definitions";
@@ -46,6 +47,21 @@ import {
     downloadRawText,
     getInsights,
 } from "./utils";
+
+/**
+ * Helper function to retrieve the handle for the default component route
+ */
+async function getHandle(runtimeP: Promise<IComponentRuntime>): Promise<IComponentHandle> {
+    const runtime = await runtimeP;
+    const request = await runtime.request({ url: "" });
+
+    if (request.status !== 200 || request.mimeType !== "fluid/component") {
+        return Promise.reject("Not found");
+    }
+
+    const component = request.value as IComponent;
+    return component.IComponentLoadable.handle;
+}
 
 export class SharedTextRunner
     extends EventEmitter
@@ -131,6 +147,23 @@ export class SharedTextRunner
             }
             this.rootView.set("text", newString.handle);
 
+            const hostRuntime = this.context.hostRuntime;
+            const [progressBars, math, videoPlayers, images] = await Promise.all([
+                getHandle(hostRuntime.createComponent("@chaincode/progress-bars")),
+                getHandle(hostRuntime.createComponent("@chaincode/math")),
+                getHandle(hostRuntime.createComponent("@chaincode/video-players")),
+                getHandle(hostRuntime.createComponent("@chaincode/image-collection")),
+            ]);
+
+            this.rootView.set("progressBars", progressBars);
+            this.rootView.set("math", math);
+            this.rootView.set("videoPlayers", videoPlayers);
+            this.rootView.set("images", images);
+
+            insights.set(newString.id, this.collabDoc.createMap().handle);
+
+             // flowContainerMap MUST be set last
+
             const flowContainerMap = this.collabDoc.createMap();
             flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
             flowContainerMap.set("pageInk", Stream.create(this.runtime).handle);
@@ -142,11 +175,7 @@ export class SharedTextRunner
         debug(`collabDoc loaded ${this.runtime.id} - ${performanceNow()}`);
         debug(`Getting root ${this.runtime.id} - ${performanceNow()}`);
 
-        await Promise.all([
-            this.rootView.wait("text"),
-            this.rootView.wait("insights"),
-            this.rootView.wait("flowContainerMap"),
-        ]);
+        await this.rootView.wait("flowContainerMap");
 
         this.sharedString = await this.rootView.get<IComponentHandle>("text").get<SharedString>();
         this.insightsMap = await this.rootView.get<IComponentHandle>("insights").get<DistributedMap.ISharedMap>();

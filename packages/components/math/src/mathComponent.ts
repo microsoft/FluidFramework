@@ -7,8 +7,9 @@ import * as SearchMenu from "@chaincode/search-menu";
 import * as ClientUI from "@prague/client-ui";
 import {
     IComponent,
-    IComponentHTMLOptions,
+    IComponentHandleContext,
 
+    IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
     IComponentLoadable,
@@ -16,7 +17,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
     ISharedMap,
@@ -432,6 +433,7 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
 
+    public handle: ComponentHandle;
     public views: MathView[];
     public endMarker: IMathMarkerInst;
     public startMarker: MergeTree.Marker;
@@ -442,9 +444,12 @@ export class MathInstance implements IComponentLoadable, IComponentRouter,
     constructor(
         public url: string,
         public leafId: string,
+        context: IComponentHandleContext,
         public readonly collection: MathCollection,
         public readonly options = MathInstance.defaultOptions,
-        inCombinedText = false) {
+        inCombinedText = false,
+    ) {
+        this.handle = new ComponentHandle(this, leafId, context);
         this.initialize(inCombinedText);
     }
 
@@ -545,12 +550,14 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
     public get IComponentRouter() { return this; }
 
     public url: string;
+    public handle: ComponentHandle;
 
     private root: ISharedMap;
     private combinedMathText: Sequence.SharedString;
 
     constructor(private readonly runtime: IComponentRuntime, context: IComponentContext) {
         this.url = context.id;
+        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
     }
 
     public appendMathMarkers(instance: MathInstance, inCombinedText: boolean) {
@@ -581,7 +588,7 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
 
     public createCollectionItem(options?: IMathOptions): MathInstance {
         const leafId = `math-${Date.now()}`;
-        return new MathInstance(`${this.url}/${leafId}`, leafId, this, options);
+        return new MathInstance(`${this.url}/${leafId}`, leafId, this.runtime.IComponentHandleContext, this, options);
     }
 
     public getText(instance: MathInstance) {
@@ -643,7 +650,8 @@ export class MathCollection implements IComponentLoadable, IComponentCollection,
                 if (mathMarker.properties.componentOptions) {
                     options = mathMarker.properties.componentOptions;
                 }
-                mathMarker.mathInstance = new MathInstance(`${this.url}/${id}`, id, this, options, true);
+                mathMarker.mathInstance = new MathInstance(
+                    `${this.url}/${id}`, id, this.runtime.IComponentHandleContext, this, options, true);
             }
             return mathMarker.mathInstance as MathInstance;
         }

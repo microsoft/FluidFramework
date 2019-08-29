@@ -28,9 +28,6 @@ import {
     IComponentLayout, IInboundSignalMessage,
 } from "@prague/runtime-definitions";
 import * as Sequence from "@prague/sequence";
-import { ISharedObject } from "@prague/shared-object-common";
-import * as assert from "assert";
-import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { isBlock } from "@prague/app-ui";
@@ -240,12 +237,6 @@ const commands: IFlowViewCmd[] = [
             f.paintFormat();
         },
         key: "paint format",
-    },
-    {
-        exec: (c, p, f) => {
-            f.geocodeAddress();
-        },
-        key: "geocode",
     },
     {
         exec: (c, p, f) => {
@@ -577,6 +568,12 @@ const commands: IFlowViewCmd[] = [
             f.insertNewCollectionComponent(f.images);
         },
         key: "insert image",
+    },
+    {
+        exec: (c, p, f) => {
+            f.insertNewCollectionComponent(f.progressBars);
+        },
+        key: "insert progress bar",
     },
     {
         exec: (c, p, f) => {
@@ -3207,6 +3204,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     public videoPlayers: IComponentCollection;
     public images: IComponentCollection;
+    public progressBars: IComponentCollection;
 
     // TODO: 'services' is being used temporarily to smuggle context down to components.
     //       Should be replaced w/component-standardized render context, layout context, etc.
@@ -3222,7 +3220,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     private cmdTree: MergeTree.TST<IFlowViewCmd>;
     private formatRegister: MergeTree.PropertySet;
 
-    private progressBars: ProgressCollection;
     private math: IMathCollection;
 
     // A list of Marker segments modified by the most recently processed op.  (Reset on each
@@ -4765,15 +4762,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.statusMessage("cursor", `Cursor: ${this.cursor.pos} `);
     }
 
-    public geocodeAddress() {
-        const sel = this.cursor.getSelection();
-        if (sel) {
-            const text = this.sharedString.getText(sel.start, sel.end);
-            Geocoder.geocode(text, (err, data) => console.log(data),
-                { key: "" });
-        }
-    }
-
     public showCommentText() {
         const overlappingComments = this.commentsView.findOverlappingIntervals(
             this.cursor.pos,
@@ -4953,41 +4941,19 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private async openCollections() {
+        const root = this.collabDocument.getRoot();
+
         const [progressBars, math, videoPlayers, images] = await Promise.all([
-            this.openPlatform<ProgressCollection>("progress-bars"),
-            this.openPlatform<IMathCollection>("math"),
-            this.openCollection("video-players"),
-            this.openCollection("images"),
+            root.get<IComponentHandle>("progressBars").get<IComponent>(),
+            root.get<IComponentHandle>("math").get<IMathCollection>(),
+            root.get<IComponentHandle>("videoPlayers").get<IComponent>(),
+            root.get<IComponentHandle>("images").get<IComponent>(),
         ]);
 
-        this.progressBars = progressBars;
         this.math = math;
-        this.videoPlayers = videoPlayers;
-        this.images = images;
-    }
-
-    private async openCollection(id: string): Promise<IComponentCollection> {
-        const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
-        const request = await runtime.request({ url: "/" });
-
-        if (request.status !== 200 || request.mimeType !== "fluid/component") {
-            return Promise.reject("Not found");
-        }
-
-        const component = request.value as IComponent;
-        return component.IComponentCollection;
-    }
-
-    // TODO openPlatform should be removed in favor of openCollection
-    private async openPlatform<T>(id: string): Promise<T> {
-        const runtime = await this.collabDocument.context.getComponentRuntime(id, true);
-        const component = await runtime.request({ url: "/" });
-
-        if (component.status !== 200 || component.mimeType !== "fluid/component") {
-            return Promise.reject("Not found");
-        }
-
-        return component.value as T;
+        this.progressBars = progressBars.IComponentCollection;
+        this.videoPlayers = videoPlayers.IComponentCollection;
+        this.images = images.IComponentCollection;
     }
 
     private insertBlobInternal(blob: IGenericBlob) {

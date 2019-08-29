@@ -5,15 +5,16 @@
 
 import {
     IComponent,
-    IComponentHTMLOptions,
+    IComponentHandleContext,
 
+    IComponentHTMLOptions,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, MapFactory } from "@prague/map";
 import {
     IComponentCollection,
@@ -38,8 +39,10 @@ export class ImageComponent implements
     public minimumHeightInline?: number;
     public readonly canInline = true;
     public readonly preferInline = false;
+    public handle: ComponentHandle;
 
-    constructor(public imageUrl: string, public url: string) {
+    constructor(public imageUrl: string, public url: string, path: string, context: IComponentHandleContext) {
+        this.handle = new ComponentHandle(this, path, context);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
@@ -72,6 +75,7 @@ export class ImageCollection extends EventEmitter implements
     public get IComponentRouter() { return this; }
 
     public url: string;
+    public handle: ComponentHandle;
 
     private images = new Map<string, ImageComponent>();
     private root: ISharedMap;
@@ -80,6 +84,7 @@ export class ImageCollection extends EventEmitter implements
         super();
 
         this.url = context.id;
+        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
     }
 
     public createCollectionItem(): ImageComponent {
@@ -129,7 +134,11 @@ export class ImageCollection extends EventEmitter implements
         for (const key of this.root.keys()) {
             this.images.set(
                 key,
-                new ImageComponent(this.root.get(key), `${this.url}/${key}`));
+                new ImageComponent(
+                    this.root.get(key),
+                    `${this.url}/${key}`,
+                    key,
+                    this.runtime.IComponentHandleContext));
         }
 
         this.root.on("valueChanged", (changed, local) => {
@@ -139,7 +148,9 @@ export class ImageCollection extends EventEmitter implements
             } else {
                 const player = new ImageComponent(
                     this.root.get(changed.key),
-                    `${this.url}/${changed.key}`);
+                    `${this.url}/${changed.key}`,
+                    changed.key,
+                    this.runtime.IComponentHandleContext);
                 this.images.set(changed.key, player);
             }
         });

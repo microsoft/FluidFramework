@@ -5,13 +5,14 @@
 
 import {
     IComponent,
+    IComponentHandleContext,
     IComponentHTMLVisual,
     IComponentLoadable,
     IComponentRouter,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IComponentCollection,
@@ -96,14 +97,17 @@ export class VideoPlayer implements
     public readonly canInline = true;
     public readonly preferInline = false;
     public readonly preferPersistentElement = true;
+    public handle: ComponentHandle;
 
     constructor(
         public videoId: string,
         public url: string,
+        context: IComponentHandleContext,
         private keyId: string,
         private youTubeApi: YouTubeAPI,
         private collection: VideoPlayerCollection,
     ) {
+        this.handle = new ComponentHandle(this, keyId, context);
     }
 
     public heightInLines() {
@@ -165,6 +169,7 @@ export class VideoPlayerCollection extends EventEmitter implements
     public get IComponentCollection() { return this; }
 
     public url: string;
+    public handle: ComponentHandle;
 
     private videoPlayers = new Map<string, VideoPlayer>();
     private root: ISharedMap;
@@ -173,6 +178,7 @@ export class VideoPlayerCollection extends EventEmitter implements
         super();
 
         this.url = context.id;
+        this.handle = new ComponentHandle(this, "", runtime.IComponentHandleContext);
     }
 
     public changeValue(key: string, newValue: number) {
@@ -230,7 +236,13 @@ export class VideoPlayerCollection extends EventEmitter implements
         for (const key of this.root.keys()) {
             this.videoPlayers.set(
                 key,
-                new VideoPlayer(this.root.get(key), `${this.url}/${key}`, key, youTubeApi, this));
+                new VideoPlayer(
+                    this.root.get(key),
+                    `${this.url}/${key}`,
+                    this.runtime.IComponentHandleContext,
+                    key,
+                    youTubeApi,
+                    this));
         }
 
         this.root.on("valueChanged", (changed, local) => {
@@ -241,6 +253,7 @@ export class VideoPlayerCollection extends EventEmitter implements
                 const player = new VideoPlayer(
                     this.root.get(changed.key),
                     `${this.url}/${changed.key}`,
+                    this.runtime.IComponentHandleContext,
                     changed.key,
                     youTubeApi,
                     this);
