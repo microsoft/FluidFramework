@@ -50,7 +50,9 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
         const collection = new AgentScheduler(runtime, scheduler);
-        await collection.initialize();
+        collection.initialize().catch((err) => {
+            debug(err as string);
+        });
 
         return collection;
     }
