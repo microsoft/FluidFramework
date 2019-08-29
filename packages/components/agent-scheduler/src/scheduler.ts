@@ -49,12 +49,12 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             const handle = await root.wait<IComponentHandle>("scheduler");
             scheduler = await handle.get<ConsensusRegisterCollection<string | null>>();
         }
-        const collection = new AgentScheduler(runtime, scheduler);
-        collection.initialize().catch((err) => {
+        const agentScheduler = new AgentScheduler(runtime, scheduler);
+        agentScheduler.initialize().catch((err) => {
             debug(err as string);
         });
 
-        return collection;
+        return agentScheduler;
     }
 
     public get IAgentScheduler() { return this; }
@@ -280,12 +280,37 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
             await new Promise<void>((resolve) => this.runtime.on("connected", () => resolve()));
         }
 
-        // Wait for the component to be attached.
-        await this.runtime.waitAttached();
+        const quorum = this.runtime.getQuorum();
+        // A client left the quorum. Iterate and clear tasks held by that client.
+        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
+        // Probably okay for now to have every client try to do this.
+        quorum.on("removeMember", async (clientId: string) => {
+            const leftTasks: string[] = [];
+            for (const taskUrl of this.scheduler.keys()) {
+                if (this.getTaskClientId(taskUrl) === clientId) {
+                    leftTasks.push(taskUrl);
+                }
+            }
+            await this.clearTasks(leftTasks);
+        });
+
+        // Listeners for new/released tasks. All clients will try to grab at the same time.
+        // May be we want a randomized timer (Something like raft) to reduce chattiness?
+        this.scheduler.on("atomicChanged", async (changed: IChanged) => {
+            const currentClient = this.getTaskClientId(changed.key);
+            // Either a client registered for a new task or released a running task.
+            if (currentClient === null) {
+                await this.pickNewTasks([changed.key]);
+            }
+            // A new leader was picked. set leadership info.
+            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
+                this._leader = true;
+                this.emit("leader");
+            }
+        });
 
         // Nobody released the tasks held by last client in previous session.
         // Check to see if this client needs to do this.
-        const quorum = this.runtime.getQuorum();
         const clearCandidates: string[] = [];
         for (const taskUrl of this.scheduler.keys()) {
             // tslint:disable-next-line: no-non-null-assertion
@@ -306,34 +331,6 @@ class AgentScheduler extends EventEmitter implements IAgentScheduler, IComponent
         } catch (err) {
             debug(err as string);
         }
-
-        // Listeners for new/released tasks. All clients will try to grab at the same time.
-        // May be we want a randomized timer (Something like raft) to reduce chattiness?
-        this.scheduler.on("atomicChanged", async (changed: IChanged) => {
-            const currentClient = this.getTaskClientId(changed.key);
-            // Either a client registered for a new task or released a running task.
-            if (currentClient === null) {
-                await this.pickNewTasks([changed.key]);
-            }
-            // A new leader was picked. set leadership info.
-            if (changed.key === LeaderTaskId && currentClient === this.runtime.clientId) {
-                this._leader = true;
-                this.emit("leader");
-            }
-        });
-
-        // A client left the quorum. Iterate and clear tasks held by that client.
-        // Ideally a leader should do this cleanup. But it's complicated when a leader itself leaves.
-        // Probably okay for now to have every client do this.
-        quorum.on("removeMember", async (clientId: string) => {
-            const leftTasks: string[] = [];
-            for (const taskUrl of this.scheduler.keys()) {
-                if (this.getTaskClientId(taskUrl) === clientId) {
-                    leftTasks.push(taskUrl);
-                }
-            }
-            await this.clearTasks(leftTasks);
-        });
     }
 
     private async runTask(url: string) {
