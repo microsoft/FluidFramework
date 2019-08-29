@@ -4,15 +4,19 @@
  */
 
 import { IErrorTrackingService } from "@prague/protocol-definitions";
-import * as raven from "raven";
+import * as Sentry from "@sentry/node";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {
 
-    constructor(private endpoint: string) {
+    constructor(endpoint: string) {
+        Sentry.init({ dsn: endpoint });
     }
 
-    public track(func: () => void) {
-        raven.config(this.endpoint).install();
-        raven.context(func);
+    public track<T>(func: () => T): T {
+        return func();
+    }
+
+    public captureException(error: any): string {
+        return Sentry.captureException(error);
     }
 }
