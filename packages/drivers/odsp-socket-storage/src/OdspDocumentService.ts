@@ -30,6 +30,7 @@ export class OdspDocumentService implements api.IDocumentService {
      * @param storageFetchWrapper - if not provided FetchWrapper will be used
      * @param deltasFetchWrapper - if not provided FetchWrapper will be used
      * @param socketStorageDiscovery - the initial JoinSession response
+     * @param fetchFullSnapshot - whether we want to fetch full snapshot(with blobs)
      * @param snapshotP - optional promise to prefetched latest snapshot. It will query the
      * server if the promise is not provide. If the promise resolves to null,
      * it will assume that there are no snapshot on the server and skip the query
@@ -42,6 +43,7 @@ export class OdspDocumentService implements api.IDocumentService {
         private readonly storageFetchWrapper: IFetchWrapper,
         private readonly deltasFetchWrapper: IFetchWrapper,
         private socketStorageDiscovery: ISocketStorageDiscovery,
+        private readonly fetchFullSnapshot: boolean,
         private readonly snapshotP?: Promise<IOdspSnapshot | undefined>,
         joinSession?: () => Promise<ISocketStorageDiscovery>,
     ) {
@@ -91,6 +93,7 @@ export class OdspDocumentService implements api.IDocumentService {
 
                     return this.tokenProvider;
                 },
+                this.fetchFullSnapshot,
             ),
         );
     }

@@ -165,7 +165,8 @@ export interface ISnapshotCommit {
 export interface IOdspSnapshot {
     id: string;
     sha: string;
-    trees: resources.ITree[];
+    trees?: resources.ITree[];
+    tree?: resources.ITree;
     blobs: resources.IBlob[];
     ops: ISequencedDeltaOpMessage[];
 }

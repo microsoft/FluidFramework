@@ -7,6 +7,7 @@ import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 import { buildHierarchy } from "@prague/utils";
 import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, IOdspSnapshot, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
+import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { TokenProvider } from "./tokenProvider";
@@ -21,6 +22,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly queryString: string;
+    private readonly appId: string;
 
     constructor(
         queryParams: { [key: string]: string },
@@ -31,6 +33,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         blobs: resources.IBlob[] | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
+        private readonly fetchFullSnapshot: boolean,
     ) {
         if (trees) {
             this.initTreesCache(trees);
@@ -41,6 +44,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         this.queryString = getQueryString(queryParams);
+        this.appId = queryParams.app_id;
     }
 
     public createBlob(file: Buffer): Promise<api.ICreateBlobResponse> {
@@ -295,17 +299,27 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     }
 
     private async readTree(id: string): Promise<resources.ITree | null> {
+        if (!this.snapshotUrl) {
+            return null;
+        }
         let tree = this.treesCache.get(id);
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const tokenProvider = await this.getTokenProvider(refresh);
+                const tokenProvider = (await this.getTokenProvider(refresh)) as TokenProvider;
 
-                const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/${id}${this.queryString}`);
-
-                const response = await this.fetchWrapper.get<resources.ITree>(url, id, headers);
-
-                // FIX SPO
-                return response && response.tree ? response : undefined;
+                const odspSnapshot: IOdspSnapshot = await fetchSnapshot(this.snapshotUrl!, tokenProvider.storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
+                // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
+                if (odspSnapshot) {
+                    if (odspSnapshot.trees) {
+                        this.initTreesCache(odspSnapshot.trees);
+                    } else if (odspSnapshot.tree) {
+                        this.treesCache.set(odspSnapshot.sha, (odspSnapshot as any) as resources.ITree);
+                    }
+                    if (odspSnapshot.blobs) {
+                        this.initBlobsCache(odspSnapshot.blobs);
+                    }
+                }
+                return this.treesCache.get(id);
             });
         }
 

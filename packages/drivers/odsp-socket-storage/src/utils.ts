@@ -67,9 +67,9 @@ const defaultRetryPolicy: IRetryPolicy = {
 
 /**
  * A utility function to do fetch with support for retries
- * @param url fetch requestInfo, can be a string
- * @param requestInit fetch requestInit
- * @param retryPolicy how to do retries
+ * @param url - fetch requestInfo, can be a string
+ * @param requestInit - fetch requestInit
+ * @param retryPolicy - how to do retries
  */
 export function fetchWithRetry(
     requestInfo: RequestInfo,
@@ -109,7 +109,7 @@ function fetchWithRetryImpl(
 
 /**
  * Creates a filter that will allow retries for the whitelisted status codes
- * @param retriableCodes Cannot be null/undefined
+ * @param retriableCodes - Cannot be null/undefined
  */
 export function whitelist(retriableCodes: number[]): RetryFilter {
     return (response: Response) => retriableCodes.includes(response.status);

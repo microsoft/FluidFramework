@@ -105,6 +105,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
         blobs,
         this.storageFetchWrapper,
         () => this.getTokenProvider(),
+        true,
       ),
     );
   }

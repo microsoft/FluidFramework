@@ -47,6 +47,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
                         this.storageFetchWrapper,
                         this.deltasFetchWrapper,
                         socketStorageDiscovery,
+                        true,
                         this.snapshot,
                         this.joinSession,
                     ),
@@ -100,6 +101,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
             this.storageFetchWrapper,
             this.deltasFetchWrapper,
             socketStorageDiscoveryFromURL,
+            true,
         ));
     }
 }
