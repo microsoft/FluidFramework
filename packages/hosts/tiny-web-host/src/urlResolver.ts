@@ -65,9 +65,7 @@ function r11sResolveUrl(
         `/${encodeURIComponent(tenantId)}/${encodeURIComponent(documentId)}`;
 
     const storageUrl =
-        config.blobStorageUrl.replace("historian:3000", "localhost:3001") +
-        "/repos" +
-        `/${encodeURIComponent(tenantId)}`;
+        config.blobStorageUrl.replace("historian:3000", "localhost:3001");
 
     const resolvedUrl: IFluidResolvedUrl = {
         endpoints: {
