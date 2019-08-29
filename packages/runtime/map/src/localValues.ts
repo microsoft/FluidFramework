@@ -10,7 +10,13 @@ import {
     ISerializedHandle,
 } from "@prague/component-core-interfaces";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
+import {
+    ISharedObject,
+    parseHandles,
+    serializeHandles,
+    SharedObject,
+    ValueType,
+} from "@prague/shared-object-common";
 import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
 import { DistributedSetValueType } from "./set";
@@ -22,28 +28,6 @@ export interface ILocalValue {
         serializer: IComponentSerializer,
         context: IComponentHandleContext,
         bind: IComponentHandle): ISerializableValue;
-}
-
-export function serializeHandles(
-    value: any,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
-    bind: IComponentHandle,
-) {
-    return value !== undefined
-        ? JSON.parse(serializer.stringify(
-            value,
-            context,
-            bind))
-        : value;
-}
-
-export function parseHandles(
-    value: any,
-    serializer: IComponentSerializer,
-    context: IComponentHandleContext,
-) {
-    return value !== undefined ? serializer.parse(JSON.stringify(value), context) : value;
 }
 
 export const valueTypes: ReadonlyArray<IValueType<any>> = [

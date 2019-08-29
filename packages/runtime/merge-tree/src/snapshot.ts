@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@prague/component-core-interfaces";
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
@@ -84,7 +85,16 @@ export class Snapshot {
         }
     }
 
-    emit(tardisMsgs: ISequencedDocumentMessage[]): ITree {
+    /**
+     * Emits the snapshot to an ITree. If provided the optional IComponentSerializer will be used when serializing
+     * the summary data rather than JSON.stringify.
+     */
+    emit(
+        tardisMsgs: ISequencedDocumentMessage[],
+        serializer?: IComponentSerializer,
+        context?: IComponentHandleContext,
+        bind?: IComponentHandle,
+    ): ITree {
         let chunk1 = this.getSeqLengthSegs(this.segments, this.segmentLengths, Snapshot.sizeOfFirstChunk);
         let length: number = chunk1.chunkLengthChars;
         let segments: number = chunk1.chunkSegmentCount;
@@ -95,7 +105,7 @@ export class Snapshot {
                     path: Snapshot.header,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(chunk1),
+                        contents: serializer ? serializer.stringify(chunk1, context, bind): JSON.stringify(chunk1),
                         encoding: "utf-8",
                     },
                 },
@@ -113,7 +123,7 @@ export class Snapshot {
                 path: Snapshot.body,
                 type: TreeEntry[TreeEntry.Blob],
                 value: {
-                    contents: JSON.stringify(chunk2),
+                    contents: serializer ? serializer.stringify(chunk2, context, bind) : JSON.stringify(chunk2),
                     encoding: "utf-8",
                 },
             });
@@ -132,7 +142,7 @@ export class Snapshot {
             path: Snapshot.tardis,
             type: TreeEntry[TreeEntry.Blob],
             value: {
-                contents: JSON.stringify(tardisMsgs),
+                contents: serializer ? serializer.stringify(tardisMsgs, context, bind) : JSON.stringify(tardisMsgs),
                 encoding: "utf-8",
             },
         });
@@ -195,9 +205,14 @@ export class Snapshot {
         return this.segments;
     }
 
-    public static async loadChunk(storage: IObjectStorageService, path: string): Promise<ops.MergeTreeChunk> {
+    public static async loadChunk(
+        storage: IObjectStorageService,
+        path: string,
+        serializer?: IComponentSerializer,
+        context?: IComponentHandleContext,
+    ): Promise<ops.MergeTreeChunk> {
         let chunkAsString: string = await storage.read(path);
-        return Snapshot.processChunk(chunkAsString);
+        return Snapshot.processChunk(chunkAsString, serializer, context);
     }
 
     public static EmptyChunk: ops.MergeTreeChunk = {
@@ -210,7 +225,12 @@ export class Snapshot {
         segmentTexts: [],
     }
 
-    public static processChunk(chunk: string): ops.MergeTreeChunk {
-        return JSON.parse(Buffer.from(chunk, "base64").toString("utf-8")) as ops.MergeTreeChunk;
+    public static processChunk(
+        chunk: string,
+        serializer?: IComponentSerializer,
+        context?: IComponentHandleContext,
+    ): ops.MergeTreeChunk {
+        const utf8 = Buffer.from(chunk, "base64").toString("utf-8");
+        return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }
 }

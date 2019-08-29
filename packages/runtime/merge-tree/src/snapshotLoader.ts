@@ -50,7 +50,10 @@ export class SnapshotLoader {
         header: string,
         branchId: string): MergeTreeChunk {
 
-        const chunk = Snapshot.processChunk(header);
+        const chunk = Snapshot.processChunk(
+            header,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext);
         const segs = chunk.segmentTexts.map((spec) => {
             const seg = this.client.specToSegment(spec);
             seg.seq = UniversalSequenceNumber;
@@ -68,7 +71,7 @@ export class SnapshotLoader {
         return chunk;
     }
 
-   private async loadBody(chunk1: MergeTreeChunk, services: IObjectStorageService): Promise<void> {
+    private async loadBody(chunk1: MergeTreeChunk, services: IObjectStorageService): Promise<void> {
         this.runtime.logger.shipAssert(
             chunk1.chunkLengthChars <= chunk1.totalLengthChars,
             { eventName: "Mismatch in totalLengthChars" });
@@ -79,9 +82,13 @@ export class SnapshotLoader {
 
         if (chunk1.chunkSegmentCount === chunk1.totalSegmentCount) {
             return;
-       }
+        }
 
-        const chunk2 = await Snapshot.loadChunk(services, Snapshot.body);
+        const chunk2 = await Snapshot.loadChunk(
+            services,
+            Snapshot.body,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext);
 
         this.runtime.logger.shipAssert(
             chunk1.chunkLengthChars + chunk2.chunkLengthChars === chunk1.totalLengthChars,
@@ -99,14 +106,17 @@ export class SnapshotLoader {
             NonCollabClient,
             UniversalSequenceNumber,
             undefined);
-   }
+    }
 
     // If loading from a snapshot load tardis messages
     private async loadTardis(
         rawMessages: Promise<string>,
         branchId: string,
     ): Promise<ISequencedDocumentMessage[]> {
-        const messages = JSON.parse(Buffer.from(await rawMessages, "base64").toString()) as ISequencedDocumentMessage[];
+        const utf8 = Buffer.from(await rawMessages, "base64").toString();
+        const messages = (this.runtime.IComponentSerializer
+            ? this.runtime.IComponentSerializer.parse(utf8, this.runtime.IComponentHandleContext)
+            : JSON.parse(utf8)) as ISequencedDocumentMessage[];
         if (branchId !== this.runtime.documentId) {
             for (const message of messages) {
                 // Append branch information when transforming for the case of messages stashed with the snapshot

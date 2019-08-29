@@ -2406,14 +2406,8 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
                 } else {
                     // Delay load the instance if not available
                     if (!newBlock.instanceP) {
-                        newBlock.instanceP = layoutContext.flowView.collabDocument.context.hostRuntime
-                            .request({ url: `/${newBlock.properties.leafId}` })
-                            .then(async (response) => {
-                                if (response.status !== 200 || response.mimeType !== "fluid/component") {
-                                    return Promise.reject(response);
-                                }
-
-                                const component = response.value as IComponent;
+                        newBlock.instanceP = newBlock.properties.leafId.get()
+                            .then(async (component: IComponent) => {
                                 // TODO below is a temporary workaround. Should every QI interface also implement
                                 // IComponent. Then you can go from IComponentHTMLVisual to IComponentLayout.
                                 // Or should you query for each one individually.
@@ -4885,9 +4879,9 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 type: {
                     name: "component",
                 } as IReferenceDocType,
-                url: loadable.url,
+                url: loadable.handle,
             },
-            leafId: loadable.url,
+            leafId: loadable.handle,
         };
 
         if (!inline) {

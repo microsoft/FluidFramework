@@ -18,6 +18,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
 } from "@prague/runtime-definitions";
+import { parseHandles, serializeHandles } from "@prague/shared-object-common";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
@@ -348,7 +349,12 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     public abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
-        this.submitLocalMessage(message);
+        const translated = serializeHandles(
+            message,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+        this.submitLocalMessage(translated);
     }
 
     public addLocalReference(lref) {
@@ -435,12 +441,20 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         const snap = this.client.createSnapshotter();
         snap.extractSync();
         this.messagesSinceMSNChange.forEach((m) => m.minimumSequenceNumber = minSeq);
-        const mtSnap = snap.emit(this.messagesSinceMSNChange);
+        const mtSnap = snap.emit(
+            this.messagesSinceMSNChange,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
 
         return mtSnap;
     }
 
-    protected processContent(message: ISequencedDocumentMessage) {
+    protected processContent(rawMessage: ISequencedDocumentMessage) {
+        const message = parseHandles(
+            rawMessage,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext);
 
         const ops: MergeTree.IMergeTreeOp[] = [];
         function transfromOps(event: SequenceDeltaEvent) {

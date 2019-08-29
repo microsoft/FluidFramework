@@ -16,7 +16,13 @@ import {
     IObjectStorageService,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+import {
+    ISharedObjectFactory,
+    parseHandles,
+    serializeHandles,
+    SharedObject,
+    ValueType,
+} from "@prague/shared-object-common";
 import { debug } from "./debug";
 import {
     ISerializableValue,
@@ -29,8 +35,6 @@ import {
 import {
     ILocalValue,
     LocalValueMaker,
-    parseHandles,
-    serializeHandles,
     ValueTypeLocalValue,
     valueTypes,
 } from "./localValues";
