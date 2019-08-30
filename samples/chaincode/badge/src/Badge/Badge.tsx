@@ -3,29 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  IComponentReactViewable
-} from "@prague/aqueduct-react";
-import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
-
+import { PrimedComponent } from "@prague/aqueduct";
+import { IComponentReactViewable } from "@prague/aqueduct-react";
 import { SharedCell } from "@prague/cell";
+import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { SharedMap } from "@prague/map";
 import { SharedObjectSequence } from "@prague/sequence";
-
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-
-import { BadgeView } from "./BadgeView";
-
 import { SharedColors } from '@uifabric/fluent-theme/lib/fluent/FluentColors';
 import { IIconProps } from 'office-ui-fabric-react/lib/Icon';
-import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { BadgeView } from "./BadgeView";
 
 export interface IBadgeType {
   key: string;
@@ -39,6 +27,10 @@ export interface IHistory<T> {
 }
 
 export class Badge extends PrimedComponent implements IComponentHTMLVisual, IComponentReactViewable {
+  currentCell: SharedCell;
+  optionsMap: SharedMap;
+  historySequence: SharedObjectSequence<IHistory<IBadgeType>>;
+
   public get IComponentHTMLVisual() { return this; }
   public get IComponentHTMLRender() { return this; }
   public get IComponentReactViewable() { return this; }
@@ -95,18 +87,15 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
    * before any other user will see the component.
    */
   protected async componentInitializingFirstTime() {
-    // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
-    await super.componentInitializingFirstTime();
-
     // create a cell to represent the Badge's current state
     const current = SharedCell.create(this.runtime);
     current.set(this.defaultOptions[0]);
-    this.root.set(this.currentId, current);
+    this.root.set(this.currentId, current.handle);
 
     // create a map to represent the options for the Badge
     const options = SharedMap.create(this.runtime);
     this.defaultOptions.forEach(v => options.set(v.key, v));
-    this.root.set(this.optionsId, options);
+    this.root.set(this.optionsId, options.handle);
 
     // create a sequence to store the badge's history
     const history = SharedObjectSequence.create<IHistory<IBadgeType>>(this.runtime);
@@ -114,19 +103,19 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
       value: current.get(),
       timestamp: new Date()
     }]);
-    this.root.set(this.historyId, history);
+    this.root.set(this.historyId, history.handle);
   }
 
   /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
+   * In order to retrieve values from the SharedDirectory/Map, we must use await, so we need an async function.
+   * This function stashes local references to the Shared objects that we want to pass into the React component
+   * in render (see createJSXElement). That way our render method, which cannot be async, can pass in the Shared
+   * object refs as props to the React component.
    */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<Badge> {
-    const badge = new Badge(runtime, context);
-    await badge.initialize();
-
-    return badge;
+  protected async componentHasInitialized() {
+    this.currentCell = await this.root.get<IComponentHandle>(this.currentId).get<SharedCell>();
+    this.optionsMap = await this.root.get<IComponentHandle>(this.optionsId).get<SharedMap>();
+    this.historySequence = await this.root.get<IComponentHandle>(this.historyId).get<SharedObjectSequence<IHistory<IBadgeType>>>();
   }
 
   public render(div: HTMLElement) {
@@ -141,16 +130,16 @@ export class Badge extends PrimedComponent implements IComponentHTMLVisual, ICom
   }
 
   public createJSXElement(): JSX.Element {
-    const currentCell = this.root.get<SharedCell>(this.currentId);
-    const optionsMap = this.root.get<SharedMap>(this.optionsId);
-    const historySequence = this.root.get<SharedObjectSequence<IHistory<IBadgeType>>>(this.historyId);
+    const divStyle = {
+      display: "inline-block"
+    };
 
     return (
-      <div>
+      <div style={divStyle}>
         <BadgeView
-          currentCell={currentCell}
-          optionsMap={optionsMap}
-          historySequence={historySequence} />
+          currentCell={this.currentCell}
+          optionsMap={this.optionsMap}
+          historySequence={this.historySequence} />
       </div>
     )
   }
