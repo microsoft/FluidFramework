@@ -21,7 +21,7 @@ export interface IWebsocketEndpoint {
 export interface IOdspResolvedUrl extends IResolvedUrlBase {
   type: "prague";
 
-  // URL to send to prague, contains the documentId and the path
+  // URL to send to fluid, contains the documentId and the path
   url: string;
 
   // A hashed identifier that is unique to this document

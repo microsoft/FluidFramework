@@ -1,4 +1,4 @@
-# Prague UI Framework
+# Fluid UI Framework
 
 ## Design Goals
 

@@ -1,7 +1,7 @@
 [![Headless Agent Status](https://offnet.visualstudio.com/_apis/public/build/definitions/0a22f611-6a4a-4416-a1bb-53ed7284aa21/19/badge)](https://offnet.visualstudio.com/officenet/_build/index?definitionId=19)
 
 # Headless Agent
-Loads Prague components on a headless chromium browser.
+Loads Fluid components on a headless chromium browser.
 
 To build
 ```

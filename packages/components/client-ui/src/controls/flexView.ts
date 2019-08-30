@@ -96,19 +96,19 @@ export class FlexView extends ui.Component {
     private addButtons() {
         const stackPanelElement = document.createElement("div");
         const buttonSize = { width: 50, height: 50 };
-        const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-prague"]);
+        const stackPanel = new StackPanel(stackPanelElement, Orientation.Horizontal, ["navbar-fluid"]);
         this.colorButton = new Button(
             document.createElement("div"),
             buttonSize,
-            ["btn", "btn-palette", "prague-icon-pencil"]);
+            ["btn", "btn-palette", "fluid-icon-pencil"]);
         const replayButton = new Button(
             document.createElement("div"),
             buttonSize,
-            ["btn", "btn-palette", "prague-icon-replay"]);
+            ["btn", "btn-palette", "fluid-icon-replay"]);
         const clearButton = new Button(
             document.createElement("div"),
             buttonSize,
-            ["btn", "btn-palette", "prague-icon-cross"]);
+            ["btn", "btn-palette", "fluid-icon-cross"]);
 
         stackPanel.addChild(this.colorButton);
         stackPanel.addChild(replayButton);

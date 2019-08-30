@@ -1,7 +1,7 @@
-# Prague Loader
+# Fluid Loader
 
-The loader makes up the minimal kernal of the Prague runtime. This kernel is responsible for providing access to
-Prague storage as well as consensus over a quorum of clients.
+The loader makes up the minimal kernal of the Fluid runtime. This kernel is responsible for providing access to
+Fluid storage as well as consensus over a quorum of clients.
 
 Storage includes snapshots as well as the live and persisted operation stream.
 

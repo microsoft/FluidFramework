@@ -8,7 +8,7 @@ import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";
 import { configureLogging } from "./logger";
-import { testPragueService } from "./testService";
+import { testFluidService } from "./testService";
 
 function getConfig(configFile: string): nconf.Provider {
     return nconf.argv().env("__" as any).file(configFile).use("memory");
@@ -26,7 +26,7 @@ async function runInternal(config: nconf.Provider, retry: number, error: string)
     if (retry === 0) {
         return Promise.reject(error);
     }
-    const testP = testPragueService(config).then(() => {
+    const testP = testFluidService(config).then(() => {
         return;
     }, (err: string) => {
         return runInternal(config, retry - 1, err);

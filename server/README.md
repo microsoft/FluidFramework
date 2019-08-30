@@ -12,7 +12,7 @@ This directory contains our reference server implementation. [Routerlicious](./r
 
 [Gitssh](./gitssh) is a git ssh server client container.
 
-[Headless-agent](./headless-agent) loads Prague components on a headless chromium browser.
+[Headless-agent](./headless-agent) loads Fluid components on a headless chromium browser.
 
 [Historian](./historian) provides a REST API to git repositories. The API is similar to that exposed by GitHub but can be used in local development.
 

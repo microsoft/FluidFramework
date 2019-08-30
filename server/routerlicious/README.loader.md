@@ -1,9 +1,9 @@
-# Prague Loader 
+# Fluid Loader 
 
-Experiment to build a minimum loader that can dynamically load Prague code
+Experiment to build a minimum loader that can dynamically load Fluid code
 
 Capabilities
-* Connect to Prague services
+* Connect to Fluid services
 * Load snapshot data
 * Read and write ops
 * Client consensus protocol

@@ -62,7 +62,7 @@ async function run(loader: Loader, docUrl: string, timeoutMS: number) {
     });
 }
 
-export async function testPragueService(config: Provider): Promise<void> {
+export async function testFluidService(config: Provider): Promise<void> {
     const params = config.get("loader") as ILoadParams;
     const documentId = uuid();
     const hostToken = jwt.sign(

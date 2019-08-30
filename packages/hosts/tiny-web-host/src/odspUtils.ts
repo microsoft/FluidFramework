@@ -33,7 +33,7 @@ export async function spoJoinSession(
     if (tokens === undefined) {
         return Promise.reject(`Missing tokens for ${server}`);
     }
-    // Only .b items can be prague
+    // Only .b items can be fluid
     const encoded = encodeURIComponent(`${id}.b`);
 
     // tslint:disable-next-line: no-unsafe-any

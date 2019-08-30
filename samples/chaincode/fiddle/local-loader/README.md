@@ -1,4 +1,4 @@
-## Prague Local Loader
+## Fluid Local Loader
 
 This is a simple loader lets you run from a local js file.
 

@@ -2,20 +2,20 @@
 uid: loaders
 ---
 
-# Literate Prague Loader
+# Literate Fluid Loader
 
-The Prague loader is all that is needed to load any Prague document. This example walks through all the steps to
+The Fluid loader is all that is needed to load any Fluid document. This example walks through all the steps to
 create, initialize, and then make use of the loader. And does so in a literate programming like style to provide
 more detail on each line of the code.
 
 There are other packages which provide simple APIs to make use of the loader. For example @prague/app-datastore or
 @prague/tiny-web-host. These may be better starting options when integrating the loader into your own code. But this
-example will show all the steps needed to create and use the Prague loader. And it still comes in under 200 lines
+example will show all the steps needed to create and use the Fluid loader. And it still comes in under 200 lines
 of code.
 
 ## Build steps
 
-The first (and hardest) step to get up and running is to authenticate against the Prague private NPM feed. To do so
+The first (and hardest) step to get up and running is to authenticate against the Fluid private NPM feed. To do so
 navigate to https://offnet.visualstudio.com/officenet/_packaging?feed=prague&_a=feed, click the "Connect to feed" link,
 choose "npm" and then follow the instructions.
 
@@ -36,7 +36,7 @@ http://localhost:8080/new-document?chaincode=@chaincode/tourofheroes@0.0.5918.
 
 ### Packages
 
-The loader itself only requires two Prague packages: `@prague/container-definitions` and `@prague/container-loader`.
+The loader itself only requires two Fluid packages: `@prague/container-definitions` and `@prague/container-loader`.
 
 `@prague/container-loader` contains the actual loader itself.
 
@@ -59,8 +59,8 @@ const loader = new Loader(
 
 The loader takes in four parameters. The first is a set of host interfaces. These allow the loader to interact with
 the host for identity and access control related tasks like URL resolution. The second contains the driver factory.
-This allows the loader to communicate with the service hosting the Prague document. The third parameter defines the
-code loader used to load the code defined in the Prague document. And finally the last parameter is a set of options
+This allows the loader to communicate with the service hosting the Fluid document. The third parameter defines the
+code loader used to load the code defined in the Fluid document. And finally the last parameter is a set of options
 used during the actual load.
 
 Each of these will be described in more detail in the sections that follow.
@@ -70,22 +70,22 @@ Each of these will be described in more detail in the sections that follow.
 There are certain tasks that require the host's help to complete. These are defined via the host interfaces.
 
 As a library the loader does not have full context on the identity of the user. This is defined by the session the user
-has established with the web server that served the web page being viewed. As such the Prague loader defers
+has established with the web server that served the web page being viewed. As such the Fluid loader defers
 certain tasks to the host page when identity or access control is involved.
 
-The primary of these is resolving a URL to its Prague specific endpoint and access tokens. Sites hosting Prague
+The primary of these is resolving a URL to its Fluid specific endpoint and access tokens. Sites hosting Fluid
 documents are free to define any URL scheme they want to represent a document. But they must then be able to map
-from this URL to a Prague based url of the form:
+from this URL to a Fluid based url of the form:
 
 `prague-protocool://service.domain/documentId/path`
 
-And also provided the required access tokens with this. In the above the protocol part of the URL defines which Prague
+And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
-the Prague document. And finally the path is a string handed down to the document itself and allows it to select which
+the Fluid document. And finally the path is a string handed down to the document itself and allows it to select which
 component to render and parameters for it.
 
 Deferring to the host for this resolution allows it to perform access control checks on the user's identity and only
-return the resolved Prague URL with access tokens if these pass.
+return the resolved Fluid URL with access tokens if these pass.
 
 In this sample we aren't doing any user authentication and are running client side only with the API tokens hard
 coded into the sample. This is NOT a security best practice and is only intended to be used to simplify the loader
@@ -104,7 +104,7 @@ export interface IUrlResolver {
 ```
 
 This simple interface defines a single method, `resolve`, which takes in an `IRequest` object and resolves it to an
-`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the prague based URL
+`IResolvedUrl`. An `IRequest` is simply the URL for the document. And the `IResolvedUrl` is the fluid based URL
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
@@ -117,7 +117,7 @@ const parsedUrl = new URL(request.url);
 const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 ```
 
-Once those are available we can construct the full Prague url as
+Once those are available we can construct the full Fluid url as
 
 ```typescript
 const documentUrl = `prague://${new URL(this.ordererUrl).host}` +
@@ -150,8 +150,8 @@ return response;
 
 #### Drivers
 
-Similar to how the loader defers certain tasks to the host it also defers how to establish a connection to a Prague
-service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Prague service may
+Similar to how the loader defers certain tasks to the host it also defers how to establish a connection to a Fluid
+service to a set of driver code. This allows the loader to be agnostic to the wire protocol a Fluid service may
 define so long as code is provided that correctly implements the loader's driver interface.
 
 In this example the Routerlicious driver is used `@prague/routerlicious-socket-storage`. But drivers also exist to
@@ -168,13 +168,13 @@ const documentServicesFactory = new RouterliciousDocumentServiceFactory();
 The driver factory is then passed to the loader. Internally the loader then binds the data returned from the
 host resolver to the associated driver.
 
-Although not fully utilized yet the protocol part of the Prague URL is used to determine which driver to make use of -
+Although not fully utilized yet the protocol part of the Fluid URL is used to determine which driver to make use of -
 i.e. prague-routerlicious:// would indicate the routerlicious driver/protocol should be used, while the prague-spo://
 would indicate the SharePoint driver is required.
 
 #### Code Loader
 
-At its core a Prague document is a code plus data package. The operation stream defines the code to run in addition
+At its core a Fluid document is a code plus data package. The operation stream defines the code to run in addition
 to containing the operations to run against the underlying data types. This is very similar to a the traditional web
 model where HTML is combined with script tags.
 
@@ -204,9 +204,9 @@ export interface IChaincodeFactory {
 
 Once the `IChaincodeFactory` is returned the loader then invokes the instantiateRuntime call to load the code package.
 
-### Loading a Prague document
+### Loading a Fluid document
 
-Once the loader has been created then actually loading a Prague document is a one line call
+Once the loader has been created then actually loading a Fluid document is a one line call
 
 ```typescript
 const response = await loader.request({ url });
@@ -214,8 +214,8 @@ const response = await loader.request({ url });
 
 Internally the loader is then using the host interface to resolve the URL, creating a driver to connect to the
 resolved URL, and then connecting to the document. The path part of the URL is then provided to the document and
-used to route the request to an object. In many ways you can view the Prague document like a traditional web
-server that is returning a web page. But in the Prague case a live, collaborative object is returned.
+used to route the request to an object. In many ways you can view the Fluid document like a traditional web
+server that is returning a web page. But in the Fluid case a live, collaborative object is returned.
 
 Like a web server a status code is returned to indicate the success of the request. For consistency we match HTTP
 status codes.
@@ -227,7 +227,7 @@ if (response.status !== 200) {
 ```
 
 A mime type is also provided with the request to distinguish the type of object.  The most common thing you'll receive
-is a Prague component. Components implement the attach interface which allow them to participate in the web component
+is a Fluid component. Components implement the attach interface which allow them to participate in the web component
 model. But a document could also return different mime types like static images, videos, etc...
 
 The host can then switch on the mime type and act accordingly. In the case of the component we attach our host
@@ -235,7 +235,7 @@ platform to it which provides access to the DOM and other services. We'll descri
 
 ```typescript
 switch (response.mimeType) {
-    case "prague/component":
+    case "fluid/component":
         const component = response.value;
         component.attach(platform);
         break;
@@ -263,7 +263,7 @@ to define new platform level interfaces. Given the web component model highly le
 and we view data binding as collaboration using the distributed data types, we don't expect there to be a lot of
 platform level interfaces. But this system provides the flexibility to add new ones as needed.
 
-This example simply exposes the ability to provide a div to a component. The existing Prague hosts all expose this
+This example simply exposes the ability to provide a div to a component. The existing Fluid hosts all expose this
 div capability as well.
 
 ```typescript
@@ -334,13 +334,13 @@ if (!quorum.has("code2")) {
 
 ## Next Steps
 
-And that's all that's needed to create or load Prague documents. It's intended to be light weight and simple to get
-setup as a host. And once done you gain full access to the power of the Prague platform.
+And that's all that's needed to create or load Fluid documents. It's intended to be light weight and simple to get
+setup as a host. And once done you gain full access to the power of the Fluid platform.
 
-Once you have a host setup the next best step to try is using our Prague generator to create a new component.
+Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
 Insructions for that are at https://github.com/Microsoft/Prague/blob/master/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
 When creating your new component also note that the API provides it access to the underlying loader. You can use this
 to follow similar attach steps as above to load components within your component. In this way your component can
-also serve as a host for other Prague content. It will just provide it's own `IPlatform` interface.
+also serve as a host for other Fluid content. It will just provide it's own `IPlatform` interface.

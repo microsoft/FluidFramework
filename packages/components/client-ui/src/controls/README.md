@@ -1,6 +1,6 @@
 # Controls Library
 
-Provides a set of controls built on top of the Prague UI library.
+Provides a set of controls built on top of the Fluid UI library.
 
 ## Button
 

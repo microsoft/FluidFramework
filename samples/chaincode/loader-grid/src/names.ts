@@ -628,7 +628,7 @@ const right = [
 ];
 // tslint:enable:max-line-length
 
-const prague = [
+const fluid = [
     "lucco",
     "berglund",
     "aumi",
@@ -640,10 +640,11 @@ const prague = [
     "greenly",
     "simkowitz",
     "pinjala",
+    "carlson",
 ];
 
 // Docker names + Fluid names
-const surnames = right.concat(prague);
+const surnames = right.concat(fluid);
 
 // GetRandomName generates a random name from the list of adjectives and surnames in this package
 // formatted as "adjective_surname". For example 'focused_turing'. If retry is non-zero, a random

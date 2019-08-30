@@ -13,7 +13,7 @@ export class TextGenerator {
         `This is some sample text to type.`,
         `The quick brown fox jumps over the lazy dog.`,
         `This folder contains a script that will get secret values from the prague keyvault and store them as environment variables. In order to have access to the prague keyvault you must be a member of the prague-secrets or WAC Bohemia security group.`,
-        `The loader makes up the minimal kernal of the Prague runtime. This kernel is responsible for providing access to Prague storage as well as consensus over a quorum of clients.`,
+        `The loader makes up the minimal kernal of the Fluid runtime. This kernel is responsible for providing access to Fluid storage as well as consensus over a quorum of clients.`,
         `The consensus system allows clients within the collaboration window to agree on document properties. One example of this is the npm package that should be loaded to process operations applied to the document.`,
         `The base document channel is 'owned' and run by the chaincode of the loader. It should be versioned and require a specific loader version.`,
         `Clients within the collaboration window accept the proposal by allowing their reference sequence number to go above the sequence number for the proposal.`,

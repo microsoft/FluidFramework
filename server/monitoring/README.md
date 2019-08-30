@@ -1,5 +1,5 @@
 # Monitoring Job
-Monitors Prague production health via a crone job.
+Monitors Fluid production health via a cron job.
 
 To build locally
 ```
@@ -12,7 +12,7 @@ And to run locally
 ```
 
 
-Building and pushing to Prague registry
+Building and pushing to Fluid registry
 ```
 docker build --build-arg NPM_TOKEN=$(echo $NPM_TOKEN) -t prague.azurecr.io/monitoring .
 docker push prague.azurecr.io/monitoring

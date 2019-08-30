@@ -197,6 +197,6 @@ export abstract class SharedComponent extends EventEmitter implements IComponent
             return result.value as T;
         }
 
-        return Promise.reject("response does not contain prague component");
+        return Promise.reject("response does not contain fluid component");
     }
 }

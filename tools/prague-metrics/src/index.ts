@@ -8,7 +8,7 @@ import { KafkaRunnerFactory } from "@prague/routerlicious/dist/kafka-service/run
 import * as utils from "@prague/routerlicious/dist/utils";
 import * as path from "path";
 
-const name = "prague-metrics";
+const name = "fluid-metrics";
 const lambda = path.join(__dirname, "./plugin.js");
 
 utils.runService(
