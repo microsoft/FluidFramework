@@ -30,7 +30,7 @@ spec:
           - '/usr/src/server/functions/deli/dist/broadcaster/index.js'
         env:
         - name: DEBUG
-          value: "prague:*"
+          value: "fluid:*"
         - name: NODE_ENV
           value: production
         volumeMounts:

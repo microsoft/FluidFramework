@@ -31,7 +31,7 @@ spec:
           containerPort: 3000
         env:
         - name: DEBUG
-          value: "prague:*"
+          value: "fluid:*"
         - name: NODE_ENV
           value: production
         volumeMounts:

@@ -6,7 +6,7 @@ services:
             - "3000:3000"
         command: node ../gateway/dist/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     alfred:
@@ -15,28 +15,28 @@ services:
             - "3000:3000"
         command: node dist/alfred/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     deli:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scriptorium:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     broadcaster:
         image: prague.azurecr.io/prague:latest
         command: node dist/kafka-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     riddler:
@@ -45,7 +45,7 @@ services:
             - "5000:5000"
         command: node dist/riddler/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     historian:
@@ -53,7 +53,7 @@ services:
         ports:
             - "3001:3000"
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     cobalt:
@@ -62,7 +62,7 @@ services:
     gitrest:
         image: prague.azurecr.io/gitrest:4048
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         volumes:
             - git:/home/node/documents

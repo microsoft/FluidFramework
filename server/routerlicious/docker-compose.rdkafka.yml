@@ -11,7 +11,7 @@ services:
             - "3030:3000"
         command: node deli/dist/jarvis/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
         volumes:
@@ -26,7 +26,7 @@ services:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js deli /usr/src/server/functions/deli/dist/deli/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
         volumes:
@@ -41,7 +41,7 @@ services:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js scriptorium ../scriptorium/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
         volumes:
@@ -56,7 +56,7 @@ services:
                 - NPM_TOKEN=${NPM_TOKEN}
         command: node deli/dist/kafka-service/index.js broadcaster /usr/src/server/functions/deli/dist/broadcaster/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
         volumes:

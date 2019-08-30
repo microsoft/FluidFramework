@@ -31,7 +31,7 @@ spec:
           - '/usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js'
         env:
         - name: DEBUG
-          value: "prague:*"
+          value: "fluid:*"
         - name: NODE_ENV
           value: production
         volumeMounts:

@@ -9,7 +9,7 @@ services:
             - "3000:3000"
         command: node ../gateway/dist/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
             - login__microsoft__clientId
             - login__microsoft__secret
@@ -24,7 +24,7 @@ services:
             - "3003:3000"
         command: node dist/alfred/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     deli:
@@ -34,7 +34,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js deli /usr/src/server/packages/server/routerlicious/dist/deli/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scriptorium:
@@ -44,7 +44,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     broadcaster:
@@ -54,7 +54,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js broadcaster /usr/src/server/packages/server/routerlicious/dist/broadcaster/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     scribe:
@@ -64,7 +64,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js scribe /usr/src/server/packages/server/routerlicious/dist/scribe/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     foreman:
@@ -74,7 +74,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js foreman /usr/src/server/packages/server/routerlicious/dist/foreman/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     routemaster:
@@ -84,7 +84,7 @@ services:
             target: runner
         command: node dist/kafka-service/index.js routemaster /usr/src/server/packages/server/lambdas-driver/dist/document-router/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
             - documentLambda=/usr/src/server/packages/server/routerlicious/dist/routemaster/index.js
         restart: always
@@ -95,7 +95,7 @@ services:
             target: runner
         command: node dist/paparazzi/index.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - worker__intelligence__resume__url=http://alfred:3000/intelligence/resume
             - NODE_ENV=development
             - intelligence__translation__key
@@ -109,7 +109,7 @@ services:
             - "5000:5000"
         command: node dist/riddler/www.js
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     historian:
@@ -117,7 +117,7 @@ services:
         ports:
             - "3001:3000"
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
     cobalt:
@@ -126,7 +126,7 @@ services:
     gitrest:
         image: prague.azurecr.io/gitrest:4048
         environment:
-            - DEBUG=prague:*
+            - DEBUG=fluid:*
             - NODE_ENV=development
         volumes:
             - git:/home/node/documents
