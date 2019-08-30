@@ -65,7 +65,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     private readonly mergeTreeTextHelper: MergeTree.MergeTreeTextHelper;
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedStringFactory.Attributes);
+        super(document, id, SharedStringFactory.Attributes, SharedStringFactory.segmentFromSpec);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
 
@@ -233,14 +233,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
-    }
-
-    public segmentFromSpec(spec: any) {
-        const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
-        if (maybeText) { return maybeText; }
-
-        const maybeMarker = MergeTree.Marker.fromJSONObject(spec);
-        if (maybeMarker) { return maybeMarker; }
     }
 
     public getMarkerFromId(id: string) {

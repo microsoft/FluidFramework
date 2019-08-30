@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
+import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import { MockStorage } from "@prague/runtime-test-utils";
 import { DebugLogger } from "@prague/utils";
@@ -18,13 +18,13 @@ import {
     MergeTree,
 } from "../mergeTree";
 import { createInsertSegmentOp } from "../opBuilder";
-import { IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
+import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { Snapshot } from "../snapshot";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
-export function specToSegment(spec: any) {
+export function specToSegment(spec: IJSONSegment): ISegment {
     const maybeText = TextSegment.fromJSONObject(spec);
     if (maybeText) {
         return maybeText;
@@ -50,13 +50,20 @@ export class TestClient extends Client {
      */
     public static useCheckQ = false;
 
-    public static async createFromSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
+    public static async createFromClientSnapshot(client1: TestClient, newLongClientId: string): Promise<TestClient> {
         const snapshot = new Snapshot(client1.mergeTree, DebugLogger.create("fluid:snapshot"));
         snapshot.extractSync();
         const snapshotTree = snapshot.emit([]);
+        return this.createFromSnapshot(snapshotTree, newLongClientId, client1.specToSegment);
+    }
+
+    public static async createFromSnapshot(
+        snapshotTree: ITree,
+        newLongClientId: string,
+        specToSeg: (spec: IJSONSegment) => ISegment): Promise<TestClient> {
         const services = new MockStorage(snapshotTree);
 
-        const client2 = new TestClient(client1.mergeTree.options);
+        const client2 = new TestClient(undefined, specToSeg);
         const loader = client2.createSnapshotLoader(
             // tslint:disable-next-line: no-object-literal-type-assertion
             {
@@ -76,18 +83,11 @@ export class TestClient extends Client {
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
         options?: PropertySet,
-        ...handlers: ((spec: any) => ISegment)[]) {
+        specToSeg = specToSegment) {
         super(
-            (spec: any) => {
-                for (const handler of handlers.concat(specToSegment)) {
-                    const segment = handler(spec);
-                    if (segment) {
-                        return segment;
-                    }
-                }
-            },
-        DebugLogger.create("fluid:testClient"),
-        options);
+            specToSeg,
+            DebugLogger.create("fluid:testClient"),
+            options);
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // validate by default

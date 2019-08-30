@@ -56,7 +56,7 @@ describe("MergeTree.Client", () => {
                 // Add double the number of clients each iteration
                 const targetClients = Math.max(minClients, clients.length * 2);
                 for (let cc = clients.length; cc < targetClients; cc++) {
-                    const newClient = await TestClient.createFromSnapshot(clients[0], clientNames[cc]);
+                    const newClient = await TestClient.createFromClientSnapshot(clients[0], clientNames[cc]);
                     clients.push(newClient);
                 }
 

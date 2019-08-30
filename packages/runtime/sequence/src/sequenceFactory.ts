@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import * as MergeTree from "@prague/merge-tree";
 import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
 import { pkgVersion } from "./packageVersion";
 import { SharedNumberSequence } from "./sharedNumberSequence";
 import { SharedObjectSequence } from "./sharedObjectSequence";
+import { IJSONRunSegment, SubSequence } from "./sharedSequence";
 import { SharedString } from "./sharedString";
 
 export class SharedStringFactory implements ISharedObjectFactory {
@@ -20,6 +22,14 @@ export class SharedStringFactory implements ISharedObjectFactory {
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
+
+    public static segmentFromSpec(spec: any) {
+        const maybeText = MergeTree.TextSegment.fromJSONObject(spec);
+        if (maybeText) { return maybeText; }
+
+        const maybeMarker = MergeTree.Marker.fromJSONObject(spec);
+        if (maybeMarker) { return maybeMarker; }
+    }
 
     public get type() {
         return SharedStringFactory.Type;
@@ -56,6 +66,17 @@ export class SharedObjectSequenceFactory implements ISharedObjectFactory {
         packageVersion: pkgVersion,
     };
 
+    public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
+        const runSegment = segSpec as IJSONRunSegment<object>;
+        if (runSegment.items) {
+            const seg = new SubSequence<object>(runSegment.items);
+            if (runSegment.props) {
+                seg.addProperties(runSegment.props);
+            }
+            return seg;
+        }
+    }
+
     public get type() {
         return SharedObjectSequenceFactory.Type;
     }
@@ -90,6 +111,17 @@ export class SharedNumberSequenceFactory implements ISharedObjectFactory {
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
+
+    public static segmentFromSpec(segSpec: MergeTree.IJSONSegment) {
+        const runSegment = segSpec as IJSONRunSegment<number>;
+        if (runSegment.items) {
+            const seg = new SubSequence<number>(runSegment.items);
+            if (runSegment.props) {
+                seg.addProperties(runSegment.props);
+            }
+            return seg;
+        }
+    }
 
     public get type() {
         return SharedNumberSequenceFactory.Type;

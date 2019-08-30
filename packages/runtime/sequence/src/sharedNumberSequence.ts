@@ -30,7 +30,7 @@ export class SharedNumberSequence extends SharedSequence<number> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SharedNumberSequenceFactory.Attributes);
+        super(document, id, SharedNumberSequenceFactory.Attributes, SharedNumberSequenceFactory.segmentFromSpec);
     }
 
     public getRange(start: number, end?: number) {
