@@ -74,7 +74,7 @@ export class ExperimentalOdspUrlResolver implements IUrlResolver {
     const { siteUrl, driveId, itemId, path } = decodeOdspUrl(request.url);
     const hashedDocumentId = new sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
 
-    let documentUrl = `prague-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
+    let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
     if (request.url.length > 0) {
       // In case of any additional parameters add them back to the url

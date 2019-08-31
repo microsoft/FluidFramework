@@ -32,7 +32,7 @@ function generate(
     input: any[], output: any[]) {
 
     describe(name, () => {
-        const id = "prague://test.com/test/test";
+        const id = "fluid://test.com/test/test";
 
         let testDeltaConnectionServer: ITestDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;

@@ -15,7 +15,7 @@ export class OdspUrlResolver implements IUrlResolver {
         console.log(`resolving url=${JSON.stringify(request)}`);
         const fluidSocketStorageDiscovery = await this.storageDiscoveryPromise;
         const documentUrl =
-            `prague-odsp://${new URL(fluidSocketStorageDiscovery.deltaStorageUrl).host}` +
+            `fluid-odsp://${new URL(fluidSocketStorageDiscovery.deltaStorageUrl).host}` +
             `/${encodeURIComponent(fluidSocketStorageDiscovery.tenantId)}` +
             `/${encodeURIComponent(fluidSocketStorageDiscovery.id)}`;
 

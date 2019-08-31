@@ -32,7 +32,7 @@ export class InsecureUrlResolver implements IUrlResolver {
     }
 
     const documentUrl =
-      `prague://${new URL(this.ordererUrl).host}` +
+      `fluid://${new URL(this.ordererUrl).host}` +
       `/${encodeURIComponent(tenantId)}` +
       `/${encodeURIComponent(documentId)}` +
       `${path}`;

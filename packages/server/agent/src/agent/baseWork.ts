@@ -34,7 +34,7 @@ export class BaseWork extends EventEmitter {
         super();
         this.config = this.conf;
         // tslint:disable-next-line:max-line-length
-        this.url = `prague://${parse(alfred).host}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
+        this.url = `fluid://${parse(alfred).host}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.documentId)}`;
     }
 
     public async loadDocument(

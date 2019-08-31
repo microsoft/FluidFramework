@@ -193,7 +193,7 @@ export async function getODSPFluidResolvedUrl(
         },
         tokens: { storageToken: parsedBody.storageToken, socketToken: parsedBody.socketToken },
         type: "prague",
-        url: `prague-odsp://${server}/` +
+        url: `fluid-odsp://${server}/` +
             `${encodeURIComponent(parsedBody.runtimeTenantId)}/${encodeURIComponent(parsedBody.id)}`,
     };
 }

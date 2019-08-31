@@ -54,7 +54,7 @@ function r11sResolveUrl(
 
     const token = getToken(tenantId, documentId, appTenants, user);
 
-    const pragueUrl = "prague://" +
+    const fluidUrl = "fluid://" +
         `${parse(config.get("worker:serverUrl")).host}/` +
         `${encodeURIComponent(tenantId)}/` +
         `${encodeURIComponent(documentId)}`;
@@ -77,7 +77,7 @@ function r11sResolveUrl(
         },
         tokens: { jwt: token },
         type: "prague",
-        url: pragueUrl,
+        url: fluidUrl,
     });
 
     const fullTreeP = alfred.getFullTree(tenantId, documentId);

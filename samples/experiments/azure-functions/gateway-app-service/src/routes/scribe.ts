@@ -43,7 +43,7 @@ export function create(
             config.get("worker"),
             tenantId,
             config.get("error:track"));
-        const baseUrl = `prague://` +
+        const baseUrl = `fluid://` +
             `${parse(config.get("worker:serverUrl")).host}/` +
             `${encodeURIComponent(tenantId)}`;
 

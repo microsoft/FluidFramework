@@ -54,7 +54,7 @@ function r11sResolveUrl(
 
     const token = getR11sToken(tenantId, documentId, appTenants, user);
 
-    const fluidUrl = "prague://" +
+    const fluidUrl = "fluid://" +
         `${parse(config.serverUrl).host}/` +
         `${encodeURIComponent(tenantId)}/` +
         `${encodeURIComponent(documentId)}`;

@@ -21,7 +21,7 @@ import * as jwt from "jsonwebtoken";
  * http://localhost:8080/<documentId>/<path>.
  *
  * We then need to map that to a Prague based URL. These are of the form
- * prague://orderingUrl/<tenantId>/<documentId>/<path>.
+ * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
  * part of the URL that the document interprets and maps to a component. It's exactlys similar to how a web service
@@ -40,7 +40,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         const parsedUrl = new URL(request.url);
         const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 
-        const documentUrl = `prague://${new URL(this.ordererUrl).host}` +
+        const documentUrl = `fluid://${new URL(this.ordererUrl).host}` +
             `/${encodeURIComponent(this.tenantId)}` +
             parsedUrl.pathname;
 

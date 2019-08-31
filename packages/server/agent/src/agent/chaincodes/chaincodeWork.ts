@@ -45,7 +45,7 @@ export class ChaincodeWork extends EventEmitter {
             {});
 
         const url =
-            `prague://${parse(this.alfred).host}/` +
+            `fluid://${parse(this.alfred).host}/` +
             `${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.docId)}`;
         this.document = await loader.resolve({ url });
 

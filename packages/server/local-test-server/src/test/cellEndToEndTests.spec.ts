@@ -17,7 +17,7 @@ import {
 } from "..";
 
 describe("Cell", () => {
-    const id = "prague://test.com/test/test";
+    const id = "fluid://test.com/test/test";
     const cellId = "cellKey";
     const initialCellValue = "Initial cell value";
     const newCellValue = "A new cell value";

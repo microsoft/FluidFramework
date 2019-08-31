@@ -79,7 +79,7 @@ export async function testFluidService(config: Provider): Promise<void> {
         },
         params.secret);
 
-    const documentUrl = `prague://${url.parse(params.orderer).host}` +
+    const documentUrl = `fluid://${url.parse(params.orderer).host}` +
         `/${encodeURIComponent(params.tenant)}` +
         `/${encodeURIComponent(documentId)}`;
 

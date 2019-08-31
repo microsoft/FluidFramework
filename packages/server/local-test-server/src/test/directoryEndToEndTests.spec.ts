@@ -19,7 +19,7 @@ import {
 } from "..";
 
 describe("Directory", () => {
-    const id = "prague://test.com/test/test";
+    const id = "fluid://test.com/test/test";
     const directoryId = "testDirectory";
 
     let testDeltaConnectionServer: ITestDeltaConnectionServer;

@@ -76,7 +76,7 @@ async function getInternalComponent(
     } : undefined;
 
     const token = getToken(tenantId, documentId, appTenants, scopes, user);
-    const fluidUrl = `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
+    const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =
         config.get("worker:serverUrl") +

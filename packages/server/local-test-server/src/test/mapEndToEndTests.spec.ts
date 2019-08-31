@@ -18,7 +18,7 @@ import {
 } from "..";
 
 describe("Map", () => {
-    const id = "prague://test.com/test/test";
+    const id = "fluid://test.com/test/test";
 
     let testDeltaConnectionServer: ITestDeltaConnectionServer;
     let documentDeltaEventManager: DocumentDeltaEventManager;

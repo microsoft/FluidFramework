@@ -176,7 +176,7 @@ export class PaparazziRunner implements utils.IRunner {
                 },
                 this.jwtKey);
 
-            const documentUrl = `prague://${url.parse(this.workerConfig.get("alfredUrl")).host}` +
+            const documentUrl = `fluid://${url.parse(this.workerConfig.get("alfredUrl")).host}` +
                 `/${encodeURIComponent(requestMsg.tenantId)}` +
                 `/${encodeURIComponent(requestMsg.documentId)}`;
 

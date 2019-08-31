@@ -62,7 +62,7 @@ export async function startLoading(
         },
         jwtKey);
 
-    const documentUrl = `prague://${url.parse(routerlicious).host}` +
+    const documentUrl = `fluid://${url.parse(routerlicious).host}` +
     `/${encodeURIComponent(tenantId)}` +
     `/${encodeURIComponent(id)}`;
 

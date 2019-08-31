@@ -72,7 +72,7 @@ async function getInternalComponent(
     } : undefined;
     const token = getToken(tenantId, documentId, appTenants, user);
 
-    const pragueUrl = `prague://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
+    const fluidUrl = `fluid://${url.host}/${tenantId}/${documentId}${path}${url.hash ? url.hash : ""}`;
 
     const deltaStorageUrl =
         config.get("worker:serverUrl") +
@@ -92,7 +92,7 @@ async function getInternalComponent(
         },
         tokens: { jwt: token },
         type: "prague",
-        url: pragueUrl,
+        url: fluidUrl,
     } as IFluidResolvedUrl;
 }
 

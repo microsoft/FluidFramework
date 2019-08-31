@@ -77,7 +77,7 @@ The primary of these is resolving a URL to its Fluid specific endpoint and acces
 documents are free to define any URL scheme they want to represent a document. But they must then be able to map
 from this URL to a Fluid based url of the form:
 
-`prague-protocool://service.domain/documentId/path`
+`fluid-protocool://service.domain/documentId/path`
 
 And also provided the required access tokens with this. In the above the protocol part of the URL defines which Fluid
 driver to use to to talk to the server. The domain gives the location of the service. Document ID is the identifier for
@@ -108,7 +108,7 @@ This simple interface defines a single method, `resolve`, which takes in an `IRe
 along with associated access tokens.
 
 In our example the URL format is of the form `http://localhost:8080/<documentId>/<path>`. To implement the resolve
-method we then parse a URL of this form into the associated prague:// based URL.
+method we then parse a URL of this form into the associated fluid:// based URL.
 
 To do so we first start by parsing the full URL and extracing the document ID out of the URL
 
@@ -120,7 +120,7 @@ const documentId = parsedUrl.pathname.substr(1).split("/")[0];
 Once those are available we can construct the full Fluid url as
 
 ```typescript
-const documentUrl = `prague://${new URL(this.ordererUrl).host}` +
+const documentUrl = `fluid://${new URL(this.ordererUrl).host}` +
     `/${encodeURIComponent(this.tenantId)}` +
     parsedUrl.pathname;
 ```
@@ -169,7 +169,7 @@ The driver factory is then passed to the loader. Internally the loader then bind
 host resolver to the associated driver.
 
 Although not fully utilized yet the protocol part of the Fluid URL is used to determine which driver to make use of -
-i.e. prague-routerlicious:// would indicate the routerlicious driver/protocol should be used, while the prague-spo://
+i.e. fluid-routerlicious:// would indicate the routerlicious driver/protocol should be used, while the fluid-spo://
 would indicate the SharePoint driver is required.
 
 #### Code Loader

@@ -43,7 +43,7 @@ export function create(
         } : undefined;
 
         const token = utils.getToken(tenantId, request.params.id, appTenants, user);
-        const pragueUrl = "prague://" +
+        const fluidUrl = "fluid://" +
             `${parse(config.get("worker:serverUrl")).host}/` +
             `${encodeURIComponent(tenantId)}/` +
             `${encodeURIComponent(request.params.id)}`;
@@ -66,7 +66,7 @@ export function create(
             },
             tokens: { jwt: token },
             type: "prague",
-            url: pragueUrl,
+            url: fluidUrl,
         };
 
         response.render(

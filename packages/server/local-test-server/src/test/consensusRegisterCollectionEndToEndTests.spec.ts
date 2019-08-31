@@ -28,7 +28,7 @@ interface ISharedObjectConstructor<T> {
 generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
     describe(name, () => {
-        const id = "prague://test.com/test/test";
+        const id = "fluid://test.com/test/test";
 
         let testDeltaConnectionServer: ITestDeltaConnectionServer;
         let documentDeltaEventManager: DocumentDeltaEventManager;

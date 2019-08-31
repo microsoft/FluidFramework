@@ -107,7 +107,7 @@ export function create(
             targetVersionSha);
 
         versionP.then((version) => {
-            const pragueUrl = "prague://" +
+            const fluidUrl = "fluid://" +
                 `${parse(config.get("worker:serverUrl")).host}/` +
                 `${encodeURIComponent(tenantId)}/` +
                 `${encodeURIComponent(request.params.id)}` +
@@ -131,7 +131,7 @@ export function create(
                 },
                 tokens: { jwt: token },
                 type: "prague",
-                url: pragueUrl,
+                url: fluidUrl,
             };
 
             const options = {
