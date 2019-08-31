@@ -1,5 +1,10 @@
 # 0.10 Breaking Changes
 
+- [`@prague/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
+
+## `@prague/tiny-web-host` prague -> fluid changes
+`loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
+
 # 0.9 Breaking Changes (August 26, 2019)
 
 - [PrimedComponent root is now a SharedDirectory](#primedcomponent-root-is-now-a-shareddirectory)
@@ -69,7 +74,7 @@ The `prague/component`, `prague/container`, and `prague/dataType` MIME types hav
 - [`IComponent` not to be derived from](#icomponent-not-to-be-derived-from)
 - [`sequence.annotateRange()` argument order changed](#sequenceannotaterange-argument-order-changed)
 - [`sharedString.insertText()` argument order changed](#sharedstringinserttext-argument-order-changed)
-- [`mergeTree.getOffset()` -> `mergeTree.getPosition()`](#mergetreegetoffset-mergetreegetposition)
+- [`mergeTree.getOffset()` -> `mergeTree.getPosition()`](#mergetreegetoffset---mergetreegetposition)
 - [Updated sequence API to provide richer access to the underlying merge tree](#updated-sequence-api-to-provide-richer-access-to-the-underlying-merge-tree)
 - [ISequenceDeltaRange.offset -> ISequenceDeltaRange.position](#isequencedeltarangeoffset-isequencedeltarangeposition)
 - [IComponent* interfaces from @prague/container-definitions are moved to @prague/component-core-interfaces](#icomponent-interfaces-from-praguecontainer-definitions-are-moved-to-praguecomponent-core-interfaces)

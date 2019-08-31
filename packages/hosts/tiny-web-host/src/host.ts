@@ -23,11 +23,11 @@ const appTenants = [
 ];
 
 /**
- * A single line, basic function for loading Prague Components.
+ * A single line, basic function for loading Fluid Components.
  *
  * This function purposefully does not expose all functionality.
  *
- * @param url - Url of the Prague component to be loaded (spo and spo-df will both be loaded against odsp)
+ * @param url - Url of the Fluid component to be loaded (spo and spo-df will both be loaded against odsp)
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div - The div to load the component into
  * @param appId - The SPO appId. If no SPO AppId available, a consistent and descriptive app name is acceptable
@@ -36,7 +36,7 @@ const appTenants = [
  * @param pkg - A resolved package with cdn links. Overrides a query paramter.
  * @param scriptIds - the script tags the chaincode are attached to the view with
  */
-export async function loadPragueComponent(
+export async function loadFluidComponent(
     url: string,
     getToken: () => Promise<string>,
     div: HTMLDivElement,
@@ -67,7 +67,7 @@ async function startWrapper(
     pkg?: IResolvedPackage,
     scriptIds?: string[],
 ): Promise<any> {
-    const parsedUrl = pragueUrlParser(href);
+    const parsedUrl = fluidUrlParser(href);
     const config = {
         blobStorageUrl: parsedUrl.storageUrl,
         clientId,
@@ -103,7 +103,7 @@ async function startWrapper(
         });
 }
 
-function pragueUrlParser(href: string) {
+function fluidUrlParser(href: string) {
     const url = UrlParse(href, true);
     const pathParts = url.pathname.split("/");
 
@@ -125,11 +125,11 @@ const spoRegex = "^http(s)?:\/\/\\w{0,12}\.www\.office\.com\/content\/bohemia\?.
 const routerliciousRegex = "^(http(s)?:\/\/)?www\..{3,9}\.prague\.office-int\.com\/loader\/.*";
 
 /**
- * Simple function to test if a URL is a valid SPO or Routerlicious Prague link
+ * Simple function to test if a URL is a valid SPO or Routerlicious Fluid link
  *
  * @param url - Url to Test
  */
-export function isPragueURL(url: string): boolean {
+export function isFluidURL(url: string): boolean {
     if (isRouterliciousUrl(url)) {
         return true;
     } else if (isSpoUrl(url)) {
@@ -147,16 +147,16 @@ export function isSpoUrl(url: string): boolean {
 }
 
 /**
- * Create an IFrame for loading Prague Components.
+ * Create an IFrame for loading Fluid Components.
  *
- * @param url - Url of the Prague component to be loaded
+ * @param url - Url of the Fluid component to be loaded
  * @param getToken - A function that either returns an SPO token, or a Routerlicious tenant token
  * @param div - The div to load the component into
  * @param clientId - The SPO clientId.
  * @param secret - The SPO clientSecret.
  * @param libraryName - if loaded from React, this should be "reactLoader"
  */
-export async function loadIFramedPragueComponent(
+export async function loadIFramedFluidComponent(
     url: string,
     getToken: () => Promise<string>,
     div: HTMLDivElement,
@@ -199,7 +199,7 @@ export async function loadIFramedPragueComponent(
         <script>
                 console.log("Welcome to the IFrame");
                 function start(url, token, appId) {
-                    ${libraryName}.loadPragueComponent(
+                    ${libraryName}.loadFluidComponent(
                         url,
                         () => { "return token"},
                         document.getElementById("componentDiv"),

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { loadPragueComponent } from "@prague/tiny-web-host";
+import { loadFluidComponent } from "@prague/tiny-web-host";
 
 export function runner() {
 
@@ -12,7 +12,7 @@ export function runner() {
     // Future: buildUrl("@chaincode/shared-text@0.6.9051", "prague", `ChangeThisValue-${date.getTime()}`);
 
     // Future: Fill in SPO relevant info
-    loadPragueComponent(
+    loadFluidComponent(
         url,
         async () => "",
         document.getElementById("container") as HTMLDivElement,

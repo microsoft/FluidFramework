@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { loadIFramedPragueComponent, loadPragueComponent } from "@prague/tiny-web-host";
+import { loadFluidComponent, loadIFramedFluidComponent } from "@prague/tiny-web-host";
 import * as React from "react";
 
-export { isPragueURL, isSpoUrl, loadPragueComponent } from "@prague/tiny-web-host";
+export { isFluidURL, isSpoUrl, loadFluidComponent } from "@prague/tiny-web-host";
 
 export interface ILoaderProps {
 
@@ -19,7 +19,7 @@ export interface ILoaderProps {
   libraryName?: string;
 
   /**
-   * URL of the Prague component
+   * URL of the Fluid component
    */
   url: string;
 
@@ -45,7 +45,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
   public async componentDidMount() {
 
     if (this.props.iframe) {
-       loadIFramedPragueComponent(
+       loadIFramedFluidComponent(
         this.props.url,
         this.props.getToken,
         this.divRef.current,
@@ -55,7 +55,7 @@ export class FluidLoader extends React.Component<ILoaderProps, any> {
         this.props.libraryName ? this.props.libraryName : "tinyWebLoader",
        );
     } else {
-      loadPragueComponent(
+      loadFluidComponent(
         this.props.url,
         this.props.getToken,
         this.divRef.current,
