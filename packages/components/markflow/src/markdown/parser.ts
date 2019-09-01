@@ -4,7 +4,7 @@
  */
 
 import { MapLike } from "@prague/merge-tree";
-import { strict as assert } from "assert";
+// import { strict as assert } from "assert";
 import * as remark from "remark";
 import { debug } from "./debug";
 import { MarkdownToken } from "./types";
@@ -45,9 +45,13 @@ interface IMDNode {
     url?: string;
     title?: string;
     alt?: string;
+    position: {
+        start: { offset: number };
+        end: { offset: number };
+    };
 }
 
-const newlineExp = /([^\n]+)([\n]+)/g;
+// const newlineExp = /([^\n]+)([\n]+)/g;
 
 export class MarkdownParser {
     private readonly path: IMDNode[] = [];
@@ -66,43 +70,37 @@ export class MarkdownParser {
 
         debug("[%d..%d): %s(%o)", start, end, type, node);
 
-        if (type === "text") {
-            // Text is always a leaf node.
-            assert.equal(node.children, undefined);
-            this.processText(start, end, text);
-        } else {
-            this.dispatch(this.enter, text, node, start);
-            this.path.push(node);
+        this.dispatch(this.enter, text, node, start);
+        this.path.push(node);
 
-            if (children) {
-                for (const child of children) {
-                    this.walk(text, child);
-                }
+        if (children) {
+            for (const child of children) {
+                this.walk(text, child);
             }
-
-            this.path.pop();
-            this.dispatch(this.leave, text, node, end);
         }
+
+        this.path.pop();
+        this.dispatch(this.leave, text, node, end);
     }
 
-    private processText(start: number, end: number, text: string) {
-        newlineExp.lastIndex = start;
-        do {
-            const chars = text.match(/[^\n]*/g)[0];
-            if (chars) {
-                this.enter(start, MarkdownToken.text);
-                this.leave(chars.length, MarkdownToken.text);
-                start += chars.length;
-            }
+    // private processText(start: number, end: number, text: string) {
+    //     newlineExp.lastIndex = start;
+    //     do {
+    //         const chars = text.match(/[^\n]*/g)[0];
+    //         if (chars) {
+    //             this.enter(start, MarkdownToken.text);
+    //             this.leave(chars.length, MarkdownToken.text);
+    //             start += chars.length;
+    //         }
 
-            const linefeeds = text.match(/\n*/g)[0];
-            if (linefeeds) {
-                this.enter(start, MarkdownToken.softbreak);
-                this.leave(linefeeds.length, MarkdownToken.softbreak);
-                start += linefeeds.length;
-            }
-        } while (start < end);
-    }
+    //         const linefeeds = text.match(/\n*/g)[0];
+    //         if (linefeeds) {
+    //             this.enter(start, MarkdownToken.softbreak);
+    //             this.leave(linefeeds.length, MarkdownToken.softbreak);
+    //             start += linefeeds.length;
+    //         }
+    //     } while (start < end);
+    // }
 
     private peek(index: number) {
         const path = this.path;
@@ -137,6 +135,7 @@ export class MarkdownParser {
                 token = node.ordered
                     ? MarkdownToken.orderedlist
                     : MarkdownToken.unorderedlist;
+                break;
             case "code":
                 token = MarkdownToken.code;
                 props = { "data-language": node.lang };

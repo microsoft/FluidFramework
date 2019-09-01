@@ -16,16 +16,19 @@ import { SearchMenuView } from "./searchmenu";
 
 const template = new Template(
     { tag: "div", props: { className: styles.host }, children: [
-        { tag: "div", props: { className: styles.title }, children: [
-            { tag: "h1", ref: "titleText" },
-            { tag: "hr" },
-        ]},
-        { tag: "div", props: { className: styles.page }, children: [
-            { tag: "div", ref: "viewport", props: { type: "text", className: styles.viewport }, children: [
-                { tag: "p", ref: "slot", props: { className: styles.slot } },
+        { tag: "div", props: { className: styles.viewport }, children: [
+            { tag: "div", props: { className: styles.page }, children: [
+                { tag: "div", props: { className: styles.title }, children: [
+                    { tag: "h1", ref: "titleText" },
+                    { tag: "hr" },
+                ]},
+                { tag: "div", props: { className: styles.outline }, children: [
+                    { tag: "p", ref: "slot", props: { className: styles.slot } },
+                ]},
             ]},
-            { tag: "div", ref: "search", props: { type: "text", className: styles.search }},
         ]},
+        { tag: "div", ref: "search", props: { className: styles.searchMenu }},
+        { tag: "div", ref: "status", props: { className: styles.status }},
     ]});
 
 export class WebflowView implements IComponentHTMLView {
@@ -77,6 +80,11 @@ export class WebflowView implements IComponentHTMLView {
             });
 
             this.root.addEventListener("keydown", this.onKeyDown as EventListener);
+
+            const status = template.get(this.root, "status") as HTMLElement;
+            window.setInterval(() => {
+                status.textContent = `@${editor.selection.end}/${doc.length}`;
+            }, 100);
         });
 
         elm.appendChild(this.root);
@@ -89,9 +97,11 @@ export class WebflowView implements IComponentHTMLView {
     }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
-        if (e.ctrlKey && e.code === KeyCode.keyM) {
+        if (e.ctrlKey && (e.code === KeyCode.keyM || e.code === KeyCode.space)) {
             this.previouslyFocused = document.activeElement as unknown as HTMLOrSVGElement;
             this.searchMenu.show();
+            e.preventDefault();
+            e.stopPropagation();
         }
     }
 

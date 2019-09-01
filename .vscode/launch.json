@@ -13,9 +13,9 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "WebFlow Tests",
-            "cwd": "${workspaceFolder}/packages/components/webflow",
-            "program": "${workspaceFolder}/packages/components/webflow/node_modules/mocha/bin/_mocha",
+            "name": "MarkFlow Tests",
+            "cwd": "${workspaceFolder}/packages/components/markflow",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
                 "-r",
                 "ts-node/register",
@@ -25,7 +25,8 @@
                 "ignore-styles",
                 "--no-timeouts",
                 // "test/**/*.spec.ts",
-                "test/**/layout.spec.ts",
+                // "test/**/markdown.spec.ts",
+                "test/**/markdown.parser.spec.ts",
                 "--exit"
             ],
             "env": {

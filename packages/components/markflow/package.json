@@ -1,6 +1,6 @@
 {
   "name": "@chaincode/markflow",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Collaborative markdown editor.",
   "main": "dist/index.js",
   "module": "lib/index.js",
@@ -74,6 +74,7 @@
     "mocha-junit-reporter": "^1.18.0",
     "nyc": "^14.1.1",
     "rimraf": "^2.6.2",
+    "simulate-event": "^1.4.0",
     "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.0",
     "ts-loader": "^4.5.0",

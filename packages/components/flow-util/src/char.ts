@@ -10,6 +10,8 @@ export const enum Char {
     formFeed                = "\u000C",
     carriageReturn          = "\u000D",
     space                   = "\u0020",
+    enSpace                 = "\u2002",
+    emSpace                 = "\u2003",
     zeroWidthSpace          = "\u200B",
     replacementCharacter    = "\uFFFD",
 }

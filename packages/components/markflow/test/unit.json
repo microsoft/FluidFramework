@@ -1,0 +1,26 @@
+[
+  {
+    "markdown": "hello $.;'there\n",
+    "html": "<p>hello $.;'there</p>\n",
+    "example": 647,
+    "start_line": 9349,
+    "end_line": 9353,
+    "section": "Textual content"
+  },
+  {
+    "markdown": "Foo χρῆν\n",
+    "html": "<p>Foo χρῆν</p>\n",
+    "example": 648,
+    "start_line": 9356,
+    "end_line": 9360,
+    "section": "Textual content"
+  },
+  {
+    "markdown": "Multiple     spaces\n",
+    "html": "<p>Multiple     spaces</p>\n",
+    "example": 649,
+    "start_line": 9365,
+    "end_line": 9369,
+    "section": "Textual content"
+  }
+]

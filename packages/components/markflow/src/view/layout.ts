@@ -43,12 +43,6 @@ export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 //   - Each node is emitted on behalf of exactly 1 segment
 
 export class Layout {
-    public renderCallback?: (start, end) => void;
-    public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
-    private _cursor: ILayoutCursor;
-
-    private readonly rootFormatInfo: IFormatInfo;
-
     private get format() {
         const stack = this.formatStack;
         return stack.length > 0
@@ -66,6 +60,18 @@ export class Layout {
             ? previous.nextSibling
             : cursor.parent.lastChild;
     }
+
+    public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
+    public get position() { return this._position; }
+    public get segment() { return this._segment; }
+    public get startOffset() { return this._startOffset; }
+    public get endOffset() { return this._endOffset; }
+    public get segmentStart() { return this._segmentStart; }
+    public get segmentEnd() { return this._segmentEnd; }
+    public renderCallback?: (start, end) => void;
+    public invalidatedCallback?: (start, end) => void;
+
+    private readonly rootFormatInfo: IFormatInfo;
     private formatStack: Readonly<IFormatInfo>[];
     private emitted: Set<Node>;
     private pending: Set<Node> = new Set();
@@ -74,23 +80,13 @@ export class Layout {
     private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
     private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
+    private _cursor: ILayoutCursor;
     private _position = NaN;
-    public get position() { return this._position; }
-
     private _segment: ISegment;
-    public get segment() { return this._segment; }
-
     private _startOffset = NaN;
-    public get startOffset() { return this._startOffset; }
-
     private _endOffset = NaN;
-    public get endOffset() { return this._endOffset; }
-
     private _segmentStart = NaN;
-    public get segmentStart() { return this._segmentStart; }
-
     private _segmentEnd = NaN;
-    public get segmentEnd() { return this._segmentEnd; }
 
     private startInvalid: LocalReference;
     private endInvalid: LocalReference;
@@ -120,11 +116,6 @@ export class Layout {
     public sync(start = 0, end = this.doc.length) {
         const doc = this.doc;
         const length = doc.length;
-
-        if (length === 0) {
-            Dom.removeAllChildren(this.root);
-            return;
-        }
 
         console.time("Layout.sync()");
 
@@ -363,27 +354,61 @@ export class Layout {
         const { formatter, state } = formats[formats.length - 1];
         const result = formatter.segmentAndOffsetToNodeAndOffset(this, state, segment, offset, cursor);
         if (result) {
-            debug("%o:%d -> %o:%d", segment, offset, result.node, result.nodeOffset);
+            debug("@%d %o:%d -> %o:%d",
+                segment === eotSegment
+                    ? this.doc.length
+                    : this.doc.getPosition(segment) + offset,
+                segment,
+                offset,
+                result.node,
+                result.nodeOffset);
             return result;
         }
 
-        debug("%o:%d -> null:NaN", segment, offset);
+        debug("@%d %o:%d -> null:NaN",
+            segment === eotSegment
+                ? this.doc.length
+                : this.doc.getPosition(segment) + offset,
+            segment,
+            offset);
         return { node: null, nodeOffset: NaN };
     }
 
     public nodeAndOffsetToSegmentAndOffset(node: Node, nodeOffset: number): { segment: ISegment, offset: number } {
+        // Special case for an empty document.
+        if (node === this.slot && nodeOffset === 0) {
+            const segmentAndOffset = this.doc.getSegmentAndOffset(0);
+            return segmentAndOffset.segment === undefined
+                ? { segment: eotSegment, offset: NaN }
+                : segmentAndOffset;
+        }
+
         const segment = this.nodeToSegment(node);
         const { cursor } = this.getCheckpoint(segment);
         const formats = this.getFormats(segment);
         const { formatter, state } = formats[formats.length - 1];
         const result = formatter.nodeAndOffsetToSegmentAndOffset(this, state, node, nodeOffset, segment, cursor);
         if (result) {
-            debug("%o:%d -> %o:%d", node, nodeOffset, result.segment, result.offset);
+            debug("%o:%d -> @%d %o:%d",
+                node,
+                nodeOffset,
+                result.segment === eotSegment
+                    ? this.doc.length
+                    : this.doc.getPosition(segment) + result.offset,
+                result.segment,
+                result.offset);
             return result;
         }
 
-        debug("%o:%d -> null:NaN", node, nodeOffset);
+        assert.fail();
         return { segment: undefined, offset: NaN };
+    }
+
+    public getCheckpoint(segment: ISegment) {
+        if (segment === eotSegment && this.doc.length === 0) {
+            return this.initialCheckpoint;
+        }
+        return this.segmentToCheckpoint.get(segment);
     }
 
     private nodeToSegment(node: Node): ISegment {
@@ -466,7 +491,7 @@ export class Layout {
     }
 
     private removeNode(node: Node) {
-        debug("        removed %o@%d", node, this.position);
+        debug("        removed %o", node);
         this.nodeToSegmentMap.delete(node);
         if (node.parentNode) {
             node.parentNode.removeChild(node);
@@ -506,22 +531,25 @@ export class Layout {
     }
 
     private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
-        return updateRef(doc, ref, fn(
+        return fn(
             position === undefined
                 ? limit
                 : position,
             ref === undefined
                 ? limit
                 : doc.localRefToPosition(ref),
-        ));
+        );
     }
 
     private invalidate(start: number, end: number) {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
-        this.startInvalid = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
-        this.endInvalid   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        start = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
+        end   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        this.startInvalid = updateRef(doc, this.startInvalid, start);
+        this.endInvalid   = updateRef(doc, this.endInvalid,   end);
         this.scheduleRender();
+        if (this.invalidatedCallback) { this.invalidatedCallback(start, end); }
     }
 
     private render() {
@@ -533,12 +561,5 @@ export class Layout {
         this.endInvalid = undefined;
 
         this.sync(start, end);
-    }
-
-    private getCheckpoint(segment: ISegment) {
-        if (segment === eotSegment && this.doc.length === 0) {
-            return this.initialCheckpoint;
-        }
-        return this.segmentToCheckpoint.get(segment);
     }
 }

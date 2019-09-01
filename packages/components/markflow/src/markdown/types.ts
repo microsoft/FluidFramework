@@ -20,7 +20,6 @@ export const enum MarkdownToken {
     listItem        = "listItem",
     orderedlist     = "orderedlist",
     paragraph       = "paragraph",
-    softbreak       = "softbreak",
     strong          = "strong",
     table           = "table",
     tableCell       = "tableCell",

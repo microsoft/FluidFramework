@@ -87,19 +87,25 @@ export class Editor {
                 break;
             }
 
+            case KeyCode.F2: {
+                console.clear();
+                this.caret.sync();
+                break;
+            }
+
             case KeyCode.F6: {
                 this.doc.remove(0, this.doc.length);
                 // Fall through to reset
             }
 
-            case KeyCode.F3: {
+            case KeyCode.F4: {
                 console.clear();
                 debug("*** RESET ***");
                 this.unlinkChildren(this.layout.root);
                 // Fall through to sync
             }
 
-            case KeyCode.F2 : {
+            case KeyCode.F3 : {
                 this.layout.sync();
                 break;
             }

@@ -424,6 +424,13 @@ export class FlowDocument extends PrimedComponent {
         return this;
     }
 
+    public getPreviousSegment(current: ISegment) {
+        const position = this.getPosition(current);
+        return position > 0
+            ? this.getSegmentAndOffset(position - 1).segment
+            : undefined;
+    }
+
     public toString() {
         const s: string[] = [];
         this.visitRange((position, segment) => {

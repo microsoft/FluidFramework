@@ -92,8 +92,8 @@ export class Caret {
 
     public sync() {
         debug("  Caret.sync()");
-        const { node: startNode, nodeOffset: startOffset } = this.positionToNodeOffset(this.startRef);
-        const { node: endNode, nodeOffset: endOffset } = this.positionToNodeOffset(this.endRef);
+        const { node: startNode, nodeOffset: startOffset } = this.referenceToNodeOffset(this.startRef);
+        const { node: endNode, nodeOffset: endOffset } = this.referenceToNodeOffset(this.endRef);
 
         const selection = window.getSelection();
         const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
@@ -129,9 +129,8 @@ export class Caret {
         this.setSelection(start, end);
     }
 
-    private positionToNodeOffset(ref: LocalReference) {
-        const position = this.doc.localRefToPosition(ref);
-        let { segment, offset } = this.doc.getSegmentAndOffset(position);
+    private referenceToNodeOffset(ref: LocalReference) {
+        let { segment, offset } = ref;
         if (segment === undefined) {
             segment = eotSegment;
             offset = NaN;
