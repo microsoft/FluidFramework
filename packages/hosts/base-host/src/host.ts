@@ -99,8 +99,8 @@ export function createLoader(
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
     const documentServiceFactory = new MultiDocumentServiceFactory(
         {
-            "prague-odsp:": odspDocumentServiceFactory,
-            "prague:": r11sDocumentServiceFactory,
+            "fluid-odsp:": odspDocumentServiceFactory,
+            "fluid:": r11sDocumentServiceFactory,
         });
 
     return new Loader(

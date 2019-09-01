@@ -18,6 +18,7 @@ import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
+import { initializeIcons } from '@uifabric/icons';
 import { EventEmitter } from "events";
 import { DrawerView } from "./drawerView";
 
@@ -82,6 +83,8 @@ class DrawerFactory implements IComponentFactory {
 
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(sequenceFactory.type, sequenceFactory);
+
+        initializeIcons();
 
         ComponentRuntime.load(
             context,

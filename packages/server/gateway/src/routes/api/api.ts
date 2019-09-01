@@ -54,7 +54,7 @@ async function getInternalComponent(
     appTenants: core.IAlfredTenant[],
     scopes: ScopeType[],
 ): Promise<IResolvedUrl> {
-    const regex = url.protocol === "prague:"
+    const regex = url.protocol === "fluid:"
         ? /^\/([^\/]*)\/([^\/]*)(\/?.*)$/
         : /^\/loader\/([^\/]*)\/([^\/]*)(\/?.*)$/;
     const match = url.path.match(regex);

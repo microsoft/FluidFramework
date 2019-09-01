@@ -45,7 +45,8 @@ module.exports = env => {
         },
         devServer: {
             publicPath: '/dist',
-            stats: "minimal"
+            stats: "minimal",
+            host: "0.0.0.0"
         }
     }, isProduction
         ? require("./webpack.prod")
