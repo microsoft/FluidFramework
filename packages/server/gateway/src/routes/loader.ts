@@ -18,7 +18,7 @@ import * as winston from "winston";
 import { spoEnsureLoggedIn } from "../gateway-odsp-utils";
 import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
-import { IKeyValue } from "../keyValueLoader";
+import { KeyValueWrapper } from "../keyValueWrapper";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
 
@@ -27,7 +27,7 @@ export function create(
     alfred: IAlfred,
     appTenants: IAlfredTenant[],
     ensureLoggedIn: any,
-    cacheP: Promise<IKeyValue>): Router {
+    cache: KeyValueWrapper): Router {
 
     const router: Router = Router();
     const jwtKey = config.get("gateway:key");
@@ -39,8 +39,8 @@ export function create(
     async function getUrlWithVersion(chaincode: string): Promise<string> {
         return new Promise<string>((resolve) => {
             if (chaincode !== "" && chaincode.indexOf("@") === chaincode.lastIndexOf("@")) {
-                cacheP.then((cache) => {
-                    resolve(cache.get(chaincode) as string);
+                cache.get(chaincode).then((value) => {
+                    resolve(value as string);
                 }, (err) => {
                     winston.error(err);
                     resolve(undefined);

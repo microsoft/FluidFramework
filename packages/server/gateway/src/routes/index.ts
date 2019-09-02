@@ -2,13 +2,11 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { promiseTimeout } from "@prague/services-client";
 import { IAlfredTenant, ICache } from "@prague/services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";
-import { KeyValueLoader } from "../keyValueLoader";
+import { KeyValueWrapper } from "../keyValueWrapper";
 import * as api from "./api";
 import * as demoCreator from "./democreator";
 import * as fastloader from "./fastLoader";
@@ -33,23 +31,16 @@ export function create(
         : () => {
             return (req, res, next) => next();
         };
-    const cacheLoadTimeoutMS = 10000;
 
-    const keyValueLoaderP = promiseTimeout(cacheLoadTimeoutMS, KeyValueLoader.load(config));
-    const cacheP = keyValueLoaderP.then((keyValueLoader: KeyValueLoader) => {
-        return keyValueLoader.cache;
-    }, (err) => {
-        return Promise.reject(err);
-    });
-
+    const keyValueWrapper = new KeyValueWrapper(config);
     return {
         api: api.create(config, appTenants),
         demoCreator: demoCreator.create(ensureLoggedIn),
         fastLoader: fastloader.create(config, cache, appTenants, ensureLoggedIn, urlResolver),
         fork: fork.create(alfred, ensureLoggedIn),
-        frontpage: frontpage.create(config, alfred, appTenants, ensureLoggedIn, cacheP),
+        frontpage: frontpage.create(config, alfred, appTenants, ensureLoggedIn, keyValueWrapper),
         home: home.create(config, ensureLoggedIn),
-        loader: loader.create(config, alfred, appTenants, ensureLoggedIn, cacheP),
+        loader: loader.create(config, alfred, appTenants, ensureLoggedIn, keyValueWrapper),
         templates: templates.create(config),
         token: token.create(alfred),
         versions: versions.create(alfred, ensureLoggedIn),
