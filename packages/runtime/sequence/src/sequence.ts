@@ -104,6 +104,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         document: IComponentRuntime,
         public id: string,
         attributes: IChannelAttributes,
+        public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
         super(id, document, attributes);
 
@@ -113,7 +114,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
-            this.segmentFromSpec.bind(this),
+            segmentFromSpec,
             ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
             document.options);
 
@@ -345,8 +346,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
             this.submitSequenceMessage(groupOp);
         }
     }
-
-    public abstract segmentFromSpec(segSpecs: any): MergeTree.ISegment;
 
     public submitSequenceMessage(message: MergeTree.IMergeTreeOp) {
         const translated = serializeHandles(

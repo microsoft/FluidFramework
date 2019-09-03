@@ -115,8 +115,9 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
         document: IComponentRuntime,
         public id: string,
         attributes: IChannelAttributes,
+        specToSegment: (spec: IJSONSegment) => ISegment,
     ) {
-        super(document, id, attributes);
+        super(document, id, attributes, specToSegment);
     }
 
     /**
@@ -171,13 +172,5 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
             end);
 
         return items;
-    }
-
-    public segmentFromSpec(segSpec: IJSONRunSegment<T>) {
-        const seg = new SubSequence<T>(segSpec.items);
-        if (segSpec.props) {
-            seg.addProperties(segSpec.props);
-        }
-        return seg;
     }
 }

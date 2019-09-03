@@ -208,7 +208,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     }
 
     constructor(document: IComponentRuntime, public id: string) {
-        super(document, id, SparseMatrixFactory.Attributes);
+        super(document, id, SparseMatrixFactory.Attributes, SparseMatrixFactory.segmentFromSpec);
     }
 
     public get numRows() {
@@ -281,20 +281,6 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
         this.moveAsPadding(col, maxCol - numCols, numCols);
     }
 
-    public segmentFromSpec(spec: IJSONSegment): ISegment {
-        const maybePadding = PaddingSegment.fromJSONObject(spec);
-        if (maybePadding) {
-            return maybePadding;
-        }
-
-        const maybeRun = RunSegment.fromJSONObject(spec);
-        if (maybeRun) {
-            return maybeRun;
-        }
-
-        throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(spec)}'`);
-    }
-
     // For each row, moves 'numCols' items starting from 'srcCol' and inserts 'numCols' padding
     // at 'destCol'.  Used by insertCols and removeCols.
     private moveAsPadding(srcCol: number, destCol: number, numCols: number) {
@@ -326,6 +312,20 @@ export class SparseMatrixFactory implements ISharedObjectFactory {
         snapshotFormatVersion: "0.1",
         packageVersion: pkgVersion,
     };
+
+    public static segmentFromSpec(spec: IJSONSegment): ISegment {
+        const maybePadding = PaddingSegment.fromJSONObject(spec);
+        if (maybePadding) {
+            return maybePadding;
+        }
+
+        const maybeRun = RunSegment.fromJSONObject(spec);
+        if (maybeRun) {
+            return maybeRun;
+        }
+
+        throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(spec)}'`);
+    }
 
     public get type() {
         return SparseMatrixFactory.Type;

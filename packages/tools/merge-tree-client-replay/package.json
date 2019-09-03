@@ -1,0 +1,46 @@
+{
+  "name": "@prague/merge-tree-client-replay",
+  "version": "0.10.0",
+  "description": "A tool that lets the user to replay ops.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+	"replayTool": "bin/mergeTreeClientReplay.js"
+  },
+  "sideEffects": "false",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "tsc",
+    "build:docs": "api-extractor run --local",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/client-api": "^0.10.0",
+    "@prague/runtime-definitions": "^0.10.0",
+    "@prague/container-definitions": "^0.10.0",
+    "@prague/container-loader": "^0.10.0",
+    "@prague/file-socket-storage": "^0.10.0",
+    "@prague/protocol-definitions": "^0.10.0",
+    "@prague/replay-socket-storage": "^0.10.0",
+    "@prague/sequence": "^0.10.0",
+    "@prague/merge-tree": "^0.10.0",
+    "@prague/utils": "^0.10.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.1.6",
+    "@prague/build-common": "^0.10.0",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  },
+  "license": "MIT"
+}
