@@ -20,7 +20,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
 
     // #region IComponentHTMLVisual
     public addView?(scope?: IComponent): IComponentHTMLView {
-        return new WebflowView(this.getComponent<FlowDocument>(this.docId));
+        return new WebflowView(this.getComponent<FlowDocument>(this.docId), this.context.documentId);
     }
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {

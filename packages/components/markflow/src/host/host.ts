@@ -39,7 +39,7 @@ export class WebflowView implements IComponentHTMLView {
     private previouslyFocused?: HTMLOrSVGElement;
     private root: Element;
 
-    constructor(private readonly docP: Promise<FlowDocument>) {}
+    constructor(private readonly docP: Promise<FlowDocument>, private readonly title: string) {}
 
     // #region IComponentHTMLView
     public remove(): void {
@@ -56,16 +56,15 @@ export class WebflowView implements IComponentHTMLView {
 
     public render(elm: HTMLElement, options: IComponentHTMLOptions): void {
         this.root = template.clone();
+        template.get(this.root, "titleText").textContent = this.title;
 
         this.docP.then((doc) => {
             const slot = template.get(this.root, "slot") as HTMLElement;
             let editor = new Editor(doc, slot, markdownFormatter);
-            this.setTitle(markdownFormatter);
 
             this.searchMenu = new SearchMenuView();
 
             const switchFormatter = (formatter: Readonly<RootFormatter<IFormatterState>>) => {
-                this.setTitle(formatter);
                 editor.remove();
                 editor = new Editor(doc, slot, formatter);
             };
@@ -91,10 +90,6 @@ export class WebflowView implements IComponentHTMLView {
     }
 
     // #endregion IComponentHTMLView
-
-    private setTitle(formatter: Readonly<RootFormatter<IFormatterState>>) {
-        template.get(this.root, "titleText").textContent = formatter.constructor.name;
-    }
 
     private readonly onKeyDown = (e: KeyboardEvent) => {
         if (e.ctrlKey && (e.code === KeyCode.keyM || e.code === KeyCode.space)) {
