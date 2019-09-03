@@ -6,6 +6,7 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import * as io from "socket.io-client";
 import { IOdspSnapshot, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -93,6 +94,7 @@ export class OdspDocumentService implements api.IDocumentService {
 
                     return this.tokenProvider;
                 },
+                new BaseTelemetryNullLogger(),
                 this.fetchFullSnapshot,
             ),
         );

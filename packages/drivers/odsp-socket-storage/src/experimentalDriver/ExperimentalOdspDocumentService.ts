@@ -63,7 +63,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
     private readonly snapshotStorageUrl: string,
     readonly getStorageToken: (siteUrl: string) => Promise<string | null>,
     readonly getWebsocketToken: () => Promise<string | null>,
-    logger: ITelemetryBaseLogger,
+    private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper,
     private readonly deltasFetchWrapper: IFetchWrapper,
   ) {
@@ -105,6 +105,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
         blobs,
         this.storageFetchWrapper,
         () => this.getTokenProvider(),
+        this.logger,
         true,
       ),
     );

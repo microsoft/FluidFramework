@@ -89,11 +89,12 @@ export async function getSocketStorageDiscovery(
   getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
   getPushToken: () => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
+  const joinSessionStartTime = performance.now();
   logger.send({
     category: "performance",
     eventName: "joinSessionStart",
     perfType: "start",
-    tick: performance.now(),
+    tick: joinSessionStartTime,
   });
 
   const pushTokenPromise = isPushAuthV2 ? getPushToken() : Promise.resolve(undefined);
@@ -135,11 +136,13 @@ export async function getSocketStorageDiscovery(
     socketStorageDiscovery.socketToken = pushToken!;
   }
 
+  const joinSessionEndTime = performance.now();
   logger.send({
     category: "performance",
     eventName: "joinSessionEnd",
     perfType: "end",
-    tick: performance.now(),
+    tick: joinSessionEndTime,
+    duration: joinSessionEndTime - joinSessionStartTime,
   });
 
   return socketStorageDiscovery;
