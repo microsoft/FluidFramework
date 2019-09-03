@@ -10,4 +10,4 @@ To begin you'll need to connect to the Fluid private NPM repository. Instruction
 
 You can build the production container by running.
 
-`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t prague-metrics .`
+`docker build --build-arg NPM_TOKEN=${NPM_TOKEN} -t fluid-metrics .`

@@ -1,7 +1,7 @@
 {
-  "name": "prague-metrics",
+  "name": "fluid-metrics",
   "version": "0.1.0",
-  "description": "Prague Metrics",
+  "description": "Fluid Metrics",
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run tslint && npm run tsc",
