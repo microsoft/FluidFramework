@@ -20,7 +20,7 @@ interface IState {
 
 export class OtherTextView extends React.Component<IProps, IState> {
     public render() {
-        const text = this.props.getText();
+        const text = this.props.getText() || "";
         const match = this.props.textMatch.match(text);
 
         return (

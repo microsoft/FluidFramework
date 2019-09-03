@@ -1,7 +1,7 @@
 {
   "name": "@chaincode/type-race",
   "description": "Typing race",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "main": "dist/index.js",
@@ -20,7 +20,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/prague-dev-server": "^3.6.1",
+    "@prague/prague-dev-server": "^3.9.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",
     "@types/react-dom": "^16.0.11",
@@ -41,14 +41,12 @@
     }
   },
   "dependencies": {
-    "@prague/app-component": "^0.7.9809",
-    "@prague/aqueduct": "^0.7.9809",
-    "@prague/build-common": "^0.7.9809",
-    "@prague/component-runtime": "^0.7.9809",
-    "@prague/container-definitions": "^0.7.9809",
-    "@prague/map": "^0.7.9809",
-    "@prague/runtime-definitions": "^0.7.9809",
-    "@prague/shared-object-common": "^0.7.9809",
+    "@prague/aqueduct": "^0.10.0",
+    "@prague/build-common": "^0.10.0",
+    "@prague/component-runtime": "^0.10.0",
+    "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/map": "^0.10.0",
+    "@prague/shared-object-common": "^0.10.0",
     "react": "^16.8.3",
     "react-dom": "^16.8.3"
   },

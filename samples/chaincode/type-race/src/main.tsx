@@ -5,18 +5,14 @@
 
 import {
   PrimedComponent,
-  SimpleComponentInstantiationFactory,
+  PrimedComponentFactory,
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
   SharedMap,
 } from "@prague/map";
-import {
-  IComponentContext,
-  IComponentRuntime,
-} from "@prague/runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -31,7 +27,8 @@ const style = require("./style.css");
  * Clicker example using view interfaces and stock component classes.
  */
 export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
-  private static readonly supportedInterfaces = ["IComponentHTMLVisual", "IComponentHTMLRender"];
+  public get IComponentHTMLVisual() { return this; }
+
   private readonly textGenerator = new TextGenerator();
   private username: string;
   private readonly otherUsernames: Set<string> = new Set<string>();
@@ -41,6 +38,7 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
   private textMatch: TextMatch;
 
   private readonly targetTextKey = "target-text";
+
   private get targetText(): string {
     return this.root.get(this.targetTextKey);
   }
@@ -86,25 +84,10 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
    * is created. Anything that happens in componentInitializingFirstTime will happen before any other user will see the component.
    */
   protected async componentInitializingFirstTime() {
-    // Calling super.componentInitializingFirstTime() creates a root SharedMap that you can work off.
-    await super.componentInitializingFirstTime();
     this.root.set(this.targetTextKey, this.textGenerator.generateText());
     this.root.set("started", false);
     this.root.set("players finished count", 0);
   }
-
-  /**
-   * Static load function that allows us to make async calls while creating our object.
-   * This becomes the standard practice for creating components in the new world.
-   * Using a static allows us to have async calls in class creation that you can't have in a constructor
-   */
-  public static async load(runtime: IComponentRuntime, context: IComponentContext): Promise<TypeRace> {
-    const typeRace = new TypeRace(runtime, context, TypeRace.supportedInterfaces);
-    await typeRace.initialize();
-
-    return typeRace;
-  }
-
 
   public render(div: HTMLElement) {
     if (!this.textMatch) {
@@ -276,9 +259,9 @@ export class TypeRace extends PrimedComponent implements IComponentHTMLVisual {
 /**
  * This is where you define all your Distributed Data Structures
  */
-export const TyperaceInstantiationFactory = new SimpleComponentInstantiationFactory(
+export const TyperaceInstantiationFactory = new PrimedComponentFactory(
+  TypeRace,
   [
     SharedMap.getFactory(),
   ],
-  TypeRace.load
 );
