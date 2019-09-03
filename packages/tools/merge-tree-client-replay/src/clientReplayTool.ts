@@ -36,6 +36,17 @@ interface IFullPathTreeEntry extends ITreeEntry {
     fullPath?: string;
 }
 
+interface IFullPathSequencedDocumentMessage extends ISequencedDocumentMessage {
+    fullPath?: string;
+}
+
+interface IMessageContents {
+    address: string;
+    contents: any;
+    content: any;
+    type: string;
+}
+
 /**
  * All the logic of replay tool
  */
@@ -104,15 +115,15 @@ export class ClientReplayTool {
     private async mainCycle() {
         const clients = new Map<string, Map<string, TestClient>>();
         const mergeTreeAttachTrees = new Map<string, {tree: ITree, specToSeg(segment: IJSONSegment): ISegment}>();
-        const mergeTreeMessages = new Array<ISequencedDocumentMessage & { address?: string }>();
+        const mergeTreeMessages = new Array<IFullPathSequencedDocumentMessage>();
         for (const message of this.deltaStorageService.getFromWebSocket(0, this.args.to)) {
             const messagePathParts: string[] = [];
             switch (message.type as MessageType) {
                 case MessageType.Operation:
-                    let contents = message.contents as { address: string, contents: any, content: any, type: string };
+                    let contents = message.contents as IMessageContents;
                     do {
                         messagePathParts.push(contents.address);
-                        contents = contents.contents as { address: string, contents: any, content: any, type: string };
+                        contents = contents.contents as IMessageContents;
                     } while (contents.contents);
 
                     if (contents.type && contents.type === "attach") {
@@ -120,21 +131,26 @@ export class ClientReplayTool {
                         legacyAttachMessage.id = [...messagePathParts, legacyAttachMessage.id].join("/");
                         this.processAttachMessage(legacyAttachMessage, mergeTreeAttachTrees);
                     } else {
-                        const content = contents.content as { address: string, contents: any };
+                        const content = contents.content as IMessageContents;
                         const messagePath = [...messagePathParts, content.address].join("/");
                         if (content && mergeTreeAttachTrees.has(messagePath)) {
                             if (!clients.has(message.clientId)) {
                                 clients.set(message.clientId, new Map<string, TestClient>());
                             }
-                            const op = content.contents as IMergeTreeOp;
-                            if (this.args.verbose) {
-                                console.log(`MergeTree op ${messagePath}:\n ${JSON.stringify(op)}`);
+                            // tslint:disable-next-line: no-suspicious-comment
+                            // TODO: Interval collections, store in map "key"
+                            // tslint:disable-next-line: no-unsafe-any
+                            if (!content.contents.key) {
+                                const op = content.contents as IMergeTreeOp;
+                                if (this.args.verbose) {
+                                    console.log(`MergeTree op ${messagePath}:\n ${JSON.stringify(op)}`);
+                                }
+                                const newMessage: IFullPathSequencedDocumentMessage = message;
+                                newMessage.fullPath = messagePath;
+                                newMessage.contents = op;
+                                mergeTreeMessages.push(newMessage);
+                                break;
                             }
-                            const newMessage: ISequencedDocumentMessage & { address?: string } = message;
-                            newMessage.address = messagePath;
-                            newMessage.contents = op;
-                            mergeTreeMessages.push(newMessage);
-                            break;
                         }
                     }
                     break;
@@ -157,7 +173,7 @@ export class ClientReplayTool {
                         mergeTreeId,
                         await TestClient.createFromSnapshot(creationInfo.tree, clientId, creationInfo.specToSeg));
                 }
-                const pendingMessages = new Array<ISequencedDocumentMessage & { address?: string }>();
+                const pendingMessages = new Array<IFullPathSequencedDocumentMessage>();
                 for (const message of mergeTreeMessages) {
                     if (message.clientId !== clientId) {
                         pendingMessages.push(message);
@@ -169,24 +185,44 @@ export class ClientReplayTool {
                         while (pendingMessages.length > 0
                             && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
                             const pendingMessage = pendingMessages.shift();
-                            client.get(pendingMessage.address).applyMsg(pendingMessage);
+                            try {
+                                client.get(pendingMessage.fullPath).applyMsg(pendingMessage);
+                            } catch (error) {
+                                console.log(JSON.stringify(pendingMessage, undefined, 2));
+                                throw error;
+                            }
                         }
                         const op = message.contents as IMergeTreeOp;
                         // wrap in a group op, as that's the only way to
                         // apply an op locally
-                        client.get(message.address).localTransaction(
-                            op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op));
+                        const testClient = client.get(message.fullPath);
+                        try {
+                            testClient.localTransaction(
+                                op.type === MergeTreeDeltaType.GROUP ? op : createGroupOp(op));
+                        } catch (error) {
+                            console.log(JSON.stringify(message, undefined, 2));
+                            throw error;
+                        }
                         pendingMessages.push(message);
                     }
                 }
                 // no more ops from this client, so apply whatever is left
                 for (const message of pendingMessages) {
-                    client.get(message.address).applyMsg(message);
+                    const testClient = client.get(message.fullPath);
+                    try {
+                        testClient.applyMsg(message);
+                    } catch (error) {
+                        console.log(JSON.stringify(message, undefined, 2));
+                        throw error;
+                    }
                 }
             }
             const readonlyClient = clients.get("readonly");
             for (const client of clients) {
                 for (const mergeTree of client[1]) {
+                    assert.equal(
+                        mergeTree[1].getLength(),
+                        readonlyClient.get(mergeTree[0]).getLength());
                     assert.equal(
                         mergeTree[1].getText(),
                         readonlyClient.get(mergeTree[0]).getText());
@@ -229,7 +265,7 @@ export class ClientReplayTool {
                             break;
                         }
                     }
-                    console.log(`MergeTree Found:\n ${JSON.stringify({path: ssTree.fullPath, type: mergeTreeType.type })}`);
+                    console.log(`MergeTree Found:\n ${JSON.stringify({fullPath: ssTree.fullPath, type: mergeTreeType.type })}`);
                     mergeTreeAttachTrees.set(
                         ssTree.fullPath,
                         {
