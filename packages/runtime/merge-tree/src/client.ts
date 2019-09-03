@@ -492,7 +492,7 @@ export class Client {
             // validate end if not insert, or insert has end
             //
             if (op.type !== ops.MergeTreeDeltaType.INSERT || end !== undefined) {
-                if (end === undefined || end < start) {
+                if (end === undefined || end <= start) {
                     invalidPositions.push("end");
                 }
             }
