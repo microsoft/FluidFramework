@@ -1,0 +1,47 @@
+{
+  "name": "@microsoft/fluid-webpack-component-loader",
+  "description": "Component loader for webpack-dev-server",
+  "version": "0.10.0",
+  "author": "Microsoft",
+  "repository": "microsoft/prague",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint npm:webpack",
+    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --color --config webpack.config.js"
+  },
+  "dependencies": {
+    "@prague/aqueduct": "^0.10.0",
+    "@prague/base-host": "^0.10.0",
+    "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/container-definitions": "^0.10.0",
+    "@prague/loader-web": "^0.10.0",
+    "@prague/protocol-definitions": "^0.10.0",
+    "@prague/services-core": "^0.10.0",
+    "axios": "^0.18.0",
+    "jsonwebtoken": "^8.4.0",
+    "moniker": "^0.1.2",
+    "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "@prague/build-common": "^0.10.0",
+    "@prague/url-generator": "^1.0.4",
+    "@types/node": "^10.12.12",
+    "concurrently": "^4.1.0",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5",
+    "webpack": "^4.8.2",
+    "webpack-cli": "^3.1.2"
+  },
+  "license": "MIT"
+}

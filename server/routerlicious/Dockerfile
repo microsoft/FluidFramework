@@ -115,6 +115,7 @@ COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
 COPY packages/tools/prague-dump/package*.json packages/tools/prague-dump/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
+COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/
 
 # Copy over chaincode npmrc and package.json to dynamically install packages.
