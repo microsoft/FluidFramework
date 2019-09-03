@@ -8,8 +8,11 @@ import * as Sentry from "@sentry/node";
 
 export class NodeErrorTrackingService implements IErrorTrackingService {
 
-    constructor(endpoint: string) {
+    constructor(endpoint: string, service: string) {
         Sentry.init({ dsn: endpoint });
+        Sentry.configureScope((scope) => {
+            scope.setTag("service", service);
+          });
     }
 
     public track<T>(func: () => T): T {
@@ -18,5 +21,9 @@ export class NodeErrorTrackingService implements IErrorTrackingService {
 
     public captureException(error: any): string {
         return Sentry.captureException(error);
+    }
+
+    public async flush(timeout?: number | undefined): Promise<boolean> {
+        return Sentry.flush(timeout);
     }
 }

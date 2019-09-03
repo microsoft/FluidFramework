@@ -97,24 +97,29 @@ export function runService<T extends IResources>(
     configureLogging(config.get("logger"));
 
     const errorTrackingConfig = config.get("error") as IErrorTrackingConfig;
-    let runningP;
+    const runningP = run(config, resourceFactory, runnerFactory);
+    let errorTracker: NodeErrorTrackingService;
     if (errorTrackingConfig.track) {
-        const errorTracker = new NodeErrorTrackingService(errorTrackingConfig.endpoint);
-        errorTracker.track(() => {
-            runningP = run(config, resourceFactory, runnerFactory);
-        });
-    } else {
-        runningP = run(config, resourceFactory, runnerFactory);
+        errorTracker = new NodeErrorTrackingService(errorTrackingConfig.endpoint, group);
     }
 
-    // notify of connection
     runningP.then(
         () => {
             winston.info("Exiting");
             process.exit(0);
         },
         (error) => {
-            winston.error("Service exiting due to error", error);
-            process.exit(1);
+            winston.error(`${group} service exiting due to error`);
+            winston.error(error);
+            if (errorTracker === undefined) {
+                process.exit(1);
+            } else {
+                errorTracker.captureException(error);
+                errorTracker.flush(10000).then(() => {
+                    process.exit(1);
+                }, () => {
+                    process.exit(1);
+                });
+            }
         });
 }
