@@ -4,11 +4,11 @@
  */
 
 import { createWebLoader, initializeChaincode, registerAttach } from "@prague/base-host";
-import { IComponent } from "@prague/component-core-interfaces";
 import { IResolvedPackage } from "@prague/loader-web";
 import { IResolvedUrl } from "@prague/protocol-definitions";
 import { IGitCache } from "@prague/services-client";
 import { DocumentFactory } from "./documentFactory";
+import { MicrosoftGraph } from "./graph";
 import { IHostServices } from "./services";
 
 export async function initialize(
@@ -20,12 +20,14 @@ export async function initialize(
     npm: string,
     jwt: string,
     config: any,
-    scope: IComponent,
+    graphAccessToken: string,
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
+    const graph = graphAccessToken ? new MicrosoftGraph(graphAccessToken) : undefined;
 
     const services: IHostServices = {
         IDocumentFactory: documentFactory,
+        IMicrosoftGraph: graph,
     };
 
     console.log(`Loading ${url}`);

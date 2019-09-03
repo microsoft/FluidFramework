@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IProvideDocumentFactory } from "@prague/host-service-interfaces";
+import { IProvideDocumentFactory, IProvideMicrosoftGraph } from "@prague/host-service-interfaces";
 
 /**
  * Host services provides a collection of intefaces exposed by a gateway host
  */
 // tslint:disable-next-line:no-empty-interface
-export interface IHostServices extends IProvideDocumentFactory {
+export interface IHostServices extends IProvideDocumentFactory, IProvideMicrosoftGraph {
 }

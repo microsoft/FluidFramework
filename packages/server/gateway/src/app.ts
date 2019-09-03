@@ -117,8 +117,8 @@ export function create(
             },
             (req, iss, sub, profile, jwtClaims, accessToken, refreshToken, params, done) => {
                 saveSpoTokens(req, params, accessToken, refreshToken);
-
-                return done(null, jwtClaims);
+                const userData = { ...jwtClaims, accessToken };
+                return done(null, userData);
             },
         ),
     );

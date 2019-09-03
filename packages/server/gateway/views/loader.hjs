@@ -45,7 +45,8 @@
             scriptIds,
             npm,
             jwt,
-            config);
+            config,
+            user.accessToken);
     </script>
 {{/scripts}}
 

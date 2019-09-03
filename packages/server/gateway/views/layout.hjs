@@ -17,19 +17,18 @@
             Fluid
         </a>
         <div id="fluid-user">
-
         </div>
     </nav>
-
-    
 
     {{$content}}{{/content}}
 
     <!-- Scripts -->
+    <script>
+        var user = {{{ user }}};
+    </script>
     <script src="{{#hfurl}}/public/scripts/dist/controllers.js{{/hfurl}}"></script>
     {{$scripts}}{{/scripts}}
     <script>
-        var user = {{{ user }}};
         controllers.navbar.initialize(user);
     </script>
 </body>

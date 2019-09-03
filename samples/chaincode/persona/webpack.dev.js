@@ -3,5 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export * from "./documentFactory";
-export * from "./graph";
+module.exports = {
+    mode: "development",
+    devtool: "inline-source-map"
+};
