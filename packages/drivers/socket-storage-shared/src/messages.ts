@@ -101,13 +101,3 @@ export interface IConnected {
      */
     serviceConfiguration: IServiceConfiguration;
 }
-
-/**
- * Message sent to indicate that a shadow client has connected to the server.
- */
-export interface IShadowConnected {
-    /**
-     * The client who is sending the message
-     */
-    clientId: string;
-}

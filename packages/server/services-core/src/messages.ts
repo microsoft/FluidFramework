@@ -88,7 +88,7 @@ export interface ITicketedMessage extends IMessage {
 }
 
 /**
- * Message sent when a raw opeartion is nacked
+ * Message sent when a raw operation is nacked
  */
 export interface INackMessage extends ITicketedMessage {
     // The client that is being NACKed

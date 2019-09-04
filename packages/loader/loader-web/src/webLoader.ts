@@ -181,7 +181,7 @@ class FluidPackage {
             });
 
             // If the script hasn't been attached, attach it now.
-            // This could cause a double load of the scrip, but scriptManager handles duplicates
+            // This could cause a double load of the script, but scriptManager handles duplicates
             if (scriptFound === undefined) {
                 this.scriptManager.loadScripts(umdDetails, this.details.packageUrl, scriptIds);
             }

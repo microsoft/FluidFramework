@@ -35,7 +35,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
         if (resolvedUrl.type !== "prague") {
-            Promise.reject("only fluid type urls can be resolved.");
+            return Promise.reject("only fluid type urls can be resolved.");
         }
 
         const urlAsFluidUrl = resolvedUrl as IFluidResolvedUrl;
@@ -46,7 +46,7 @@ class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
 
         if (!ordererUrl || !storageUrl || !deltaStorageUrl) {
             // tslint:disable-next-line:max-line-length
-            Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
+            return Promise.reject(`endpoint urls must exist: [ordererUrl:${ordererUrl}][storageUrl:${storageUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
         const parsedUrl = url.parse(urlAsFluidUrl.url);
