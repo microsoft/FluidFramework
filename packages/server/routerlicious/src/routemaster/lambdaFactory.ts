@@ -31,7 +31,7 @@ export class RouteMasterLambdaFactory extends EventEmitter implements IPartition
 
         const documentDetails = await DocumentManager.create(tenantId, documentId, this.collection, this.deltas);
 
-        return new RouteMasterLambda(documentDetails, this.producer, context);
+        return new RouteMasterLambda(documentDetails, this.producer, context, tenantId, documentId);
     }
 
     public async dispose(): Promise<void> {

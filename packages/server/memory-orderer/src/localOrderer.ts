@@ -325,7 +325,9 @@ export class LocalOrderer implements IOrderer {
                 this.taskMessageSender,
                 this.tenantManager,
                 this.permission,
-                context));
+                context,
+                this.tenantId,
+                this.documentId));
 
         if (this.gitManager) {
             this.scribeLambda = new LocalLambdaController(

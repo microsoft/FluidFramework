@@ -110,7 +110,7 @@ export function runService<T extends IResources>(
         },
         (error) => {
             winston.error(`${group} service exiting due to error`);
-            winston.error(error);
+            winston.error(JSON.stringify(error));
             if (errorTracker === undefined) {
                 process.exit(1);
             } else {

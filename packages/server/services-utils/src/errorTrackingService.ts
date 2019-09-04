@@ -19,8 +19,15 @@ export class NodeErrorTrackingService implements IErrorTrackingService {
         return func();
     }
 
-    public captureException(error: any): string {
-        return Sentry.captureException(error);
+    public captureException(error: any): string | undefined {
+        if (error.tenantId && error.documentId) {
+            Sentry.withScope((scope) => {
+                scope.setTag("document", `${error.tenantId}/${error.documentId}`);
+                Sentry.captureException(error.error);
+              });
+        } else {
+            return Sentry.captureException(error);
+        }
     }
 
     public async flush(timeout?: number | undefined): Promise<boolean> {

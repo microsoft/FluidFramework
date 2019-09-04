@@ -28,11 +28,15 @@ export class ForemanLambdaFactory extends EventEmitter implements IPartitionLamb
     }
 
     public async create(config: Provider, context: IContext): Promise<IPartitionLambda> {
+        const tenantId = config.get("tenantId");
+        const documentId = config.get("documentId");
         return new ForemanLambda(
             this.messageSender,
             this.tenantManager,
             this.permissions,
-            context);
+            context,
+            tenantId,
+            documentId);
     }
 
     public async dispose(): Promise<void> {

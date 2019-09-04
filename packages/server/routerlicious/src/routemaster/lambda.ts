@@ -9,7 +9,12 @@ import * as core from "@prague/services-core";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {
-    constructor(private document: DocumentManager, private producer: core.IProducer, context: core.IContext) {
+    constructor(
+        private document: DocumentManager,
+        private producer: core.IProducer,
+        context: core.IContext,
+        protected tenantId: string,
+        protected documentId: string) {
         super(context);
     }
 

@@ -20,7 +20,9 @@ export class ForemanLambda extends SequencedLambda {
         private messageSender: core.ITaskMessageSender,
         private tenantManager: core.ITenantManager,
         private permissions: any,
-        protected context: core.IContext) {
+        protected context: core.IContext,
+        protected tenantId: string,
+        protected documentId: string) {
         super(context);
         // Make a map of every task and their intended queue.
         // tslint:disable-next-line:forin
