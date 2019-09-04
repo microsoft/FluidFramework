@@ -44,7 +44,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
         const root = template.clone();
         elm.append(root);
 
-        this.getComponent<TableDocument>(this.docId).then((doc) => {
+        this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
             const grid = template.get(root, "grid");
             grid.appendChild(new GridView(doc).root);
 

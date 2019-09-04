@@ -42,7 +42,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     public addView(scope?: IComponent): IComponentHTMLView {
         return new HostView(
-            this.context,
+            (id: string, pkg: string, props?: any) => this.createAndAttachComponent(id, pkg, props),
             this.getComponent<FlowDocument>(this.docId),
             this.openCollection("math"),
             this.openCollection("video-players"),

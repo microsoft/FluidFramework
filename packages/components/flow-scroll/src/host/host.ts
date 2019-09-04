@@ -4,12 +4,12 @@
  */
 import * as SearchMenu from "@chaincode/search-menu";
 
+import { tableViewType } from "@chaincode/table-view";
 import { Editor, FlowDocument, htmlFormatter, Tag } from "@chaincode/webflow";
-import { IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
+import { IComponent, IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { IComponentCollection } from "@prague/framework-definitions";
 import { TST } from "@prague/merge-tree";
-import { IComponentContext } from "@prague/runtime-definitions";
 import * as styles from "./index.css";
 
 const template = new Template(
@@ -31,7 +31,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
     private viewport: HTMLElement;
 
     constructor(
-        private readonly context: IComponentContext,
+        private readonly createAndAttachComponent: (id: string, pkg: string, props?: any) => Promise<IComponent>,
         private readonly docP: Promise<FlowDocument>,
         private readonly mathP: Promise<IComponentCollection>,
         private readonly videosP: Promise<IComponentCollection>,
@@ -74,7 +74,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             const insertComponent = (type: string, componentOptions: object, style?: string, classList?: string[]) => {
                 const position = editor.selection.end;
                 const url = randomId();
-                this.context.createComponent(url, type).then((componentRuntime) => componentRuntime.attach());
+                this.createAndAttachComponent(url, type);
                 doc.insertComponent(position, `/${url}`, componentOptions, style, classList);
             };
 
@@ -121,7 +121,7 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "morton", enabled: () => true, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { key: "image", enabled: () => true, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
                 { key: "ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", {}, "display:block;width:61%;resize:both;overflow:hidden") },
-                { key: "table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view", {}) },
+                { key: "table", enabled: () => true, exec: () => insertComponent(tableViewType, {}) },
                 { key: "chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view", {}) },
             ];
             const baseSearchCommands = new TST<SearchMenu.ISearchMenuCommand<HostView>>();
