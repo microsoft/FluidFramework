@@ -4,6 +4,7 @@
  */
 
 import * as nconf from "nconf";
+import { inspect } from "util" ;
 import * as winston from "winston";
 import { NodeErrorTrackingService } from "./errorTrackingService";
 import { configureLogging } from "./logger";
@@ -110,7 +111,7 @@ export function runService<T extends IResources>(
         },
         (error) => {
             winston.error(`${group} service exiting due to error`);
-            winston.error(JSON.stringify(error));
+            winston.error(inspect(error));
             if (errorTracker === undefined) {
                 process.exit(1);
             } else {
