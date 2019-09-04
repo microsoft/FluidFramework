@@ -14,12 +14,14 @@ import {
     IComponentHTMLView,
 } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
+import { IPackageManager } from "@prague/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString } from "@prague/sequence";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
 import { initializeIcons } from '@uifabric/icons';
 import { EventEmitter } from "events";
+import * as semver from "semver";
 import { DrawerView } from "./drawerView";
 
 export class Drawer extends EventEmitter implements IComponentLoadable, IComponentRouter, IComponentHTMLVisual {
@@ -30,6 +32,14 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         return collection;
     }
 
+    private static packages = [
+        { pkg: "@chaincode/drawer", name: "Folder", version: "latest", icon: "FabricNewFolder" },
+        { pkg: "@chaincode/shared-text", name: "Shared Text", version: "^0.10.0", icon: "TextDocument" },
+        { pkg: "@chaincode/flow-scroll", name: "Web Flow", version: "^0.10.0", icon: "WebComponents" },
+        { pkg: "@chaincode/smde", name: "Markdown", version: "latest", icon: "MarkDownLanguage" },
+        { pkg: "@chaincode/monaco", name: "Monaco", version: "^0.10.0", icon: "Code" },
+    ];
+
     public get IComponentLoadable() { return this; }
     public get IComponentRouter() { return this; }
     public get IComponentHTMLVisual() { return this; }
@@ -37,8 +47,13 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
     public url: string;
     private root: ISharedMap;
     private views = new Set<DrawerView>();
+    private packageManager: IPackageManager;
+    private packagesP: Promise<{ pkg: string, name: string, version: string, icon: string }[]>;
 
-    constructor(private runtime: IComponentRuntime, context: IComponentContext) {
+    constructor(
+        private readonly runtime: IComponentRuntime,
+        private readonly context: IComponentContext,
+    ) {
         super();
 
         this.url = context.id;
@@ -59,10 +74,42 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         }
 
         this.root = await this.runtime.getChannel("root") as ISharedMap;
+
+        this.packageManager = this.context.scope.IPackageManager;
+        this.packagesP = this.packageManager
+            ? this.fetchPackageData()
+            : Promise.resolve([]);
+    }
+
+    private async fetchPackageData() {
+        const latest = await Promise.all(Drawer.packages.map(async (value) => {
+            if (value.version === "latest") {
+                return this.packageManager.getVersion(value.pkg, value.version);
+            }
+
+            const packument = await this.packageManager.get(value.pkg);
+            const versions = Object.keys(packument.versions);
+            const max = semver.maxSatisfying(versions, value.version);
+
+            return packument.versions[max];
+        }));
+
+        return latest.map((value, index) => {
+            return {
+                pkg: value.name,
+                name: Drawer.packages[index].name,
+                version: value.version,
+                icon: Drawer.packages[index].icon,
+            }
+        });
     }
 
     public addView(scope?: IComponent): IComponentHTMLView {
-        const view = new DrawerView(() => this.views.delete(view));
+        const view = new DrawerView(
+            this.context.scope.IDocumentFactory,
+            this.root,
+            this.packagesP,
+            () => this.views.delete(view));
         this.views.add(view);
 
         return view;

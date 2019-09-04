@@ -5,10 +5,19 @@
 
 import * as React from 'react';
 
-import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
-import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/ContextualMenu';
+import { CommandBar, ICommandBarItemProps } from 'office-ui-fabric-react/lib/CommandBar';
+import { ContextualMenuItemType, IContextualMenuItem } from 'office-ui-fabric-react/lib/ContextualMenu';
+import { IDocumentFactory } from '@prague/host-service-interfaces';
+import { IFluidCodeDetails } from '@prague/container-definitions';
+import { ISharedMap } from '@prague/map';
 
-export class DrawerCommandBar extends React.Component<{}, {}> {
+interface IDrawerCommandBarProps {
+    packages: { pkg: string, name: string, version: string, icon: string }[],
+    documentFactory: IDocumentFactory,
+    documentsMap: ISharedMap,
+}
+
+export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}> {
     public render(): JSX.Element {
         return (
             <div>
@@ -22,9 +31,42 @@ export class DrawerCommandBar extends React.Component<{}, {}> {
         );
     }
 
+    private async createDocument(details: { pkg: string, name: string, version: string, icon: string }) {
+        const chaincode: IFluidCodeDetails = {
+            config: {
+                "@chaincode:cdn": "https://pragueauspkn-3873244262.azureedge.net",
+            },
+            package: `${details.pkg}@${details.version}`,
+        };
+
+        const name = await this.props.documentFactory.create(chaincode);
+        this.props.documentsMap.set(name, details);
+    }
+
     // Data for CommandBar
     private getItems = () => {
-        return [
+        const items: IContextualMenuItem[] = this.props.packages.map((value) => {
+            return {
+                key: value.pkg,
+                name: value.name,
+                iconProps: {
+                    iconName: value.icon,
+                },
+                onClick: () => {
+                    this.createDocument(value);
+                },
+            }
+        });
+
+        items.splice(
+            1,
+            0,
+            {
+                key: 'divider_1',
+                itemType: ContextualMenuItemType.Divider,
+            });
+
+        const result: ICommandBarItemProps[] = [
             {
                 key: 'newItem',
                 name: 'New',
@@ -34,41 +76,8 @@ export class DrawerCommandBar extends React.Component<{}, {}> {
                 },
                 ariaLabel: 'New',
                 subMenuProps: {
-                    items: [
-                        {
-                            key: 'Folder',
-                            name: 'Folder',
-                            iconProps: {
-                                iconName: 'FabricNewFolder'
-                            }
-                        },
-                        {
-                            key: 'divider_1',
-                            itemType: ContextualMenuItemType.Divider,
-                        },
-                        {
-                            key: 'FlowView',
-                            name: 'Flow View',
-                            iconProps: {
-                                iconName: 'TextDocument'
-                            }
-                        },
-                        {
-                            key: 'SMDE',
-                            name: 'SMDE',
-                            iconProps: {
-                                iconName: 'MarkDownLanguage'
-                            }
-                        },
-                        {
-                            key: 'Monaco',
-                            name: 'Monaco',
-                            iconProps: {
-                                iconName: 'Code'
-                            }
-                        },
-                    ]
-                }
+                    items
+                },
             },
             {
                 key: 'share',
@@ -77,8 +86,9 @@ export class DrawerCommandBar extends React.Component<{}, {}> {
                     iconName: 'Share'
                 },
                 onClick: () => console.log('Share')
-            }
-        ];
+            }];
+
+        return result;
     };
 
     private getFarItems = () => {
