@@ -10,26 +10,66 @@ import { IMergeTreeOp } from "../ops";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
+interface IConflictFarmConfigRange {
+    min: number;
+    max: number;
+}
+
+interface IConflictFarmConfig {
+    minLength: IConflictFarmConfigRange;
+    clients: IConflictFarmConfigRange;
+    rounds: number;
+    opsPerRound: IConflictFarmConfigRange;
+    annotate: boolean;
+    incrementalLog: boolean;
+    growthFunc(input: number): number;
+}
+
+export const debugOptions: IConflictFarmConfig = {
+    minLength: {min: 2, max: 2},
+    clients: {min: 3, max: 3},
+    opsPerRound: { min: 1, max: 100 },
+    rounds: 100,
+    annotate: true,
+    incrementalLog: true,
+    growthFunc: (input: number) => input + 1,
+};
+
+export const defaultOptions: IConflictFarmConfig = {
+    minLength: {min: 1, max: 512},
+    clients: {min: 1, max: 8},
+    opsPerRound: {min: 1, max: 128},
+    rounds: 8,
+    annotate: true,
+    incrementalLog: false,
+    growthFunc: (input: number) => input * 2,
+};
+
+export const longOptions: IConflictFarmConfig = {
+    minLength: {min: 1, max: 512},
+    clients: {min: 1, max: 32},
+    opsPerRound: {min: 1, max: 512},
+    rounds: 32,
+    annotate: true,
+    incrementalLog: true,
+    growthFunc: (input: number) => input * 2,
+};
+
+function doOverRange(
+    range: IConflictFarmConfigRange,
+    growthFunc: (input: number) => number,
+    doAction: (current: number) => void) {
+    for (let current = range.min; current <= range.max; current = growthFunc(current)) {
+        doAction(current);
+    }
+}
+
 describe("MergeTree.Client", () => {
-    /* enables:
-        incremental logging
-        incremental growth
-        more rounds
-    */
-    const debug = false;
-    // short runs about 3s per seed, long runs about 4 mins per seed
-    const long = false;
+
     // tslint:disable: mocha-no-side-effect-code
-
-    // Test config
-    const maxMinLength = 512;
-    const maxClients = long ? 32 : 8;
-    const maxOpsPerRound = long ? 512 : 128;
-    const totalRounds = (long ? 32 : 8) * (debug ? 10 : 1);
-    const annotate = true;
-
-    // control how many clients to start with for debugging
-    const minClients = Math.min(maxClients, 1);
+    const opts =
+        defaultOptions;
+        // debugOptions;
 
     // Generate a list of single character client names, support up to 69 clients
     const clientNames: string[] = [];
@@ -40,13 +80,11 @@ describe("MergeTree.Client", () => {
         }
     }
 
-    const growthFunc = (input: number) => debug ? input + 1 : input * 2;
-
     addClientNames("A", 26);
     addClientNames("a", 26);
     addClientNames("0", 17);
 
-    for (let minLength = 1; minLength <= maxMinLength; minLength = growthFunc(minLength)) {
+    doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
         // tslint:enable: mocha-no-side-effect-code
         it(`ConflictFarm_${minLength}`, async () => {
             const mt = random.engines.mt19937();
@@ -57,22 +95,22 @@ describe("MergeTree.Client", () => {
                 (c, i) => c.startCollaboration(clientNames[i]));
 
             let seq = 0;
-            while (clients.length < maxClients) {
+            while (clients.length < opts.clients.max) {
                 clients.forEach((c) => c.updateMinSeq(seq));
 
                 // Add double the number of clients each iteration
-                const targetClients = Math.max(minClients, growthFunc(clients.length));
+                const targetClients = Math.max(opts.clients.min, opts.growthFunc(clients.length));
                 for (let cc = clients.length; cc < targetClients; cc++) {
                     const newClient = await TestClient.createFromClientSnapshot(clients[0], clientNames[cc]);
                     clients.push(newClient);
                 }
 
-                for (let opsPerRound = 1; opsPerRound <= maxOpsPerRound; opsPerRound = growthFunc(opsPerRound)) {
-                    if (long || debug) {
+                doOverRange(opts.opsPerRound, opts.growthFunc,  (opsPerRound) => {
+                    if (opts.incrementalLog) {
                         // tslint:disable-next-line: max-line-length
                         console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
                     }
-                    for (let round = 0; round < totalRounds; round++) {
+                    for (let round = 0; round < opts.rounds; round++) {
                         const minimumSequenceNumber = seq;
                         let tempSeq = seq * -1;
                         const logger = new TestClientLogger(
@@ -92,11 +130,10 @@ describe("MergeTree.Client", () => {
                                 op = client.insertTextLocal(
                                     pos,
                                     client.longClientId.repeat(random.integer(1, 3)(mt)));
-
                             } else {
                                 const start = random.integer(0, len - 1)(mt);
                                 const end = random.integer(start + 1, len)(mt);
-                                if (!annotate || random.bool()(mt)) {
+                                if (!opts.annotate || random.bool()(mt)) {
                                     op = client.removeRangeLocal(start, end);
                                 } else {
                                     op = client.annotateRangeLocal(start, end, { bucket: i % 3 }, undefined);
@@ -126,10 +163,10 @@ describe("MergeTree.Client", () => {
                         // validate that all the clients match at the end of the round
                         logger.validate();
                     }
-                }
+                });
             }
         })
-            // tslint:disable-next-line: mocha-no-side-effect-code
-            .timeout(30 * 1000);
-    }
+        // tslint:disable-next-line: mocha-no-side-effect-code
+        .timeout(30 * 1000);
+    });
 });
