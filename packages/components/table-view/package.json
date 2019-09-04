@@ -32,6 +32,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
+    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
   },
@@ -41,12 +42,14 @@
     "@chaincode/table-document": "^0.10.0",
     "@prague/aqueduct": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/container-definitions": "^0.10.0",
     "@prague/flow-util": "^0.10.0",
     "@prague/map": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@prague/build-common": "^0.10.0",
+    "@prague/prague-dev-server": "~3.9.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
