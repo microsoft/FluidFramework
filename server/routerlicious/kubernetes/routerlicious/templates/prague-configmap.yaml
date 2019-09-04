@@ -171,7 +171,7 @@ data:
         },
         "error": {
             "track": {{ .Values.error.track }},
-            "endpoint" : "{{ .Values.error.endpoint }}"
+            "endpoint": "{{ .Values.error.endpoint }}"
         },
         "worker": {
             "intelligence": {

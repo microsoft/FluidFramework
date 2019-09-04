@@ -49,8 +49,8 @@ export class ScribeLambda extends SequencedLambda {
     private pendingMessages = new Deque<ISequencedDocumentMessage>();
 
     // current sequence/msn of the last processed offset
-    private sequenceNumber: number;
-    private minSequenceNumber: number;
+    private sequenceNumber = 0;
+    private minSequenceNumber = 0;
 
     constructor(
         context: IContext,
@@ -83,6 +83,10 @@ export class ScribeLambda extends SequencedLambda {
         for (const baseMessage of boxcar.contents) {
             if (baseMessage.type === SequencedOperationType) {
                 const value = baseMessage as ISequencedOperationMessage;
+
+                if (value.operation.sequenceNumber <= this.sequenceNumber) {
+                    continue;
+                }
 
                 // Add the message to the list of pending for this document and those that we need
                 // to include in the checkpoint
