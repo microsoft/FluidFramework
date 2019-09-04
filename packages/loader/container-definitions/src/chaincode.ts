@@ -40,6 +40,8 @@ export interface IPerson {
  * Typescript interface definition for fields within a NPM module's package.json.
  */
 export interface IPackage {
+    // general access for extended fields
+    [key: string]: any;
     name: string;
     version: string;
     description?: string;

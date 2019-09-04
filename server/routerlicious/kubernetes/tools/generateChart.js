@@ -102,6 +102,11 @@ riddler:
   replicas: 2
   tenants: []
 
+packageManager:
+  endpoint: https://packages.wu2.prague.office-int.com
+  username: prague
+  password: bohemia
+
 historian:
   externalUrl: https://historian.wu2.prague.office-int.com
 

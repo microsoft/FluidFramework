@@ -5,3 +5,4 @@
 
 export * from "./documentFactory";
 export * from "./graph";
+export * from "./packageManager";

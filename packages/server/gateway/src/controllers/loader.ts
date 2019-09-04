@@ -9,6 +9,7 @@ import { IResolvedUrl } from "@prague/protocol-definitions";
 import { IGitCache } from "@prague/services-client";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
+import { PackageManager } from "./packageManager";
 import { IHostServices } from "./services";
 
 export async function initialize(
@@ -24,11 +25,20 @@ export async function initialize(
 ) {
     const documentFactory = new DocumentFactory(config.tenantId);
     const graph = graphAccessToken ? new MicrosoftGraph(graphAccessToken) : undefined;
+    const packageManager = new PackageManager(
+        config.packageManager.endpoint,
+        config.packageManager.username,
+        config.packageManager.password);
 
     const services: IHostServices = {
         IDocumentFactory: documentFactory,
         IMicrosoftGraph: graph,
+        IPackageManager: packageManager,
     };
+
+    // Provide access to all loader services from command line for easier testing as we bring more up
+    // tslint:disable-next-line
+    window["allServices"] = services;
 
     console.log(`Loading ${url}`);
     const loader = createWebLoader(

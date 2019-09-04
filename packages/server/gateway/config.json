@@ -80,6 +80,11 @@
         "clusterNpm": "https://pragueauspkn-3873244262.azureedge.net",
         "localNpm": "http://localhost:3002",
         "localClusterNpm": "http://auspkn:3000",
+        "packageManager": {
+            "endpoint": "https://packages.wu2.prague.office-int.com",
+            "username": "prague",
+            "password": "bohemia"
+        },
         "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "keyValue": {

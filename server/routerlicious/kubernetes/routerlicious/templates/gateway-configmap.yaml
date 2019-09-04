@@ -82,6 +82,11 @@ data:
             "repository": "prague",
             "clusterNpm": "{{ .Values.worker.clusterNpm }}",
             "npm": "{{ .Values.worker.npm }}",
+            "packageManager": {
+                "endpoint": "{{ .Values.packageManager.endpoint }}",
+                "username": "{{ .Values.packageManager.username }}",
+                "password": "{{ .Values.packageManager.password }}",
+            },
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },
         "keyValue": {
