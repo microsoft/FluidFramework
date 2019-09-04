@@ -60,7 +60,7 @@ data:
             "port": 6379
         },
         "error": {
-            "track": true,
+            "track": {{ .Values.error.track }},
             "endpoint" : "{{ .Values.error.endpoint }}"
         },
         "worker": {
@@ -85,7 +85,7 @@ data:
             "packageManager": {
                 "endpoint": "{{ .Values.packageManager.endpoint }}",
                 "username": "{{ .Values.packageManager.username }}",
-                "password": "{{ .Values.packageManager.password }}",
+                "password": "{{ .Values.packageManager.password }}"
             },
             "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
         },

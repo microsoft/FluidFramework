@@ -170,7 +170,7 @@ data:
             "port": 6379
         },
         "error": {
-            "track": true,
+            "track": {{ .Values.error.track }},
             "endpoint" : "{{ .Values.error.endpoint }}"
         },
         "worker": {

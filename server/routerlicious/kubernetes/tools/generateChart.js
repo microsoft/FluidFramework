@@ -144,6 +144,7 @@ ingress:
   class: nginx-prod
 
 error:
+  track: true
   endpoint: ""
 
 worker:
