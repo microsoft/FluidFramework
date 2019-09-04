@@ -9,7 +9,7 @@ export const enum Char {
     lineTabulation          = "\u000B",
     formFeed                = "\u000C",
     carriageReturn          = "\u000D",
-    space                   = "\u0020",
+    space                   = " ",
     enSpace                 = "\u2002",
     emSpace                 = "\u2003",
     zeroWidthSpace          = "\u200B",

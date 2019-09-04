@@ -8,6 +8,7 @@ import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { markdownFormatter } from "../markdown/formatters";
+import { markdownHighlightFormatter } from "../markdown/highlighter";
 import { plainTextFormatter } from "../plaintext/formatter";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
@@ -72,8 +73,9 @@ export class WebflowView implements IComponentHTMLView {
             this.searchMenu.attach(template.get(this.root, "search"), {
                 commands: [
                     { name: "debug",        enabled: () => true,    exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
-                    { name: "markdown",     enabled: () => true,    exec: () => { switchFormatter(markdownFormatter); }},
-                    { name: "plaintext",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
+                    { name: "md",     enabled: () => true,    exec: () => { switchFormatter(markdownFormatter); }},
+                    { name: "smd",         enabled: () => true,    exec: () => { switchFormatter(markdownHighlightFormatter); }},
+                    { name: "text",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
                 ],
                 onComplete: this.onComplete,
             });
