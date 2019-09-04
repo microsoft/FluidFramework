@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocument } from "@chaincode/table-document";
+import { colIndexToName, TableDocument } from "@chaincode/table-document";
 import { KeyCode, Scheduler, Template } from "@prague/flow-util";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
@@ -131,6 +131,16 @@ export class GridView {
             }
 
             this.tbody.appendChild(tr);
+        }
+
+        // Append any missing col headers
+        for (let col = this.cols.childElementCount - 1; col < this.numCols; col++) {
+            const th = headerTemplate.clone();
+            // Skip placeholder <th> above the row number column.
+            if (col >= 0) {
+                th.textContent = `${colIndexToName(col)}`;
+            }
+            this.cols.append(th);
         }
     }
 

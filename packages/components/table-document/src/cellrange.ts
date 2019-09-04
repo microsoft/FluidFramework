@@ -16,6 +16,20 @@ export function colNameToIndex(colName: string) {
         .reduce((accumulator, value) => (accumulator * 26) + value, 0) - 1;         // 1-indexed -> 0-indexed
 }
 
+// Convert a 0-based column index into an Excel-like column name (e.g., 0 -> 'A')
+export function colIndexToName(colIndex: number) {
+    let name = "";
+
+    do {
+        const mod = colIndex % 26;
+        name = `${String.fromCharCode(65 + mod)}${name}`;
+        // tslint:disable-next-line:no-parameter-reassignment
+        colIndex = Math.trunc(colIndex / 26) - 1;
+    } while (colIndex >= 0);
+
+    return name;
+}
+
 export function parseRange(range: string) {
     const matches = rangeExpr.exec(range)!;
     const minCol = colNameToIndex(matches[1]);
