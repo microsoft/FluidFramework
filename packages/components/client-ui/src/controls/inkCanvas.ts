@@ -129,17 +129,18 @@ export class InkCanvas extends ui.Component {
     }
 
     // We will accept pen down or mouse left down as the start of a stroke.
-    // We will accept touch down or mouse right down as the start of a touch.
     private handlePointerDown(evt: PointerEvent) {
-        this.penID = evt.pointerId;
-
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
-            // Anchor and clear any current selection.
-            const pt = new EventPoint(this.canvas, evt);
+            // Create a new stroke
+            const createOp = stream.Stream.makeCreateStrokeOperation(this.currentPen);
+            this.currentStrokeId = createOp.id;
+            this.submitAndApplyOp(createOp, true);
 
-            const operation = stream.Stream.makeDownOperation(pt.rawPosition, evt.pressure, this.currentPen);
-            this.currentStrokeId = operation.id;
-            this.submitAndApplyOp(operation, true);
+            // Set pen state to be used during this active stroke
+            this.penID = evt.pointerId;
+            this.currentStrokeId = createOp.id;
+
+            this.appendPointerEventToCurrentStroke(evt);
 
             evt.returnValue = false;
         }
@@ -147,12 +148,7 @@ export class InkCanvas extends ui.Component {
 
     private handlePointerMove(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
-            const pt = new EventPoint(this.canvas, evt);
-            const operation = stream.Stream.makeMoveOperation(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStrokeId);
-            this.submitAndApplyOp(operation, true);
+            this.appendPointerEventToCurrentStroke(evt);
 
             evt.returnValue = false;
         }
@@ -162,20 +158,26 @@ export class InkCanvas extends ui.Component {
 
     private handlePointerUp(evt: PointerEvent) {
         if (evt.pointerId === this.penID) {
-            this.penID = -1;
-            const pt = new EventPoint(this.canvas, evt);
-            evt.returnValue = false;
+            this.appendPointerEventToCurrentStroke(evt);
 
-            const operation = stream.Stream.makeUpOperation(
-                pt.rawPosition,
-                evt.pressure,
-                this.currentStrokeId);
+            // Reset pen state, no more active stroke
+            this.penID = -1;
             this.currentStrokeId = undefined;
 
-            this.submitAndApplyOp(operation, true);
+            evt.returnValue = false;
         }
 
         return false;
+    }
+
+    private appendPointerEventToCurrentStroke(evt: PointerEvent) {
+        const pt = new EventPoint(this.canvas, evt);
+        const operation = stream.Stream.makeStylusOperation(
+            pt.rawPosition,
+            evt.pressure,
+            this.currentStrokeId,
+        );
+        this.submitAndApplyOp(operation, true);
     }
 
     private animateStroke(stroke: stream.IInkStroke, operationIndex: number, startTime: number) {
@@ -225,7 +227,7 @@ export class InkCanvas extends ui.Component {
         current: stream.IStylusOperation,
         previous: stream.IStylusOperation,
     ) {
-        const pen = (stroke.operations[0] as stream.IStylusDownOperation).pen;
+        const pen = stroke.pen;
         const shapes = getShapes(previous, current, pen, SegmentCircleInclusive.End);
 
         if (shapes) {
@@ -246,7 +248,7 @@ export class InkCanvas extends ui.Component {
 
         if (operation.type === "clear") {
             this.handleClearOp();
-        } else {
+        } else if (operation.type === "stylus") {
             this.handleStylusOp(operation);
         }
     }

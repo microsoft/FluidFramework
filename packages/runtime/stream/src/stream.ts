@@ -19,14 +19,13 @@ import { SharedObject } from "@prague/shared-object-common";
 import * as uuid from "uuid/v4";
 import {
     IClearOperation,
+    ICreateStrokeOperation,
     IInkOperation,
     IInkStroke,
     IPen,
     IPoint,
     IStream,
-    IStylusDownOperation,
-    IStylusMoveOperation,
-    IStylusUpOperation,
+    IStylusOperation,
 } from "./interfaces";
 import { IInkSnapshot, InkSnapshot } from "./snapshot";
 import { StreamFactory } from "./streamFactory";
@@ -60,19 +59,24 @@ export class Stream extends SharedObject implements IStream {
         return new StreamFactory();
     }
 
-    public static createNewStroke(id: string = uuid()) {
-        const stroke: IInkStroke = {
-            id,
-            operations: [],
-        };
+    public static makeCreateStrokeOperation(pen: IPen): ICreateStrokeOperation {
+        const id: string = uuid();
+        const time: number = new Date().getTime();
 
-        return stroke;
+        return {
+            id,
+            pen,
+            time,
+            type: "createStroke",
+        };
     }
 
     /**
      * @param time - Time, in milliseconds, that the operation occurred on the originating device
      */
-    public static makeClearOperation(time: number = new Date().getTime()): IClearOperation {
+    public static makeClearOperation(): IClearOperation {
+        const time: number = new Date().getTime();
+
         return {
             time,
             type: "clear",
@@ -82,36 +86,13 @@ export class Stream extends SharedObject implements IStream {
     /**
      * @param point - Location of the down
      * @param pressure - The ink pressure applied
-     * @param pen - Drawing characteristics of the pen
-     */
-    public static makeDownOperation(
-        point: IPoint,
-        pressure: number,
-        pen: IPen,
-    ): IStylusDownOperation {
-        const id: string = uuid();
-        const time: number = new Date().getTime();
-
-        return {
-            id,
-            pen,
-            point,
-            pressure,
-            time,
-            type: "down",
-        };
-    }
-
-    /**
-     * @param point - Location of the move
-     * @param pressure - The ink pressure applied
      * @param id - Unique ID for the stroke
      */
-    public static makeMoveOperation(
+    public static makeStylusOperation(
         point: IPoint,
         pressure: number,
         id: string,
-    ): IStylusMoveOperation {
+    ): IStylusOperation {
         const time: number = new Date().getTime();
 
         return {
@@ -119,28 +100,7 @@ export class Stream extends SharedObject implements IStream {
             point,
             pressure,
             time,
-            type: "move",
-        };
-    }
-
-    /**
-     * @param point - Location of the up
-     * @param pressure - The ink pressure applied
-     * @param id - Unique ID for the stroke
-     */
-    public static makeUpOperation(
-        point: IPoint,
-        pressure: number,
-        id: string,
-    ): IStylusUpOperation {
-        const time: number = new Date().getTime();
-
-        return {
-            id,
-            point,
-            pressure,
-            time,
-            type: "up",
+            type: "stylus",
         };
     }
 
@@ -250,16 +210,34 @@ export class Stream extends SharedObject implements IStream {
         return;
     }
 
+    /**
+     * Check operation type and route appropriately.
+     * @param operation - operation to process (might be local or remote)
+     */
     private processOperation(operation: IInkOperation) {
         if (operation.type === "clear") {
-            this.inkSnapshot.clear();
-            return;
+            this.processClearOp(operation);
+        } else if (operation.type === "createStroke") {
+            this.processCreateStrokeOp(operation);
+        } else if (operation.type === "stylus") {
+            this.processStylusOp(operation);
         }
+    }
 
-        if (operation.type === "down") {
-            this.inkSnapshot.addStroke(Stream.createNewStroke(operation.id));
-        }
+    private processClearOp(operation: IClearOperation) {
+        this.inkSnapshot.clear();
+    }
 
+    private processCreateStrokeOp(operation: ICreateStrokeOperation) {
+        const stroke: IInkStroke = {
+            id: operation.id,
+            operations: [],
+            pen: operation.pen,
+        };
+        this.inkSnapshot.addStroke(stroke);
+    }
+
+    private processStylusOp(operation: IStylusOperation) {
         // Need to make sure the stroke is still there (hasn't been cleared) before appending the down/move/up.
         const stroke = this.getStroke(operation.id);
         if (stroke !== undefined) {

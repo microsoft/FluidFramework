@@ -94,11 +94,21 @@ export interface IClearOperation {
     time: number;
 }
 
+export interface ICreateStrokeOperation {
+    type: "createStroke";
+
+    time: number;
+
+    id: string;
+
+    pen: IPen;
+}
+
 /**
  * Base interface for stylus operations.
  */
 export interface IStylusOperation {
-    type: "down" | "move" | "up";
+    type: "stylus";
 
     /**
      * Time, in milliseconds, that the operation occurred on the originating device.
@@ -122,35 +132,10 @@ export interface IStylusOperation {
     id: string;
 }
 
-/**
- * Signals a down operation.
- *
- * Also contains information about the pen that this stroke will be a member of.
- */
-export interface IStylusDownOperation extends IStylusOperation {
-    type: "down";
-
-    /**
-     * Pen data if the pen has changed with this stroke.
-     */
-    pen: IPen;
-}
-
-/**
- * Signals a move operation.
- */
-export interface IStylusMoveOperation extends IStylusOperation {
-    type: "move";
-}
-
-/**
- * Signals an up operation.
- */
-export interface IStylusUpOperation extends IStylusOperation {
-    type: "up";
-}
-
-export type IInkOperation = IClearOperation | IStylusDownOperation | IStylusMoveOperation | IStylusUpOperation;
+export type IInkOperation =
+    IClearOperation |
+    ICreateStrokeOperation |
+    IStylusOperation;
 
 /**
  * Represents a single ink stroke.
@@ -165,4 +150,6 @@ export interface IInkStroke {
      * The operations contained within the stroke.
      */
     operations: IStylusOperation[];
+
+    pen: IPen;
 }

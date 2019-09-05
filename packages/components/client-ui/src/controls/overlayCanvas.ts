@@ -75,13 +75,14 @@ export class DrawingContext {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    public startNewStroke(pen: stream.IPen) {
+        this.pen = pen;
+        this.lastOperation = null;
+    }
+
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: stream.IStylusOperation) {
-        if (current.type === "down") {
-            this.pen = (current as stream.IStylusDownOperation).pen;
-            this.lastOperation = null;
-        }
+    public drawStroke(current: stream.IStylusOperation, stroke: stream.IInkStroke) {
         assert(this.pen);
 
         const previous = this.lastOperation || current;
@@ -209,15 +210,19 @@ export class InkLayer extends Layer {
             const operation = op.contents as stream.IInkOperation;
             if (operation.type === "clear") {
                 throw new Error("Clear not supported in OverlayCanvas");
-            } else {
-                this.drawingContext.drawStroke(operation);
+            } else if (operation.type === "createStroke") {
+                this.drawingContext.startNewStroke(operation.pen);
+            } else if (operation.type === "stylus") {
+                const stroke = this.model.getStroke(operation.id);
+                this.drawingContext.drawStroke(operation, stroke);
             }
         });
 
         const strokes = this.model.getStrokes();
         for (const stroke of strokes) {
+            this.drawingContext.startNewStroke(stroke.pen);
             for (const operation of stroke.operations) {
-                this.drawingContext.drawStroke(operation);
+                this.drawingContext.drawStroke(operation, stroke);
             }
         }
     }
@@ -226,8 +231,11 @@ export class InkLayer extends Layer {
         this.model.submitOperation(operation);
         if (operation.type === "clear") {
             throw new Error("Clear not supported in OverlayCanvas");
-        } else {
-            this.drawingContext.drawStroke(operation);
+        } else if (operation.type === "createStroke") {
+            this.drawingContext.startNewStroke(operation.pen);
+        } else if (operation.type === "stylus") {
+            const stroke = this.model.getStroke(operation.id);
+            this.drawingContext.drawStroke(operation, stroke);
         }
     }
 }
@@ -370,11 +378,15 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            const operation = stream.Stream.makeDownOperation(
+            const createOp = stream.Stream.makeCreateStrokeOperation(this.activePen);
+            this.currentStylusActionId = createOp.id;
+            this.activeLayer.drawOperation(createOp);
+
+            const operation = stream.Stream.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
-                this.activePen);
-            this.currentStylusActionId = operation.id;
+                this.currentStylusActionId,
+            );
             this.activeLayer.drawOperation(operation);
 
             evt.returnValue = false;
@@ -385,7 +397,7 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            const operation = stream.Stream.makeMoveOperation(
+            const operation = stream.Stream.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -403,7 +415,7 @@ export class OverlayCanvas extends ui.Component {
             this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
-            const operation = stream.Stream.makeUpOperation(
+            const operation = stream.Stream.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
