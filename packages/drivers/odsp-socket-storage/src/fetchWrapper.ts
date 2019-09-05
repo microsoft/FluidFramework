@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { exponentialBackoff, fetchWithRetry, IRetryPolicy, whitelist } from "./utils";
+import { exponentialBackoff, fetchWithRetry, IFetchWithRetryResponse, IRetryPolicy, whitelist } from "./utils";
 
 export interface IFetchWrapper {
     get<T>(url: string, id: string, headers: HeadersInit): Promise<T>;
@@ -24,17 +24,9 @@ export class FetchWrapper implements IFetchWrapper {
         }
     }
 
-    public get<T>(url: string, _: string, headers: HeadersInit): Promise<T> {
-        return fetchWithRetry(
-            url,
-            { headers },
-            this.retryPolicy,
-        ).then((response) => {
-            if (response.response.status === 401 || response.response.status === 403) {
-                throw response.response.status;
-            }
-            return (response.response.json() as any) as T;
-        });
+    public async get<T>(url: string, _: string, headers: HeadersInit): Promise<T> {
+        const response = await fetchWithRetry(url, { headers }, this.retryPolicy);
+        return this.processResponse(response);
     }
 
     public async post<T>(url: string, postBody: string, headers: HeadersInit): Promise<T> {
@@ -48,10 +40,14 @@ export class FetchWrapper implements IFetchWrapper {
             this.retryPolicy,
         );
 
-        if (response.response.status === 401 || response.response.status === 403) {
-            return Promise.reject(response.response.status);
+        return this.processResponse(response);
+    }
+
+    public processResponse(response: IFetchWithRetryResponse) {
+        if (response.response.status >= 200 && response.response.status < 300) {
+            return (response.response.json() as any);
         }
 
-        return response.response.json();
+        return Promise.reject(response.response.status);
     }
 }

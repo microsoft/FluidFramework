@@ -7,7 +7,7 @@ import * as assert from "assert";
 import { FetchWrapper } from "../fetchWrapper";
 import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
 import { TokenProvider } from "../tokenProvider";
-import { exponentialBackoff, whitelist } from "../utils";
+import { exponentialBackoff, IFetchWithRetryResponse, whitelist } from "../utils";
 
 describe("DeltaStorageService", () => {
     /*
@@ -75,6 +75,7 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
                 retryPolicy: { maxRetries: 5, backoffFn: exponentialBackoff(500), filter: whitelist([503, 500, 408, 409, 429]) },
+                processResponse: (response: IFetchWithRetryResponse) => {},
             };
             deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
@@ -134,6 +135,7 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
                 retryPolicy: { maxRetries: 5, backoffFn: exponentialBackoff(500), filter: whitelist([503, 500, 408, 409, 429]) },
+                processResponse: (response: IFetchWithRetryResponse) => {},
             };
             deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
