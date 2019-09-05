@@ -11,3 +11,5 @@ const base = (document.currentScript as HTMLScriptElement).src;
 // https://github.com/Microsoft/monaco-editor-webpack-plugin/issues/7
 // tslint:disable-next-line:no-string-literal
 window["__webpack_public_path__"] = __webpack_public_path__ = base.substr(0, base.lastIndexOf("/") + 1);
+
+export {};

@@ -7,3 +7,5 @@
 // as the base
 const base = (document.currentScript as HTMLScriptElement).src;
 __webpack_public_path__ = base.substr(0, base.lastIndexOf("/") + 1);
+
+export {};

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+ // set the base path for all dynamic imports first
+// tslint:disable-next-line:no-import-side-effect
+import "./publicpath";
+
 import { IContainerContext, IRuntime } from "@prague/container-definitions";
 
 export { tableViewType } from "./runtime";
