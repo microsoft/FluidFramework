@@ -38,6 +38,7 @@
     "@prague/protocol-definitions": "^0.10.0",
     "@prague/routerlicious-host": "^0.10.0",
     "@prague/routerlicious-socket-storage": "^0.10.0",
+    "@prague/iframe-socket-storage": "^0.10.0",
     "@prague/services-client": "^0.10.0"
   },
   "license": "MIT"

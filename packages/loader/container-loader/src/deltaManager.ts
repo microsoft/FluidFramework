@@ -567,7 +567,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
                 // Notify of the connection
                 // WARNING: This has to happen before processInitialMessages() call below.
-                // If not, we may not update Constainer.pendingClientId in time before seeing our own join session op.
+                // If not, we may not update Container.pendingClientId in time before seeing our own join session op.
                 this.emit("connect", connection.details);
 
                 this.processInitialMessages(
@@ -600,7 +600,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 }
 
                 const delayNext = Math.min(delay * 2, MaxReconnectDelay);
-
+                console.log("WaitForConnectedState");
                 waitForConnectedState(delayNext).then(() => this.connectCore(reason, delayNext));
             });
     }
@@ -706,8 +706,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         for (const message of messages) {
             // Check that the messages are arriving in the expected order
             if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
+                debug(`DeltaManager: enque Messages *Out of* Order Message ${message.sequenceNumber} - last ${this.lastQueuedSequenceNumber}`);
+
                 this.handleOutOfOrderMessage(message);
             } else {
+                debug("DeltaManager: enque Messages In Order Message");
                 this.lastQueuedSequenceNumber = message.sequenceNumber;
                 this._inbound.push(message);
             }

@@ -27,7 +27,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
         return "";
     }
 
-    constructor(private readonly id: string, public manager: gitStorage.GitManager) {
+    constructor(public readonly id: string, public manager: gitStorage.GitManager) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {

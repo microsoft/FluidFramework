@@ -14,6 +14,7 @@ import * as fork from "./fork";
 import * as frontpage from "./frontpage";
 import * as home from "./home";
 import * as loader from "./loader";
+import * as loaderFramed from "./loaderFramed";
 import * as templates from "./templates";
 import * as token from "./token";
 import * as versions from "./versions";
@@ -41,6 +42,7 @@ export function create(
         frontpage: frontpage.create(config, alfred, appTenants, ensureLoggedIn, keyValueWrapper),
         home: home.create(config, ensureLoggedIn),
         loader: loader.create(config, alfred, appTenants, ensureLoggedIn, keyValueWrapper),
+        loaderFramed: loaderFramed.create(config, alfred, appTenants, ensureLoggedIn, keyValueWrapper),
         templates: templates.create(config),
         token: token.create(alfred),
         versions: versions.create(alfred, ensureLoggedIn),

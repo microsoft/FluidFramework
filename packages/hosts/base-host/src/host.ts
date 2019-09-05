@@ -7,16 +7,38 @@ import {
     IComponent,
     IComponentHTMLVisual,
     IComponentQueryableLegacy,
+    IRequest,
 } from "@prague/component-core-interfaces";
 import { ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
+import {
+    InnerDocumentServiceFactory,
+    InnerUrlResolver,
+    OuterDocumentServiceFactory,
+} from "@prague/iframe-socket-storage";
 import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
 import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IErrorTrackingService, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
+import {
+    IDocumentServiceFactory,
+    IErrorTrackingService,
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
 import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
+
+export interface IPrivateSessionInfo {
+    outerSession?: boolean;
+
+    innerSession?: boolean;
+
+    frameP?: Promise<HTMLIFrameElement>;
+
+    request?: IRequest;
+}
 
 async function attach(loader: Loader, url: string, div: HTMLDivElement) {
     const response = await loader.request({ url });
@@ -88,30 +110,55 @@ export function createLoader(
     scope: IComponent,
     codeLoader: ICodeLoader,
     errorService: IErrorTrackingService,
+    privateSession: IPrivateSessionInfo = {
+        innerSession: false,
+        outerSession: false,
+    },
 ): Loader {
-    // URL resolver for routes
-    const resolver = new ContainerUrlResolver(
-        baseUrl,
-        jwt,
-        new Map<string, IResolvedUrl>([[url, resolved]]));
 
-    const r11sDocumentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-    const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
-    const documentServiceFactory = new MultiDocumentServiceFactory(
-        {
-            "fluid-odsp:": odspDocumentServiceFactory,
-            "fluid:": r11sDocumentServiceFactory,
-        });
+    let resolver: IUrlResolver;
+    let documentServiceFactory: IDocumentServiceFactory;
+    if (privateSession.innerSession) {
+        // TODO: protect this typing more carefully
+        resolver = new InnerUrlResolver(resolved);
+        documentServiceFactory = new InnerDocumentServiceFactory();
+    } else {
+        resolver = new ContainerUrlResolver(
+            baseUrl,
+            jwt,
+            new Map<string, IResolvedUrl>([[url, resolved]]));
+
+        const r11sDocumentServiceFactory =
+            new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
+        const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
+        documentServiceFactory = new MultiDocumentServiceFactory(
+            {
+                "fluid-odsp:": odspDocumentServiceFactory,
+                "fluid:": r11sDocumentServiceFactory,
+            });
+    }
+
+    const options = {
+        blockUpdateMarkers: true,
+        config,
+        tokens: (resolved as IFluidResolvedUrl).tokens,
+    };
+
+    if (privateSession.outerSession) {
+        new OuterDocumentServiceFactory(
+            documentServiceFactory,
+            privateSession.frameP,
+            options,
+            { resolver },
+            ).createDocumentServiceFromRequest({ url });
+        return;
+    }
 
     return new Loader(
         { resolver },
         documentServiceFactory,
         codeLoader,
-        {
-            blockUpdateMarkers: true,
-            config,
-            tokens: (resolved as IFluidResolvedUrl).tokens,
-        },
+        options,
         scope);
 }
 
@@ -125,6 +172,7 @@ export function createWebLoader(
     jwt: string,
     config: any,
     scope: IComponent,
+    privateSession?: IPrivateSessionInfo,
 ): Loader {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(npm);
@@ -141,6 +189,7 @@ export function createWebLoader(
     }
 
     const errorService = new DefaultErrorTracking();
+
     const loader = createLoader(
         document.location.origin,
         url,
@@ -150,8 +199,8 @@ export function createWebLoader(
         config,
         scope,
         codeLoader,
-        errorService);
-
+        errorService,
+        privateSession);
     return loader;
 }
 
@@ -176,11 +225,11 @@ export async function start(
         url,
         div);
 
-    // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
-    // package.
+        // If this is a new document we will go and instantiate the chaincode. For old documents we assume a legacy
+        // package.
     if (!container.existing) {
-        await initializeChaincode(container, pkg)
-            .catch((error) => console.error("chaincode error", error));
+            await initializeChaincode(container, pkg)
+                .catch((error) => console.error("chaincode error", error));
     }
 
     return container;

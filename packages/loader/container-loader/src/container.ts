@@ -282,6 +282,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     public async snapshot(tagMessage: string, generateFullTreeNoOptimizations?: boolean): Promise<void> {
         // TODO: Issue-2171 Support for Branch Snapshots
         if (tagMessage.includes("ReplayTool Snapshot") === false && this.parentBranch) {
+            // The below debug ruins the chrome debugging session
+            // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
             debug(`Skipping snapshot due to being branch of ${this.parentBranch}`);
             return;
         }
@@ -662,7 +664,10 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     }
 
     private async transitionRuntime(pkg: string | IFluidCodeDetails): Promise<void> {
-        debug(`Transitioning runtime from ${this.pkg} to ${pkg}`);
+        // The below debug ruins the chrome debugging session
+        // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
+        // tslint:disable-next-line: prefer-template restrict-plus-operands
+        debug("Transitioning runtime from " + this.pkg + " to " + pkg);
         // No need to transition if package stayed the same
         if (pkg === this.pkg) {
             return;
@@ -810,6 +815,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.emit("processTime", time);
             });
 
+            // If we're the outer frame, do we want to do this?
             // Begin fetching any pending deltas once we know the base sequence #. Can this fail?
             // It seems like something, like reconnection, that we would want to retry but otherwise allow
             // the document to load

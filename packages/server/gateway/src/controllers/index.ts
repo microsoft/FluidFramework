@@ -11,3 +11,6 @@ export { navbar };
 
 import * as loader from "./loader";
 export { loader };
+
+import * as loaderFramed from "./loaderFramed";
+export { loaderFramed };

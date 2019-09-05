@@ -147,7 +147,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
                     response.initialContents.sort((a, b) =>
                         // tslint:disable-next-line:strict-boolean-expressions
                         (a.clientId === b.clientId) ? 0 : ((a.clientId < b.clientId) ? -1 : 1) ||
-                        a.clientSequenceNumber - b.clientSequenceNumber);
+                            a.clientSequenceNumber - b.clientSequenceNumber);
                 }
 
                 if (queuedSignals.length > 0) {
@@ -164,6 +164,7 @@ export class DocumentDeltaConnection extends EventEmitter implements IDocumentDe
             });
 
             socket.on("error", ((error) => {
+                debug(`Error in documentDeltaConection: ${error}`);
                 // This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
                 socket.disconnect();
                 reject(createErrorObject("error", error, error === "Invalid namespace"));

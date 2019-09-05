@@ -13,7 +13,9 @@ export class DocumentFactory implements IDocumentFactory {
 
     public get IDocumentFactory(): IDocumentFactory { return this; }
 
-    constructor(private readonly tenantId: string) {
+    constructor(private readonly tenantId: string,
+                private readonly moniker?: string,
+                private readonly url?: string) {
     }
 
     /**
@@ -25,13 +27,21 @@ export class DocumentFactory implements IDocumentFactory {
     }
 
     public async create(chaincode: IFluidCodeDetails): Promise<string> {
+        const monikerP = new Promise(async (resolve) => {
+            if (this.moniker) {
+                resolve(this.moniker);
+            } else {
+                const res = await Axios.get("/api/v1/moniker");
+                resolve(res.data);
+            }
+        });
         const [loader, moniker] = await Promise.all([
             this.loaderDeferred.promise,
-            Axios.get("/api/v1/moniker"),
+            monikerP,
         ]);
 
         // generate a moniker to use as part of creating the new document
-        const url = `${window.location.origin}/loader/${this.tenantId}/${moniker.data}`;
+        const url = this.url ? this.url : `${window.location.origin}/loader/${this.tenantId}/${moniker}`;
         const resolved = await loader.resolve({ url });
 
         // TODO need connected flag on the IContainer

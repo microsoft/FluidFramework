@@ -68,6 +68,7 @@ COPY packages/drivers/fluid-debugger/package*.json packages/drivers/fluid-debugg
 COPY packages/drivers/file-socket-storage/package*.json packages/drivers/file-socket-storage/
 COPY packages/drivers/routerlicious-host/package*.json packages/drivers/routerlicious-host/
 COPY packages/drivers/routerlicious-socket-storage/package*.json packages/drivers/routerlicious-socket-storage/
+COPY packages/drivers/iframe-socket-storage/package*.json packages/drivers/iframe-socket-storage/
 COPY packages/drivers/socket-storage-shared/package*.json packages/drivers/socket-storage-shared/
 COPY packages/framework/aqueduct/package*.json packages/framework/aqueduct/
 COPY packages/framework/aqueduct-react/package*.json packages/framework/aqueduct-react/

@@ -101,7 +101,7 @@ export class RelativeLoader extends EventEmitter implements ILoader {
  */
 export class Loader extends EventEmitter implements ILoader {
     private readonly containers = new Map<string, Promise<Container>>();
-    private readonly resolveCache = new Map<string, IFluidResolvedUrl>();
+    private readonly resolveCache = new Map<string, IResolvedUrl>();
 
     constructor(
         private readonly containerHost: IHost,
@@ -124,6 +124,7 @@ export class Loader extends EventEmitter implements ILoader {
         if (!codeLoader) {
             throw new Error("An ICodeLoader must be provided");
         }
+
     }
 
     public async resolve(request: IRequest): Promise<Container> {
@@ -160,9 +161,7 @@ export class Loader extends EventEmitter implements ILoader {
             : null;
     }
 
-    private async resolveCore(
-        request: IRequest,
-    ): Promise<{ container: Container, parsed: IParsedUrl }> {
+    private async getResolvedUrl(request: IRequest): Promise<IResolvedUrl> {
         // Resolve the given request to a URL
         // Check for an already resolved URL otherwise make a new request
         if (!this.resolveCache.has(request.url)) {
@@ -172,7 +171,14 @@ export class Loader extends EventEmitter implements ILoader {
             }
             this.resolveCache.set(request.url, toCache);
         }
-        const resolved = this.resolveCache.get(request.url)!;
+        return this.resolveCache.get(request.url)!;
+    }
+
+    private async resolveCore(
+        request: IRequest,
+    ): Promise<{ container: Container, parsed: IParsedUrl }> {
+
+        const resolved = await this.getResolvedUrl(request);
 
         // Parse URL into components
         const resolvedAsFluid = resolved as IFluidResolvedUrl;
