@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 import { buildHierarchy } from "@prague/utils";
@@ -31,6 +32,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         blobs: resources.IBlob[] | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
+        private readonly logger: ITelemetryBaseLogger,
     ) {
         if (trees) {
             this.initTreesCache(trees);
@@ -152,6 +154,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         return hierarchicalTree;
     }
 
+    // tslint:disable-next-line: max-func-body-length
     public async getVersions(blobid: string | null, count: number): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid === this.documentId) {
@@ -198,9 +201,26 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
             // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
             if (count === 1) {
+                const treesLatestStartTime = performance.now();
+                this.logger.send({
+                    category: "performance",
+                    eventName: "treesLatestStart",
+                    perfType: "start",
+                    tick: treesLatestStartTime,
+                  });
                 const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?channels=1&blobs=2`);
 
                 const {trees, blobs, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+
+                const treesLatestEndTime = performance.now();
+                this.logger.send({
+                    category: "performance",
+                    eventName: "treesLatestEnd",
+                    perfType: "end",
+                    // tslint:disable-next-line: object-literal-sort-keys
+                    duration: treesLatestEndTime - treesLatestStartTime,
+                    tick: treesLatestEndTime,
+                  });
 
                 if (trees) {
                     this.initTreesCache(trees);
