@@ -12,7 +12,7 @@ function dumpCSSText(element){
   return s;
 }
 
-function getallcss() {
+function getAllCSS() {
     var css = "", //variable to hold all the css that we extract
         styletags = document.getElementsByTagName("style");
 
