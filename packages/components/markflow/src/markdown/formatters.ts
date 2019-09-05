@@ -98,8 +98,10 @@ class MarkdownFormatter extends PlainTextFormatter<IMarkdownState> {
         segment[modeSym] = this.calculateMode(active);
         const top = active[active.length - 1];
 
-        if (TextSegment.is(segment) && this.getRenderInfo(top).emitText) {
-            layout.emitText(segment.text);
+        if (TextSegment.is(segment)) {
+            if (this.getRenderInfo(top).emitText) {
+                layout.emitText(segment.text);
+            }
         } else {
             console.warn(`Not 'markdown': '${getDocSegmentKind(segment)}'`);
         }
