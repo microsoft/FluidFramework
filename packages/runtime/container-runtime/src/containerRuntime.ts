@@ -565,7 +565,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             () => this.generateSummary(!loadedFromSummary));
 
         // Create the SummaryManager and mark the initial state
-        this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries);
+        this.summaryManager = new SummaryManager(context, this.runtimeOptions.generateSummaries || loadedFromSummary);
         if (this.context.connectionState === ConnectionState.Connected) {
             this.summaryManager.setConnected(this.context.clientId);
         }
