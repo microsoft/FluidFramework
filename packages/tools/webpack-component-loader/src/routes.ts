@@ -9,10 +9,9 @@ import * as moniker from "moniker";
 import * as path from "path";
 
 export const before = (app, server, baseDir, options) => {
-    app.get("/", docMoniker);
+    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
     app.get("/fluid-loader.js", (req, res) => loader(req, res, baseDir));
-    app.get("/dist/main.bundle.js", (req, res) => main(req, res, baseDir));
-    app.get("/*", (req, res) => {
+    app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => {
         fluid(req, res, baseDir, (!options || !options.live)
             ? { live: false }
             : {
@@ -103,16 +102,4 @@ const loader = (req, res, baseDir) => {
     fs.createReadStream(
         path.join(baseDir, "node_modules", "@microsoft", "fluid-webpack-component-loader", "dist", "fluid-loader.bundle.js")
     ).pipe(res);
-};
-
-const main = (req, res, baseDir) => {
-    res.setHeader("Content-Type", "application/javascript");
-
-    fs.createReadStream(
-        path.join(baseDir, "dist", "main.bundle.js")
-    ).pipe(res);
-};
-
-const docMoniker = (req, res) => {
-    res.redirect(`/${moniker.choose()}`);
 };
