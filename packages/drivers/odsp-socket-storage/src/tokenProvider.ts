@@ -6,6 +6,20 @@
 import { ITokenProvider } from "@prague/protocol-definitions";
 
 /**
+ * Gets the length of the query string portion of a url.
+ * @param url The full url
+ */
+function getQueryStringLength(url: string): number {
+    const queryParamStart = url.indexOf("?");
+
+    if (queryParamStart === -1) {
+        return 0;
+    }
+
+    return url.length - queryParamStart - 1;
+}
+
+/**
  * Provides basic token related apis.
  */
 export class TokenProvider implements ITokenProvider {
@@ -49,7 +63,11 @@ export class TokenProvider implements ITokenProvider {
             tokenQueryParam += `access_token=${encodeURIComponent(this.storageToken)}`;
         }
 
-        if (tokenIsQueryParam || (url.length + tokenQueryParam.length) < 2048) {
+        // ODSP APIs have a limitation that the query string cannot exceed 2048 characters.
+        // We try to stick the access token in the URL to make it a simple XHR request and avoid an options call.
+        // If the query string exceeds 2048, we have to fall back to sending the access token as a header, which
+        // has a negative performance implication as it adds a performance overhead.
+        if (tokenIsQueryParam || getQueryStringLength(url + tokenQueryParam) <= 2048) {
             return {
                 headers: {},
                 url: url + tokenQueryParam,
