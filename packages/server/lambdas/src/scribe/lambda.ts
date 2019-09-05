@@ -68,7 +68,13 @@ export class ScribeLambda extends SequencedLambda {
         super(context);
 
         this.lastOffset = scribe.logOffset;
-        this.pendingMessages.push(...messages.map((message) => message.operation));
+        this.sequenceNumber = scribe.sequenceNumber;
+        this.minSequenceNumber = scribe.minimumSequenceNumber;
+
+        // Filter messages in case they were not deleted after the last checkpoint.
+        this.pendingMessages.push(...messages
+            .filter((message) => message.operation.sequenceNumber > this.sequenceNumber)
+            .map((message) => message.operation));
     }
 
     public async handlerCore(message: IKafkaMessage): Promise<void> {
