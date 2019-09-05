@@ -34,7 +34,9 @@
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
     "tsc": "tsc",
-    "tslint": "tslint --project tsconfig.json --format verbose"
+    "tslint": "tslint --project tsconfig.json --format verbose",
+    "webpack": "webpack --env=\"production\"",
+    "webpack:dev": "webpack --env=\"development\""
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

@@ -53,10 +53,7 @@ services:
             - NODE_ENV=development
         restart: always
     scriptorium:
-        build:
-            context: ../
-            dockerfile: server/routerlicious/Dockerfile
-            target: runner
+        image: prague.azurecr.io/prague:12579
         command: node dist/kafka-service/index.js scriptorium /usr/src/server/packages/server/routerlicious/dist/scriptorium/index.js
         environment:
             - DEBUG=fluid:*

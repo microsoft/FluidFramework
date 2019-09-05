@@ -52,13 +52,8 @@ export class DocumentList extends React.Component<IDocumentListProps, IDocumentL
             return result;
         });
 
-        const style = {
-            display: "flex",
-            "flex-wrap": "wrap",
-        };
-
         return (
-            <div style={style}>
+            <div style={ { display: "flex", flexWrap: "wrap" }}>
                 {cards}                
             </div>
         );
