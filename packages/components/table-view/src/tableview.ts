@@ -22,6 +22,7 @@ const template = new Template({
         { tag: "button", ref: "addRows", props: { textContent: "R++" } },
         { tag: "button", ref: "addCols", props: { textContent: "C++" } },
         { tag: "div", ref: "grid", props: { className: styles.grid } },
+        { tag: "input", ref: "goto" },
     ],
 });
 
@@ -46,7 +47,8 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
 
         this.getComponent<TableDocument>(this.docId, /* wait: */ true).then((doc) => {
             const grid = template.get(root, "grid");
-            grid.appendChild(new GridView(doc).root);
+            const gridView = new GridView(doc);
+            grid.appendChild(gridView.root);
 
             const addRowBtn = template.get(root, "addRow");
             addRowBtn.addEventListener("click", () => {
@@ -66,6 +68,11 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
             const addColsBtn = template.get(root, "addCols");
             addColsBtn.addEventListener("click", () => {
                 doc.insertCols(doc.numCols, 10 /*16384*/);
+            });
+
+            const gotoInput = template.get(root, "goto") as HTMLInputElement;
+            gotoInput.addEventListener("change", () => {
+                gridView.startRow = parseInt(gotoInput.value, 10);
             });
         });
     }

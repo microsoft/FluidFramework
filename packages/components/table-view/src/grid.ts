@@ -38,7 +38,19 @@ const cellInputTemplate = new Template({ tag: "input", props: { className: style
 const numberExp = /^[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?$/;
 
 export class GridView {
+
+    private get numRows() { return this.doc.numRows; }
+    private get numCols() { return this.doc.numCols; }
     public readonly root = tableTemplate.clone();
+
+    private _startRow    = 0;
+    public get startRow() { return this._startRow; }
+    public set startRow(value: number) {
+        this._startRow = value;
+        this.cancelInput();
+        this.refreshCells();
+    }
+
     private readonly cols = tableTemplate.get(this.root, "cols");
     private readonly tbody = tableTemplate.get(this.root, "body");
     private readonly inputBox = cellInputTemplate.clone() as HTMLInputElement;
@@ -48,6 +60,7 @@ export class GridView {
         [ `${styles.selectedL}`,  `${styles.selected}`,  `${styles.selectedR}`  ],
         [ `${styles.selectedBL}`, `${styles.selectedB}`, `${styles.selectedBR}` ],
     ]);
+    private readonly maxRows = 10;
 
     private readonly invalidate: () => void;
 
@@ -68,9 +81,6 @@ export class GridView {
 
         this.refreshCells();
     }
-
-    private get numRows() { return this.doc.numRows; }
-    private get numCols() { return this.doc.numCols; }
 
     private refreshCell(td: HTMLTableCellElement, row: number, col: number) {
         const className = this.selection.getStyle(row, col);
@@ -96,29 +106,41 @@ export class GridView {
     }
 
     private readonly refreshCells = () => {
-        let row = 0;
-        for (const tr of this.tbody.children) {
-            let col = -1;
-            for (const td of tr.children) {
-                // While editing a cell, we use the 'td' to size the table to the current formula.
-                // Do not synchronize it at this time.
-                if (col >= 0 && this.inputBox.parentElement !== td) {
-                    this.refreshCell(td as HTMLTableCellElement, row, col);
-                }
-                col++;
-            }
+        let row = this.startRow;
+        const numRows = Math.min(this.numRows, row + this.maxRows);
+        {
+            let tr = this.tbody.firstElementChild;
 
-            // Append any missing columns
-            for (; col < this.numCols; col++) {
-                const td = cellTemplate.clone() as HTMLTableCellElement;
-                this.refreshCell(td, row, col);
-                tr.appendChild(td);
+            while (tr) {
+                const next = tr.nextElementSibling;
+                if (row < numRows) {
+                    let col = -1;
+                    for (const td of tr.children) {
+                        if (col < 0) {
+                            td.textContent = `${row + 1}`;
+                        } else {
+                            this.refreshCell(td as HTMLTableCellElement, row, col);
+                        }
+                        col++;
+                    }
+
+                    // Append any missing columns
+                    for (; col < this.numCols; col++) {
+                        const td = cellTemplate.clone() as HTMLTableCellElement;
+                        this.refreshCell(td, row, col);
+                        tr.appendChild(td);
+                    }
+                } else {
+                    tr.remove();
+                }
+
+                tr = next;
+                row++;
             }
-            row++;
         }
 
         // Append any missing rows
-        for (; row < this.numRows; row++) {
+        for (; row < numRows; row++) {
             const tr = rowTemplate.clone();
             const th = headerTemplate.clone();
             th.textContent = `${row + 1}`;
@@ -309,15 +331,17 @@ export class GridView {
 
     // Map the given 'id' string in the from 'row,col' to an array of 2 integers [row, col].
     private getRowColFromTd(td: HTMLTableDataCellElement) {
-        const col = td.cellIndex;
-        const row = (td.parentElement as HTMLTableRowElement).rowIndex;
+        const colOffset = td.cellIndex;
+        const rowOffset = (td.parentElement as HTMLTableRowElement).rowIndex;
 
         // The '-1' are to account for Row/Columns headings.  Note that even though the column
         // headings our outside the body, it still impacts their cellIndex.
-        return [row - 1, col - 1];
+        return [this.startRow + rowOffset - 1, colOffset - 1];
     }
 
     private getTdFromRowCol(row: number, col: number) {
+        row -= this.startRow;
+
         // Column heading are outside the <tbody> in <thead>, and therefore we do not need
         // to make adjustments when indexing into children.
         const rows = this.tbody.children;
