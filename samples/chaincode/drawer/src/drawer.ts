@@ -56,6 +56,8 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
     ) {
         super();
 
+        this.context.clientId;
+
         this.url = context.id;
     }
 
@@ -108,6 +110,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         const view = new DrawerView(
             this.context.scope.IDocumentFactory,
             this.root,
+            this.context,
             this.packagesP,
             () => this.views.delete(view));
         this.views.add(view);

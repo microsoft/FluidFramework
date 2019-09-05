@@ -10,8 +10,10 @@ import { ContextualMenuItemType, IContextualMenuItem } from 'office-ui-fabric-re
 import { IDocumentFactory } from '@prague/host-service-interfaces';
 import { IFluidCodeDetails } from '@prague/container-definitions';
 import { ISharedMap } from '@prague/map';
+import { IComponentContext } from '@prague/runtime-definitions';
 
 interface IDrawerCommandBarProps {
+    context: IComponentContext,
     packages: { pkg: string, name: string, version: string, icon: string }[],
     documentFactory: IDocumentFactory,
     documentsMap: ISharedMap,
@@ -39,8 +41,13 @@ export class DrawerCommandBar extends React.Component<IDrawerCommandBarProps, {}
             package: `${details.pkg}@${details.version}`,
         };
 
+        const context = this.props.context;
+        const clientId = context.clientId;
+        const member = context.getQuorum().getMember(clientId);
+        const user = member ? member.client.user : {};
+
         const name = await this.props.documentFactory.create(chaincode);
-        this.props.documentsMap.set(name, details);
+        this.props.documentsMap.set(name, { ...details, user, date: Date.now() });
     }
 
     // Data for CommandBar

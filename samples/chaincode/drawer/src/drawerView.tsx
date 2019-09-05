@@ -14,6 +14,7 @@ import { DrawerCommandBar } from './drawerCommandBar';
 import { DocumentList } from "./documentList";
 import { IDocumentFactory } from "@prague/host-service-interfaces";
 import { ISharedMap } from "@prague/map";
+import { IComponentContext } from "@prague/runtime-definitions";
 
 // Inject some global styles
 mergeStyles({
@@ -33,6 +34,7 @@ export class DrawerView implements IComponentHTMLView {
     constructor(
         private readonly documentsFactory: IDocumentFactory,
         private readonly documentsMap: ISharedMap,
+        private readonly context: IComponentContext,
         packagesP: Promise<{ pkg: string, name: string, version: string, icon: string }[]>,
         public remove: () => void,
     ) {
@@ -51,6 +53,7 @@ export class DrawerView implements IComponentHTMLView {
         ReactDOM.render(
             <div>
                 <DrawerCommandBar
+                    context={this.context}
                     packages={this.packages}
                     documentFactory={this.documentsFactory}
                     documentsMap={this.documentsMap}

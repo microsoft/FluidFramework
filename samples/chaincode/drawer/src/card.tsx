@@ -12,13 +12,16 @@ import {
     IDocumentCardPreviewProps
 } from 'office-ui-fabric-react/lib/DocumentCard';
 import { ImageFit } from 'office-ui-fabric-react/lib/Image';
+import * as moment from "moment";
 
 export interface IDocumentCardBasicExampleProps {
     pkg: string,
     name: string,
     version: string,
     icon: string,
-    url: string
+    url: string,
+    date: number,
+    user: any
 }
 
 export class DocumentCardBasicExample extends React.Component<IDocumentCardBasicExampleProps> {
@@ -43,6 +46,11 @@ export class DocumentCardBasicExample extends React.Component<IDocumentCardBasic
             ]
         };
 
+        const name = this.props.user ? this.props.user.name : "Fluid User";
+        const activity = this.props.date
+            ? `Created ${moment(this.props.date).fromNow()}`
+            : "Created before the existance of time";
+
         return (
             <DocumentCard onClick={(event) => { window.open(this.props.url, "_blank")}}>
                 <DocumentCardPreview {...previewProps} />
@@ -51,10 +59,10 @@ export class DocumentCardBasicExample extends React.Component<IDocumentCardBasic
                     shouldTruncate={true}
                 />
                 <DocumentCardActivity
-                    activity="Created a few minutes ago"
+                    activity={activity}
                     people={[{
-                        name: 'Annie Lindqvist',
-                        profileImageSrc: "https://static2.sharepointonline.com/files/fabric/office-ui-fabric-react-assets/persona-female.png",
+                        name,
+                        profileImageSrc: undefined,
                     }]}
                 />
             </DocumentCard>

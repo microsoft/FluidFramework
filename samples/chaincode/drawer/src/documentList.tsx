@@ -12,7 +12,15 @@ export interface IDocumentListProps {
 }
 
 export interface IDocumentListState {
-    values: { pkg: string, name: string, version: string, icon: string, url: string }[];
+    values: {
+        pkg: string,
+        name: string,
+        version: string,
+        icon: string,
+        url: string,
+        date: number,
+        user: any,
+    }[];
 }
 
 export class DocumentList extends React.Component<IDocumentListProps, IDocumentListState> {
@@ -36,6 +44,8 @@ export class DocumentList extends React.Component<IDocumentListProps, IDocumentL
                         version={value.version}
                         icon={value.icon}
                         url={value.url}
+                        date={value.date}
+                        user={value.user}
                     />
                 </div>
             
