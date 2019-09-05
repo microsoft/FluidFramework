@@ -25,9 +25,9 @@ import { ScribeLambda } from "./lambda";
 
 const DefaultScribe: IScribe = {
     logOffset: -1,
-    minimumSequenceNumber: -1,
+    minimumSequenceNumber: 0,
     protocolState: undefined,
-    sequenceNumber: -1,
+    sequenceNumber: 0,
 };
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -70,12 +70,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             : DefaultScribe;
         const lastState = scribe.protocolState
             ? scribe.protocolState
-            : { members: [], proposals: [], values: []};
+            : { members: [], minimumSequenceNumber: 0, proposals: [], sequenceNumber: 0, values: []};
 
         const protocolHandler = new ProtocolOpHandler(
             document.documentId,
-            scribe.minimumSequenceNumber,
-            scribe.sequenceNumber,
+            lastState.minimumSequenceNumber,
+            lastState.sequenceNumber,
             lastState.members,
             lastState.proposals,
             lastState.values,

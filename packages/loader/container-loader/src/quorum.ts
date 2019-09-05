@@ -162,7 +162,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Removes a client from the quorum
      */
     public removeMember(clientId: string) {
-        assert(this.members.has(clientId), `this.members.has(${clientId})`);
+        // assert(this.members.has(clientId), `this.members.has(${clientId})`);
         this.members.delete(clientId);
         this.emit("removeMember", clientId);
     }

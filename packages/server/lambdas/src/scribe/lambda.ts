@@ -73,7 +73,7 @@ export class ScribeLambda extends SequencedLambda {
 
         // Filter messages in case they were not deleted after the last checkpoint.
         this.pendingMessages.push(...messages
-            .filter((message) => message.operation.sequenceNumber > this.sequenceNumber)
+            .filter((message) => message.operation.sequenceNumber > scribe.protocolState.sequenceNumber)
             .map((message) => message.operation));
     }
 
@@ -113,7 +113,8 @@ export class ScribeLambda extends SequencedLambda {
                 if (value.operation.type === MessageType.Summarize) {
                     const content = JSON.parse(value.operation.contents) as ISummaryContent;
 
-                    // Process up to the summary op value to get the protocol state at the summary op
+                    // Process up to the summary op value to get the protocol state at the summary op.
+                    // TODO: We should vaidate that we can actually make a summary prior to this call.
                     this.processFromPending(value.operation.referenceSequenceNumber);
                     await this.summarize(
                         content,
