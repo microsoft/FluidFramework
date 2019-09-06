@@ -16,8 +16,8 @@
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --component --live",
-    "start:local": "prague-dev-server --config webpack.config.js --package package.json --component",
+    "start:live": "prague-dev-server --config webpack.config.js --package package.json --live",
+    "start": "prague-dev-server --config webpack.config.js --package package.json",
     "webpack": "webpack --env=\"production\"",
     "webpack:dev": "webpack --env=\"development\"",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com"
@@ -25,6 +25,7 @@
   "dependencies": {
     "@prague/aqueduct": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
+    "@prague/container-definitions": "^0.10.0",
     "@prague/map": "^0.10.0",
     "@prague/merge-tree": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",

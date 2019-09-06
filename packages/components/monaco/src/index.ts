@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentFactory } from "@prague/runtime-definitions";
+import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IProvideRuntimeFactory } from "@prague/container-definitions";
+import { IProvideComponentFactory } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { MonacoRunner } from "./chaincode";
 
-export const fluidExport: IComponentFactory = new PrimedComponentFactory(
+const componentFactory = new PrimedComponentFactory(
     MonacoRunner,
     [
         sequence.SharedString.getFactory(),
@@ -16,3 +17,15 @@ export const fluidExport: IComponentFactory = new PrimedComponentFactory(
         sequence.SharedNumberSequence.getFactory(),
     ],
 );
+
+const runtimeFactory = new SimpleModuleInstantiationFactory(
+    "@chaincode/monaco",
+    new Map([
+        ["@chaincode/monaco", Promise.resolve(componentFactory)],
+    ]),
+);
+
+export const fluidExport: IProvideComponentFactory & IProvideRuntimeFactory = {
+    IComponentFactory: componentFactory,
+    IRuntimeFactory: runtimeFactory,
+};

@@ -118,8 +118,6 @@ export class MonacoRunner extends PrimedComponent implements
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         if (!this.mapHost) {
             this.mapHost = document.createElement("div");
-            this.mapHost.style.width = "100%";
-            this.mapHost.style.height = "100%";
             elm.appendChild(this.mapHost);
             this.initializeEditorDiv().catch((error) => { console.error(error); });
         } else {
@@ -149,24 +147,11 @@ export class MonacoRunner extends PrimedComponent implements
         // TODO make my dts
         const hostDts = null; // await platform.queryInterface<any>("dts");
 
-        if (!this.mapHost.style.width) {
-            this.mapHost.style.width = "100vw";
-            this.mapHost.style.height = "100vh";
-        }
-
-        const hostWrapper = document.createElement("div");
-        hostWrapper.style.display = "flex";
-        hostWrapper.style.flex = "1";
-        hostWrapper.style.width = "100%";
-        hostWrapper.style.height = "100%";
-
-        const inputDiv = document.createElement("div");
-        inputDiv.style.width = "100%";
+        this.mapHost.style.minHeight = "480px";
+        this.mapHost.style.width = "100%";
+        this.mapHost.style.height = "100%";
         // const outputDiv = document.createElement("div");
         // outputDiv.style.width = "50%";
-
-        this.mapHost.appendChild(hostWrapper);
-        hostWrapper.appendChild(inputDiv);
         // hostWrapper.appendChild(outputDiv);
 
         const textHandle = await this.root.wait<IComponentHandle>("text");
@@ -191,7 +176,7 @@ export class MonacoRunner extends PrimedComponent implements
         const outputModel = monaco.editor.createModel("", "javascript");
 
         this.codeEditor = monaco.editor.create(
-            inputDiv,
+            this.mapHost,
             { model: this.codeModel, automaticLayout: true });
         // const outputEditor = monaco.editor.create(
         //     outputDiv,

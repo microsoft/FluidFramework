@@ -81,6 +81,9 @@ module.exports = env => {
             libraryTarget: "umd",
             globalObject: 'self',
         },
+        devServer: {
+            host: "0.0.0.0"
+        },
         plugins: [
             // new MonacoWebpackPlugin()
             // new BundleAnalyzerPlugin()
