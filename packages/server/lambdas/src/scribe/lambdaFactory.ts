@@ -26,7 +26,7 @@ import { ScribeLambda } from "./lambda";
 const DefaultScribe: IScribe = {
     logOffset: -1,
     minimumSequenceNumber: 0,
-    protocolState: { members: [], minimumSequenceNumber: 0, proposals: [], sequenceNumber: 0, values: [] },
+    protocolState: undefined,
     sequenceNumber: 0,
 };
 
@@ -68,15 +68,23 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const scribe = document.scribe
             ? typeof document.scribe === "string" ? JSON.parse(document.scribe) : document.scribe
             : DefaultScribe;
-        const lastState = scribe.protocolState;
+        if (!scribe.protocolState) {
+            scribe.protocolState = {
+                members: [],
+                minimumSequenceNumber: 0,
+                proposals: [],
+                sequenceNumber: 0,
+                values: [],
+            };
+        }
 
         const protocolHandler = new ProtocolOpHandler(
             document.documentId,
-            lastState.minimumSequenceNumber,
-            lastState.sequenceNumber,
-            lastState.members,
-            lastState.proposals,
-            lastState.values,
+            scribe.protocolState.minimumSequenceNumber,
+            scribe.protocolState.sequenceNumber,
+            scribe.protocolState.members,
+            scribe.protocolState.proposals,
+            scribe.protocolState.values,
             () => -1,
             () => { return; });
 
