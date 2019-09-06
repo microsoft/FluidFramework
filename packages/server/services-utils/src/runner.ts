@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { AssertionError } from "assert";
 import * as nconf from "nconf";
 import { inspect } from "util" ;
 import * as winston from "winston";
@@ -115,12 +116,16 @@ export function runService<T extends IResources>(
             if (errorTracker === undefined) {
                 process.exit(1);
             } else {
-                errorTracker.captureException(error);
-                errorTracker.flush(10000).then(() => {
-                    process.exit(1);
-                }, () => {
-                    process.exit(1);
-                });
+                if (group === "scribe" && error.error && error.error instanceof AssertionError) {
+                    errorTracker.captureException(error);
+                } else {
+                    errorTracker.captureException(error);
+                    errorTracker.flush(10000).then(() => {
+                        process.exit(1);
+                    }, () => {
+                        process.exit(1);
+                    });
+                }
             }
         });
 }
