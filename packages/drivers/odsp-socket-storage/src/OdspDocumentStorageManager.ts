@@ -212,7 +212,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     perfType: "start",
                     tick: treesLatestStartTime,
                 });
-                const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?channels=1&blobs=2`);
+
+                // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
+                // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
+                const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`);
 
                 const {trees, blobs, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
