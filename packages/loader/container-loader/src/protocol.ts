@@ -15,6 +15,8 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
+    ISummaryAck,
+    ISummaryContent,
     ISummaryNack,
     ISummaryTree,
     MessageType,
@@ -103,16 +105,28 @@ export class ProtocolOpHandler {
                 break;
 
             case MessageType.Summarize:
+                if (this.logger) {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "Summarize",
+                        summaryContent: message.contents as ISummaryContent,
+                    });
+                }
                 debug("MessageType.Summarize", message.contents);
                 break;
 
             case MessageType.SummaryAck:
+                if (this.logger) {
+                    this.logger.sendTelemetryEvent({
+                        eventName: "SummaryAck",
+                        summaryAck: message.contents as ISummaryAck,
+                    });
+                }
                 debug("MessageType.SummaryAck", message.contents);
                 break;
 
             case MessageType.SummaryNack:
                 if (this.logger) {
-                    this.logger.sendErrorEvent({
+                    this.logger.sendTelemetryEvent({
                         eventName: "SummaryNack",
                         summaryNack: message.contents as ISummaryNack,
                     });
