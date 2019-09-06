@@ -15,7 +15,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+import { Deferred, doIfNotDisposed, EventForwarder } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
@@ -73,6 +73,8 @@ export class Quorum extends EventEmitter implements IQuorum {
     private readonly members: Map<string, ISequencedClient>;
     private readonly proposals: Map<number, PendingProposal>;
     private readonly values: Map<string, ICommittedProposal>;
+    private isDisposed: boolean = false;
+    public get disposed() { return this.isDisposed; }
 
     // List of commits that have been approved but not yet committed
     private readonly pendingCommit: Map<string, ICommittedProposal>;
@@ -387,5 +389,26 @@ export class Quorum extends EventEmitter implements IQuorum {
             });
             this.localProposals.clear();
         }
+    }
+
+    public dispose(): void {
+        this.isDisposed = true;
+    }
+}
+
+export class QuorumProxy extends EventForwarder implements IQuorum {
+    public readonly propose: (key: string, value: any) => Promise<void>;
+    public readonly has: (key: string) => boolean;
+    public readonly get: (key: string) => any;
+    public readonly getMembers: () => Map<string, ISequencedClient>;
+    public readonly getMember: (clientId: string) => ISequencedClient | undefined;
+
+    constructor(quorum: IQuorum) {
+        super(quorum);
+        this.propose = doIfNotDisposed(this, quorum.propose.bind(quorum));
+        this.has = doIfNotDisposed(this, quorum.has.bind(quorum));
+        this.get = doIfNotDisposed(this, quorum.get.bind(quorum));
+        this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
+        this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
     }
 }

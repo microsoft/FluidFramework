@@ -5,7 +5,9 @@
 
 export * from "./batchManager";
 export * from "./blobs";
+export * from "./disposal";
 export * from "./eventEmitterWithErrorHandling";
+export * from "./eventForwarder";
 export * from "./heap";
 export * from "./logger";
 export * from "./promises";

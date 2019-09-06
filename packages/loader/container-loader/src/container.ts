@@ -66,7 +66,7 @@ import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService";
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
-import { Quorum } from "./quorum";
+import { Quorum, QuorumProxy } from "./quorum";
 
 interface IConnectResult {
     detailsP: Promise<IConnectionDetails | null>;
@@ -542,7 +542,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     attributes,
                     this.blobManager,
                     this._deltaManager!,
-                    this.protocolHandler!.quorum,
+                    new QuorumProxy(this.protocolHandler!.quorum),
                     loader,
                     storageService,
                     (err) => this.emit("error", err),
@@ -710,7 +710,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             attributes,
             this.blobManager,
             this._deltaManager!,
-            this.protocolHandler!.quorum,
+            new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             documentStorageService,
             (err) => this.emit("error", err),

@@ -7,5 +7,6 @@ export * from "./blobs";
 export * from "./chaincode";
 export * from "./consensus";
 export * from "./deltas";
+export * from "./disposable";
 export * from "./loader";
 export * from "./logger";

@@ -5,6 +5,7 @@
 
 import { ISequencedClient } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
+import { IDisposable } from "./disposable";
 
 /**
  * Proposal to set the given key/value pair.
@@ -43,7 +44,7 @@ export interface IPendingProposal extends ISequencedProposal {
 /**
  * Class representing agreed upon values in a quorum
  */
-export interface IQuorum extends EventEmitter {
+export interface IQuorum extends EventEmitter, IDisposable {
     propose(key: string, value: any): Promise<void>;
 
     has(key: string): boolean;

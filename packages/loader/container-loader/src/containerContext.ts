@@ -184,6 +184,9 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         const snapshot = await this.runtime!.snapshot("", false /*generageFullTreeNoOptimizations*/);
         await this.runtime!.stop();
 
+        // dispose
+        this.quorum.dispose();
+
         return snapshot;
     }
 
