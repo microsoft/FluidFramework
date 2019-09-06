@@ -35,6 +35,7 @@ COPY packages/components/agent-scheduler/package*.json packages/components/agent
 COPY packages/components/app-ui/package*.json packages/components/app-ui/
 COPY packages/components/blob-manager/package*.json packages/components/blob-manager/
 COPY packages/components/canvas/package*.json packages/components/canvas/
+COPY packages/components/charts/package*.json packages/components/charts/
 COPY packages/components/clicker/package*.json packages/components/clicker/
 COPY packages/components/client-ui/package*.json packages/components/client-ui/
 COPY packages/components/external-component-loader/package*.json packages/components/external-component-loader/

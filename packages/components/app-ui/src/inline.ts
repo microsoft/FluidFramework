@@ -5,11 +5,6 @@
 
 import { Box, BoxContext, BoxKind, BoxState } from "./box";
 
-// User defined type guard.
-export function isInline<T extends BoxState>(maybeBox: Box<T> | undefined): maybeBox is Inline<T> {
-    return (maybeBox !== undefined) && (maybeBox.boxKind === BoxKind.Inline);
-}
-
 // Inline elements participate in line layout.
 export abstract class Inline<TSelf extends BoxState> extends Box<TSelf> {
     constructor() {
