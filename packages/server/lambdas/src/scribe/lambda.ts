@@ -139,10 +139,12 @@ export class ScribeLambda extends SequencedLambda {
             // winston.info(`Handle message ${JSON.stringify(message)}`);
 
             if (message.contents && typeof message.contents === "string" && message.type !== MessageType.ClientLeave) {
-                message.contents = JSON.parse(message.contents);
+                const clonedMessage = _.cloneDeep(message);
+                clonedMessage.contents = JSON.parse(clonedMessage.contents);
+                this.protocolHandler.processMessage(clonedMessage, false);
+            } else {
+                this.protocolHandler.processMessage(message, false);
             }
-
-            this.protocolHandler.processMessage(message, false);
         }
     }
 
