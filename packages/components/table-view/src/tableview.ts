@@ -72,7 +72,7 @@ export class TableView extends PrimedComponent implements IComponentHTMLVisual {
 
             const gotoInput = template.get(root, "goto") as HTMLInputElement;
             gotoInput.addEventListener("change", () => {
-                gridView.startRow = parseInt(gotoInput.value, 10);
+                gridView.startRow = parseInt(gotoInput.value, 10) - 1;
             });
         });
     }
