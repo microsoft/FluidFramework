@@ -51,6 +51,8 @@ export interface IQuorum extends EventEmitter, IDisposable {
 
     get(key: string): any;
 
+    getApprovalData(key: string): ICommittedProposal | undefined;
+
     getMembers(): Map<string, ISequencedClient>;
 
     getMember(clientId: string): ISequencedClient | undefined;

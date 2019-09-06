@@ -20,10 +20,8 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 
-// tslint:disable:no-var-requires
-// tslint:disable-next-line:no-submodule-imports
-const cloneDeep = require("lodash/cloneDeep");
-// tslint:enable:no-var-requires
+// tslint:disable-next-line: no-submodule-imports no-var-requires
+const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 
 // Appends a deferred and rejection count to a sequenced proposal. For locally generated promises this allows us to
 // attach a Deferred which we will resolve once the proposal is either accepted or rejected.
@@ -130,8 +128,7 @@ export class Quorum extends EventEmitter implements IQuorum {
             values: [...this.values],
         };
 
-        // tslint:disable-next-line:no-unsafe-any
-        return cloneDeep(snapshot) as IQuorumSnapshot;
+        return cloneDeep(snapshot);
     }
 
     /**
@@ -149,6 +146,14 @@ export class Quorum extends EventEmitter implements IQuorum {
         if (keyMap !== undefined) {
             return keyMap.value;
         }
+    }
+
+    /**
+     * Returns additional data about the approved consensus value
+     */
+    public getApprovalData(key: string): ICommittedProposal | undefined {
+        const proposal = this.values.get(key);
+        return proposal ? cloneDeep(proposal) : undefined;
     }
 
     /**
@@ -400,6 +405,7 @@ export class QuorumProxy extends EventForwarder implements IQuorum {
     public readonly propose: (key: string, value: any) => Promise<void>;
     public readonly has: (key: string) => boolean;
     public readonly get: (key: string) => any;
+    public readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
     public readonly getMembers: () => Map<string, ISequencedClient>;
     public readonly getMember: (clientId: string) => ISequencedClient | undefined;
 
@@ -408,6 +414,7 @@ export class QuorumProxy extends EventForwarder implements IQuorum {
         this.propose = doIfNotDisposed(this, quorum.propose.bind(quorum));
         this.has = doIfNotDisposed(this, quorum.has.bind(quorum));
         this.get = doIfNotDisposed(this, quorum.get.bind(quorum));
+        this.getApprovalData = doIfNotDisposed(this, quorum.getApprovalData.bind(quorum));
         this.getMembers = doIfNotDisposed(this, quorum.getMembers.bind(quorum));
         this.getMember = doIfNotDisposed(this, quorum.getMember.bind(quorum));
     }
