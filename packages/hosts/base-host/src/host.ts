@@ -17,7 +17,7 @@ import {
     OuterDocumentServiceFactory,
 } from "@prague/iframe-socket-storage";
 import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { ExperimentalOdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import {
     IDocumentServiceFactory,
     IErrorTrackingService,
@@ -28,7 +28,11 @@ import {
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
+
+const getStorageTokenStub = (siteUrl: string) => Promise.resolve("fake token");
+const getWebsocketTokenStub = () => Promise.resolve("fake token");
 
 export interface IPrivateSessionInfo {
     outerSession?: boolean;
@@ -110,6 +114,8 @@ export function createLoader(
     scope: IComponent,
     codeLoader: ICodeLoader,
     errorService: IErrorTrackingService,
+    getStorageToken: (siteUrl: string) => Promise<string | null> = getStorageTokenStub,
+    getWebsocketToken: () => Promise<string | null> = getWebsocketTokenStub,
     privateSession: IPrivateSessionInfo = {
         innerSession: false,
         outerSession: false,
@@ -130,7 +136,11 @@ export function createLoader(
 
         const r11sDocumentServiceFactory =
             new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-        const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
+        const odspDocumentServiceFactory = new ExperimentalOdspDocumentServiceFactory(
+            "Server Gateway",
+            getStorageToken,
+            getWebsocketToken,
+            new BaseTelemetryNullLogger());
         documentServiceFactory = new MultiDocumentServiceFactory(
             {
                 "fluid-odsp:": odspDocumentServiceFactory,
@@ -173,6 +183,8 @@ export function createWebLoader(
     config: any,
     scope: IComponent,
     privateSession?: IPrivateSessionInfo,
+    getStorageToken: (siteUrl: string) => Promise<string | null> = getStorageTokenStub,
+    getWebsocketToken: () => Promise<string | null> = getWebsocketTokenStub,
 ): Loader {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(npm);
@@ -200,6 +212,8 @@ export function createWebLoader(
         scope,
         codeLoader,
         errorService,
+        getStorageToken,
+        getWebsocketToken,
         privateSession);
     return loader;
 }
@@ -216,7 +230,8 @@ export async function start(
     scope: IComponent,
     div: HTMLDivElement,
 ): Promise<Container> {
-    const loader = createWebLoader(url, resolved, cache, pkg, scriptIds, npm, jwt, config, scope);
+    const loader = createWebLoader(
+        url, resolved, cache, pkg, scriptIds, npm, jwt, config, scope);
 
     const container = await loader.resolve({ url });
     registerAttach(

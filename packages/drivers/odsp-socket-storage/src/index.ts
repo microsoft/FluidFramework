@@ -15,3 +15,7 @@ export * from "./OdspUrlResolver";
 export * from "./fetchSnapshot";
 export * from "./utils";
 export * from "./Vroom";
+export * from "./experimentalDriver/ExperimentalOdspDocumentServiceFactory";
+export * from "./experimentalDriver/ExperimentalOdspDocumentService";
+export * from "./experimentalDriver/ExperimentalOdspUrlResolver";
+export * from "./experimentalDriver/contracts";

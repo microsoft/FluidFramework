@@ -211,7 +211,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     eventName: "treesLatestStart",
                     perfType: "start",
                     tick: treesLatestStartTime,
-                  });
+                });
                 const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?channels=1&blobs=2`);
 
                 const {trees, blobs, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
@@ -223,7 +223,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                     perfType: "end",
                     duration: treesLatestEndTime - treesLatestStartTime,
                     tick: treesLatestEndTime,
-                  });
+                });
 
                 if (trees) {
                     this.initTreesCache(trees);

@@ -3,21 +3,10 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
-import { ISequencedDeltaOpMessage } from "../contracts";
 import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { IOdspResolvedUrl } from "./contracts";
 import { ExperimentalOdspDocumentService } from "./ExperimentalOdspDocumentService";
-
-// tslint:disable-next-line: interface-name
-export interface IOdspSnapshot {
-  id: string;
-  sha: string;
-  trees: resources.ITree[];
-  blobs: resources.IBlob[];
-  ops: ISequencedDeltaOpMessage[];
-}
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
