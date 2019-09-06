@@ -29,7 +29,10 @@ async function loadAllSequencedMessages(
     const sequencedMessages: ISequencedDocumentMessage[] = [];
     let curr = 0;
     const batch = 2000;
+
+    let timeStart = Date.now();
     while (true) {
+        console.log(`Loading ops at ${curr}`);
         const messages = await deltaStorage.get(curr, curr + batch);
         if (messages.length === 0) {
             break;
@@ -39,15 +42,20 @@ async function loadAllSequencedMessages(
         curr = messages[messages.length - 1].sequenceNumber;
     }
 
+    console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to retrieve ${sequencedMessages.length} ops`);
+
     const client: IClient = {
         permission: [],
         scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
         type: "browser",
         user: { id: "blah" },
      };
+    console.log("Retrieving messages from web socket");
+    timeStart = Date.now();
     const deltaStream = await documentService.connectToDeltaStream(client);
     const initialMessages = deltaStream.initialMessages;
     deltaStream.disconnect();
+    console.log(`${Math.floor((Date.now() - timeStart) / 1000)} seconds to connect to web socket`);
 
     let logMsg = `)`;
     let allMessages = sequencedMessages;
