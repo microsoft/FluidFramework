@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { DistributedSet, DistributedSetValueType, ISharedMap } from "@prague/map";
+import { ISharedMap } from "@prague/map";
 import { default as axios } from "axios";
 
 export async function downloadRawText(textUrl: string): Promise<string> {
@@ -33,7 +33,7 @@ export async function getInsights(map: ISharedMap, id: string): Promise<ISharedM
     return handle.get<ISharedMap>();
 }
 
-export async function addTranslation(
+export async function setTranslation(
     document: { existing: boolean, getRoot: () => ISharedMap },
     id: string,
     fromLanguage: string,
@@ -47,17 +47,7 @@ export async function addTranslation(
     const idMap = await idMapHandle.get<ISharedMap>();
 
     if (!document.existing) {
-        idMap.set("translationsFrom", undefined, DistributedSetValueType.Name);
-        idMap.set("translationsTo", undefined, DistributedSetValueType.Name);
-    }
-
-    if (fromLanguage) {
-        const translationsFrom = await idMap.wait<DistributedSet<string>>("translationsFrom");
-        translationsFrom.add(fromLanguage);
-    }
-
-    if (toLanguage) {
-        const translationsTo = await idMap.wait<DistributedSet<string>>("translationsTo");
-        translationsTo.add(toLanguage);
+        idMap.set("translationFrom", fromLanguage);
+        idMap.set("translationTo", toLanguage);
     }
 }

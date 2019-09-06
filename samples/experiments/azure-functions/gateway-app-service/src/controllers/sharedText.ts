@@ -55,7 +55,7 @@ async function getInsights(map: DistributedMap.ISharedMap, id: string): Promise<
     return insights.wait<DistributedMap.ISharedMap>(id);
 }
 
-async function addTranslation(
+async function setTranslation(
     document: API.Document,
     id: string,
     fromLanguage: string,
@@ -64,18 +64,8 @@ async function addTranslation(
     const insights = await document.getRoot().wait<DistributedMap.ISharedMap>("insights");
     const idMap = await insights.wait<DistributedMap.ISharedMap>(id);
     if (!document.existing) {
-        idMap.set("translationsFrom", undefined, DistributedMap.DistributedSetValueType.Name);
-        idMap.set("translationsTo", undefined, DistributedMap.DistributedSetValueType.Name);
-    }
-
-    if (fromLanguage) {
-        const translationsFrom = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsFrom");
-        translationsFrom.add(fromLanguage);
-    }
-
-    if (toLanguage) {
-        const translationsTo = await idMap.wait<DistributedMap.DistributedSet<string>>("translationsTo");
-        translationsTo.add(toLanguage);
+        idMap.set("translationFrom", fromLanguage);
+        idMap.set("translationTo", toLanguage);
     }
 }
 
@@ -241,7 +231,7 @@ async function loadDocument(
 
     const translationFromLanguage = "translationFromLanguage";
     const translationToLanguage = "translationToLanguage";
-    addTranslation(
+    setTranslation(
         collabDoc,
         sharedString.id,
         options[translationFromLanguage],

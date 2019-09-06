@@ -48,8 +48,8 @@ export class SharedStringTranslator {
 
     private needsTranslation(op: any): boolean {
         // Exit early if there are no target translations
-        const languages = this.typeInsights.get("translationsTo") as map.DistributedSet<string>;
-        if (!languages || languages.entries().length === 0) {
+        const languages = this.typeInsights.get("translationTo") as string;
+        if (!languages) {
             return false;
         }
 
@@ -90,12 +90,12 @@ export class SharedStringTranslator {
             // Let new reqeusts start
             this.pendingTranslation = false;
 
-            const fromLanguages = this.typeInsights.get("translationsFrom") as map.DistributedSet<string>;
-            const toLanguages = this.typeInsights.get("translationsTo") as map.DistributedSet<string>;
+            const fromLanguage = this.typeInsights.get("translationFrom") as string;
+            const toLanguage = this.typeInsights.get("translationTo") as string;
 
             // Run translation on all other operations
             this.translating = true;
-            const translationsP = this.invokeTranslation(fromLanguages.entries(), toLanguages.entries());
+            const translationsP = this.invokeTranslation([fromLanguage], [toLanguage]);
             const doneP = translationsP.catch((error) => {
                 this.translating = false;
                 console.error(error);

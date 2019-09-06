@@ -19,7 +19,6 @@ import {
 } from "@prague/shared-object-common";
 import { CounterValueType } from "./counter";
 import { ISerializableValue, IValueOpEmitter, IValueOperation, IValueType } from "./interfaces";
-import { DistributedSetValueType } from "./set";
 
 export interface ILocalValue {
     readonly type: string;
@@ -32,7 +31,6 @@ export interface ILocalValue {
 
 export const valueTypes: ReadonlyArray<IValueType<any>> = [
     new CounterValueType(),
-    new DistributedSetValueType(),
 ];
 
 export class PlainLocalValue implements ILocalValue {

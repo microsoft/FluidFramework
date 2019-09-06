@@ -43,9 +43,9 @@ const debug = require("debug")("fluid:shared-text");
 import * as url from "url";
 import { Document } from "./document";
 import {
-    addTranslation,
     downloadRawText,
     getInsights,
+    setTranslation,
 } from "./utils";
 
 /**
@@ -188,7 +188,7 @@ export class SharedTextRunner
         this.taskManager = schedulerComponent.ITaskManager;
 
         const options = parse(window.location.search.substr(1));
-        addTranslation(
+        setTranslation(
             this.collabDoc,
             this.sharedString.id,
             options.translationFromLanguage as string,

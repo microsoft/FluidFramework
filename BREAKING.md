@@ -2,12 +2,16 @@
 
 - [`@prague/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
 - [prague URIs changed to fluid](#prague-URIs-changed-to-fluid)
+- [DistributedSet removed](#distributedset-removed)
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
 
 ## prague URIs changed to fluid
 `prague://` and `prague-odsp://` URIs have been changed to `fluid://` and `fluid-odsp://` respectively.
+
+## DistributedSet removed
+The DistributedSet value type has been removed.
 
 # 0.9 Breaking Changes (August 26, 2019)
 

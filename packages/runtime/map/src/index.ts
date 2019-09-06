@@ -6,5 +6,4 @@
 export * from "./counter";
 export * from "./interfaces";
 export * from "./map";
-export * from "./set";
 export * from "./directory";

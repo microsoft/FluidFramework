@@ -9,8 +9,6 @@ import { Browser, IClient, IFluidResolvedUrl, IHost, IResolvedUrl } from "@pragu
 import {
     Counter,
     CounterValueType,
-    DistributedSet,
-    DistributedSetValueType,
     ISharedMap,
     IValueChanged,
 } from "@prague/map";
@@ -50,10 +48,7 @@ async function updateOrCreateKey(key: string, map: ISharedMap, container: JQuery
             displayMap(keyElement, key, value, map, doc);
         }
     } else {
-        if (key === "set") {
-            const set = value as DistributedSet<number>;
-            keyElement.text(`${key}: ${JSON.stringify(set.entries())}`);
-        } else if (key === "counter") {
+        if (key === "counter") {
             const counter = value as Counter;
             keyElement.text(`${key}: ${counter.value}`);
         } else {
@@ -140,9 +135,6 @@ async function randomizeMap(map: ISharedMap) {
     const counter: Counter =
         map.set("counter", undefined, CounterValueType.Name).
             get("counter");
-    const set: DistributedSet<number> =
-        map.set("set", [1, 2, 3, 3, 2, 4], DistributedSetValueType.Name).
-            get("set");
 
     setInterval(async () => {
         // tslint:disable-next-line:insecure-random
@@ -150,9 +142,6 @@ async function randomizeMap(map: ISharedMap) {
         // tslint:disable-next-line:insecure-random
         map.set(key, Math.floor(Math.random() * 100000).toString());
         counter.increment(1);
-        set.add(5);
-        set.add(5);
-        set.delete(1);
     }, 1000);
 }
 
