@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 const pkg = require("./package.json");
@@ -25,7 +26,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader:'ts-loader',
+                            loader: 'ts-loader',
                             options: {
                                 compilerOptions: {
                                     module: "esnext"
@@ -75,7 +76,9 @@ module.exports = env => {
                 child_process: 'empty',
             },
             devServer: {
-                host: '0.0.0.0',
+                publicPath: '/dist',
+                stats: "minimal",
+                before: (app, server) => fluidRoute.before(app, server, __dirname, env),
             },
             resolveLoader: {
                 alias: {

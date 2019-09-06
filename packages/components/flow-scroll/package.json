@@ -44,7 +44,6 @@
   "repository": "microsoft/prague",
   "license": "MIT",
   "dependencies": {
-    "@chaincode/chart-view": "^0.10.0",
     "@chaincode/charts": "^0.10.0",
     "@chaincode/flow-intel": "^0.10.0",
     "@chaincode/flow-intel-viewer": "^0.10.0",

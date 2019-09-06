@@ -55,7 +55,6 @@
   "dependencies": {
     "@prague/agent": "^0.10.0",
     "@prague/client-api": "^0.10.0",
-    "@prague/client-ui": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/gitresources": "^0.10.0",
     "@prague/kafka-orderer": "^0.10.0",

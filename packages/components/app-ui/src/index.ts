@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Block, isBlock } from "./block";
+import { Block } from "./block";
 import { Box, BoxContext, BoxState, IBoxStyle, IBoxStyleContext } from "./box";
-import { Inline, isInline } from "./inline";
+import { Inline } from "./inline";
 
 export {
     Block,
@@ -15,6 +15,4 @@ export {
     IBoxStyle,
     IBoxStyleContext,
     Inline,
-    isBlock,
-    isInline,
 };

@@ -17,7 +17,6 @@ import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
 
-// const charts = import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts");
 const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@chaincode/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@chaincode/monaco");
 const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
@@ -57,8 +56,6 @@ class MyRegistry implements IComponentRegistry {
             return this.sharedTextFactory;
         } else if (name === "@chaincode/math") {
             return math.then((m) => m.fluidExport);
-        // } else if (name === "@chaincode/charts") {
-        //     return charts.then((m) => m.fluidExport);
         } else if (name === "@chaincode/progress-bars") {
             return progressBars.then((m) => m.fluidExport);
         } else if (name === "@chaincode/video-players") {
