@@ -155,7 +155,7 @@ export class Quorum extends EventEmitter implements IQuorum {
      * Adds a new client to the quorum
      */
     public addMember(clientId: string, details: ISequencedClient) {
-        assert(!this.members.has(clientId), `!this.members.has(${clientId})`);
+        // assert(!this.members.has(clientId), `!this.members.has(${clientId})`);
         this.members.set(clientId, details);
         this.emit("addMember", clientId, details);
     }
@@ -214,10 +214,10 @@ export class Quorum extends EventEmitter implements IQuorum {
         local: boolean,
         clientSequenceNumber: number) {
 
-        assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
-        assert(
-            !local || this.localProposals.has(clientSequenceNumber),
-            `!${local} || this.localProposals.has(${clientSequenceNumber})`);
+        // assert(!this.proposals.has(sequenceNumber), `!this.proposals.has(${sequenceNumber})`);
+        // assert(
+            // !local || this.localProposals.has(clientSequenceNumber),
+            // `!${local} || this.localProposals.has(${clientSequenceNumber})`);
 
         const proposal = new PendingProposal(
             this.sendReject,
@@ -246,7 +246,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         // Proposals require unanimous approval so any rejection results in a rejection of the proposal. For error
         // detection we will keep a rejected proposal in the pending list until the MSN advances so that we can
         // track the total number of rejections.
-        assert(this.proposals.has(sequenceNumber), `this.proposals.has(${sequenceNumber})`);
+        // assert(this.proposals.has(sequenceNumber), `this.proposals.has(${sequenceNumber})`);
 
         const proposal = this.proposals.get(sequenceNumber);
         if (proposal !== undefined) {
