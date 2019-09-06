@@ -6,4 +6,4 @@
 /**
  * Components supported by the TodoItem component
  */
-export type TodoItemSupportedComponents = "todo" | "clicker" | "textBox";
+export type TodoItemSupportedComponents = "todo" | "clicker" | "textBox" | "textList";

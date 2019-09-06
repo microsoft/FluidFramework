@@ -54,6 +54,16 @@ export class CollaborativeInput extends React.Component<IProps, IState> {
         });
     }
 
+    public componentDidUpdate(prevProps: IProps) {
+        // If the component gets a new sharedString props it needs to re-fetch the sharedString text
+        if (prevProps.sharedString !== this.props.sharedString) {
+            const text = this.props.sharedString.getText();
+            if (text !== this.state.text) {
+                this.setState({text});
+            }
+        }
+    }
+
     public render() {
         return(
             // There are a lot of different ways content can be inserted into a input box

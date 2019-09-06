@@ -52,7 +52,8 @@
     "@prague/runtime-definitions": "^0.10.0",
     "@prague/sequence": "^0.10.0",
     "react": "^16.8.3",
-    "react-dom": "^16.8.3"
+    "react-dom": "^16.8.3",
+    "react-list": "^0.8.11"
   },
   "devDependencies": {
     "@prague/build-common": "^0.10.0",

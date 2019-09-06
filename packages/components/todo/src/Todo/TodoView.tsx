@@ -11,6 +11,8 @@ import { ISharedMap } from "@prague/map";
 import { SharedString } from "@prague/sequence";
 import * as React from "react";
 
+import ReactList from "react-list";
+
 interface p {
     createComponent(props?: any): Promise<void>;
     getComponentView(id: string): JSX.Element;
@@ -38,10 +40,11 @@ export class TodoView extends React.Component<p, s> {
         this.createComponent = this.createComponent.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.updateInputValue = this.updateInputValue.bind(this);
+        this.renderItem = this.renderItem.bind(this);
     }
 
     componentDidMount(): void {
-        this.props.map.on("valueChanged", () => {
+        this.props.map.on("op", () => {
             this.setState({ids: [...this.props.map.keys()]});
         });
 
@@ -64,6 +67,11 @@ export class TodoView extends React.Component<p, s> {
 
     updateInputValue(ev: React.ChangeEvent<HTMLInputElement>): void {
         this.setState({inputValue: ev.target.value});
+    }
+
+    renderItem(index) {
+        const id = this.state.ids[index];
+        return <div key={id}>{this.props.getComponentView(id)}</div>;
     }
 
     render(): JSX.Element {
@@ -96,7 +104,12 @@ export class TodoView extends React.Component<p, s> {
                     <button type="submit">+</button>
                     </form>
                 </span>
-                {todoItemComponents}
+                <ReactList
+                    itemRenderer={this.renderItem}
+                    length={this.state.ids.length}
+                    type="uniform"
+                    minSize={this.state.ids.length}
+                    />
             </div>
         );
     }

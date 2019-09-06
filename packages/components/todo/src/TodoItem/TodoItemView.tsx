@@ -109,6 +109,7 @@ export class TodoItemView extends React.Component<p, s> {
                                 <button onClick={async () => this.createComponent("todo")}>todo</button>
                                 <button onClick={async () => this.createComponent("clicker")}>clicker</button>
                                 <button onClick={async () => this.createComponent("textBox")}>textBox</button>
+                                <button onClick={async () => this.createComponent("textList")}>textList</button>
                             </span>
                         }
                         {this.state.innerId !== "" && this.props.getComponentView(this.state.innerId)}

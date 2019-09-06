@@ -38,6 +38,7 @@ import { TodoItemSupportedComponents } from "./supportedComponent";
 import { TodoItemView } from "./TodoItemView";
 
 import { TextBoxName } from "../TextBox";
+import { TextListName } from "../TextList";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json");
@@ -156,6 +157,9 @@ export class TodoItem extends PrimedComponent
           break;
       case "textBox":
           await this.createAndAttachComponent(id, TextBoxName, props);
+          break;
+      case "textList":
+          await this.createAndAttachComponent(id, TextListName, props);
           break;
       default:
     }

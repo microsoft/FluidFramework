@@ -83,6 +83,14 @@ export class Todo extends PrimedComponent implements IComponentHTMLVisual, IComp
     const titleTextCell = this.root.get<IComponentHandle>(this.titleId).get<ISharedCell>();
     const titleTextSharedString = this.root.get<IComponentHandle>(this.sharedStringTitleId).get<SharedString>();
 
+    // tslint:disable-next-line: no-console
+    console.log("here");
+    this.context.on("op", (e) => {
+      alert("hello");
+      // tslint:disable-next-line: no-console
+      console.log(JSON.stringify(e));
+    });
+
     [
       this.innerCellIdsMap,
       this.titleTextCell,
