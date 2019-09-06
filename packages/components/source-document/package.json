@@ -47,6 +47,7 @@
     "@prague/merge-tree": "^0.10.0",
     "@prague/sequence": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",
+    "@tiny/types": "^0.0.12772",
     "debug": "^4.1.1"
   },
   "devDependencies": {

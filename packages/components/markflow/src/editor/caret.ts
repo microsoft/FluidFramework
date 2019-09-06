@@ -35,6 +35,44 @@ export class Caret {
     private startRef: LocalReference;
     private endRef: LocalReference;
 
+    private readonly onCaretLeave = ((e: ICaretEvent) => {
+        const detail = e.detail;
+        debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
+        const root = this.layout.root;
+        const node = e.target as Node;
+        if (root.contains(node)) {
+            let el = node.parentElement;
+
+            // tslint:disable-next-line:no-conditional-assignment
+            while (el && el !== root) {
+                if (el.classList.contains(styles.inclusion)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let position = this.nodeOffsetToPosition(el, 0);
+                    debug("  inclusion found @%d", position);
+
+                    switch (detail.direction) {
+                        case Direction.up:
+                        case Direction.left:
+                            break;
+                        default:
+                            position++;
+                    }
+
+                    // Defer setting the selection to avoid stealing focus and receiving the pending key event.
+                    requestAnimationFrame(() => {
+                        (root as HTMLElement).focus();
+                        this.setSelection(position, position);
+                        this.sync();
+                    });
+                    break;
+                }
+                el = el.parentElement;
+            }
+        }
+    }) as EventListener;
+
     public constructor(private readonly layout: Layout) {
         this.startRef = this.doc.addLocalRef(0);
         this.endRef = this.doc.addLocalRef(0);
@@ -43,43 +81,16 @@ export class Caret {
         document.addEventListener("selectionchange", this.onSelectionChange);
 
         const root = layout.root;
-        root.addEventListener("focus", () => { this.sync(); });
-        root.addEventListener(CaretEventType.leave, ((e: ICaretEvent) => {
-            const detail = e.detail;
-            debug("Leaving inclusion: (dx=%d,dy=%d,bounds=%o)", getDeltaX(detail.direction), getDeltaY(detail.direction), detail.caretBounds);
-            const node = e.target as Node;
-            if (root.contains(node)) {
-                let el = node.parentElement;
+        root.addEventListener("focus", this.onFocus);
+        root.addEventListener(CaretEventType.leave, this.onCaretLeave);
+    }
 
-                // tslint:disable-next-line:no-conditional-assignment
-                while (el && el !== root) {
-                    if (el.classList.contains(styles.inclusion)) {
-                        e.preventDefault();
-                        e.stopPropagation();
+    public remove() {
+        document.removeEventListener("selectionchange", this.onSelectionChange);
 
-                        let position = this.nodeOffsetToPosition(el, 0);
-                        debug("  inclusion found @%d", position);
-
-                        switch (detail.direction) {
-                            case Direction.up:
-                            case Direction.left:
-                                break;
-                            default:
-                                position++;
-                        }
-
-                        // Defer setting the selection to avoid stealing focus and receiving the pending key event.
-                        requestAnimationFrame(() => {
-                            (root as HTMLElement).focus();
-                            this.setSelection(position, position);
-                            this.sync();
-                        });
-                        break;
-                    }
-                    el = el.parentElement;
-                }
-            }
-        }) as EventListener);
+        const root = this.layout.root;
+        root.removeEventListener("focus", this.onFocus);
+        root.removeEventListener(CaretEventType.leave, this.onCaretLeave);
     }
 
     public setSelection(start: number, end: number) {
@@ -127,6 +138,10 @@ export class Caret {
         const start = this.nodeOffsetToPosition(anchorNode, anchorOffset);
         const end = this.nodeOffsetToPosition(focusNode, focusOffset);
         this.setSelection(start, end);
+    }
+
+    private readonly onFocus = () => {
+        this.sync();
     }
 
     private referenceToNodeOffset(ref: LocalReference) {

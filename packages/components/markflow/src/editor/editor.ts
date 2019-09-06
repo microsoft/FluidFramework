@@ -48,6 +48,7 @@ export class Editor {
         this.root.removeEventListener("paste", this.onPaste);
         this.root.removeEventListener("keydown", this.onKeyDown);
         this.root.removeEventListener("keypress", this.onKeyPress);
+        this.caret.remove();
         this.layout.remove();
     }
 
