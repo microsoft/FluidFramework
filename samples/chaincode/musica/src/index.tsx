@@ -108,8 +108,8 @@ export class Musica extends Document {
 export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
   return Component.instantiateRuntime(
     context,
-    '@chaincode/clicker',
-    new Map([['@chaincode/clicker', Promise.resolve(Component.createComponentFactory(Musica))]])
+    '@fluid-example/clicker',
+    new Map([['@fluid-example/clicker', Promise.resolve(Component.createComponentFactory(Musica))]])
   );
 }
 //CSPELL:ignore Unpress chaincode Musica

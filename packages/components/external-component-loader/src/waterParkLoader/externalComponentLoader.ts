@@ -29,7 +29,7 @@ export class ExternalComponentLoader extends PrimedComponent
         "@chaincode/monaco",
         "@chaincode/image-collection",
         "@chaincode/pond",
-        "@chaincode/clicker",
+        "@fluid-example/clicker",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
     private viewComponentP: Promise<IComponent>;

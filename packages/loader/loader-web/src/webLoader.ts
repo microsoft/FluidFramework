@@ -323,10 +323,10 @@ export class WebCodeLoader implements ICodeLoader {
         const details = normalize(input, (typeof input === "string" ? this.baseUrl : undefined));
 
         const fullPkg = typeof details.package === "string"
-            ? details.package // just return it if it's a string e.g. "@chaincode/clicker@0.1.1"
+            ? details.package // just return it if it's a string e.g. "@fluid-example/clicker@0.1.1"
             : !details.package.version // if it doesn't exist, let's make it from the packge detals
-                ? `${details.package.name}` // e.g. @chaincode/clicker
-                : `${details.package.name}@${details.package.version}`; // reconstitute e.g. @chaincode/clicker@0.1.1.
+                ? `${details.package.name}` // e.g. @fluid-example/clicker
+                : `${details.package.name}@${details.package.version}`; // rebuild e.g. @fluid-example/clicker@0.1.1
         const parsed = extractDetails(fullPkg);
 
         const scriptCdnTag = `${parsed.scope ? `@${parsed.scope}:` : ""}cdn`;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ClickerName } from "@chaincode/clicker";
+import { ClickerName } from "@fluid-example/clicker";
 
 import {
   PrimedComponent,

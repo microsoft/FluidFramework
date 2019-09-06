@@ -42,7 +42,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@chaincode/clicker": "^0.10.0",
+    "@fluid-example/clicker": "^0.10.0",
     "@prague/aqueduct": "^0.10.0",
     "@prague/aqueduct-react": "^0.10.0",
     "@prague/cell": "^0.10.0",
