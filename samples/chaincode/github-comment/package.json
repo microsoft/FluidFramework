@@ -8,7 +8,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint",
+    "build": "concurrently npm:build:compile npm:tslint npm:webpack",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
