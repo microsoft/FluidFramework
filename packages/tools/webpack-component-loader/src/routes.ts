@@ -8,22 +8,21 @@ import * as fs from "fs";
 import * as moniker from "moniker";
 import * as path from "path";
 
-export const before = (app, server, baseDir, options) => {
+export const before = (app, server, baseDir, env) => {
+    let options;
+    if (!env) {
+        options = { local: false };
+    } else if (env.fluidHost && !(env.tenantId && env.tenantSecret)) {
+        throw new Error("If you provide a host, you must provide a tenantId and tenantSecret");
+    } else if ((env.tenantId || env.tenantSecret) && !(env.tenantId && env.tenantSecret)) {
+        throw new Error("tenantId and tenantSecret must be provided together");
+    } else {
+        options = env;
+    }
+
     app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
     app.get("/fluid-loader.js", (req, res) => loader(req, res, baseDir));
-    app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => {
-        fluid(req, res, baseDir, (!options || !options.live)
-            ? { live: false }
-            : {
-                // if live === true, expect these all to be defined
-                live: options.live,
-                fluidHost: options.fluidHost,
-                tenantId: options.tenantId,
-                tenantSecret: options.tenantSecret,
-                component: options.component,
-            }
-        );
-    });
+    app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => fluid(req, res, baseDir, options));
 };
 
 const fluid = (req, res, baseDir, options) => {
@@ -44,20 +43,20 @@ const fluid = (req, res, baseDir, options) => {
     let secret;
     let npm;
 
-    if (options.live) {
-        host = options.fluidHost;
-        routerlicious = host.replace("www", "alfred");
-        historian = host.replace("www", "historian");
-        tenantId = options.tenantId;
-        secret = options.tenantSecret;
-        npm = "https://fluidauspkn-3873244262.azureedge.net";
-    } else {
+    if (options.local) {
         host = "http://localhost:3000";
         routerlicious = "http://localhost:3003";
         historian = "http://localhost:3001";
         tenantId = "prague";
         secret = "43cfc3fbf04a97c0921fd23ff10f9e4b";
         npm = "http://localhost:3002";
+    } else {
+        host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+        tenantId = options.tenantId ? options.tenantId : "stoic-gates";
+        secret = options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0";
+        routerlicious = host.replace("www", "alfred");
+        historian = host.replace("www", "historian");
+        npm = "https://pragueauspkn-3873244262.azureedge.net";
     }
 
     const html =
