@@ -6,8 +6,6 @@
 import {
     IComponent,
     IComponentConfiguration,
-    IProvideComponentHandleContext,
-    IProvideComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -143,7 +141,7 @@ export interface IFluidCodeDetails {
 /**
  * The IRuntime represents an instantiation of a code package within a container.
  */
-export interface IRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
+export interface IRuntime {
 
     /**
      * Executes a request against the runtime

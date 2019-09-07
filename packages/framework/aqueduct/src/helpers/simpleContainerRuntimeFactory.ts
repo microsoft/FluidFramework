@@ -7,9 +7,7 @@ import {
     IComponent,
     IRequest,
 } from "@prague/component-core-interfaces";
-import {
-    IContainerContext,
-} from "@prague/container-definitions";
+import { IContainerContext } from "@prague/container-definitions";
 import { ComponentRegistryTypes, ContainerRuntime } from "@prague/container-runtime";
 import { IHostRuntime } from "@prague/runtime-definitions";
 
@@ -24,7 +22,7 @@ export class SimpleContainerRuntimeFactory {
         chaincode: string,
         registry: ComponentRegistryTypes,
         generateSummaries: boolean = false,
-    ): Promise<IHostRuntime> {
+    ): Promise<ContainerRuntime> {
         // debug(`instantiateRuntime(chaincode=${chaincode},registry=${JSON.stringify(registry)})`);
         const runtime = await ContainerRuntime.load(context, registry, this.createRequestHandler.bind(this), { generateSummaries });
         // debug("runtime loaded.");

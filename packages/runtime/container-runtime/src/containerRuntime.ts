@@ -20,6 +20,7 @@ import {
     ILoader,
     IMessageScheduler,
     IQuorum,
+    IRuntime,
     ITelemetryLogger,
 } from "@prague/container-definitions";
 import {
@@ -331,7 +332,7 @@ function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the component level mappings.
  */
-export class ContainerRuntime extends EventEmitter implements IHostRuntime {
+export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRuntime {
     /**
      * Load the components from a snapshot and returns the runtime.
      * @param context - Context of the container.

@@ -7,6 +7,8 @@ import {
     IComponentHandleContext,
     IComponentRouter,
     IComponentSerializer,
+    IProvideComponentHandleContext,
+    IProvideComponentSerializer,
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
@@ -17,7 +19,6 @@ import {
     IGenericBlob,
     ILoader,
     IQuorum,
-    IRuntime,
     ITelemetryLogger,
 } from "@prague/container-definitions";
 import {
@@ -285,7 +286,7 @@ export enum FlushMode {
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  */
-export interface IHostRuntime extends IRuntime {
+export interface IHostRuntime extends EventEmitter, IProvideComponentSerializer, IProvideComponentHandleContext {
     readonly id: string;
     readonly existing: boolean;
     readonly options: any;
@@ -364,4 +365,9 @@ export interface IHostRuntime extends IRuntime {
      * sequentially. Total size of all messages must be less than maxOpSize.
      */
     orderSequentially(callback: () => void): void;
+
+    /**
+     * Executes a request against the runtime
+     */
+    request(request: IRequest): Promise<IResponse>;
 }
