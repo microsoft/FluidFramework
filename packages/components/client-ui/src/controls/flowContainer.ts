@@ -6,10 +6,10 @@
 // tslint:disable:ban-types
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
+import { IInk } from "@prague/ink";
 import { ISharedMap } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
-import { IStream } from "@prague/stream";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
 import { FlowView, IOverlayMarker } from "./flowView";
@@ -50,7 +50,7 @@ export class FlowContainer extends ui.Component {
         private collabDocument: api.Document,
         private sharedString: Sequence.SharedString,
         private readonly overlayInkMap: ISharedMap,
-        private readonly pageInkStream: IStream,
+        private readonly pageInk: IInk,
         private image: Image,
         private options?: Object) {
 
@@ -86,7 +86,7 @@ export class FlowContainer extends ui.Component {
             overlayCanvasDiv.classList.add("overlay-canvas");
             this.overlayCanvas = new OverlayCanvas(this.collabDocument, overlayCanvasDiv, layerPanelDiv);
 
-            this.overlayCanvas.on("ink", (layer: InkLayer, model: IStream, start: ui.IPoint) => {
+            this.overlayCanvas.on("ink", (layer: InkLayer, model: IInk, start: ui.IPoint) => {
                 this.overlayCanvas.enableInkHitTest(false);
                 const position = this.flowView.getNearestPosition(start);
                 this.overlayCanvas.enableInkHitTest(true);
@@ -110,7 +110,7 @@ export class FlowContainer extends ui.Component {
                     });
             });
         } else {
-            this.inkCanvas = new InkCanvas(document.createElement("div"), this.pageInkStream);
+            this.inkCanvas = new InkCanvas(document.createElement("div"), this.pageInk);
             this.inkCanvas.enableInkHitTest(false);
         }
 
@@ -210,7 +210,7 @@ export class FlowContainer extends ui.Component {
         if (this.activeLayers[id]) {
             this.activeLayers[id].active = true;
         }
-        const inkLayerData = await this.overlayInkMap.get<IComponentHandle>(id).get<IStream>();
+        const inkLayerData = await this.overlayInkMap.get<IComponentHandle>(id).get<IInk>();
 
         if (!(id in this.layerCache)) {
             const layer = new InkLayer(this.size, inkLayerData);

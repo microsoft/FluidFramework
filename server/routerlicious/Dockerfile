@@ -90,13 +90,13 @@ COPY packages/runtime/consensus-ordered-collection/package*.json packages/runtim
 COPY packages/runtime/consensus-register-collection/package*.json packages/runtime/consensus-register-collection/
 COPY packages/runtime/cell/package*.json packages/runtime/cell/
 COPY packages/runtime/client-api/package*.json packages/runtime/client-api/
+COPY packages/runtime/ink/package*.json packages/runtime/ink/
 COPY packages/runtime/map/package*.json packages/runtime/map/
 COPY packages/runtime/merge-tree/package*.json packages/runtime/merge-tree/
 COPY packages/runtime/container-runtime/package*.json packages/runtime/container-runtime/
 COPY packages/runtime/runtime-definitions/package*.json packages/runtime/runtime-definitions/
 COPY packages/runtime/runtime-test-utils/package*.json packages/runtime/runtime-test-utils/
 COPY packages/runtime/sequence/package*.json packages/runtime/sequence/
-COPY packages/runtime/stream/package*.json packages/runtime/stream/
 COPY packages/server/agent/package*.json packages/server/agent/
 COPY packages/server/gateway/package*.json packages/server/gateway/
 COPY packages/server/kafka-orderer/package*.json packages/server/kafka-orderer/

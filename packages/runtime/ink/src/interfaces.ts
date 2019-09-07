@@ -47,7 +47,7 @@ export interface IColor {
 /**
  * Shared data structure for representing ink.
  */
-export interface IStream extends ISharedObject {
+export interface IInk extends ISharedObject {
     /**
      * Get the collection of strokes.
      */

@@ -4,7 +4,7 @@
  */
 
 // The main app code
-import { IColor, IStream } from "@prague/stream";
+import { IColor, IInk } from "@prague/ink";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { debug } from "./debug";
@@ -46,7 +46,7 @@ export class FlexView extends ui.Component {
 
     constructor(
         element: HTMLDivElement,
-        inkStream: IStream,
+        ink: IInk,
         image?: CanvasImageSource,
     ) {
         super(element);
@@ -59,7 +59,7 @@ export class FlexView extends ui.Component {
         // Add the ink canvas to the dock
         // Add blob Upload Handler
         const inkCanvasElement = document.createElement("div");
-        this.ink = new InkCanvas(inkCanvasElement, inkStream, image);
+        this.ink = new InkCanvas(inkCanvasElement, ink, image);
         this.dock.addContent(this.ink);
 
         this.addButtons();

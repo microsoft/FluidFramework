@@ -17,18 +17,18 @@ import {
 import { SharedObject } from "@prague/shared-object-common";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
+import { InkFactory } from "./inkFactory";
 import {
     IClearOperation,
     ICreateStrokeOperation,
+    IInk,
     IInkOperation,
     IInkStroke,
     IPen,
     IPoint,
-    IStream,
     IStylusOperation,
 } from "./interfaces";
-import { IInkSnapshot, InkSnapshot } from "./snapshot";
-import { StreamFactory } from "./streamFactory";
+import { InkData, ISerializableInk } from "./snapshot";
 
 /**
  * Filename where the snapshot is stored.
@@ -38,25 +38,25 @@ const snapshotFileName = "header";
 /**
  * Inking data structure.
  */
-export class Stream extends SharedObject implements IStream {
+export class Ink extends SharedObject implements IInk {
     /**
-     * Create a new shared stream
+     * Create a new shared ink
      *
-     * @param runtime - component runtime the new shared stream belongs to
-     * @param id - optional name of the shared stream
-     * @returns newly create shared stream (but not attached yet)
+     * @param runtime - component runtime the new shared ink belongs to
+     * @param id - optional name of the shared ink
+     * @returns newly create shared ink (but not attached yet)
      */
     public static create(runtime: IComponentRuntime, id?: string) {
-        return runtime.createChannel(SharedObject.getIdForCreate(id), StreamFactory.Type) as Stream;
+        return runtime.createChannel(SharedObject.getIdForCreate(id), InkFactory.Type) as Ink;
     }
 
     /**
-     * Get a factory for SharedStream to register with the component.
+     * Get a factory for Ink to register with the component.
      *
-     * @returns a factory that creates and load SharedStream
+     * @returns a factory that creates and load Ink
      */
     public static getFactory() {
-        return new StreamFactory();
+        return new InkFactory();
     }
 
     public static makeCreateStrokeOperation(pen: IPen): ICreateStrokeOperation {
@@ -107,23 +107,23 @@ export class Stream extends SharedObject implements IStream {
     /**
      * The current ink snapshot.
      */
-    private inkSnapshot: InkSnapshot = new InkSnapshot();
+    private inkData: InkData = new InkData();
 
     /**
-     * Create a new Stream.
+     * Create a new Ink.
      *
-     * @param runtime - The runtime the Stream will attach to
-     * @param id - UUID for the stream
+     * @param runtime - The runtime the Ink will attach to
+     * @param id - UUID for the ink
      */
     constructor(runtime: IComponentRuntime, id: string) {
-        super(id, runtime, StreamFactory.Attributes);
+        super(id, runtime, InkFactory.Attributes);
     }
 
     /**
      * Get the ink strokes from the snapshot.
      */
     public getStrokes(): IInkStroke[] {
-        return this.inkSnapshot.getStrokes();
+        return this.inkData.getStrokes();
     }
 
     /**
@@ -132,7 +132,7 @@ export class Stream extends SharedObject implements IStream {
      * @param key - The UUID for the stroke
      */
     public getStroke(key: string): IInkStroke {
-        return this.inkSnapshot.getStroke(key);
+        return this.inkData.getStroke(key);
     }
 
     /**
@@ -155,7 +155,7 @@ export class Stream extends SharedObject implements IStream {
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: JSON.stringify(this.inkSnapshot),
+                        contents: JSON.stringify(this.inkData.getSerializable()),
                         encoding: "utf-8",
                     },
                 },
@@ -167,7 +167,7 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Initialize the stream with a snapshot from the given storage.
+     * Initialize the ink with a snapshot from the given storage.
      *
      * @param branchId - Branch ID. Not used
      * @param storage - Storage service to read from
@@ -178,8 +178,8 @@ export class Stream extends SharedObject implements IStream {
 
         const header = await storage.read(snapshotFileName);
         if (header) {
-            this.inkSnapshot = new InkSnapshot(
-                JSON.parse(Buffer.from(header, "base64").toString("utf-8")) as IInkSnapshot,
+            this.inkData = new InkData(
+                JSON.parse(Buffer.from(header, "base64").toString("utf-8")) as ISerializableInk,
             );
         }
     }
@@ -197,7 +197,7 @@ export class Stream extends SharedObject implements IStream {
     }
 
     /**
-     * Perform custom processing once an attach has happened.  Nothing for Stream
+     * Perform custom processing once an attach has happened.  Nothing for Ink
      */
     protected registerCore() {
         return;
@@ -225,7 +225,7 @@ export class Stream extends SharedObject implements IStream {
     }
 
     private processClearOp(operation: IClearOperation) {
-        this.inkSnapshot.clear();
+        this.inkData.clear();
     }
 
     private processCreateStrokeOp(operation: ICreateStrokeOperation) {
@@ -234,7 +234,7 @@ export class Stream extends SharedObject implements IStream {
             operations: [],
             pen: operation.pen,
         };
-        this.inkSnapshot.addStroke(stroke);
+        this.inkData.addStroke(stroke);
     }
 
     private processStylusOp(operation: IStylusOperation) {

@@ -271,8 +271,8 @@
       "projectFolder": "packages/runtime/sequence/"
     },
     {
-      "packageName": "@prague/stream",
-      "projectFolder": "packages/runtime/stream/"
+      "packageName": "@prague/ink",
+      "projectFolder": "packages/runtime/ink/"
     },
     {
       "packageName": "@prague/agent",

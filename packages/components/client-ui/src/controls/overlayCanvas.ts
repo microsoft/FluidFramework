@@ -4,7 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
-import * as stream from "@prague/stream";
+import * as ink from "@prague/ink";
 import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
@@ -54,8 +54,8 @@ function padRight(current: number, next: number, padding: number) {
 export class DrawingContext {
     public canvas = document.createElement("canvas");
     private context: CanvasRenderingContext2D;
-    private lastOperation: stream.IStylusOperation = null;
-    private pen: stream.IPen;
+    private lastOperation: ink.IStylusOperation = null;
+    private pen: ink.IPen;
     private canvasOffset: ui.IPoint = { x: 0, y: 0 };
 
     public get offset(): ui.IPoint {
@@ -75,14 +75,14 @@ export class DrawingContext {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    public startNewStroke(pen: stream.IPen) {
+    public startNewStroke(pen: ink.IPen) {
         this.pen = pen;
         this.lastOperation = null;
     }
 
     // store instructions used to render itself? i.e. the total path? Or defer to someone else to actually
     // do the re-render with a context?
-    public drawStroke(current: stream.IStylusOperation, stroke: stream.IInkStroke) {
+    public drawStroke(current: ink.IStylusOperation, stroke: ink.IInkStroke) {
         assert(this.pen);
 
         const previous = this.lastOperation || current;
@@ -198,7 +198,7 @@ export abstract class Layer {
  * Used to render ink
  */
 export class InkLayer extends Layer {
-    constructor(size: ui.ISize, private model: stream.IStream) {
+    constructor(size: ui.ISize, private model: ink.IInk) {
         super(size);
 
         // Listen for updates and re-render
@@ -207,7 +207,7 @@ export class InkLayer extends Layer {
                 return;
             }
 
-            const operation = op.contents as stream.IInkOperation;
+            const operation = op.contents as ink.IInkOperation;
             if (operation.type === "clear") {
                 throw new Error("Clear not supported in OverlayCanvas");
             } else if (operation.type === "createStroke") {
@@ -227,7 +227,7 @@ export class InkLayer extends Layer {
         }
     }
 
-    public drawOperation(operation: stream.IInkOperation) {
+    public drawOperation(operation: ink.IInkOperation) {
         this.model.submitOperation(operation);
         if (operation.type === "clear") {
             throw new Error("Clear not supported in OverlayCanvas");
@@ -250,7 +250,7 @@ export class OverlayCanvas extends ui.Component {
     private inkEventsEnabled = false;
     private penHovering = false;
     private forceInk = false;
-    private activePen: stream.IPen = {
+    private activePen: ink.IPen = {
         color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
         thickness: 7,
     };
@@ -298,7 +298,7 @@ export class OverlayCanvas extends ui.Component {
     /**
      * Sets the current pen
      */
-    public setPen(pen: stream.IPen) {
+    public setPen(pen: ink.IPen) {
         this.activePen = { color: pen.color, thickness: pen.thickness };
     }
 
@@ -367,7 +367,7 @@ export class OverlayCanvas extends ui.Component {
             // Create a new layer if doesn't already exist
             if (!this.activeLayer) {
                 // Create a new layer at the position of the pointer down
-                const model = this.document.createStream();
+                const model = this.document.createInk();
                 this.activeLayer = new InkLayer({ width: 0, height: 0 }, model);
                 this.activeLayer.setPosition(translatedPoint);
                 this.addLayer(this.activeLayer);
@@ -378,11 +378,11 @@ export class OverlayCanvas extends ui.Component {
             this.activePointerId = evt.pointerId;
             this.element.setPointerCapture(this.activePointerId);
 
-            const createOp = stream.Stream.makeCreateStrokeOperation(this.activePen);
+            const createOp = ink.Ink.makeCreateStrokeOperation(this.activePen);
             this.currentStylusActionId = createOp.id;
             this.activeLayer.drawOperation(createOp);
 
-            const operation = stream.Stream.makeStylusOperation(
+            const operation = ink.Ink.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId,
@@ -397,7 +397,7 @@ export class OverlayCanvas extends ui.Component {
         if (evt.pointerId === this.activePointerId) {
             const translatedPoint = this.translatePoint(this.element, evt);
             this.pointsToRecognize.push(translatedPoint);
-            const operation = stream.Stream.makeStylusOperation(
+            const operation = ink.Ink.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);
@@ -415,7 +415,7 @@ export class OverlayCanvas extends ui.Component {
             this.pointsToRecognize.push(translatedPoint);
             evt.returnValue = false;
 
-            const operation = stream.Stream.makeStylusOperation(
+            const operation = ink.Ink.makeStylusOperation(
                 this.translateToLayer(translatedPoint, this.activeLayer),
                 evt.pressure,
                 this.currentStylusActionId);

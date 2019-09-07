@@ -15,13 +15,13 @@ import {
     IRuntimeFactory,
 } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
+import * as ink from "@prague/ink";
 import * as map from "@prague/map";
 import {
     IComponentContext,
     IComponentFactory,
 } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
-import * as stream from "@prague/stream";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -34,7 +34,7 @@ class Chaincode implements IComponentFactory {
         // Create channel factories
         const mapFactory = map.SharedMap.getFactory();
         const sharedStringFactory = sequence.SharedString.getFactory();
-        const streamFactory = stream.Stream.getFactory();
+        const inkFactory = ink.Ink.getFactory();
         const cellFactory = cell.SharedCell.getFactory();
         const objectSequenceFactory = sequence.SharedObjectSequence.getFactory();
         const numberSequenceFactory = sequence.SharedNumberSequence.getFactory();
@@ -48,7 +48,7 @@ class Chaincode implements IComponentFactory {
         const modules = new Map<string, any>();
         modules.set(mapFactory.type, mapFactory);
         modules.set(sharedStringFactory.type, sharedStringFactory);
-        modules.set(streamFactory.type, streamFactory);
+        modules.set(inkFactory.type, inkFactory);
         modules.set(cellFactory.type, cellFactory);
         modules.set(objectSequenceFactory.type, objectSequenceFactory);
         modules.set(numberSequenceFactory.type, numberSequenceFactory);

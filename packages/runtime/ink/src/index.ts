@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./streamFactory";
+export * from "./inkFactory";
 export * from "./interfaces";
-export * from "./stream";
+export * from "./ink";

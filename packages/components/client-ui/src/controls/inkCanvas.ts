@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as stream from "@prague/stream";
+import * as ink from "@prague/ink";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import { Image } from "./image";
 import { SegmentCircleInclusive } from "./overlayCanvas";
-import { IShape } from "./shapes/index";
 import { Video } from "./video";
 
 interface IPtrEvtPoint {
@@ -40,11 +39,11 @@ export class InkCanvas extends ui.Component {
     private penID: number = -1;
     private canvasWrapper: HTMLElement;
     private currentStrokeId: string;
-    private currentPen: stream.IPen;
+    private currentPen: ink.IPen;
     private lastStrokeRenderOp: { [key: string]: number } = {};
 
     // constructor
-    constructor(element: HTMLDivElement, private model: stream.IStream, private image?: CanvasImageSource) {
+    constructor(element: HTMLDivElement, private model: ink.IInk, private image?: CanvasImageSource) {
         super(element);
 
         this.model.on("op", (op) => {
@@ -85,7 +84,7 @@ export class InkCanvas extends ui.Component {
         this.element.style.pointerEvents = enable ? "auto" : "none";
     }
 
-    public setPenColor(color: stream.IColor) {
+    public setPenColor(color: ink.IColor) {
         this.currentPen.color = color;
     }
 
@@ -112,7 +111,7 @@ export class InkCanvas extends ui.Component {
     }
 
     public clear() {
-        const operation = stream.Stream.makeClearOperation();
+        const operation = ink.Ink.makeClearOperation();
         this.submitAndApplyOp(operation, true);
     }
 
@@ -132,7 +131,7 @@ export class InkCanvas extends ui.Component {
     private handlePointerDown(evt: PointerEvent) {
         if ((evt.pointerType === "pen") || ((evt.pointerType === "mouse") && (evt.button === 0))) {
             // Create a new stroke
-            const createOp = stream.Stream.makeCreateStrokeOperation(this.currentPen);
+            const createOp = ink.Ink.makeCreateStrokeOperation(this.currentPen);
             this.currentStrokeId = createOp.id;
             this.submitAndApplyOp(createOp, true);
 
@@ -172,7 +171,7 @@ export class InkCanvas extends ui.Component {
 
     private appendPointerEventToCurrentStroke(evt: PointerEvent) {
         const pt = new EventPoint(this.canvas, evt);
-        const operation = stream.Stream.makeStylusOperation(
+        const operation = ink.Ink.makeStylusOperation(
             pt.rawPosition,
             evt.pressure,
             this.currentStrokeId,
@@ -180,7 +179,7 @@ export class InkCanvas extends ui.Component {
         this.submitAndApplyOp(operation, true);
     }
 
-    private animateStroke(stroke: stream.IInkStroke, operationIndex: number, startTime: number) {
+    private animateStroke(stroke: ink.IInkStroke, operationIndex: number, startTime: number) {
         if (operationIndex >= stroke.operations.length) {
             return;
         }
@@ -223,9 +222,9 @@ export class InkCanvas extends ui.Component {
     }
 
     private drawStroke(
-        stroke: stream.IInkStroke,
-        current: stream.IStylusOperation,
-        previous: stream.IStylusOperation,
+        stroke: ink.IInkStroke,
+        current: ink.IStylusOperation,
+        previous: ink.IStylusOperation,
     ) {
         const pen = stroke.pen;
         const shapes = getShapes(previous, current, pen, SegmentCircleInclusive.End);
@@ -241,7 +240,7 @@ export class InkCanvas extends ui.Component {
         }
     }
 
-    private submitAndApplyOp(operation: stream.IInkOperation, submit: boolean) {
+    private submitAndApplyOp(operation: ink.IInkOperation, submit: boolean) {
         if (submit) {
             this.model.submitOperation(operation);
         }
@@ -258,7 +257,7 @@ export class InkCanvas extends ui.Component {
         this.lastStrokeRenderOp = {};
     }
 
-    private handleStylusOp(operation: stream.IStylusOperation) {
+    private handleStylusOp(operation: ink.IStylusOperation) {
         // Render the dirty stroke
         const dirtyStrokeId = operation.id;
         let index = this.lastStrokeRenderOp[dirtyStrokeId] ? this.lastStrokeRenderOp[dirtyStrokeId] : 0;

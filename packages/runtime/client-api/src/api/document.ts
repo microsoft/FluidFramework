@@ -12,6 +12,7 @@ import {
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IContainerRuntimeOptions } from "@prague/container-runtime";
+import * as ink from "@prague/ink";
 import { ISharedMap, SharedMap } from "@prague/map";
 import {
     IDocumentMessage,
@@ -22,7 +23,6 @@ import {
 import { IComponentContext } from "@prague/runtime-definitions";
 import * as sequence from "@prague/sequence";
 import { ISharedObject } from "@prague/shared-object-common";
-import * as stream from "@prague/stream";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";
@@ -160,8 +160,8 @@ export class Document extends EventEmitter {
     /**
      * Creates a new ink shared object
      */
-    public createStream(): stream.IStream {
-        return stream.Stream.create(this.runtime);
+    public createInk(): ink.IInk {
+        return ink.Ink.create(this.runtime);
     }
 
     /**

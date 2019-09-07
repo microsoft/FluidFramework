@@ -3,6 +3,7 @@
 - [`@prague/tiny-web-host` prague -> fluid changes](#praguetiny-web-host-prague---fluid-changes)
 - [prague URIs changed to fluid](#prague-URIs-changed-to-fluid)
 - [DistributedSet removed](#distributedset-removed)
+- [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
@@ -12,6 +13,9 @@
 
 ## DistributedSet removed
 The DistributedSet value type has been removed.
+
+## `Stream` renamed to `Ink`
+The `Stream` data structure (and associated interfaces and classes like `IStream`, `StreamFactory`, etc.) have been renamed to `Ink` (`IInk`, `InkFactory`, etc.).  They are available in `@prague/ink`.
 
 # 0.9 Breaking Changes (August 26, 2019)
 

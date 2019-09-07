@@ -14,6 +14,7 @@ import {
     IRequest,
     IResponse } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
+import { IInk, Ink } from "@prague/ink";
 import { TextAnalyzer } from "@prague/intelligence-runner";
 import * as DistributedMap from "@prague/map";
 import {
@@ -33,7 +34,6 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@prague/sequence";
-import { IStream, Stream } from "@prague/stream";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires
@@ -166,7 +166,7 @@ export class SharedTextRunner
 
             const flowContainerMap = this.collabDoc.createMap();
             flowContainerMap.set("overlayInk", this.collabDoc.createMap().handle);
-            flowContainerMap.set("pageInk", Stream.create(this.runtime).handle);
+            flowContainerMap.set("pageInk", Ink.create(this.runtime).handle);
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
@@ -228,7 +228,7 @@ export class SharedTextRunner
             .get<DistributedMap.ISharedMap>();
         const [overlayInkMap, pageInk] = await Promise.all([
             overlayMap.get<IComponentHandle>("overlayInk").get<ISharedMap>(),
-            overlayMap.get<IComponentHandle>("pageInk").get<IStream>(),
+            overlayMap.get<IComponentHandle>("pageInk").get<IInk>(),
         ]);
 
         const containerDiv = document.createElement("div");
@@ -296,14 +296,14 @@ export function instantiateComponent(context: IComponentContext): void {
     // Create channel factories
     const mapFactory = SharedMap.getFactory();
     const sharedStringFactory = SharedString.getFactory();
-    const streamFactory = Stream.getFactory();
+    const inkFactory = Ink.getFactory();
     const cellFactory = SharedCell.getFactory();
     const objectSequenceFactory = SharedObjectSequence.getFactory();
     const numberSequenceFactory = SharedNumberSequence.getFactory();
 
     modules.set(mapFactory.type, mapFactory);
     modules.set(sharedStringFactory.type, sharedStringFactory);
-    modules.set(streamFactory.type, streamFactory);
+    modules.set(inkFactory.type, inkFactory);
     modules.set(cellFactory.type, cellFactory);
     modules.set(objectSequenceFactory.type, objectSequenceFactory);
     modules.set(numberSequenceFactory.type, numberSequenceFactory);

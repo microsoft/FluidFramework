@@ -11,9 +11,9 @@ import {
     IComponentHTMLView,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
+import { IInk, Ink } from "@prague/ink";
 import { ISharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
-import { IStream, Stream } from "@prague/stream";
 import "./style.less";
 
 // tslint:disable:no-console
@@ -24,7 +24,7 @@ class CanvasView implements IComponentHTMLView {
     public static create(
         runtime: IComponentRuntime,
         root: ISharedMap,
-        ink: IStream,
+        ink: IInk,
     ): CanvasView {
         const browserHost = new ui.BrowserContainerHost();
         const canvas = new controls.FlexView(
@@ -49,20 +49,20 @@ class CanvasView implements IComponentHTMLView {
 export class Canvas extends PrimedComponent implements IComponentHTMLVisual {
     public get IComponentHTMLVisual() { return this; }
 
-    private ink: IStream;
+    private ink: IInk;
 
     public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
         CanvasView.create(this.runtime, this.root, this.ink).render(elm, options);
     }
 
     protected async componentInitializingFirstTime() {
-        this.root.set("pageInk", Stream.create(this.runtime).handle);
+        this.root.set("pageInk", Ink.create(this.runtime).handle);
     }
 
     protected async componentHasInitialized() {
         // Wait here for the ink - otherwise flexView will try to root.get it before it exists if there hasn't been
         // a summary op yet.  Probably flexView should wait instead.
         const handle = await this.root.wait<IComponentHandle>("pageInk");
-        this.ink = await handle.get<IStream>();
+        this.ink = await handle.get<IInk>();
     }
 }

@@ -5,37 +5,37 @@
 
 import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
 import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+import { Ink } from "./ink";
 import { pkgVersion } from "./packageVersion";
-import { Stream } from "./stream";
 
 /**
- * Factory for Streams.
+ * Factory for Ink.
  */
-export class StreamFactory implements ISharedObjectFactory {
+export class InkFactory implements ISharedObjectFactory {
     /**
      * Static type identifier.
      */
-    public static Type = "https://graph.microsoft.com/types/stream";
+    public static Type = "https://graph.microsoft.com/types/ink";
 
     public static Attributes: IChannelAttributes = {
-        type: StreamFactory.Type,
+        type: InkFactory.Type,
         snapshotFormatVersion: "0.2",
         packageVersion: pkgVersion,
     };
 
     public get type() {
-        return StreamFactory.Type;
+        return InkFactory.Type;
     }
 
     public get attributes() {
-        return StreamFactory.Attributes;
+        return InkFactory.Attributes;
     }
 
     /**
-     * Creates a new Stream object and loads it with data from the given services.
+     * Creates a new Ink object and loads it with data from the given services.
      *
-     * @param runtime - The ComponentRuntime that this stream will be associated with
-     * @param id - Unique ID for the new stream
+     * @param runtime - The ComponentRuntime that this ink will be associated with
+     * @param id - Unique ID for the new ink
      * @param services - Services with the object storage to load from
      * @param branchId - branch ID (not used)
      */
@@ -45,22 +45,22 @@ export class StreamFactory implements ISharedObjectFactory {
         services: ISharedObjectServices,
         branchId: string): Promise<ISharedObject> {
 
-        const stream = new Stream(runtime, id);
-        await stream.load(branchId, services);
+        const ink = new Ink(runtime, id);
+        await ink.load(branchId, services);
 
-        return stream;
+        return ink;
     }
 
     /**
-     * Creates a new empty Stream object.
+     * Creates a new empty Ink object.
      *
-     * @param runtime - The ComponentRuntime that this stream will be associated with
-     * @param id - Unique ID for the new stream
+     * @param runtime - The ComponentRuntime that this ink will be associated with
+     * @param id - Unique ID for the new ink
      */
     public create(runtime: IComponentRuntime, id: string): ISharedObject {
-        const stream = new Stream(runtime, id);
-        stream.initializeLocal();
+        const ink = new Ink(runtime, id);
+        ink.initializeLocal();
 
-        return stream;
+        return ink;
     }
 }

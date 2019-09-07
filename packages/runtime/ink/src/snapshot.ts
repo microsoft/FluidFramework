@@ -10,7 +10,7 @@ import {
 /**
  * Ink snapshot interface.
  */
-export interface IInkSnapshot {
+export interface ISerializableInk {
     /**
      * Collection of the strokes in this snapshot.
      */
@@ -18,7 +18,7 @@ export interface IInkSnapshot {
 
     /**
      * Stores a mapping from the provided key to its index in strokes. Since
-     * IInkSnapshot is serialized we need to use an index.
+     * ISerializableInk is serialized we need to use an index.
      */
     strokeIndex: { [key: string]: number };
 }
@@ -26,7 +26,7 @@ export interface IInkSnapshot {
 /**
  * Maintains a live record of the data that can be used for snapshotting.
  */
-export class InkSnapshot {
+export class InkData {
     private strokes: IInkStroke[];
     private strokeIndex: { [key: string]: number };
 
@@ -34,7 +34,7 @@ export class InkSnapshot {
      * Construct a new snapshot.
      * @param snapshot - Existing snapshot to be cloned
      */
-    constructor(snapshot?: IInkSnapshot) {
+    constructor(snapshot?: ISerializableInk) {
         this.strokes = snapshot ? snapshot.strokes : [];
         this.strokeIndex = snapshot ? snapshot.strokeIndex : {};
     }
@@ -66,5 +66,12 @@ export class InkSnapshot {
     public addStroke(stroke: IInkStroke) {
         this.strokes.push(stroke);
         this.strokeIndex[stroke.id] = this.strokes.length - 1;
+    }
+
+    public getSerializable(): ISerializableInk {
+        return {
+            strokes: this.strokes,
+            strokeIndex: this.strokeIndex,
+        };
     }
 }

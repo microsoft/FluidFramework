@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { Stream } from "@prague/stream";
+import { Ink } from "@prague/ink";
 import { Canvas } from "./canvas";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
@@ -14,7 +14,7 @@ export const CanvasName = pkg.name as string;
 export const CanvasInstantiationFactory = new PrimedComponentFactory(
     Canvas,
     [
-        Stream.getFactory(),
+        Ink.getFactory(),
     ],
   );
 

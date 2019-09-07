@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPen, IStylusOperation } from "@prague/stream";
+import { IPen, IStylusOperation } from "@prague/ink";
 import { IPoint, IVector, Point, Vector } from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";
