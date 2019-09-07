@@ -4,12 +4,23 @@
  */
 
 // tslint:disable no-var-requires no-unsafe-any non-literal-fs-path
+import * as express from "express";
 import * as fs from "fs";
 import * as moniker from "moniker";
 import * as path from "path";
+import WebpackDevServer from "webpack-dev-server";
 
-export const before = (app, server, baseDir, env) => {
-    let options;
+export interface IRouteOptions {
+    local?: boolean;
+    live?: boolean;
+    fluidHost?: string;
+    tenantId?: string;
+    tenantSecret?: string;
+    component?: string;
+}
+
+export const before = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
+    let options: IRouteOptions;
     if (!env) {
         options = { local: false };
     } else if (env.fluidHost && !(env.tenantId && env.tenantSecret)) {
@@ -25,7 +36,7 @@ export const before = (app, server, baseDir, env) => {
     app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => fluid(req, res, baseDir, options));
 };
 
-const fluid = (req, res, baseDir, options) => {
+const fluid = (req: express.Request, res: express.Response,  baseDir: string, options: IRouteOptions) => {
     const rawPath = req.params[0];
     const slash = rawPath.indexOf("/");
     const documentId = rawPath.substring(
@@ -95,7 +106,7 @@ const fluid = (req, res, baseDir, options) => {
     res.end(html);
 };
 
-const loader = (req, res, baseDir) => {
+const loader = (req: express.Request, res: express.Response,  baseDir: string) => {
     res.setHeader("Content-Type", "application/javascript");
 
     fs.createReadStream(
