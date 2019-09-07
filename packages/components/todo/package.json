@@ -14,13 +14,14 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
-    "start": "prague-dev-server --config webpack.config.js --live --package package.json",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\""
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "prague": {
     "browser": {
@@ -56,8 +57,8 @@
     "react-list": "^0.8.11"
   },
   "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
     "@types/react-dom": "^16.0.11",
@@ -68,6 +69,7 @@
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "~3.8.0",
     "webpack-merge": "^4.1.2"
   }
 }
