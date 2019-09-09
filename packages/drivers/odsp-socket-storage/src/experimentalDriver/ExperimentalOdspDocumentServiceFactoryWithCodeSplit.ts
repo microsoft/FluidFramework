@@ -3,27 +3,19 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
-import * as resources from "@prague/gitresources";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
-import { ISequencedDeltaOpMessage } from "../contracts";
 import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { IOdspResolvedUrl } from "./contracts";
 import { ExperimentalOdspDocumentService } from "./ExperimentalOdspDocumentService";
 
-// tslint:disable-next-line: interface-name
-export interface IOdspSnapshot {
-  id: string;
-  sha: string;
-  trees: resources.ITree[];
-  blobs: resources.IBlob[];
-  ops: ISequencedDeltaOpMessage[];
-}
-
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
+ *
+ * This constructor should be used by environments that support dynamic imports and that wish
+ * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class ExperimentalOdspDocumentServiceFactory implements IDocumentServiceFactory {
+export class ExperimentalOdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -56,7 +48,7 @@ export class ExperimentalOdspDocumentServiceFactory implements IDocumentServiceF
       this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
-      Promise.resolve(io),
+      import("socket.io-client"),
     );
   }
 }

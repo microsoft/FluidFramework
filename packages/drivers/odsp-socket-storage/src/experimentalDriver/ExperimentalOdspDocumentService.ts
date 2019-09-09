@@ -14,7 +14,6 @@ import {
   IErrorTrackingService,
 } from "@prague/protocol-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
-import * as io from "socket.io-client";
 import { IFetchWrapper } from "../fetchWrapper";
 import { DocumentDeltaStorageService, OdspDeltaStorageService } from "../OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "../OdspDocumentStorageManager";
@@ -53,6 +52,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
    * @param logger - a logger that can capture performance and diagnostic information
    * @param storageFetchWrapper - if not provided FetchWrapper will be used
    * @param deltasFetchWrapper - if not provided FetchWrapper will be used
+   * @param socketIOClientP - promise to the socket io library required by the driver
    */
   constructor(
     private readonly appId: string,
@@ -66,6 +66,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
     private readonly logger: ITelemetryBaseLogger,
     private readonly storageFetchWrapper: IFetchWrapper,
     private readonly deltasFetchWrapper: IFetchWrapper,
+    private readonly socketIOClientP: Promise<SocketIOClientStatic>,
   ) {
     this.websocketEndpointRequestThrottler = new SinglePromise(() =>
       getSocketStorageDiscovery(
@@ -149,12 +150,12 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
     }
     this.attemptedDeltaStreamConnection = true;
 
-    const websocketEndpoint = await this.websocketEndpointP;
+    const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
     return DocumentDeltaConnection.create(
       websocketEndpoint.tenantId,
       websocketEndpoint.id,
-      await this.getWebsocketToken(),
+      webSocketToken,
       io,
       client,
       websocketEndpoint.deltaStreamSocketUrl,
