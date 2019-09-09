@@ -232,6 +232,10 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         return;
     }
 
+    public reloadContext() {
+        this.container.reloadContext();
+    }
+
     private async load() {
         this.runtime = await this.chaincode.instantiateRuntime(this);
     }

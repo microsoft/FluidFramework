@@ -320,6 +320,40 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
+    public reloadContext(): void {
+        // pause inbound synchronously
+        this.deltaManager!.inbound.systemPause();
+        this.deltaManager!.inboundSignal.systemPause();
+
+        this.reloadContextCore().then(() => {
+            this.deltaManager!.inbound.systemResume();
+            this.deltaManager!.inboundSignal.systemResume();
+        });
+    }
+
+    private async reloadContextCore(): Promise<void> {
+        const previousContextState = await this.context!.stop();
+
+        let snapshot: ISnapshotTree | undefined;
+        const blobs = new Map();
+        if (previousContextState) {
+            const flattened = flatten(previousContextState.entries, blobs);
+            snapshot = buildHierarchy(flattened);
+        }
+
+        const storage = blobs.size > 0
+            ? new BlobCacheStorageService(this.storageService!, blobs)
+            : this.storageService!;
+
+        const attributes: IDocumentAttributes = {
+            branch: this.id,
+            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
+            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
+        };
+
+        await this.loadContext(attributes, storage, snapshot);
+    }
+
     private async snapshotCore(tagMessage: string, generateFullTreeNoOptimizations?: boolean) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
@@ -443,24 +477,12 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             return this.storageService;
         });
 
-        // Get the snapshot tree
-        const treeP = storageP.then(async (storage) => {
-            // If a version is specified we will load it directly - otherwise will query historian for the latest
-            // version and then load it
-            if (specifiedVersion !== null) {
-                const versionId = specifiedVersion ? specifiedVersion : this.id;
-                const versions = await this.getVersion(versionId);
-                const version = versions.length > 0 ? versions[0] : null;
-                if (version !== null) {
-                    return storage.getSnapshotTree(version);
-                }
-            }
-            return null; // not using snapshots!
-        });
+        // fetch specified snapshot
+        const treeP = storageP.then(() => this.fetchSnapshotTree(specifiedVersion));
 
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
-                if (tree === null) {
+                if (!tree) {
                     return {
                         branch: this.id,
                         minimumSequenceNumber: 0,
@@ -485,9 +507,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 return this.initializeProtocolState(attributes, storage, tree!);
             });
 
-        // ...instantiate the chaincode defined on the document
-        const chaincodeP = protocolHandlerP.then((protocolHandler) => this.loadCodeFromQuorum(protocolHandler.quorum));
-
         const blobManagerP = Promise.all([storageP, treeP]).then(
             ([storage, tree]) => this.loadBlobManager(storage, tree!));
 
@@ -499,20 +518,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 attributesP,
                 blobManagerP,
                 protocolHandlerP,
-                chaincodeP,
                 connectResult.handlerAttachedP,
             ])
             .then(async ([
-                storageService,
+                storage,
                 tree,
                 attributes,
                 blobManager,
-                protocolHandler,
-                chaincode]) => {
+                protocolHandler]) => {
 
                 this.protocolHandler = protocolHandler;
                 this.blobManager = blobManager;
-                this.pkg = chaincode.pkg;
 
                 perfEvent.reportProgress({ stage: "BeforeContextLoad" });
 
@@ -530,29 +546,9 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     perfEvent.reportProgress({ stage: "AfterSocketConnect" });
                 }
 
-                // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-                // are set. Global requests will still go to this loader
-                const loader = new RelativeLoader(this.loader, this.originalRequest);
-                this.context = await ContainerContext.load(
-                    this,
-                    this.scope,
-                    this.codeLoader,
-                    chaincode.chaincode,
-                    tree!,
-                    attributes,
-                    this.blobManager,
-                    this._deltaManager!,
-                    new QuorumProxy(this.protocolHandler!.quorum),
-                    loader,
-                    storageService,
-                    (err) => this.emit("error", err),
-                    (type, contents, batch, metadata) => this.submitMessage(type, contents, batch, metadata),
-                    (message) => this.submitSignal(message),
-                    (message) => this.snapshot(message),
-                    () => this.close(),
-                    Container.version);
+                await this.loadContext(attributes, storage, tree);
+
                 this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
-                loader.resolveContainer(this);
 
                 if (connect) {
                     assert(this._deltaManager, "DeltaManager should have been created during connect call");
@@ -639,18 +635,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
                     debug(`loadCode ${JSON.stringify(value)}`);
 
-                    // Stop processing inbound messages/signals as we transition to the new code
-                    this.deltaManager!.inbound.systemPause();
-                    this.deltaManager!.inboundSignal.systemPause();
-                    this.transitionRuntime(value as string).then(
-                        () => {
-                            // Resume once transition is complete
-                            this.deltaManager!.inbound.systemResume();
-                            this.deltaManager!.inboundSignal.systemResume();
-                        },
-                        (error) => {
-                            this.emit("error", error);
-                        });
+                    if (value === this.pkg) {
+                        return;
+                    }
+
+                    this.reloadContext();
                 }
             });
 
@@ -668,62 +657,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         blobManager.loadBlobMetadata(blobs);
 
         return blobManager;
-    }
-
-    private async transitionRuntime(pkg: string | IFluidCodeDetails): Promise<void> {
-        // The below debug ruins the chrome debugging session
-        // Tracked (https://bugs.chromium.org/p/chromium/issues/detail?id=659515)
-        // tslint:disable-next-line: prefer-template restrict-plus-operands
-        debug("Transitioning runtime from " + this.pkg + " to " + pkg);
-        // No need to transition if package stayed the same
-        if (pkg === this.pkg) {
-            return;
-        }
-
-        // Load in the new host code and initialize the platform
-        const chaincode = await this.loadCode(pkg);
-
-        const previousContextState = await this.context!.stop();
-        let snapshotTree: ISnapshotTree | null;
-        const blobs = new Map();
-        if (previousContextState) {
-            const flattened = flatten(previousContextState.entries, blobs);
-            snapshotTree = buildHierarchy(flattened);
-        } else {
-            snapshotTree = { id: null, blobs: {}, commits: {}, trees: {} };
-        }
-
-        const attributes: IDocumentAttributes = {
-            branch: this.id,
-            minimumSequenceNumber: this._deltaManager!.minimumSequenceNumber,
-            sequenceNumber: this._deltaManager!.referenceSequenceNumber,
-        };
-        const documentStorageService = blobs.size > 0
-            ? new BlobCacheStorageService(this.storageService!, blobs) : this.storageService;
-        const loader = new RelativeLoader(this.loader, this.originalRequest);
-        const newContext = await ContainerContext.load(
-            this,
-            this.scope,
-            this.codeLoader,
-            chaincode,
-            snapshotTree,
-            attributes,
-            this.blobManager,
-            this._deltaManager!,
-            new QuorumProxy(this.protocolHandler!.quorum),
-            loader,
-            documentStorageService,
-            (err) => this.emit("error", err),
-            (type, contents) => this.submitMessage(type, contents),
-            (message) => this.submitSignal(message),
-            (message) => this.snapshot(message),
-            () => this.close(),
-            Container.version);
-        this.context = newContext;
-        loader.resolveContainer(this);
-
-        this.pkg = pkg;
-        this.emit("contextChanged", this.pkg);
     }
 
     private async loadCodeFromQuorum(
@@ -1000,5 +933,58 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private getScopes(options: any): string[] {
         return options && options.tokens && options.tokens.jwt ?
             (jwtDecode(options.tokens.jwt) as ITokenClaims).scopes : [];
+    }
+    // tslint:enable no-unsafe-any
+
+    private async fetchSnapshotTree(specifiedVersion: string | null | undefined): Promise<ISnapshotTree | undefined> {
+        if (specifiedVersion === null) {
+            // intentionally do not load from snapshot
+            return undefined;
+        }
+
+        const versions = await this.getVersion(specifiedVersion || this.id);
+
+        // we should have a non-null version to load from if specified version requested
+        if (specifiedVersion && !versions) {
+            throw new Error("No version found from storage, but version was specified.");
+        }
+
+        return await this.storageService!.getSnapshotTree(versions[0]) || undefined;
+    }
+
+    private async loadContext(
+        attributes: IDocumentAttributes,
+        storage: IDocumentStorageService,
+        snapshot?: ISnapshotTree,
+    ) {
+        const chaincode = await this.loadCodeFromQuorum(this.protocolHandler!.quorum);
+        this.pkg = chaincode.pkg;
+
+        // The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+        // are set. Global requests will still go to this loader
+        const loader = new RelativeLoader(this.loader, this.originalRequest);
+
+        this.context = await ContainerContext.load(
+            this,
+            this.scope,
+            this.codeLoader,
+            chaincode.chaincode,
+            snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
+            attributes,
+            this.blobManager,
+            this._deltaManager!,
+            new QuorumProxy(this.protocolHandler!.quorum),
+            loader,
+            storage,
+            (err) => this.emit("error", err),
+            (type, contents) => this.submitMessage(type, contents),
+            (message) => this.submitSignal(message),
+            (message) => this.snapshot(message),
+            () => this.close(),
+            Container.version,
+        );
+
+        loader.resolveContainer(this);
+        this.emit("contextChanged", this.pkg);
     }
 }
