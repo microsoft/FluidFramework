@@ -855,15 +855,24 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     public orderSequentially(callback: () => void): void {
-        const savedFlushMode = this.flushMode;
-
-        this.setFlushMode(FlushMode.Manual);
-
-        try {
+        // If flush mode is already manual we are either
+        // nested in another orderSequentially, or
+        // the app is flushing manually, in which
+        // case this invokation doesn't own
+        // flushing.
+        if (this.flushMode === FlushMode.Manual) {
             callback();
-        } finally {
-            this.flush();
-            this.setFlushMode(savedFlushMode);
+        } else {
+            const savedFlushMode = this.flushMode;
+
+            this.setFlushMode(FlushMode.Manual);
+
+            try {
+                callback();
+            } finally {
+                this.flush();
+                this.setFlushMode(savedFlushMode);
+            }
         }
     }
 
