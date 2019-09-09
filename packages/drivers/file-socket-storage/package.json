@@ -24,7 +24,8 @@
     "@prague/replay-socket-storage": "^0.10.0",
     "@prague/socket-storage-shared": "^0.10.0",
     "@prague/utils": "^0.10.0",
-    "debug": "^4.1.1"
+    "debug": "^4.1.1",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
