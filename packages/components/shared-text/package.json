@@ -102,7 +102,7 @@
     "webpack": "^4.8.2",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.14",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   },

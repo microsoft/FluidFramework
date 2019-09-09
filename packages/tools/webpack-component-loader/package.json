@@ -32,7 +32,7 @@
     "moniker": "^0.1.2",
     "uuid": "^3.3.2",
     "express": "^4.16.3",
-    "webpack-dev-server": "^3.1.14"
+    "webpack-dev-server": "^3.8.0"
   },
   "devDependencies": {
     "@prague/build-common": "^0.10.0",

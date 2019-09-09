@@ -55,7 +55,6 @@
   "dependencies": {
     "@chaincode/progress-bars": "^0.10.0",
     "@chaincode/search-menu": "^0.10.0",
-    "@prague/app-ui": "^0.10.0",
     "@prague/cell": "^0.10.0",
     "@prague/client-api": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",

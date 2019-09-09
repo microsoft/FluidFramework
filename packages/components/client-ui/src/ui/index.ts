@@ -5,6 +5,5 @@
 
 export * from "./browserContainerHost";
 export * from "./component";
-export * from "./flowViewContext";
 export * from "./geometry";
 export * from "./utils";
