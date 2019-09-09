@@ -16,8 +16,8 @@
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --component --live",
-    "start:local": "prague-dev-server --config webpack.config.js --package package.json --component",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.component",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local --env.component",
     "webpack": "webpack --config webpack.config.js"
   },
   "dependencies": {
@@ -41,8 +41,8 @@
     "leaflet": "^1.3.4"
   },
   "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",
@@ -57,6 +57,7 @@
     "url-loader": "^1.1.1",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "~3.8.0",
     "webpack-serve": "^2.0.2"
   },
   "fluid": {

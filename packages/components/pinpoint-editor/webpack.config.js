@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require('path');
 // var Visualizer = require('webpack-visualizer-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-module.exports = {
+module.exports = env => ({
     entry: {
         main: './src/index.ts'
     },
@@ -63,7 +64,8 @@ module.exports = {
         libraryTarget: "umd"
     },
     devServer: {
-        publicPath: '/dist'
+        publicPath: '/dist',
+        before: (app, server) => fluidRoute.before(app, server, __dirname, env),
     },
     plugins: [
         // new BundleAnalyzerPlugin(),
@@ -71,4 +73,4 @@ module.exports = {
         //     filename: './statistics.html'
         // })
     ],
-};
+});

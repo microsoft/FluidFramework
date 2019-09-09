@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 const pkg = require("./package.json");
@@ -17,7 +18,7 @@ const useCssModules = [
 ];
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
         : "[name]-[local]-[hash:base64:5]"
@@ -113,6 +114,7 @@ module.exports = env => {
         },
         devServer: {
             contentBase: [path.resolve(__dirname, 'assets')],
+            before: (app, server) => fluidRoute.before(app, server, __dirname, env),
         }
     }, isProduction
         ? require("./webpack.prod")

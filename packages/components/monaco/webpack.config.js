@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require('path');
-const webpack = require('webpack');
 const merge = require('webpack-merge');
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
     return merge({
         entry: {
             main: './src/index.ts'
@@ -82,7 +82,8 @@ module.exports = env => {
             globalObject: 'self',
         },
         devServer: {
-            host: "0.0.0.0"
+            host: "0.0.0.0",
+            before: (app, server) => fluidRoute.before(app, server, __dirname, env),
         },
         plugins: [
             // new MonacoWebpackPlugin()
