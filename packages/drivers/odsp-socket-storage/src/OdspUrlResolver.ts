@@ -4,36 +4,97 @@
  */
 
 import { IRequest } from "@prague/component-core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@prague/protocol-definitions";
-import { ISocketStorageDiscovery } from "./contracts";
+import { IResolvedUrl, IUrlResolver } from "@prague/protocol-definitions";
+import * as sha from "sha.js";
+import { IOdspResolvedUrl } from "./contracts";
+
+function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string) {
+  const siteOrigin = new URL(siteUrl).origin;
+  return `${siteOrigin}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
+}
+
+/**
+ * Encodes SPO information into a URL format that can be handled by the Loader
+ * @param siteUrl - The site where the container is hosted
+ * @param driveId - The id of the drive with the container
+ * @param itemId - The id of the container
+ * @param path - A path that corresponds to a request that will be handled by the container
+ */
+export function createOdspUrl(siteUrl: string, driveId: string, itemId: string, path: string): string {
+  return `${siteUrl}?driveId=${encodeURIComponent(driveId)}&itemId=${encodeURIComponent(
+    itemId,
+  )}&path=${encodeURIComponent(path)}`;
+}
+
+/**
+ * Utility that enables us to handle paths provided with a beginning slash.
+ * For example if a value of '/id1/id2' is provided, id1/id2 is returned.
+ */
+function removeBeginningSlash(str: string): string {
+  if (str[0] === "/") {
+    return str.substr(1);
+  }
+
+  return str;
+}
 
 export class OdspUrlResolver implements IUrlResolver {
-    constructor(private readonly storageDiscoveryPromise: Promise<ISocketStorageDiscovery>) { }
+  constructor() { }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        // TODO: no need to resolve the request against SPO now. We already have SPO info from Purple app. In theory, this resolve would take an SPO typical doc url and perform the SPO joinSession steps to retrieve all this info.
-        console.log(`resolving url=${JSON.stringify(request)}`);
-        const fluidSocketStorageDiscovery = await this.storageDiscoveryPromise;
-        const documentUrl =
-            `fluid-odsp://${new URL(fluidSocketStorageDiscovery.deltaStorageUrl).host}` +
-            `/${encodeURIComponent(fluidSocketStorageDiscovery.tenantId)}` +
-            `/${encodeURIComponent(fluidSocketStorageDiscovery.id)}`;
+  public async resolve(request: IRequest): Promise<IResolvedUrl> {
+    const { siteUrl, driveId, itemId, path } = this.decodeOdspUrl(request.url);
+    const hashedDocumentId = new sha.sha256().update(`${siteUrl}_${driveId}_${itemId}`).digest("hex");
 
-        // tslint:disable-next-line: no-unnecessary-local-variable
-        const response: IFluidResolvedUrl = {
-            endpoints: {
-                deltaStorageUrl: fluidSocketStorageDiscovery.deltaStorageUrl,
-                ordererUrl: fluidSocketStorageDiscovery.deltaStreamSocketUrl,
-                storageUrl: fluidSocketStorageDiscovery.snapshotStorageUrl,
-            },
-            tokens: {
-                socketToken: fluidSocketStorageDiscovery.socketToken,
-                storageToken: fluidSocketStorageDiscovery.storageToken,
-            },
-            type: "prague",
-            url: documentUrl,
-        };
+    let documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(path)}`;
 
-        return response;
+    if (request.url.length > 0) {
+      // In case of any additional parameters add them back to the url
+      const requestURL = new URL(request.url);
+      const searchParams = requestURL.search;
+      if (!!searchParams) {
+        documentUrl += searchParams;
+      }
     }
+    const response: IOdspResolvedUrl = {
+      endpoints: { snapshotStorageUrl: getSnapshotUrl(siteUrl, driveId, itemId) },
+      tokens: {},
+      type: "prague",
+      url: documentUrl,
+      hashedDocumentId,
+      siteUrl,
+      driveId,
+      itemId,
+    };
+
+    return response;
+  }
+
+  private decodeOdspUrl(url: string): { siteUrl: string; driveId: string; itemId: string; path: string } {
+    const [siteUrl, queryString] = url.split("?");
+
+    const searchParams = new URLSearchParams(queryString);
+
+    const driveId = searchParams.get("driveId");
+    const itemId = searchParams.get("itemId");
+    const path = searchParams.get("path");
+
+    if (driveId === null) {
+      throw new Error("ODSP URL did not contain a drive id");
+    }
+
+    if (itemId === null) {
+      throw new Error("ODSP Url did not contain an item id");
+    }
+
+    if (path === null) {
+      throw new Error("ODSP Url did not contain a path");
+    }
+
+    return {
+      siteUrl,
+      driveId: decodeURIComponent(driveId),
+      itemId: decodeURIComponent(itemId),
+      path: decodeURIComponent(path),
+    };
+  }
 }

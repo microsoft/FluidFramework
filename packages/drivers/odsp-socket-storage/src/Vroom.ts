@@ -85,7 +85,6 @@ export async function getSocketStorageDiscovery(
   itemId: string,
   siteUrl: string,
   logger: ITelemetryBaseLogger,
-  isPushAuthV2: boolean,
   getVroomToken: (siteUrl: string) => Promise<string | undefined | null>,
   getPushToken: () => Promise<string | undefined | null>,
 ): Promise<ISocketStorageDiscovery> {
@@ -97,7 +96,7 @@ export async function getSocketStorageDiscovery(
     tick: joinSessionStartTime,
   });
 
-  const pushTokenPromise = isPushAuthV2 ? getPushToken() : Promise.resolve(undefined);
+  const pushTokenPromise = getPushToken();
 
   const joinSessionPromise = fetchOpStream(
     appId,
@@ -117,7 +116,7 @@ export async function getSocketStorageDiscovery(
 
   const [pushToken, joinSessionResponse] = await Promise.all([pushTokenPromise, joinSessionPromise]);
 
-  if (isPushAuthV2 && !pushToken) {
+  if (!pushToken) {
     throw new Error("Failed to acquire Push token");
   }
 
@@ -131,10 +130,8 @@ export async function getSocketStorageDiscovery(
   }
 
   const socketStorageDiscovery = responseJson as ISocketStorageDiscovery;
-  if (isPushAuthV2) {
-    // tslint:disable-next-line: no-non-null-assertion
-    socketStorageDiscovery.socketToken = pushToken!;
-  }
+  // tslint:disable-next-line: no-non-null-assertion
+  socketStorageDiscovery.socketToken = pushToken!;
 
   const joinSessionEndTime = performance.now();
   logger.send({

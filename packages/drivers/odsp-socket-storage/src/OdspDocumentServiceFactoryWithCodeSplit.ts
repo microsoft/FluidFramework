@@ -4,9 +4,9 @@
  */
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
-import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { IOdspResolvedUrl } from "./contracts";
-import { ExperimentalOdspDocumentService } from "./ExperimentalOdspDocumentService";
+import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
+import { OdspDocumentService } from "./OdspDocumentService";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -15,7 +15,7 @@ import { ExperimentalOdspDocumentService } from "./ExperimentalOdspDocumentServi
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
-export class ExperimentalOdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
@@ -36,7 +36,7 @@ export class ExperimentalOdspDocumentServiceFactoryWithCodeSplit implements IDoc
   ) {}
 
   public async createDocumentService(resolvedUrl: IOdspResolvedUrl): Promise<IDocumentService> {
-    return new ExperimentalOdspDocumentService(
+    return new OdspDocumentService(
       this.appId,
       resolvedUrl.hashedDocumentId,
       resolvedUrl.siteUrl,

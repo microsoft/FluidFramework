@@ -19,6 +19,7 @@ import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
 
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import { paramForceRefreshToken, paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 
@@ -176,7 +177,14 @@ async function initializeODSPCore(server: string, drive: string, item: string, c
 
     const resolvedUrl = await joinODSPSession(server, drive, item, clientConfig);
 
-    const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory("prague-dumper");
+    const odspTokens = await getODSPTokens(server, clientConfig, false);
+    const getStorageTokenStub = (siteUrl: string) => Promise.resolve(odspTokens.accessToken);
+    const getWebsocketTokenStub = () => Promise.resolve("fake token");
+    const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
+        "prague-dumper",
+        getStorageTokenStub,
+        getWebsocketTokenStub,
+        new BaseTelemetryNullLogger());
     paramDocumentService = await odspDocumentServiceFactory.createDocumentService(resolvedUrl);
 }
 

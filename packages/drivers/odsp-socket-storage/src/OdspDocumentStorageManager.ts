@@ -30,21 +30,11 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly documentId: string,
         private readonly snapshotUrl: string | undefined,
         private latestSha: string | null | undefined,
-        trees: resources.ITree[] | undefined,
-        blobs: resources.IBlob[] | undefined,
         private readonly fetchWrapper: IFetchWrapper,
         private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
         private readonly logger: ITelemetryBaseLogger,
         private readonly fetchFullSnapshot: boolean,
     ) {
-        if (trees) {
-            this.initTreesCache(trees);
-        }
-
-        if (blobs) {
-            this.initBlobsCache(blobs);
-        }
-
         this.queryString = getQueryString(queryParams);
         this.appId = queryParams.app_id;
     }

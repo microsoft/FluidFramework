@@ -6,6 +6,40 @@
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 
+export interface IWebsocketEndpoint {
+  deltaStorageUrl: string;
+
+  deltaStreamSocketUrl: string;
+
+  // The id of the web socket
+  id: string;
+
+  tenantId: string;
+}
+
+export interface IOdspResolvedUrl extends api.IResolvedUrlBase {
+  type: "prague";
+
+  // URL to send to fluid, contains the documentId and the path
+  url: string;
+
+  // A hashed identifier that is unique to this document
+  hashedDocumentId: string;
+
+  siteUrl: string;
+
+  driveId: string;
+
+  itemId: string;
+
+  endpoints: {
+    snapshotStorageUrl: string;
+  };
+
+  // Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
+  tokens: {};
+}
+
 /**
  * Interface for creating/getting/writing blobs to the underlying storage.
  */

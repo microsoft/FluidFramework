@@ -17,7 +17,7 @@ import {
     OuterDocumentServiceFactory,
 } from "@prague/iframe-socket-storage";
 import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
-import { ExperimentalOdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import {
     IDocumentServiceFactory,
     IErrorTrackingService,
@@ -136,7 +136,7 @@ export function createLoader(
 
         const r11sDocumentServiceFactory =
             new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-        const odspDocumentServiceFactory = new ExperimentalOdspDocumentServiceFactory(
+        const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
             "Server Gateway",
             getStorageToken,
             getWebsocketToken,
