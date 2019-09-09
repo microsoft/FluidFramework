@@ -35,7 +35,6 @@ import { raiseConnectedEvent } from "@prague/utils";
 import { EventEmitter } from "events";
 import { BlobManager } from "./blobManager";
 import { Container } from "./container";
-import { DeltaManagerProxy } from "./deltaManagerProxy";
 
 export class ContainerContext extends EventEmitter implements IContainerContext {
     public static async load(
@@ -142,7 +141,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
     // Back compat flag - can remove in 0.6
     public legacyMessaging = true;
-    public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
     private runtime: IRuntime | undefined;
 
@@ -154,7 +152,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly baseSnapshot: ISnapshotTree | null,
         private readonly attributes: IDocumentAttributes,
         public readonly blobManager: BlobManager | undefined,
-        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly storage: IDocumentStorageService | undefined | null,
         public readonly loader: ILoader,
@@ -167,7 +165,6 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
         public readonly version: string,
     ) {
         super();
-        this.deltaManager = new DeltaManagerProxy(deltaManager);
         this.logger = container.subLogger;
     }
 
@@ -186,6 +183,7 @@ export class ContainerContext extends EventEmitter implements IContainerContext 
 
         // dispose
         this.quorum.dispose();
+        this.deltaManager.dispose();
 
         return snapshot;
     }

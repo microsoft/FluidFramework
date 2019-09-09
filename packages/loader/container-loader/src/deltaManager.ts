@@ -52,10 +52,12 @@ const DefaultContentBufferSize = 10;
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
  */
 export class DeltaManager extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+    public get disposed() { return this.isDisposed; }
 
     public readonly clientType: string;
     public get IDeltaSender() { return this; }
 
+    private isDisposed: boolean = false;
     private pending: ISequencedDocumentMessage[] = [];
     private fetching = false;
 
@@ -233,6 +235,11 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this._inbound.pause();
         this._outbound.pause();
         this._inboundSignal.pause();
+    }
+
+    public dispose() {
+        assert.fail("Not implemented.");
+        this.isDisposed = true;
     }
 
     /**

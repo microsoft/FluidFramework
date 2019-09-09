@@ -45,7 +45,7 @@ export class EventForwarder extends EventEmitter implements IDisposable {
     }
 
     protected forward(emitter: EventEmitter, event: string | symbol): void {
-        if (emitter && event && !this.forwardingEvents.has(event)) {
+        if (emitter && event && !this.forwardingEvents.has(event) && event !== "newListener") {
             const listener = (...args: any[]) => this.emit(event, ...args);
             this.forwardingEvents.add(event);
             emitter.on(event, listener);

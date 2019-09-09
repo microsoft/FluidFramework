@@ -22,10 +22,15 @@ import * as assert from "assert";
 import { EventEmitter } from "events";
 
 export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+    public disposed: boolean = false;
     public paused: boolean;
     public length: number;
     public idle: boolean;
     private resumeDeferred: utils.Deferred<void>;
+
+    public dispose() {
+        this.disposed = true;
+    }
 
     public pause(): Promise<void> {
         if (!this.paused) {
@@ -72,6 +77,8 @@ export class TestDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 export class TestDeltaManager
     extends EventEmitter implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 
+    public disposed: boolean = false;
+
     public referenceSequenceNumber: number;
 
     public maxMessageSize: number;
@@ -91,6 +98,10 @@ export class TestDeltaManager
     public serviceConfiguration: IServiceConfiguration;
 
     public get IDeltaSender() { return this; }
+
+    public dispose() {
+        this.disposed = true;
+    }
 
     public enableReadonlyMode() {
         return;

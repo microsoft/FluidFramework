@@ -12,6 +12,7 @@ import {
     MessageType,
 } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
+import { IDisposable } from "./disposable";
 
 export interface IConnectionDetails {
     clientId: string;
@@ -64,7 +65,7 @@ export interface IDeltaSender extends IProvideDeltaSender {
     flush(): void;
 }
 
-export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender {
+export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDisposable {
     // The queue of inbound delta messages
     inbound: IDeltaQueue<T>;
 
@@ -114,7 +115,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender {
     submitSignal(content: any): void;
 }
 
-export interface IDeltaQueue<T> extends EventEmitter {
+export interface IDeltaQueue<T> extends EventEmitter, IDisposable {
     /**
      * Flag indicating whether or not the queue was paused
      */

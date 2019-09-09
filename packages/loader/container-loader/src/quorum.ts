@@ -397,6 +397,7 @@ export class Quorum extends EventEmitter implements IQuorum {
     }
 
     public dispose(): void {
+        assert.fail("Not implemented.");
         this.isDisposed = true;
     }
 }

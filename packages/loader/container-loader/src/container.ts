@@ -61,6 +61,7 @@ import { BlobManager } from "./blobManager";
 import { ContainerContext } from "./containerContext";
 import { debug } from "./debug";
 import { DeltaManager } from "./deltaManager";
+import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { Loader, RelativeLoader } from "./loader";
 import { NullChaincode } from "./nullRuntime";
 import { pkgName, pkgVersion } from "./packageVersion";
@@ -972,7 +973,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             snapshot || { id: null, blobs: {}, commits: {}, trees: {} },
             attributes,
             this.blobManager,
-            this._deltaManager!,
+            new DeltaManagerProxy(this._deltaManager!),
             new QuorumProxy(this.protocolHandler!.quorum),
             loader,
             storage,

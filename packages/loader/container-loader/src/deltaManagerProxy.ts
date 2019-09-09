@@ -17,16 +17,12 @@ import {
     ISignalMessage,
     MessageType,
 } from "@prague/protocol-definitions";
-import { EventEmitter } from "events";
-
-function forward(event: string, from: EventEmitter, to: EventEmitter) {
-    from.on(event, (...args: any[]) => to.emit(event, ...args));
-}
+import { EventForwarder } from "@prague/utils";
 
 /**
  * Proxy to the real IDeltaQueue - used to restrict access
  */
-export class DeltaQueueProxy<T> extends EventEmitter implements IDeltaQueue<T> {
+export class DeltaQueueProxy<T> extends EventForwarder implements IDeltaQueue<T> {
     public get paused(): boolean {
         return this.queue.paused;
     }
@@ -43,14 +39,7 @@ export class DeltaQueueProxy<T> extends EventEmitter implements IDeltaQueue<T> {
     private localPaused = false;
 
     constructor(private readonly queue: IDeltaQueue<T>) {
-        super();
-
-        forward("error", this.queue, this);
-        forward("op", this.queue, this);
-        forward("push", this.queue, this);
-        forward("pause", this.queue, this);
-        forward("pre-op", this.queue, this);
-        forward("resume", this.queue, this);
+        super(queue);
     }
 
     public peek(): T | undefined {
@@ -94,19 +83,15 @@ export class DeltaQueueProxy<T> extends EventEmitter implements IDeltaQueue<T> {
  * Proxy to the real IDeltaManager - used to restrict access
  */
 export class DeltaManagerProxy
-    extends EventEmitter
+    extends EventForwarder
     implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
 
     public readonly inbound: IDeltaQueue<ISequencedDocumentMessage>;
-
     public readonly outbound: IDeltaQueue<IDocumentMessage[]>;
+    public readonly inboundSignal: IDeltaQueue<ISignalMessage>;
 
     public get IDeltaSender(): IDeltaSender {
         return this;
-    }
-
-    public get inboundSignal(): IDeltaQueue<ISignalMessage> {
-        return this.deltaManager.inboundSignal;
     }
 
     public get minimumSequenceNumber(): number {
@@ -134,19 +119,18 @@ export class DeltaManagerProxy
     }
 
     constructor(private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
-        super();
+        super(deltaManager);
 
         this.inbound = new DeltaQueueProxy(deltaManager.inbound);
         this.outbound = new DeltaQueueProxy(deltaManager.outbound);
+        this.inboundSignal = new DeltaQueueProxy(deltaManager.inboundSignal);
+    }
 
-        forward("allSentOpsAckd", this.deltaManager, this);
-        forward("connect", this.deltaManager, this);
-        forward("disconnect", this.deltaManager, this);
-        forward("error", this.deltaManager, this);
-        forward("pong", this.deltaManager, this);
-        forward("prepareSend", this.deltaManager, this);
-        forward("processTime", this.deltaManager, this);
-        forward("submitOp", this.deltaManager, this);
+    public dispose(): void {
+        this.inbound.dispose();
+        this.outbound.dispose();
+        this.inboundSignal.dispose();
+        super.dispose();
     }
 
     public enableReadonlyMode(): void {

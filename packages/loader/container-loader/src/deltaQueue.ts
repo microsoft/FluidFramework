@@ -5,10 +5,12 @@
 
 import { IDeltaQueue } from "@prague/container-definitions";
 import { Deferred } from "@prague/utils";
+import * as assert from "assert";
 import * as Deque from "double-ended-queue";
 import { EventEmitter } from "events";
 
 export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
+    private isDisposed: boolean = false;
     private readonly q = new Deque<T>();
 
     // We expose access to the DeltaQueue in order to allow users (from the console or code) to be able to pause/resume.
@@ -21,6 +23,10 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     private error: any | undefined;
     private processing = false;
     private pauseDeferred: Deferred<void> | undefined;
+
+    public get disposed(): boolean {
+        return this.isDisposed;
+    }
 
     public get paused(): boolean {
         return this._paused;
@@ -36,6 +42,11 @@ export class DeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     constructor(private readonly worker: (value: T, callback: (error?) => void) => void) {
         super();
+    }
+
+    public dispose() {
+        assert.fail("Not implemented.");
+        this.isDisposed = true;
     }
 
     public clear() {
