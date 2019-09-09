@@ -17,9 +17,10 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
     "deploy": "npm publish --registry https://packages.wu2.prague.office-int.com",
-    "start": "prague-dev-server --config webpack.config.js --package package.json",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\""
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "fluid": {
     "browser": {
@@ -44,13 +45,14 @@
     "jquery": "^3.3.1"
   },
   "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
   },
   "license": "MIT"

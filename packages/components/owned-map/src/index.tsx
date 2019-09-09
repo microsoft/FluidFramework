@@ -72,7 +72,8 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
     this.root.set("clicks", 0, CounterValueType.Name);
     this.counter = await this.root.wait<Counter>("clicks");
     this.root.set("ownedMap", OwnedSharedMap.create(this.runtime).handle);
-    this.ownedMap = this.root.get("ownedMap");
+    const ownedMapHandle = await this.root.wait<IComponentHandle>("ownedMap");
+    this.ownedMap = await ownedMapHandle.get<OwnedSharedMap>();
     this.ownedMap.set("title", "Default Title");
   }
 

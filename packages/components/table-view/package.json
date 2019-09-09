@@ -35,11 +35,12 @@
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "publish-wu2": "npm run build && npm version patch && npm publish --registry https://packages.wu2.prague.office-int.com",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env=\"production\"",
-    "webpack:dev": "webpack --env=\"development\""
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -53,14 +54,15 @@
     "@prague/runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",
     "copyfiles": "^2.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
-    "typescript": "~3.4.5"
+    "typescript": "~3.4.5",
+    "webpack-dev-server": "^3.8.0"
   },
   "license": "MIT"
 }

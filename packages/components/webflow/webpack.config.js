@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
     const styleLocalIdentName = isProduction
         ? "[hash:base64:5]"
         : "[local]-[hash:base64:5]"
@@ -79,6 +80,9 @@ module.exports = env => {
                 library: "[name]",
                 libraryTarget: "umd",
                 globalObject: 'self',
+            },
+            devServer: {
+                before: (app, server) => fluidRoute.before(app, server, __dirname, env),
             },
         },
         isProduction ? require("./webpack.prod") : require("./webpack.dev"));

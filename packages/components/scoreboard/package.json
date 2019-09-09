@@ -8,14 +8,16 @@
   "main": "dist/main.bundle.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "webpack --env=\"production\"",
-    "dev": "webpack --env=\"development\"",
+    "build": "webpack --env.production",
+    "dev": "webpack --env.development",
     "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --pragueHost https://www.wu2.prague.office-int.com --tenantId cocky-ramanujan --tenantSecret 3e439fcb58228d3f8f7deb55399d978c",
-    "start:local": "prague-dev-server --config webpack.config.js --package package.json",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
     "verdaccio": "npm publish --registry https://packages.wu2.prague.office-int.com",
     "deploy": "npm run build && npm version patch && npm run verdaccio && npm run post-deploy",
-    "post-deploy": "getUrl -p"
+    "post-deploy": "getUrl -p",
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "prague": {
     "browser": {
@@ -34,8 +36,8 @@
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",
@@ -53,6 +55,7 @@
     "typescript": "~3.4.5",
     "webpack": "^4.8.2",
     "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2"
   }
 }

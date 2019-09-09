@@ -33,12 +33,14 @@
     "build:full:compile": "npm run build:compile && npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "dev": "npm run build:esnext -- --watch",
-    "start": "prague-dev-server --config webpack.config.js --package package.json --env=\"development\"",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
     "test": "mocha -r ts-node/register -r ignore-styles --recursive test/**/*.spec.ts --exit",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml --exit",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "webpack": "webpack --env=\"production\""
+    "webpack": "webpack --env.production",
+    "webpack:dev": "webpack --env.development"
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",
@@ -56,9 +58,9 @@
     "remark": "^11.0.1"
   },
   "devDependencies": {
+    "@microsoft/fluid-webpack-component-loader": "^0.10.0",
     "@prague/build-common": "^0.10.0",
     "@prague/local-test-server": "^0.10.0",
-    "@prague/prague-dev-server": "~3.9.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",
@@ -84,6 +86,7 @@
     "webpack": "^4.8.2",
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.8.0",
     "webpack-merge": "^4.1.2",
     "webpack-visualizer-plugin": "^0.1.11"
   }

@@ -48,7 +48,7 @@ function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
         };
     }
 
-    // Start by translating the input package to be prague-dev-server relative URLs
+    // Start by translating the input package to be webpack-dev-server relative URLs
     for (let i = 0; i < fluidPackage.fluid.browser.umd.files.length; i++) {
         const value = fluidPackage.fluid.browser.umd.files[i];
         const updatedUrl = `${window.location.origin}/${value}`;

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const fluidRoute = require("@microsoft/fluid-webpack-component-loader");
 const path = require("path");
 const merge = require("webpack-merge");
 
@@ -12,7 +13,7 @@ const chaincodeName = pkg.name.slice(1);
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = env => {
-  const isProduction = env === "production";
+  const isProduction = env && env.production;
 
   return merge({
     entry: {
@@ -56,7 +57,8 @@ module.exports = env => {
     },
     devServer: {
       publicPath: '/dist',
-      stats: "minimal"
+      stats: "minimal",
+      before: (app, server) => fluidRoute.before(app, server, __dirname, env),
     },
     plugins: [
       new MiniCssExtractPlugin({
