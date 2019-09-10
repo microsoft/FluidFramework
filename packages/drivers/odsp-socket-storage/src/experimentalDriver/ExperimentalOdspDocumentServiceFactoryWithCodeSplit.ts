@@ -48,7 +48,7 @@ export class ExperimentalOdspDocumentServiceFactoryWithCodeSplit implements IDoc
       this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
-      import("socket.io-client"),
+      import("../getSocketIo").then((m) => m.getSocketIo()),
     );
   }
 }
