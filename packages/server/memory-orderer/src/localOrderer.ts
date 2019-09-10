@@ -385,7 +385,6 @@ export class LocalOrderer implements IOrderer {
             lastState.proposals,
             lastState.values,
             () => -1,
-            () => { return; },
             () => { return; });
 
         return new ScribeLambda(

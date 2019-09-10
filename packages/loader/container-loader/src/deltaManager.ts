@@ -8,6 +8,7 @@ import {
     IDeltaHandlerStrategy,
     IDeltaManager,
     IDeltaQueue,
+    IProcessMessageResult,
     ITelemetryLogger,
 } from "@prague/container-definitions";
 import {
@@ -776,18 +777,17 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
         this.handler!.process(
             message,
-            (err?: any) => {
-                if (err) {
-                    callback(err);
+            (result: IProcessMessageResult) => {
+                if (result && result.error) {
+                    callback(result.error);
                 } else {
                     // We will queue a message to update our reference sequence number upon receiving a server
                     // operation. This allows the server to know our true reference sequence number and be able to
                     // correctly update the minimum sequence number (MSN). We don't acknowledge other message types
                     // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
                     // update, which updates the MSN, then ack the update, etc...).
-                    if (message.type === MessageType.Operation ||
-                      message.type === MessageType.Propose) {
-                      this.updateSequenceNumber(message.type);
+                    if (message.type === MessageType.Operation || result.immediateNoOp) {
+                        this.updateSequenceNumber(result.immediateNoOp);
                     }
 
                     const endTime = Date.now();
@@ -904,14 +904,13 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Acks the server to update the reference sequence number
      */
-    private updateSequenceNumber(type: MessageType): void {
+    private updateSequenceNumber(immediateNoOp?: boolean): void {
         // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
         if (this.readonly) {
             return;
         }
 
-        // On a quorum proposal, immediately send a response to expedite the approval.
-        if (type === MessageType.Propose) {
+        if (immediateNoOp) {
             this.submit(MessageType.NoOp, ImmediateNoOpResponse);
             return;
         }
@@ -933,7 +932,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.submit(MessageType.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
-                this.updateSequenceNumber(type);
+                this.updateSequenceNumber();
             }
         }, 100);
     }

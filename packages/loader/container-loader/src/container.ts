@@ -18,6 +18,7 @@ import {
     IFluidCodeDetails,
     IFluidModule,
     IGenericBlob,
+    IProcessMessageResult,
     IQuorum,
     IRuntimeFactory,
     ISequencedProposal,
@@ -617,7 +618,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
-            (immediate?: boolean) => this.submitMessage(MessageType.NoOp, immediate ? "" : null),
             this.subLogger);
 
         // Track membership changes and update connection state accordingly
@@ -879,18 +879,21 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return this._deltaManager!.submit(type, contents, batch, metadata);
     }
 
-    private processRemoteMessage(message: ISequencedDocumentMessage, callback: (err?: any) => void) {
+    private processRemoteMessage(
+        message: ISequencedDocumentMessage,
+        callback: (result: IProcessMessageResult) => void,
+    ) {
         if (this.context!.legacyMessaging) {
             this.processRemoteMessageLegacy(message).then(
-                () => { callback(); },
-                (error) => { callback(error); });
+                (result) => { callback(result); },
+                (error) => { callback({ error }); });
         } else {
-            this.processRemoteMessageNew(message);
-            callback();
+            const result = this.processRemoteMessageNew(message);
+            callback(result);
         }
     }
 
-    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage) {
+    private async processRemoteMessageLegacy(message: ISequencedDocumentMessage): Promise<IProcessMessageResult> {
         const local = this._clientId === message.clientId;
         let context;
 
@@ -912,16 +915,18 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
 
         if (!isSystemMessage(message)) {
             await this.context!.postProcess(message, local, context);
         }
+
+        return result;
     }
 
-    private processRemoteMessageNew(message: ISequencedDocumentMessage) {
+    private processRemoteMessageNew(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this._clientId === message.clientId;
 
         // Forward non system messages to the loaded runtime for processing
@@ -930,9 +935,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
 
         // Allow the protocol handler to process the message
-        this.protocolHandler!.processMessage(message, local);
+        const result = this.protocolHandler!.processMessage(message, local);
 
         this.emit("op", message);
+
+        return result;
     }
 
     private submitSignal(message: any) {

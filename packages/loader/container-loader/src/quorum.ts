@@ -87,7 +87,6 @@ export class Quorum extends EventEmitter implements IQuorum {
         values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
         private readonly sendReject: (sequenceNumber: number) => void,
-        private readonly sendNoOp: (immediate?: boolean) => void,
         private readonly logger?: ITelemetryLogger,
     ) {
         super();
@@ -290,9 +289,11 @@ export class Quorum extends EventEmitter implements IQuorum {
 
     /**
      * Updates the minimum sequence number. If the MSN advances past the sequence number for any proposal without
-     * a rejection then it becomes an accepted consensus value.
+     * a rejection then it becomes an accepted consensus value.  If the MSN advances past the sequence number
+     * that the proposal was accepted, then it becomes a committed consensus value.
+     * Returns true if immediate no-op is required.
      */
-    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): void {
+    public updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean {
         const value = message.minimumSequenceNumber;
         if (this.minimumSequenceNumber !== undefined) {
             if (value < this.minimumSequenceNumber && this.logger) {
@@ -303,11 +304,12 @@ export class Quorum extends EventEmitter implements IQuorum {
                 });
             }
             if (value <= this.minimumSequenceNumber) {
-                return;
+                return false;
             }
         }
 
         this.minimumSequenceNumber = value;
+        let immediateNoOp = false;
 
         // Accept proposals and reject proposals whose sequenceNumber is <= the minimumSequenceNumber
 
@@ -349,7 +351,9 @@ export class Quorum extends EventEmitter implements IQuorum {
                 this.pendingCommit.set(committedProposal.key, committedProposal);
 
                 // send no-op on approval to expedite commit
-                this.sendNoOp(true);
+                // accept means that all clients have seen the proposal and nobody has rejected it
+                // commit means that all clients have seen that the proposal was accepted by everyone
+                immediateNoOp = true;
 
                 this.emit(
                     "approveProposal",
@@ -388,6 +392,8 @@ export class Quorum extends EventEmitter implements IQuorum {
                     this.pendingCommit.delete(pendingCommit.key);
                 });
         }
+
+        return immediateNoOp;
     }
 
     public changeConnectionState(value: ConnectionState, clientId: string) {

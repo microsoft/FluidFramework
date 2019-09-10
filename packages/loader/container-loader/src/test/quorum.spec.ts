@@ -17,7 +17,6 @@ describe("Loader", () => {
                 [],
                 (key, value) => 0,
                 (value) => { return; },
-                (immediate?: boolean) => { return; },
             );
         });
 
