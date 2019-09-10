@@ -5,6 +5,7 @@
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
+import * as io from "socket.io-client";
 import { ISequencedDeltaOpMessage } from "../contracts";
 import { FetchWrapper, IFetchWrapper } from "../fetchWrapper";
 import { IOdspResolvedUrl } from "./contracts";
