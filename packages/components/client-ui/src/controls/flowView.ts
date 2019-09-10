@@ -33,7 +33,7 @@ import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
-import { blobUploadHandler, urlToInclusion } from "../blob";
+import { blobUploadHandler } from "../blob";
 import {
     CharacterCodes,
     Paragraph,
@@ -203,30 +203,6 @@ const cssColors = (f: FlowView) => cssColorTree;
 const defaultColor = (f: FlowView) => "Black";
 
 const commands: IFlowViewCmd[] = [
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(dinoImage);
-        },
-        key: "enable dinosaur",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(dinoImage, true);
-        },
-        key: "jettison one dinosaur",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(mrBennetEyeRoll);
-        },
-        key: "release the Bennets",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(mrBennetEyeRoll, true);
-        },
-        key: "release one Bennet",
-    },
     {
         exec: (c, p, f) => {
             f.copyFormat();
@@ -482,12 +458,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertPhoto();
-        },
-        key: "insert photo",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertList();
         },
         key: "insert list",
@@ -607,12 +577,10 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 const baseURI = typeof document !== "undefined" ? document.location.origin : "";
-const dinoImage = `url("${baseURI}/public/images/Dino3.jpg")`;
 const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
 const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
-const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
 
 // global until remove old render
 let textErrorRun: IRange;
@@ -1632,18 +1600,6 @@ export class Viewport {
     private inclusions: Map<string, HTMLVideoElement> = new Map<string, HTMLVideoElement>();
 
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
-    }
-
-    public showExclu() {
-        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
-            .then((incl) => {
-                for (const exclu of this.excludedRects) {
-                    const showImage = document.createElement("img");
-                    showImage.src = incl.url;
-                    exclu.conformElement(showImage);
-                    this.div.appendChild(showImage);
-                }
-            });
     }
 
     // Remove inclusions that are not in the excluded rect list
@@ -4562,18 +4518,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.setProps({ fontFamily: family, fontSize: size });
     }
 
-    public setBGImage(imageName: string, setSize?: boolean) {
-        this.viewportDiv.style.backgroundImage = imageName;
-        if (setSize) {
-            const rect = this.viewportDiv.getBoundingClientRect();
-            this.viewportDiv.style.backgroundSize = `${rect.width}px ${rect.height}px`;
-        }
-    }
-
-    public clearBGImage() {
-        this.viewportDiv.style.backgroundImage = undefined;
-    }
-
     public setColor(color: string) {
         this.setProps({ color }, false);
     }
@@ -4788,29 +4732,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
-    }
-
-    public insertPhoto() {
-        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
-            .then(async (incl) => {
-                this.collabDocument.uploadBlob(incl)
-                    .then((blob) => {
-                        this.insertBlobInternal(blob);
-                    });
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-    }
-
-    public insertVideo() {
-        urlToInclusion(`${baseURI}/public/images/SampleVideo_1280x720_1mb.mp4`)
-            .then(async (incl) => {
-                this.insertBlobInternal(await this.collabDocument.uploadBlob(incl));
-            })
-            .catch((error) => {
-                console.log(error);
-            });
     }
 
     private async openCollections() {

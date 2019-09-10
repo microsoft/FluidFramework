@@ -21,7 +21,6 @@ import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
-import * as favicon from "serve-favicon";
 // tslint:disable-next-line:no-var-requires
 const split = require("split");
 import * as expiry from "static-expiry";
@@ -168,7 +167,6 @@ export function create(
     app.set("view engine", "hjs");
 
     app.use(compression());
-    app.use(favicon(path.join(__dirname, "../public", "favicon.ico")));
     // TODO we probably want to switch morgan to use the common format in prod
     app.use(morgan(config.get("logger:morganFormat"), { stream }));
 
