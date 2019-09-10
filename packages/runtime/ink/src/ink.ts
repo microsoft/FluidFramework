@@ -15,6 +15,7 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { SharedObject } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { InkFactory } from "./inkFactory";
@@ -179,7 +180,7 @@ export class Ink extends SharedObject implements IInk {
         const header = await storage.read(snapshotFileName);
         if (header) {
             this.inkData = new InkData(
-                JSON.parse(Buffer.from(header, "base64").toString("utf-8")) as ISerializableInk,
+                JSON.parse(fromBase64ToUtf8(header)) as ISerializableInk,
             );
         }
     }

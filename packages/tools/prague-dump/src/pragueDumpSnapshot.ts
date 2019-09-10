@@ -9,6 +9,7 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@prague/protocol-definitions";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import * as fs from "fs";
 import * as util from "util";
 import {
@@ -94,7 +95,7 @@ async function dumpSnapshotTree(storage: IDocumentStorageService, tree: ISnapsho
                 console.log(`${item.path.padEnd(75)}| ${blob.length}`);
             }
             if (dumpSnapshotBlobs) {
-                const decoded = Buffer.from(blob, "base64").toString();
+                const decoded = fromBase64ToUtf8(blob);
                 try {
                     console.log(JSON.parse(decoded));
                 } catch (e) {
@@ -133,7 +134,7 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
         // tslint:disable-next-line:non-literal-fs-path
         await writeFile(`${outDir}/${blob.blobId}`, data);
 
-        const decoded = Buffer.from(data, "base64").toString();
+        const decoded = fromBase64ToUtf8(data);
         try {
             const object = JSON.parse(decoded);
             await writeFile(`${outDir}/decoded/${blob.blobId}.json`, JSON.stringify(object, undefined, 2));

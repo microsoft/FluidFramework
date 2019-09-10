@@ -17,6 +17,7 @@ import {
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import * as path from "path";
 import { debug } from "./debug";
@@ -474,8 +475,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
 
         const header = await storage.read(snapshotFileName);
 
-        const data = header ? JSON.parse(Buffer.from(header, "base64")
-            .toString("utf-8")) : {};
+        const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
         this.populate(data as IDirectoryDataObject);
     }
 

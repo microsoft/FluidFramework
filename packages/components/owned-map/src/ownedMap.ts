@@ -12,6 +12,7 @@ import {
     TreeEntry,
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import { OwnedMapFactory } from "./ownedMapFactory";
 
@@ -124,7 +125,7 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
 
     protected async getOwnerSnapshot(storage: IObjectStorageService): Promise<void> {
         const owner = await storage.read(ownerPath);
-        this.owner = Buffer.from(owner, "base64").toString("utf-8");
+        this.owner = fromBase64ToUtf8(owner);
     }
 
     protected setOwner(): string | undefined {

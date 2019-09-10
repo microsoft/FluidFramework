@@ -6,6 +6,7 @@
 import * as api from "@prague/protocol-definitions";
 import { GitManager, Historian, ICredentials, IGitCache } from "@prague/services-client";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
+import { fromUtf8ToBase64 } from "@prague/utils";
 import Axios from "axios";
 import * as io from "socket.io-client";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
@@ -112,8 +113,7 @@ export class DocumentService implements api.IDocumentService {
     public async branch(): Promise<string> {
         let headers: {Authorization: string} | null = null;
         headers = {
-            Authorization: `Basic ${Buffer.from(`${this.tenantId}:${this.tokenProvider.token}`)
-                .toString("base64")}`,
+            Authorization: `Basic ${fromUtf8ToBase64(`${this.tenantId}:${this.tokenProvider.token}`)}`,
         };
 
         // tslint:disable-next-line:max-line-length

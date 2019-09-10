@@ -7,7 +7,7 @@ import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from 
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService} from "@prague/runtime-definitions";
-import { ChildLogger } from "@prague/utils";
+import { ChildLogger, fromBase64ToUtf8 } from "@prague/utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";
 import * as ops from "./ops";
@@ -230,7 +230,7 @@ export class Snapshot {
         serializer?: IComponentSerializer,
         context?: IComponentHandleContext,
     ): ops.MergeTreeChunk {
-        const utf8 = Buffer.from(chunk, "base64").toString("utf-8");
+        const utf8 = fromBase64ToUtf8(chunk);
         return serializer ? serializer.parse(utf8, context) : JSON.parse(utf8);
     }
 }

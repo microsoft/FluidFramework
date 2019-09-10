@@ -23,6 +23,7 @@ import {
     SharedObject,
     ValueType,
 } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {
     ISerializableValue,
@@ -462,8 +463,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         const header = await storage.read(snapshotFileName);
 
-        const data = header ? JSON.parse(Buffer.from(header, "base64")
-            .toString("utf-8")) : {};
+        const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
         this.populate(data as IMapDataObject);
 
         const contentStorage = new ContentObjectStorage(storage);

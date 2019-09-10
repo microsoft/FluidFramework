@@ -4,6 +4,7 @@
  */
 
 import * as git from "@prague/gitresources";
+import { fromUtf8ToBase64 } from "@prague/utils";
 import { RestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 
@@ -43,7 +44,7 @@ export class Historian implements IHistorian {
         }
 
         if (credentials) {
-            queryString.token = Buffer.from(`${credentials.user}`).toString("base64");
+            queryString.token = fromUtf8ToBase64(`${credentials.user}`);
         }
 
         this.restWrapper = new RestWrapper(endpoint, {}, queryString, cacheBust);

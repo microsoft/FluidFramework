@@ -5,7 +5,7 @@
 
 import * as api from "@prague/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@prague/replay-socket-storage";
-import { buildHierarchy, flatten } from "@prague/utils";
+import { buildHierarchy, flatten, fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import * as fs from "fs";
 
@@ -289,7 +289,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             for (const blobName of Object.keys(snapshotTree.blobs)) {
                 const contents = await this.read(snapshotTree.blobs[blobName]);
                 const blob: api.IBlob = {
-                    contents: Buffer.from(contents, "base64").toString("utf-8"), // decode for readability
+                    contents: fromBase64ToUtf8(contents), // decode for readability
                     encoding: "utf-8",
                 };
                 tree.entries.push({

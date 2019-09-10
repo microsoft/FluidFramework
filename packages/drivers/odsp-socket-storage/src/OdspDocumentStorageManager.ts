@@ -6,7 +6,7 @@
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
-import { buildHierarchy } from "@prague/utils";
+import { buildHierarchy, fromBase64ToUtf8, fromUtf8ToBase64 } from "@prague/utils";
 import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, IOdspSnapshot, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
 import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
@@ -65,10 +65,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             // ODSP document ids are random guids (different per session)
             // fix the branch name in attributes
             // this prevents issues when generating summaries
-            const documentAttributes: api.IDocumentAttributes = JSON.parse(Buffer.from(blob.content, "base64").toString("utf-8"));
+            const documentAttributes: api.IDocumentAttributes = JSON.parse(fromBase64ToUtf8(blob.content));
             documentAttributes.branch = this.documentId;
 
-            blob.content = Buffer.from(JSON.stringify(documentAttributes)).toString("base64");
+            blob.content = fromUtf8ToBase64(JSON.stringify(documentAttributes));
         }
 
         return blob;

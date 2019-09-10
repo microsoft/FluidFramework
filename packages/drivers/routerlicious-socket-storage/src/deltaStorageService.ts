@@ -4,10 +4,12 @@
  */
 
 import * as api from "@prague/protocol-definitions";
+import { fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import Axios from "axios";
 import * as querystring from "querystring";
 import { TokenProvider} from "./tokens";
+
 /**
  * Storage service limited to only being able to fetch documents for a specific document
  */
@@ -46,8 +48,7 @@ export class DeltaStorageService implements api.IDeltaStorageService {
 
         if (token) {
             headers = {
-                Authorization: `Basic ${Buffer.from(`${tenantId}:${token}`)
-                    .toString("base64")}`,
+                Authorization: `Basic ${fromUtf8ToBase64(`${tenantId}:${token}`)}`,
             };
         }
 

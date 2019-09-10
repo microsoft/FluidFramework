@@ -5,6 +5,7 @@
 
 import { IBlob, ITree, TreeEntry } from "@prague/protocol-definitions";
 import { IObjectStorageService } from "@prague/runtime-definitions";
+import { fromUtf8ToBase64 } from "@prague/utils";
 
 export class LocalChannelStorageService implements IObjectStorageService {
     constructor(private readonly tree: ITree) {
@@ -29,7 +30,7 @@ export class LocalChannelStorageService implements IObjectStorageService {
                     if (path === entry.path) {
                         const blob = entry.value as IBlob;
                         return blob.encoding === "utf-8"
-                            ? Buffer.from(blob.contents).toString("base64")
+                            ? fromUtf8ToBase64(blob.contents)
                             : blob.contents;
                     }
                     break;

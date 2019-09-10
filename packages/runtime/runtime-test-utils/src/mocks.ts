@@ -32,7 +32,7 @@ import {
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
 import { IHistorian } from "@prague/services-client";
-import { ComponentSerializer, DebugLogger, Deferred } from "@prague/utils";
+import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 // tslint:disable-next-line: no-submodule-imports
@@ -255,7 +255,7 @@ export class MockHistorian implements IHistorian {
 
     public async read(path: string) {
         const content = await this.read_r(path, this.tree);
-        return Buffer.from(content).toString("base64");
+        return fromUtf8ToBase64(content);
     }
 
     public async read_r(path: string, baseBlob: git.ITree | git.ICreateTreeParams): Promise<string> {

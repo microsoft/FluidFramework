@@ -16,6 +16,7 @@ import {
     IObjectStorageService,
 } from "@prague/runtime-definitions";
 import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";
 import { ISharedCell } from "./interfaces";
@@ -185,8 +186,7 @@ export class SharedCell extends SharedObject implements ISharedCell {
 
         // tslint:disable-next-line:strict-boolean-expressions
         const content = rawContent
-            ? JSON.parse(Buffer.from(rawContent, "base64")
-                .toString("utf-8")) as ICellValue
+            ? JSON.parse(fromBase64ToUtf8(rawContent)) as ICellValue
             : { type: ValueType[ValueType.Plain], value: undefined };
 
         this.data = this.fromSerializable(content);

@@ -11,6 +11,7 @@ import {
     ScopeType,
 } from "@prague/protocol-definitions";
 import * as core from "@prague/services-core";
+import { fromUtf8ToBase64 } from "@prague/utils";
 import { Request, Response, Router } from "express";
 import * as jwt from "jsonwebtoken";
 import * as moniker from "moniker";
@@ -61,7 +62,7 @@ export function create(
         const tenantId = getParam(request.params, "tenantId");
         const blobData = request.body as IBlobData;
         const historian = config.get("worker:blobStorageUrl") as string;
-        const requestToken = Buffer.from(tenantId).toString("base64");
+        const requestToken = fromUtf8ToBase64(tenantId);
         const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
         const requestBody: git.ICreateBlobParams = {
             content: blobData.content,

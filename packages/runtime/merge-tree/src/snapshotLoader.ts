@@ -4,6 +4,7 @@
  */
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
@@ -113,7 +114,7 @@ export class SnapshotLoader {
         rawMessages: Promise<string>,
         branchId: string,
     ): Promise<ISequencedDocumentMessage[]> {
-        const utf8 = Buffer.from(await rawMessages, "base64").toString();
+        const utf8 = fromBase64ToUtf8(await rawMessages);
         const messages = (this.runtime.IComponentSerializer
             ? this.runtime.IComponentSerializer.parse(utf8, this.runtime.IComponentHandleContext)
             : JSON.parse(utf8)) as ISequencedDocumentMessage[];

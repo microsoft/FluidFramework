@@ -13,6 +13,7 @@ import {
 } from "@prague/protocol-definitions";
 import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import { debug } from "./debug";
@@ -229,8 +230,7 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         storage: IObjectStorageService): Promise<void> {
 
         const header = await storage.read(snapshotFileName);
-        const data: { [key: string]: ILocalData } = header ? JSON.parse(Buffer.from(header, "base64")
-            .toString("utf-8")) : {};
+        const data: { [key: string]: ILocalData } = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
 
         for (const key of Object.keys(data)) {
             const serializedValues = data[key];

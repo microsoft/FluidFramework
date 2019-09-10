@@ -14,12 +14,12 @@ import {
 } from "@prague/odsp-utils";
 import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
+import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
 
 import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
 
-import { BaseTelemetryNullLogger } from "@prague/utils";
 import { paramForceRefreshToken, paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 
@@ -275,8 +275,7 @@ async function initializeFluidOffice(pathname: string) {
     const site = siteDriveItemMatch[1];
 
     // Path value is base64 encoded so need to decode first
-    const b = Buffer.from(site, "base64");
-    const decodedSite = b.toString();
+    const decodedSite = fromBase64ToUtf8(site);
 
     // Site value includes storage type
     const storageType = decodedSite.split(":")[0];

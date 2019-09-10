@@ -10,6 +10,7 @@ import {
 } from "@prague/protocol-definitions";
 import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
 import { SharedObject, ValueType } from "@prague/shared-object-common";
+import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { IConsensusOrderedCollectionValue } from "./values";
 
@@ -65,8 +66,7 @@ export class SnapshotableArray<T> extends Array {
 
         // tslint:disable-next-line:strict-boolean-expressions
         if (rawContent) {
-            const values = JSON.parse(Buffer.from(rawContent, "base64")
-                .toString("utf-8")) as IConsensusOrderedCollectionValue[];
+            const values = JSON.parse(fromBase64ToUtf8(rawContent)) as IConsensusOrderedCollectionValue[];
 
             for (const item of values) {
                 switch (item.type) {
