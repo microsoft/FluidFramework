@@ -9,6 +9,7 @@ import {
     matchProperties,
     MergeTreeDeltaType,
     PropertySet,
+    ReferenceType,
     Stack,
     TrackingGroup,
 } from "@prague/merge-tree";
@@ -197,10 +198,9 @@ class SequenceUndoRedo implements IRevertable {
 
                     case MergeTreeDeltaType.REMOVE:
                         const insertSegment = this.sequence.segmentFromSpec(sg.toJSONObject());
-                        const insertOp = this.sequence.client.insertSiblingSegment(sg, insertSegment);
-                        if (insertOp) {
-                            this.sequence.submitSequenceMessage(insertOp);
-                        }
+                        this.sequence.insertAtReferencePosition(
+                                this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
+                                insertSegment);
                         sg.trackingCollection.trackingGroups.forEach((tg) => {
                             tg.link(insertSegment);
                             tg.unlink(sg);

@@ -61,8 +61,8 @@ export class LocalReference implements ReferencePosition {
     }
 
     public toPosition() {
-        if (this.segment) {
-            return this.offset + this.client.getPosition(this.segment);
+        if (this.segment && this.segment.parent) {
+            return this.getOffset() + this.client.getPosition(this.segment);
         } else {
             return LocalReference.DetachedPosition;
         }
@@ -105,6 +105,9 @@ export class LocalReference implements ReferencePosition {
     }
 
     public getOffset() {
+        if (this.segment.removedSeq) {
+            return 0;
+        }
         return this.offset;
     }
 

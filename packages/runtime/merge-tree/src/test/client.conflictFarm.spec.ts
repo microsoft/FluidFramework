@@ -6,7 +6,9 @@
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import * as random from "random-js";
+import { LocalReference } from "../localReference";
 import { IMergeTreeOp } from "../ops";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -21,6 +23,7 @@ interface IConflictFarmConfig {
     rounds: number;
     opsPerRound: IConflictFarmConfigRange;
     annotate: boolean;
+    insertAtRefPos: boolean;
     incrementalLog: boolean;
     growthFunc(input: number): number;
 }
@@ -29,8 +32,9 @@ export const debugOptions: IConflictFarmConfig = {
     minLength: {min: 2, max: 2},
     clients: {min: 3, max: 3},
     opsPerRound: { min: 1, max: 100 },
-    rounds: 100,
+    rounds: 1000,
     annotate: true,
+    insertAtRefPos: true,
     incrementalLog: true,
     growthFunc: (input: number) => input + 1,
 };
@@ -41,6 +45,7 @@ export const defaultOptions: IConflictFarmConfig = {
     opsPerRound: {min: 1, max: 128},
     rounds: 8,
     annotate: true,
+    insertAtRefPos: true,
     incrementalLog: false,
     growthFunc: (input: number) => input * 2,
 };
@@ -51,6 +56,7 @@ export const longOptions: IConflictFarmConfig = {
     opsPerRound: {min: 1, max: 512},
     rounds: 32,
     annotate: true,
+    insertAtRefPos: true,
     incrementalLog: true,
     growthFunc: (input: number) => input * 2,
 };
@@ -70,6 +76,7 @@ describe("MergeTree.Client", () => {
     const opts =
         defaultOptions;
         // debugOptions;
+        // longOptions;
 
     // Generate a list of single character client names, support up to 69 clients
     const clientNames: string[] = [];
@@ -105,7 +112,7 @@ describe("MergeTree.Client", () => {
                     clients.push(newClient);
                 }
 
-                doOverRange(opts.opsPerRound, opts.growthFunc,  (opsPerRound) => {
+                doOverRange(opts.opsPerRound, opts.growthFunc, (opsPerRound) => {
                     if (opts.incrementalLog) {
                         // tslint:disable-next-line: max-line-length
                         console.log(`MinLength: ${minLength} Clients: ${clients.length} Ops: ${opsPerRound} Seq: ${seq}`);
@@ -127,9 +134,18 @@ describe("MergeTree.Client", () => {
                             let op: IMergeTreeOp;
                             if (len < minLength) {
                                 const pos = random.integer(0, len)(mt);
-                                op = client.insertTextLocal(
-                                    pos,
-                                    client.longClientId.repeat(random.integer(1, 3)(mt)));
+                                const segOff = client.getContainingSegment(pos);
+                                const text = client.longClientId.repeat(random.integer(1, 3)(mt));
+                                if (opts.insertAtRefPos && segOff.segment && random.bool()(mt)) {
+                                    assert(!segOff.segment.removedSeq);
+                                    op = client.insertAtReferencePositionLocal(
+                                        new LocalReference(client, segOff.segment, segOff.offset),
+                                        TextSegment.make(text));
+                                } else {
+                                    op = client.insertTextLocal(
+                                        pos,
+                                        text);
+                                }
                             } else {
                                 const start = random.integer(0, len - 1)(mt);
                                 const end = random.integer(start + 1, len)(mt);
@@ -157,7 +173,9 @@ describe("MergeTree.Client", () => {
                         while (messages.length > 0) {
                             const message = messages.shift();
                             message.sequenceNumber = ++seq;
-                            logger.log(message, (c) => c.applyMsg(message));
+                            logger.log(message, (c) => {
+                                c.applyMsg(message);
+                            });
                         }
 
                         // validate that all the clients match at the end of the round

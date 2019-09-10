@@ -235,7 +235,7 @@ export function TestPack(verbose = true) {
         let snapClient: TestClient;
         let useGroupOperationsForMoveWord = false;
         let annotateProps: PropertySet;
-        let insertAsSibling = false;
+        let insertAsRefPos = false;
 
         let options = {};
         if (measureBookmarks) {
@@ -416,10 +416,15 @@ export function TestPack(verbose = true) {
                 }
                 let pos = word2.pos + word2.text.length;
 
-                const insertOp = !insertAsSibling ?
-                    client.insertTextLocal(pos, word1.text) :
-                    client.insertSiblingSegment(
-                        client.getContainingSegment(pos).segment, TextSegment.make(word1.text));
+                let insertOp;
+                const segOff = client.getContainingSegment(pos);
+                if (!insertAsRefPos && segOff.segment) {
+                    insertOp = client.insertAtReferencePositionLocal(
+                        new MergeTree.LocalReference(client, segOff.segment, segOff.offset, MergeTree.ReferenceType.Transient),
+                        TextSegment.make(word1.text));
+                } else {
+                    insertOp = client.insertTextLocal(pos, word1.text)
+                }
 
                 if (!useGroupOperationsForMoveWord) {
                     server.enqueueMsg(

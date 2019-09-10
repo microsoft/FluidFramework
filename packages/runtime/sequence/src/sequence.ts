@@ -278,16 +278,14 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     public createPositionReference(
-        pos: number,
+        segment: T,
+        offset: number,
         refType: MergeTree.ReferenceType): MergeTree.LocalReference {
-        const segoff = this.getContainingSegment(pos);
-        if (segoff && segoff.segment) {
-            const lref = new MergeTree.LocalReference(this.client, segoff.segment, segoff.offset, refType);
-            if (refType !== MergeTree.ReferenceType.Transient) {
-                this.addLocalReference(lref);
-            }
-            return lref;
+        const lref = new MergeTree.LocalReference(this.client, segment, offset, refType);
+        if (refType !== MergeTree.ReferenceType.Transient) {
+            this.addLocalReference(lref);
         }
+        return lref;
     }
 
     public localRefToPos(localRef: MergeTree.LocalReference) {
@@ -386,6 +384,13 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     public getCurrentSeq() {
         return this.client.getCurrentSeq();
+    }
+
+    public insertAtReferencePosition(pos: MergeTree.ReferencePosition, segment: T) {
+        const insertOp = this.client.insertAtReferencePositionLocal(pos, segment);
+        if (insertOp) {
+            this.submitSequenceMessage(insertOp);
+        }
     }
 
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment) {

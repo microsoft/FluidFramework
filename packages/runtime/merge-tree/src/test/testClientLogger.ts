@@ -5,7 +5,9 @@
 
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as assert from "assert";
+import { UnassignedSequenceNumber } from "../constants";
 import { IMergeTreeOp } from "../ops";
+import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
 
 export class TestClientLogger {
@@ -30,18 +32,20 @@ export class TestClientLogger {
     public log(msg?: ISequencedDocumentMessage, preAction?: (c: TestClient) => void) {
         const seq = msg ? msg.sequenceNumber.toString() : "";
         const client = msg ? msg.clientId : "";
-        const op = msg ? (msg.contents as IMergeTreeOp) : undefined;
+        const op = msg ? msg.contents as IMergeTreeOp : undefined;
         const opType = op ? op.type.toString() : "";
         // tslint:disable-next-line: no-string-literal
-        const opPos = op && op["pos1"] ? `@${op["pos1"]}${op["pos2"] ? `,${op["pos2"]}` : ""}` : "";
-        const clientOp = ` ${client}${opType}${opPos};`;
-        const line: string[] = [
+        const opPos = op && op["pos1"] !== undefined ? `@${op["pos1"]}${op["pos2"] !== undefined  ? `,${op["pos2"]}` : ""}` : "";
+        const clientOp = ` ${client}${opType}${opPos}`;
+        const ackedLine: string[] = [
             seq,
             clientOp,
         ];
-        this.paddings[0] = Math.max(line[0].length, this.paddings[0]);
-        this.paddings[1] = Math.max(line[1].length, this.paddings[1]);
-        this.roundLogLines.push(line);
+        this.roundLogLines.push(ackedLine);
+        const localLine: string[] = ["", ""];
+        let localChanges = false;
+        this.paddings[0] = Math.max(ackedLine[0].length, this.paddings[0]);
+        this.paddings[1] = Math.max(ackedLine[1].length, this.paddings[1]);
         this.clients.forEach((c, i) => {
             if (preAction) {
                 try {
@@ -52,11 +56,19 @@ export class TestClientLogger {
                     throw e;
                 }
             }
-            line.push(c.getText());
-            this.paddings[i + 2] = Math.max(line[i + 2].length, this.paddings[i + 2]);
+            const segStrings = this.getSegString(c);
+            ackedLine.push(segStrings.acked);
+            localLine.push(segStrings.local);
+            if (!localChanges && segStrings.local.trim().length > 0) {
+                localChanges = true;
+            }
+            this.paddings[i + 2] = Math.max(ackedLine[i + 2].length, this.paddings[i + 2]);
         });
+        if (localChanges) {
+            this.roundLogLines.push(localLine);
+        }
         if (this.incrementalLog) {
-            console.log(line.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
+            console.log(ackedLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
         }
     }
 
@@ -70,20 +82,57 @@ export class TestClientLogger {
                     assert.equal(
                         c.getText(),
                         baseText,
-                        `Client ${c.longClientId} does not match client ${this.clients[0].longClientId}${this}`);
+                        `${this.toString()}\nClient ${c.longClientId} does not match client ${this.clients[0].longClientId}`);
                 }
             });
     }
 
     public toString() {
-        let str = "\n";
+        let str = "";
         if (this.title) {
             str += `${this.title}\n`;
         }
         str += this.roundLogLines
             .map((line) => line.map((v, i) => v.padEnd(this.paddings[i])).join(" | "))
             .join("\n");
-
         return str;
+    }
+
+    private getSegString(client: TestClient): {acked: string, local: string} {
+        let acked: string = "";
+        let local: string = "";
+        const nodes = [...client.mergeTree.root.children];
+        while (nodes.length > 0) {
+            const node = nodes.shift();
+            if (node) {
+                if (node.isLeaf()) {
+                    if (TextSegment.is(node)) {
+                        if (node.removedSeq) {
+                            if (node.removedSeq === UnassignedSequenceNumber) {
+                                acked += "_".repeat(node.text.length);
+                                if (node.seq === UnassignedSequenceNumber) {
+                                    local += "*".repeat(node.text.length);
+                                }
+                                local += "-".repeat(node.text.length);
+                            } else {
+                                acked += "-".repeat(node.text.length);
+                                local += " ".repeat(node.text.length);
+                            }
+                        } else {
+                            if (node.seq === UnassignedSequenceNumber) {
+                                acked += "_".repeat(node.text.length);
+                                local += node.text;
+                            } else {
+                                acked += node.text;
+                                local += " ".repeat(node.text.length);
+                            }
+                        }
+                    }
+                } else {
+                    nodes.push(...node.children);
+                }
+            }
+        }
+        return { acked, local };
     }
 }

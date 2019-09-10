@@ -1860,12 +1860,16 @@ export class MergeTree {
         }
     }
 
-    referencePositionToLocalPosition(
+    public referencePositionToLocalPosition(
         refPos: ReferencePosition,
-        refSeq = UniversalSequenceNumber, clientId = this.collabWindow.clientId) {
+        refSeq = this.collabWindow.currentSeq,
+        clientId = this.collabWindow.clientId) {
         const seg = refPos.getSegment();
-        const offset = refPos.getOffset();
-        return offset + this.getPosition(seg, refSeq, clientId);
+        if (seg && seg.parent) {
+            const offset = !seg.removedSeq ? refPos.getOffset() : 0;
+            return offset + this.getPosition(seg, refSeq, clientId);
+        }
+        return LocalReference.DetachedPosition;
     }
 
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
@@ -2137,9 +2141,79 @@ export class MergeTree {
         }
     }
 
-    public insertSiblingSegment(leftSibling: ISegment, insertSegment: ISegment, seq: number, clientId: number, opArgs: IMergeTreeDeltaOpArgs) {
+    // tslint:disable-next-line: max-func-body-length
+    public insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void {
 
-        insertSegment.seq = seq;
+        if (insertSegment.cachedLength === 0) {
+            return;
+        }
+        if (insertSegment.parent
+            || insertSegment.removedSeq
+            || insertSegment.seq !== UniversalSequenceNumber) {
+            throw new Error("Cannot insert segment that has already been inserted.");
+        }
+
+        const rebalanceTree = (segment: ISegment) => {
+            // blocks should never be left full
+            // if the inserts makes the block full
+            // then we need to walk up the chain of parents
+            // and split the blocks until we find a block with
+            // room
+            let ordinalUpdateNode: IMergeBlock;
+            let block = segment.parent;
+            while (block !== undefined) {
+                if (block.childCount >= MaxNodesInBlock) {
+                    const splitNode = this.split(block);
+                    if (block === this.root) {
+                        this.updateRoot(splitNode);
+                        // update root already updates all it's children ordinals
+                        ordinalUpdateNode = undefined;
+                    } else {
+                        this.insertChildNode(block.parent, splitNode, block.index + 1);
+                        ordinalUpdateNode = splitNode;
+                        this.blockUpdateLength(block.parent, UnassignedSequenceNumber, clientId);
+                    }
+                } else {
+                    this.blockUpdateLength(block, UnassignedSequenceNumber, clientId);
+                }
+                block = block.parent;
+            }
+            // only update ordinals once, for all children,
+            // on the path
+            if (ordinalUpdateNode) {
+                this.nodeUpdateOrdinals(ordinalUpdateNode);
+            }
+        };
+
+        const clientId = this.collabWindow.clientId;
+        const refSegment = referencePosition.getSegment();
+        const refOffset = referencePosition.getOffset();
+        const refSegLen = this.nodeLength(refSegment, this.collabWindow.currentSeq, clientId);
+        let startSeg = refSegment;
+        if (refOffset !== 0 && refSegLen !== 0) {
+            const splitSeg = this.splitLeafSegment(refSegment, refOffset);
+            assert(splitSeg.next);
+            this.insertChildNode(refSegment.parent, splitSeg.next, refSegment.index + 1);
+            rebalanceTree(splitSeg.next);
+            startSeg = splitSeg.next;
+        }
+        this.leftExcursion<ISegment>(startSeg, (backSeg) => {
+            if (!backSeg.isLeaf()) {
+                return true;
+            }
+            const backLen = this.nodeLength(backSeg, this.collabWindow.currentSeq, clientId);
+            // find the nearest 0 length seg we can insert over, as all other inserts
+            // go near to far
+            if (backLen === 0) {
+                if (this.breakTie(0, 0, backSeg, this.collabWindow.currentSeq, clientId)) {
+                    startSeg = backSeg;
+                }
+                return true;
+            }
+            return false;
+        });
+
+        insertSegment.seq = UnassignedSequenceNumber;
         insertSegment.clientId = clientId;
 
         if (Marker.is(insertSegment)) {
@@ -2149,45 +2223,9 @@ export class MergeTree {
             }
         }
 
-        this.insertChildNode(leftSibling.parent, insertSegment, leftSibling.index + 1);
+        this.insertChildNode(startSeg.parent, insertSegment, startSeg.index);
 
-        // blocks should never be left full
-        // if the inserts makes the block full
-        // then we need to walk up the chain of parents
-        // and split the blocks until we find a block with
-        // room
-        let ordinalUpdateNode: IMergeBlock;
-        let block = leftSibling.parent;
-        while (block !== undefined) {
-            if (block.childCount >= MaxNodesInBlock) {
-                const splitNode = this.split(block);
-                if (block === this.root) {
-                    this.updateRoot(splitNode);
-                    // update root already updates all it's children ordinals
-                    ordinalUpdateNode = undefined;
-                } else {
-                    this.insertChildNode(block.parent, splitNode, block.index + 1);
-                    ordinalUpdateNode = splitNode;
-                    this.blockUpdateLength(block.parent, seq, clientId);
-                }
-            } else {
-                this.blockUpdateLength(block, seq, clientId);
-            }
-            block = block.parent;
-        }
-        // only update ordinals once, for all children,
-        // on the path
-        if (ordinalUpdateNode) {
-            this.nodeUpdateOrdinals(ordinalUpdateNode);
-        }
-
-        if (this.collabWindow.collaborating) {
-            if (seq === UnassignedSequenceNumber) {
-                this.addToPendingList(insertSegment);
-            } else {
-                this.addToLRUSet(insertSegment, seq);
-            }
-        }
+        rebalanceTree(insertSegment);
 
         if (this.mergeTreeDeltaCallback) {
             this.mergeTreeDeltaCallback(
@@ -2200,9 +2238,8 @@ export class MergeTree {
                 });
         }
 
-        if (this.collabWindow.collaborating && MergeTree.options.zamboniSegments &&
-            (seq !== UnassignedSequenceNumber)) {
-            this.zamboniSegments();
+        if (this.collabWindow.collaborating) {
+            this.addToPendingList(insertSegment);
         }
     }
 
@@ -2352,20 +2389,28 @@ export class MergeTree {
 
     // assume called only when pos == len
     private breakTie(
-        pos: number, len: number, seq: number, node: IMergeNode, refSeq: number,
+        pos: number, len: number, node: IMergeNode, refSeq: number,
         clientId: number, candidateSegment?: ISegment) {
         if (node.isLeaf()) {
             if (pos === 0) {
                 const segment = node;
-                if (segment.seq !== UnassignedSequenceNumber) {
-                    // ensure we merge right. segments with lower seq should come before segments with higher seq
+                const branchId = this.getBranchId(clientId);
+                const segmentBranchId = this.getBranchId(segment.clientId);
+                const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
+                if (removalInfo.removedSeq
+                    && removalInfo.removedSeq <= refSeq
+                    && removalInfo.removedSeq !== UnassignedSequenceNumber) {
+                        return false;
+                }
+
+                // local change see everything
+                if (clientId === this.collabWindow.clientId) {
                     return true;
-                } else {
-                    // if the segment is unacked, and the new segment is unacked, the new segment should go first
-                    // if the new segment is not unacked, the old segment should go first as it will have a greater seq
-                    if (seq === UnassignedSequenceNumber) {
-                        return true;
-                    }
+                }
+
+                if (node.seq !== UnassignedSequenceNumber) {
+                    // ensure we merge right. newer segments should come before older segments
+                    return true;
                 }
             }
             return false;
@@ -2467,7 +2512,7 @@ export class MergeTree {
                 console.log(`@tcli: ${glc(this, this.collabWindow.clientId)} len: ${len} pos: ${pos} ${segInfo}`);
             }
 
-            if ((pos < len) || ((pos === len) && this.breakTie(pos, len, seq, child, refSeq, clientId, context.candidateSegment))) {
+            if ((pos < len) || ((pos === len) && this.breakTie(pos, len, child, refSeq, clientId, context.candidateSegment))) {
                 // found entry containing pos
                 found = true;
                 if (!child.isLeaf()) {
@@ -2498,18 +2543,6 @@ export class MergeTree {
                         console.log(`@tcli: ${glc(this, this.collabWindow.clientId)}: leaf action`);
                     }
                     const segment = child;
-                    if (MergeTree.options.insertAfterRemovedSegs === true && len === 0) {
-                        const branchId = this.getBranchId(clientId);
-                        const segmentBranchId = this.getBranchId(segment.clientId);
-                        const removalInfo = this.getRemovalInfo(branchId, segmentBranchId, segment);
-                        // only skipped ack segments above the refSeq of the insert
-                        if (removalInfo
-                            && removalInfo.removedSeq <= refSeq
-                            && removalInfo.removedSeq !== UnassignedSequenceNumber) {
-                            continue;
-                        }
-                    }
-
                     const segmentChanges = context.leaf(segment, pos, context);
                     if (segmentChanges.replaceCurrent) {
                         if (MergeTree.traceOrdinals) {

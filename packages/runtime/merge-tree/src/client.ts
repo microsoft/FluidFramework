@@ -10,7 +10,7 @@ import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs, MergeTreeMaintenanceCallback } from "./index";
+import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs, MergeTreeMaintenanceCallback, ReferencePosition } from "./index";
 import { LocalReference } from "./localReference";
 import {
     ClientIds,
@@ -194,31 +194,34 @@ export class Client {
      * @param leftSibling - The segment that should be the left sibling of the inserted segment
      * @param segment - The segment to insert
      */
-    public insertSiblingSegment(leftSibling: ISegment, segment: ISegment): ops.IMergeTreeInsertMsg {
-        // generate the op for the expected position of the new sibling segment
-        let opPos =
-            this.getPosition(leftSibling);
-        // only add the length if the segment isn't removed
-        if (!leftSibling.removedSeq) {
-            opPos += leftSibling.cachedLength;
-        }
-        const insertOp = OpBuilder.createInsertSegmentOp(opPos, segment);
+    public insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): ops.IMergeTreeInsertMsg {
 
+        const pos = this.mergeTree.referencePositionToLocalPosition(
+            refPos,
+            this.getCurrentSeq(),
+            this.getClientId());
+
+        if (pos === LocalReference.DetachedPosition) {
+            return undefined;
+        }
+        const op = OpBuilder.createInsertSegmentOp(
+            pos,
+            segment);
+
+        const opArgs = { op };
         let clockStart: number | [ number, number ];
         if (this.measureOps) {
             clockStart = clock();
         }
-        const opArgs = { op: insertOp };
-        this.mergeTree.insertSiblingSegment(
-            leftSibling,
+
+        this.mergeTree.insertAtReferencePosition(
+            refPos,
             segment,
-            UnassignedSequenceNumber,
-            this.getClientId(),
             opArgs);
 
-        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), {start: opPos, end: undefined}, clockStart);
+        this.completeAndLogOp(opArgs, this.getClientSequenceArgs(opArgs), {start: op.pos1, end: undefined}, clockStart);
 
-        return insertOp;
+        return op;
     }
 
     /**
