@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { MockRuntime } from "@prague/runtime-test-utils";
+import { ConnectionState } from "@prague/container-definitions";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@prague/runtime-test-utils";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";
@@ -30,5 +31,52 @@ describe("Routerlicious", () => {
                 });
             });
         }
+    });
+
+    describe("reconnect", () => {
+        it("message sent before reconnect", async () => {
+            const factory = new ConsensusRegisterCollectionFactory();
+            const runtime = new MockRuntime();
+            const deltaConnFactory = new MockDeltaConnectionFactory();
+            const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            const testCollection = factory.create(runtime, "consensus-ordered-collection");
+            testCollection.connect(runtime.services);
+
+            const writeP = testCollection.write("test", "test");
+            deltaConnection.state = ConnectionState.Disconnected;
+            deltaConnection.state = ConnectionState.Connecting;
+            await deltaConnFactory.processAllMessages();
+            deltaConnection.state = ConnectionState.Connected;
+            await deltaConnFactory.processAllMessages();
+            await writeP;
+        });
+
+        it("message not sent before reconnect", async () => {
+            const factory = new ConsensusRegisterCollectionFactory();
+            const runtime = new MockRuntime();
+            const deltaConnFactory = new MockDeltaConnectionFactory();
+            const deltaConnection = deltaConnFactory.createDeltaConnection(runtime);
+            runtime.services = {
+                deltaConnection,
+                objectStorage: new MockStorage(),
+            };
+            const testCollection = factory.create(runtime, "consensus-ordered-collection");
+            testCollection.connect(runtime.services);
+
+            const writeP =  testCollection.write("test", "test");
+            deltaConnection.state = ConnectionState.Disconnected;
+            deltaConnection.state = ConnectionState.Connecting;
+            deltaConnFactory.clearMessages();
+            deltaConnection.state = ConnectionState.Connected;
+            await deltaConnFactory.processAllMessages();
+            try {
+                await writeP;
+                assert.fail("expected to fail");
+            } catch { }
+        });
     });
 });

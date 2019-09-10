@@ -44,31 +44,52 @@ import * as uuid from "uuid/v4";
  */
 export class MockDeltaConnectionFactory {
     public sequenceNumber = 0;
+    public minSeq = new Map<string, number>();
     private readonly messages: ISequencedDocumentMessage[] = [];
     private readonly deltaConnections: MockDeltaConnection[] = [];
-    public createDeltaConnection(runtime: IComponentRuntime): IDeltaConnection {
+    public createDeltaConnection(runtime: MockRuntime): IDeltaConnection {
         const delta = new MockDeltaConnection(this, runtime);
         this.deltaConnections.push(delta);
         return delta;
     }
 
     public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+        if (!this.minSeq.has(msg.clientId)) {
+            this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+        }
         this.messages.push(msg as ISequencedDocumentMessage);
     }
 
-    public async processMessages(): Promise<void> {
+    public clearMessages() {
+        while (this.messages.shift()) { }
+    }
+
+    public async processAllMessages(): Promise<void> {
         while (this.messages.length > 0) {
             const msg = this.messages.shift();
+            this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
             msg.sequenceNumber = ++this.sequenceNumber;
-            msg.minimumSequenceNumber = 0;
+            msg.minimumSequenceNumber = this.getMinSeq();
             for (const dc of this.deltaConnections) {
                 for (const h of dc.handlers) {
-                    await h.prepare(msg, true);
-                    h.process(msg, true, msg.contents);
+                    await h.prepare(msg, dc.isLocal(msg));
+                    h.process(msg, dc.isLocal(msg), msg.contents);
                 }
             }
         }
         return Promise.resolve();
+    }
+
+    private getMinSeq(): number {
+        let minSeq: number;
+        for (const [, clientSeq] of this.minSeq) {
+            if (!minSeq) {
+                minSeq = clientSeq;
+            } else {
+                minSeq = Math.min(minSeq, clientSeq);
+            }
+        }
+        return minSeq ? minSeq : 0;
     }
 }
 
@@ -81,6 +102,18 @@ class MockDeltaConnection implements IDeltaConnection {
     }
 
     public set state(state: ConnectionState) {
+        switch (state) {
+            case ConnectionState.Connected:
+                if (this.pendingClientId) {
+                    this.runtime.clientId = this.pendingClientId;
+                    this.pendingClientId = undefined;
+                }
+            case ConnectionState.Connecting:
+                this.pendingClientId = uuid();
+                break;
+            case ConnectionState.Disconnected:
+            default:
+        }
         this.connectionState = state;
         this.handlers.forEach((h) => {
             h.setConnectionState(this.state);
@@ -89,10 +122,20 @@ class MockDeltaConnection implements IDeltaConnection {
     public readonly handlers: IDeltaHandler[] = [];
     private connectionState: ConnectionState = ConnectionState.Connected;
     private clientSequenceNumber: number = 0;
+    private pendingClientId: string;
+    private referenceSequenceNumber = 0;
 
     constructor(
         private readonly factory: MockDeltaConnectionFactory,
-        private readonly runtime: IComponentRuntime) { }
+        private readonly runtime: MockRuntime) {
+            this.handlers.push({
+                prepare: async (message: ISequencedDocumentMessage, local: boolean) => { },
+                process: (message: ISequencedDocumentMessage, local: boolean, context: any) => {
+                    this.referenceSequenceNumber = message.sequenceNumber;
+                 },
+                setConnectionState: (state: ConnectionState) => { },
+            });
+        }
 
     public submit(messageContent: any): number {
         this.clientSequenceNumber++;
@@ -100,7 +143,7 @@ class MockDeltaConnection implements IDeltaConnection {
             clientId: this.runtime.clientId,
             clientSequenceNumber: this.clientSequenceNumber,
             contents: messageContent,
-            referenceSequenceNumber: this.factory.sequenceNumber,
+            referenceSequenceNumber: this.referenceSequenceNumber,
             type: MessageType.Operation,
 
         };
@@ -112,6 +155,10 @@ class MockDeltaConnection implements IDeltaConnection {
     public attach(handler: IDeltaHandler): void {
         this.handlers.push(handler);
         handler.setConnectionState(this.state);
+    }
+
+    public isLocal(msg: ISequencedDocumentMessage) {
+        return msg.clientId === this.runtime.clientId || msg.clientId === this.pendingClientId;
     }
 }
 
@@ -129,7 +176,7 @@ export class MockRuntime extends EventEmitter
     public readonly id: string;
     public readonly existing: boolean;
     public readonly options: any;
-    public readonly clientId: string = uuid();
+    public clientId: string = uuid();
     public readonly clientType: string = "browser";
     public readonly parentBranch: string;
     public readonly path = "";

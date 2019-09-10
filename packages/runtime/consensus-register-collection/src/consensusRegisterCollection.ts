@@ -219,6 +219,14 @@ export class ConsensusRegisterCollection<T> extends SharedObject implements ICon
         return tree;
     }
 
+    protected onConnect(pending: any[]) {
+        while (this.promiseResolveQueue.length > 0) {
+            // tslint:disable-next-line: no-non-null-assertion
+            const pendingP = this.promiseResolveQueue.shift()!;
+            pendingP.reject(`Client was disconnected before message was sent`);
+        }
+    }
+
     protected async loadCore(
         minimumSequenceNumber: number,
         headerOrigin: string,

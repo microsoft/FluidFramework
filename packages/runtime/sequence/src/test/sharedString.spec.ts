@@ -42,7 +42,7 @@ describe("SharedString", () => {
 
         it("acked insertSegment", async () => {
 
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.sendNACKed();
@@ -55,16 +55,16 @@ describe("SharedString", () => {
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
             assert.equal(sharedString.client.mergeTree.pendingSegments.count(), (insertCount * 2) - 1);
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
         });
 
         it("acked removeRange", async () => {
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.removeRange(0, sharedString.getLength());
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.sendNACKed();
@@ -72,7 +72,7 @@ describe("SharedString", () => {
         });
 
         it("nacked removeRange", async () => {
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.removeRange(0, sharedString.getLength());
@@ -81,7 +81,7 @@ describe("SharedString", () => {
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
             assert.equal(sharedString.client.mergeTree.pendingSegments.count(), (insertCount * 2) - 1);
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
         });
 
@@ -93,11 +93,11 @@ describe("SharedString", () => {
         });
 
         it("acked annotateRange", async () => {
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.annotateRange(0, sharedString.getLength(), { foo: "bar" });
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.sendNACKed();
@@ -105,7 +105,7 @@ describe("SharedString", () => {
         });
 
         it("nacked annotateRange", async () => {
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
 
             sharedString.annotateRange(0, sharedString.getLength(), { foo: "bar" });
@@ -114,7 +114,7 @@ describe("SharedString", () => {
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
             assert.equal(sharedString.client.mergeTree.pendingSegments.count(), (insertCount * 2) - 1);
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
         });
 
@@ -125,7 +125,7 @@ describe("SharedString", () => {
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
             assert.equal(sharedString.client.mergeTree.pendingSegments.count(), (insertCount * 2) - 1);
-            await deltaConnectionFactory.processMessages();
+            await deltaConnectionFactory.processAllMessages();
             assert(sharedString.client.mergeTree.pendingSegments.empty());
         });
     });
