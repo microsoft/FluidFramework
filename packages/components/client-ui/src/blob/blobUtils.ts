@@ -31,27 +31,6 @@ export async function blobUploadHandler(
     };
 }
 
-export async function urlToInclusion(path: string): Promise<IGenericBlob> {
-    // TODO sabroner: wow this is brittle.
-    const pathComponents = path.split("/");
-    const fileName = pathComponents[pathComponents.length - 1];
-
-    return new Promise<IGenericBlob>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", path);
-        xhr.responseType = "blob"; // force the HTTP response, response-type header to be blob
-        xhr.onload = () => {
-
-            const b: any = xhr.response;
-            b.lastModifiedDate = new Date();
-            b.name = fileName;
-            const f: File = b;
-            resolve(fileToInclusion(f));
-        };
-        xhr.send();
-    });
-}
-
 async function fileToInclusion(file: File): Promise<IGenericBlob> {
     const arrayBufferReader = new FileReader();
 

@@ -27,10 +27,10 @@ describe("Core-Utils", () => {
     // Expected hashes are from git hash-object file...
     // Make sure the hash is of the file and not of an LFS stub
     describe("#gitHashFile", () => {
-        it("Windows ICON should Hash", async () => {
-            const p = path.join(__dirname, `${dataDir}/favicon.ico`);
+        it("SVG should Hash", async () => {
+            const p = path.join(__dirname, `${dataDir}/images/bindy.svg`);
             const file = await getFileContents(p);
-            const expectedHash = "bfe873eb228f98720fe0ed18c638daa13906958f";
+            const expectedHash = "c741e46ae4a5f1ca19debf0ac609aabc5fe94add";
             const hash = gitHashFile(file);
 
             assert.equal(hash, expectedHash);
@@ -45,10 +45,10 @@ describe("Core-Utils", () => {
             assert.equal(hash, expectedHash);
         });
 
-        it("Clippy GIF should Hash", async () => {
-            const p = path.join(__dirname, `${dataDir}/images/clippy.gif`);
+        it("Grid GIF should Hash", async () => {
+            const p = path.join(__dirname, `${dataDir}/images/grid.gif`);
             const file = await getFileContents(p);
-            const expectedHash = "3ce319dee60ec493f93c7e1ac4c97470b10707fd";
+            const expectedHash = "a7d63376bbcb05d0a6fa749594048c8ce6be23fb";
             const hash = gitHashFile(file);
 
             assert.equal(hash, expectedHash);
