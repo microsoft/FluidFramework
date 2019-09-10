@@ -12,22 +12,18 @@ import {
     MessageType,
 } from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
-import * as assert from "assert";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
 
 /**
- * Wrapper interface holding snapshot details for a given op
+ * Wrapper interface holding summary details for a given op
  */
-interface IOpSnapshotDetails {
-    // Whether we should snapshot at the given op
-    shouldSnapshot: boolean;
+interface IOpSummaryDetails {
+    // Whether we should summarize at the given op
+    shouldSummarize: boolean;
 
-    // The message to include with the snapshot
+    // The message to include with the summarize
     message: string;
-
-    // Whether creating the snapshot at this op is required
-    required: boolean;
 }
 
 declare module "@prague/component-core-interfaces" {
@@ -51,12 +47,13 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
     public get ISummarizer() { return this; }
     public get IComponentLoadable() { return this; }
 
-    // Use the current time on initialization since we will be loading off a snapshot
-    private lastSnapshotTime: number = Date.now();
-    private lastSnapshotSeqNumber: number = 0;
+    // Use the current time on initialization since we will be loading off a summary
+    private lastSummaryTime: number = Date.now();
+    private lastSummarySeqNumber: number = 0;
+    private summarizing = false;
     private idleTimer: NodeJS.Timeout | null = null;
     private lastOp: ISequencedDocumentMessage | null = null;
-    private lastOpSnapshotDetails: IOpSnapshotDetails | null = null;
+    private lastOpSummaryDetails: IOpSummaryDetails | null = null;
     private readonly runDeferred = new Deferred<void>();
 
     constructor(
@@ -81,6 +78,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             return;
         }
 
+        // start the timer after connecting to the document
+        this.resetIdleTimer();
+
         this.runtime.on("batchEnd", (error: any, op: ISequencedDocumentMessage) => {
             if (error) {
                 return;
@@ -88,56 +88,69 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
             this.clearIdleTimer();
 
-            // Get the snapshot details for the given op
+            // Get the summary details for the given op
             this.lastOp = op;
-            this.lastOpSnapshotDetails = this.getOpSnapshotDetails(op);
+            this.lastOpSummaryDetails = this.getOpSummaryDetails(op);
 
-            if (this.lastOpSnapshotDetails.shouldSnapshot) {
-                // Snapshot immediately if requested
-                this.summarize(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
+            if (this.lastOpSummaryDetails.shouldSummarize) {
+                // Summarize immediately if requested
+                // tslint:disable-next-line: no-floating-promises
+                this.summarize(this.lastOpSummaryDetails.message);
             } else {
                 // Otherwise detect when we idle to trigger the snapshot
-                this.startIdleTimer();
+                this.resetIdleTimer();
             }
         });
 
         return this.runDeferred.promise;
     }
 
-    private summarize(message: string, required: boolean) {
-        const snapshotP = this.generateSummary().then(
-            () => {
-                // On success note the time of the snapshot and op sequence number. Skip on error to cause us to
-                // attempt the snapshot again.
-                this.lastSnapshotTime = Date.now();
-                this.lastSnapshotSeqNumber = this.lastOp.sequenceNumber;
-                return true;
-            },
-            (error) => {
-                debug(`Snapshotting error ${this.runtime.id}`, error);
-                return false;
-            });
+    private async summarize(message: string) {
+        try {
+            // generateSummary could take some time
+            // mark that we are currently summarizing to prevent concurrent summarizing
+            this.summarizing = true;
 
-        snapshotP.catch((error) => this.runDeferred.reject(error));
+            debug(`Summarizing: ${message}`);
+
+            const summarySequenceNumber = this.lastOp ? this.lastOp.sequenceNumber : 1;
+
+            await this.generateSummary();
+
+            // On success note the time of the snapshot and op sequence number.
+            // Skip on error to cause us to attempt the snapshot again.
+            this.lastSummaryTime = Date.now();
+            this.lastSummarySeqNumber = summarySequenceNumber;
+
+        } catch (ex) {
+            debug(`Summarize error ${this.runtime.id}`, ex);
+
+        } finally {
+            this.summarizing = false;
+        }
     }
 
-    private getOpSnapshotDetails(op: ISequencedDocumentMessage): IOpSnapshotDetails {
-        if (op.type === MessageType.Save) {
-            // Forced snapshot.
-            return {
-                message: `;${op.clientId}: ${op.contents}`,
-                required: true,
-                shouldSnapshot: true,
-            };
-        } else {
-            // Snapshot if it has been above the max time between snapshots.
-            const timeSinceLastSnapshot = Date.now() - this.lastSnapshotTime;
-            const opCountSinceLastSnapshot = op.sequenceNumber - this.lastSnapshotSeqNumber;
+    private getOpSummaryDetails(op: ISequencedDocumentMessage): IOpSummaryDetails {
+        if (this.summarizing) {
+            // We are currently summarizing. Don't summarize again.
             return {
                 message: "",
-                required: false,
-                shouldSnapshot: (timeSinceLastSnapshot > this.configuration.maxTime) ||
-                                (opCountSinceLastSnapshot > this.configuration.maxOps),
+                shouldSummarize: false,
+            };
+        } else if (op.type === MessageType.Save) {
+            // Forced summary.
+            return {
+                message: `;${op.clientId}: ${op.contents}`,
+                shouldSummarize: true,
+            };
+        } else {
+            // Summarize if it has been above the max time between summaries.
+            const timeSinceLastSummary = Date.now() - this.lastSummaryTime;
+            const opCountSinceLastSummary = op.sequenceNumber - this.lastSummarySeqNumber;
+            return {
+                message: "",
+                shouldSummarize: (timeSinceLastSummary > this.configuration.maxTime) ||
+                    (opCountSinceLastSummary > this.configuration.maxOps),
             };
         }
     }
@@ -150,12 +163,14 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
         this.idleTimer = null;
     }
 
-    private startIdleTimer() {
-        assert(!this.idleTimer);
+    private resetIdleTimer() {
+        this.clearIdleTimer();
+
         this.idleTimer = setTimeout(
             () => {
-                debug("Snapshotting due to being idle");
-                this.summarize(this.lastOpSnapshotDetails.message, this.lastOpSnapshotDetails.required);
+                debug("Summarizing due to being idle");
+                // tslint:disable-next-line: no-floating-promises
+                this.summarize("idle");
             },
             this.configuration.idleTime);
     }
