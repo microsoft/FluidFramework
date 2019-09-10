@@ -617,6 +617,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             values,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
             (sequenceNumber) => this.submitMessage(MessageType.Reject, sequenceNumber),
+            (immediate?: boolean) => this.submitMessage(MessageType.NoOp, immediate ? "" : null),
             this.subLogger);
 
         // Track membership changes and update connection state accordingly

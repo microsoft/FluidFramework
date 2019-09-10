@@ -87,6 +87,7 @@ export class Quorum extends EventEmitter implements IQuorum {
         values: [string, ICommittedProposal][],
         private readonly sendProposal: (key: string, value: any) => number,
         private readonly sendReject: (sequenceNumber: number) => void,
+        private readonly sendNoOp: (immediate?: boolean) => void,
         private readonly logger?: ITelemetryLogger,
     ) {
         super();
@@ -332,14 +333,13 @@ export class Quorum extends EventEmitter implements IQuorum {
             }
 
             if (approved) {
-                /* tslint:disable:no-object-literal-type-assertion */
-                const committedProposal = {
+                const committedProposal: ICommittedProposal = {
                     approvalSequenceNumber: message.sequenceNumber,
                     commitSequenceNumber: -1,
                     key: proposal.key,
                     sequenceNumber: proposal.sequenceNumber,
                     value: proposal.value,
-                } as ICommittedProposal;
+                };
 
                 // TODO do we want to notify when a proposal doesn't make it to the commit phase - i.e. because
                 // a new proposal was made before it made it to the committed phase? For now we just will never
@@ -347,6 +347,9 @@ export class Quorum extends EventEmitter implements IQuorum {
 
                 this.values.set(committedProposal.key, committedProposal);
                 this.pendingCommit.set(committedProposal.key, committedProposal);
+
+                // send no-op on approval to expedite commit
+                this.sendNoOp(true);
 
                 this.emit(
                     "approveProposal",

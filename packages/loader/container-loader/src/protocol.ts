@@ -61,9 +61,19 @@ export class ProtocolOpHandler {
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
         sendReject: (sequenceNumber: number) => void,
+        sendNoOp: (immediate?: boolean) => void,
         private readonly logger?: ITelemetryLogger,
     ) {
-        this.quorum = new Quorum(minimumSequenceNumber, members, proposals, values, sendProposal, sendReject, logger);
+        this.quorum = new Quorum(
+            minimumSequenceNumber,
+            members,
+            proposals,
+            values,
+            sendProposal,
+            sendReject,
+            sendNoOp,
+            logger,
+        );
     }
 
     public close() {
