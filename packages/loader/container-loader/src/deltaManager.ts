@@ -778,7 +778,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.handler!.process(
             message,
             (result: IProcessMessageResult) => {
-                if (result && result.error) {
+                if (result.error) {
                     callback(result.error);
                 } else {
                     // We will queue a message to update our reference sequence number upon receiving a server
@@ -787,7 +787,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     // similarly (like a min sequence number update) to avoid acknowledgement cycles (i.e. ack the MSN
                     // update, which updates the MSN, then ack the update, etc...).
                     if (message.type === MessageType.Operation || result.immediateNoOp) {
-                        this.updateSequenceNumber(result.immediateNoOp);
+                        this.updateSequenceNumber(result.immediateNoOp === true);
                     }
 
                     const endTime = Date.now();
@@ -904,7 +904,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     /**
      * Acks the server to update the reference sequence number
      */
-    private updateSequenceNumber(immediateNoOp?: boolean): void {
+    private updateSequenceNumber(immediateNoOp: boolean): void {
         // Exit early for readonly clients. They don't take part in the minimum sequence number calculation.
         if (this.readonly) {
             return;
@@ -932,7 +932,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 this.submit(MessageType.NoOp, null);
             } else {
                 this.updateHasBeenRequested = false;
-                this.updateSequenceNumber();
+                this.updateSequenceNumber(false);
             }
         }, 100);
     }
