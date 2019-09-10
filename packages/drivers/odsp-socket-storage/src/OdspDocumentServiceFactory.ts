@@ -4,9 +4,9 @@
  */
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import { IDocumentService, IDocumentServiceFactory } from "@prague/protocol-definitions";
-import * as io from "socket.io-client";
 import { IOdspResolvedUrl } from "./contracts";
 import { FetchWrapper, IFetchWrapper } from "./fetchWrapper";
+import { getSocketIo } from "./getSocketIo";
 import { OdspDocumentService } from "./OdspDocumentService";
 
 /**
@@ -46,7 +46,7 @@ export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
       this.logger,
       this.storageFetchWrapper,
       this.deltasFetchWrapper,
-      Promise.resolve(io),
+      Promise.resolve(getSocketIo()),
     );
   }
 }
