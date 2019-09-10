@@ -16,7 +16,9 @@ describe("Loader", () => {
                 [],
                 [],
                 (key, value) => 0,
-                (value) => { return; });
+                (value) => { return; },
+                (immediate?: boolean) => { return; },
+            );
         });
 
         describe(".propose()", async () => {
