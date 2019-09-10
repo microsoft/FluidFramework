@@ -31,7 +31,8 @@
     "@prague/replay-socket-storage": "^0.10.0",
     "@prague/sequence": "^0.10.0",
     "@prague/merge-tree": "^0.10.0",
-    "@prague/utils": "^0.10.0"
+    "@prague/utils": "^0.10.0",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",

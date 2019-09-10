@@ -10,6 +10,7 @@ const optionsArray = [
     "Location:",
         ["--indir <directory>", "Name of the directory containing the output of the prague dumper tool"],
     "Misc:",
+        ["--testReconnect", "Simulates reconnect and rebuilding of pending changes"],
         ["--quiet", "Reduces amount of output"],
         ["--verbose", "Increases amount of output"],
 ];
@@ -45,6 +46,9 @@ class ReplayProcessArgs extends ReplayArgs {
                     break;
                 case "--verbose":
                     this.verbose = true;
+                    break;
+                case "--testreconnect":
+                    this.testReconnet = true;
                     break;
                 default:
                     console.error(`ERROR: Invalid argument ${arg}`);

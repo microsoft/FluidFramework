@@ -13,7 +13,7 @@
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ],
-            "args": ["--indir", "d:\\temp\\invalid-ack"]
+            "args": ["--indir", "D:\\temp\\vlad\\all\\Authoring-MVP3", "--testReconnect"]
         }
     ]
 }

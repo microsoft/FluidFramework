@@ -10,6 +10,7 @@ export class ReplayArgs {
     public inDirName: string;
     public to: number = Number.MAX_SAFE_INTEGER;
     public verbose = false;
+    public testReconnet = false;
 
     public checkArgs() {
     }

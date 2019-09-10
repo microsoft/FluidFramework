@@ -31,6 +31,8 @@ import {
 } from "@prague/sequence";
 import * as assert from "assert";
 import { ReplayArgs } from "./replayArgs";
+// tslint:disable-next-line:no-var-requires no-submodule-imports no-require-imports
+const cloneDeep = require("lodash/cloneDeep");
 
 interface IFullPathTreeEntry extends ITreeEntry {
     fullPath?: string;
@@ -120,36 +122,41 @@ export class ClientReplayTool {
             const messagePathParts: string[] = [];
             switch (message.type as MessageType) {
                 case MessageType.Operation:
-                    let contents = message.contents as IMessageContents;
-                    do {
-                        messagePathParts.push(contents.address);
-                        contents = contents.contents as IMessageContents;
-                    } while (contents.contents);
-
-                    if (contents.type && contents.type === "attach") {
-                        const legacyAttachMessage = contents.content as IAttachMessage;
-                        legacyAttachMessage.id = [...messagePathParts, legacyAttachMessage.id].join("/");
-                        this.processAttachMessage(legacyAttachMessage, mergeTreeAttachTrees);
-                    } else {
-                        const content = contents.content as IMessageContents;
-                        const messagePath = [...messagePathParts, content.address].join("/");
-                        if (content && mergeTreeAttachTrees.has(messagePath)) {
-                            if (!clients.has(message.clientId)) {
-                                clients.set(message.clientId, new Map<string, TestClient>());
+                    let contents = message.contents as Partial<IMessageContents>;
+                    if (contents) {
+                        do {
+                            if (typeof contents === "string") {
+                                contents = JSON.parse(contents) as IMessageContents;
                             }
-                            // tslint:disable-next-line: no-suspicious-comment
-                            // TODO: Interval collections, store in map "key"
-                            // tslint:disable-next-line: no-unsafe-any
-                            if (!content.contents.key) {
-                                const op = content.contents as IMergeTreeOp;
-                                if (this.args.verbose) {
-                                    console.log(`MergeTree op ${messagePath}:\n ${JSON.stringify(op)}`);
+                            messagePathParts.push(contents.address);
+                            contents = contents.contents as IMessageContents;
+                        } while (contents.contents);
+
+                        if (contents.type && contents.type === "attach") {
+                            const legacyAttachMessage = contents.content as IAttachMessage;
+                            legacyAttachMessage.id = [...messagePathParts, legacyAttachMessage.id].join("/");
+                            this.processAttachMessage(legacyAttachMessage, mergeTreeAttachTrees);
+                        } else {
+                            const content = contents.content as IMessageContents;
+                            const messagePath = [...messagePathParts, content.address].join("/");
+                            if (content && mergeTreeAttachTrees.has(messagePath)) {
+                                if (!clients.has(message.clientId)) {
+                                    clients.set(message.clientId, new Map<string, TestClient>());
                                 }
-                                const newMessage: IFullPathSequencedDocumentMessage = message;
-                                newMessage.fullPath = messagePath;
-                                newMessage.contents = op;
-                                mergeTreeMessages.push(newMessage);
-                                break;
+                                // tslint:disable-next-line: no-suspicious-comment
+                                // TODO: Interval collections, store in map "key"
+                                // tslint:disable-next-line: no-unsafe-any
+                                if (!content.contents.key) {
+                                    const op = content.contents as IMergeTreeOp;
+                                    if (this.args.verbose) {
+                                        console.log(`MergeTree op ${messagePath}:\n ${JSON.stringify(op)}`);
+                                    }
+                                    const newMessage: IFullPathSequencedDocumentMessage = message;
+                                    newMessage.fullPath = messagePath;
+                                    newMessage.contents = op;
+                                    mergeTreeMessages.push(newMessage);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -174,6 +181,9 @@ export class ClientReplayTool {
                         await TestClient.createFromSnapshot(creationInfo.tree, clientId, creationInfo.specToSeg));
                 }
                 const pendingMessages = new Array<IFullPathSequencedDocumentMessage>();
+                const reconnectClients =
+                    new Array<{ client: Map<string, TestClient>, messages: IFullPathSequencedDocumentMessage[] }>();
+                reconnectClients.push({ client, messages: mergeTreeMessages });
                 for (const message of mergeTreeMessages) {
                     if (message.clientId !== clientId) {
                         pendingMessages.push(message);
@@ -182,11 +192,35 @@ export class ClientReplayTool {
                         // that means we know this clients reference sequence number
                         // when the op was created, so apply all ops up to this ops
                         // reference sequence number before we apply this op
+                        if (this.args.testReconnet) {
+                            const reconnectPaths = new Set<string>();
+                            const reconnectMessages: IFullPathSequencedDocumentMessage[] = [];
+                            while (pendingMessages.length > 0
+                                && pendingMessages[0].clientId === clientId
+                                && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
+                                const reconnectMessage =
+                                    // tslint:disable-next-line: no-unsafe-any
+                                    cloneDeep(pendingMessages.shift()) as IFullPathSequencedDocumentMessage;
+                                if (!reconnectPaths.has(reconnectMessage.fullPath)) {
+                                    const reconnectOp =
+                                        client.get(reconnectMessage.fullPath).resetPendingSegmentsToOp();
+                                    reconnectMessage.contents = reconnectOp ;
+                                    reconnectMessages.push(reconnectMessage);
+                                    reconnectPaths.add(reconnectMessage.fullPath);
+                                } else {
+                                    reconnectMessage.contents = createGroupOp();
+                                    reconnectMessages.push(reconnectMessage);
+                                }
+                            }
+                            pendingMessages.unshift(...reconnectMessages);
+                        }
                         while (pendingMessages.length > 0
                             && pendingMessages[0].sequenceNumber <= message.referenceSequenceNumber) {
                             const pendingMessage = pendingMessages.shift();
                             try {
-                                client.get(pendingMessage.fullPath).applyMsg(pendingMessage);
+                                if (this.args.testReconnet) {
+                                    client.get(pendingMessage.fullPath).applyMsg(pendingMessage);
+                                }
                             } catch (error) {
                                 console.log(JSON.stringify(pendingMessage, undefined, 2));
                                 throw error;

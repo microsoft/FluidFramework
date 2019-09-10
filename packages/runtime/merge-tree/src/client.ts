@@ -32,6 +32,7 @@ import * as ops from "./ops";
 import * as Properties from "./properties";
 import { Snapshot } from "./snapshot";
 import { SnapshotLoader } from "./snapshotLoader";
+import { SortedSegmentSet } from "./sortedSegmentSet";
 import { MergeTreeTextHelper } from "./textSegment";
 
 export class Client {
@@ -855,44 +856,27 @@ export class Client {
     }
 
     public resetPendingSegmentsToOp(): ops.IMergeTreeOp {
-        const orderedSegments = [] as ISegment[];
+        const orderedSegments = new SortedSegmentSet();
         while (!this.mergeTree.pendingSegments.empty()) {
             const NACKedSegmentGroup = this.mergeTree.pendingSegments.dequeue();
             for (const segment of NACKedSegmentGroup.segments) {
-                orderedSegments.push(segment);
+                orderedSegments.addOrUpdate(segment);
             }
         }
-
-        orderedSegments.sort((a, b) => {
-            if (a === b) {
-                return 0;
-            } else if (a.ordinal < b.ordinal) {
-                return -1;
-            } else {
-                return 1;
-            }
-        });
 
         const opList: ops.IMergeTreeOp[] = [];
-        let prevSeg: ISegment;
-        for (const segment of orderedSegments) {
-            if (prevSeg !== segment) {
-                const op = this.resetPendingSegmentToOp(segment);
-                if (op) {
-                    opList.push(op);
-                }
-                prevSeg = segment;
+        for (const segment of orderedSegments.items) {
+            const op = this.resetPendingSegmentToOp(segment);
+            if (op) {
+                opList.push(op);
             }
         }
 
-        if (opList.length > 0) {
-            const groupOp: ops.IMergeTreeGroupMsg = {
-                ops: opList,
-                type: ops.MergeTreeDeltaType.GROUP,
-            };
-            return groupOp;
+        if (opList.length === 1) {
+            return opList[0];
+        } else {
+            return OpBuilder.createGroupOp(...opList);
         }
-        return undefined;
     }
 
     public createTextHelper() {
