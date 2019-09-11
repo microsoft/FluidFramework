@@ -52,9 +52,11 @@ export class WebflowView implements IComponentHTMLView {
 
         this.docP.then((doc) => {
             const slot = template.get(this.root, "slot") as HTMLElement;
-            let editor = new Editor(doc, slot, markdownFormatter);
+            let editor = new Editor(doc, slot, htmlFormatter);
 
             this.searchMenu = new SearchMenuView();
+
+            const always = () => true;
 
             const hasSelection = () => {
                 const { start, end } = editor.selection;
@@ -85,23 +87,29 @@ export class WebflowView implements IComponentHTMLView {
                 editor = new Editor(doc, slot, formatter);
             };
 
+            const setStyle = (style: string) => {
+                const { start, end } = editor.selection;
+                doc.setCssStyle(start, end, style);
+            };
+
             this.searchMenu.attach(template.get(this.root, "search"), {
                 commands: [
-                    { name: "blockquote",   enabled: () => true,    exec: () => { setFormat(Tag.blockquote); }},
+                    { name: "blockquote",   enabled: always,        exec: () => { setFormat(Tag.blockquote); }},
                     { name: "bold",         enabled: hasSelection,  exec: () => toggleSelection(styles.bold) },
-                    { name: "debug",        enabled: () => true,    exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
-                    { name: "h1",           enabled: () => true,    exec: () => { setFormat(Tag.h1); }},
-                    { name: "h2",           enabled: () => true,    exec: () => { setFormat(Tag.h2); }},
-                    { name: "h3",           enabled: () => true,    exec: () => { setFormat(Tag.h3); }},
-                    { name: "h4",           enabled: () => true,    exec: () => { setFormat(Tag.h4); }},
-                    { name: "h5",           enabled: () => true,    exec: () => { setFormat(Tag.h5); }},
-                    { name: "h6",           enabled: () => true,    exec: () => { setFormat(Tag.h6); }},
-                    { name: "markdown",     enabled: () => true,    exec: () => { switchFormatter(markdownFormatter); }},
-                    { name: "ol",           enabled: () => true,    exec: () => { insertTags([Tag.ol, Tag.li]); }},
-                    { name: "p",            enabled: () => true,    exec: () => { setFormat(Tag.p); }},
-                    { name: "plaintext",    enabled: () => true,    exec: () => { switchFormatter(plainTextFormatter); }},
-                    { name: "html",         enabled: () => true,    exec: () => { switchFormatter(htmlFormatter); }},
-                    { name: "ul",           enabled: () => true,    exec: () => { insertTags([Tag.ul, Tag.li]); }},
+                    { name: "debug",        enabled: always,        exec: () => { import(/* webpackChunkName: "debug" */ "./debug.css"); slot.toggleAttribute("data-debug"); }},
+                    { name: "h1",           enabled: always,        exec: () => { setFormat(Tag.h1); }},
+                    { name: "h2",           enabled: always,        exec: () => { setFormat(Tag.h2); }},
+                    { name: "h3",           enabled: always,        exec: () => { setFormat(Tag.h3); }},
+                    { name: "h4",           enabled: always,        exec: () => { setFormat(Tag.h4); }},
+                    { name: "h5",           enabled: always,        exec: () => { setFormat(Tag.h5); }},
+                    { name: "h6",           enabled: always,        exec: () => { setFormat(Tag.h6); }},
+                    { name: "markdown",     enabled: always,        exec: () => { switchFormatter(markdownFormatter); }},
+                    { name: "ol",           enabled: always,        exec: () => { insertTags([Tag.ol, Tag.li]); }},
+                    { name: "p",            enabled: always,        exec: () => { setFormat(Tag.p); }},
+                    { name: "plaintext",    enabled: always,        exec: () => { switchFormatter(plainTextFormatter); }},
+                    { name: "html",         enabled: always,        exec: () => { switchFormatter(htmlFormatter); }},
+                    { name: "ul",           enabled: always,        exec: () => { insertTags([Tag.ul, Tag.li]); }},
+                    { name: "red",          enabled: always,        exec: () => { setStyle("color:red"); } },
                 ],
                 onComplete: this.onComplete,
             });
