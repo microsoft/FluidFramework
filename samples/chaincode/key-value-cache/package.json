@@ -18,7 +18,7 @@
     "webpack:dev": "npm run dev"
   },
   "devDependencies": {
-    "@prague/build-common": "0.9.12046",
+    "@microsoft/fluid-build-common": "0.9.12046",
     "@prague/prague-dev-server": "~3.9.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.14.6",

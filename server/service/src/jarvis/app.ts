@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as express from "express";

@@ -13,7 +13,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/node": "^10.12.12",
     "@types/socket.io-client": "^1.4.32",

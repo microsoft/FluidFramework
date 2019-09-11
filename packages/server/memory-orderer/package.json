@@ -1,5 +1,5 @@
 {
-  "name": "@prague/memory-orderer",
+  "name": "@microsoft/fluid-server-memory-orderer",
   "version": "0.10.0",
   "description": "Prague ordering services",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/uuid": "^3.4.4",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@prague/container-loader": "^0.10.0",
-    "@prague/lambdas": "^0.10.0",
+    "@microsoft/fluid-server-lambdas": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/double-ended-queue": "^2.1.0",
@@ -44,7 +44,7 @@
     "ws": "^6.1.2"
   },
   "browser": {
-    "moniker": "@prague/services-core/dist/dockerNames.js"
+    "moniker": "@microsoft/fluid-server-services-core/dist/dockerNames.js"
   },
   "license": "MIT"
 }

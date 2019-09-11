@@ -4,7 +4,7 @@
  */
 
 import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl } from "@prague/container-definitions";
-import * as core from "@prague/services-core";
+import * as core from "@microsoft/fluid-server-services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";

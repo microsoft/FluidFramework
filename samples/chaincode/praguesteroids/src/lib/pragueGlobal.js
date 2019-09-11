@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-var prague=require("@prague/routerlicious");
+var prague=require("@microsoft/fluid-server-routerlicious");
 
 
 // This page will read from the common Prague Doc that manages all the connected games

@@ -4,7 +4,7 @@
  */
 
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IGitCache } from "@prague/services-client";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 
 export interface IAlfred {
     createFork(tenantId: string, id: string): Promise<string>;

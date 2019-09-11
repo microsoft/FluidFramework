@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ICollection,
-    IContext,
-    IDocument,
-} from "@prague/services-core";
+import { ICollection, IContext, IDocument } from "@microsoft/fluid-server-services-core";
 import { IRangeTrackerSnapshot } from "@prague/utils";
 import * as winston from "winston";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as utils from "@prague/services-utils";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as nconf from "nconf";
 import * as path from "path";
 import * as winston from "winston";

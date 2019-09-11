@@ -11,8 +11,14 @@ import {
     MongoManager,
     NackOperationType,
     SequencedOperationType,
-} from "@prague/services-core";
-import { KafkaMessageFactory, MessageFactory, TestContext, TestDbFactory, TestKafka } from "@prague/test-utils";
+} from "@microsoft/fluid-server-services-core";
+import {
+    KafkaMessageFactory,
+    MessageFactory,
+    TestContext,
+    TestDbFactory,
+    TestKafka,
+} from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as nconf from "nconf";

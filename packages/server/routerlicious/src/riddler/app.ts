@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@prague/services-core";
+import { MongoManager } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as express from "express";
 import { Express } from "express";
 import * as morgan from "morgan";
-// tslint:disable-next-line:no-var-requires
-const split = require("split");
 import * as winston from "winston";
 import * as api from "./api";
+
+// tslint:disable-next-line:no-var-requires
+const split = require("split");
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)

@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@prague/url-generator": "^1.0.4",
     "@types/node": "^10.12.12",
     "@types/react": "^16.7.7",

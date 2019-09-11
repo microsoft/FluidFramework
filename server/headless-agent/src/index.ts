@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { runService } from "@prague/services-utils";
+import { runService } from "@microsoft/fluid-server-services-utils";
 import * as path from "path";
 import { HeadlessResourcesFactory, HeadlessRunnerFactory } from "./runnerFactory";
 

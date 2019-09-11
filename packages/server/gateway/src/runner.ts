@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IAlfredTenant,
-    ICache,
-    IWebServer,
-    IWebServerFactory,
-} from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant, ICache, IWebServer, IWebServerFactory } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";

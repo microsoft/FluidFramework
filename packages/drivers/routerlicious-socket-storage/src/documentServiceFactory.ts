@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -10,7 +11,6 @@ import {
     IFluidResolvedUrl,
     IResolvedUrl,
 } from "@prague/protocol-definitions";
-import { ICredentials, IGitCache } from "@prague/services-client";
 import { parse } from "url";
 import { DocumentService } from "./documentService";
 import { DocumentService2 } from "./documentService2";

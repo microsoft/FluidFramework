@@ -9,7 +9,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { ScriptoriumLambda } from "./lambda";

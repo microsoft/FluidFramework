@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { canSummarize } from "@microsoft/fluid-server-services-client";
 import { ISummaryTokenClaims, ITokenClaims } from "@prague/protocol-definitions";
-import { canSummarize } from "@prague/services-client";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
-import passport = require("passport");
 import { IAlfred } from "../interfaces";
 
+import passport = require("passport");
 interface ISummaryTokenRequest {
     actorClientId: string;
     grantType: string;

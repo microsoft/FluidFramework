@@ -3,21 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { getRandomName } from "@microsoft/fluid-server-services-core";
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { start as startCore } from "@prague/base-host";
-import {
-    IRequest,
-} from "@prague/component-core-interfaces";
-import {
-    IFluidModule,
-    IFluidPackage,
-    IPackage,
-    IPraguePackage,
-} from "@prague/container-definitions";
+import { IRequest } from "@prague/component-core-interfaces";
+import { IFluidModule, IFluidPackage, IPackage, IPraguePackage } from "@prague/container-definitions";
 import { extractDetails, IResolvedPackage } from "@prague/loader-web";
 import { IUser } from "@prague/protocol-definitions";
-import { getRandomName } from "@prague/services-core";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";

@@ -3,6 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { IGitManager } from "@microsoft/fluid-server-services-client";
+import {
+    extractBoxcar,
+    ICollection,
+    IContext,
+    IDocument,
+    IKafkaMessage,
+    IProducer,
+    IRawOperationMessage,
+    IScribe,
+    ISequencedOperationMessage,
+    RawOperationType,
+    SequencedOperationType,
+} from "@microsoft/fluid-server-services-core";
 import { IQuorumSnapshot, ProtocolOpHandler } from "@prague/container-loader";
 import { ICreateCommitParams, ICreateTreeEntry } from "@prague/gitresources";
 import {
@@ -17,20 +31,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IGitManager } from "@prague/services-client";
-import {
-    extractBoxcar,
-    ICollection,
-    IContext,
-    IDocument,
-    IKafkaMessage,
-    IProducer,
-    IRawOperationMessage,
-    IScribe,
-    ISequencedOperationMessage,
-    RawOperationType,
-    SequencedOperationType,
-} from "@prague/services-core";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
 import * as winston from "winston";

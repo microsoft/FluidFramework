@@ -12,7 +12,7 @@
     "build:docs": "api-extractor run --local",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo",
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@prague/runtime-test-utils": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",

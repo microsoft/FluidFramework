@@ -4,13 +4,13 @@
  */
 
 import { AzureFunction, Context as AzContext } from "@azure/functions";
-import { DeliLambdaFactory } from "@prague/lambdas";
-import { create as createDocumentRouter } from "@prague/lambdas-driver";
-import * as services from "@prague/services";
-import * as core from "@prague/services-core";
+import { DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
+import * as services from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { Context, processAll, settings } from "../common";
-import { IPartitionLambda } from "@prague/services-core";
+import { IPartitionLambda } from "@microsoft/fluid-server-services-core";
 
 async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const mongoUrl = config.get("mongo:endpoint") as string;

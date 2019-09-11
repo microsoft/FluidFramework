@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IComponent,
     IComponentHTMLVisual,
@@ -27,7 +28,6 @@ import {
 } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IGitCache } from "@prague/services-client";
 import { BaseTelemetryNullLogger } from "@prague/utils";
 
 const getStorageTokenStub = (siteUrl: string) => Promise.resolve("fake token");

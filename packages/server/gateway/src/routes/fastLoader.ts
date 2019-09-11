@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import { IFluidResolvedUrl, ScopeType } from "@prague/protocol-definitions";
-import { IAlfredTenant, ICache } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

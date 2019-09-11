@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAgentUploader } from "@prague/services-core";
+import { IAgentUploader } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as minio from "minio";
 

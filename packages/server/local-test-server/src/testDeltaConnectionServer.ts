@@ -3,21 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { RoundTrip } from "@prague/client-api";
 import {
     LocalNodeFactory,
     LocalOrderer,
     LocalOrderManager,
     NodeManager,
     ReservationManager,
-} from "@prague/memory-orderer";
-import {
-    IClient,
-    IContentMessage,
-    IDocumentMessage,
-    ISignalMessage,
-    ITokenClaims,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-server-memory-orderer";
 import {
     ICollection,
     IDatabaseManager,
@@ -29,8 +21,7 @@ import {
     IWebSocketServer,
     MongoDatabaseManager,
     MongoManager,
-} from "@prague/services-core";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
+} from "@microsoft/fluid-server-services-core";
 import {
     TestCollection,
     TestDbFactory,
@@ -38,7 +29,10 @@ import {
     TestTaskMessageSender,
     TestTenantManager,
     TestWebSocketServer,
-} from "@prague/test-utils";
+} from "@microsoft/fluid-server-test-utils";
+import { RoundTrip } from "@prague/client-api";
+import { IClient, IContentMessage, IDocumentMessage, ISignalMessage, ITokenClaims } from "@prague/protocol-definitions";
+import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import * as jwt from "jsonwebtoken";
 import * as randomName from "random-name";
 import * as semver from "semver";

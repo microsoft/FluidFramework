@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaResources } from "@prague/lambdas";
-import { IPartitionLambdaFactory } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { KafkaResources } from "@microsoft/fluid-server-lambdas";
+import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { RdkafkaConsumer } from "../rdkafka";

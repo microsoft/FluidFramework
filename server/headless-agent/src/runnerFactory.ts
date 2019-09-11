@@ -5,9 +5,9 @@
 
 // tslint:disable max-classes-per-file
 
-import * as services from "@prague/services";
-import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import * as services from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import { ICache, RedisCache } from "./redisCache";

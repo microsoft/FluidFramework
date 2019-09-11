@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IPartitionLambdaFactory } from "@prague/services-core";
-import { IRunner } from "@prague/services-utils";
+import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IRunner } from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";

@@ -4,8 +4,8 @@
  */
 
 import { IPraguePackage, IUser } from "@prague/container-definitions";
-import { IAlfredTenant } from "@prague/services-core";
-import { generateToken } from "@prague/services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import { generateToken } from "@microsoft/fluid-server-services-core";
 import Axios from "axios";
 import * as _ from "lodash";
 import * as winston from "winston";

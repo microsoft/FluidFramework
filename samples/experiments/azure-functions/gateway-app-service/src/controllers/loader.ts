@@ -15,7 +15,7 @@ import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IComponent } from "@prague/runtime-definitions";
-import { IGitCache } from "@prague/services-client";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { MultiDocumentServiceFactory } from "../multiDocumentServiceFactory";
 
 export class WebLoader implements ICodeLoader {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import {
     ICollection,
     IContext,
@@ -12,7 +11,8 @@ import {
     IKafkaMessage,
     IOrderer,
     ISequencedOperationMessage,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 
 export interface IConcreteNode extends EventEmitter {

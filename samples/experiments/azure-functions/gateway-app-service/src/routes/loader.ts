@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@prague/services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";

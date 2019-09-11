@@ -1,5 +1,5 @@
 {
-  "name": "@prague/services-core",
+  "name": "@microsoft/fluid-server-services-core",
   "version": "0.10.0",
   "description": "Prague services core definitions",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "concurrently": "^4.1.0",
     "jsonwebtoken": "^8.4.0",
     "rimraf": "^2.6.2",
@@ -28,7 +28,7 @@
     "@prague/container-definitions": "^0.10.0",
     "@prague/gitresources": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-client": "^0.10.0",
+    "@microsoft/fluid-server-services-client": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/nconf": "^0.0.37",

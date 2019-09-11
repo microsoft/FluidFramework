@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName } from "@prague/services-core";
-import { run } from "@prague/tools-core";
+import { getRandomName } from "@microsoft/fluid-server-services-core";
+import { run } from "@microsoft/fluid-server-tools-core";
 
 export function initialize() {
     document.getElementById("run").onclick = async (ev) => {

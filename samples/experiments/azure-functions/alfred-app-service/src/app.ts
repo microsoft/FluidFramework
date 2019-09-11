@@ -6,7 +6,7 @@
 import {
     IDocumentStorage,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";

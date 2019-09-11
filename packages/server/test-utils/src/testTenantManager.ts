@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager } from "@prague/services-client";
-import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@prague/services-core";
+import { GitManager } from "@microsoft/fluid-server-services-client";
+import { ITenant, ITenantManager, ITenantOrderer, ITenantStorage } from "@microsoft/fluid-server-services-core";
 import { TestHistorian } from "./testHistorian";
 
 export class TestTenant implements ITenant {

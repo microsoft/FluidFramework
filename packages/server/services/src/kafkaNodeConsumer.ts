@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IPartition } from "@prague/services-core";
+import { IConsumer, IPartition } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";

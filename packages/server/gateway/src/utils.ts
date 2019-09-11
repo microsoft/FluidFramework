@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { generateToken, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { IUser, ScopeType } from "@prague/protocol-definitions";
-import { generateToken, IAlfredTenant } from "@prague/services-core";
 import { Request } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
 import { Params } from "express-serve-static-core";
-
 import * as _ from "lodash";
 
 export interface IAlfredUser extends IUser {

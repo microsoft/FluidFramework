@@ -4,7 +4,7 @@
  */
 
 import { IFluidResolvedUrl } from "@prague/container-definitions";
-import { IAlfredTenant } from "@prague/services-core";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";

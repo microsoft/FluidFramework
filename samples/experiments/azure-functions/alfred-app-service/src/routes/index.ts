@@ -6,7 +6,7 @@
 import {
     IDocumentStorage,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as api from "./api";

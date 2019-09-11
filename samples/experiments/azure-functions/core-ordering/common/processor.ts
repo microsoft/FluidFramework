@@ -4,7 +4,7 @@
  */
 
 import { Context } from "@azure/functions";
-import { IBoxcarMessage, BoxcarType, IKafkaMessage, IPartitionLambda } from "@prague/services-core";
+import { IBoxcarMessage, BoxcarType, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import * as safeStringify from "json-stringify-safe";
 
 export async function processAll(eventHubMessages: any[], context: Context, lambda: IPartitionLambda) {

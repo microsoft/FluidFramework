@@ -4,7 +4,7 @@
  */
 
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { GitManager, Historian, IGitCache } from "@prague/services-client";
+import { GitManager, Historian, IGitCache } from "@microsoft/fluid-server-services-client";
 import Axios from "axios";
 import { IAlfred } from "./interfaces";
 

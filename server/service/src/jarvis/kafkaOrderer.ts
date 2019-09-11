@@ -4,7 +4,7 @@
  */
 
 import { IClient, IClientJoin, IDocumentMessage, IUser, MessageType } from "@prague/runtime-definitions";
-import * as core from "@prague/services-core";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as moniker from "moniker";
 
 export class KafkaOrdererConnection implements core.IOrdererConnection {

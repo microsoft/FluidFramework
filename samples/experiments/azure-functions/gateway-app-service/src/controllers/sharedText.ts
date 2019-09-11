@@ -4,7 +4,7 @@
  */
 
 // tslint:disable:ban-types
-import * as agent from "@prague/agent";
+import * as agent from "@microsoft/fluid-server-agent";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import {
@@ -22,7 +22,7 @@ import { ReplayDocumentServiceFactory } from "@prague/replay-socket-storage";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as Sequence from "@prague/sequence";
-import { IGitCache } from "@prague/services-client";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { IStream } from "@prague/stream";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");

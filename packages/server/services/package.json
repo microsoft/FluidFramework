@@ -1,5 +1,5 @@
 {
-  "name": "@prague/services",
+  "name": "@microsoft/fluid-server-services",
   "version": "0.10.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -17,7 +17,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/amqplib": "^0.5.9",
     "@types/debug": "^0.0.31",
     "@types/lodash": "^4.14.118",
@@ -38,8 +38,8 @@
     "@prague/container-definitions": "^0.10.0",
     "@prague/gitresources": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-client": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
+    "@microsoft/fluid-server-services-client": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "amqplib": "^0.5.5",
     "axios": "^0.18.0",

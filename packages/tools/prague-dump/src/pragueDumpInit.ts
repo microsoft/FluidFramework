@@ -4,14 +4,14 @@
  */
 
 // tslint:disable:object-literal-sort-keys
-import * as odsp from "@prague/odsp-socket-storage";
 import {
     getDriveItemByFileId,
     getODSPFluidResolvedUrl,
     IClientConfig,
     IODSPTokens,
     postTokenRequest,
-} from "@prague/odsp-utils";
+} from "@microsoft/fluid-odsp-utils";
+import * as odsp from "@prague/odsp-socket-storage";
 import { IDocumentService } from "@prague/protocol-definitions";
 import * as r11s from "@prague/routerlicious-socket-storage";
 import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
@@ -19,7 +19,6 @@ import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
 import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
-
 import { paramForceRefreshToken, paramJWT, paramURL } from "./pragueDumpArgs";
 import { loadRC, saveRC } from "./pragueToolRC";
 

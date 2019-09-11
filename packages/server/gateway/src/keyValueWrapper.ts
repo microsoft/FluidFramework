@@ -6,9 +6,7 @@ import { Deferred } from "@prague/utils";
 import { ChildProcess, fork } from "child_process";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import {
-    IIncomingMessage as IOutgoingChildMessage,
-    IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
+import { IIncomingMessage as IOutgoingChildMessage, IOutgoingMessage as IIncomingChildMessage } from "./childLoader";
 
 export class KeyValueWrapper {
     private readonly kvDeferred = new Deferred<void>();

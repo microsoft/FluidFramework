@@ -6,9 +6,14 @@
 import * as API from "@prague/client-api";
 import { IRequest } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
-import { IDocumentDeltaStorageService, IDocumentService, IDocumentStorageService, IFluidResolvedUrl } from "@prague/protocol-definitions";
+import {
+    IDocumentDeltaStorageService,
+    IDocumentService,
+    IDocumentStorageService,
+    IFluidResolvedUrl,
+} from "@prague/protocol-definitions";
 import * as assert from "assert";
-import { ITestDeltaConnectionServer, TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver } from "..";
+import { ITestDeltaConnectionServer, TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver } from "../";
 
 describe("Container", () => {
     let testDeltaConnectionServer: ITestDeltaConnectionServer;

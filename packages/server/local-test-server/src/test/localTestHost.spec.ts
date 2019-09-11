@@ -8,7 +8,7 @@ import { Counter, CounterValueType } from "@prague/map";
 import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
 import { SharedString, SharedStringFactory } from "@prague/sequence";
 import * as assert from "assert";
-import { DocumentDeltaEventManager, TestHost } from "..";
+import { DocumentDeltaEventManager, TestHost } from "../";
 
 /**
  * Implementation of counter component for testing.

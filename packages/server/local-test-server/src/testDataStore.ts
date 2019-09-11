@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ICodeLoader,
-} from "@prague/container-definitions";
+import { ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import {
-    IDocumentServiceFactory,
-    IUrlResolver,
-} from "@prague/protocol-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@prague/protocol-definitions";
 import { debug } from "./debug";
 
 /**

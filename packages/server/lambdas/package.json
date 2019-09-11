@@ -1,5 +1,5 @@
 {
-  "name": "@prague/lambdas",
+  "name": "@microsoft/fluid-server-lambdas",
   "version": "0.10.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
@@ -42,9 +42,9 @@
     "@prague/gitresources": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0",
-    "@prague/services": "^0.10.0",
-    "@prague/services-client": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
+    "@microsoft/fluid-server-services": "^0.10.0",
+    "@microsoft/fluid-server-services-client": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "async": "^2.6.1",
     "double-ended-queue": "^2.1.0-0",
@@ -53,8 +53,8 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
-    "@prague/test-utils": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-server-test-utils": "^0.10.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

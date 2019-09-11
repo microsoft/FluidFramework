@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IODSPTokens } from "@prague/odsp-utils";
+import { IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";

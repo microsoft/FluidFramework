@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IHistorian } from "@microsoft/fluid-server-services-client";
 import * as git from "@prague/gitresources";
-import { IHistorian } from "@prague/services-client";
 
 export class TestHistorian implements IHistorian {
     public endpoint = "http://test";

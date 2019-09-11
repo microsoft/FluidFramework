@@ -5,11 +5,7 @@
 
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ConsensusQueue,
-    ConsensusStack,
-    IConsensusOrderedCollection,
-} from "@prague/consensus-ordered-collection";
+import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@prague/consensus-ordered-collection";
 import { ISharedMap } from "@prague/map";
 import { IComponentRuntime } from "@prague/runtime-definitions";
 import * as assert from "assert";
@@ -19,7 +15,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "..";
+} from "../";
 
 interface ISharedObjectConstructor<T> {
     create(runtime: IComponentRuntime, id?: string): T;

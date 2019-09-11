@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolOpHandler } from "@prague/container-loader";
 import {
     ActivityCheckingTimeout,
     BroadcasterLambda,
@@ -13,11 +12,7 @@ import {
     NoopConsolidationTimeout,
     ScribeLambda,
     ScriptoriumLambda,
-} from "@prague/lambdas";
-import {
-    IClient,
-    IServiceConfiguration,
-} from "@prague/protocol-definitions";
+} from "@microsoft/fluid-server-lambdas";
 import {
     IContext,
     IDatabaseManager,
@@ -31,7 +26,9 @@ import {
     ITenantManager,
     ITopic,
     IWebSocket,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { ProtocolOpHandler } from "@prague/container-loader";
+import { IClient, IServiceConfiguration } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";

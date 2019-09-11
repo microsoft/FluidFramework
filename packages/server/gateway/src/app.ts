@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getRandomName, IAlfredTenant, ICache } from "@prague/services-core";
+import { getRandomName, IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";
@@ -20,14 +20,14 @@ import * as passportLocal from "passport-local";
 import * as passportOpenIdConnect from "passport-openidconnect";
 import * as path from "path";
 import * as redis from "redis";
-// tslint:disable-next-line:no-var-requires
-const split = require("split");
 import * as expiry from "static-expiry";
 import * as winston from "winston";
 import { saveSpoTokens } from "./gateway-odsp-utils";
 import { IAlfred } from "./interfaces";
 import * as gatewayRoutes from "./routes";
 
+// tslint:disable-next-line:no-var-requires
+const split = require("split");
 // Base endpoint to expose static files at
 const staticFilesEndpoint = "/public";
 

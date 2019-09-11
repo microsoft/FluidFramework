@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/lambdas";
 import * as aria from "aria-nodejs-sdk";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";

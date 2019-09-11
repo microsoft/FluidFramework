@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/node": "^10.12.12",
     "@types/react-dom": "^16.0.11",
     "rimraf": "^2.6.2",

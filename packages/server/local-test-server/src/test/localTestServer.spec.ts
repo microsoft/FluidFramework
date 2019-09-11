@@ -9,12 +9,12 @@ import { MessageType } from "@prague/protocol-definitions";
 import { SharedString } from "@prague/sequence";
 import * as assert from "assert";
 import {
-  DocumentDeltaEventManager,
-  ITestDeltaConnectionServer,
-  TestDeltaConnectionServer,
-  TestDocumentServiceFactory,
-  TestResolver,
-} from "..";
+    DocumentDeltaEventManager,
+    ITestDeltaConnectionServer,
+    TestDeltaConnectionServer,
+    TestDocumentServiceFactory,
+    TestResolver,
+} from "../";
 
 describe("LocalTestServer", () => {
   const id = "fluid://test.com/test/test";

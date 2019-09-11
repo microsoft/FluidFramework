@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@prague/agent";
+import * as agent from "@microsoft/fluid-server-agent";
+import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import {
     IDocumentService,
     IDocumentServiceFactory,
@@ -13,9 +16,6 @@ import {
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
 import { IQueueMessage } from "@prague/runtime-definitions";
-import { NodeCodeLoader } from "@prague/services";
-import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";

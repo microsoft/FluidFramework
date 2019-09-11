@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentAttributes } from "@prague/protocol-definitions";
 import {
     ICollection,
     IDatabaseManager,
@@ -11,7 +10,8 @@ import {
     IDocumentDetails,
     IDocumentStorage,
     ISequencedOperationMessage,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { IDocumentAttributes } from "@prague/protocol-definitions";
 import { IGitManager } from "../../services-client/dist";
 import { ILocalOrdererSetup } from "./interfaces";
 

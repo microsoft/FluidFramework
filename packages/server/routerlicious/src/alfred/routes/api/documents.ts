@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, IDocumentStorage } from "@prague/services-core";
+import { IAlfredTenant, IDocumentStorage } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { getParam } from "../../utils";
 

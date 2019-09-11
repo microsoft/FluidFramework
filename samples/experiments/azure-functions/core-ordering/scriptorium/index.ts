@@ -4,9 +4,9 @@
  */
 
 import { AzureFunction, Context as AzContext } from "@azure/functions";
-import { ScriptoriumLambdaFactory } from "@prague/lambdas";
-import * as services from "@prague/services";
-import { IPartitionLambdaFactory, MongoManager, IPartitionLambda } from "@prague/services-core";
+import { ScriptoriumLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import * as services from "@microsoft/fluid-server-services";
+import { IPartitionLambdaFactory, MongoManager, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { Context, processAll, settings } from "../common";
 

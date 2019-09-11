@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IKafkaResources, KafkaRunnerFactory } from "@prague/lambdas";
-import * as utils from "@prague/services-utils";
+import { IKafkaResources, KafkaRunnerFactory } from "@microsoft/fluid-server-lambdas";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as commander from "commander";
 
 export function execute(

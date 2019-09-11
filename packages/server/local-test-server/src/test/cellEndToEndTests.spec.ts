@@ -14,7 +14,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "..";
+} from "../";
 
 describe("Cell", () => {
     const id = "fluid://test.com/test/test";

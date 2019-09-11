@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { DocumentLambda } from "./documentLambda";

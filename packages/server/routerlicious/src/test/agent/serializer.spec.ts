@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@prague/agent";
-import { MessageFactory, TestDocument } from "@prague/test-utils";
+import * as agent from "@microsoft/fluid-server-agent";
+import { MessageFactory, TestDocument } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 
 describe("Routerlicious", () => {

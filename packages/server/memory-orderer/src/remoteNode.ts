@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@microsoft/fluid-server-services-core";
 import { IClient, IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
-import { INode, IOrderer, IOrdererConnection, IWebSocket, MongoManager } from "@prague/services-core";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

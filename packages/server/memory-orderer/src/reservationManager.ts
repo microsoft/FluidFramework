@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, MongoManager } from "@prague/services-core";
+import { ICollection, MongoManager } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { IConcreteNode, IReservationManager } from "./interfaces";
 import { NodeManager } from "./nodeManager";

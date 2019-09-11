@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ForemanLambdaFactory } from "@prague/lambdas";
-import * as services from "@prague/services";
-import { IPartitionLambdaFactory } from "@prague/services-core";
+import { ForemanLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import * as services from "@microsoft/fluid-server-services";
+import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

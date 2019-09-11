@@ -4,14 +4,6 @@
  */
 
 import {
-    IClient,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    IServiceConfiguration,
-    MessageType,
-} from "@prague/protocol-definitions";
-import {
     BoxcarType,
     IBoxcarMessage,
     IDocument,
@@ -19,8 +11,16 @@ import {
     IProducer,
     IRawOperationMessage,
     RawOperationType,
-} from "@prague/services-core";
-import { IPubSub, ISubscriber } from ".";
+} from "@microsoft/fluid-server-services-core";
+import {
+    IClient,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    IServiceConfiguration,
+    MessageType,
+} from "@prague/protocol-definitions";
+import { IPubSub, ISubscriber } from "./";
 
 // tslint:disable-next-line:no-var-requires
 const now = require("performance-now");

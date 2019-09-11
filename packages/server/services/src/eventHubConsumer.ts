@@ -4,7 +4,13 @@
  */
 
 import { EventData, EventProcessorHost, PartitionContext } from "@azure/event-processor-host";
-import { BoxcarType, IBoxcarMessage, IConsumer, IKafkaMessage, IPartition } from "@prague/services-core";
+import {
+    BoxcarType,
+    IBoxcarMessage,
+    IConsumer,
+    IKafkaMessage,
+    IPartition,
+} from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { debug } from "./debug";
 

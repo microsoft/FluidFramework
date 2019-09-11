@@ -1,5 +1,5 @@
 {
-    "extends": ["@prague/build-common/tslint.json"],
+    "extends": ["@microsoft/fluid-build-common/tslint.json"],
     "rules": {
         "no-null-keyword": false
     }

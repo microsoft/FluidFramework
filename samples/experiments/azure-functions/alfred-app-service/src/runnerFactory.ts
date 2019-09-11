@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaOrdererFactory } from "@prague/kafka-orderer";
-import { DocumentStorage, EventHubProducer, HttpServer, MongoDbFactory, Tenant, WebServer } from "@prague/services";
-import { GitManager, Historian } from "@prague/services-client";
-import * as core from "@prague/services-core";
-import { ITenantConfig } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
+import { DocumentStorage, EventHubProducer, HttpServer, MongoDbFactory, Tenant, WebServer } from "@microsoft/fluid-server-services";
+import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
+import { ITenantConfig } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
 import { EventEmitter } from "events";
 import * as http from "http";

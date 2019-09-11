@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICredentials } from "@microsoft/fluid-server-services-client";
 import * as api from "@prague/protocol-definitions";
-import { ICredentials } from "@prague/services-client";
 import { DocumentService } from "./documentService";
 import { TokenProvider } from "./tokens";
 import { WSDeltaConnection } from "./wsDeltaConnection";

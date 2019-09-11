@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOrderer } from "@prague/services-core";
+import { IOrderer } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 

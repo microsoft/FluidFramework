@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ReplayArgs, ReplayTool } from "@prague/replay-tool";
+import { ReplayArgs, ReplayTool } from "@microsoft/fluid-replay-tool";
 import * as fs from "fs";
 
 const fileLocation: string = "content";

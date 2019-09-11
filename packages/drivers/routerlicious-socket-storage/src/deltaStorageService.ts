@@ -8,7 +8,7 @@ import { fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import Axios from "axios";
 import * as querystring from "querystring";
-import { TokenProvider} from "./tokens";
+import { TokenProvider } from "./tokens";
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document

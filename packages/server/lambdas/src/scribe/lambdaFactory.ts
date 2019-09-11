@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ProtocolOpHandler } from "@prague/container-loader";
-import { IDocumentAttributes } from "@prague/protocol-definitions";
-import { GitManager, Historian } from "@prague/services-client";
+import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
     IContext,
@@ -16,7 +14,9 @@ import {
     IScribe,
     ISequencedOperationMessage,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { ProtocolOpHandler } from "@prague/container-loader";
+import { IDocumentAttributes } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as winston from "winston";

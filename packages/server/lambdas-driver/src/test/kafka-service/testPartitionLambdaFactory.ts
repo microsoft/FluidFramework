@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
+import { IContext, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";

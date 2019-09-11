@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { NodeCodeLoader } from "@microsoft/fluid-server-services";
+import { promiseTimeout } from "@microsoft/fluid-server-services-client";
 import { createLoader } from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
-import { NodeCodeLoader } from "@prague/services";
-import { promiseTimeout } from "@prague/services-client";
 import { Deferred } from "@prague/utils";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";

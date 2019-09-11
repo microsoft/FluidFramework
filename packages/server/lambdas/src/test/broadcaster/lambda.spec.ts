@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda } from "@prague/services-core";
-import { IEvent, KafkaMessageFactory, MessageFactory, TestContext, TestPublisher } from "@prague/test-utils";
+import { IPartitionLambda } from "@microsoft/fluid-server-services-core";
+import {
+    IEvent,
+    KafkaMessageFactory,
+    MessageFactory,
+    TestContext,
+    TestPublisher,
+} from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { BroadcasterLambda } from "../../broadcaster/lambda";
 

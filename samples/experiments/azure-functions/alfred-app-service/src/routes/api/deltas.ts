@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@prague/container-definitions";
-import { IAlfredTenant, MongoManager } from "@prague/services-core";
+import { IAlfredTenant, MongoManager } from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 

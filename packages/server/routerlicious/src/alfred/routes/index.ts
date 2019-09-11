@@ -8,7 +8,8 @@ import {
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager } from "@prague/services-core";
+    MongoManager,
+} from "@microsoft/fluid-server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import * as agent from "./agent";

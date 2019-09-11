@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { generateToken, IAlfredTenant, ITenantManager } from "@microsoft/fluid-server-services-core";
 import { IServiceConfiguration, IUser, ScopeType } from "@prague/protocol-definitions";
-import { IAlfredTenant, ITenantManager } from "@prague/services-core";
-import { generateToken } from "@prague/services-core";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // tslint:disable-next-line:no-implicit-dependencies
 import { Params } from "express-serve-static-core";

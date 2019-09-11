@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@prague/services";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
+import * as services from "@microsoft/fluid-server-services";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { BroadcasterLambda } from "./lambda";

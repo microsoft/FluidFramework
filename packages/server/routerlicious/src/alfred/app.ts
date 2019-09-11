@@ -10,7 +10,7 @@ import {
     IProducer,
     ITenantManager,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as cookieParser from "cookie-parser";
@@ -21,10 +21,11 @@ import * as safeStringify from "json-stringify-safe";
 import * as morgan from "morgan";
 import { Provider } from "nconf";
 import * as path from "path";
-// tslint:disable-next-line:no-var-requires
-const split = require("split");
 import * as winston from "winston";
 import * as alfredRoutes from "./routes";
+
+// tslint:disable-next-line:no-var-requires
+const split = require("split");
 
 /**
  * Basic stream logging interface for libraries that require a stream to pipe output to (re: Morgan)

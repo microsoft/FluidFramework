@@ -51,7 +51,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@prague/local-test-server": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",

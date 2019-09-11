@@ -8,8 +8,8 @@ import {
     ICache,
     IWebServer,
     IWebServerFactory,
-} from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+} from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@prague/utils";
 import { Provider } from "nconf";
 import * as winston from "winston";

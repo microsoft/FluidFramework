@@ -1,10 +1,10 @@
 {
-  "name": "@prague/build-common",
+  "name": "@microsoft/fluid-build-common",
   "version": "0.10.0",
   "description": "Package containing common configs",
   "sideEffects": "false",
   "scripts": {
-    "build": "echo Skipping @prague/build-common: No build steps necessary."
+    "build": "echo Skipping @microsoft/fluid-build-common: No build steps necessary."
   },
   "author": "Microsoft",
   "repository": "microsoft/prague",

@@ -4,8 +4,8 @@
  */
 
 import { IQueueMessage } from "@prague/runtime-definitions";
-import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Deferred } from "@prague/utils";
 import * as winston from "winston";
 import { ICloseEvent, PuppetMaster } from "./puppeteer";

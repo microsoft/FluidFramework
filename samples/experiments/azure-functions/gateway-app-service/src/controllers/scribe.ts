@@ -4,7 +4,7 @@
  */
 
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import * as scribe from "@prague/tools-core";
+import * as scribe from "@microsoft/fluid-server-tools-core";
 import * as request from "request";
 import * as url from "url";
 import { registerDocumentServiceFactory } from "./utils";

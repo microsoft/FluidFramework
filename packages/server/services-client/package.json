@@ -1,5 +1,5 @@
 {
-  "name": "@prague/services-client",
+  "name": "@microsoft/fluid-server-services-client",
   "version": "0.10.0",
   "description": "Isomorphic services for communicating with Prague",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "test": "mocha --recursive dist/test",
     "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
@@ -41,7 +41,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",
     "concurrently": "^4.1.0",

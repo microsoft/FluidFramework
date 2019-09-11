@@ -4,8 +4,8 @@
  */
 
 import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
-import { IAlfredTenant } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Router } from "express";
 import { Provider } from "nconf";
 

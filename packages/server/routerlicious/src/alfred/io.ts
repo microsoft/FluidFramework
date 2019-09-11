@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@prague/agent";
+import * as agent from "@microsoft/fluid-server-agent";
+import { canSummarize, canWrite } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
+import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
 import * as api from "@prague/client-api";
 import {
     IClient,
@@ -13,9 +16,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@prague/protocol-definitions";
-import { canSummarize, canWrite } from "@prague/services-client";
-import * as core from "@prague/services-core";
-import { generateClientId, getRandomInt } from "@prague/services-utils";
 import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";

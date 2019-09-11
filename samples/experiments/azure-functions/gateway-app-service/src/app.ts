@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, ICache } from "@prague/services-core";
+import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import * as bodyParser from "body-parser";
 import * as compression from "compression";
 import * as connectRedis from "connect-redis";

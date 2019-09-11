@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory } from "@prague/services-core";
+import { IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import { BBCLambdaFactory } from "./lambdaFactory";

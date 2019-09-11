@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as core from "@microsoft/fluid-server-services-core";
 import {
     IClient,
     IContentMessage,
@@ -13,7 +14,6 @@ import {
     ISignalMessage,
     ITokenClaims,
 } from "@prague/protocol-definitions";
-import * as core from "@prague/services-core";
 import { debug, IConnect, IConnected } from "@prague/socket-storage-shared";
 import { BatchManager } from "@prague/utils";
 import { EventEmitter } from "events";

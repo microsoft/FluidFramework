@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { GitManager, Historian, ICredentials, IGitCache } from "@microsoft/fluid-server-services-client";
 import * as api from "@prague/protocol-definitions";
-import { GitManager, Historian, ICredentials, IGitCache } from "@prague/services-client";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import { fromUtf8ToBase64 } from "@prague/utils";
 import Axios from "axios";

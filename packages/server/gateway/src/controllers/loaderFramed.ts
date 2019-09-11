@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { createWebLoader, initializeChaincode, IPrivateSessionInfo, registerAttach } from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
 import { IResolvedPackage } from "@prague/loader-web";
 import { IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
-import { IGitCache } from "@prague/services-client";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";

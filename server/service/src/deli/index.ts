@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { create as createDocumentRouter, DeliLambdaFactory } from "@prague/lambdas";
-import * as services from "@prague/services";
-import { IDocument, IPartitionLambdaFactory } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import { create as createDocumentRouter, DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import * as services from "@microsoft/fluid-server-services";
+import { IDocument, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as _ from "lodash";
 import { Provider } from "nconf";
 import { RdkafkaProducer } from "../rdkafka";

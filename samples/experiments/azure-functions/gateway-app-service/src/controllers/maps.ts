@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as agent from "@prague/agent";
+import * as agent from "@microsoft/fluid-server-agent";
 import * as api from "@prague/client-api";
 import { Browser, IClient, IFluidResolvedUrl, IHost, IResolvedUrl } from "@prague/container-definitions";
 import {

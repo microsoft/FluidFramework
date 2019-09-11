@@ -4,13 +4,14 @@
  */
 
 import * as commits from "./commits";
+import * as loader from "./loader";
+import * as loaderFramed from "./loaderFramed";
+import * as navbar from "./navbar";
+
 export { commits };
 
-import * as navbar from "./navbar";
 export { navbar };
 
-import * as loader from "./loader";
 export { loader };
 
-import * as loaderFramed from "./loaderFramed";
 export { loaderFramed };

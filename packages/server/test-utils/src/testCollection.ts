@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDb, IDbFactory } from "@prague/services-core";
+import { ICollection, IDb, IDbFactory } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
 

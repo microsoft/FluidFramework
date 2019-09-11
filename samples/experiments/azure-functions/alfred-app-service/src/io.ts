@@ -12,8 +12,8 @@ import {
     ITokenClaims,
 } from "@prague/container-definitions";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
-import * as core from "@prague/services-core";
-import { generateClientId, getRandomInt } from "@prague/services-utils";
+import * as core from "@microsoft/fluid-server-services-core";
+import { generateClientId, getRandomInt } from "@microsoft/fluid-server-services-utils";
 import { isSystemType } from "@prague/utils";
 import * as jwt from "jsonwebtoken";
 import * as winston from "winston";

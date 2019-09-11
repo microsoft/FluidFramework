@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DeliLambdaFactory } from "@prague/lambdas";
-import { create as createDocumentRouter } from "@prague/lambdas-driver";
-import * as services from "@prague/services";
-import * as core from "@prague/services-core";
+import { DeliLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import { create as createDocumentRouter } from "@microsoft/fluid-server-lambdas-driver";
+import * as services from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 

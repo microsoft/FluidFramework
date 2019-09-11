@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaOrdererFactory } from "@prague/kafka-orderer";
+import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
 import {
     LocalNodeFactory,
     LocalOrderManager,
     NodeManager,
     ReservationManager,
-} from "@prague/memory-orderer";
-import * as services from "@prague/services";
-import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+} from "@microsoft/fluid-server-memory-orderer";
+import * as services from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as os from "os";

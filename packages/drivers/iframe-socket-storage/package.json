@@ -13,7 +13,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -22,7 +22,7 @@
   "repository": "microsoft/prague",
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^5.2.5",
@@ -38,7 +38,7 @@
   "dependencies": {
     "@prague/gitresources": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-client": "^0.10.0",
+    "@microsoft/fluid-server-services-client": "^0.10.0",
     "@prague/socket-storage-shared": "^0.10.0",
     "@prague/routerlicious-socket-storage": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",

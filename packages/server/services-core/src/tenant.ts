@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGitManager } from "@prague/services-client";
+import { IGitManager } from "@microsoft/fluid-server-services-client";
 
 export interface IAlfredTenant {
     id: string;

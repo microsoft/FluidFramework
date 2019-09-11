@@ -4,7 +4,7 @@
  */
 
 import { Context as FnContext } from "@azure/functions";
-import { IContext } from "@prague/services-core";
+import { IContext } from "@microsoft/fluid-server-services-core";
 import { Deferred } from "@prague/utils";
 
 export class Context implements IContext {

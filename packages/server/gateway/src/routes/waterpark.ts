@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { IPraguePackage } from "@prague/container-definitions";
 import { extractDetails, WebCodeLoader } from "@prague/loader-web";
 import { ScopeType } from "@prague/protocol-definitions";
-import { IAlfredTenant } from "@prague/services-core";
 import { Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as jwt from "jsonwebtoken";
@@ -19,6 +19,7 @@ import { resolveUrl } from "../gateway-urlresolver";
 import { IAlfred } from "../interfaces";
 import { getConfig, getParam, getUserDetails } from "../utils";
 import { defaultPartials } from "./partials";
+
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkgJson = require("../../package.json") as IPraguePackage;
 const defaultChaincode =

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITaskMessage, ITaskMessageReceiver } from "@prague/services-core";
+import { ITaskMessage, ITaskMessageReceiver } from "@microsoft/fluid-server-services-core";
 import * as amqp from "amqplib";
 import { EventEmitter } from "events";
 import * as winston from "winston";

@@ -1,5 +1,5 @@
 {
-  "name": "@prague/lambdas-driver",
+  "name": "@microsoft/fluid-server-lambdas-driver",
   "version": "0.10.0",
   "description": "Driver components for the prague service lambdas.",
   "main": "dist/index.js",
@@ -38,9 +38,9 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@prague/services": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
-    "@prague/services-utils": "^0.10.0",
+    "@microsoft/fluid-server-services": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
+    "@microsoft/fluid-server-services-utils": "^0.10.0",
     "@prague/utils": "^0.10.0",
     "async": "^2.6.1",
     "lodash": "^4.17.11",
@@ -49,8 +49,8 @@
     "winston": "^3.1.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
-    "@prague/test-utils": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
+    "@microsoft/fluid-server-test-utils": "^0.10.0",
     "@types/async": "^2.0.50",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^5.2.5",

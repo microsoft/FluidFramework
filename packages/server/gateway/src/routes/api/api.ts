@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import * as core from "@microsoft/fluid-server-services-core";
 import { IFluidResolvedUrl, IResolvedUrl, IWebResolvedUrl, ScopeType } from "@prague/protocol-definitions";
-import * as core from "@prague/services-core";
 import Axios from "axios";
 import { Request, Router } from "express";
 import * as safeStringify from "json-stringify-safe";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
-import passport = require("passport");
 import { parse, UrlWithStringQuery } from "url";
 import * as winston from "winston";
 import { getToken, IAlfredUser } from "../../utils";
 
+import passport = require("passport");
 // Although probably the case we want a default behavior here. Maybe just the URL?
 async function getWebComponent(url: UrlWithStringQuery): Promise<IWebResolvedUrl> {
     const result = await Axios.get(url.href);

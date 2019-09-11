@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IKafkaMessage, IProducer } from "@prague/services-core";
+import { IKafkaMessage, IProducer } from "@microsoft/fluid-server-services-core";
 import * as Deque from "double-ended-queue";
 import { IKafkaSubscriber } from "./interfaces";
 import { LocalKafkaSubscription } from "./localKafkaSubscription";

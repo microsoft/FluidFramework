@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { generateToken } from "@microsoft/fluid-server-services-core";
 import { IRequest } from "@prague/component-core-interfaces";
 import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver, ScopeType } from "@prague/protocol-definitions";
-import { generateToken } from "@prague/services-core";
 
 /**
  * Resolves URLs by providing fake URLs which succeed with the other

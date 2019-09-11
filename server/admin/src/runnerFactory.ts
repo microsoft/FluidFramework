@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@prague/services";
-import { promiseTimeout } from "@prague/services-client";
-import * as core from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import * as services from "@microsoft/fluid-server-services";
+import { promiseTimeout } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { KeyValueManager } from "./keyValueManager";

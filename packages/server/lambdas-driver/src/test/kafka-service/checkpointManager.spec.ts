@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestConsumer, TestKafka } from "@prague/test-utils";
+import { TestConsumer, TestKafka } from "@microsoft/fluid-server-test-utils";
 import * as assert from "assert";
 import { CheckpointManager } from "../../kafka-service/checkpointManager";
 

@@ -11,7 +11,7 @@ import {
     IPartitionLambdaFactory,
     IProducer,
     MongoManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import { NoOpLambda } from "../utils";

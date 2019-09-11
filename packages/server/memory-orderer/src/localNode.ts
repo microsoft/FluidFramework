@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -13,7 +12,8 @@ import {
     ITaskMessageSender,
     ITenantManager,
     IWebSocketServer,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { IDocumentMessage, IServiceConfiguration } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import * as _ from "lodash";
@@ -21,9 +21,7 @@ import * as moniker from "moniker";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { debug } from "./debug";
-import {
-    IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage,
-} from "./interfaces";
+import { IConcreteNode, IConnectedMessage, IConnectMessage, INodeMessage, IOpMessage } from "./interfaces";
 import { ISubscriber, LocalOrderer } from "./localOrderer";
 import { Socket } from "./socket";
 

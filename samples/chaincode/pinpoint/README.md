@@ -14,7 +14,7 @@ Then open index.html in your browser of choice to view the example
 # How it works
 
 The API code itself is loaded by including
-`import { api as prague } from "@prague/routerlicious";`
+`import { api as prague } from "@microsoft/fluid-server-routerlicious";`
 in [src/index.ts](src/index.ts).
 
 The code for the example is in [src/index.ts](src/index.ts). The example loads a collaborative document which contains

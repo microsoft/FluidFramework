@@ -10,7 +10,7 @@
     "tslint": "tslint 'src/**/*.ts'"
   },
   "dependencies": {
-    "@prague/routerlicious": "^0.1.2544",
+    "@microsoft/fluid-server-routerlicious": "^0.1.2544",
     "aria-nodejs-sdk": "https://praguenpm.blob.core.windows.net/packages/aria-nodejs-sdk-1.1.1.tgz",
     "winston": "^2.4.2"
   },

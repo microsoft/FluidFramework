@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MongoManager } from "@prague/services-core";
+import { MongoManager } from "@microsoft/fluid-server-services-core";
 import { Response, Router } from "express";
 import { getParam } from "../alfred/utils";
 import { TenantManager } from "./tenantManager";

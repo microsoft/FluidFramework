@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICredentials } from "@microsoft/fluid-server-services-client";
 import { IDocumentService, IErrorTrackingService } from "@prague/protocol-definitions";
-import { ICredentials } from "@prague/services-client";
 import { DocumentService2 } from "./documentService2";
 import { DefaultErrorTracking } from "./errorTracking";
 import { TokenProvider } from "./tokens";

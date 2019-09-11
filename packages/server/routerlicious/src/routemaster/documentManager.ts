@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@prague/services-core";
+import * as core from "@microsoft/fluid-server-services-core";
 import { Deferred } from "@prague/utils";
 
 export class DocumentManager {

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, IDocumentStorage, IProducer, ITenantManager, MongoManager } from "@prague/services-core";
+import {
+    IAlfredTenant,
+    IDocumentStorage,
+    IProducer,
+    ITenantManager,
+    MongoManager,
+} from "@microsoft/fluid-server-services-core";
 import * as cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";

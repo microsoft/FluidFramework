@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { IProtocolState } from "@prague/container-definitions";
 import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IGitCache } from "@prague/services-client";
 import { IRangeTrackerSnapshot } from "@prague/utils";
 
 export interface IDocumentDetails {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IKafkaMessage, IPartitionLambda } from "@prague/services-core";
+import { IContext, IKafkaMessage, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";

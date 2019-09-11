@@ -11,7 +11,7 @@ import {
     SharedStringInterval,
 } from "@prague/sequence";
 import * as assert from "assert";
-import { TestHost } from "..";
+import { TestHost } from "../";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,

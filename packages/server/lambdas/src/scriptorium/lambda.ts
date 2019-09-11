@@ -11,7 +11,7 @@ import {
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as services from "@prague/services";
-import { getOrCreateRepository } from "@prague/services-client";
-import { MongoManager } from "@prague/services-core";
-import * as utils from "@prague/services-utils";
+import * as services from "@microsoft/fluid-server-services";
+import { getOrCreateRepository } from "@microsoft/fluid-server-services-client";
+import { MongoManager } from "@microsoft/fluid-server-services-core";
+import * as utils from "@microsoft/fluid-server-services-utils";
 import { Provider } from "nconf";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";

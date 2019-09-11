@@ -3,17 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IBranchOrigin,
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    ITrace,
-    MessageType,
-} from "@prague/protocol-definitions";
-import { canSummarize } from "@prague/services-client";
+import { canSummarize } from "@microsoft/fluid-server-services-client";
 import {
     extractBoxcar,
     ICollection,
@@ -30,13 +20,18 @@ import {
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import {
-    Heap,
-    IComparer,
-    IHeapNode,
-} from "@prague/utils";
-import { isSystemType, RangeTracker } from "@prague/utils";
+    IBranchOrigin,
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ISequencedDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    ITrace,
+    MessageType,
+} from "@prague/protocol-definitions";
+import { Heap, IComparer, IHeapNode, isSystemType, RangeTracker } from "@prague/utils";
 import * as assert from "assert";
 import * as _ from "lodash";
 import * as winston from "winston";

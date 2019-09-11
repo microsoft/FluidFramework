@@ -9,7 +9,7 @@ import {
     IKafkaMessage,
     IPartitionLambda,
     IPartitionLambdaFactory,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";

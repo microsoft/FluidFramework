@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotDocument } from "@prague/agent";
-import {
-    IConnectionDetails,
-    IDeltaHandlerStrategy,
-    IDeltaManager,
-    IDeltaQueue,
-} from "@prague/container-definitions";
+import { ISnapshotDocument } from "@microsoft/fluid-server-agent";
+import { IConnectionDetails, IDeltaHandlerStrategy, IDeltaManager, IDeltaQueue } from "@prague/container-definitions";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,

@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "concurrently": "^4.1.0",
     "css-loader": "^1.0.0",
     "html-loader": "^0.5.5",

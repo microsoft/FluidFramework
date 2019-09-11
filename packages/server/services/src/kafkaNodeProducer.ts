@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@prague/services-core";
+import { BoxcarType, IBoxcarMessage, IPendingBoxcar, IProducer } from "@microsoft/fluid-server-services-core";
 import * as utils from "@prague/utils";
 import * as kafkaNode from "kafka-node";
 import * as util from "util";

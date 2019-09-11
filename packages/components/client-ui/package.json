@@ -38,7 +38,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/jsdom": "^12.0.0",
     "@types/mocha": "^5.2.5",

@@ -192,7 +192,7 @@
   dependencies:
     "@prague/container-definitions" "^0.3.6777"
     "@prague/gitresources" "^0.3.6777"
-    "@prague/services-client" "^0.3.6777"
+    "@microsoft/fluid-server-services-client" "^0.3.6777"
     "@prague/socket-storage-shared" "^0.3.6777"
     "@prague/utils" "^0.3.6777"
     axios "^0.18.0"
@@ -227,7 +227,7 @@
     lodash "^4.17.11"
     uuid "^3.3.2"
 
-"@prague/services-client@^0.3.6777":
+"@microsoft/fluid-server-services-client@^0.3.6777":
   version "0.3.6777"
   resolved "https://packages.wu2.prague.office-int.com/@prague%2fservices-client/-/services-client-0.3.6777.tgz#3db4c308afcbeb0a08ca9516790484fb54780827"
   integrity sha512-71/e/4cer0Gvfa+IJtLtlf/0AmlUczu+1FzxO4fXlVO3F7WCnsSaMjDmZ8izJXOhLRtGF8dAL9+zrALw4NLcGg==

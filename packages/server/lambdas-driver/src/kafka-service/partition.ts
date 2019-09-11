@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@prague/services-core";
+import { IConsumer, IKafkaMessage, IPartitionLambda, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
 import { AsyncQueue, queue } from "async";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";

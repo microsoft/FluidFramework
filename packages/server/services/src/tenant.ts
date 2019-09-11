@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { GitManager, Historian } from "@prague/services-client";
-import * as core from "@prague/services-core";
+import { GitManager, Historian } from "@microsoft/fluid-server-services-client";
+import * as core from "@microsoft/fluid-server-services-core";
 import Axios from "axios";
 
 export class Tenant implements core.ITenant {

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as gitStorage from "@microsoft/fluid-server-services-client";
 import * as resources from "@prague/gitresources";
 import {
     FileMode,
@@ -16,7 +17,6 @@ import {
     SummaryObject,
     SummaryType,
 } from "@prague/protocol-definitions";
-import * as gitStorage from "@prague/services-client";
 import { buildHierarchy } from "@prague/utils";
 
 /**

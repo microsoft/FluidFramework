@@ -16,7 +16,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from ".";
+} from "./";
 import { TestDataStore } from "./testDataStore";
 
 /**

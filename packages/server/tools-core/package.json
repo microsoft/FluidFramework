@@ -1,5 +1,5 @@
 {
-  "name": "@prague/tools-core",
+  "name": "@microsoft/fluid-server-tools-core",
   "version": "0.10.0",
   "description": "Prague service lambdas",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
     "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "node node_modules/@prague/build-common/gen_version.js",
+    "build:genver": "node node_modules/@microsoft/fluid-build-common/gen_version.js",
     "clean": "rimraf dist lib *.tsbuildinfo package-deps.json *.build.log",
     "tsc": "tsc",
     "tslint": "tslint --project tsconfig.json --format verbose"
@@ -18,7 +18,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/async": "^2.0.50",
     "@types/debug": "^0.0.31",
     "@types/jsonwebtoken": "^8.3.0",

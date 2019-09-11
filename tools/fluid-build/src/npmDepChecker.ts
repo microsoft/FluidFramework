@@ -19,7 +19,7 @@ export class NpmDepChecker {
     // hjs is implicitly used
     private readonly ignored = ["hjs", ...this.foundTypes];
     // list of packages that should always in the devDependencies
-    private readonly dev = ["@prague/build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha"];
+    private readonly dev = ["@microsoft/fluid-build-common", "nyc", "typescript", "tslint", "mocha-junit-reporter", "mocha"];
     private records: DepCheckRecord[] = [];
 
     constructor(private readonly pkg: Package, private readonly checkFiles: string[]) {

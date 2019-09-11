@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant, ICache } from "@prague/services-core";
+import { IAlfredTenant, ICache } from "@microsoft/fluid-server-services-core";
 import * as ensureAuth from "connect-ensure-login";
 import { Provider } from "nconf";
 import { IAlfred } from "../interfaces";

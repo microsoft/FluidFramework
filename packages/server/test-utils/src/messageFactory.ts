@@ -4,13 +4,6 @@
  */
 
 import {
-    IClientJoin,
-    IDocumentMessage,
-    IDocumentSystemMessage,
-    ISequencedDocumentMessage,
-    MessageType,
-    ScopeType } from "@prague/protocol-definitions";
-import {
     BoxcarType,
     IBoxcarMessage,
     IKafkaMessage,
@@ -18,7 +11,16 @@ import {
     ISequencedOperationMessage,
     RawOperationType,
     SequencedOperationType,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import {
+    IClientJoin,
+    IDocumentMessage,
+    IDocumentSystemMessage,
+    ISequencedDocumentMessage,
+    MessageType,
+    ScopeType,
+} from "@prague/protocol-definitions";
+
 import hash = require("string-hash");
 
 export class KafkaMessageFactory {

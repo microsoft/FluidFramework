@@ -26,15 +26,15 @@
   "dependencies": {
     "@prague/base-host": "^0.10.0",
     "@prague/loader-web": "^0.10.0",
-    "@prague/odsp-utils": "^0.10.0",
+    "@microsoft/fluid-odsp-utils": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
     "jsonwebtoken": "^8.4.0",
     "url-parse": "^1.4.3"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.1.6",
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "@types/node": "^10.12.12",
     "@types/url-parse": "^1.4.1",
     "concurrently": "^4.1.0",

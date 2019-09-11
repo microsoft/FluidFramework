@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
-import { IGitCache } from "@prague/services-client";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     ICollection,
+    IDatabaseManager,
+    IDocumentDetails,
+    IDocumentStorage,
     IForkOperation,
     IProducer,
     IRawOperationMessage,
     IScribe,
+    ITenantManager,
     RawOperationType,
-} from "@prague/services-core";
-import { IDatabaseManager, IDocumentDetails, IDocumentStorage, ITenantManager } from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
+import { IDocumentAttributes, IDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
 import * as moniker from "moniker";
 
 const StartingSequenceNumber = 0;

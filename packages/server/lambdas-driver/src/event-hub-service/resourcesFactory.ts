@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventHubConsumer } from "@prague/services";
-import { IConsumer, IPartitionLambdaFactory } from "@prague/services-core";
-import { IResourcesFactory } from "@prague/services-utils";
+import { EventHubConsumer } from "@microsoft/fluid-server-services";
+import { IConsumer, IPartitionLambdaFactory } from "@microsoft/fluid-server-services-core";
+import { IResourcesFactory } from "@microsoft/fluid-server-services-utils";
 import * as moniker from "moniker";
 import { Provider } from "nconf";
 import { IKafkaResources } from "../kafka-service";

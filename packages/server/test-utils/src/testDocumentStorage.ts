@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails } from "@prague/gitresources";
-import { IGitCache } from "@prague/services-client";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IDatabaseManager,
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
     ITenantManager,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { ICommit, ICommitDetails } from "@prague/gitresources";
 
 const StartingSequenceNumber = 0;
 

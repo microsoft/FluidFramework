@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IComponentHandle,
-    IComponentHandleContext,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+import { IHistorian } from "@microsoft/fluid-server-services-client";
+import { IComponentHandle, IComponentHandleContext, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     IDeltaManager,
@@ -18,12 +14,7 @@ import {
     ITelemetryLogger,
 } from "@prague/container-definitions";
 import * as git from "@prague/gitresources";
-import {
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-    ITreeEntry,
-    MessageType,
-} from "@prague/protocol-definitions";
+import { IDocumentMessage, ISequencedDocumentMessage, ITreeEntry, MessageType } from "@prague/protocol-definitions";
 import {
     IChannel,
     IComponentRuntime,
@@ -31,7 +22,6 @@ import {
     IDeltaHandler,
     ISharedObjectServices,
 } from "@prague/runtime-definitions";
-import { IHistorian } from "@prague/services-client";
 import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

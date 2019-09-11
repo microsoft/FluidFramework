@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SequencedLambda } from "@prague/lambdas";
+import { SequencedLambda } from "@microsoft/fluid-server-lambdas";
+import * as core from "@microsoft/fluid-server-services-core";
 import { IDocumentSystemMessage, ISequencedDocumentSystemMessage, MessageType } from "@prague/protocol-definitions";
-import * as core from "@prague/services-core";
 import { DocumentManager } from "./documentManager";
 
 export class RouteMasterLambda extends SequencedLambda {

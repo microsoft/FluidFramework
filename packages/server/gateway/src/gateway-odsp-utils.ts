@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
+import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
+import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 import { URL } from "url";
 
 const spoTenants = new Map<string, string>([
@@ -62,7 +63,7 @@ export async function spoJoinSession(
     tenantId: string,
     id: string,
     serverTokens: { [server: string]: IODSPTokens } | undefined,
-    clientConfig: IClientConfig) {
+    clientConfig: IClientConfig): Promise<IFluidResolvedUrl> {
 
     const server = getSpoServer(tenantId);
     if (server === undefined) {

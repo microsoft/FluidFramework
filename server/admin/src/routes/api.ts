@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@prague/services-core";
+import * as core from "@microsoft/fluid-server-services-core";
 import { Response, Router } from "express";
 import { Provider } from "nconf";
 import { IKeyValue, ITenantInput } from "../definitions";

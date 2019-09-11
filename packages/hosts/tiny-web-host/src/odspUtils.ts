@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@prague/odsp-utils";
+import { getODSPFluidResolvedUrl, IClientConfig, IODSPTokens } from "@microsoft/fluid-odsp-utils";
 import { IFluidResolvedUrl } from "@prague/protocol-definitions";
 
 const spoTenants = new Map<string, string>([

@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantConfig, ITenantOrderer, ITenantStorage } from "@prague/services-core";
-import { getRandomName, MongoManager } from "@prague/services-core";
+import {
+    getRandomName,
+    ITenantConfig,
+    ITenantOrderer,
+    ITenantStorage,
+    MongoManager,
+} from "@microsoft/fluid-server-services-core";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";

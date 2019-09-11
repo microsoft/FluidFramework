@@ -15,7 +15,7 @@ import {
     TestDeltaConnectionServer,
     TestDocumentServiceFactory,
     TestResolver,
-} from "..";
+} from "../";
 
 describe("Map", () => {
     const id = "fluid://test.com/test/test";

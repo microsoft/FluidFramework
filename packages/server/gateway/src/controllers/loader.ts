@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { IGitCache } from "@microsoft/fluid-server-services-client";
 import { createWebLoader, initializeChaincode, registerAttach } from "@prague/base-host";
 import { IResolvedPackage } from "@prague/loader-web";
 import { IResolvedUrl } from "@prague/protocol-definitions";
-import { IGitCache } from "@prague/services-client";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";

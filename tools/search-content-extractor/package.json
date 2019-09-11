@@ -11,13 +11,13 @@
   "dependencies": {
     "@prague/container-definitions": "^0.5.0",
     "@prague/odsp-socket-storage": "^0.5.0",
-    "@prague/odsp-utils": "^0.5.0",
+    "@microsoft/fluid-odsp-utils": "^0.5.0",
     "@prague/routerlicious-socket-storage": "^0.5.0",
     "@prague/runtime-definitions": "^0.5.0",
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.5.0",
+    "@microsoft/fluid-build-common": "^0.5.0",
     "@types/node": "^10.14.12",
     "@types/request": "^2.47.1",
     "concurrently": "^4.1.0",

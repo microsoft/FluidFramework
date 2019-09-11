@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IConsumer } from "@prague/services-core";
+import { IConsumer } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import * as Kafka from "node-rdkafka";
 

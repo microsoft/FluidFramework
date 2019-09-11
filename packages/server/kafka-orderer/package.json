@@ -1,5 +1,5 @@
 {
-  "name": "@prague/kafka-orderer",
+  "name": "@microsoft/fluid-server-kafka-orderer",
   "version": "0.10.0",
   "description": "Prague ordering services",
   "main": "dist/index.js",
@@ -16,7 +16,7 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "devDependencies": {
-    "@prague/build-common": "^0.10.0",
+    "@microsoft/fluid-build-common": "^0.10.0",
     "concurrently": "^4.1.0",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0",
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@prague/protocol-definitions": "^0.10.0",
-    "@prague/services-core": "^0.10.0",
+    "@microsoft/fluid-server-services-core": "^0.10.0",
     "@types/lodash": "^4.14.118",
     "@types/node": "^10.12.12",
     "lodash": "^4.17.11"

@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { KafkaOrdererFactory } from "@prague/kafka-orderer";
-import {
-    IClientJoin,
-    IDocumentMessage,
-    ISequencedDocumentSystemMessage,
-    MessageType,
-    ScopeType,
-} from "@prague/protocol-definitions";
-import * as services from "@prague/services";
-import * as core from "@prague/services-core";
-import { IConnect, IConnected } from "@prague/socket-storage-shared";
+import { KafkaOrdererFactory } from "@microsoft/fluid-server-kafka-orderer";
+import * as services from "@microsoft/fluid-server-services";
+import * as core from "@microsoft/fluid-server-services-core";
 import {
     MessageFactory,
     TestCollection,
@@ -22,7 +14,15 @@ import {
     TestTenantManager,
     TestWebSocket,
     TestWebSocketServer,
-} from "@prague/test-utils";
+} from "@microsoft/fluid-server-test-utils";
+import {
+    IClientJoin,
+    IDocumentMessage,
+    ISequencedDocumentSystemMessage,
+    MessageType,
+    ScopeType,
+} from "@prague/protocol-definitions";
+import { IConnect, IConnected } from "@prague/socket-storage-shared";
 import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as io from "../../alfred/io";

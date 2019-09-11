@@ -9,7 +9,7 @@ import {
     IPartitionLambda,
     IPartitionLambdaFactory,
     ISequencedOperationMessage,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 import * as assert from "assert";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";

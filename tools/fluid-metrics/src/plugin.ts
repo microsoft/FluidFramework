@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambdaFactory } from "@prague/routerlicious/dist/kafka-service/lambdas";
+import { IPartitionLambdaFactory } from "@microsoft/fluid-server-routerlicious/dist/kafka-service/lambdas";
 import * as aria from "aria-nodejs-sdk";
 import { Provider } from "nconf";
 import { MetricsLambdaFactory } from "./lambdaFactory";

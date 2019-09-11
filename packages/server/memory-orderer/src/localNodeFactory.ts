@@ -9,7 +9,7 @@ import {
     ITaskMessageSender,
     ITenantManager,
     IWebSocketServer,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";
 import { IConcreteNodeFactory } from "./interfaces";

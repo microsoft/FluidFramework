@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { INack, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import {
     extractBoxcar,
     IContext,
@@ -14,7 +13,8 @@ import {
     ISequencedOperationMessage,
     NackOperationType,
     SequencedOperationType,
-} from "@prague/services-core";
+} from "@microsoft/fluid-server-services-core";
+import { INack, ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import * as _ from "lodash";
 
 class BroadcasterBatch {

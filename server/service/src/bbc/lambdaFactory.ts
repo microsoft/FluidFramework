@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BBCLambda } from "@prague/lambdas";
-import { IContext, IPartitionLambda, IPartitionLambdaFactory, IPublisher, ITopic } from "@prague/services-core";
+import { BBCLambda } from "@microsoft/fluid-server-lambdas";
+import { IContext, IPartitionLambda, IPartitionLambdaFactory, IPublisher, ITopic } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
 import * as redis from "redis";

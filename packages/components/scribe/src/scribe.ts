@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as scribe from "@microsoft/fluid-server-tools-core";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
@@ -30,7 +31,6 @@ import {
     IComponentRuntime,
 } from "@prague/runtime-definitions";
 import { ISharedObjectFactory } from "@prague/shared-object-common";
-import * as scribe from "@prague/tools-core";
 import Axios from "axios";
 import { EventEmitter } from "events";
 import { resolve } from "url";

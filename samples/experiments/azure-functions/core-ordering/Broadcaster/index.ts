@@ -4,8 +4,8 @@
  */
 
 import { AzureFunction, Context as AzContext } from "@azure/functions";
-import { BroadcasterLambda } from "@prague/lambdas";
-import { IPartitionLambdaFactory, IPublisher, ITopic, IContext, IPartitionLambda } from "@prague/services-core";
+import { BroadcasterLambda } from "@microsoft/fluid-server-lambdas";
+import { IPartitionLambdaFactory, IPublisher, ITopic, IContext, IPartitionLambda } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
 import * as redis from "redis";
 import * as socketIoEmitter from "socket.io-emitter";

@@ -10,12 +10,12 @@
   "dependencies": {
     "@prague/container-definitions": "^0.3.6672",
     "@prague/gitresources": "^0.3.6672",
-    "@prague/kafka-orderer": "^0.3.6672",
+    "@microsoft/fluid-server-kafka-orderer": "^0.3.6672",
     "@prague/routerlicious-socket-storage": "^0.3.6672",
-    "@prague/services": "^0.3.6672",
-    "@prague/services-client": "^0.3.6672",
-    "@prague/services-core": "^0.3.6672",
-    "@prague/services-utils": "^0.3.6663",
+    "@microsoft/fluid-server-services": "^0.3.6672",
+    "@microsoft/fluid-server-services-client": "^0.3.6672",
+    "@microsoft/fluid-server-services-core": "^0.3.6672",
+    "@microsoft/fluid-server-services-utils": "^0.3.6663",
     "@prague/utils": "^0.3.6672",
     "@types/body-parser": "^1.17.0",
     "@types/bytes": "^3.0.0",
@@ -51,7 +51,7 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "@prague/build-common": "^0.3.6663",
+    "@microsoft/fluid-build-common": "^0.3.6663",
     "tslint": "^5.16.0",
     "tslint-microsoft-contrib": "^6.1.1",
     "typescript": "^3.4.5"

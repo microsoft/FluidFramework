@@ -4,9 +4,9 @@
  */
 
 import { IFluidResolvedUrl } from "@prague/container-definitions";
-import { IClientConfig } from "@prague/odsp-utils";
-import { IGitCache } from "@prague/services-client";
-import { chooseCelaName, IAlfredTenant } from "@prague/services-core";
+import { IClientConfig } from "@microsoft/fluid-odsp-utils";
+import { IGitCache } from "@microsoft/fluid-server-services-client";
+import { chooseCelaName, IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import { Request } from "express";
 import { Provider } from "nconf";
 import { parse } from "url";
