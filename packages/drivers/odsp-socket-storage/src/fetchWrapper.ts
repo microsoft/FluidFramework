@@ -20,10 +20,10 @@ export class FetchWrapper implements IFetchWrapper {
             { headers },
             { maxRetries: 5, backoffFn: exponentialBackoff(500), filter: whitelist([503, 500, 408, 409, 429]) },
         ).then((response) => {
-            if (response.response.status === 401 || response.response.status === 403) {
-                throw response.response.status;
+            if (response.response.status >= 200 && response.response.status < 300) {
+                return (response.response.json() as any) as T;
             }
-            return (response.response.json() as any) as T;
+            return Promise.reject(response.response.status);
         });
     }
 
@@ -41,10 +41,10 @@ export class FetchWrapper implements IFetchWrapper {
                 maxRetries: 5,
             });
 
-        if (response.response.status === 401 || response.response.status === 403) {
-            return Promise.reject(response.response.status);
+        if (response.response.status >= 200 && response.response.status < 300) {
+            return response.response.json();
         }
 
-        return response.response.json();
+        return Promise.reject(response.response.status);
     }
 }

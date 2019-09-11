@@ -103,13 +103,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             request,
             logger);
 
-        // Log error right away to telemetry pipeline
-        await container.load(version, connection).catch((error) => {
-            container.emit("error", error);
-            throw error;
+        const containerP = new Promise<Container>(async (res, rej) => {
+            await container.load(version, connection)
+                .then(() => {
+                    res(container);
+                })
+                .catch((error) => {
+                    rej(error);
+            });
         });
 
-        return container;
+        return containerP;
     }
 
     public subLogger: ITelemetryLogger;
