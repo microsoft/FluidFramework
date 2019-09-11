@@ -1201,8 +1201,17 @@ export type LocalReferenceMapper = (id: string) => LocalReference;
 
 // represents a sequence of text segments
 export class MergeTree {
+
+    // Maximum length of text segment to be considered to be merged with other segment.
+    // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
+    // The bigger it is, the more expensive it is to break segment into sub-segments (on edits)
+    // The smaller it is, the more segments we have in snapshots (and in memory) - it's more expensive to load snapshots.
+    // Small number also makes ReplayTool produce false positives ("same" snapshots have slightly different binary representations).
+    // More measurements needs to be done, but it's very likely the right spot is somewhere between 1K-2K mark.
+    // That said, we also break segments on newline and there are very few segments that are longer than 256 because of it.
     // must be an even number
     static TextSegmentGranularity = 256;
+
     static zamboniSegmentsMaxCount = 2;
     static options = {
         incrementalUpdate: true,
