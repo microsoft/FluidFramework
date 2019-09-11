@@ -6,17 +6,27 @@
 import { ISharedCell } from "@prague/cell";
 import { ISharedMap } from "@prague/map";
 import { SharedObjectSequence } from "@prague/sequence";
+import {
+  ActivityItem,
+  DefaultButton,
+  PrimaryButton,
+  ContextualMenuItemType,
+  DirectionalHint,
+  Dialog,
+  DialogFooter,
+  DialogType,
+  HoverCard,
+  HoverCardType,
+  Icon,
+  initializeIcons,
+  ColorPicker,
+  getColorFromHSV,
+  getColorFromString,
+  IColor,
+  Stack,
+  TextField
+} from "office-ui-fabric-react";
 import { MotionAnimations } from "@uifabric/fluent-theme/lib/fluent/FluentMotion";
-import { ActivityItem } from 'office-ui-fabric-react/lib/ActivityItem';
-import { DefaultButton, PrimaryButton } from 'office-ui-fabric-react/lib/Button';
-import { ContextualMenuItemType, DirectionalHint } from 'office-ui-fabric-react/lib/ContextualMenu';
-import { Dialog, DialogFooter, DialogType } from 'office-ui-fabric-react/lib/Dialog';
-import { HoverCard, HoverCardType } from 'office-ui-fabric-react/lib/HoverCard';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import { ColorPicker, getColorFromHSV, getColorFromString, IColor } from 'office-ui-fabric-react/lib/index';
-import { Stack } from 'office-ui-fabric-react/lib/Stack';
-import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import * as React from "react";
 import { getRelativeDate } from '../Utils';
 import { IBadgeType, IHistory } from './';
