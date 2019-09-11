@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-// tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
 import { Dom, Scheduler } from "@prague/flow-util";
 import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from "@prague/merge-tree";
@@ -35,14 +34,9 @@ class LayoutCheckpoint {
 }
 
 // tslint:disable-next-line:no-object-literal-type-assertion
-export const eotSegment = { cachedLength: 0 } as ISegment;
+export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 
 export class Layout {
-    public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
-    private _cursor: ILayoutCursor;
-
-    private readonly rootFormatInfo: IFormatInfo;
-
     private get format() {
         const stack = this.formatStack;
         return stack.length > 0
@@ -51,6 +45,18 @@ export class Layout {
     }
 
     private get slot() { return this.root; }
+
+    public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
+    public get position() { return this._position; }
+    public get segment() { return this._segment; }
+    public get startOffset() { return this._startOffset; }
+    public get endOffset() { return this._endOffset; }
+    public get segmentStart() { return this._segmentStart; }
+    public get segmentEnd() { return this._segmentEnd; }
+    public renderCallback?: (start, end) => void;
+    public invalidatedCallback?: (start, end) => void;
+
+    private readonly rootFormatInfo: IFormatInfo;
     private formatStack: Readonly<IFormatInfo>[];
     private emitted: Set<Node>;
     private pending: Set<Node> = new Set();
@@ -60,23 +66,13 @@ export class Layout {
     private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
     private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
+    private _cursor: ILayoutCursor;
     private _position = NaN;
-    public get position() { return this._position; }
-
     private _segment: ISegment;
-    public get segment() { return this._segment; }
-
     private _startOffset = NaN;
-    public get startOffset() { return this._startOffset; }
-
     private _endOffset = NaN;
-    public get endOffset() { return this._endOffset; }
-
     private _segmentStart = NaN;
-    public get segmentStart() { return this._segmentStart; }
-
     private _segmentEnd = NaN;
-    public get segmentEnd() { return this._segmentEnd; }
 
     private startInvalid: LocalReference;
     private endInvalid: LocalReference;
@@ -110,11 +106,6 @@ export class Layout {
     public sync(start = 0, end = this.doc.length) {
         const doc = this.doc;
         const length = doc.length;
-
-        if (length === 0) {
-            Dom.removeAllChildren(this.root);
-            return;
-        }
 
         console.time("Layout.sync()");
 
@@ -386,7 +377,10 @@ export class Layout {
         const shouldContinue = this.cursor.parent !== previous.cursor.parent
             || this.cursor.previous !== previous.cursor.previous;
 
-        // Identical structure implies that the node is still attached to the root.
+        // TODO: Move the 'this.root.contains()' to the above 'shouldContinue' logic to support formatters
+        //       that push multiple nodes?  (In which case parent could be unchained, but still detached).
+        //
+        //       If so, do we really need the parent/previous comparison?
         assert(shouldContinue || this.root.contains(previous.cursor.parent));
 
         return shouldContinue;
@@ -402,7 +396,7 @@ export class Layout {
     }
 
     private removeNode(node: Node) {
-        debug("        removed %o@%d", node, this.position);
+        debug("        removed %o", node);
         this.nodeToSegmentMap.delete(node);
         if (node.parentNode) {
             node.parentNode.removeChild(node);
