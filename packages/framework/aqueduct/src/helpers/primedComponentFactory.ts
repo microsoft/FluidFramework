@@ -23,6 +23,7 @@ export class PrimedComponentFactory extends SharedComponentFactory {
     constructor(
         ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
+        onDemandInstantiation = true,
     ) {
         const mergedObjects = [...sharedObjects];
 
@@ -33,7 +34,7 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedDirectory.getFactory());
         }
 
-        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed.
+        // TODO: Remove SharedMap factory when compatibility with SharedMap PrimedComponent is no longer needed in 0.10
         if (!sharedObjects.find((factory) => {
             return factory.type === MapFactory.Type;
         })) {
@@ -41,6 +42,6 @@ export class PrimedComponentFactory extends SharedComponentFactory {
             mergedObjects.push(SharedMap.getFactory());
         }
 
-        super(ctor, mergedObjects);
+        super(ctor, mergedObjects, onDemandInstantiation);
     }
 }

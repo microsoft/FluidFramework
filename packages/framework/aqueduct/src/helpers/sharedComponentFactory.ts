@@ -17,12 +17,13 @@ import {
 } from "@prague/shared-object-common";
 import { SharedComponent } from "../components/sharedComponent";
 
-export class SharedComponentFactory implements IComponentFactory  {
+export class SharedComponentFactory implements IComponentFactory {
     private readonly registry: ISharedObjectRegistry;
 
     constructor(
         private readonly ctor: new (runtime: IComponentRuntime, context: IComponentContext) => SharedComponent,
         sharedObjects: ReadonlyArray<ISharedObjectFactory>,
+        private readonly onDemandInstantiation = true,
     ) {
         this.registry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
     }
@@ -31,6 +32,8 @@ export class SharedComponentFactory implements IComponentFactory  {
 
     /**
      * This is where we do component setup.
+     *
+     * @param context - component context used to load a component runtime
      */
     public instantiateComponent(context: IComponentContext): void {
         // Create a new runtime for our component
@@ -38,15 +41,36 @@ export class SharedComponentFactory implements IComponentFactory  {
         ComponentRuntime.load(
             context,
             this.registry,
-            (runtime) => {
-                // Create a new instance of our component
-                const instance = new this.ctor(runtime, context);
-                const initializedP = instance.initialize();
+            (runtime: ComponentRuntime) => {
+                let instanceP: Promise<SharedComponent>;
+                // For new runtime, we need to force the component instance to be create
+                // run the initialization.
+                if (!this.onDemandInstantiation || !runtime.existing) {
+                    // Create a new instance of our component up front
+                    instanceP = this.instantiateInstance(runtime, context);
+                }
 
                 runtime.registerRequestHandler(async (request: IRequest) => {
-                    await initializedP;
+                    if (!instanceP) {
+                        // Create a new instance of our component on demand
+                        instanceP = this.instantiateInstance(runtime, context);
+                    }
+                    const instance = await instanceP;
                     return instance.request(request);
                 });
-            });
+            },
+        );
+    }
+
+    /**
+     * Instantiate and initialize the component object
+     * @param runtime - component runtime created for the component context
+     * @param context - component context used to load a component runtime
+     */
+    private async instantiateInstance(runtime: ComponentRuntime, context: IComponentContext) {
+        // Create a new instance of our component
+        const instance = new this.ctor(runtime, context);
+        await instance.initialize();
+        return instance;
     }
 }
