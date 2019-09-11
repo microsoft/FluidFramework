@@ -14,13 +14,8 @@ class FlowScrollFactoryComponent implements IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");
-        return entry.instantiateRuntime(context);
+        return entry.fluidExport.instantiateRuntime(context);
     }
 }
 
 export const fluidExport = new FlowScrollFactoryComponent();
-
-// TODO included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}

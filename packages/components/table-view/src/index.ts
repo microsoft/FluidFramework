@@ -7,12 +7,5 @@
 // tslint:disable-next-line:no-import-side-effect
 import "./publicpath";
 
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-
-export { tableViewType } from "./runtime";
+export { fluidExport, tableViewType } from "./runtime";
 export { TableView } from "./tableview";
-
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const entry = await import(/* webpackChunkName: "runtime", webpackPreload: true */ "./runtime");
-    return entry.instantiateRuntime(context);
-}

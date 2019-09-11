@@ -4,25 +4,14 @@
  */
 
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { IComponentContext } from "@prague/runtime-definitions";
-import { FlowDocument, flowDocumentFactory } from "./document";
-import { WebFlow, webFlowFactory } from "./host";
+
+export const WebFlowType = "@chaincode/webflow";
+export const FlowDocumentType = "@chaincode/flow-document";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
-    WebFlow.type,
+    WebFlowType,
     new Map([
-        [WebFlow.type, Promise.resolve(webFlowFactory)],
-        [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+        [WebFlowType, import(/* webpackChunkName: "webflow", webpackPreload: true */ "./host").then((m) => m.webFlowFactory)],
+        [FlowDocumentType, import(/* webpackChunkName: "flowdoc", webpackPreload: true */ "./document").then((m) => m.flowDocumentFactory)],
     ]),
 );
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-      return fluidExport.instantiateRuntime(context);
-}
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

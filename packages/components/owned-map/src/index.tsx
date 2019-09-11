@@ -7,7 +7,6 @@
 import {
   PrimedComponent,
   PrimedComponentFactory,
-  SimpleContainerRuntimeFactory,
   SimpleModuleInstantiationFactory,
 } from "@prague/aqueduct";
 import {
@@ -15,10 +14,6 @@ import {
   IComponentHTMLOptions,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
-import {
-  IContainerContext,
-  IRuntime,
-} from "@prague/container-definitions";
 import { Counter, CounterValueType } from "@prague/map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -40,7 +35,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
   public ownedMap: OwnedSharedMap;
   public counter: Counter;
 
-  // #region IComponetHTMLView
+  // #region IComponentHTMLVisual
   public render(elm: HTMLElement, options?: IComponentHTMLOptions): void {
     const render = () => this.doRender(elm);
     this.root.on("op", () => {
@@ -53,7 +48,7 @@ export class OwnedMap extends PrimedComponent implements IComponentHTMLVisual {
 
     this.doRender(elm);
   }
-  // #endregion ICompoentHTMLRender
+  // #endregion IComponentHTMLVisual
 
   /**
    *  The component has been loaded. Render the component into the provided div
@@ -123,15 +118,3 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
   ]),
 );
-
-export async function instantiateRuntime(
-  context: IContainerContext,
-): Promise<IRuntime> {
-  return SimpleContainerRuntimeFactory.instantiateRuntime(
-    context,
-    "@chaincode/owned-map",
-    new Map(
-      [
-        ["@chaincode/owned-map", Promise.resolve(OwnedMap.getFactory())],
-      ]));
-}

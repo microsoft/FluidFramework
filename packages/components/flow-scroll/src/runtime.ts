@@ -4,16 +4,14 @@
  */
 
 import { TableDocumentType, TableSliceType } from "@chaincode/table-document";
-import { FlowDocument, flowDocumentFactory } from "@chaincode/webflow";
+import { flowDocumentFactory, FlowDocumentType } from "@chaincode/webflow";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IContainerContext, IRuntime } from "@prague/container-definitions";
-import { IComponentContext } from "@prague/runtime-definitions";
 import { WebFlowHost, webFlowHostFactory } from "./host";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     WebFlowHost.type,
     new Map([
-        [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+        [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         [WebFlowHost.type, Promise.resolve(webFlowHostFactory)],
 
         // Demo components
@@ -38,13 +36,3 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         // ["@chaincode/pinpoint-editor", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/pinpoint-editor")],
     ]),
 );
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

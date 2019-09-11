@@ -132,8 +132,6 @@ export class FlowDocument extends PrimedComponent {
         return this.sharedString.getLength();
     }
 
-    public static readonly type = "@chaincode/flow-document";
-
     private static readonly paragraphProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.paragraph, DocTile.checkpoint], tag: Tag.p });
     private static readonly lineBreakProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.lineBreak, DocTile.checkpoint] });
     private static readonly inclusionProperties = Object.freeze({ [reservedTileLabelsKey]: [DocSegmentKind.inclusion, DocTile.checkpoint] });

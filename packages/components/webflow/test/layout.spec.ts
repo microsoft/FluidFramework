@@ -17,6 +17,7 @@ import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";
 import { htmlFormatter } from "../src";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
+import { FlowDocumentType } from "../src/runtime";
 import { Layout } from "../src/view/layout";
 
 interface ISnapshotNode {
@@ -51,10 +52,10 @@ describe("Layout", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
+        doc = await host.createAndAttachComponent("fd", FlowDocumentType);
     });
 
     after(async () => {

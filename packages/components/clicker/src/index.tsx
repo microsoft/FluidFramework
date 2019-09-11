@@ -12,16 +12,9 @@ import {
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import {
-  IContainerContext,
-  IRuntime,
-} from "@prague/container-definitions";
-import {
   Counter,
   CounterValueType,
 } from "@prague/map";
-import {
-  IComponentContext,
-} from "@prague/runtime-definitions";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -109,13 +102,3 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
     [ClickerName, Promise.resolve(ClickerInstantiationFactory)],
   ]),
 );
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
-
-// Included for back compat - can remove in 0.7 once fluidExport is default
-export function instantiateComponent(context: IComponentContext): void {
-  fluidExport.instantiateComponent(context);
-}

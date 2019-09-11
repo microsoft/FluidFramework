@@ -8,6 +8,7 @@ import { TestHost } from "@prague/local-test-server";
 import { TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
 import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
+import { FlowDocumentType } from "../src/runtime";
 
 // tslint:disable-next-line:no-import-side-effect
 import "mocha";
@@ -18,10 +19,10 @@ describe("SegmentSpan", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         ]);
 
-        doc = await host.createAndAttachComponent("fd", FlowDocument.type);
+        doc = await host.createAndAttachComponent("fd", FlowDocumentType);
     });
 
     after(async () => {

@@ -7,7 +7,7 @@ import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHTMLOptions, IComponentHTMLView, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { FlowDocument } from "../document";
-import { flowDocumentType } from "../runtime";
+import { FlowDocumentType } from "../runtime";
 import { WebflowView } from "./host";
 import { importDoc } from "./import";
 
@@ -30,7 +30,7 @@ export class WebFlow extends PrimedComponent implements IComponentHTMLVisual {
     // #endregion IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
-        const docP = this.createAndAttachComponent<FlowDocument>(this.docId, flowDocumentType);
+        const docP = this.createAndAttachComponent<FlowDocument>(this.docId, FlowDocumentType);
         const url = new URL(window.location.href);
         const template = url.searchParams.get("template");
         if (template) {

@@ -11,6 +11,7 @@ import { TestHost } from "@prague/local-test-server";
 import { Marker, ReferenceType } from "@prague/merge-tree";
 import * as assert from "assert";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
+import { FlowDocumentType } from "../src/runtime";
 
 import { randomId } from "@prague/flow-util";
 import { Tag } from "../src/util/tag";
@@ -21,7 +22,7 @@ describe("FlowDocument", () => {
 
     before(async () => {
         host = new TestHost([
-            [FlowDocument.type, Promise.resolve(flowDocumentFactory)],
+            [FlowDocumentType, Promise.resolve(flowDocumentFactory)],
         ]);
     });
 
@@ -30,7 +31,7 @@ describe("FlowDocument", () => {
     });
 
     beforeEach(async () => {
-        doc = await host.createAndAttachComponent(randomId(), FlowDocument.type);
+        doc = await host.createAndAttachComponent(randomId(), FlowDocumentType);
     });
 
     function expect(expected: string) {

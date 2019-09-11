@@ -155,13 +155,3 @@ export class KeyValueFactoryComponent implements IRuntimeFactory, IComponentFact
 }
 
 export const fluidExport = new KeyValueFactoryComponent();
-
-// TODO included for back compat - can remove in 0.7 once fluidExport is default
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    return fluidExport.instantiateRuntime(context);
-}
-
-// TODO included for back compat - can remove in 0.7 once fluidExport is default
-export function instantiateComponent(context: IComponentContext): void {
-    fluidExport.instantiateComponent(context);
-}

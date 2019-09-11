@@ -5,7 +5,7 @@
 
 import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
-import { FlowDocument } from "@chaincode/webflow";
+import { FlowDocument, FlowDocumentType } from "@chaincode/webflow";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponent,
@@ -56,7 +56,7 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
 
     protected async componentInitializingFirstTime() {
         await Promise.all([
-            this.createAndAttachComponent(this.docId, FlowDocument.type),
+            this.createAndAttachComponent(this.docId, FlowDocumentType),
             this.createAndAttachComponent("math", "@chaincode/math"),
             this.createAndAttachComponent("video-players", "@chaincode/video-players"),
             this.createAndAttachComponent("images", "@chaincode/image-collection"),
