@@ -11,3 +11,4 @@ The following environment variables can be defined when running webpack-dev-serv
 | `fluidHost` | Host url to target while testing (e.g. https://www.wu2-ppe.prague.office-int.com/). If you supply this, you must supply a tenant ID and secret |
 | `tenantId` | Tenant ID for your host. If you supply this you must supply a tenant secret |
 | `tenantSecret` | Secret for your tenant |
+| `component` | Load your component inside of a container |

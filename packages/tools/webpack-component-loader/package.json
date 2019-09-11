@@ -8,8 +8,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:tslint npm:webpack",
-    "build:compile": "concurrently npm:tsc npm:build:esnext",
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "concurrently npm:tsc npm:build:esnext npm:webpack",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
