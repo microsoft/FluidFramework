@@ -67,12 +67,6 @@ import { PrefetchDocumentStorageService } from "./prefetchDocumentStorageService
 import { isSystemMessage, ProtocolOpHandler } from "./protocol";
 import { Quorum } from "./quorum";
 
-interface IConnectResult {
-    detailsP: Promise<IConnectionDetails | null>;
-
-    handlerAttachedP: Promise<void>;
-}
-
 const PackageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 export class Container extends EventEmitterWithErrorHandling implements IContainer {
@@ -142,6 +136,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
     private pkg: string | IFluidCodeDetails | undefined;
     private codeQuorumKey;
     private protocolHandler: ProtocolOpHandler | undefined;
+    private connectionDetailsP: Promise<IConnectionDetails | null> | undefined;
 
     public get id(): string {
         return this._id;
@@ -307,6 +302,17 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
+    public resume() {
+        assert(this.loaded);
+        // resume processing ops
+        this._deltaManager!.inbound.resume();
+        this._deltaManager!.outbound.resume();
+        this._deltaManager!.inboundSignal.resume();
+
+        // ensure connection to web socket
+        this.connectToDeltaStream();
+    }
+
     private async snapshotCore(tagMessage: string, generateFullTreeNoOptimizations?: boolean) {
         // Snapshots base document state and currently running context
         const root = this.snapshotBase();
@@ -408,6 +414,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         }
     }
 
+    private connectToDeltaStream() {
+        if (!this.connectionDetailsP) {
+            this.connectionDetailsP = this._deltaManager!.connect("Document loading");
+        }
+        return this.connectionDetailsP;
+    }
+
     /**
      * Load container.
      *
@@ -448,6 +461,8 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         const attributesP = Promise.all([storageP, treeP]).then<IDocumentAttributes>(
             ([storage, tree]) => {
                 if (tree === null) {
+                    // Have to have a web socket - see code below requiring it!
+                    this.connectToDeltaStream();
                     return {
                         branch: this.id,
                         minimumSequenceNumber: 0,
@@ -463,7 +478,11 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             });
 
         // ...begin the connection process to the delta stream
-        const connectResult: IConnectResult = this.createDeltaManager(attributesP, connect);
+        const handlerAttachedP = this.createDeltaManager(attributesP, connect);
+
+        if (connect && !pause) {
+            this.connectToDeltaStream();
+        }
 
         // ...load in the existing quorum
         const protocolHandlerP = Promise.all([attributesP, storageP, treeP]).then(
@@ -487,7 +506,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 blobManagerP,
                 protocolHandlerP,
                 chaincodeP,
-                connectResult.handlerAttachedP,
+                handlerAttachedP,
             ])
             .then(async ([
                 storageService,
@@ -509,7 +528,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     this._existing = true;
                     this._parentBranch = attributes.branch !== this.id ? attributes.branch : null;
                 } else {
-                    const details = await connectResult.detailsP;
+                    const details = await this.connectToDeltaStream();
 
                     this._existing = details!.existing;
                     this._parentBranch = details!.parentBranch;
@@ -540,18 +559,13 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                 this.context!.changeConnectionState(this.connectionState, this.clientId!, this._version);
                 loader.resolveContainer(this);
 
-                if (connect) {
-                    assert(this._deltaManager, "DeltaManager should have been created during connect call");
-                    if (!pause) {
-                        perfEvent.reportProgress({ stage: "resuming" });
-                        this._deltaManager!.inbound.resume();
-                        this._deltaManager!.outbound.resume();
-                        this._deltaManager!.inboundSignal.resume();
-                    }
-                }
-
                 // Internal context is fully loaded at this point
                 this.loaded = true;
+
+                if (connect && !pause) {
+                    perfEvent.reportProgress({ stage: "resuming" });
+                    this.resume();
+                }
 
                 perfEvent.end({ stage: "Loaded" });
             });
@@ -764,7 +778,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
         return Promise.reject(PackageNotFactoryError);
     }
 
-    private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): IConnectResult {
+    private createDeltaManager(attributesP: Promise<IDocumentAttributes>, connect: boolean): Promise<void> {
         // Create the DeltaManager and begin listening for connection events
         // tslint:disable-next-line:no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;
@@ -777,7 +791,6 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
 
         if (connect) {
             // Open a connection - the DeltaManager will automatically reconnect
-            const detailsP = this._deltaManager.connect("Document loading");
             this._deltaManager.on("connect", (details: IConnectionDetails) => {
                 this.setConnectionState(
                     ConnectionState.Connecting,
@@ -822,7 +835,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     true);
             });
 
-            return { detailsP, handlerAttachedP };
+            return handlerAttachedP;
         } else {
             const handlerAttachedP = attributesP.then((attributes) => {
                 this._deltaManager!.attachOpHandler(
@@ -839,7 +852,7 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
                     false);
             });
 
-            return { detailsP: Promise.resolve(null), handlerAttachedP };
+            return handlerAttachedP;
         }
     }
 

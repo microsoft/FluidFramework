@@ -80,7 +80,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
     private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
     private readonly _outbound: DeltaQueue<IDocumentMessage[]>;
 
-    private connecting: Deferred<IConnectionDetails> | undefined | null;
+    private connecting: Deferred<IConnectionDetails> | undefined;
     private connection: DeltaConnection | undefined;
     private clientSequenceNumber = 0;
     private clientSequenceNumberObserved = 0;
@@ -264,21 +264,12 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
 
     public async connect(reason: string): Promise<IConnectionDetails> {
         if (this.connecting) {
+            assert(!this.connection);
             return this.connecting.promise;
         }
-
-        // Connect to the delta storage endpoint
-        const storageDeferred = new Deferred<IDocumentDeltaStorageService>();
-        this.deltaStorageP = storageDeferred.promise;
-        this.service.connectToDeltaStorage().then(
-            (deltaStorage) => {
-                storageDeferred.resolve(deltaStorage);
-            },
-            (error) => {
-                // Could not get delta storage promise. For now we assume this is not possible and so simply
-                // emit the error.
-                this.emit("error", error);
-            });
+        if (this.connection) {
+            return this.connection.details;
+        }
 
         this.connecting = new Deferred<IConnectionDetails>();
         this.connectCore(reason, InitialReconnectDelay);
@@ -359,6 +350,15 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         while (!this.closed) {
             const maxFetchTo = from + MaxBatchDeltas;
             const fetchTo = to === undefined ? maxFetchTo : Math.min(maxFetchTo, to);
+
+            // Connect to the delta storage endpoint
+            if (!this.deltaStorageP) {
+                this.deltaStorageP = this.service.connectToDeltaStorage().catch(
+                    (error) => {
+                        this.emit("error", error);
+                        throw error;
+                    });
+            }
 
             // Let exceptions here propagate through, without hitting retry logic below
             const deltaStorage = await this.deltaStorageP!;
@@ -442,7 +442,14 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
         this.stopSequenceNumberUpdate();
         if (this.connection) {
             this.connection.close();
+            this.connection = undefined;
         }
+
+        if (this.connecting) {
+            this.connecting.reject(new Error("Container closed"));
+            this.connecting = undefined;
+        }
+
         this._inbound.clear();
         this._outbound.clear();
         this._inboundSignal.clear();
@@ -519,7 +526,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                 // If first connection resolve the promise with the details
                 if (this.connecting) {
                     this.connecting.resolve(connection.details);
-                    this.connecting = null;
+                    this.connecting = undefined;
                 }
 
                 connection.on("op", (documentId: string, messages: ISequencedDocumentMessage[]) => {
@@ -582,7 +589,7 @@ export class DeltaManager extends EventEmitter implements IDeltaManager<ISequenc
                     this.emit("error", error);
                     if (this.connecting) {
                         this.connecting.reject(error);
-                        this.connecting = null;
+                        this.connecting = undefined;
                     }
                     return;
                 }

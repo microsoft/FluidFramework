@@ -18,9 +18,9 @@ describe("DeltaStorageService", () => {
     // tslint:disable-next-line:mocha-no-side-effect-code
     const testDeltaStorageUrl = `${deltaStorageBasePath}${deltaStorageRelativePath}`;
 
-    it("Should build the correct sharepoint delta url with auth", () => {
-        const deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, new FetchWrapper(), undefined, async (refresh) => new TokenProvider("?access_token=123", null));
-        const actualDeltaUrl = deltaStorageService.buildUrl(2, 8);
+    it("Should build the correct sharepoint delta url with auth", async () => {
+        const deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl, new FetchWrapper(), undefined, async (refresh) => new TokenProvider("?access_token=123", null));
+        const actualDeltaUrl = await deltaStorageService.buildUrl(2, 8);
         // tslint:disable-next-line:max-line-length
         const expectedDeltaUrl = `${deltaStorageBasePath}/drives/testdrive/items/testitem/opStream?filter=sequenceNumber%20ge%203%20and%20sequenceNumber%20le%207`;
         assert.equal(actualDeltaUrl, expectedDeltaUrl, "The constructed delta url is invalid");
@@ -74,12 +74,11 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
+            deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const tokenProvider = new TokenProvider(null, null);
-            const actualDeltaFeedResponse = await deltaStorageService.get(null, null, tokenProvider, 2, 8);
+            const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");
@@ -132,12 +131,11 @@ describe("DeltaStorageService", () => {
                         reject("not implemented");
                     }),
             };
-            deltaStorageService = new OdspDeltaStorageService({}, testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
+            deltaStorageService = new OdspDeltaStorageService({}, async () => testDeltaStorageUrl, fetchWrapperMock, undefined, async (refresh) => new TokenProvider("", null));
         });
 
         it("Should deserialize the delta feed response correctly", async () => {
-            const tokenProvider = new TokenProvider(null, null);
-            const actualDeltaFeedResponse = await deltaStorageService.get(null, null, tokenProvider, 2, 8);
+            const actualDeltaFeedResponse = await deltaStorageService.get(2, 8);
             assert.equal(actualDeltaFeedResponse.length, 2, "Deseralized feed response is not of expected length");
             assert.equal(actualDeltaFeedResponse[0].sequenceNumber, 1,
                 "First element of feed response has invalid sequence number");

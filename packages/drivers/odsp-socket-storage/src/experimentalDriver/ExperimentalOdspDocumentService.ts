@@ -15,7 +15,7 @@ import {
 } from "@prague/protocol-definitions";
 import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
 import { IFetchWrapper } from "../fetchWrapper";
-import { DocumentDeltaStorageService, OdspDeltaStorageService } from "../OdspDeltaStorageService";
+import { OdspDeltaStorageService } from "../OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "../OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "../OdspDocumentStorageService";
 import { TokenProvider } from "../tokenProvider";
@@ -27,15 +27,14 @@ import { IWebsocketEndpoint } from "./contracts";
  * clients
  */
 export class ExperimentalOdspDocumentService implements IDocumentService {
-  // This is used to differentiate the initial connection to the delta stream vs a reconnect attempt
-  private attemptedDeltaStreamConnection: boolean;
-
   // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
   private readonly websocketEndpointRequestThrottler: SinglePromise<IWebsocketEndpoint>;
 
   // This is the result of a call to websocketEndpointSingleP, it is used to make sure that we don't make two join session
   // calls to handle connecting to delta storage and delta stream.
-  private websocketEndpointP: Promise<IWebsocketEndpoint>;
+  private websocketEndpointP: Promise<IWebsocketEndpoint> | undefined;
+
+  private storageManager?: OdspDocumentStorageManager;
 
   /**
    * @param appId - app id used for telemetry for network requests
@@ -80,9 +79,6 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
         getWebsocketToken,
       ),
     );
-
-    this.attemptedDeltaStreamConnection = false;
-    this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
   }
 
   /**
@@ -96,19 +92,19 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
     const trees: resources.ITree[] | undefined = undefined;
     const latestSha: string | null | undefined = undefined;
 
-    return new OdspDocumentStorageService(
-      new OdspDocumentStorageManager(
-        { app_id: this.appId },
-        this.hashedDocumentId,
-        this.snapshotStorageUrl,
-        latestSha,
-        trees,
-        blobs,
-        this.storageFetchWrapper,
-        () => this.getTokenProvider(),
-        this.logger,
-      ),
+    this.storageManager = new OdspDocumentStorageManager(
+      { app_id: this.appId },
+      this.hashedDocumentId,
+      this.snapshotStorageUrl,
+      latestSha,
+      trees,
+      blobs,
+      this.storageFetchWrapper,
+      () => this.getTokenProvider(),
+      this.logger,
     );
+
+    return new OdspDocumentStorageService(this.storageManager);
   }
 
   /**
@@ -117,21 +113,26 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
    * @returns returns the document delta storage service for sharepoint driver.
    */
   public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-    const ops = undefined;
+    const urlProvider = async () => {
+      if (!this.websocketEndpointP) {
+        // We should never get here
+        // the very first (proactive) call to fetch ops should be serviced from latest snapshot, resulting in no opStream call
+        // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
+        // and thus we already have fresh join session call.
+        this.logger.send({category: "error", eventName: "OdspOpStreamPerf" });
 
-    const websocketEndpoint = await this.websocketEndpointP;
+        this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
+      }
+      const websocketEndpoint = await this.websocketEndpointP;
+      return websocketEndpoint.deltaStorageUrl;
+    };
 
-    return new DocumentDeltaStorageService(
-      websocketEndpoint.tenantId,
-      websocketEndpoint.id,
-      await this.getTokenProvider(),
-      new OdspDeltaStorageService(
+    return new OdspDeltaStorageService(
         { app_id: this.appId },
-        websocketEndpoint.deltaStorageUrl,
+        urlProvider,
         this.deltasFetchWrapper,
-        ops,
+        this.storageManager ? this.storageManager.ops : undefined,
         () => this.getTokenProvider(),
-      ),
     );
   }
 
@@ -143,12 +144,8 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
   public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
     // TODO: we should add protection to ensure we are only ever processing one connectToDeltaStream
 
-    // when it's not the first time through it means we are trying to reconnect to a disconnected websocket.
-    // In this scenario we should refresh our knowledge before attempting to connect
-    if (this.attemptedDeltaStreamConnection) {
-      this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
-    }
-    this.attemptedDeltaStreamConnection = true;
+    // We should refresh our knowledge before attempting to reconnect
+    this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
 
     const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
