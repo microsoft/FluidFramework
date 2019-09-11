@@ -4,4 +4,3 @@
  */
 
 export * from "./host";
-export * from "./multiDocumentServiceFactory";

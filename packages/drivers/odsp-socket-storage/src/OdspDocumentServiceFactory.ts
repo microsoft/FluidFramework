@@ -14,6 +14,7 @@ import { OdspDocumentService } from "./OdspDocumentService";
  * use the sharepoint implementation.
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "fluid-odsp:";
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is

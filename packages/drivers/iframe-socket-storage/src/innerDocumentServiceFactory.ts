@@ -10,6 +10,7 @@ import { InnerDocumentService } from "./innerDocumentService";
  * Connects to the outerDocumentService factory across the iframe boundary
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "fluid-inner:";
     constructor() {
 
     }

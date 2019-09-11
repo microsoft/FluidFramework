@@ -18,6 +18,8 @@ import { createTestDocumentService } from "./testDocumentService";
  * Implementation of document service factory for testing.
  */
 export class TestDocumentServiceFactory implements IDocumentServiceFactory {
+
+    public readonly protocolName = "fluid-test:";
     /**
      * @param testDeltaConnectionServer - delta connection server for ops
      */

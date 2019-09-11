@@ -12,6 +12,7 @@ import { OuterDocumentService } from "./outerDocumentService";
  * A converter that remotes a real connection to documentServices to an iframe
  */
 export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "fluid-outer:";
     constructor(private readonly documentServiceFactory: IDocumentServiceFactory,
                 private readonly frameP: Promise<HTMLIFrameElement>,
                 private readonly options: any,
@@ -20,9 +21,10 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        const connectedDocumentServiceP = this.documentServiceFactory.createDocumentService(resolvedUrl);
+        const connectedDocumentService: IDocumentService =
+            await this.documentServiceFactory.createDocumentService(resolvedUrl);
 
-        const documentServiceP = OuterDocumentService.create(await connectedDocumentServiceP, await this.frameP);
+        const documentServiceP = OuterDocumentService.create(connectedDocumentService, await this.frameP);
 
         // tslint:disable-next-line: no-unsafe-any
         const clientDetails = this.options ? (this.options.client as IClient) : null;

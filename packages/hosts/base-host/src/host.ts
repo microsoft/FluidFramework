@@ -10,7 +10,7 @@ import {
     IRequest,
 } from "@prague/component-core-interfaces";
 import { ICodeLoader } from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
+import { Container, createProtocolToFactoryMapping, Loader, selectDocumentServiceFactoryForProtocol } from "@prague/container-loader";
 import {
     InnerDocumentServiceFactory,
     InnerUrlResolver,
@@ -29,7 +29,6 @@ import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
 import { BaseTelemetryNullLogger } from "@prague/utils";
-import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 
 const getStorageTokenStub = (siteUrl: string) => Promise.resolve("fake token");
 const getWebsocketTokenStub = () => Promise.resolve("fake token");
@@ -123,11 +122,11 @@ export function createLoader(
 ): Loader {
 
     let resolver: IUrlResolver;
-    let documentServiceFactory: IDocumentServiceFactory;
+    let documentServiceFactories: IDocumentServiceFactory[];
     if (privateSession.innerSession) {
         // TODO: protect this typing more carefully
         resolver = new InnerUrlResolver(resolved);
-        documentServiceFactory = new InnerDocumentServiceFactory();
+        documentServiceFactories = [new InnerDocumentServiceFactory()];
     } else {
         resolver = new ContainerUrlResolver(
             baseUrl,
@@ -141,11 +140,7 @@ export function createLoader(
             getStorageToken,
             getWebsocketToken,
             new BaseTelemetryNullLogger());
-        documentServiceFactory = new MultiDocumentServiceFactory(
-            {
-                "fluid-odsp:": odspDocumentServiceFactory,
-                "fluid:": r11sDocumentServiceFactory,
-            });
+        documentServiceFactories = [odspDocumentServiceFactory, r11sDocumentServiceFactory];
     }
 
     const options = {
@@ -155,8 +150,9 @@ export function createLoader(
     };
 
     if (privateSession.outerSession) {
+        const factoryMap = createProtocolToFactoryMapping(documentServiceFactories);
         new OuterDocumentServiceFactory(
-            documentServiceFactory,
+            selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
             privateSession.frameP,
             options,
             { resolver },
@@ -166,7 +162,7 @@ export function createLoader(
 
     return new Loader(
         { resolver },
-        documentServiceFactory,
+        documentServiceFactories,
         codeLoader,
         options,
         scope);

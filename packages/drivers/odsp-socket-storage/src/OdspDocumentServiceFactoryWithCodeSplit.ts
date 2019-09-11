@@ -16,6 +16,7 @@ import { OdspDocumentService } from "./OdspDocumentService";
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
+  public readonly protocolName = "fluid-odsp:";
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is

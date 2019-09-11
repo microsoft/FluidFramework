@@ -22,6 +22,7 @@ import { TokenProvider } from "./tokens";
  * use the routerlicious implementation.
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "fluid:";
     constructor(
         private readonly useDocumentService2: boolean = false,
         private readonly errorTracking: IErrorTrackingService = new DefaultErrorTracking(),

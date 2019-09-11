@@ -20,6 +20,8 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
         );
     }
 
+    public readonly protocolName = "fluid-replay:";
+
     public constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,
         private readonly controller: ReplayController) {}
