@@ -8,7 +8,6 @@ export * from "./OdspDocumentServiceFactory";
 export * from "./OdspDeltaStorageService";
 export * from "./OdspDocumentService";
 export * from "./OdspDocumentStorageManager";
-export * from "./OdspDeltaStorageService";
 export * from "./contracts";
 export * from "./tokenProvider";
 export * from "./OdspUrlResolver";
