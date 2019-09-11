@@ -8,8 +8,6 @@ import { ICommand, KeyCode, Template } from "@prague/flow-util";
 import { FlowDocument } from "../document";
 import { Editor } from "../editor";
 import { htmlFormatter } from "../html/formatters";
-import { markdownFormatter } from "../markdown/formatters";
-import { plainTextFormatter } from "../plaintext/formatter";
 import { Tag } from "../util/tag";
 import { IFormatterState, RootFormatter } from "../view/formatter";
 import { debug } from "./debug";
@@ -103,10 +101,8 @@ export class WebflowView implements IComponentHTMLView {
                     { name: "h4",           enabled: always,        exec: () => { setFormat(Tag.h4); }},
                     { name: "h5",           enabled: always,        exec: () => { setFormat(Tag.h5); }},
                     { name: "h6",           enabled: always,        exec: () => { setFormat(Tag.h6); }},
-                    { name: "markdown",     enabled: always,        exec: () => { switchFormatter(markdownFormatter); }},
                     { name: "ol",           enabled: always,        exec: () => { insertTags([Tag.ol, Tag.li]); }},
                     { name: "p",            enabled: always,        exec: () => { setFormat(Tag.p); }},
-                    { name: "plaintext",    enabled: always,        exec: () => { switchFormatter(plainTextFormatter); }},
                     { name: "html",         enabled: always,        exec: () => { switchFormatter(htmlFormatter); }},
                     { name: "ul",           enabled: always,        exec: () => { insertTags([Tag.ul, Tag.li]); }},
                     { name: "red",          enabled: always,        exec: () => { setStyle("color:red"); } },
