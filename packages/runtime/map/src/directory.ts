@@ -144,7 +144,6 @@ export class DirectoryFactory {
         branchId: string): Promise<ISharedDirectory> {
 
         const directory = new SharedDirectory(id, runtime);
-        this.registerValueTypes(directory);
         await directory.load(branchId, services);
 
         return directory;
@@ -152,16 +151,9 @@ export class DirectoryFactory {
 
     public create(runtime: IComponentRuntime, id: string): ISharedDirectory {
         const directory = new SharedDirectory(id, runtime);
-        this.registerValueTypes(directory);
         directory.initializeLocal();
 
         return directory;
-    }
-
-    private registerValueTypes(directory: SharedDirectory): void {
-        for (const type of valueTypes) {
-            directory.registerValueType(type);
-        }
     }
 }
 
@@ -221,6 +213,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         super(id, runtime, DirectoryFactory.Attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
+        for (const type of valueTypes) {
+            this.registerValueType(type);
+        }
     }
 
     public get<T = any>(key: string): T {
@@ -329,13 +324,6 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
             id: null,
         };
         return tree;
-    }
-
-    /**
-     * Registers a new value type on the directory
-     */
-    public registerValueType<T>(type: IValueType<T>) {
-        this.localValueMaker.registerValueType(type);
     }
 
     /**
@@ -507,6 +495,13 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
                     .process(op, local, message);
             }
         }
+    }
+
+    /**
+     * Registers a new value type on the directory
+     */
+    protected registerValueType<T>(type: IValueType<T>) {
+        this.localValueMaker.registerValueType(type);
     }
 
     /**

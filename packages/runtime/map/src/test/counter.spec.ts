@@ -20,7 +20,6 @@ describe("Routerlicious", () => {
                 runtime = new MockRuntime();
                 const factory = new map.MapFactory();
                 testMap = factory.create(runtime, "test");
-                testMap.registerValueType(new map.CounterValueType());
 
                 testCounter = testMap.
                     set("defaultCounter", undefined,
@@ -52,15 +51,24 @@ describe("Routerlicious", () => {
                     testCounter.increment(-40);
                     assert.equal(testCounter.value, -20);
                 });
-            });
 
-            describe(".increment", () => {
-                it("Should fire listener callback after increment", () => {
+                it("Should fire incremented listener callback after increment", () => {
                     let fired = false;
 
                     testCounter.on("incremented", (value: number) => {
                         fired = true;
                         assert.equal(value, 10);
+                    });
+
+                    testCounter.increment(10);
+                    assert.ok(fired);
+                });
+
+                it("Should fire valueChanged listener callback on its container after increment", () => {
+                    let fired = false;
+
+                    testMap.on("valueChanged", () => {
+                        fired = true;
                     });
 
                     testCounter.increment(10);

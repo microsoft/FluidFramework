@@ -4,7 +4,7 @@
  */
 
 /* tslint:disable:no-unsafe-any*/
-import { ISharedMap, IValueType, SharedMap } from "@prague/map";
+import { ISharedMap, SharedMap } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -40,8 +40,8 @@ export class OwnedSharedMap extends SharedMap implements ISharedMap {
      *
      * @returns a factory that creates and load OwnedSharedMap
      */
-    public static getFactory(defaultValueTypes: IValueType<any>[] = []) {
-        return new OwnedMapFactory(defaultValueTypes);
+    public static getFactory() {
+        return new OwnedMapFactory();
     }
 
     public owner: string;

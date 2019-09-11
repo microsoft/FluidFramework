@@ -122,7 +122,6 @@ export class MapFactory implements ISharedObjectFactory {
         branchId: string): Promise<ISharedMap> {
 
         const map = new SharedMap(id, runtime);
-        this.registerValueTypes(map);
         await map.load(branchId, services);
 
         return map;
@@ -130,16 +129,9 @@ export class MapFactory implements ISharedObjectFactory {
 
     public create(runtime: IComponentRuntime, id: string): ISharedMap {
         const map = new SharedMap(id, runtime);
-        this.registerValueTypes(map);
         map.initializeLocal();
 
         return map;
-    }
-
-    private registerValueTypes(map: SharedMap) {
-        for (const type of valueTypes) {
-            map.registerValueType(type);
-        }
     }
 }
 
@@ -186,6 +178,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
         super(id, runtime, attributes);
         this.localValueMaker = new LocalValueMaker(runtime);
         this.setMessageHandlers();
+        for (const type of valueTypes) {
+            this.registerValueType(type);
+        }
     }
 
     public keys(): IterableIterator<string> {
@@ -389,13 +384,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * Registers a new value type on the map
-     */
-    public registerValueType<T>(type: IValueType<T>) {
-        this.localValueMaker.registerValueType(type);
-    }
-
-    /**
      * Registers a listener on the specified events
      */
     public on(
@@ -538,6 +526,13 @@ export class SharedMap extends SharedObject implements ISharedMap {
      */
     protected snapshotContent(): ITree {
         return null;
+    }
+
+    /**
+     * Registers a new value type on the map
+     */
+    protected registerValueType<T>(type: IValueType<T>) {
+        this.localValueMaker.registerValueType(type);
     }
 
     private populate(data: IMapDataObject): void {

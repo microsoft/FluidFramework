@@ -66,13 +66,6 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
-export interface IValueTypeSupporter {
-    /**
-     * Registers a value type to support
-     */
-    registerValueType<T>(type: IValueType<T>);
-}
-
 /**
  * Interface describing actions on a directory.  When used as a Map, operates on its keys.
  */
@@ -94,7 +87,7 @@ export interface IDirectory extends Map<string, any> {
 
     /**
      * Sets the key to the provided value. An optional type can be specified to initialize the key
-     * to one of the registered value types.
+     * to one of the value types.
      */
     set<T = any>(key: string, value: T, type?: string): this;
 
@@ -137,7 +130,7 @@ export interface IDirectory extends Map<string, any> {
 /**
  * Interface describing a shared directory.
  */
-export interface ISharedDirectory extends ISharedObject, IValueTypeSupporter, IDirectory {
+export interface ISharedDirectory extends ISharedObject, IDirectory {
 }
 
 /**
@@ -150,7 +143,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, IValueTypeSupporter, Map<string, any> {
+export interface ISharedMap extends ISharedObject, Map<string, any> {
     /**
      * Retrieves the given key from the map
      */
@@ -188,13 +181,13 @@ export interface ISharedMap extends ISharedObject, IValueTypeSupporter, Map<stri
  * the _in-memory representatation_ of the value instead).  An ISerializableValue is what gets passed to
  * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
  * and ops (set).
- * If type is Plain, then it's taken at face value as a JS object but it better be something that can survive a
- * JSON.stringify/parse roundtrip or it won't work.  E.g. a URL object will just get stringified to a URL string
- * and not rehydrate as a URL object on the other side.
- * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.
+ * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
+ * just get stringified to a URL string and not rehydrate as a URL object on the other side.  It may contain members
+ * that are ISerializedHandle (the serialized form of a handle).
  * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
  * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
+ * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
+ * channel ID.  This type is legacy and deprecated.
  */
 export interface ISerializableValue {
     type: string;
