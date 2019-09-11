@@ -10,7 +10,7 @@ import { BaseTelemetryNullLogger } from "@prague/utils";
 import * as io from "socket.io-client";
 import { IOdspSnapshot, ISocketStorageDiscovery } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
-import { DocumentDeltaStorageService, OdspDeltaStorageService } from "./OdspDeltaStorageService";
+import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
 import { TokenProvider } from "./tokenProvider";
@@ -106,27 +106,22 @@ export class OdspDocumentService implements api.IDocumentService {
         const snapshot = await this.snapshotP;
         const ops = snapshot ? snapshot.ops || [] : undefined;
 
-        return new DocumentDeltaStorageService(
-            this.socketStorageDiscovery.tenantId,
-            this.socketStorageDiscovery.id,
-            this.tokenProvider,
-            new OdspDeltaStorageService(
-                { app_id: this.appId },
-                this.socketStorageDiscovery.deltaStorageUrl,
-                this.deltasFetchWrapper,
-                ops,
-                async (refresh) => {
-                    if (refresh) {
-                        await this.refreshKnowledge();
-                    }
+        return new OdspDeltaStorageService(
+            { app_id: this.appId },
+            async () => this.socketStorageDiscovery.deltaStorageUrl,
+            this.deltasFetchWrapper,
+            ops,
+            async (refresh) => {
+                if (refresh) {
+                    await this.refreshKnowledge();
+                }
 
-                    if (!this.tokenProvider.storageToken) {
-                        throw new Error("unexpected missing storageToken upon refresh attempt!");
-                    }
+                if (!this.tokenProvider.storageToken) {
+                    throw new Error("unexpected missing storageToken upon refresh attempt!");
+                }
 
-                    return this.tokenProvider;
-                },
-            ),
+                return this.tokenProvider;
+            },
         );
     }
 

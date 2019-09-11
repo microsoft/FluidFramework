@@ -7,7 +7,20 @@ import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import * as resources from "@prague/gitresources";
 import * as api from "@prague/protocol-definitions";
 import { buildHierarchy } from "@prague/utils";
-import { IDocumentStorageGetVersionsResponse, IDocumentStorageManager, IOdspSnapshot, ISnapshotRequest, ISnapshotResponse, ISnapshotTree, ISnapshotTreeBaseEntry, SnapshotTreeEntry, SnapshotTreeValue, SnapshotType } from "./contracts";
+import * as assert from "assert";
+import {
+    IDocumentStorageGetVersionsResponse,
+    IDocumentStorageManager,
+    IOdspSnapshot,
+    ISequencedDeltaOpMessage,
+    ISnapshotRequest,
+    ISnapshotResponse,
+    ISnapshotTree,
+    ISnapshotTreeBaseEntry,
+    SnapshotTreeEntry,
+    SnapshotTreeValue,
+    SnapshotType,
+} from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
 import { TokenProvider } from "./tokenProvider";
@@ -22,6 +35,20 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly queryString: string;
+
+    private _ops: ISequencedDeltaOpMessage[] | undefined;
+
+    private firstVersionCall = true;
+
+    public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
+        assert(this._ops === undefined);
+        assert(ops !== undefined);
+        this._ops = ops;
+    }
+
+    public get ops(): ISequencedDeltaOpMessage[] | undefined {
+        return this._ops;
+    }
 
     constructor(
         queryParams: { [key: string]: string },
@@ -200,7 +227,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             const tokenProvider = await this.getTokenProvider(refresh);
 
             // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
-            if (count === 1) {
+            // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
+            if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
+                this.firstVersionCall = false;
+
                 const treesLatestStartTime = performance.now();
                 this.logger.send({
                     category: "performance",
@@ -213,7 +243,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
                 const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`);
 
-                const {trees, blobs, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                const {trees, blobs, ops, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
                 const treesLatestEndTime = performance.now();
                 this.logger.send({
@@ -232,6 +262,8 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (blobs) {
                     this.initBlobsCache(blobs);
                 }
+
+                this.ops = ops;
 
                 return sha ? [{ id: sha, treeId: undefined! }] : [];
             } else {
