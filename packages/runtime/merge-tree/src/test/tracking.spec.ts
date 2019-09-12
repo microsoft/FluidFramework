@@ -4,36 +4,24 @@
  */
 
 import * as assert from "assert";
-import { UnassignedSequenceNumber } from "../constants";
-import * as MergeTree from "../mergeTree";
 import { TrackingGroup } from "../mergeTreeTracking";
-import { TextSegment } from "../textSegment";
+import { TestClient } from "./testClient";
 
 describe("MergeTree.tracking", () => {
-    const localClientId = 0;
-    let mergeTree: MergeTree.MergeTree;
-    let referenceSequenceNumber: number;
+    let testClient: TestClient;
 
     beforeEach(() => {
-        referenceSequenceNumber = 0;
-        mergeTree = new MergeTree.MergeTree();
-        mergeTree.startCollaboration(localClientId, referenceSequenceNumber, 0);
+        testClient = new TestClient();
+        testClient.startCollaboration("me");
     });
 
     it("Inserted segment should have empty tracking groups",
         () => {
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("abc")],
-                referenceSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                undefined);
+            testClient.insertTextLocal(0, "abc");
 
-            assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 3);
+            assert.equal(testClient.getLength(), 3);
 
-            const segmentInfo =
-                mergeTree.getContainingSegment(0, referenceSequenceNumber, localClientId);
+            const segmentInfo = testClient.getContainingSegment(0);
 
             assert(segmentInfo.segment.trackingCollection.empty);
         });
@@ -42,25 +30,16 @@ describe("MergeTree.tracking", () => {
         () => {
             const trackingGroup = new TrackingGroup();
 
-            mergeTree.mergeTreeDeltaCallback =
+            testClient.mergeTree.mergeTreeDeltaCallback =
                 (opArgs, deltaArgs) => {
                     deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
                 };
 
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("abc")],
-                referenceSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                {op: undefined});
-
-            assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 3);
+            testClient.insertTextLocal(0, "abc");
 
             assert.equal(trackingGroup.size, 1);
 
-            const segmentInfo =
-                mergeTree.getContainingSegment(0, referenceSequenceNumber, localClientId);
+            const segmentInfo = testClient.getContainingSegment(0);
 
             assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
         });
@@ -69,37 +48,55 @@ describe("MergeTree.tracking", () => {
         () => {
             const trackingGroup = new TrackingGroup();
 
-            mergeTree.mergeTreeDeltaCallback =
+            testClient.mergeTree.mergeTreeDeltaCallback =
                 (opArgs, deltaArgs) => {
                     deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
                 };
 
-            mergeTree.insertSegments(
-                0,
-                [TextSegment.make("abc")],
-                referenceSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                {op: undefined});
+            const ops = [testClient.insertTextLocal(0, "abc")];
 
-            mergeTree.mergeTreeDeltaCallback = undefined;
+            testClient.mergeTree.mergeTreeDeltaCallback = undefined;
             assert.equal(trackingGroup.size, 1);
 
-            mergeTree.insertSegments(
-                1,
-                [TextSegment.make("z")],
-                referenceSequenceNumber,
-                localClientId,
-                UnassignedSequenceNumber,
-                {op: undefined});
-
-            assert.equal(mergeTree.getLength(referenceSequenceNumber, localClientId), 4);
+            ops.push(testClient.insertTextLocal(1, "z"));
+            assert.equal(testClient.getLength(), 4);
 
             assert.equal(trackingGroup.size, 2);
+            const segmentInfo = testClient.getContainingSegment(0);
+            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+        });
 
-            const segmentInfo =
-                mergeTree.getContainingSegment(0, referenceSequenceNumber, localClientId);
+    it("Zamboni should merge matching tracking groups",
+        () => {
+            const trackingGroup = new TrackingGroup();
 
+            testClient.mergeTree.mergeTreeDeltaCallback =
+                (opArgs, deltaArgs) => {
+                    deltaArgs.deltaSegments.forEach((sg) => sg.segment.trackingCollection.link(trackingGroup));
+                };
+
+            const ops = [testClient.insertTextLocal(0, "abc")];
+
+            assert.equal(trackingGroup.size, 1);
+
+            ops.push(testClient.insertTextLocal(1, "z"));
+            assert.equal(testClient.getLength(), 4);
+
+            assert.equal(trackingGroup.size, 3);
+            let segmentInfo = testClient.getContainingSegment(0);
+            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+
+            let seq = 1;
+            ops.forEach((op) => testClient.applyMsg(testClient.makeOpMessage(op, ++seq)));
+
+            assert.equal(trackingGroup.size, 3);
+            segmentInfo = testClient.getContainingSegment(0);
+            assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
+
+            testClient.updateMinSeq(seq);
+
+            assert.equal(trackingGroup.size, 1);
+            segmentInfo = testClient.getContainingSegment(0);
             assert.equal(segmentInfo.segment.trackingCollection.trackingGroups.size, 1);
         });
 });

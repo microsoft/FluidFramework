@@ -1448,17 +1448,19 @@ export class MergeTree {
             const childNode = node.children[k];
             if (childNode.isLeaf()) {
                 const segment = childNode;
-                if (segment.segmentGroups.empty && segment.trackingCollection.empty) {
+                if (segment.segmentGroups.empty) {
                     if (segment.removedSeq !== undefined) {
-                        const createBrid = this.getBranchId(segment.clientId);
-                        const removeBrid = this.getBranchId(segment.removedClientId);
-                        if ((removeBrid !== createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
-                            holdNodes.push(segment);
-                        } else {
-                            if (MergeTree.traceZRemove) {
-                                console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
+                        if (segment.trackingCollection.empty) {
+                            const createBrid = this.getBranchId(segment.clientId);
+                            const removeBrid = this.getBranchId(segment.removedClientId);
+                            if ((removeBrid !== createBrid) || (segment.removedSeq > this.collabWindow.minSeq)) {
+                                holdNodes.push(segment);
+                            } else {
+                                if (MergeTree.traceZRemove) {
+                                    console.log(`${this.getLongClientId(this.collabWindow.clientId)}: Zremove ${segment["text"]}; cli ${this.getLongClientId(segment.clientId)}`);
+                                }
+                                segment.parent = undefined;
                             }
-                            segment.parent = undefined;
                         }
                         prevSegment = undefined;
                     } else {
