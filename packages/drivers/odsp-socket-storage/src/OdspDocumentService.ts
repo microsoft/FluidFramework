@@ -90,7 +90,7 @@ export class OdspDocumentService implements api.IDocumentService {
                         await this.refreshKnowledge();
                     }
 
-                    return this.tokenProvider;
+                    return this.tokenProvider.storageToken;
                 },
                 new BaseTelemetryNullLogger(),
             ),
@@ -120,7 +120,7 @@ export class OdspDocumentService implements api.IDocumentService {
                     throw new Error("unexpected missing storageToken upon refresh attempt!");
                 }
 
-                return this.tokenProvider;
+                return this.tokenProvider.storageToken;
             },
         );
     }
