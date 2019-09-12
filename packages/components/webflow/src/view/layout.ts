@@ -4,12 +4,15 @@
  */
 import { IComponent } from "@prague/component-core-interfaces";
 import { Dom, Scheduler } from "@prague/flow-util";
-import { ISegment, LocalReference, MergeTreeMaintenanceType, TextSegment } from "@prague/merge-tree";
+import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@prague/merge-tree";
 import { SequenceEvent } from "@prague/sequence";
 import * as assert from "assert";
+import { EventEmitter } from "events";
+import { Tag } from "..";
 import { FlowDocument } from "../document";
 import { clamp, done, emptyObject, getSegmentRange } from "../util";
 import { extractRef, updateRef } from "../util/localref";
+import { hasTag } from "../util/tag";
 import { debug } from "./debug";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter";
 
@@ -36,7 +39,7 @@ class LayoutCheckpoint {
 // tslint:disable-next-line:no-object-literal-type-assertion
 export const eotSegment = Object.freeze({ cachedLength: 0 }) as ISegment;
 
-export class Layout {
+export class Layout extends EventEmitter {
     private get format() {
         const stack = this.formatStack;
         return stack.length > 0
@@ -46,6 +49,15 @@ export class Layout {
 
     private get slot() { return this.root; }
 
+    private get next() {
+        const cursor = this.cursor;
+        const { previous } = cursor;
+
+        return previous
+            ? previous.nextSibling
+            : cursor.parent.lastChild;
+    }
+
     public get cursor(): Readonly<ILayoutCursor> { return this._cursor; }
     public get position() { return this._position; }
     public get segment() { return this._segment; }
@@ -53,6 +65,7 @@ export class Layout {
     public get endOffset() { return this._endOffset; }
     public get segmentStart() { return this._segmentStart; }
     public get segmentEnd() { return this._segmentEnd; }
+    public get rendered() { return this.renderPromise; }
     public renderCallback?: (start, end) => void;
     public invalidatedCallback?: (start, end) => void;
 
@@ -63,7 +76,6 @@ export class Layout {
     private readonly initialCheckpoint: LayoutCheckpoint;
     private readonly segmentToCheckpoint = new WeakMap<ISegment, LayoutCheckpoint>();
     private readonly nodeToSegmentMap = new WeakMap<Node, ISegment>();
-    private readonly segmentToTextMap = new WeakMap<ISegment, Text>();
     private readonly segmentToEmitted = new WeakMap<ISegment, Set<Node>>();
 
     private _cursor: ILayoutCursor;
@@ -81,9 +93,10 @@ export class Layout {
 
     private renderPromise = done;
     private renderResolver: () => void;
-    public get rendered() { return this.renderPromise; }
 
     constructor(public readonly doc: FlowDocument, public readonly root: Element, formatter: Readonly<RootFormatter<IFormatterState>>, scheduler = new Scheduler(), public readonly scope?: IComponent) {
+        super();
+
         this.scheduleRender = scheduler.coalesce(scheduler.onTurnEnd, () => { this.render(); });
         this.initialCheckpoint = new LayoutCheckpoint([], { parent: this.slot, previous: null });
         this.rootFormatInfo = Object.freeze({ formatter: new BootstrapFormatter(formatter), state: emptyObject });
@@ -139,6 +152,7 @@ export class Layout {
             this.restoreCheckpoint(checkpoint);
 
             debug("Begin: sync([%d..%d)) -> [%d..%d) len: %d -> %d", oldStart, oldEnd, start, end, oldEnd - oldStart, end - start);
+            this.emit("render", { start, end });
         }
 
         try {
@@ -250,6 +264,40 @@ export class Layout {
         }
     }
 
+    public pushTag<T extends {}>(tag: Tag, props?: T) {
+        const element = this.elementForTag(tag);
+        if (props) {
+            Object.assign(element, props);
+        }
+        this.pushNode(element);
+        return element;
+    }
+
+    public popTag(count = 1) {
+        this.popNode(count);
+    }
+
+    public emitTag<T extends {}>(tag: Tag, props?: T) {
+        const element = this.elementForTag(tag);
+        if (props) {
+            Object.assign(element, props);
+        }
+        this.emitNode(element);
+        return element;
+    }
+
+    public emitText(text: string) {
+        // Note: Removing and inserting a new text node has the side-effect of reseting the caret blink.
+        //       Because text nodes are always leaves, this is harmless.
+        let existing = this.next;
+        if (existing && existing.nodeType === Node.TEXT_NODE && this.nodeToSegment(existing) === this.segment) {
+            this.removeNode(existing);
+        }
+        existing = document.createTextNode(text);
+        this.emitNode(existing);
+        return existing;
+    }
+
     public pushNode(node: Node) {
         debug("    pushNode(%o@%d)", node, this.position);
 
@@ -293,41 +341,82 @@ export class Layout {
         assert(this.root.contains(this.cursor.parent));
     }
 
-    public emitText() {
-        const segment = this.segment as TextSegment;
-        const text = segment.text;
-        let node = this.segmentToTextMap.get(segment);
-        if (node === undefined) {
-            node = document.createTextNode(text);
-            this.segmentToTextMap.set(segment, node);
-        } else if (node.textContent !== text) {
-            node.textContent = text;
-        }
-
-        this.emitNode(node);
-    }
-
     public nodeToSegment(node: Node): ISegment {
         const seg = this.nodeToSegmentMap.get(node);
         return seg && (seg.removedSeq === undefined ? seg : undefined);
     }
 
     public segmentAndOffsetToNodeAndOffset(segment: ISegment, offset: number) {
-        {
-            const node: Text = this.segmentToTextMap.get(segment);
-            if (node) {
-                return { node, nodeOffset: Math.min(offset, node.textContent.length) };
+        const checkpoint = this.segmentToCheckpoint.get(segment);
+        if (!checkpoint) {
+            return { node: null, nodeOffset: NaN };
+        }
+
+        const result = this.segmentAndOffsetToNodeAndOffsetHelper(checkpoint.cursor, offset);
+
+        if (result) {
+            debug("@%d %o:%d -> %o:%d",
+                segment === eotSegment
+                    ? this.doc.length
+                    : this.doc.getPosition(segment) + offset,
+                segment,
+                offset,
+                result.node,
+                result.nodeOffset);
+            return result;
+        }
+
+        debug("@%d %o:%d -> null:NaN",
+            segment === eotSegment
+                ? this.doc.length
+                : this.doc.getPosition(segment) + offset,
+            segment,
+            offset);
+        return { node: null, nodeOffset: NaN };
+    }
+
+    private segmentAndOffsetToNodeAndOffsetHelper(cursor: ILayoutCursor, offset: number) {
+        let { previous: node } = cursor;
+
+        // If there was no previous node, the cursor is located at the first child of the parent.
+        if (!node) {
+            const { parent } = cursor;
+            return { node: parent, nodeOffset: 0 };
+        }
+
+        // If the previous node was a non-text element, place the cursor at the end of the non-text element's content.
+        while (node.nodeType !== Node.TEXT_NODE) {
+            const { childNodes } = node;
+            const { length } = childNodes;
+
+            // We cannot descend any further.
+            if (length === 0) {
+                return { node, nodeOffset: 0 };
+            }
+
+            // Coerce NaN to last child
+            node = node.childNodes[childNodes.length - 1];
+
+            // If we've found a text node, set the offset to the just after the end of the text.
+            if (node.nodeType === Node.TEXT_NODE) {
+                offset = node.textContent.length;
             }
         }
 
-        const checkpoint = this.segmentToCheckpoint.get(segment);
-        if (checkpoint) {
-            const cursor = checkpoint.cursor;
-            const node = cursor.previous || cursor.parent.firstChild || cursor.parent;
-            return { node, nodeOffset: Math.min(offset, node.childNodes.length) };
+        // Coerce NaN to the position after the last character
+        {
+            const { length } = node.textContent;
+            return { node, nodeOffset: offset < length ? offset : length };
         }
+    }
 
-        return { node: null, nodeOffset: NaN };
+    private elementForTag(tag: Tag) {
+        const existing = this.next;
+        // Reuse the existing element if possible, otherwise create a new one.  Note that
+        // 'layout.pushNode(..)' will clean up the old node if needed.
+        return hasTag(existing, tag) && this.nodeToSegment(existing) === this.segment
+            ? existing as HTMLElement
+            : document.createElement(tag);
     }
 
     private beginSegment(position: number, segment: ISegment, startOffset: number, endOffset: number) {
@@ -413,7 +502,6 @@ export class Layout {
         }
 
         this.segmentToCheckpoint.delete(segment);
-        this.segmentToTextMap.delete(segment);
     }
 
     private readonly onChange = (e: SequenceEvent) => {
@@ -437,21 +525,23 @@ export class Layout {
     }
 
     private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
-        return updateRef(doc, ref, fn(
+        return fn(
             position === undefined
                 ? limit
                 : position,
             ref === undefined
                 ? limit
                 : doc.localRefToPosition(ref),
-        ));
+        );
     }
 
     private invalidate(start: number, end: number) {
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
-        this.startInvalid = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
-        this.endInvalid   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        start = this.unionRef(doc, start, this.startInvalid, Math.min, +Infinity);
+        end   = this.unionRef(doc, end,   this.endInvalid,   Math.max, -Infinity);
+        this.startInvalid = updateRef(doc, this.startInvalid, start);
+        this.endInvalid   = updateRef(doc, this.endInvalid,   end);
         this.scheduleRender();
 
         // tslint:disable-next-line:promise-must-complete

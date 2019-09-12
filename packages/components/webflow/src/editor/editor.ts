@@ -24,6 +24,7 @@ export class Editor {
         this.layout = new Layout(doc, root, formatter, scheduler, scope);
         this.caret = new Caret(this.layout);
         this.caretSync = scheduler.coalesce(scheduler.onTurnEnd, () => { this.caret.sync(); });
+        this.layout.on("render", this.caretSync);
 
         root.tabIndex = 0;
         root.contentEditable = "true";
@@ -39,6 +40,7 @@ export class Editor {
         this.root.removeEventListener("paste", this.onPaste);
         this.root.removeEventListener("keydown", this.onKeyDown);
         this.root.removeEventListener("keypress", this.onKeyPress);
+        this.layout.off("render", this.caretSync);
         this.layout.remove();
     }
 
@@ -61,7 +63,6 @@ export class Editor {
         const doc = this.doc;
         doc.remove(Math.max(0, start), Math.min(end, doc.length));
         caret.collapseForward();
-        this.caretSync();
     }
 
     private unlinkChildren(node: Node | HTMLElement) {
@@ -105,7 +106,6 @@ export class Editor {
                 debug("*** RESET ***");
                 this.unlinkChildren(this.layout.root);
                 this.layout.sync();
-                this.caretSync();
                 break;
             }
 
@@ -152,10 +152,8 @@ export class Editor {
             case KeyCode.enter: {
                 if (e.shiftKey) {
                     this.doc.insertLineBreak(this.caret.position);
-                    this.caretSync();
                 } else {
                     this.doc.insertParagraph(this.caret.position);
-                    this.caretSync();
                 }
                 break;
             }
@@ -173,7 +171,6 @@ export class Editor {
             this.doc.replaceWithText(start, end, text);
         }
         this.caret.collapseForward();
-        this.caretSync();
     }
 
     private consume(e: Event) {

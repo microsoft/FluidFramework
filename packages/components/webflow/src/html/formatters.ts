@@ -5,7 +5,7 @@
 
 import { IComponent, IComponentHTMLView } from "@prague/component-core-interfaces";
 import { Caret as CaretUtil, Direction, Rect } from "@prague/flow-util";
-import { Marker } from "@prague/merge-tree";
+import { Marker, TextSegment } from "@prague/merge-tree";
 import * as assert from "assert";
 import { DocSegmentKind, getComponentOptions, getCss, getDocSegmentKind } from "../document";
 import * as styles from "../editor/index.css";
@@ -18,7 +18,13 @@ import { ICssProps, sameCss, syncCss } from "./css";
 import { debug } from "./debug";
 
 class HtmlFormatter extends RootFormatter<IFormatterState> {
-    public begin() { return emptyObject; }
+    public begin(layout: Layout) {
+        // Note: Setting the whiteSpace style to "pre-wrap" has the side-effect of suppressing period insertion
+        //       on double space for MacOS.
+        (layout.cursor.parent as HTMLElement).style.whiteSpace = "pre-wrap";
+        return emptyObject;
+    }
+
     public end() { }
 
     public visit(layout: Layout, state: Readonly<IFormatterState>) {
@@ -132,12 +138,12 @@ class TagsFormatter extends Formatter<ITagsState> {
         const props: ITagsProps = (segment && segment.properties) || emptyObject;
         const tags = props.tags;
 
-        state.root = this.pushTag(layout, tags[0], state.root) as HTMLElement;
+        state.root = layout.pushTag(tags[0]);
         const root = state.root;
         syncCss(root, getCss(segment), undefined);
         syncAttrs(root, getAttrs(segment));
-        for (let index = 1, existing: Element = root; index < tags.length; index++) {
-            existing = this.pushTag(layout, tags[index], existing && existing.firstElementChild);
+        for (let index = 1; index < tags.length; index++) {
+            layout.pushTag(tags[index]);
         }
 
         state.popCount = tags.length;
@@ -151,14 +157,13 @@ class TagsFormatter extends Formatter<ITagsState> {
 
         switch (kind) {
             case DocSegmentKind.text: {
-                layout.emitText();
+                layout.emitText((segment as TextSegment).text);
                 return { state, consumed: true };
             }
 
             case DocSegmentKind.paragraph: {
                 layout.popNode();
-                const previous = layout.cursor.previous;
-                const pg = this.pushTag(layout, state.pTag, previous && previous.nextSibling);
+                const pg = layout.pushTag(state.pTag);
                 syncCss(pg as HTMLElement, getCss(segment), undefined);
                 return { state, consumed: true };
             }
@@ -205,7 +210,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
         const segment = layout.segment;
         // tslint:disable-next-line:strict-boolean-expressions
         const tag = (segment.properties && segment.properties.tag) || this.defaultTag;
-        state.root = this.pushTag(layout, tag, state.root) as HTMLElement;
+        state.root = layout.pushTag(tag);
         syncCss(state.root, getCss(segment), undefined);
 
         return state;
@@ -250,7 +255,7 @@ class ParagraphFormatter extends Formatter<IParagraphState> {
     }
 
     public end(layout: Layout, state: Readonly<IParagraphState>) {
-        this.emitTag(layout, Tag.br, state.root.lastChild);
+        layout.emitTag(Tag.br);
         layout.popNode();
     }
 }
@@ -262,7 +267,7 @@ class TextFormatter extends Formatter<ITextState> {
         const state: Partial<ITextState> = prevState
             ? { ...prevState }
             : {};
-        state.root = this.pushTag(layout, Tag.span, state.root) as HTMLElement;
+        state.root = layout.pushTag(Tag.span);
         state.css = getCss(layout.segment);
         syncCss(state.root, state.css, undefined);
         return state;
@@ -278,7 +283,7 @@ class TextFormatter extends Formatter<ITextState> {
                     layout.popFormat();
                     return { state, consumed: false };
                 }
-                layout.emitText();
+                layout.emitText((segment as TextSegment).text);
                 return { state, consumed: true };
             }
 
