@@ -19,7 +19,6 @@ import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
-import { TokenProvider } from "./tokenProvider";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -94,7 +93,7 @@ export class OdspDocumentService implements IDocumentService {
             this.snapshotStorageUrl,
             latestSha,
             this.storageFetchWrapper,
-            () => this.getTokenProvider(),
+            () => this.getStorageToken(this.siteUrl),
             this.logger,
             true,
         );
@@ -127,7 +126,7 @@ export class OdspDocumentService implements IDocumentService {
             urlProvider,
             this.deltasFetchWrapper,
             this.storageManager ? this.storageManager.ops : undefined,
-            () => this.getTokenProvider(),
+            () => this.getStorageToken(this.siteUrl),
         );
     }
 
@@ -158,14 +157,5 @@ export class OdspDocumentService implements IDocumentService {
 
     public getErrorTrackingService(): IErrorTrackingService {
         return { track: () => null };
-    }
-
-    private async getTokenProvider(): Promise<TokenProvider> {
-        const [storageToken, websocketToken] = await Promise.all([
-            this.getStorageToken(this.siteUrl),
-            this.getWebsocketToken(),
-        ]);
-
-        return new TokenProvider(storageToken, websocketToken);
     }
 }

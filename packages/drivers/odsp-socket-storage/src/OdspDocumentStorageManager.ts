@@ -24,7 +24,7 @@ import {
 import { fetchSnapshot } from "./fetchSnapshot";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
-import { TokenProvider } from "./tokenProvider";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./utils";
 
 export class OdspDocumentStorageManager implements IDocumentStorageManager {
@@ -58,7 +58,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         private readonly snapshotUrl: string | undefined,
         private latestSha: string | null | undefined,
         private readonly fetchWrapper: IFetchWrapper,
-        private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
+        private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
         private readonly logger: ITelemetryBaseLogger,
         private readonly fetchFullSnapshot: boolean,
     ) {
@@ -80,9 +80,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             this.checkSnapshotUrl();
 
             blob = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const tokenProvider = await this.getTokenProvider(refresh);
+                const storageToken = await this.getStorageToken(refresh);
 
-                const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`);
+                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/blobs/${blobid}${this.queryString}`, storageToken);
 
                 return this.fetchWrapper.get<resources.IBlob>(url, blobid, headers);
             });
@@ -105,9 +105,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         this.checkSnapshotUrl();
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const tokenProvider = await this.getTokenProvider(refresh);
+            const storageToken = await this.getStorageToken(refresh);
 
-            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/contents${getQueryString({ ref: version.id, path })}`, storageToken);
 
             return this.fetchWrapper.get<resources.IBlob>(url, version.id, headers);
         });
@@ -218,7 +218,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         }
 
         return getWithRetryForTokenRefresh(async (refresh) => {
-            const tokenProvider = await this.getTokenProvider(refresh);
+            const storageToken = await this.getStorageToken(refresh);
 
             // If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
             // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
@@ -235,7 +235,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 // TODO: This snapshot will return deltas, which we currently aren't using. We need to enable this flag to go down the "optimized"
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
-                const { headers, url } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`);
+                const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
                 const {trees, blobs, ops, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
@@ -260,7 +260,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
 
                 return sha ? [{ id: sha, treeId: undefined! }] : [];
             } else {
-                const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`);
+                const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/versions?count=${count}`, storageToken);
 
                 // fetch the latest snapshot versions for the document
                 const versionsResponse = await this.fetchWrapper
@@ -359,9 +359,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         let tree = this.treesCache.get(id);
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (refresh: boolean) => {
-                const tokenProvider = (await this.getTokenProvider(refresh)) as TokenProvider;
+                const storageToken = await this.getStorageToken(refresh);
 
-                const odspSnapshot: IOdspSnapshot = await fetchSnapshot(this.snapshotUrl!, tokenProvider.storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
+                const odspSnapshot: IOdspSnapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, this.appId, this.fetchWrapper, id, this.fetchFullSnapshot);
                 // odspSnapshot contain "trees" when the request is made for latest or the root of the tree, for all other cases it will contain "tree" which is the fetched tree with the id
                 if (odspSnapshot) {
                     if (odspSnapshot.trees) {
@@ -453,9 +453,9 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
         };
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const tokenProvider = await this.getTokenProvider(refresh);
+            const storageToken = await this.getStorageToken(refresh);
 
-            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`);
+            const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot${this.queryString}`, storageToken);
             headers["Content-Type"] = "application/json";
 
             const postBody = JSON.stringify(snapshot);

@@ -6,7 +6,7 @@
 import { IOdspSnapshot } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
-import { TokenProvider } from "./tokenProvider";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -39,7 +39,7 @@ export async function fetchSnapshot(
         queryParams = { app_id: appId };
     }
     const queryString = getQueryString(queryParams);
-    const { url, headers } = new TokenProvider(token, null).getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`);
+    const { url, headers } = getUrlAndHeadersWithAuth(`${snapshotUrl}${path}${queryString}`, token);
     const fetchResponse = await storageFetchWrapper.get<IOdspSnapshot>(url, versionId, headers);
 
     return fetchResponse;
