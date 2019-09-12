@@ -105,8 +105,8 @@
                 Another example of Prague components is creating a poll and then a chart that binds to the poll data.
             </p>
             <ul class="list-unstyled">
-                <li><a href="/loader/{{chartsMoniker}}?chaincode=@chaincode/charts@0.7.3" target="_blank">Charts</a></li>
-                <li><a href="/loader/{{pollMoniker}}?chaincode=@chaincode/poll@1.2.11" target="_blank">Poll</a></li>
+                <li>Charts (DEPRECATED)</li>
+                <li>Poll (DEPRECATED)</li>
             </ul>
             <p>
                 Start by opening the poll listed above. Fill out the question title as well as some of the choices.

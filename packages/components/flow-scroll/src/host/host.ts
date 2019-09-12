@@ -103,25 +103,23 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
             };
 
             const commands: SearchMenu.ISearchMenuCommand<HostView>[] = [
-                { key: "blockquote", enabled: () => true, exec: () => { setFormat(Tag.blockquote); } },
-                { key: "bold", enabled: hasSelection, exec: () => toggleSelection(styles.bold) },
-                { key: "h1", enabled: () => true, exec: () => { setFormat(Tag.h1); } },
-                { key: "h2", enabled: () => true, exec: () => { setFormat(Tag.h2); } },
-                { key: "h3", enabled: () => true, exec: () => { setFormat(Tag.h3); } },
-                { key: "h4", enabled: () => true, exec: () => { setFormat(Tag.h4); } },
-                { key: "h5", enabled: () => true, exec: () => { setFormat(Tag.h5); } },
-                { key: "h6", enabled: () => true, exec: () => { setFormat(Tag.h6); } },
-                { key: "ol", enabled: () => true, exec: () => { insertTags([Tag.ol, Tag.li]); } },
-                { key: "p", enabled: () => true, exec: () => { setFormat(Tag.p); } },
-                { key: "ul", enabled: () => true, exec: () => { insertTags([Tag.ul, Tag.li]); } },
-
-                { key: "math inline", enabled: () => true, exec: () => insertComponentFromCollection(math, { display: "inline"}) },
-                { key: "math block", enabled: () => true, exec: () => insertComponentFromCollection(math, { display: "block"}) },
-                { key: "morton", enabled: () => true, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
-                { key: "image", enabled: () => true, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", {}, "display:block;width:61%;resize:both;overflow:hidden") },
-                { key: "table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view", {}) },
-                { key: "chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view", {}) },
+                { key: "blockquote",    enabled: always,        exec: () => { setFormat(Tag.blockquote); } },
+                { key: "bold",          enabled: hasSelection,  exec: () => toggleSelection(styles.bold) },
+                { key: "h1",            enabled: always,        exec: () => { setFormat(Tag.h1); } },
+                { key: "h2",            enabled: always,        exec: () => { setFormat(Tag.h2); } },
+                { key: "h3",            enabled: always,        exec: () => { setFormat(Tag.h3); } },
+                { key: "h4",            enabled: always,        exec: () => { setFormat(Tag.h4); } },
+                { key: "h5",            enabled: always,        exec: () => { setFormat(Tag.h5); } },
+                { key: "h6",            enabled: always,        exec: () => { setFormat(Tag.h6); } },
+                { key: "ol",            enabled: always,        exec: () => { insertTags([Tag.ol, Tag.li]); } },
+                { key: "p",             enabled: always,        exec: () => { setFormat(Tag.p); } },
+                { key: "ul",            enabled: always,        exec: () => { insertTags([Tag.ul, Tag.li]); } },
+                { key: "red",           enabled: always,        exec: () => { setStyle("color:red"); } },
+                { key: "math inline",   enabled: always,        exec: () => insertComponentFromCollection(math, { display: "inline"}) },
+                { key: "math block",    enabled: always,        exec: () => insertComponentFromCollection(math, { display: "block"}) },
+                { key: "morton",        enabled: always,        exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
+                { key: "image",         enabled: always,        exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
+                { key: "table",         enabled: always,        exec: () => insertComponent(tableViewType, {}) },
             ];
             const baseSearchCommands = new TST<SearchMenu.ISearchMenuCommand<HostView>>();
             for (const command of commands) {
