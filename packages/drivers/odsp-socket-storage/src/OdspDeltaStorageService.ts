@@ -7,7 +7,7 @@ import * as api from "@prague/protocol-definitions";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { getQueryString } from "./getQueryString";
-import { TokenProvider } from "./tokenProvider";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { getWithRetryForTokenRefresh } from "./utils";
 
 /**
@@ -21,7 +21,7 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         private readonly deltaFeedUrlProvider: () => Promise<string>,
         private readonly fetchWrapper: IFetchWrapper,
         private ops: ISequencedDeltaOpMessage[] | undefined,
-        private readonly getTokenProvider: (refresh: boolean) => Promise<api.ITokenProvider>,
+        private readonly getStorageToken: (refresh: boolean) => Promise<string | null>,
     ) {
         this.queryString = getQueryString(queryParams);
     }
@@ -39,9 +39,9 @@ export class OdspDeltaStorageService implements api.IDocumentDeltaStorageService
         this.ops = undefined;
 
         return getWithRetryForTokenRefresh(async (refresh: boolean) => {
-            const tokenProvider = await this.getTokenProvider(refresh);
+            const storageToken = await this.getStorageToken(refresh);
 
-            const { url, headers } = (tokenProvider as TokenProvider).getUrlAndHeadersWithAuth(await this.buildUrl(from, to));
+            const { url, headers } = getUrlAndHeadersWithAuth(await this.buildUrl(from, to), storageToken);
 
             const response = await this.fetchWrapper.get<IDeltaStorageGetResponse>(url, url, headers);
 
