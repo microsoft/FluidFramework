@@ -120,15 +120,19 @@ export function selectDocumentServiceFactoryForProtocol(
 
 /**
  * Api that creates the protocol to factory map.
- * @param documentServiceFactory - A single factory or array of document factories.
+ * @param documentServiceFactories - A single factory or array of document factories.
  */
 export function createProtocolToFactoryMapping(
-    documentServiceFactory: IDocumentServiceFactory[],
+    documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
 ): Map<string, IDocumentServiceFactory> {
     const protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory> = new Map();
-    documentServiceFactory.forEach((factory: IDocumentServiceFactory) => {
-        protocolToDocumentFactoryMap.set(factory.protocolName, factory);
-    });
+    if (Array.isArray(documentServiceFactories)) {
+        documentServiceFactories.forEach((factory: IDocumentServiceFactory) => {
+            protocolToDocumentFactoryMap.set(factory.protocolName, factory);
+        });
+    } else {
+        protocolToDocumentFactoryMap.set(documentServiceFactories.protocolName, documentServiceFactories);
+    }
     return protocolToDocumentFactoryMap;
 }
 
@@ -142,7 +146,7 @@ export class Loader extends EventEmitter implements ILoader {
 
     constructor(
         private readonly containerHost: IHost,
-        private readonly documentServiceFactories: IDocumentServiceFactory[],
+        private readonly documentServiceFactories: IDocumentServiceFactory | IDocumentServiceFactory[],
         private readonly codeLoader: ICodeLoader,
         private readonly options: any,
         private readonly scope: IComponent,

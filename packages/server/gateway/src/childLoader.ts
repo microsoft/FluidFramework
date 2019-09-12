@@ -2,14 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { NodeCodeLoader } from "@microsoft/fluid-server-services";
 import { promiseTimeout } from "@microsoft/fluid-server-services-client";
-import { createLoader } from "@prague/base-host";
+import { createLoader, IHostConfig } from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
-import { IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
-import { Deferred } from "@prague/utils";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { BaseTelemetryNullLogger, Deferred } from "@prague/utils";
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { parse } from "url";
@@ -68,17 +70,34 @@ class KeyValueLoader {
                 headers,
             });
 
-        const loader = createLoader(
+        const documentServiceFactories: IDocumentServiceFactory[] = [];
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            "Server-Gateway",
+            (siteUrl: string) => Promise.resolve("fake token"),
+            () => Promise.resolve("fake token"),
+            new BaseTelemetryNullLogger()));
+
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            undefined));
+
+        const resolver = new ContainerUrlResolver(
             config.gatewayUrl,
-            documentUrl,
-            result.data,
-            undefined,
             hostToken,
+            new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
+
+        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+        const loader = createLoader(
+            result.data,
             config,
             {},
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            undefined,
+            hostConf,
         );
+
         const container = await loader.resolve({ url: documentUrl });
         winston.info(`Loaded key value container from ${documentUrl}`);
 

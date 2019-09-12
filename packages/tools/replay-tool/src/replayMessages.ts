@@ -276,7 +276,7 @@ class Document {
 
         // Load the Fluid document
         this.docLogger = ChildLogger.create(new Logger(containerDescription, errorHandler));
-        const loader = new Loader(host, [serviceFactory], codeLoader, options, {}, this.docLogger);
+        const loader = new Loader(host, serviceFactory, codeLoader, options, {}, this.docLogger);
         const container: Container = await loader.resolve({ url: resolved.url });
 
         assert(container.existing); // ReplayFileDeltaConnection.create() guarantees that

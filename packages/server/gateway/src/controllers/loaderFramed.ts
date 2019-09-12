@@ -4,10 +4,21 @@
  */
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { createWebLoader, initializeChaincode, IPrivateSessionInfo, registerAttach } from "@prague/base-host";
+import { createWebLoader,
+    IHostConfig,
+    initializeChaincode,
+    IPrivateSessionInfo,
+    registerAttach,
+} from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
+import { createProtocolToFactoryMapping, selectDocumentServiceFactoryForProtocol } from "@prague/container-loader";
+import { InnerDocumentServiceFactory, InnerUrlResolver, OuterDocumentServiceFactory } from "@prague/iframe-socket-storage";
 import { IResolvedPackage } from "@prague/loader-web";
-import { IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IDocumentServiceFactory, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import Axios from "axios";
 import { DocumentFactory } from "./documentFactory";
 import { IHostServices } from "./services";
@@ -40,20 +51,20 @@ export async function initialize(
     let documentFactory: DocumentFactory;
 
     const div = document.getElementById("content") as HTMLDivElement;
-
     // Don't resolve in the outer session
     if (!privateSession.outerSession) {
+        const hostConf: IHostConfig = {
+            documentServiceFactory: new InnerDocumentServiceFactory(),
+            urlResolver: new InnerUrlResolver(resolved),
+        };
         const loader = createWebLoader(
-            url,
             resolved,
-            cache,
             pkg,
             scriptIds,
             npm,
-            jwt,
             config,
             services,
-            privateSession);
+            hostConf);
 
         documentFactory = new DocumentFactory(config.tenantId,
             config.moniker,
@@ -69,20 +80,40 @@ export async function initialize(
             await initializeChaincode(container, pkg);
         }
     } else {
+        const documentServiceFactories: IDocumentServiceFactory[] = [];
+        documentServiceFactories.push(new OdspDocumentServiceFactory(
+            "Server-Gateway",
+            (siteUrl: string) => Promise.resolve("fake token"),
+            () => Promise.resolve("fake token"),
+            new BaseTelemetryNullLogger()));
+
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            cache));
+        const factoryMap = createProtocolToFactoryMapping(documentServiceFactories);
+
         config.moniker = (await Axios.get("/api/v1/moniker")).data;
         config.url = url;
         privateSession.frameP = createFrame(div, createIFrameHTML(resolved, pkg, scriptIds, scope, config));
-        createWebLoader(
-            url,
-            resolved,
-            cache,
-            pkg,
-            scriptIds,
-            npm,
+        const resolver = new ContainerUrlResolver(
+            document.location.origin,
             jwt,
+            new Map<string, IResolvedUrl>([[url, resolved]]));
+
+        const options = {
+            blockUpdateMarkers: true,
             config,
-            services, // not required if we don't resolve
-            privateSession);
+            tokens: (resolved as IFluidResolvedUrl).tokens,
+        };
+        new OuterDocumentServiceFactory(
+            selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
+            privateSession.frameP,
+            options,
+            { resolver },
+            ).createDocumentServiceFromRequest({ url });
     }
 }
 
@@ -138,7 +169,6 @@ function createIFrameHTML(resolved: IResolvedUrl,
             controllers.loaderFramed.initialize(
                 "${url}",
                 ${JSON.stringify(santizedResolved)}, // resolved
-                undefined, // cache
                 ${JSON.stringify(pkg)}, // chaincode
                 ${JSON.stringify(scriptIds)}, // scriptIds
                 undefined, // npm

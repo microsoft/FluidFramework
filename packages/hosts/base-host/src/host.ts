@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IGitCache } from "@microsoft/fluid-server-services-client";
 import {
     IComponent,
     IComponentHTMLVisual,
@@ -11,27 +10,13 @@ import {
     IRequest,
 } from "@prague/component-core-interfaces";
 import { ICodeLoader } from "@prague/container-definitions";
-import { Container, createProtocolToFactoryMapping, Loader, selectDocumentServiceFactoryForProtocol } from "@prague/container-loader";
-import {
-    InnerDocumentServiceFactory,
-    InnerUrlResolver,
-    OuterDocumentServiceFactory,
-} from "@prague/iframe-socket-storage";
+import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebCodeLoader } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
 import {
-    IDocumentServiceFactory,
-    IErrorTrackingService,
     IFluidResolvedUrl,
     IResolvedUrl,
-    IUrlResolver,
 } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { BaseTelemetryNullLogger } from "@prague/utils";
-
-const getStorageTokenStub = (siteUrl: string) => Promise.resolve("fake token");
-const getWebsocketTokenStub = () => Promise.resolve("fake token");
+import { IHostConfig } from "./hostConfig";
 
 export interface IPrivateSessionInfo {
     outerSession?: boolean;
@@ -104,44 +89,12 @@ export async function registerAttach(loader: Loader, container: Container, uri: 
 }
 
 export function createLoader(
-    baseUrl: string,
-    url: string,
     resolved: IResolvedUrl,
-    cache: IGitCache,
-    jwt: string,
     config: any,
     scope: IComponent,
     codeLoader: ICodeLoader,
-    errorService: IErrorTrackingService,
-    getStorageToken: (siteUrl: string) => Promise<string | null> = getStorageTokenStub,
-    getWebsocketToken: () => Promise<string | null> = getWebsocketTokenStub,
-    privateSession: IPrivateSessionInfo = {
-        innerSession: false,
-        outerSession: false,
-    },
+    hostConf: IHostConfig,
 ): Loader {
-
-    let resolver: IUrlResolver;
-    let documentServiceFactories: IDocumentServiceFactory[];
-    if (privateSession.innerSession) {
-        // TODO: protect this typing more carefully
-        resolver = new InnerUrlResolver(resolved);
-        documentServiceFactories = [new InnerDocumentServiceFactory()];
-    } else {
-        resolver = new ContainerUrlResolver(
-            baseUrl,
-            jwt,
-            new Map<string, IResolvedUrl>([[url, resolved]]));
-
-        const r11sDocumentServiceFactory =
-            new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-        const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
-            "Server Gateway",
-            getStorageToken,
-            getWebsocketToken,
-            new BaseTelemetryNullLogger());
-        documentServiceFactories = [odspDocumentServiceFactory, r11sDocumentServiceFactory];
-    }
 
     const options = {
         blockUpdateMarkers: true,
@@ -149,38 +102,22 @@ export function createLoader(
         tokens: (resolved as IFluidResolvedUrl).tokens,
     };
 
-    if (privateSession.outerSession) {
-        const factoryMap = createProtocolToFactoryMapping(documentServiceFactories);
-        new OuterDocumentServiceFactory(
-            selectDocumentServiceFactoryForProtocol(resolved as IFluidResolvedUrl, factoryMap),
-            privateSession.frameP,
-            options,
-            { resolver },
-            ).createDocumentServiceFromRequest({ url });
-        return;
-    }
-
     return new Loader(
-        { resolver },
-        documentServiceFactories,
+        { resolver: hostConf.urlResolver },
+        hostConf.documentServiceFactory,
         codeLoader,
         options,
         scope);
 }
 
 export function createWebLoader(
-    url: string,
     resolved: IResolvedUrl,
-    cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
-    jwt: string,
     config: any,
     scope: IComponent,
-    privateSession?: IPrivateSessionInfo,
-    getStorageToken: (siteUrl: string) => Promise<string | null> = getStorageTokenStub,
-    getWebsocketToken: () => Promise<string | null> = getWebsocketTokenStub,
+    hostConf: IHostConfig,
 ): Loader {
     // Create the web loader and prefetch the chaincode we will need
     const codeLoader = new WebCodeLoader(npm);
@@ -196,38 +133,27 @@ export function createWebLoader(
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 
-    const errorService = new DefaultErrorTracking();
-
     const loader = createLoader(
-        document.location.origin,
-        url,
         resolved,
-        cache,
-        jwt,
         config,
         scope,
         codeLoader,
-        errorService,
-        getStorageToken,
-        getWebsocketToken,
-        privateSession);
+        hostConf);
     return loader;
 }
 
 export async function start(
     url: string,
     resolved: IResolvedUrl,
-    cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
-    jwt: string,
     config: any,
     scope: IComponent,
     div: HTMLDivElement,
+    hostConf: IHostConfig,
 ): Promise<Container> {
-    const loader = createWebLoader(
-        url, resolved, cache, pkg, scriptIds, npm, jwt, config, scope);
+    const loader = createWebLoader(resolved, pkg, scriptIds, npm, config, scope, hostConf);
 
     const container = await loader.resolve({ url });
     registerAttach(

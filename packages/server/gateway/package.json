@@ -64,6 +64,7 @@
     "@prague/map": "^0.10.0",
     "@prague/merge-tree": "^0.10.0",
     "@prague/odsp-socket-storage": "^0.10.0",
+    "@prague/iframe-socket-storage": "^0.10.0",
     "@microsoft/fluid-odsp-utils": "^0.10.0",
     "@prague/protocol-definitions": "^0.10.0",
     "@prague/replay-socket-storage": "^0.10.0",

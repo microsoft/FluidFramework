@@ -4,3 +4,4 @@
  */
 
 export * from "./host";
+export * from "./hostConfig";

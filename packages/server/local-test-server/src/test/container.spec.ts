@@ -35,7 +35,7 @@ describe("Container", () => {
         codeLoader = new API.CodeLoader({ generateSummaries: false });
         const options = {};
 
-        loader = new Loader(host, [serviceFactory], codeLoader, options, {});
+        loader = new Loader(host, serviceFactory, codeLoader, options, {});
     });
 
     it("Load container successfully", async () => {

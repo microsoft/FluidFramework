@@ -4,9 +4,13 @@
  */
 
 import { IGitCache } from "@microsoft/fluid-server-services-client";
-import { createWebLoader, initializeChaincode, registerAttach } from "@prague/base-host";
+import { createWebLoader, IHostConfig, initializeChaincode, registerAttach } from "@prague/base-host";
 import { IResolvedPackage } from "@prague/loader-web";
-import { IResolvedUrl } from "@prague/protocol-definitions";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
+import { BaseTelemetryNullLogger } from "@prague/utils";
 import { DocumentFactory } from "./documentFactory";
 import { MicrosoftGraph } from "./graph";
 import { PackageManager } from "./packageManager";
@@ -36,21 +40,40 @@ export async function initialize(
         IPackageManager: packageManager,
     };
 
+    const documentServiceFactories: IDocumentServiceFactory[] = [];
+    documentServiceFactories.push(new OdspDocumentServiceFactory(
+        "Server-Gateway",
+        (siteUrl: string) => Promise.resolve("fake token"),
+        () => Promise.resolve("fake token"),
+        new BaseTelemetryNullLogger()));
+
+    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+        false,
+        new DefaultErrorTracking(),
+        false,
+        true,
+        cache));
+
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        jwt,
+        new Map<string, IResolvedUrl>([[url, resolved]]));
+
+    const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+
     // Provide access to all loader services from command line for easier testing as we bring more up
     // tslint:disable-next-line
     window["allServices"] = services;
 
     console.log(`Loading ${url}`);
     const loader = createWebLoader(
-        url,
         resolved,
-        cache,
         pkg,
         scriptIds,
         npm,
-        jwt,
         config,
-        services);
+        services,
+        hostConf);
     documentFactory.resolveLoader(loader);
 
     const div = document.getElementById("content") as HTMLDivElement;

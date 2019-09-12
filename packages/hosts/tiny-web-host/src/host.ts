@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { start } from "@prague/base-host";
+import { IHostConfig, start } from "@prague/base-host";
 import { IResolvedPackage } from "@prague/loader-web";
+import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as UrlParse from "url-parse";
 import { resolveUrl } from "./urlResolver";
-import { auth } from "./utils";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const packageJson = require("../package.json");
@@ -82,19 +84,34 @@ async function startWrapper(
 
     return Promise.all([resolvedP, fullTreeP])
         .then(async ([resolved, fullTree]) => {
+            const documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
+                false,
+                new DefaultErrorTracking(),
+                false,
+                true,
+                undefined);
+
+            const resolver = new ContainerUrlResolver(
+                document.location.origin,
+                await getToken(),
+                new Map<string, IResolvedUrl>([[href, resolved as IResolvedUrl]]));
+
+            const hostConf: IHostConfig = {
+                documentServiceFactory,
+                urlResolver: resolver,
+            };
             // tslint:disable-next-line: no-unsafe-any
             return start(
                 href,
                 // tslint:disable-next-line: no-unsafe-any
                 resolved, // resolved, IResolvedUrl,
-                undefined, // cache, IGitCache (could be a value)
                 pkg, // pkg, IResolvedPackage, (gateway/routes/loader has an example (pkgP))
                 scriptIds, // scriptIds, string[], defines the id of the script tag added to the page
                 npm, // string,
-                await auth(parsedUrl.tenant, parsedUrl.container, getToken), // string,
                 {},
                 {},
                 div,
+                hostConf,
             );
         }, (error) => {
             throw error;

@@ -39,7 +39,7 @@ export class ChaincodeWork extends EventEmitter {
     public async loadChaincode(options: any, attachPlatform: boolean): Promise<void> {
         const loader = new Loader(
             this.host,
-            [this.serviceFactory],
+            this.serviceFactory,
             this.codeLoader,
             options,
             {});
