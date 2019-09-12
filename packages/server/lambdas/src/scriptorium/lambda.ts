@@ -12,7 +12,6 @@ import {
     ISequencedOperationMessage,
     SequencedOperationType,
 } from "@microsoft/fluid-server-services-core";
-import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -82,7 +81,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
                 this.sendPending();
             },
             (error) => {
-                winston.error(error);
                 this.context.error(error, true);
             });
     }

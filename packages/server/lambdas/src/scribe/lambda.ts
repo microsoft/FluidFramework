@@ -33,7 +33,6 @@ import {
 } from "@prague/protocol-definitions";
 import * as Deque from "double-ended-queue";
 import * as _ from "lodash";
-import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";
 
 export class ScribeLambda extends SequencedLambda {
@@ -249,7 +248,8 @@ export class ScribeLambda extends SequencedLambda {
         quorumSnapshot: IQuorumSnapshot,
         summarySequenceNumber: number,
     ): Promise<void> {
-        winston.info(`START Summary! ${JSON.stringify(content)}`);
+        // TODO: Issue-3547 Logger abstraction in lambdas for routerlicious and Push
+        // winston.info(`START Summary! ${JSON.stringify(content)}`);
 
         // If the sequence number for the protocol head is greater than current sequence number then we
         // have already captured this summary and are processing this message due to a replay of the stream.
@@ -387,7 +387,9 @@ export class ScribeLambda extends SequencedLambda {
         }
 
         await this.sendSummaryAck(commit.sha, summarySequenceNumber);
-        winston.info(`END Summary! ${JSON.stringify(content)}`);
+
+        // TODO: Issue-3547 Logger abstraction in lambdas for routerlicious and Push
+        // winston.info(`END Summary! ${JSON.stringify(content)}`);
     }
 
     private async sendSummaryAck(handle: string, summarySequenceNumber: number) {

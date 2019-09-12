@@ -93,6 +93,7 @@ export class DeliLambda implements IPartitionLambda {
     private idleTimer: any;
     private noopTimer: any;
     private noActiveClients = false;
+    // @ts-ignore
     private canClose = false;
 
     constructor(
@@ -177,10 +178,6 @@ export class DeliLambda implements IPartitionLambda {
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
                 this.checkIdleClients(ticketedMessage);
-
-                if (this.canClose) {
-                    winston.info(`${this.tenantId}/${this.documentId} can be closed`);
-                }
 
                 // Check for document inactivity.
                 if (ticketedMessage.type !== MessageType.NoClient && this.noActiveClients) {
