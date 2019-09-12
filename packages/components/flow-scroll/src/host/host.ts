@@ -128,7 +128,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "math block",    enabled: always,        exec: () => insertComponentFromCollection(math, { display: "block"}) },
                 { key: "morton",        enabled: always,        exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { key: "image",         enabled: always,        exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
-                { key: "ivy",           enabled: always,        exec: () => insertComponent("@chaincode/charts", {}, "display:block;width:61%;resize:both;overflow:hidden") },
                 { key: "table",         enabled: always,        exec: () => insertComponent(tableViewType, {}) },
             ];
 

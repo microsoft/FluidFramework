@@ -21,7 +21,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument.getFactory())],
         [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice.getFactory())],
         ["@chaincode/table-view", import("@chaincode/table-view").then((m) => m.TableView.getFactory())],
-        ["@chaincode/charts", import(/* webpackChunkName: "charts", webpackPrefetch: true */ "@chaincode/charts").then((m) => m.fluidExport)],
         ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players").then((m) => m.fluidExport)],
         ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection").then((m) => m.fluidExport)],
         // pinpoint editor's SASS loading of resources causes trouble

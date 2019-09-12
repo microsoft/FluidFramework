@@ -44,7 +44,6 @@
     }
   },
   "dependencies": {
-    "@chaincode/charts": "^0.10.0",
     "@chaincode/image-collection": "^0.10.0",
     "@chaincode/math": "^0.10.0",
     "@chaincode/monaco": "^0.10.0",
