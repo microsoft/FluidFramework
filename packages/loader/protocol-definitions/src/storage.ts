@@ -108,6 +108,10 @@ export interface IVersion  {
 
     // tree ID for this version of the snapshot
     treeId: string;
+
+    // Time when snapshot was generated.
+    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+    date?: string;
 }
 
 /**

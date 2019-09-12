@@ -47,7 +47,11 @@ export class DocumentStorageService implements IDocumentStorageService  {
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         const commits = await this.manager.getCommits(versionId ? versionId : this.id, count);
-        return commits.map((commit) => ({id: commit.sha, treeId: commit.commit.tree.sha}));
+        return commits.map((commit) => ({
+            date: commit.commit.author.date,
+            id: commit.sha,
+            treeId: commit.commit.tree.sha,
+        }));
     }
 
     public async read(blobId: string): Promise<string> {
@@ -63,7 +67,7 @@ export class DocumentStorageService implements IDocumentStorageService  {
     public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
         const branch = ref ? `components/${this.id}/${ref}` : this.id;
         const commit = this.manager.write(branch, tree, parents, message);
-        return commit.then((c) => ({id: c.sha, treeId: c.tree.sha}));
+        return commit.then((c) => ({date: c.committer.date, id: c.sha, treeId: c.tree.sha}));
     }
 
     public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {

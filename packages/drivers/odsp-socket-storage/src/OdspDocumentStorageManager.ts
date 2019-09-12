@@ -269,7 +269,17 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 if (versionsResponse) {
                     if (Array.isArray(versionsResponse.value)) {
                         return versionsResponse.value.map((version) => {
+                            // Parse the date from the message
+                            let date: string|undefined;
+                            for (const rec of version.message.split("\n")) {
+                                const index = rec.indexOf(":");
+                                if (index !== -1 && rec.substr(0, index) === "Date") {
+                                    date = rec.substr(index + 1).trim();
+                                    break;
+                                }
+                            }
                             return {
+                                date,
                                 id: version.sha,
                                 treeId: undefined!,
                             };

@@ -17,7 +17,7 @@ export interface IDebuggerUI {
      * Call when new version is downloaded from storage
      * Expect multiple callbacks.
      */
-    updateVersion(index: number, version: IVersion, seqNumber: number, timeStamp: number): void;
+    updateVerison(index: number, version: IVersion, seqNumber: number): void;
 
     /**
      * Called in response to successful onVersionSelection() or onSnapshotFileSelection() call
@@ -208,16 +208,20 @@ export class DebuggerUI {
             this.versions = versions;
             for (const version of versions) {
                 const option = document.createElement("option");
-                option.text = `id = ${version.id}`;
+                if (version.date !== undefined) {
+                    option.text = `id = ${version.id},  time = ${version.date}`;
+                } else {
+                    option.text = `id = ${version.id}`;
+                }
                 this.selector.add(option);
             }
         }
     }
 
-    public updateVersion(index: number, version: IVersion, seqNumber: number, timeStamp: number) {
+    public updateVerison(index: number, version: IVersion, seqNumber: number) {
         if (this.selector) {
-            const option = document.createElement("option");
-            option.text = `id = ${version.id}   seq = ${seqNumber}`;
+            const option = this.selector[index + 1] as HTMLOptionElement;
+            option.text = `${option.text},  seq = ${seqNumber}`;
             // Accounting for "no snapshots"
             this.selector[index + 1] = option;
         }

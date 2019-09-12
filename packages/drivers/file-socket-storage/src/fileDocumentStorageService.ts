@@ -222,6 +222,7 @@ export function FileSnapshotWriterClassFactory<TBase extends ReaderConstructor>(
             this.onCommitHandler(componentName, tree);
             return {
                 id: commitName,
+                date: new Date().toUTCString(),
                 treeId: FileStorageVersionTreeIdUnused,
             };
         }
