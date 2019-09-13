@@ -17,9 +17,8 @@
     "tsc": "tsc",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "tslint": "tslint --project tsconfig.json --format verbose",
-    "start": "webpack-dev-server --config webpack.config.js --package package.json --env.production",
-    "start:live": "webpack-dev-server --config webpack.config.js --package package.json --env.production  --env.live --env.fluidHost=https://www.wu2.prague.office-int.com --env.tenantId=cocky-ramanujan --env.tenantSecret=3e439fcb58228d3f8f7deb55399d978c",
-    "start:dev": "webpack-dev-server --config webpack.config.js --package package.json --env.development",
+    "start": "webpack-dev-server --config webpack.config.js --package package.json",
+    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.local",
     "webpack": "webpack --env.production",
     "webpack:dev": "webpack --env.development"
   },

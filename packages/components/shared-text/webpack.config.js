@@ -11,7 +11,7 @@ const pkg = require("./package.json");
 // const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = env => {
-    const isProduction = env === "production";
+    const isProduction = env && env.production;
     return merge(
         {
             entry: './src/index.ts',
@@ -91,6 +91,9 @@ module.exports = env => {
                 path: path.resolve(__dirname, 'dist'),
                 publicPath: "/dist/",
                 library: "[name]",
+                // https://github.com/webpack/webpack/issues/5767
+                // https://github.com/webpack/webpack/issues/7939
+                devtoolNamespace: "shared-text",
                 libraryTarget: "umd",
                 globalObject: 'self',
             },
