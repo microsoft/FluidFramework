@@ -43,12 +43,12 @@
     }
   },
   "dependencies": {
-    "@chaincode/image-collection": "^0.10.0",
-    "@chaincode/math": "^0.10.0",
-    "@chaincode/monaco": "^0.10.0",
-    "@chaincode/pinpoint-editor": "^0.10.0",
-    "@chaincode/progress-bars": "^0.10.0",
-    "@chaincode/video-players": "^0.10.0",
+    "@fluid-example/image-collection": "^0.10.0",
+    "@fluid-example/math": "^0.10.0",
+    "@fluid-example/monaco": "^0.10.0",
+    "@fluid-example/pinpoint-editor": "^0.10.0",
+    "@fluid-example/progress-bars": "^0.10.0",
+    "@fluid-example/video-players": "^0.10.0",
     "@prague/cell": "^0.10.0",
     "@prague/client-api": "^0.10.0",
     "@prague/client-ui": "^0.10.0",

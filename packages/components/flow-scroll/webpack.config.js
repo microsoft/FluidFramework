@@ -12,7 +12,6 @@ const pkg = require("./package.json");
 const useCssModules = [ 
     path.resolve(__dirname, "./src"),
     path.resolve(__dirname, "../table-view"),
-    path.resolve(__dirname, "../chart-view"),
     path.resolve(__dirname, "../webflow"),
     path.resolve(__dirname, "../flow-util"),
 ];

@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/pond",
+  "name": "@fluid-example/pond",
   "description": "Grab bag of fluid scenarios.",
   "version": "0.10.0",
   "author": "Microsoft",

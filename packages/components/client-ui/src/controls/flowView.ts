@@ -5,7 +5,6 @@
 
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import { ProgressCollection } from "@chaincode/progress-bars";
 import * as SearchMenu from "@chaincode/search-menu";
 import * as api from "@prague/client-api";
 import {
@@ -497,13 +496,13 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertComponentNew("map", "@chaincode/pinpoint-editor");
+            f.insertComponentNew("map", "@fluid-example/pinpoint-editor");
         },
         key: "insert new map",
     },
     {
         exec: (c, p, f) => {
-            f.insertComponentNew("code", "@chaincode/monaco");
+            f.insertComponentNew("code", "@fluid-example/monaco");
         },
         key: "insert new monaco",
     },

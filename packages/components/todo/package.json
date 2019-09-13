@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/todo",
+  "name": "@fluid-example/todo",
   "description": "Simple todo canvas.",
   "version": "0.10.0",
   "author": "Microsoft",

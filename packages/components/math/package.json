@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/math",
+  "name": "@fluid-example/math",
   "version": "0.10.0",
   "description": "Chaincode component that provides math.",
   "main": "dist/mathComponent.js",

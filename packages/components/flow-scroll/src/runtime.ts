@@ -15,14 +15,14 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         [WebFlowHost.type, Promise.resolve(webFlowHostFactory)],
 
         // Demo components
-        ["@chaincode/math", import("@chaincode/math").then((m) => m.fluidExport)],
+        ["@fluid-example/math", import("@fluid-example/math").then((m) => m.fluidExport)],
         // Bootstrap CSS definitions conflict with flow-scroll
-        // ["@chaincode/progress-bars", import("@chaincode/progress-bars")],
+        // ["@fluid-example/progress-bars", import("@fluid-example/progress-bars")],
         [TableDocumentType, import("@chaincode/table-document").then((m) => m.TableDocument.getFactory())],
         [TableSliceType, import("@chaincode/table-document").then((m) => m.TableSlice.getFactory())],
         ["@chaincode/table-view", import("@chaincode/table-view").then((m) => m.TableView.getFactory())],
-        ["@chaincode/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/video-players").then((m) => m.fluidExport)],
-        ["@chaincode/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection").then((m) => m.fluidExport)],
+        ["@fluid-example/video-players", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/video-players").then((m) => m.fluidExport)],
+        ["@fluid-example/image-collection", import(/* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection").then((m) => m.fluidExport)],
         // pinpoint editor's SASS loading of resources causes trouble
         // If I can change webpack to do this then things are ok
         // {
@@ -32,6 +32,6 @@ export const fluidExport = new SimpleModuleInstantiationFactory(
         //         "css-loader", // translates CSS into CommonJS
         //     ]
         // },
-        // ["@chaincode/pinpoint-editor", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@chaincode/pinpoint-editor")],
+        // ["@fluid-example/pinpoint-editor", import(/* webpackChunkName: "video-players", webpackPrefetch: true */ "@fluid-example/pinpoint-editor")],
     ]),
 );

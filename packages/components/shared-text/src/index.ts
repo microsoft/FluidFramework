@@ -17,15 +17,15 @@ import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
 
-const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@chaincode/math");
-// const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@chaincode/monaco");
-const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@chaincode/pinpoint-editor");
+const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
+// const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
+const pinpoint = import(/* webpackChunkName: "pinpoint", webpackPrefetch: true */ "@fluid-example/pinpoint-editor");
 const progressBars = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/progress-bars");
+    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
 const videoPlayers = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@chaincode/video-players");
+    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/video-players");
 const images = import(
-    /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@chaincode/image-collection");
+    /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection");
 
 const DefaultComponentName = "text";
 
@@ -54,17 +54,17 @@ class MyRegistry implements IComponentRegistry {
     public async get(name: string): Promise<IComponentFactory> {
         if (name === "@chaincode/shared-text") {
             return this.sharedTextFactory;
-        } else if (name === "@chaincode/math") {
+        } else if (name === "@fluid-example/math") {
             return math.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/progress-bars") {
+        } else if (name === "@fluid-example/progress-bars") {
             return progressBars.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/video-players") {
+        } else if (name === "@fluid-example/video-players") {
             return videoPlayers.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/image-collection") {
+        } else if (name === "@fluid-example/image-collection") {
             return images.then((m) => m.fluidExport);
-        // } else if (name === "@chaincode/monaco") {
+        // } else if (name === "@fluid-example/monaco") {
         //     return monaco.then((m) => m.fluidExport);
-        } else if (name === "@chaincode/pinpoint-editor") {
+        } else if (name === "@fluid-example/pinpoint-editor") {
             return pinpoint.then((m) => m.fluidExport);
         } else {
             return this.context.codeLoader.load<IComponentFactory>(name);

@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/pinpoint-editor",
+  "name": "@fluid-example/pinpoint-editor",
   "version": "0.10.0",
   "description": "A web app for creating and editing Pinpoint maps.",
   "main": "dist/index.js",

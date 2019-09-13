@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/image-collection",
+  "name": "@fluid-example/image-collection",
   "description": "Collection of images",
   "version": "0.10.0",
   "author": "Microsoft",

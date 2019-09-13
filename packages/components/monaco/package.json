@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/monaco",
+  "name": "@fluid-example/monaco",
   "version": "0.10.0",
   "description": "Monaco code editor",
   "main": "dist/index.js",

@@ -19,9 +19,9 @@ const componentFactory = new PrimedComponentFactory(
 );
 
 const runtimeFactory = new SimpleModuleInstantiationFactory(
-    "@chaincode/monaco",
+    "@fluid-example/monaco",
     new Map([
-        ["@chaincode/monaco", Promise.resolve(componentFactory)],
+        ["@fluid-example/monaco", Promise.resolve(componentFactory)],
     ]),
 );
 

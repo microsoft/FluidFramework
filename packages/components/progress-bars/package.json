@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/progress-bars",
+  "name": "@fluid-example/progress-bars",
   "description": "Progress bar collection",
   "version": "0.10.0",
   "author": "Microsoft",

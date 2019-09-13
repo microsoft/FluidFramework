@@ -23,12 +23,12 @@ export class ExternalComponentLoader extends PrimedComponent
     implements IComponentHTMLVisual {
 
     private static readonly defaultComponents = [
-        "@chaincode/pinpoint-editor",
-        "@chaincode/todo",
-        "@chaincode/math",
-        "@chaincode/monaco",
-        "@chaincode/image-collection",
-        "@chaincode/pond",
+        "@fluid-example/pinpoint-editor",
+        "@fluid-example/todo",
+        "@fluid-example/math",
+        "@fluid-example/monaco",
+        "@fluid-example/image-collection",
+        "@fluid-example/pond",
         "@fluid-example/clicker",
     ];
     private readonly viewComponentMapID: string = "ViewComponentUrl";
@@ -77,7 +77,7 @@ export class ExternalComponentLoader extends PrimedComponent
             inputDiv.append(input);
             input.setAttribute("list", dataList.id);
             input.type = "text";
-            input.placeholder = "@chaincode/component-name@version";
+            input.placeholder = "@fluid-example/component-name@version";
             input.style.width = "100%";
 
             const counterButton = document.createElement("button");

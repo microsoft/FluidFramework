@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/video-players",
+  "name": "@fluid-example/video-players",
   "description": "Video player collection",
   "version": "0.10.0",
   "author": "Microsoft",

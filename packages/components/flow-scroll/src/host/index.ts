@@ -57,9 +57,9 @@ export class WebFlowHost extends PrimedComponent implements IComponentHTMLVisual
     protected async componentInitializingFirstTime() {
         await Promise.all([
             this.createAndAttachComponent(this.docId, FlowDocumentType),
-            this.createAndAttachComponent("math", "@chaincode/math"),
-            this.createAndAttachComponent("video-players", "@chaincode/video-players"),
-            this.createAndAttachComponent("images", "@chaincode/image-collection"),
+            this.createAndAttachComponent("math", "@fluid-example/math"),
+            this.createAndAttachComponent("video-players", "@fluid-example/video-players"),
+            this.createAndAttachComponent("images", "@fluid-example/image-collection"),
         ]);
 
         const insights = SharedMap.create(this.runtime, insightsMapId);
