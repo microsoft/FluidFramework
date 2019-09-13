@@ -44,7 +44,7 @@ const optionsArray =
     ];
 
 export function printUsage() {
-    console.log("Usage: pragueDump [options] URL");
+    console.log("Usage: fluid-fetch [options] URL");
     console.log("URL: <ODSP joinSession URL>|<Routerlicious URL>");
     console.log("Options:");
     for (const i of optionsArray) {

@@ -21,9 +21,9 @@ import {
     paramNumSnapshotVersions,
     paramSave,
     paramSnapshotVersionIndex,
-} from "./pragueDumpArgs";
+} from "./fluidFetchArgs";
 
-import { latestVersionsId } from "./pragueDumpInit";
+import { latestVersionsId } from "./fluidFetchInit";
 
 async function fetchSnapshotTreeBlobs(
     storage: IDocumentStorageService,
@@ -144,7 +144,7 @@ async function saveSnapshot(storage: IDocumentStorageService, version: IVersion,
     }));
 }
 
-export async function pragueDumpSnapshot(documentService: IDocumentService) {
+export async function fluidFetchSnapshot(documentService: IDocumentService) {
 
     const dumpTree = dumpSnapshotStats || dumpSnapshotTrees || dumpSnapshotBlobs || dumpTotalStats;
     if (dumpTree || dumpSnapshotVersions || paramSave !== undefined) {

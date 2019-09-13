@@ -1,10 +1,10 @@
 {
-  "name": "@prague/prague-dump",
+  "name": "@microsoft/fluid-fetch",
   "version": "0.10.0",
   "description": "",
-  "main": "dist/pragueDump.js",
+  "main": "dist/fluidFetch.js",
   "bin": {
-    "prague-dump": "bin/prague-dump"
+    "fluid-fetch": "bin/fluid-fetch"
   },
   "scripts": {
     "build": "concurrently npm:build:compile npm:tslint",

@@ -6,18 +6,18 @@
 // tslint:disable:object-literal-sort-keys
 import * as fs from "fs";
 import * as util from "util";
-import { paramSave, parseArguments } from "./pragueDumpArgs";
+import { paramSave, parseArguments } from "./fluidFetchArgs";
 import {
     connectionInfo,
+    fluidFetchInit,
     paramDocumentService,
-    pragueDumpInit,
-} from "./pragueDumpInit";
+} from "./fluidFetchInit";
 
-import { pragueDumpMessages } from "./pragueDumpMessages";
-import { pragueDumpSnapshot } from "./pragueDumpSnapshot";
+import { fluidFetchMessages } from "./fluidFetchMessages";
+import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 
-async function pragueDumpMain() {
-    await pragueDumpInit();
+async function fluidFetchMain() {
+    await fluidFetchInit();
     if (paramSave !== undefined) {
         const mkdir = util.promisify(fs.mkdir);
         const writeFile = util.promisify(fs.writeFile);
@@ -29,13 +29,13 @@ async function pragueDumpMain() {
         await writeFile(`${paramSave}/info.json`, JSON.stringify(info, undefined, 2));
     }
 
-    await pragueDumpMessages(paramDocumentService);
-    await pragueDumpSnapshot(paramDocumentService);
+    await fluidFetchMessages(paramDocumentService);
+    await fluidFetchSnapshot(paramDocumentService);
 }
 
 parseArguments();
 
-pragueDumpMain()
+fluidFetchMain()
     .catch((error: Error) => {
         if (error instanceof Error) {
             const data = (error as any).requestResult;

@@ -112,7 +112,7 @@ COPY packages/utils/build-common/package*.json packages/utils/build-common/
 COPY packages/server/test-utils/package*.json packages/server/test-utils/
 COPY packages/server/tools-core/package*.json packages/server/tools-core/
 COPY packages/test/snapshots/package*.json packages/test/snapshots/
-COPY packages/tools/prague-dump/package*.json packages/tools/prague-dump/
+COPY packages/tools/fluid-fetch/package*.json packages/tools/fluid-fetch/
 COPY packages/tools/replay-tool/package*.json packages/tools/replay-tool/
 COPY packages/tools/webpack-component-loader/package*.json packages/tools/webpack-component-loader/
 COPY packages/tools/merge-tree-client-replay/package*.json packages/tools/merge-tree-client-replay/

@@ -21,7 +21,7 @@ import {
     dumpTotalStats,
     messageTypeFilter,
     paramSave,
-} from "./pragueDumpArgs";
+} from "./fluidFetchArgs";
 
 async function loadAllSequencedMessages(
     documentService: IDocumentService): Promise<ISequencedDocumentMessage[]> {
@@ -100,7 +100,7 @@ function getObjectId(componentId: string, id: string) {
     return `[${componentId}]/${id}`;
 }
 
-export async function pragueDumpMessages(documentService: IDocumentService) {
+export async function fluidFetchMessages(documentService: IDocumentService) {
 
     const messageStats = dumpMessageStats || dumpChannelStats || dumpDataTypeStats || dumpTotalStats;
     if (dumpMessages || messageStats || paramSave !== undefined) {

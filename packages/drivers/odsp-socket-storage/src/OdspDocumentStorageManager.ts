@@ -198,7 +198,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 }
             }
         } else {
-            // PragueDump & FluidDebugger tools use empty sting to query for versions
+            // FluidFetch & FluidDebugger tools use empty sting to query for versions
             // In such case we need to make a call against SPO to give full picture to the tool, no matter if we have
             // Otherwise, each commit calls getVersions but odsp doesn't have a history for each commit
             // return the blobid as is

@@ -17,8 +17,8 @@ import {
     FileDocumentServiceFactory,
     FileSnapshotWriterClassFactory,
     FileStorageDocumentName,
+    FluidFetchReaderFileSnapshotWriter,
     ISnapshotWriterStorage,
-    PragueDumpReaderFileSnapshotWriter,
     Replayer,
     ReplayFileDeltaConnection,
 } from "@prague/file-socket-storage";
@@ -388,7 +388,7 @@ export class ReplayTool {
 
         this.deltaStorageService = new FileDeltaStorageService(this.args.inDirName);
 
-        this.storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
+        this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
         let description = this.args.version ? this.args.version : "main container";
         this.mainDocument = new Document(this.args, this.storage, description);
         await this.loadDoc(this.mainDocument);
@@ -407,7 +407,7 @@ export class ReplayTool {
         // This does not seem to provide much value, we can disable it for per reasons
         // It adds about 10% to the duration of the test.
         if (this.args.snapFreq !== Number.MAX_SAFE_INTEGER || this.args.validateStorageSnapshots) {
-            const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
+            const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.version);
             description = this.args.version ? this.args.version : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
             await this.loadDoc(
@@ -433,7 +433,7 @@ export class ReplayTool {
                     continue;
                 }
 
-                const storage = new PragueDumpReaderFileSnapshotWriter(this.args.inDirName, node.name);
+                const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, node.name);
                 const doc = new Document(this.args, storage, node.name);
                 try {
                     await this.loadDoc(doc);
@@ -616,7 +616,7 @@ export class ReplayTool {
         if (this.args.write) {
             // Follow up:
             // Summary needs commits (same way as snapshot), that is available in
-            // PragueDumpReaderFileSnapshotWriter.write()
+            // FluidFetchReaderFileSnapshotWriter.write()
             const summaryTree = await container.summarize(true);
             const file = `${dir}/summary.json`;
             fs.writeFileSync(file, JSON.stringify(summaryTree, undefined, 2));

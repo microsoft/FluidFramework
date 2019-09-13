@@ -14,7 +14,7 @@ function printUsage() {
     console.log("Usage:");
     console.log("   Sanitize <input>");
     console.log("Where");
-    console.log ("  <input> - file path to message.json - file downloaded by PragueDump tool");
+    console.log ("  <input> - file path to message.json - file downloaded by FluidFetch tool");
     process.exit(-1);
 }
 

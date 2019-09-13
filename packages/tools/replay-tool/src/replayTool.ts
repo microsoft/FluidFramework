@@ -8,7 +8,7 @@ import { ReplayTool } from "./replayMessages";
 
 const optionsArray = [
     "Location:",
-        ["--indir <directory>", "Name of the directory containing the output of the prague dumper tool"],
+        ["--indir <directory>", "Name of the directory containing the output of the fluid-fetch tool"],
         ["--outdir <directory>", "Name of the output directory where the snapshots will appear",
             "If not specified a directory will be created in current directory with name Output"],
     "Modes:",
@@ -18,7 +18,7 @@ const optionsArray = [
         ["--snapfreq <N>", "A snapshot will be taken after every <N>th op"],
         ["--stressTest", "Run stress tests. Adds --quiet --snapfreq 50",
             "Writes out only snapshots with consistency issues"],
-        ["--storageSnapshots", "Validate storage (PragueDump) snapshots"],
+        ["--storageSnapshots", "Validate storage (FluidFetch) snapshots"],
         ["--incremental", "Allow incremental snapshots (to closer simulate reality). Diff will be noisy"],
     "Scoping:",
         ["--from <op#|version>", "if a number, indicates seq# where to start generation/validation of snapshots",

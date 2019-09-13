@@ -14,7 +14,7 @@ interface IResources {
 }
 
 function getRCFileName() {
-    return path.join(os.homedir(), ".praguetoolrc");
+    return path.join(os.homedir(), ".fluidtoolrc");
 }
 
 export async function loadRC(): Promise<IResources> {

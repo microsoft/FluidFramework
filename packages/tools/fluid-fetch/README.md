@@ -1,11 +1,11 @@
-# Prague Dumper
+# Fluid Fetch
 
 Connection using ODSP or routerlicious driver to dump the messages or snapshot information on the server.
 In order to connect to ODSP, the clientID and clientSecret must be set as environment variables login__microsoft__clientId and login__microsoft__secret, respectively. If you have access to the keyvault this can be done by running [this tool](../../../tools/getkeys).
 
 ## Usage
 
-    Usage: pragueDump [options] URL
+    Usage: fluid-fetch [options] URL
     URL: <ODSP joinSession URL>|<Routerlicious URL>
     Options:
       --dump:rawmessage               : dump all messages

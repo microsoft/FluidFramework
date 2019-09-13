@@ -22,7 +22,7 @@ const FileStorageVersionTreeIdUnused = "baad";
 /**
  * Document storage service for the file driver.
  */
-export class PragueDumpReader extends ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
+export class FluidFetchReader extends ReadDocumentStorageServiceBase implements api.IDocumentStorageService {
     protected docTree: api.ISnapshotTree | null = null;
 
     constructor(private readonly path: string, private readonly versionName?: string) {
@@ -317,4 +317,4 @@ function removeNullTreIds(tree: api.ITree) {
     delete tree.id;
 }
 
-export const PragueDumpReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(PragueDumpReader);
+export const FluidFetchReaderFileSnapshotWriter = FileSnapshotWriterClassFactory(FluidFetchReader);

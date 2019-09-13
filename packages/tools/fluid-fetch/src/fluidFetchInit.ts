@@ -19,8 +19,9 @@ import { BaseTelemetryNullLogger, fromBase64ToUtf8 } from "@prague/utils";
 import * as child_process from "child_process";
 import * as http from "http";
 import { URL } from "url";
-import { paramForceRefreshToken, paramJWT, paramURL } from "./pragueDumpArgs";
-import { loadRC, saveRC } from "./pragueToolRC";
+
+import { paramForceRefreshToken, paramJWT, paramURL } from "./fluidFetchArgs";
+import { loadRC, saveRC } from "./fluidToolRC";
 
 export let paramDocumentService: IDocumentService;
 export let latestVersionsId: string = "";
@@ -36,7 +37,7 @@ async function getAuthorizationCode(server: string, clientConfig: IClientConfig)
         + `&response_type=code`
         + `&redirect_uri=${redirectUri}`;
     if (process.platform === "win32") {
-        child_process.exec(`start "prague-dump" /B "${authUrl}"`);
+        child_process.exec(`start "fluid-fetch" /B "${authUrl}"`);
         message = "Opening browser to get authorization code.  If that doesn't open, please go to this URL manually";
     }
 
@@ -180,7 +181,7 @@ async function initializeODSPCore(server: string, drive: string, item: string, c
     const getStorageTokenStub = (siteUrl: string) => Promise.resolve(odspTokens.accessToken);
     const getWebsocketTokenStub = () => Promise.resolve("fake token");
     const odspDocumentServiceFactory = new odsp.OdspDocumentServiceFactory(
-        "prague-dumper",
+        "fluid-fetch",
         getStorageTokenStub,
         getWebsocketTokenStub,
         new BaseTelemetryNullLogger());
@@ -371,7 +372,7 @@ const r11sServers = [
     "www.wu2.prague.office-int.com",
     "www.eu.prague.office-int.com",
 ];
-export async function pragueDumpInit() {
+export async function fluidFetchInit() {
     if (paramURL) {
         const url = new URL(paramURL);
 
