@@ -136,7 +136,7 @@ export class MapFactory implements ISharedObjectFactory {
 }
 
 /**
- * Implementation of a map shared object
+ * A SharedMap is a map-like distributed data structure.
  */
 export class SharedMap extends SharedObject implements ISharedMap {
     /**

@@ -67,7 +67,10 @@ export interface IValueType<T> {
 }
 
 /**
- * Interface describing actions on a directory.  When used as a Map, operates on its keys.
+ * Interface describing actions on a directory.
+ *
+ * @remarks
+ * When used as a Map, operates on its keys.
  */
 export interface IDirectory extends Map<string, any> {
     /**

@@ -4,9 +4,11 @@ uid: SharedObjectSequence
 
 # SharedObjectSequence
 
-* Package: <xref:sequence>
-* API documentation: <xref:sequence.SharedObjectSequence>
+* Package: <xref:@prague/sequence!>
+* API documentation: <xref:@prague/sequence!SharedObjectSequence:class>
 
-* High level description of the data structure
+[!INCLUDE [object-serialization](../includes/object-serialization.md)]
 
-## Using SharedObjectSequence effectively
+## Related distributed data structures
+
+* <xref:SharedNumberSequence>

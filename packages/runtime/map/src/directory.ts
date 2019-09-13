@@ -160,10 +160,13 @@ export class DirectoryFactory {
 /**
  * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
- * SubDirectories can be retrieved for use as working directories.  E.g.:
+ * SubDirectories can be retrieved for use as working directories.  For example:
+ *
+ * ```ts
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
- * mySubDir.get("foo"); // val1
+ * mySubDir.get("foo"); // returns val1
+ * ```
  */
 export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**

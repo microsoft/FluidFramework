@@ -24,7 +24,7 @@
     "@prague/component-core-interfaces": "^0.10.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.1.6",
+    "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/node": "^10.12.12",
     "concurrently": "^4.1.0",

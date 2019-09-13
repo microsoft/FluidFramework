@@ -44,7 +44,7 @@
     "report-dir": "nyc/report"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.1.6",
+    "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/gitresources": "^0.10.0",

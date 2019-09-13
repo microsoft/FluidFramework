@@ -4,9 +4,9 @@ uid: SharedNumberSequence
 
 # SharedNumberSequence
 
-* Package: <xref:sequence>
-* API documentation: <xref:sequence.SharedNumberSequence>
+* Package: <xref:@prague/sequence!>
+* API documentation: <xref:@prague/sequence!SharedNumberSequence:class>
 
-* High level description of the data structure
+## Related distributed data structures
 
-## Using SharedNumberSequence effectively
+* <xref:SharedObjectSequence>

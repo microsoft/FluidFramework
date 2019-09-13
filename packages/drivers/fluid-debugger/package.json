@@ -25,7 +25,7 @@
     "@prague/utils": "^0.10.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.1.6",
+    "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.12",

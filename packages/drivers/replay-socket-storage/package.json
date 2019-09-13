@@ -27,7 +27,7 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.1.6",
+    "@microsoft/api-extractor": "^7.3.11",
     "@microsoft/fluid-build-common": "^0.10.0",
     "@types/debug": "^0.0.31",
     "@types/mocha": "^5.2.5",

@@ -4,9 +4,5 @@ uid: SharedString
 
 # SharedString
 
-* Package: <xref:sequence>
-* API documentation: <xref:sequence.SharedString>
-
-* High level description of the data structure
-
-## Using SharedString effectively
+* Package: <xref:@prague/sequence!>
+* API documentation: <xref:@prague/sequence!SharedString:class>

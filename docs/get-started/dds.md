@@ -4,10 +4,13 @@ uid: dds
 
 # Distributed Data Structures
 
+> [!IMPORTANT]
+> The content for this section will come from this [source document][1].
 
+[1]: https://
 
 Much of Fluid's power lies in a set of base primitives called distributed data structures. These data structures, such
-as <xref:map.SharedMap> and the various types in the <xref:sequence> package, are [eventually
+as <xref:@prague/map!SharedMap:class> and the various types in the <xref:@prague/sequence!> package, are [eventually
 consistent](https://en.wikipedia.org/wiki/Eventual_consistency). The Fluid runtime manages these data structures; as
 changes are made locally and remotely, they are merged in seamlessly by the runtime.
 
@@ -32,15 +35,17 @@ the changes if needed. And this all happens *very* quickly.
 > decoupling rendering from data inbound should reduce UI jitter.
 
 There are cases, however, where the eventually consistent guarantee is insufficient. In these cases, the data structures
-in the <xref:consensus-ordered-collection> package are useful. The types in this package defer operations until
-acknowledged by the server. This ensures that each client `.pops()` a different value from a stack, for example.
+in the <xref:@prague/consensus-ordered-collection!> and <xref:@prague/consensus-register-collection!> packages are useful.
+The types in these packages defer operations until acknowledged by the server. This ensures that each client `.pops()` a
+different value from a stack, for example.
 
 
 ## Type Hierarchy
 
 ```text
 ├── SharedMap
-├─┬ SharedSegmentSequence<TSegment> (Low-level base class for "sequence like things")
+├── SharedDirectory
+├─┬ SharedSegmentSequence<TSegment> (Low-level base class for "sequence-like things")
 │ ├── SharedString (Special type for strings)
 │ └─┬ SharedSequence<T> (Base class for arrays)
 |   ├── SharedObjectSequence (Array of objects)
@@ -49,6 +54,15 @@ acknowledged by the server. This ensures that each client `.pops()` a different 
   ├── ConsensusStack
   └── ConsensusQueue
 ```
+
+## Comparison
+
+
+| Distributed data structure | Use case                                                            | Merge resolution behavior             |
+| -------------------------- | ------------------------------------------------------------------- | ------------------------------------- |
+| <xref:SharedMap>           | Key-value data                                                      | For a given key, the last writer wins |
+| <xref:SharedDirectory      | Key-value data with additional support for path-based key retrieval | For a given key, the last writer wins |
+
 
 ## Merge behavior
 

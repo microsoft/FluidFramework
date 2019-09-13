@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 # Download DocFX
 WORKDIR /docfx
-RUN wget https://github.com/dotnet/docfx/releases/download/v2.42.3/docfx.zip -nv
+RUN wget https://github.com/dotnet/docfx/releases/download/v2.45/docfx.zip -nv
 RUN unzip docfx.zip
 WORKDIR /
 
@@ -27,8 +27,8 @@ FROM r11s AS docs
 
 # Workaround for https://github.com/Microsoft/web-build-tools/issues/1229
 WORKDIR /docs/api
-RUN sed -i "s/SharePoint Framework reference/API overview/g" toc.yml 
-RUN sed -i "s/\~\/overview\/sharepoint.md/\~\/api_overview.md/g" toc.yml 
+RUN sed -i "s/SharePoint Framework reference/API overview/g" toc.yml
+RUN sed -i "s/\~\/overview\/sharepoint.md/\~\/api_overview.md/g" toc.yml
 
 # Run DocFX
 WORKDIR /docfx

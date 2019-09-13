@@ -4,10 +4,15 @@ uid: build-a-component
 
 # Build a component
 
+> [!WARNING]
+> This documentation is based on an earlier version of the Fluid Framework and is outdated.
+>
+> Track the documentation update with [#3502](https://github.com/microsoft/Prague/issues/3502).
+
 If you haven't already, you should [install and run yo fluid](xref:yo-fluid) and use it to generate scaffolding for a
 new component.
 
-Winthin your project folder you can use the following commands:
+Within your project folder you can use the following commands:
 
 `npm start` -- Builds and hosts the component at <http://localhost:8080>
 

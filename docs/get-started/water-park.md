@@ -4,8 +4,13 @@ uid: water-park
 
 # The Component Water Park
 
-The Fluid Component Waterpark is a place to explore, test, and share components. It can load any component made with
+> [!WARNING]
+> This documentation is based on an earlier version of the Fluid Framework and is outdated.
+>
+> Track the documentation update with [#3501](https://github.com/microsoft/Prague/issues/3501).
+
+The Fluid Component Water Park is a place to explore, test, and share components. It can load any component made with
 <xref:yo-fluid> and published to Verdaccio. `yo fluid` provides instructions on how to publish your components to
 Verdaccio.
 
-[Visit the Water Park](https://www.wu2.prague.office-int.com/waterpark) to get started.
+[Visit the Water Park](https://aka.ms/fluidwaterpark) to get started.

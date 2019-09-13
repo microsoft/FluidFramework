@@ -13,18 +13,21 @@ Prerequisites: [Node (with npm)](https://nodejs.org) installed
     `npm i -g vsts-npm-auth`
 
 2. Add registry to the our scopes (globally per-user)
-    ````
+
+    ```text
     npm config set @prague:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     npm config set @chaincode:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
     npm config set @component:registry https://offnet.pkgs.visualstudio.com/_packaging/prague/npm/registry/
-    ````
+    ```
 
-3. Auth with VSTS using vsts-npm-auth (Windows only, Linux/Mac instructions [here](https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows))
+3. Auth with VSTS using vsts-npm-auth (Windows only, Linux/Mac instructions
+   [here](https://docs.microsoft.com/en-us/azure/devops/artifacts/npm/npmrc?view=azure-devops&tabs=windows))
 
     `vsts-npm-auth %USERPROFILE%\.npmrc`
 
 4. Start installing Fluid packages into your package
-    e.g. `npm i @prague/container-runtime`
+
+    `npm i @prague/container-runtime`
 
 
 NOTE:

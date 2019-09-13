@@ -4,6 +4,11 @@ uid: yo-fluid-details
 
 # Yo Fluid Breakdown
 
+> [!WARNING]
+> This documentation is based on an earlier version of the Fluid Framework and is outdated.
+>
+> Track the documentation update with [#3499](https://github.com/microsoft/Prague/issues/3499).
+
 So you've used <xref:yo-fluid> to create your first component! If you haven't done this yet, head over to <xref:yo-fluid>.
 
 ## Different Components
@@ -27,7 +32,7 @@ The difference between the two is how we render our view in the DOM. (Discussed 
 
 Upon creation your directory structure will look like this:
 
-### React Directory Structure
+### [React Directory Structure](#tab/tabid-1)
 
 ```text
 ├── node_modules
@@ -46,7 +51,7 @@ Upon creation your directory structure will look like this:
 └── webpack.prod.js
 ```
 
-### VanillaJS Directory Structure
+### [VanillaJS Directory Structure](#tab/tabid-2)
 
 ```text
 ├── node_modules
@@ -65,6 +70,8 @@ Upon creation your directory structure will look like this:
 └── webpack.prod.js
 ```
 
+*******
+
 ## Main.tsx/Main.ts
 
 The `src/main.ts*` file is where the component logic lives. Below we will walk through both the vanillaJS and the React examples.
@@ -73,9 +80,9 @@ The `src/main.ts*` file is where the component logic lives. Below we will walk t
 
 First we will declare all our imports. Here is a quick description and use cases for each is discussed further below.
 
-`PrimedComponent` and `PrimedComponentFactory` from <xref:aqueduct> provides helper functionality.
-`IComponentHTMLVisual` from <xref:container-definitions> provides the interface for enabling rendering.
-`CounterValueType` from <xref:map> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
+`PrimedComponent` and `PrimedComponentFactory` from <xref:@prague/aqueduct!> provides helper functionality.
+`IComponentHTMLVisual` from <xref:@prague/component-core-interfaces!> provides the interface for enabling rendering.
+`CounterValueType` from <xref:@prague/map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for React* and enable React use.
 
@@ -86,7 +93,7 @@ import {
 } from "@prague/aqueduct";
 import {
   IComponentHTMLVisual,
-} from "@prague/container-definitions";
+} from "@prague/component-core-interfaces";
 import {
   CounterValueType,
 } from "@prague/map";
@@ -103,9 +110,9 @@ import * as ReactDOM from "react-dom"; // only used with react
 
 Below we define our component class `ExampleFluidComponent`.
 
-#### <xref:aqueduct.PrimedComponent>
+#### <xref:@prague/aqueduct!PrimedComponent:class>
 
-Extending <xref:aqueduct.PrimedComponent> set up our component with required default behavior as well as additional
+Extending <xref:@prague/aqueduct!PrimedComponent:class> set up our component with required default behavior as well as additional
 helpers to make development easier.
 
 #### Key Benefits
@@ -119,11 +126,12 @@ to other components.
     - `existing()` - called every time except the first time a component is initialized
     - `opened()` - called every time a component is initialized. After `create` and `existing`.
 
-#### <xref:container-definitions.IComponentHTMLVisual>
+#### <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface>
 
-Implementing <xref:container-definitions.IComponentHTMLVisual> denotes that our component can render a view. Throughout
-the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting to use this component can
-can know we support this interface and therefor we will have a `render(...)` function. View rendering is explained more below.
+Implementing <xref:@prague/component-core-interfaces!IComponentHTMLVisual:interface> denotes that our component can
+render a view. Throughout the Fluid Framework we define interfaces as a way to state our behavior. Whoever is attempting
+to use this component can can know we support this interface and therefor we will have a `render(...)` function. View
+rendering is explained more below.
 
 #### Code
 
@@ -148,7 +156,7 @@ We also pass through our `supportedInterface`. As described above our component 
 can discover that we implement `IComponentHTMLViewable`.
 
 Next we call, and `await`, `initialize()` on our newly created component instance. `initialize()` is a method on the
-<xref:aqueduct.SharedComponent> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
+<xref:@prague/aqueduct!SharedComponent:class> that properly calls the three override methods discussed above, `componentInitializingFirstTime()`, `existing()`,
 and `opened()`. We want to `await` this call because it could perform asynchronous operations such as creating and/or getting
 a component.
 
@@ -191,7 +199,7 @@ Component can use to render into. Every time `render(...)` is called we should r
 > [!NOTE]
 > This is the point where React and vanillaJS differ.
 
-#### [React Implementation](#tab/tabid-1)
+#### [React Implementation](#tab/tabid-3)
 
 The first thing we do is get our `"clicks"` counter, created in `componentInitializingFirstTime()`.
 
@@ -258,7 +266,7 @@ public render(div: HTMLElement) {
 }
 ```
 
-#### [VanillaJS Implementation](#tab/tabid-2)
+#### [VanillaJS Implementation](#tab/tabid-4)
 
 The VanillaJS implementation is similar in many ways to the React version. There is more
 code because ReactDOM provides a lot of the inner element setup.
@@ -351,7 +359,7 @@ new instance. We require having an instantiation factory because it's required t
 distributed data structures up from. Defining all the DDSs up front allows for the Fluid Framework to load
 from a snapshot without worrying that something might exist in the snapshot that the framework can't understand.
 
-In the example below we use the <xref:aqueduct.PrimedComponentFactory> as a helper to create our
+In the example below we use the <xref:@prague/aqueduct!PrimedComponentFactory:class> as a helper to create our
 instantiation factory. As properties we pass in our supported distributed data structures.
 In this scenario we don't use any additional distributed data structures, so we pass an empty array.
 

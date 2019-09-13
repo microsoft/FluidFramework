@@ -13,6 +13,8 @@
     - name: Distributed Data Structures
       href: dds.md
       items:
+        - name: SharedDirectory
+          href: SharedDirectory.md
         - name: SharedMap
           href: SharedMap.md
         - name: SharedNumberSequence

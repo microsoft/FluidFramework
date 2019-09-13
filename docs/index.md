@@ -26,13 +26,10 @@ bandwidth. Fluid is extensible, too. You can write components which can be re-us
 distributed data structures.
 
 
-<div class="panel panel-primary">
-  <div class="panel-heading">Where did Prague go?</div>
-  <div class="panel-body">
-    <p>Prague was the code name for the Fluid Framework. Fluid is the name we'll use going forward.</p>
-    <p>"Prague" === "Fluid" === "Fluid Framework"</p>
-  </div>
-</div>
+> [!TIP]
+> Prague was the code name for the Fluid Framework. Fluid is the name we'll use going forward.
+>
+> `"Prague" === "Fluid" === "Fluid Framework"`
 
 
 ## What is Fluid?

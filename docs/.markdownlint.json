@@ -9,5 +9,6 @@
   "no-inline-html": false,
   "no-multiple-blanks": {
     "maximum": 2
-  }
+  },
+  "DOCSMD010": false
 }
