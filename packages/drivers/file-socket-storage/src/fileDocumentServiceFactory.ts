@@ -19,6 +19,7 @@ import { FileDocumentService } from "./fileDocumentService";
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 
+    public readonly protocolName = "prague-file:";
     constructor(
             private readonly storage: IDocumentStorageService,
             private readonly deltaStorage: FileDeltaStorageService,

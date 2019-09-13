@@ -264,7 +264,7 @@ class Document {
             },
             tokens: {},
             type: "prague",
-            url: `prague://localhost:6000/prague/${FileStorageDocumentName}`,
+            url: `prague-file://localhost:6000/prague/${FileStorageDocumentName}`,
         };
 
         const resolver = new ContainerUrlResolver(

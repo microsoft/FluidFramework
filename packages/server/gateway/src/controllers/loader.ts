@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { start } from "@prague/base-host";
+import { IHostConfig, start } from "@prague/base-host";
 import { IResolvedPackage } from "@prague/loader-web";
-import { IResolvedUrl } from "@prague/protocol-definitions";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IDocumentServiceFactory, IResolvedUrl } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { IGitCache } from "@prague/services-client";
 
 export function initialize(
@@ -18,15 +21,33 @@ export function initialize(
     jwt: string,
     config: any,
 ) {
+
+    const documentServiceFactories: IDocumentServiceFactory[] = [];
+    documentServiceFactories.push(new OdspDocumentServiceFactory("Server-Gateway"));
+
+    documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+        false,
+        new DefaultErrorTracking(),
+        false,
+        true,
+        cache));
+
+    const resolver = new ContainerUrlResolver(
+        document.location.origin,
+        jwt,
+        new Map<string, IResolvedUrl>([[url, resolved]]));
+
+    const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+
     console.log(`Loading ${url}`);
     const startP = start(
         url,
         resolved,
-        cache,
         pkg,
         scriptIds,
         npm,
-        jwt,
-        config);
+        config,
+        hostConf);
+
     startP.catch((err) => console.error(err));
 }

@@ -11,13 +11,12 @@ import {
 import { ICodeLoader } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
 import { IResolvedPackage, WebLoader } from "@prague/loader-web";
-import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
-import { IErrorTrackingService, IFluidResolvedUrl, IResolvedUrl } from "@prague/protocol-definitions";
-import { ContainerUrlResolver } from "@prague/routerlicious-host";
-import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
-import { IGitCache } from "@prague/services-client";
+import {
+    IFluidResolvedUrl,
+    IResolvedUrl,
+} from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
-import { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
+import { IHostConfig } from "./hostConfig";
 
 async function attach(loader: Loader, url: string, host: Host) {
     const response = await loader.request({ url });
@@ -123,38 +122,23 @@ async function registerAttach(loader: Loader, container: Container, uri: string,
 }
 
 export function getLoader(
-    baseUrl: string,
-    url: string,
     resolved: IResolvedUrl,
-    cache: IGitCache,
-    jwt: string,
     config: any,
     codeLoader: ICodeLoader,
-    errorService: IErrorTrackingService,
+    hostConf: IHostConfig,
 ): Loader {
-    // URL resolver for routes
-    const resolver = new ContainerUrlResolver(
-        baseUrl,
-        jwt,
-        new Map<string, IResolvedUrl>([[url, resolved]]));
 
-    const r11sDocumentServiceFactory = new RouterliciousDocumentServiceFactory(false, errorService, false, true, cache);
-    const odspDocumentServiceFactory = new OdspDocumentServiceFactory("Server Gateway");
-    const documentServiceFactory = new MultiDocumentServiceFactory(
-        {
-            "prague-odsp:": odspDocumentServiceFactory,
-            "prague:": r11sDocumentServiceFactory,
-        });
+    const options = {
+        blockUpdateMarkers: true,
+        config,
+        tokens: (resolved as IFluidResolvedUrl).tokens,
+    };
 
     return new Loader(
-        { resolver },
-        documentServiceFactory,
+        { resolver: hostConf.urlResolver },
+        hostConf.documentServiceFactory,
         codeLoader,
-        {
-            blockUpdateMarkers: true,
-            config,
-            tokens: (resolved as IFluidResolvedUrl).tokens,
-        });
+        options);
 }
 
 export let lastLoaded: Container;
@@ -162,12 +146,11 @@ export let lastLoaded: Container;
 export async function start(
     url: string,
     resolved: IResolvedUrl,
-    cache: IGitCache,
     pkg: IResolvedPackage,
     scriptIds: string[],
     npm: string,
-    jwt: string,
     config: any,
+    hostConf: IHostConfig,
     div?: HTMLDivElement,
 ): Promise<void> {
     // Create the web loader and prefetch the chaincode we will need
@@ -184,16 +167,12 @@ export async function start(
         codeLoader.load(pkg.details).catch((error) => console.error("script load error", error));
     }
 
-    const errorService = new DefaultErrorTracking();
     const loader = getLoader(
-        document.location.origin,
-        url,
         resolved,
-        cache,
-        jwt,
         config,
         codeLoader,
-        errorService);
+        hostConf);
+
     const container = await loader.resolve({ url });
     lastLoaded = container;
 

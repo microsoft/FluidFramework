@@ -9,7 +9,6 @@ import { ReplayControllerStatic } from "./replayDocumentDeltaConnection";
 import { ReplayDocumentService } from "./replayDocumentService";
 
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
-
     public static create(
             from: number,
             to: number,
@@ -19,6 +18,8 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
             new ReplayControllerStatic(from, to),
         );
     }
+
+    public readonly protocolName = "prague-replay:";
 
     public constructor(
         private readonly documentServiceFactory: IDocumentServiceFactory,

@@ -161,6 +161,7 @@ export class StaticStorageDocumentService implements IDocumentService {
 }
 
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "prague-static-storage:";
     public constructor(protected readonly storage: IDocumentStorageService) {}
 
     public async createDocumentService(fileURL: IResolvedUrl): Promise<IDocumentService> {

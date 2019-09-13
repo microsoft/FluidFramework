@@ -4,4 +4,4 @@
  */
 
 export * from "./host";
-export * from "./multiDocumentServiceFactory";
+export * from "./hostConfig";

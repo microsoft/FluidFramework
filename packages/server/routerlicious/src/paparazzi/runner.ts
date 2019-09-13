@@ -32,6 +32,7 @@ const packageWaitTimeoutMS = 60000;
 const packagesBase = `/tmp/chaincode`;
 
 class WorkerDocumentServiceFactory implements IDocumentServiceFactory {
+    public readonly protocolName = "prague-worker:";
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 
         if (resolvedUrl.type !== "prague") {

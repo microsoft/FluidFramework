@@ -32,7 +32,7 @@ export class TestResolver implements IUrlResolver {
             },
             tokens: { jwt: generateToken(this.tenantId, this.id, this.tokenKey, scopes) },
             type: "prague",
-            url: `prague://test.com/${this.tenantId}/${this.id}`,
+            url: `prague-test://test.com/${this.tenantId}/${this.id}`,
         };
 
         return resolved;

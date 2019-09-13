@@ -15,6 +15,7 @@ import { OdspDocumentService } from "./OdspDocumentService";
  */
 export class OdspDocumentServiceFactory implements IDocumentServiceFactory {
 
+    public readonly protocolName = "prague-odsp:";
     /**
      * @param appId - app id used for telemetry for network requests
      * @param snapshot - optional promise to prefetched latest snapshot. It will query the

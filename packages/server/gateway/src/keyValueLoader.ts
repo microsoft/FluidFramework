@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { getLoader } from "@prague/base-host";
+import { getLoader, IHostConfig } from "@prague/base-host";
 import { IComponent } from "@prague/component-core-interfaces";
 import { Container, Loader } from "@prague/container-loader";
-import { IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { OdspDocumentServiceFactory } from "@prague/odsp-socket-storage";
+import { IDocumentServiceFactory, IResolvedUrl, ScopeType } from "@prague/protocol-definitions";
+import { ContainerUrlResolver } from "@prague/routerlicious-host";
+import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import { NodeCodeLoader } from "@prague/services";
 import { Deferred } from "@prague/utils";
+
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { Provider } from "nconf";
@@ -52,16 +56,29 @@ export class KeyValueLoader {
                 headers,
             });
 
-        const loader = getLoader(
+        const documentServiceFactories: IDocumentServiceFactory[] = [];
+        documentServiceFactories.push(new OdspDocumentServiceFactory("Server-Gateway"));
+
+        documentServiceFactories.push(new RouterliciousDocumentServiceFactory(
+            false,
+            new DefaultErrorTracking(),
+            false,
+            true,
+            undefined));
+
+        const resolver = new ContainerUrlResolver(
             config.get("worker:gatewayUrl"),
-            documentUrl,
-            result.data,
-            undefined,
             hostToken,
+            new Map<string, IResolvedUrl>([[documentUrl, result.data]]));
+
+        const hostConf: IHostConfig = { documentServiceFactory: documentServiceFactories, urlResolver: resolver };
+        const loader = getLoader(
+            result.data,
             config,
             new NodeCodeLoader(packageUrl, installLocation, waitTimeoutMS),
-            undefined,
+            hostConf,
         );
+
         const container = await loader.resolve({ url: documentUrl });
         winston.info(`Loaded key value container from ${documentUrl}`);
 

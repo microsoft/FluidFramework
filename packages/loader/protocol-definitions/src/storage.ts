@@ -298,6 +298,10 @@ export interface IDocumentService {
 }
 
 export interface IDocumentServiceFactory {
+    /**
+     * name of the protocol used by factory
+     */
+    protocolName: string;
 
     /**
      * returns an instance of IDocumentService

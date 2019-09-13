@@ -16,6 +16,7 @@ import { ExperimentalOdspDocumentService } from "./ExperimentalOdspDocumentServi
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class ExperimentalOdspDocumentServiceFactoryWithCodeSplit implements IDocumentServiceFactory {
+  public readonly protocolName = "prague-odsp:";
   /**
    * @param appId - app id used for telemetry for network requests.
    * @param getStorageToken - function that can provide the storage token for a given site. This is
