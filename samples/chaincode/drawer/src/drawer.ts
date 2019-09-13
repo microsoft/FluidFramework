@@ -36,6 +36,7 @@ export class Drawer extends EventEmitter implements IComponentLoadable, ICompone
         { pkg: "@chaincode/drawer", name: "Folder", version: "latest", icon: "FabricNewFolder" },
         { pkg: "@chaincode/shared-text", name: "Shared Text", version: "^0.10.0", icon: "TextDocument" },
         { pkg: "@chaincode/flow-scroll", name: "Web Flow", version: "^0.10.0", icon: "WebComponents" },
+        { pkg: "@chaincode/prosemirror", name: "ProseMirror", version: "latest", icon: "WebComponents" },
         { pkg: "@chaincode/smde", name: "Markdown", version: "latest", icon: "MarkDownLanguage" },
         { pkg: "@chaincode/monaco", name: "Monaco", version: "^0.10.0", icon: "Code" },
         { pkg: "@chaincode/codemirror", name: "CodeMirror", version: "latest", icon: "Code" },
