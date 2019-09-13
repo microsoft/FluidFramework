@@ -18,7 +18,14 @@ export interface ISet<T> {
  * Type of "valueChanged" event parameter
  */
 export interface IValueChanged {
+    /**
+     * The key storing the value that changed.
+     */
     key: string;
+
+    /**
+     * The value that was stored at the key prior to the change.
+     */
     previousValue: any;
 }
 
@@ -79,18 +86,23 @@ export interface IDirectory extends Map<string, any> {
     readonly absolutePath: string;
 
     /**
-     * Retrieves the given key from the directory
+     * Retrieves the value stored at the given key from the directory.
+     * @param key - key to retrieve from
      */
     get<T = any>(key: string): T;
 
     /**
      * A form of get except it will only resolve the promise once the key exists in the directory.
+     * @param key - key to retrieve from
      */
     wait<T = any>(key: string): Promise<T>;
 
     /**
-     * Sets the key to the provided value. An optional type can be specified to initialize the key
+     * Sets the value stored at key to the provided value. An optional type can be specified to initialize the key
      * to one of the value types.
+     * @param key - key to set at
+     * @param value - value to set, OR if type is provided then instead the initialization arguments for the value type
+     * @param type - if provided, will create a new value type at this key using the provided initialization arguements
      */
     set<T = any>(key: string, value: T, type?: string): this;
 
@@ -125,9 +137,9 @@ export interface IDirectory extends Map<string, any> {
 
     /**
      * Get an IDirectory within the directory, in order to use relative paths from that location.
-     * @param path - Path of the IDirectory to get, relative to this IDirectory
+     * @param relativePath - Path of the IDirectory to get, relative to this IDirectory
      */
-    getWorkingDirectory(path: string): IDirectory;
+    getWorkingDirectory(relativePath: string): IDirectory;
 }
 
 /**
@@ -140,6 +152,9 @@ export interface ISharedDirectory extends ISharedObject, IDirectory {
  * Type of "valueChanged" event parameter for SharedDirectory
  */
 export interface IDirectoryValueChanged extends IValueChanged {
+    /**
+     * The absolute path to the IDirectory storing the key which changed.
+     */
     path: string;
 }
 

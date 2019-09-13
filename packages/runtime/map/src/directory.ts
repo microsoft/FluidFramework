@@ -190,6 +190,10 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     public [Symbol.toStringTag]: string = "SharedDirectory";
+
+    /**
+     * {@inheritDoc IDirectory.absolutePath}
+     */
     public get absolutePath(): string {
         return this.root.absolutePath;
     }
@@ -221,81 +225,134 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         }
     }
 
+    /**
+     * {@inheritDoc IDirectory.get}
+     */
     public get<T = any>(key: string): T {
         return this.root.get<T>(key);
     }
 
+    /**
+     * {@inheritDoc IDirectory.wait}
+     */
     public async wait<T = any>(key: string): Promise<T> {
         return this.root.wait<T>(key);
     }
 
+    /**
+     * {@inheritDoc IDirectory.set}
+     */
     public set<T = any>(key: string, value: T, type?: string): this {
         this.root.set(key, value, type);
         return this;
     }
 
+    /**
+     * Deletes the given key from within this IDirectory.
+     * @param key - the key to delete
+     */
     public delete(key: string): boolean {
         return this.root.delete(key);
     }
 
+    /**
+     * Deletes all keys from within this IDirectory.
+     */
     public clear(): void {
         this.root.clear();
     }
 
+    /**
+     * Checks whether the given key exists in this IDirectory.
+     * @param key - the key to check
+     */
     public has(key: string): boolean {
         return this.root.has(key);
     }
 
+    /**
+     * The number of entries under this IDirectory.
+     */
     public get size(): number {
         return this.root.size;
     }
 
+    /**
+     * Issue a callback on each entry under this IDirectory.
+     * @param callback - callback to issue
+     */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
         this.root.forEach(callback);
     }
 
+    /**
+     * Get an iterator over the entries under this IDirectory.
+     */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.root[Symbol.iterator]();
     }
 
+    /**
+     * Get an iterator over the entries under this IDirectory.
+     */
     public entries(): IterableIterator<[string, any]> {
         return this.root.entries();
     }
 
+    /**
+     * Get an iterator over the keys under this IDirectory.
+     */
     public keys(): IterableIterator<string> {
         return this.root.keys();
     }
 
+    /**
+     * Get an iterator over the values under this IDirectory.
+     */
     public values(): IterableIterator<any> {
         return this.root.values();
     }
 
+    /**
+     * {@inheritDoc IDirectory.createSubDirectory}
+     */
     public createSubDirectory(subdirName: string): IDirectory {
         return this.root.createSubDirectory(subdirName);
     }
 
+    /**
+     * {@inheritDoc IDirectory.getSubDirectory}
+     */
     public getSubDirectory(subdirName: string): IDirectory {
         return this.root.getSubDirectory(subdirName);
     }
 
+    /**
+     * {@inheritDoc IDirectory.hasSubDirectory}
+     */
     public hasSubDirectory(subdirName: string): boolean {
         return this.root.hasSubDirectory(subdirName);
     }
 
+    /**
+     * {@inheritDoc IDirectory.deleteSubDirectory}
+     */
     public deleteSubDirectory(subdirName: string): boolean {
         return this.root.deleteSubDirectory(subdirName);
     }
 
+    /**
+     * {@inheritDoc IDirectory.subdirectories}
+     */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this.root.subdirectories();
     }
 
     /**
-     * Get a SubDirectory within the directory, in order to use relative paths from that location.
-     * @param rootRelativePath - path of the SubDirectory to get, relative to the root
+     * {@inheritDoc IDirectory.getWorkingDirectory}
      */
-    public getWorkingDirectory(rootRelativePath: string): IDirectory {
-        const absolutePath = this.makeAbsolute(rootRelativePath);
+    public getWorkingDirectory(relativePath: string): IDirectory {
+        const absolutePath = this.makeAbsolute(relativePath);
         if (absolutePath === posix.sep) {
             return this.root;
         }
@@ -311,6 +368,9 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
         return currentSubDir;
     }
 
+    /**
+     * {@inheritDoc SharedObject.snapshot}
+     */
     public snapshot(): ITree {
         const tree: ITree = {
             entries: [
@@ -681,7 +741,7 @@ class SubDirectory implements IDirectory {
     /**
      * Constructor.
      * @param directory - reference back to the SharedDirectory to perform operations
-     * @param absolutePath - the absolute path of this SubDirectory
+     * @param absolutePath - the absolute path of this IDirectory
      */
     constructor(
         private readonly directory: SharedDirectory,
@@ -690,7 +750,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Checks whether the given key exists in this SubDirectory.
+     * Checks whether the given key exists in this IDirectory.
      * @param key - the key to check
      */
     public has(key: string): boolean {
@@ -698,8 +758,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Retrieves the given key from within this SubDirectory.
-     * @param key - the key to retrieve
+     * {@inheritDoc IDirectory.get}
      */
     public get<T = any>(key: string): T {
         if (!this._storage.has(key)) {
@@ -709,6 +768,9 @@ class SubDirectory implements IDirectory {
         return this._storage.get(key).value as T;
     }
 
+    /**
+     * {@inheritDoc IDirectory.wait}
+     */
     public async wait<T = any>(key: string): Promise<T> {
         // Return immediately if the value already exists
         if (this._storage.has(key)) {
@@ -729,10 +791,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Sets the given key to the given value within this SubDirectory.
-     * @param key - the key to set
-     * @param value - the value to set the key to
-     * @param type - value type
+     * {@inheritDoc IDirectory.set}
      */
     public set<T = any>(key: string, value: T, type?: string): this {
         let localValue: ILocalValue;
@@ -785,8 +844,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Creates a SubDirectory with the given name as a child of this SubDirectory.
-     * @param subdirName - name of the SubDirectory
+     * {@inheritDoc IDirectory.createSubDirectory}
      */
     public createSubDirectory(subdirName: string): IDirectory {
         if (subdirName.indexOf(posix.sep) !== -1) {
@@ -806,24 +864,21 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Retrieves the given SubDirectory from within this SubDirectory.
-     * @param subdirName - the name of the SubDirectory to retrieve
+     * {@inheritDoc IDirectory.getSubDirectory}
      */
     public getSubDirectory(subdirName: string): IDirectory {
         return this._subdirectories.get(subdirName);
     }
 
     /**
-     * Checks whether the given SubDirectory exists as a child of this SubDirectory.
-     * @param subdirName - the name of the SubDirectory to check
+     * {@inheritDoc IDirectory.hasSubDirectory}
      */
     public hasSubDirectory(subdirName: string): boolean {
         return this._subdirectories.has(subdirName);
     }
 
     /**
-     * Deletes the given SubDirectory and all descendent keys and SubDirectories.
-     * @param subdirName - the SubDirectory to delete
+     * {@inheritDoc IDirectory.deleteSubDirectory}
      */
     public deleteSubDirectory(subdirName: string): boolean {
         const op: IDirectoryDeleteSubDirectoryOperation = {
@@ -838,22 +893,21 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Get an iterator over the SubDirectories contained within this SubDirectory.
+     * {@inheritDoc IDirectory.subdirectories}
      */
     public subdirectories(): IterableIterator<[string, IDirectory]> {
         return this._subdirectories.entries();
     }
 
     /**
-     * Get a SubDirectory within this SubDirectory, in order to use relative paths from that location.
-     * @param relativePath - Path of the SubDirectory to get, relative to this SubDirectory
+     * {@inheritDoc IDirectory.getWorkingDirectory}
      */
     public getWorkingDirectory(relativePath: string): IDirectory {
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
     }
 
     /**
-     * Deletes the given key from within this SubDirectory.
+     * Deletes the given key from within this IDirectory.
      * @param key - the key to delete
      */
     public delete(key: string): boolean {
@@ -869,7 +923,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Deletes all keys from within this SubDirectory.
+     * Deletes all keys from within this IDirectory.
      */
     public clear(): void {
         const op: IDirectoryClearOperation = {
@@ -882,7 +936,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Issue a callback on each entry under this SubDirectory.
+     * Issue a callback on each entry under this IDirectory.
      * @param callback - callback to issue
      */
     public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
@@ -892,14 +946,14 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * The number of entries under this SubDirectory.
+     * The number of entries under this IDirectory.
      */
     public get size(): number {
         return this._storage.size;
     }
 
     /**
-     * Get an iterator over the entries under this SubDirectory.
+     * Get an iterator over the entries under this IDirectory.
      */
     public entries(): IterableIterator<[string, any]> {
         const localEntriesIterator = this._storage.entries();
@@ -921,14 +975,14 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Get an iterator over the keys under this Subdirectory.
+     * Get an iterator over the keys under this IDirectory.
      */
     public keys(): IterableIterator<string> {
         return this._storage.keys();
     }
 
     /**
-     * Get an iterator over the values under this Subdirectory.
+     * Get an iterator over the values under this IDirectory.
      */
     public values(): IterableIterator<any> {
         const localValuesIterator = this._storage.values();
@@ -950,7 +1004,7 @@ class SubDirectory implements IDirectory {
     }
 
     /**
-     * Get an iterator over the entries under this Subdirectory.
+     * Get an iterator over the entries under this IDirectory.
      */
     public [Symbol.iterator](): IterableIterator<[string, any]> {
         return this.entries();
