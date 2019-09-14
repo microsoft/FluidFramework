@@ -1,0 +1,31 @@
+{
+  "name": "@microsoft/fluid-test-loader-utils",
+  "version": "0.10.0",
+  "description": "Mocks and other test utilities for the Fluid Framework Loader",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": "false",
+  "scripts": {
+    "build": "concurrently npm:build:compile npm:tslint",
+    "build:compile": "npm run tsc",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:compile",
+    "clean": "rimraf dist *.tsbuildinfo package-deps.json *.build.log",
+    "tsc": "tsc",
+    "tslint": "tslint --project tsconfig.json --format verbose"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "repository": "microsoft/prague",
+  "dependencies": {
+    "@prague/protocol-definitions": "^0.10.0"
+  },
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.10.0",
+    "concurrently": "^4.1.0",
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0",
+    "typescript": "~3.4.5"
+  }
+}
