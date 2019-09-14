@@ -13,21 +13,15 @@ import {
     IVersion,
 } from "@prague/protocol-definitions";
 
-export interface IOuterDocumentServiceProxy {
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree>;
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-    read(blobId: string): Promise<string>;
-}
-
 /**
  * Document access to underlying storage for routerlicious driver.
  */
 export class InnerDocumentStorageService implements IDocumentStorageService  {
     public get repositoryUrl(): string {
-        return "";
+        return this.outerStorageService.repositoryUrl;
     }
 
-    constructor(private readonly outerStorageService: IOuterDocumentServiceProxy) {
+    constructor(private readonly outerStorageService: IDocumentStorageService) {
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
@@ -36,6 +30,9 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         const versions = await this.outerStorageService.getVersions(versionId, count);
+        if (versions === undefined) {
+            return [];
+        }
         return versions;
     }
 
@@ -45,27 +42,27 @@ export class InnerDocumentStorageService implements IDocumentStorageService  {
     }
 
     public async getContent(version: IVersion, path: string): Promise<string> {
-        return Promise.reject(new Error("InnerDocumentStorageService: getContent not implemented"));
+        return this.outerStorageService.getContent(version, path);
     }
 
     public write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion> {
-        return Promise.reject(new Error("InnerDocumentStorageService: write not implemented"));
+        return this.outerStorageService.write(tree, parents, message, ref);
     }
 
     public async uploadSummary(commit: ISummaryTree): Promise<ISummaryHandle> {
-        return Promise.reject(new Error("InnerDocumentStorageService: uploadSummary not implemented"));
+        return this.outerStorageService.uploadSummary(commit);
 
     }
 
     public downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-        return Promise.reject(new Error("InnerDocumentStorageService: downloadSummary not implemented"));
+        return this.outerStorageService.downloadSummary(handle);
     }
 
     public async createBlob(file: Buffer): Promise<ICreateBlobResponse> {
-        return Promise.reject(new Error("InnerDocumentStorageService: createBlob not implemented"));
+        return this.outerStorageService.createBlob(file);
     }
 
     public getRawUrl(blobId: string): string {
-        throw new Error("InnerDocumentStorageService: getRawUrl not implemented");
+        return this.outerStorageService.getRawUrl(blobId);
     }
 }

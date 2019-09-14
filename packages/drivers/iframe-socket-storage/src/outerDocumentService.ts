@@ -8,8 +8,6 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
-    ISequencedDocumentMessage,
-    IVersion,
 } from "@prague/protocol-definitions";
 import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
 import {
@@ -18,10 +16,11 @@ import {
     IOuterDocumentDeltaConnection,
     OuterDocumentDeltaConnection,
 } from "@prague/socket-storage-shared";
-import { buildHierarchy, Deferred } from "@prague/utils";
+import { Deferred } from "@prague/utils";
 import * as assert from "assert";
 import * as Comlink from "comlink";
-import { IOuterDocumentStorage, OuterDocumentStorageService } from "./outerDocumentStorageService";
+import { OuterDeltaStorageService } from "./outerDeltaStorageService";
+import { OuterDocumentStorageService } from "./outerDocumentStorageService";
 
 const protocolVersions = ["^0.2.0", "^0.1.0"];
 
@@ -30,13 +29,11 @@ interface IInnerProxy extends IInnerDocumentDeltaConnectionProxy {
 
 }
 
-interface IOuterDeltaStorage {
-    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
-}
-
-interface IOuterProxy extends IOuterDocumentDeltaConnection, IOuterDocumentStorage, IOuterDeltaStorage {
+export interface IOuterProxy extends IOuterDocumentDeltaConnection,
+                                    IDocumentStorageService,
+                                    IDocumentDeltaStorageService {
     handshake: any;
-    connected(): boolean;
+    connected(): Promise<boolean>;
 }
 
 /**
@@ -61,12 +58,16 @@ export class OuterDocumentService implements IDocumentService {
     private deltaConnection: IDocumentDeltaConnection | undefined;
     private readonly proxiedFunctionsFromInnerFrameP: Promise<IInnerProxy>;
     private getProxyFromOuterDocumentDeltaConnection!: (IOuterDocumentDeltaConnection) => any;
+    private outerDocumentStorageService: IDocumentStorageService;
+    private outerDeltaStorageService: IDocumentDeltaStorageService;
 
     constructor(private readonly storageService: DocumentStorageService,
                 private readonly deltaStorage: IDocumentDeltaStorageService,
                 private readonly documentService: IDocumentService,
                 frame: HTMLIFrameElement,
     ) {
+        this.outerDocumentStorageService = this.createDocumentStorageService(storageService);
+        this.outerDeltaStorageService = this.createDeltaStorageService(deltaStorage);
 
         // Host guarantees that frame and contentwindow are both loaded
         const iframeContentWindow = frame!.contentWindow!;
@@ -75,7 +76,7 @@ export class OuterDocumentService implements IDocumentService {
         // tslint:disable-next-line: promise-must-complete
         this.proxiedFunctionsFromInnerFrameP = handshake.promise;
 
-        const connected = () => {
+        const connected = async () => {
             return true;
         };
 
@@ -87,53 +88,13 @@ export class OuterDocumentService implements IDocumentService {
 
         deltaConnectionProxyP
             .then(async (deltaConnectionProxy) => {
-                // documentStorageProxy
-                const customGetVersions = async (versionId: string, count: number) => {
-                    const commits = await this.storageService.manager.getCommits(versionId ?
-                        versionId : this.storageService.id, count);
-                    return commits.map((commit) => ({ id: commit.sha, treeId: commit.commit.tree.sha }));
-                };
-
-                const customGetSnapshotTree = async (version?: IVersion) => {
-                    let requestVersion = version;
-                    if (!requestVersion) {
-                        const versions = await customGetVersions(this.storageService.id, 1);
-                        if (versions.length === 0) {
-                            return null;
-                        }
-
-                        requestVersion = versions[0];
-                    }
-
-                    const tree = await this.storageService.manager.getTree(requestVersion.treeId);
-                    return buildHierarchy(tree);
-                };
-
-                const customRead = async (blobId: string) => {
-                    const value = await this.storageService.manager.getBlob(blobId);
-                    return value.content;
-                };
-
-                const documentStorageProxy = {
-                    getSnapshotTree: customGetSnapshotTree,
-                    getVersions: customGetVersions,
-                    read: customRead,
-                };
-
-                // deltaStorageProxy
-                const customGet = async (from?: number, to?: number) => {
-                    const val = this.deltaStorage.get(from, to);
-                    return val;
-                };
-
-                const deltaStorageProxy: IOuterDeltaStorage = {
-                    get: customGet,
-                };
 
                 const outerDocumentServiceProxy: IOuterProxy = {
                     ...deltaConnectionProxy,
-                    ...documentStorageProxy,
-                    ...deltaStorageProxy,
+                    ...(this.outerDocumentStorageService as OuterDocumentStorageService)
+                        .getOuterDocumentStorageServiceProxy(),
+                    ...(this.outerDeltaStorageService as OuterDeltaStorageService)
+                        .getOuterDocumentDeltaStorageProxy(),
                     handshake,
                     connected,
                 };
@@ -153,7 +114,7 @@ export class OuterDocumentService implements IDocumentService {
      * @returns returns the document storage service for routerlicious driver.
      */
     public async connectToStorage(): Promise<IDocumentStorageService> {
-        return new OuterDocumentStorageService();
+        return this.createDocumentStorageService(this.storageService);
     }
 
     /**
@@ -162,7 +123,7 @@ export class OuterDocumentService implements IDocumentService {
      * @returns returns the document delta storage service for routerlicious driver.
      */
     public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-        return Promise.reject(new Error("OuterDocumentService: connectToDeltaStorage not implemented"));
+        return this.createDeltaStorageService(this.deltaStorage);
     }
 
     /**
@@ -203,5 +164,19 @@ export class OuterDocumentService implements IDocumentService {
     public getErrorTrackingService() {
         throw new Error("Outer Document Service: getErrorTrackingService not implemented");
         return null;
+    }
+
+    private createDocumentStorageService(storageService: DocumentStorageService) {
+        if (!this.outerDocumentStorageService) {
+            this.outerDocumentStorageService = new OuterDocumentStorageService(storageService);
+        }
+        return this.outerDocumentStorageService;
+    }
+
+    private createDeltaStorageService(deltaStorage: IDocumentDeltaStorageService) {
+        if (!this.outerDeltaStorageService) {
+            this.outerDeltaStorageService = new OuterDeltaStorageService(deltaStorage);
+        }
+        return this.outerDeltaStorageService;
     }
 }

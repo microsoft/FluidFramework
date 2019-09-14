@@ -23,10 +23,10 @@ export interface IInnerDocumentDeltaConnectionProxy {
 }
 
 export interface IOuterDocumentDeltaConnection {
-    add(a: number, b: number): number;
-    getDetails(): IConnected;
-    submit(messages: IDocumentMessage[]): void;
-    submitSignal(message: IDocumentMessage): void;
+    add(a: number, b: number): Promise<number>;
+    getDetails(): Promise<IConnected>;
+    submit(messages: IDocumentMessage[]): Promise<void>;
+    submitSignal(message: IDocumentMessage): Promise<void>;
 }
 
 /**
@@ -154,19 +154,20 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
         super();
 
         // Test
-        function add(a: number, b: number): number {
+        async function add(a: number, b: number): Promise<number> {
             return a + b;
         }
 
-        function getDetails(): IConnected {
-            return details;
-        }
+        // function getDetails(): IConnected {
+        //     return details;
+        // }
+        const getDetails = async () => details;
 
-        const submit = (messages: IDocumentMessage[]) => {
+        const submit = async (messages: IDocumentMessage[]) => {
             this.connection.submit(messages);
         };
 
-        const submitSignal = (message: IDocumentMessage) => {
+        const submitSignal = async (message: IDocumentMessage) => {
             this.connection.submitSignal(message);
         };
 
@@ -235,20 +236,7 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      * @param listener - listener for the event
      */
     public on(event: string, listener: (...args: any[]) => void): this {
-        // This is a hack to register all events.
-        // It guarantees all registered events (using the outerFrame as the template) get sent to the inner frame
-
-        // Should get registered in the create to speed up registration
-        // Forces the inner frame to fetch missed deltas
-        // tslint:disable-next-line: no-floating-promises
-        this.proxiedFunctionsFromInnerFrameP
-            .then((innerProxy) => {
-                this.connection.on(event, async (...args: any[]) => {
-                    await innerProxy.forwardEvent(event, args);
-                });
-            });
-
-        return this;
+        throw new Error("OuterDocumentDeltaConnection: Should have no listeners");
     }
 
     /**

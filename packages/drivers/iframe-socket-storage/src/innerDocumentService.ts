@@ -9,26 +9,11 @@ import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentStorageService,
-    ISequencedDocumentMessage,
 } from "@prague/protocol-definitions";
-import { InnerDocumentDeltaConnection, IOuterDocumentDeltaConnectionProxy } from "@prague/socket-storage-shared";
+import { InnerDocumentDeltaConnection } from "@prague/socket-storage-shared";
 import * as Comlink from "comlink";
-import { InnerDocumentStorageService, IOuterDocumentServiceProxy } from "./innerDocumentStorageService";
-
-/**
- * All proxied interfaces from the outerDocument
- */
-export interface IOuterProxy extends
-        IOuterDocumentDeltaConnectionProxy, IOuterDocumentServiceProxy, IOuterDeltaStorageProxy {
-    connected(): Promise<boolean>;
-}
-
-/**
- * IOuterDeltaStorageProxy
- */
-export interface IOuterDeltaStorageProxy {
-    get(from?: number, to?: number): Promise<ISequencedDocumentMessage[]>;
-}
+import { InnerDocumentStorageService } from "./innerDocumentStorageService";
+import { IOuterProxy } from "./outerDocumentService";
 
 /**
  * The shell of the document Service that we'll use on the inside of an IFrame

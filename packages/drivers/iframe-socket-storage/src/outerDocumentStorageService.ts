@@ -12,12 +12,8 @@ import {
     ITree,
     IVersion,
 } from "@prague/protocol-definitions";
-
-export interface IOuterDocumentStorage {
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    read(blobId: string): Promise<string>;
-}
+import { DocumentStorageService } from "@prague/routerlicious-socket-storage";
+import { buildHierarchy } from "@prague/utils";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -27,7 +23,81 @@ export class OuterDocumentStorageService implements IDocumentStorageService {
         return "";
     }
 
-    constructor() {
+    constructor(private readonly storageService: DocumentStorageService) {
+    }
+
+    public getOuterDocumentStorageServiceProxy(): IDocumentStorageService {
+
+        const getVersions = async (versionId: string, count: number) => {
+            console.log("getVersions");
+            const commits = await this.storageService.manager.getCommits(versionId ?
+                versionId : this.storageService.id, count);
+            return commits.map((commit) => ({ id: commit.sha, treeId: commit.commit.tree.sha }));
+
+        };
+
+        const getSnapshotTree = async (version?: IVersion) => {
+            console.log("getSnapshotTree");
+            let requestVersion = version;
+            if (!requestVersion) {
+                const versions = await getVersions(this.storageService.id, 1);
+                if (versions === undefined || versions.length === 0) {
+                    return null;
+                }
+
+                requestVersion = versions[0];
+            }
+
+            const tree = await this.storageService.manager.getTree(requestVersion.treeId);
+            return buildHierarchy(tree);
+        };
+
+        const read = async (blobId: string) => {
+            const value = await this.storageService.manager.getBlob(blobId);
+            return value.content;
+        };
+
+        const getContent = async (version: IVersion, path: string) => {
+            const value = await this.storageService.manager.getContent(version.id, path);
+            return value.content;
+        };
+
+        const uploadSummary = async (commit: ISummaryTree) => {
+            return this.storageService.uploadSummary(commit);
+        };
+
+        const write = async (tree: ITree, parents: string[], message: string, ref: string) => {
+            const branch = ref ? `components/${this.storageService.id}/${ref}` : this.storageService.id;
+            const commit = this.storageService.manager.write(branch, tree, parents, message);
+            return commit.then((c) => ({ id: c.sha, treeId: c.tree.sha }));
+        };
+
+        const downloadSummary = async (handle: ISummaryHandle) => {
+            return this.storageService.downloadSummary(handle);
+        };
+
+        const createBlob = async (file: Buffer) => {
+            return this.storageService.createBlob(file);
+        };
+
+        const getRawUrl = (blobId: string) => {
+            return this.storageService.getRawUrl(blobId);
+        };
+
+        const documentStorageProxy = {
+            repositoryUrl: "Not Implemented",
+            getSnapshotTree,
+            getVersions,
+            read,
+            getContent,
+            write,
+            uploadSummary,
+            downloadSummary,
+            createBlob,
+            getRawUrl,
+        };
+
+        return documentStorageProxy;
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {

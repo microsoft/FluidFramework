@@ -169,6 +169,7 @@ function createIFrameHTML(resolved: IResolvedUrl,
             controllers.loaderFramed.initialize(
                 "${url}",
                 ${JSON.stringify(santizedResolved)}, // resolved
+                undefined, // cache
                 ${JSON.stringify(pkg)}, // chaincode
                 ${JSON.stringify(scriptIds)}, // scriptIds
                 undefined, // npm
