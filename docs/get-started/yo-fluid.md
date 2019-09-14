@@ -22,4 +22,4 @@ See <xref:yo-fluid-details>
 
 ## Yo fluid source
 
-See <https://github.com/Microsoft/Prague/blob/master/tools/generator-fluid/>
+See <https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/>
