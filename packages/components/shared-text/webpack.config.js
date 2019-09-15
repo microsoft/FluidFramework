@@ -25,7 +25,7 @@ module.exports = env => {
                     {
                         test: /\.tsx?$/,
                         use: [{
-                            loader:'ts-loader',
+                            loader: 'ts-loader',
                             options: {
                                 compilerOptions: {
                                     module: "esnext"

@@ -7,9 +7,6 @@
 import * as MergeTree from "@prague/merge-tree";
 import * as Sequence from "@prague/sequence";
 import { CharacterCodes } from "./characterCodes";
-import * as ui from "../ui";
-import { isInline } from "@prague/app-ui";
-import { TextSegment } from "@prague/merge-tree";
 
 type SharedString = Sequence.SharedString;
 
@@ -470,30 +467,8 @@ export interface IItemsContext {
 
 export function markerToItems(marker: MergeTree.Marker, itemsContext: IItemsContext) {
     const items = itemsContext.itemInfo.items;
-    const font = itemsContext.fontInfo.getFont(itemsContext.curPGMarker);
-
-    const typeName = marker.properties.ref && marker.properties.ref.type.name;
-    const maybeComponent = ui.refTypeNameToComponent.get(typeName);
-
-    // If it is a registered external component, measure it and push a block item.
-    if (isInline(maybeComponent)) {
-        const state = marker.properties.state;
-        const context = new ui.FlowViewContext(
-            document.createElement("canvas").getContext("2d"),
-            { font },
-            itemsContext.services);
-
-        items.push({
-            type: ParagraphItemType.Block,
-            text: "1",  // Only text.length is used to measure positions occupied.
-            width: maybeComponent.measure(state, context).max,
-            segment: marker
-        } as IPGBlock);
-
-        return;
-    }
-
-    // Otherwise, assume this is a paragraph marker.  (Note early 'return' above.)
+    
+    // Assume this is a paragraph marker
     items.push(makeIPGMarker(marker));
 }
 

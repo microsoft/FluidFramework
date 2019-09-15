@@ -120,8 +120,6 @@ export class HostView implements IComponentHTMLView, SearchMenu.ISearchMenuHost 
                 { key: "morton", enabled: () => true, exec: () => insertComponentFromCollection(videos, {}, "display:block;width:61%;--aspect-ratio:calc(16/9)") },
                 { key: "image", enabled: () => true, exec: () => insertComponentFromCollection(images, {}, "display:inline-block;float:left;resize:both;overflow:hidden") },
                 { key: "ivy", enabled: () => true, exec: () => insertComponent("@chaincode/charts", {}, "display:block;width:61%;resize:both;overflow:hidden") },
-                { key: "table", enabled: () => true, exec: () => insertComponent("@chaincode/table-view", {}) },
-                { key: "chart", enabled: () => true, exec: () => insertComponent("@chaincode/chart-view", {}) },
             ];
             const baseSearchCommands = new TST<SearchMenu.ISearchMenuCommand<HostView>>();
             for (const command of commands) {

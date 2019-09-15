@@ -3,4 +3,11 @@
 shrinkwrap.yaml              merge=binary
 npm-shrinkwrap.json          merge=binary
 yarn.lock                    merge=binary
-* text !filter !merge !diff
+*     text !filter !merge !diff
+*     text=auto eol=lf
+*.txt text=auto !eol
+
+*.png -text
+*.jpg -text
+*.gif -text
+*.pdf -text

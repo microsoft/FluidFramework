@@ -33,9 +33,7 @@ import * as assert from "assert";
 import * as Geocoder from "geocoder";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
-import { isBlock } from "@prague/app-ui";
-import { blobUploadHandler, urlToInclusion } from "../blob";
-import { SharedWorkbook } from "../calc";
+import { blobUploadHandler } from "../blob";
 import {
     CharacterCodes,
     Paragraph,
@@ -205,30 +203,6 @@ const cssColors = (f: FlowView) => cssColorTree;
 const defaultColor = (f: FlowView) => "Black";
 
 const commands: IFlowViewCmd[] = [
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(dinoImage);
-        },
-        key: "enable dinosaur",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(dinoImage, true);
-        },
-        key: "jettison one dinosaur",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(mrBennetEyeRoll);
-        },
-        key: "release the Bennets",
-    },
-    {
-        exec: (c, p, f) => {
-            f.setBGImage(mrBennetEyeRoll, true);
-        },
-        key: "release one Bennet",
-    },
     {
         exec: (c, p, f) => {
             f.copyFormat();
@@ -484,12 +458,6 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertPhoto();
-        },
-        key: "insert photo",
-    },
-    {
-        exec: (c, p, f) => {
             f.insertList();
         },
         key: "insert list",
@@ -529,18 +497,6 @@ const commands: IFlowViewCmd[] = [
             f.toggleUnderline();
         },
         key: "underline",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertSheetlet();
-        },
-        key: "insert sheet",
-    },
-    {
-        exec: (c, p, f) => {
-            f.insertComponentNew("charts", "@chaincode/charts");
-        },
-        key: "insert new chart",
     },
     {
         exec: (c, p, f) => {
@@ -621,12 +577,10 @@ function elmOffToSegOff(elmOff: IRangeInfo, span: HTMLSpanElement) {
 }
 
 const baseURI = typeof document !== "undefined" ? document.location.origin : "";
-const dinoImage = `url("${baseURI}/public/images/Dino3.jpg")`;
 const underlineStringURL = `url("${baseURI}/public/images/underline.gif") bottom repeat-x`;
 const underlinePaulStringURL = `url("${baseURI}/public/images/underline-paul.gif") bottom repeat-x`;
 const underlinePaulGrammarStringURL = `url("${baseURI}/public/images/underline-paulgrammar.gif") bottom repeat-x`;
 const underlinePaulGoldStringURL = `url("${baseURI}/public/images/underline-gold.gif") bottom repeat-x`;
-const mrBennetEyeRoll = `url("${baseURI}/public/images/bennet-eye-roll.gif")`;
 
 // global until remove old render
 let textErrorRun: IRange;
@@ -869,7 +823,6 @@ function renderSegmentIntoLine(
         // If the marker is a simple reference, see if it's types is registered as an external
         // component.
         if (segment.refType === MergeTree.ReferenceType.Simple) {
-            const typeName = segment.properties.ref && segment.properties.ref.type.name;
             const marker = segment as MergeTree.Marker;
             if (isMathComponentView(marker)) {
                 const span = document.createElement("span");
@@ -912,30 +865,6 @@ function renderSegmentIntoLine(
                     componentMarker.instance.render(span, { display: "inline" });
                     componentMarker.properties.cachedElement = span;
                     lineContext.contentDiv.appendChild(span);
-                }
-            } else {
-                const maybeComponent = ui.refTypeNameToComponent.get(typeName);
-                // If it is a registered external component, ask it to render itself to HTML and
-                // insert the divs here.
-                if (maybeComponent) {
-                    const context = new ui.FlowViewContext(
-                        document.createElement("canvas").getContext("2d"),
-                        lineContext.lineDiv.style,
-                        lineContext.flowView.services,
-                    );
-
-                    const newElement = maybeComponent.upsert(
-                        segment.properties.state,
-                        context,
-                        segment.properties.cachedElement,
-                    );
-
-                    if (newElement !== segment.properties.cachedElement) {
-                        segment.properties.cachedElement = newElement;
-                        allowDOMEvents(newElement);
-                    }
-
-                    lineContext.contentDiv.appendChild(newElement);
                 }
             }
         }
@@ -1673,18 +1602,6 @@ export class Viewport {
     constructor(public maxHeight: number, public div: IViewportDiv, private width: number) {
     }
 
-    public showExclu() {
-        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
-            .then((incl) => {
-                for (const exclu of this.excludedRects) {
-                    const showImage = document.createElement("img");
-                    showImage.src = incl.url;
-                    exclu.conformElement(showImage);
-                    this.div.appendChild(showImage);
-                }
-            });
-    }
-
     // Remove inclusions that are not in the excluded rect list
     public removeInclusions() {
         if (this.div) {
@@ -2340,8 +2257,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             ? segoff.segment
             : undefined;
 
-        const maybeComponent = asMarker && ui.maybeGetComponent(asMarker);
-
         const newBlock = getComponentBlock(asMarker);
         if (newBlock) {
             const refDoc = newBlock.properties.crefTest as IReferenceDoc;
@@ -2442,49 +2357,6 @@ function renderFlow(layoutContext: ILayoutContext, targetTranslation: string, de
             }
 
             layoutContext.viewport.vskip(ch);
-            currentPos++;
-            segoff = undefined;
-        } else if (isBlock(maybeComponent)) {
-            const context = new ui.FlowViewContext(
-                document.createElement("canvas").getContext("2d"),
-                layoutContext.viewport.div.style,
-                layoutContext.flowView.services,
-            );
-
-            const componentDiv = maybeComponent.upsert(
-                asMarker.properties.state,
-                context,
-                asMarker.properties.cachedElement,
-            );
-
-            if (componentDiv !== asMarker.properties.cachedElement) {
-                asMarker.properties.cachedElement = componentDiv;
-                allowDOMEvents(componentDiv);
-            }
-
-            // Force subtree positioning to be relative to the lineDiv we create below.
-            componentDiv.style.display = "flex";
-
-            // Temporarily parent 'componentDiv' in the position where we will insert the lineDiv
-            // in order to calculate it's height.
-            layoutContext.viewport.div.appendChild(componentDiv);
-            const componentHeight = componentDiv.scrollHeight;
-            componentDiv.remove();
-
-            const lineDiv = makeLineDiv(
-                new ui.Rectangle(
-                    0,
-                    layoutContext.viewport.getLineTop(),
-                    parseInt(layoutContext.viewport.div.style.width, 10),
-                    componentHeight),
-                layoutContext.docContext.fontstr);
-
-            lineDiv.appendChild(componentDiv);
-
-            // TODO: Suspect that missing ILineDiv metadata on element is why scroll(..) can hang on components.
-            // componentDiv.linePos = currentPos;
-            // componentDiv.lineEnd = currentPos + 1;
-            layoutContext.viewport.vskip(componentHeight);
             currentPos++;
             segoff = undefined;
         } else if (asMarker && asMarker.hasRangeLabel("table")) {
@@ -3301,9 +3173,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             (incl: IGenericBlob) => this.insertBlobInternal(incl),
         );
 
-        // HACK: Expose "insertComponent" and "insertText" via window to Shared Browser Extension
+        // HACK: Expose "insertText" via window to Shared Browser Extension
         //       for 2018/Oct demo.
-        window["insertComponent"] = this.insertComponent.bind(this);
         window["insertText"] = (text: string) => {
             this.sharedString.insertText(this.cursor.pos, text);
         };
@@ -3316,7 +3187,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
         // Provide access to the containing shared object
         this.services.set("document", this.collabDocument);
-        this.initializeMaps();
     }
 
     // remember an element to give to a component; element will be absolutely positioned during render, if needed
@@ -3347,44 +3217,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 pc.elm.style.display = "none";
             });
         }
-    }
-
-    public async initializeMaps() {
-        // TODO: Should insert a workbook into the document on demand, implement the ability
-        //       to add references to pre-existing notebooks, support multiple notebooks, ...
-        //
-        //       Instead, we currently check to see if a workbook already exists.  If not, we
-        //       insert one up front.
-        const rootMap = this.collabDocument.getRoot();
-        let workbookMap: types.ISharedMap;
-
-        if (!this.collabDocument.existing) {
-            workbookMap = this.collabDocument.createMap();
-        } else {
-            const workbookHandle = await rootMap.wait<IComponentHandle>("workbook");
-            workbookMap = await workbookHandle.get<types.ISharedMap>();
-        }
-
-        this.services.set(
-            "workbook",
-            new SharedWorkbook(workbookMap, 6, 6, [
-                ["Player", "Euchre", "Bridge", "Poker", "Go Fish", "Total Wins"],
-                ["Daniel", "0", "0", "0", "5", "=SUM(B2:E2)"],
-                ["Kurt", "2", "3", "0", "0", "=SUM(B3:E3)"],
-                ["Sam", "3", "4", "0", "0", "=SUM(B4:E4)"],
-                ["Tanvir", "3", "3", "0", "0", "=SUM(B5:E5)"],
-                ["Total Played", "=SUM(B2:B5)", "=SUM(C2:C5)", "=SUM(D2:D5)", "=SUM(E2:E5)", "=SUM(F2:F5)"],
-            ]));
-
-        // Set the map after loading data so it's populated when other clients load it
-        if (!this.collabDocument.existing) {
-            rootMap.set("workbook", workbookMap.handle);
-        }
-
-        workbookMap.on("valueChanged", () => {
-            // TODO: Track which cells are visible and damp invalidation for off-screen cells.
-            this.queueRender(undefined, true);
-        });
     }
 
     public renderChildFlow(startChar: number, cursorPos: number, flowElement: HTMLDivElement,
@@ -4686,18 +4518,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.setProps({ fontFamily: family, fontSize: size });
     }
 
-    public setBGImage(imageName: string, setSize?: boolean) {
-        this.viewportDiv.style.backgroundImage = imageName;
-        if (setSize) {
-            const rect = this.viewportDiv.getBoundingClientRect();
-            this.viewportDiv.style.backgroundSize = `${rect.width}px ${rect.height}px`;
-        }
-    }
-
-    public clearBGImage() {
-        this.viewportDiv.style.backgroundImage = undefined;
-    }
-
     public setColor(color: string) {
         this.setProps({ color }, false);
     }
@@ -4812,11 +4632,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         }
     }
 
-    /** Insert a Sheetlet. */
-    public insertSheetlet() {
-        this.insertComponent("sheetlet", {});
-    }
-
     public insertComponentNew(prefix: string, chaincode: string, inline = false) {
         const id = `${prefix}-${Date.now()}`;
 
@@ -4904,16 +4719,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sharedString.insertMarker(markerPos, MergeTree.ReferenceType.Simple, props);
     }
 
-    /** Insert a Formula box to display the given 'formula'. */
-    public insertFormula(formula: string) {
-        this.insertComponent("formula", { formula });
-    }
-
-    /** Insert a Slider box to display the given 'formula'. */
-    public insertSlider(value: string) {
-        this.insertComponent("slider", { value });
-    }
-
     public insertList() {
         const testList: SearchMenu.ISearchMenuCommand[] = [{ key: "providence" }, { key: "boston" }, { key: "issaquah" }];
         const irdoc = <IListReferenceDoc>{
@@ -4927,29 +4732,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             [Paragraph.referenceProperty]: irdoc,
         };
         this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, refProps);
-    }
-
-    public insertPhoto() {
-        urlToInclusion(`${baseURI}/public/images/bennet1.jpeg`)
-            .then(async (incl) => {
-                this.collabDocument.uploadBlob(incl)
-                    .then((blob) => {
-                        this.insertBlobInternal(blob);
-                    });
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-    }
-
-    public insertVideo() {
-        urlToInclusion(`${baseURI}/public/images/SampleVideo_1280x720_1mb.mp4`)
-            .then(async (incl) => {
-                this.insertBlobInternal(await this.collabDocument.uploadBlob(incl));
-            })
-            .catch((error) => {
-                console.log(error);
-            });
     }
 
     private async openCollections() {
@@ -5253,20 +5035,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             }
             case CharacterCodes.M: {
-                const cmdParser = (searchString: string) => {
-                    // TODO: A micro-language for inserting components would be helpful here.
-                    // If it starts with "=", assume it's a formula definition.
-                    if (searchString.startsWith("=")) {
-                        this.insertFormula(searchString);
-                    }
-
-                    // If it starts with "*", assume it's a slider definition.
-                    if (searchString.startsWith("*")) {
-                        this.insertSlider("=" + searchString.substring(1));
-                    }
-                };
                 this.activeSearchBox = SearchMenu.searchBoxCreate(this, this.viewportDiv,
-                    this.cmdTree, true, cmdParser);
+                    this.cmdTree, true);
                 break;
             }
             case CharacterCodes.L:
@@ -5555,27 +5325,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         // new marker gets existing props
         this.sharedString.insertMarker(pos, MergeTree.ReferenceType.Tile, curProps);
         this.undoRedoManager.closeCurrentOperation();
-    }
-
-    private insertComponent(type: string, state: {}) {
-        // TODO: All markers should be inserted as an atomic group.
-        const component = ui.refTypeNameToComponent.get(type);
-        if (isBlock(component)) {
-            this.insertParagraph(this.cursor.pos++);
-        }
-
-        const props = {
-            [Paragraph.referenceProperty]: {
-                referenceDocId: "",                        // 'referenceDocId' not used
-                type: {
-                    name: type,
-                } as IReferenceDocType,
-                url: "",                        // 'url' not used
-            } as IReferenceDoc,
-            state,
-        };
-
-        this.sharedString.insertMarker(this.cursor.pos++, MergeTree.ReferenceType.Simple, props);
     }
 
     private remotePresenceUpdate(message: IInboundSignalMessage, local: boolean) {
