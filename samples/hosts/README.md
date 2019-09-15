@@ -338,7 +338,7 @@ And that's all that's needed to create or load Fluid documents. It's intended to
 setup as a host. And once done you gain full access to the power of the Fluid platform.
 
 Once you have a host setup the next best step to try is using our Fluid generator to create a new component.
-Insructions for that are at https://github.com/Microsoft/Prague/blob/master/tools/generator-fluid/README.md.
+Insructions for that are at https://github.com/Microsoft/FluidFramework/blob/master/tools/generator-fluid/README.md.
 You can then publish this package to Verdaccio and load it inside of your new loader!
 
 When creating your new component also note that the API provides it access to the underlying loader. You can use this

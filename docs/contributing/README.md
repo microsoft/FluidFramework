@@ -3,9 +3,9 @@
 There are many ways to contribute to the Fluid project: logging bugs, submitting pull requests with bug fixes or
 new features, reporting issues, and adding to documentation.
 
-Check out the [issues list](https://github.com/Microsoft/Prague/issues) for ways you can contribute. Issues
-labeled [help wanted](https://github.com/Microsoft/Prague/labels/help%20wanted) are good issues to submit a PR
-for. Issues labeled [good first issue](https://github.com/Microsoft/Prague/labels/good%20first%20issue) are great
+Check out the [issues list](https://github.com/Microsoft/FluidFramework/issues) for ways you can contribute. Issues
+labeled [help wanted](https://github.com/Microsoft/FluidFramework/labels/help%20wanted) are good issues to submit a PR
+for. Issues labeled [good first issue](https://github.com/Microsoft/FluidFramework/labels/good%20first%20issue) are great
 candidates to pick up if you are in the code for the first time. If you are contributing significant changes, please
 discuss with the assignee of the issue first before starting to work on the issue.
 

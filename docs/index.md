@@ -46,7 +46,7 @@ See [this draft document](xref:what-is-fluid) for some more information about Fl
 
 ## Get the Fluid source code, including examples
 
-The repository is located at <https://github.com/Microsoft/Prague/>. To gain access you will need to link your GitHub
+The repository is located at <https://github.com/Microsoft/FluidFramework/>. To gain access you will need to link your GitHub
 and Microsoft accounts. To do so follow the instructions at <https://repos.opensource.microsoft.com/link>.
 
 After linking your accounts you should be added to the <https://github.com/orgs/Microsoft/teams/everyone> group which
@@ -62,6 +62,6 @@ The Fluid team answers **questions** on the [Microsoft Stack Overflow](https://s
 the [Prague](https://stackoverflow.microsoft.com/questions/tagged/prague) and
 [Fluid](https://stackoverflow.microsoft.com/questions/tagged/fluid) tags.
 
-Bugs, suggestions, and issues should be directed to our [issues page](https://github.com/Microsoft/Prague/issues).
+Bugs, suggestions, and issues should be directed to our [issues page](https://github.com/Microsoft/FluidFramework/issues).
 
 Logistical questions can be directed to our [Teams group](https://teams.microsoft.com/l/team/19%3a10ccb94cae324ec2aabcd6b6322b1a25%40thread.skype/conversations?groupId=9ce27575-2f82-4689-abdb-bcff07e8063b&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47).
