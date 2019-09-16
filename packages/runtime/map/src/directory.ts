@@ -242,8 +242,8 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        this.root.set(key, value, type);
+    public set<T = any>(key: string, value: T): this {
+        this.root.set(key, value);
         return this;
     }
 
