@@ -369,7 +369,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * {@inheritDoc SharedObject.snapshot}
+     * {@inheritDoc @prague/shared-object-common#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {
