@@ -98,6 +98,22 @@ describe("Routerlicious", () => {
                     sharedMap.set("test", subMap.handle);
                     assert.equal(sharedMap.get<IComponentHandle>("test").path, subMap.id);
                 });
+
+                it("Should be able to set and retrieve a plain object with nested handles", async () => {
+                    const subMap = factory.create(runtime, "subMap");
+                    const subMap2 = factory.create(runtime, "subMap2");
+                    const containingObject = {
+                        subMapHandle: subMap.handle,
+                        nestedObj: {
+                            subMap2Handle: subMap2.handle,
+                        },
+                    };
+                    sharedMap.set("object", containingObject);
+
+                    const retrieved = sharedMap.get("object");
+                    assert.equal(await retrieved.subMapHandle.get(), subMap);
+                    assert.equal(await retrieved.nestedObj.subMap2Handle.get(), subMap2);
+                });
             });
 
             describe(".forEach()", () => {
@@ -146,7 +162,7 @@ describe("Routerlicious", () => {
                     });
                 });
 
-                it("Should serialize and deserialize an undefined value", () => {
+                it("Should serialize an undefined value", () => {
                     sharedMap.set("first", "second");
                     sharedMap.set("third", "fourth");
                     sharedMap.set("fifth", undefined);
@@ -166,6 +182,21 @@ describe("Routerlicious", () => {
                             assert.equal(parsed[key].value.url, subMap.id);
                         }
                     });
+                });
+
+                it("Should serialize an object with nested handles", async () => {
+                    const subMap = factory.create(runtime, "subMap");
+                    const subMap2 = factory.create(runtime, "subMap2");
+                    const containingObject = {
+                        subMapHandle: subMap.handle,
+                        nestedObj: {
+                            subMap2Handle: subMap2.handle,
+                        },
+                    };
+                    sharedMap.set("object", containingObject);
+
+                    const serialized = (sharedMap as SharedMap).serialize();
+                    assert.equal(serialized, `{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"subMap"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"subMap2"}}}}}`);
                 });
             });
 

@@ -13,7 +13,7 @@ export enum ValueType {
     Shared,
 
     /**
-     * The value is a plain JavaScript object
+     * The value is a plain JavaScript object or handle.  If a plain object, it may contain handles deeper within.
      */
     Plain,
 }

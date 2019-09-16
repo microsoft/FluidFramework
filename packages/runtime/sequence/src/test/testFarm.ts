@@ -5,6 +5,7 @@
 
 // tslint:disable
 import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp, MergeTreeTextHelper } from "@prague/merge-tree";
 import {
     LocalClientId,
     NonCollabClient,
