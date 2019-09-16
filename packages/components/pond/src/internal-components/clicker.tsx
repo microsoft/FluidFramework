@@ -37,7 +37,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
      * Do setup work here
      */
     protected async componentInitializingFirstTime() {
-        this.root.set("clicks", 0, CounterValueType.Name);
+        this.root.createValueType("clicks", CounterValueType.Name, 0);
 
         const clicks = this.root.get<Counter>("clicks");
         clicks.increment(5);
@@ -47,7 +47,7 @@ export class Clicker extends PrimedComponent implements IComponentHTMLVisual {
         this.root.set("storedMap", storedMap.handle);
 
         // Add another clicker to the map
-        storedMap.set("clicks2", 0, CounterValueType.Name);
+        storedMap.createValueType("clicks2", CounterValueType.Name, 0);
     }
 
     protected async componentHasInitialized() {

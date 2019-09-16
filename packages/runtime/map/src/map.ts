@@ -330,7 +330,6 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any): this {
-        // value is actually initialization params in the value type case
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
         // TODO ideally we could use makeSerializable in this case as well. But the interval

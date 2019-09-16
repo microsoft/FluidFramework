@@ -10,9 +10,6 @@ const myMap = SharedMap.create(this.runtime, id);
 ## Usage
 You can use a `SharedMap` mostly the same way you would a normal `Map` in JS.  However, keys must be strings only, and values must only be plain JS objects, `SharedObject` handles, or value types.  `SharedMap` also supports the following additional functionality as compared to a `Map`:
 
-### `.set()`
-The `set` method optionally takes a third parameter, which creates a value type.  More on that below.
-
 ### `.wait()`
 `SharedMap` has a `wait` method in addition to the normal `get`, which returns a `Promise` that resolves to the value when the key becomes available.
 
@@ -44,9 +41,9 @@ Value types are values stored on `SharedMap` and `SharedDirectory` that have spe
 You can create a counter on a key and increment it.
 
 ### Creation
-To create a `Counter`, provide the value type to the `set` method, and pass the initial value in as the value to set.
+To create a `Counter`, call .createValueType on the map/directory with the type and initial value.
 ```typescript
-myMap.set("counterKey", 0, CounterValueType.Name);
+myMap.createValueType("counterKey", CounterValueType.Name, 0);
 const myCounter = myMap.get("counterKey");
 ```
 

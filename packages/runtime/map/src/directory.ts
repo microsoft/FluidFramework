@@ -855,7 +855,6 @@ class SubDirectory implements IDirectory {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any): this {
-        // value is actually initialization params in the value type case
         const localValue = this.directory.localValueMaker.makeValueType(
             type,
             this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
