@@ -28,6 +28,8 @@
     "@prague/protocol-definitions": "^0.10.0",
     "@prague/routerlicious-socket-storage": "^0.10.0",
     "@microsoft/fluid-server-services-core": "^0.10.0",
+    "@prague/local-test-server": "^0.10.0",
+    "@microsoft/fluid-server-test-utils": "^0.10.0",
     "axios": "^0.18.0",
     "jsonwebtoken": "^8.4.0",
     "moniker": "^0.1.2",

@@ -4,6 +4,7 @@
  */
 
 import { getRandomName } from "@microsoft/fluid-server-services-core";
+
 // tslint:disable no-string-literal trailing-comma no-shadowed-variable no-submodule-imports no-floating-promises
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { IHostConfig, start as startCore } from "@prague/base-host";
@@ -17,15 +18,23 @@ import {
     IPraguePackage,
 } from "@prague/container-definitions";
 import { extractDetails, IResolvedPackage } from "@prague/loader-web";
-import { IDocumentServiceFactory, IUser } from "@prague/protocol-definitions";
+import {TestDeltaConnectionServer, TestDocumentServiceFactory, TestResolver} from "@prague/local-test-server";
+import { IDocumentServiceFactory, IUrlResolver, IUser } from "@prague/protocol-definitions";
 import { DefaultErrorTracking, RouterliciousDocumentServiceFactory } from "@prague/routerlicious-socket-storage";
 import * as jwt from "jsonwebtoken";
 import * as uuid from "uuid/v4";
 import { InsecureUrlResolver } from "./insecureUrlResolver";
 // import * as fetch from "isomorphic-fetch";
-
 export interface IDevServerUser extends IUser {
     name: string;
+}
+
+export interface IRouteOptions {
+    mode: "local" | "localhost" | "live";
+    fluidHost?: string;
+    tenantId?: string;
+    tenantSecret?: string;
+    component?: string;
 }
 
 function getUser(): IDevServerUser {
@@ -126,15 +135,12 @@ async function getPkg(packageJson: IPackage, scriptId: string, component = false
     });
 }
 
+const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
+
+// tslint:disable-next-line: max-func-body-length
 export async function start(
     packageJson: IPackage,
-    host: string,
-    routerlicious: string,
-    historian: string,
-    npm: string,
-    tenantId: string,
-    secret: string,
-    jwt: string,
+    options: IRouteOptions,
     div: HTMLDivElement,
     component: boolean
 ): Promise<void> {
@@ -144,16 +150,6 @@ export async function start(
     const scriptId = "pragueDevServerScriptToLoad";
     const scriptIds = [scriptId];
     const pkg = await getPkg(packageJson, scriptId, component);
-
-    // Get endpoints
-    const urlResolver = new InsecureUrlResolver(
-        host,
-        routerlicious,
-        historian,
-        tenantId,
-        secret,
-        getUser(),
-        jwt);
 
     // Construct a request
     const req: IRequest = {
@@ -169,28 +165,79 @@ export async function start(
             type: "browser",
         },
     };
+    let urlResolver: IUrlResolver;
+    let npm: string;
+    switch (options.mode) {
+        case "live":
+            npm = "https://pragueauspkn-3873244262.azureedge.net";
+            const host = options.fluidHost ? options.fluidHost : "https://www.wu2.prague.office-int.com";
+            urlResolver = new InsecureUrlResolver(
+                host,
+                host.replace("www", "alfred"),
+                host.replace("www", "historian"),
+                options.tenantId ? options.tenantId : "stoic-gates",
+                options.tenantSecret ? options.tenantSecret : "1a7f744b3c05ddc525965f17a1b58aa0",
+                getUser(),
+                bearerSecret);
+            break;
 
-    const documentServiceFactory: IDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
+        case "localhost":
+            npm = "http://localhost:3002";
+            const localHost = "http://localhost:3000";
+            urlResolver = new InsecureUrlResolver(
+                localHost,
+                localHost,
+                localHost,
+                "prague",
+                "43cfc3fbf04a97c0921fd23ff10f9e4b",
+                getUser(),
+                bearerSecret);
+            break;
+
+        case "local":
+            urlResolver = new TestResolver();
+        default:
+    }
+
+    let documentServiceFactory: IDocumentServiceFactory;
+    if (options.mode !== "local") {
+        documentServiceFactory = new RouterliciousDocumentServiceFactory(
             false,
             new DefaultErrorTracking(),
             false,
             true,
             undefined,
         );
+        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
 
-    const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+        startCore(
+            url,
+            await urlResolver.resolve(req),
+            pkg,
+            scriptIds,
+            npm,
+            config,
+            {},
+            div,
+            hostConf,
+        );
+    } else {
 
-    startCore(
-        url,
-        await urlResolver.resolve(req),
-        pkg,
-        scriptIds,
-        npm,
-        config,
-        {},
-        div,
-        hostConf,
-    );
+        const deltaConn = TestDeltaConnectionServer.create();
+        documentServiceFactory = new TestDocumentServiceFactory(deltaConn);
+        const hostConf: IHostConfig = { documentServiceFactory, urlResolver };
+        startCore(
+            url,
+            await urlResolver.resolve(req),
+            pkg,
+            scriptIds,
+            npm,
+            config,
+            {},
+            div,
+            hostConf,
+        );
+    }
 }
 
 export function getUserToken(bearerSecret: string) {
