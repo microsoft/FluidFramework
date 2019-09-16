@@ -104,11 +104,15 @@ export class Container extends EventEmitterWithErrorHandling implements IContain
             logger);
 
         const containerP = new Promise<Container>(async (res, rej) => {
+            container.once("error", (error) => {
+                rej(error);
+            });
             await container.load(version, connection)
                 .then(() => {
                     res(container);
                 })
                 .catch((error) => {
+                    container.emit("error", error);
                     rej(error);
             });
         });
