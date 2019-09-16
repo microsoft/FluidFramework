@@ -180,12 +180,13 @@ export function register(
     tenantManager: ITenantManager,
     contentCollection: ICollection<any>) {
 
+    const socketList: IWebSocket[] = [];
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
-
+        socketList.push(socket);
         async function connectDocument(message: IConnect): Promise<IConnected> {
             // Validate token signature and claims
             const token = message.token;
@@ -348,12 +349,13 @@ export function register(
             const roomId = roomMap.get(clientId);
 
             for (const content of contents) {
-                const signalMessage: ISignalMessage = {
-                    clientId,
-                    content,
-                };
-
-                socket.emitToRoom(roomId, "signal", signalMessage);
+                socketList.forEach((webSocket: IWebSocket) => {
+                    const signalMessage: ISignalMessage = {
+                        clientId,
+                        content,
+                    };
+                    webSocket.emitToRoom(roomId, "signal", signalMessage);
+                });
             }
 
             response(null);
