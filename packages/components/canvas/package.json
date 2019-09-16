@@ -45,7 +45,7 @@
     "@prague/aqueduct": "^0.10.0",
     "@prague/client-ui": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
-    "@microsoft/fluid-ink-stream": "^0.10.0",
+    "@microsoft/fluid-ink": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-runtime-definitions": "^0.10.0"
   },

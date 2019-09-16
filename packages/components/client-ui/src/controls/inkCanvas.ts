@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as ink from "@microsoft/fluid-ink-stream";
+import * as ink from "@microsoft/fluid-ink";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";
 import { Image } from "./image";

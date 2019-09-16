@@ -6,7 +6,7 @@
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import * as ink from "@microsoft/fluid-ink-stream";
+import * as ink from "@microsoft/fluid-ink";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";

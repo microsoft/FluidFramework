@@ -59,7 +59,7 @@
     "@prague/container-loader": "^0.10.0",
     "@prague/gitresources": "^0.10.0",
     "@prague/host-service-interfaces": "^0.10.0",
-    "@microsoft/fluid-ink-stream": "^0.10.0",
+    "@microsoft/fluid-ink": "^0.10.0",
     "@prague/loader-web": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInk } from "@microsoft/fluid-ink-stream";
+import { IInk } from "@microsoft/fluid-ink";
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import * as Sequence from "@microsoft/fluid-sequence";

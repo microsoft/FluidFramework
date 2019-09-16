@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPen, IStylusOperation } from "@microsoft/fluid-ink-stream";
+import { IPen, IStylusOperation } from "@microsoft/fluid-ink";
 import { IPoint, IVector, Point, Vector } from "../ui";
 import { SegmentCircleInclusive } from "./overlayCanvas";
 import { Circle, IShape, Polygon } from "./shapes/index";

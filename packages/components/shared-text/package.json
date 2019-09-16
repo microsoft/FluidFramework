@@ -56,7 +56,7 @@
     "@microsoft/fluid-component-runtime": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
     "@microsoft/fluid-container-runtime": "^0.10.0",
-    "@microsoft/fluid-ink-stream": "^0.10.0",
+    "@microsoft/fluid-ink": "^0.10.0",
     "@prague/intelligence-runner": "^0.10.0",
     "@microsoft/fluid-map": "^0.10.0",
     "@microsoft/fluid-merge-tree": "^0.10.0",

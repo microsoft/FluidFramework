@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInk, Ink } from "@microsoft/fluid-ink-stream";
+import { IInk, Ink } from "@microsoft/fluid-ink";
 import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { PrimedComponent } from "@prague/aqueduct";

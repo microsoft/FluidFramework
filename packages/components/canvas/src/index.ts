@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Ink } from "@microsoft/fluid-ink-stream";
+import { Ink } from "@microsoft/fluid-ink";
 import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { Canvas } from "./canvas";
 

@@ -6,7 +6,7 @@
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
-import * as ink from "@microsoft/fluid-ink-stream";
+import * as ink from "@microsoft/fluid-ink";
 import * as map from "@microsoft/fluid-map";
 import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
 import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";

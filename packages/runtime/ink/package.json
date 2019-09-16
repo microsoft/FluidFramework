@@ -1,5 +1,5 @@
 {
-  "name": "@microsoft/fluid-ink-stream",
+  "name": "@microsoft/fluid-ink",
   "version": "0.10.0",
   "description": "Ink DDS",
   "main": "dist/index.js",

@@ -4,7 +4,7 @@
  */
 
 // The main app code
-import { IColor, IInk } from "@microsoft/fluid-ink-stream";
+import { IColor, IInk } from "@microsoft/fluid-ink";
 import * as ui from "../ui";
 import { Button } from "./button";
 import { debug } from "./debug";

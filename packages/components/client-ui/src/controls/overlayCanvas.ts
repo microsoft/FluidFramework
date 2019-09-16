@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as ink from "@microsoft/fluid-ink-stream";
+import * as ink from "@microsoft/fluid-ink";
 import * as api from "@prague/client-api";
 import * as assert from "assert";
 import * as ui from "../ui";
