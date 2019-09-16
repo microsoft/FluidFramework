@@ -32,7 +32,7 @@ export class OuterDocumentServiceFactory implements IDocumentServiceFactory {
         documentServiceP
             .then((documentService) => {
                 return Promise.all([
-                    documentService.connectToDeltaStream(clientDetails!),
+                    documentService.connectToDeltaStream(clientDetails!, "write"),
                     documentService.connectToDeltaStorage(),
                     documentService.connectToStorage(),
                 ]);

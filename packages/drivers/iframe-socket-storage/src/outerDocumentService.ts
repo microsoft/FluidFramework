@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -131,8 +132,8 @@ export class OuterDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for routerlicious driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
-        this.deltaConnection = await this.documentService.connectToDeltaStream(client);
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
+        this.deltaConnection = await this.documentService.connectToDeltaStream(client, mode);
         assert((this.deltaConnection as any).socket !== undefined);
 
         const connection: IConnected = {
@@ -143,6 +144,7 @@ export class OuterDocumentService implements IDocumentService {
             initialMessages: this.deltaConnection.initialMessages,
             initialSignals: this.deltaConnection.initialSignals,
             maxMessageSize: this.deltaConnection.maxMessageSize,
+            mode: this.deltaConnection.mode,
             parentBranch: this.deltaConnection.parentBranch,
             serviceConfiguration: this.deltaConnection.serviceConfiguration,
             version: this.deltaConnection.version,

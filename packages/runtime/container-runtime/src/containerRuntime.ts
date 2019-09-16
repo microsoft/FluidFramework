@@ -754,6 +754,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.summaryManager.setConnected(clientId);
         } else {
             this.summaryManager.setDisconnected();
+            this.proposeLeadershipOnConnection = true;
         }
     }
 
@@ -1311,7 +1312,9 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
     }
 
     private startLeaderElection() {
-        if (this.deltaManager && this.deltaManager.clientType === Browser) {
+        if (this.deltaManager &&
+            this.deltaManager.clientType === Browser &&
+            (this.context.configuration === undefined || this.context.configuration.canReconnect)) {
             this.initLeaderElection();
         }
     }
@@ -1338,7 +1341,7 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
         });
         this.leaderElector.on("memberLeft", (clientId: string) => {
             debug(`Member ${clientId} left`);
-            if (this.leader) {
+            if (this.leader && this.deltaManager.active) {
                 this.runTaskAnalyzer();
             }
         });
@@ -1350,16 +1353,18 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime, IRun
             this.proposeLeadershipOnConnection = true;
             return;
         }
-        this.proposeLeadershipOnConnection = false;
 
-        this.leaderElector.proposeLeadership(this.clientId).then(() => {
-            debug(`Leadership proposal accepted for ${this.clientId}`);
-        }, (err) => {
-            debug(`Leadership proposal rejected ${err}`);
-            if (!this.connected) {
-                this.proposeLeadershipOnConnection = true;
-            }
-        });
+        if (this.deltaManager.active && this.leaderElector) {
+            this.proposeLeadershipOnConnection = false;
+            this.leaderElector.proposeLeadership(this.clientId).then(() => {
+                debug(`Leadership proposal accepted for ${this.clientId}`);
+            }, (err) => {
+                debug(`Leadership proposal rejected ${err}`);
+                if (!this.connected) {
+                    this.proposeLeadershipOnConnection = true;
+                }
+            });
+        }
     }
 
     /**

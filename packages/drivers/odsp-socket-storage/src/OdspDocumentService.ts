@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@prague/container-definitions";
 import {
+    ConnectionMode,
     IClient,
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -135,7 +136,7 @@ export class OdspDocumentService implements IDocumentService {
      *
      * @returns returns the document delta stream service for sharepoint driver.
      */
-    public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+    public async connectToDeltaStream(client: IClient, mode: ConnectionMode): Promise<IDocumentDeltaConnection> {
         // We should refresh our knowledge before attempting to reconnect
         this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
 
@@ -148,7 +149,7 @@ export class OdspDocumentService implements IDocumentService {
             io,
             client,
             websocketEndpoint.deltaStreamSocketUrl,
-        );
+            mode);
     }
 
     public async branch(): Promise<string> {

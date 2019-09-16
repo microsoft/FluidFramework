@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     ISequencedDocumentMessage,
     IServiceConfiguration,
@@ -18,6 +19,7 @@ export interface IConnectionDetails {
     clientId: string;
     claims: ITokenClaims;
     existing: boolean;
+    mode: ConnectionMode;
     parentBranch: string | null;
     version: string;
     initialMessages?: ISequencedDocumentMessage[];
@@ -93,12 +95,7 @@ export interface IDeltaManager<T, U> extends EventEmitter, IDeltaSender, IDispos
     // Service configuration provided by the service.
     serviceConfiguration: IServiceConfiguration;
 
-    /**
-     * Puts the delta manager in read only mode
-     */
-    enableReadonlyMode(): void;
-
-    disableReadonlyMode(): void;
+    active: boolean;
 
     close(): void;
 

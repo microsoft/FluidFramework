@@ -412,6 +412,7 @@ export abstract class SharedObject extends EventEmitterWithErrorHandling impleme
                 // - we have a client ID
                 // - we are caught up enough to attempt to send messages
                 this.onConnect(pendingOps);
+                this.emit("connected");
 
                 break;
 

@@ -66,7 +66,6 @@ describe("Routerlicious", () => {
                         producer);
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
-                        testStorage,
                         1024 * 1024,
                         DefaultServiceConfiguration);
                     testOrderer = new OrdererManager(url, testTenantManager, null, kafkaOrderer, null);
@@ -79,6 +78,7 @@ describe("Routerlicious", () => {
                         metricClientConfig,
                         testOrderer,
                         testTenantManager,
+                        testStorage,
                         contentCollection);
                 });
 
@@ -93,6 +93,7 @@ describe("Routerlicious", () => {
                     const connectMessage: IConnect = {
                         client: undefined,
                         id,
+                        mode: "read",
                         tenantId,
                         token,
                         versions: ["^0.1.0"],

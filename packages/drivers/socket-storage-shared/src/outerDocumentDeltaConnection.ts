@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -62,6 +63,15 @@ export class OuterDocumentDeltaConnection extends EventEmitter implements IDocum
      */
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    /**
+     * Get the mode of the client
+     *
+     * @returns the client mode
+     */
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     /**

@@ -4,6 +4,7 @@
  */
 
 import {
+    ConnectionMode,
     IContentMessage,
     IDocumentDeltaConnection,
     IDocumentMessage,
@@ -102,6 +103,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
      */
     public static async create(
             documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection> {
+        const mode: ConnectionMode = "write";
         const connection = {
             claims: Claims,
             clientId: "",
@@ -110,6 +112,7 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
             initialMessages: [],
             initialSignals: [],
             maxMessageSize: ReplayMaxMessageSize,
+            mode,
             parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
@@ -144,6 +147,10 @@ export class ReplayFileDeltaConnection extends EventEmitter implements IDocument
 
     public get clientId(): string {
         return this.details.clientId;
+    }
+
+    public get mode(): ConnectionMode {
+        return this.details.mode;
     }
 
     public get claims(): ITokenClaims {
