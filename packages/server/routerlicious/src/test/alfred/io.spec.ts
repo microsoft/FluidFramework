@@ -171,7 +171,6 @@ describe("Routerlicious", () => {
                         });
                 });
 
-                /*
                 describe("#disconnect", () => {
                     it("Should disconnect from an interactive document", async () => {
                         const socket = webSocketServer.createConnection();
@@ -182,7 +181,7 @@ describe("Routerlicious", () => {
                         // There is no ack for the disconnect, but the message will be ordered with future messages.
                         await connectToServer(testId, testTenantId, testSecret, webSocketServer.createConnection());
 
-                        assert.equal(deliKafka.getRawMessages().length, 3);
+                        assert.equal(deliKafka.getRawMessages().length, 2);
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
@@ -191,7 +190,7 @@ describe("Routerlicious", () => {
                         const clientId = JSON.parse(systemLeaveMessage.data) as string;
                         assert.equal(clientId, connectMessage.clientId);
                     });
-                });*/
+                });
 
                 describe("#submitOp", () => {
                     it("Can connect to the web socket server", async () => {
