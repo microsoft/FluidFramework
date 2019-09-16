@@ -4,7 +4,6 @@
  */
 
 import { Document, load } from "@prague/client-api";
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { IInboundSignalMessage } from "@prague/runtime-definitions";
 import * as assert from "assert";
 import {

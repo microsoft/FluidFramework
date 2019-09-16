@@ -330,7 +330,9 @@ export function register(
             };
 
             contentCollection.insertOne(dbMessage).then(() => {
-                socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
+                socketList.forEach((webSocket: IWebSocket) => {
+                    webSocket.emit("op-content", broadCastMessage);
+                });
                 return response(null);
             }, (error) => {
                 if (error.code !== 11000) {
@@ -346,15 +348,13 @@ export function register(
                 return response("Invalid client ID", null);
             }
 
-            const roomId = roomMap.get(clientId);
-
             for (const content of contents) {
                 socketList.forEach((webSocket: IWebSocket) => {
                     const signalMessage: ISignalMessage = {
                         clientId,
                         content,
                     };
-                    webSocket.emitToRoom(roomId, "signal", signalMessage);
+                    webSocket.emit("signal", signalMessage);
                 });
             }
 
