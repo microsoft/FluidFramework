@@ -945,9 +945,9 @@ export class Client {
         }
     }
 
-    getContainingSegment(pos: number) {
+    getContainingSegment<T extends ISegment>(pos: number) {
         const segWindow = this.mergeTree.getCollabWindow();
-        return this.mergeTree.getContainingSegment(pos, segWindow.currentSeq, segWindow.clientId);
+        return this.mergeTree.getContainingSegment<T>(pos, segWindow.currentSeq, segWindow.clientId);
     }
 
     getPropertiesAtPosition(pos: number) {

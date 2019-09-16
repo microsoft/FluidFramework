@@ -94,7 +94,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return ops;
     }
 
-    public client: MergeTree.Client;
+    protected client: MergeTree.Client;
     protected isLoaded = false;
     // Deferred that triggers once the object is loaded
     protected loadedDeferred = new Deferred<void>();
@@ -233,7 +233,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     public getContainingSegment(pos: number) {
-        return this.client.getContainingSegment(pos);
+        return this.client.getContainingSegment<T>(pos);
     }
 
     /**

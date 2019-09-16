@@ -6,7 +6,6 @@
 import { PrimedComponent } from "@prague/aqueduct";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import {
-    BaseSegment,
     ISegment,
     LocalReference,
     PropertySet,
@@ -76,12 +75,12 @@ export class SourceDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return Object.freeze(new LocalReference(this.sharedString.client, endOfTextSegment));
+            this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
-        this.sharedString.addLocalReference(localRef);
+        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
+
         return localRef;
     }
 

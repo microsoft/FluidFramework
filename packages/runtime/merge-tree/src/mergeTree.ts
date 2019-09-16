@@ -1756,12 +1756,12 @@ export class MergeTree {
         return accum.segments;
     }
 
-    getContainingSegment(pos: number, refSeq: number, clientId: number) {
-        let segment: ISegment | undefined;
+    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number) {
+        let segment: T | undefined;
         let offset: number | undefined;
 
         const leaf = (leafSeg: ISegment, segpos: number, refSeq: number, clientId: number, start: number) => {
-            segment = leafSeg;
+            segment = leafSeg as T;
             offset = start;
             return false;
         };

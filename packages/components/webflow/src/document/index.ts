@@ -7,7 +7,6 @@ import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
 import { randomId, TokenList } from "@prague/flow-util";
 import {
-    BaseSegment,
     createInsertSegmentOp,
     createRemoveRangeOp,
     IMergeTreeRemoveMsg,
@@ -24,7 +23,7 @@ import {
     TextSegment,
 } from "@prague/merge-tree";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory } from "@prague/sequence";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent, SharedString, SharedStringFactory, SharedStringSegment } from "@prague/sequence";
 import * as assert from "assert";
 import { clamp, emptyArray } from "../util";
 import { IHTMLAttributes } from "../util/attr";
@@ -123,7 +122,7 @@ const accumAsLeafAction = (
 //       to undefined segments.)
 //
 //       See: https://github.com/microsoft/Prague/issues/2408
-const endOfTextSegment = undefined as unknown as BaseSegment;
+const endOfTextSegment = undefined as unknown as SharedStringSegment;
 
 export class FlowDocument extends PrimedComponent {
     private get sharedString() { return this.maybeSharedString; }
@@ -174,12 +173,12 @@ export class FlowDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            return new LocalReference(this.sharedString.client, endOfTextSegment);
+            this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
-        const localRef = new LocalReference(this.sharedString.client, segment as BaseSegment, offset, ReferenceType.SlideOnRemove);
-        this.sharedString.addLocalReference(localRef);
+        const localRef = this.sharedString.createPositionReference(segment, offset, ReferenceType.SlideOnRemove);
+
         return localRef;
     }
 

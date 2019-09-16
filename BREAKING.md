@@ -5,6 +5,7 @@
 - [DistributedSet removed](#distributedset-removed)
 - [`Stream` renamed to `Ink`](#stream-renamed-to-ink)
 - [`insertSiblingSegment` change to `insertAtReferencePosition`](#insertAtReferencePosition)
+- [MergeTree Client No Longer Public on Sequence](#MergeTree-Client-No-Longer-Public-on-Sequence)
 
 ## `@prague/tiny-web-host` prague -> fluid changes
 `loadPragueComponent`, `loadIFramedPragueComponent`, and `isPragueUrl` from `@prague/tiny-web-host` have been renamed to `loadFluidComponent`, `loadIFramedFluidComponent`, and `isFluidUrl`, respectively.
@@ -35,6 +36,8 @@ After:
             this.sequence.createPositionReference(sg, 0, ReferenceType.Transient),
             insertSegment);
 ```
+## MergeTree Client No Longer Public on Sequence
+The client property is not longer public on sequence. All existing and supported functionality should be used off sequence itself.
 
 # 0.9 Breaking Changes (August 26, 2019)
 
