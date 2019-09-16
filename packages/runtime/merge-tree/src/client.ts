@@ -872,10 +872,8 @@ export class Client {
             }
         }
 
-        if (opList.length === 1) {
-            return opList[0];
-        } else {
-            return OpBuilder.createGroupOp(...opList);
+        if (opList.length > 0) {
+            return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
         }
     }
 
