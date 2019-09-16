@@ -496,13 +496,13 @@ const commands: IFlowViewCmd[] = [
     },
     {
         exec: (c, p, f) => {
-            f.insertComponentNew("map", "@chaincode/pinpoint-editor");
+            f.insertComponentNew("map", "@fluid-exampl/pinpoint-editor");
         },
         key: "insert new map",
     },
     {
         exec: (c, p, f) => {
-            f.insertComponentNew("code", "@chaincode/monaco");
+            f.insertComponentNew("code", "@fluid-exampl/monaco");
         },
         key: "insert new monaco",
     },
