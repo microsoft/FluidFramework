@@ -7,6 +7,10 @@ import { SharedCell } from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { IInk, Ink } from "@microsoft/fluid-ink";
 import * as DistributedMap from "@microsoft/fluid-map";
+import {
+    ISharedMap,
+    SharedMap,
+} from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import {

@@ -13,6 +13,7 @@ export { ui };
 
 export { controls };
 
+import { CharacterCodes, Paragraph, Table } from "./text";
 export { CharacterCodes, Paragraph, Table };
 
 export { Text };
