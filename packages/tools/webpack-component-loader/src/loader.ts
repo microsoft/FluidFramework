@@ -80,59 +80,60 @@ async function getPkg(packageJson: IPackage, scriptId: string, component = false
     const legacyPackage = `${fluidPackage.name}@${fluidPackage.version}`;
 
     // Add script to page, rather than load bundle directly
-    const script = document.createElement("script");
-    script.src = `${window.location.origin}/dist/main.bundle.js`;
-    script.id = scriptId;
+    const scriptLoadP: Promise<void>[] = [];
+    fluidPackage.fluid.browser.umd.files.forEach((file) => {
+        const script = document.createElement("script");
+        script.src = file;
+        script.id = scriptId;
 
-    const onloadP = new Promise((resolve) => {
-        script.onload = () => {
-            resolve();
-        };
-    });
-
-    document.body.appendChild(script);
-
-    return onloadP.then(() => {
-
-        if (component) {
-            // Wrap the core component in a runtime
-            const loadedComponentRaw = window["main"];
-            const fluidModule = loadedComponentRaw as IFluidModule;
-            const componentFactory = fluidModule.fluidExport.IComponentFactory;
-
-            const runtimeFactory = new SimpleModuleInstantiationFactory(
-                legacyPackage,
-                new Map([
-                    [legacyPackage, Promise.resolve(componentFactory)],
-                ]),
-            );
-            window["componentMain"] = {
-                fluidExport: runtimeFactory,
+        scriptLoadP.push(new Promise((resolve) => {
+            script.onload = () => {
+                resolve();
             };
+        }));
 
-            fluidPackage.fluid.browser.umd.library = "componentMain";
-            fluidPackage.name = `${fluidPackage.name}-dev-server`;
-
-        }
-
-        return {
-            pkg: fluidPackage,
-            details: {
-                config: {
-                    [`@${details.scope}:cdn`]: window.location.origin,
-                },
-                package: fluidPackage,
-            },
-            parsed: {
-                full: legacyPackage,
-                pkg: "NA",
-                name: "NA",
-                version: "NA",
-                scope: "NA"
-            },
-            packageUrl: "NA"
-        };
+        document.body.appendChild(script);
     });
+    await Promise.all(scriptLoadP);
+
+    if (component) {
+        // Wrap the core component in a runtime
+        const loadedComponentRaw = window["main"];
+        const fluidModule = loadedComponentRaw as IFluidModule;
+        const componentFactory = fluidModule.fluidExport.IComponentFactory;
+
+        const runtimeFactory = new SimpleModuleInstantiationFactory(
+            legacyPackage,
+            new Map([
+                [legacyPackage, Promise.resolve(componentFactory)],
+            ]),
+        );
+        window["componentMain"] = {
+            fluidExport: runtimeFactory,
+        };
+
+        fluidPackage.fluid.browser.umd.library = "componentMain";
+        fluidPackage.name = `${fluidPackage.name}-dev-server`;
+
+    }
+
+    return {
+        pkg: fluidPackage,
+        details: {
+            config: {
+                [`@${details.scope}:cdn`]: window.location.origin,
+            },
+            package: fluidPackage,
+        },
+        parsed: {
+            full: legacyPackage,
+            pkg: "NA",
+            name: "NA",
+            version: "NA",
+            scope: "NA"
+        },
+        packageUrl: "NA"
+    };
 }
 
 const bearerSecret = "VBQyoGpEYrTn3XQPtXW3K8fFDd";
