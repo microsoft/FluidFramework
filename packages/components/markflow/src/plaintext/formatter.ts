@@ -4,7 +4,7 @@
  */
 
 import { Char, Direction, getDeltaX, KeyCode } from "@prague/flow-util";
-import { ISegment, TextSegment } from "@prague/merge-tree";
+import { ISegment, TextSegment } from "@microsoft/fluid-merge-tree";
 import { FlowDocument } from "..";
 import { ClipboardFormat } from "../clipboard/paste";
 import { Caret } from "../editor/caret";

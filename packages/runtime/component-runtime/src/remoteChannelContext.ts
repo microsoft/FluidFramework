@@ -16,7 +16,7 @@ import {
     IChannelAttributes,
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";

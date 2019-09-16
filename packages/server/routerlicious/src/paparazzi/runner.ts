@@ -15,7 +15,7 @@ import {
 } from "@prague/protocol-definitions";
 import { ContainerUrlResolver } from "@prague/routerlicious-host";
 import * as socketStorage from "@prague/routerlicious-socket-storage";
-import { IQueueMessage } from "@prague/runtime-definitions";
+import { IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import { Deferred } from "@prague/utils";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";

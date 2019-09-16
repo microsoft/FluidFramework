@@ -6,7 +6,7 @@
 import * as api from "@prague/client-api";
 import { IHost } from "@prague/container-definitions";
 import { IClient } from "@prague/protocol-definitions";
-import { IHelpMessage } from "@prague/runtime-definitions";
+import { IHelpMessage } from "@microsoft/fluid-runtime-definitions";
 import { RateLimiter } from "@prague/utils";
 import { debug } from "./debug";
 import { loadDictionary } from "./dictionaryLoader";

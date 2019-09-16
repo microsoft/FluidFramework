@@ -5,7 +5,7 @@
 
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
-import { TextSegment } from "@prague/merge-tree";
+import { TextSegment } from "@microsoft/fluid-merge-tree";
 import * as assert from "assert";
 import { FlowDocument, flowDocumentFactory, SegmentSpan } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";

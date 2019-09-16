@@ -10,7 +10,7 @@ import {
     MessageType,
     ScopeType,
 } from "@prague/protocol-definitions";
-import { IAttachMessage, IEnvelope } from "@prague/runtime-definitions";
+import { IAttachMessage, IEnvelope } from "@microsoft/fluid-runtime-definitions";
 import * as fs from "fs";
 import * as util from "util";
 import {

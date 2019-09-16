@@ -33,7 +33,7 @@ import {
     IEnvelope,
     IHostRuntime,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

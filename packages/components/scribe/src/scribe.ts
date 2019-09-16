@@ -12,25 +12,25 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IContainerContext,
     IFluidCodeDetails,
     IRuntime,
     IRuntimeFactory,
 } from "@prague/container-definitions";
-import { ContainerRuntime } from "@prague/container-runtime";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
 import { IDocumentFactory } from "@prague/host-service-interfaces";
 import {
     ISharedMap,
     SharedMap,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import Axios from "axios";
 import { EventEmitter } from "events";
 import { resolve } from "url";

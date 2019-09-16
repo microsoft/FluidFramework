@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory } from '@prague/map';
+import { ISharedDirectory } from '@microsoft/fluid-map';
 import * as React from 'react';
 
 interface WinnerTextProps {

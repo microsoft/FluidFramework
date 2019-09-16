@@ -14,7 +14,7 @@ import {
   IComponentHTMLOptions,
   IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
-import { Counter, CounterValueType } from "@prague/map";
+import { Counter, CounterValueType } from "@microsoft/fluid-map";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";

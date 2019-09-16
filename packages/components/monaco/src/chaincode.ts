@@ -19,12 +19,12 @@ import {
     IMergeTreeOp,
     IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 import {
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import { SharedString } from "@prague/sequence";
+} from "@microsoft/fluid-runtime-definitions";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as monaco from "monaco-editor";
 
 /**

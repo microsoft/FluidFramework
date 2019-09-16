@@ -14,7 +14,7 @@ import {
 import {
   Counter,
   CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

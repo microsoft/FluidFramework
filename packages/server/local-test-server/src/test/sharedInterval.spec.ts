@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IntervalType, LocalReference } from "@prague/merge-tree";
+import { IntervalType, LocalReference } from "@microsoft/fluid-merge-tree";
 import {
     SharedIntervalCollectionView,
     SharedString,
     SharedStringFactory,
     SharedStringInterval,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import { TestHost } from "../";
 

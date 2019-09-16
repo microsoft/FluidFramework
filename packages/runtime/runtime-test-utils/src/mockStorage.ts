@@ -9,7 +9,7 @@ import {
 } from "@prague/protocol-definitions";
 import {
     IObjectStorageService,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 
 /**

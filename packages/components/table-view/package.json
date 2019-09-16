@@ -50,8 +50,8 @@
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
     "@prague/flow-util": "^0.10.0",
-    "@prague/map": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0"
+    "@microsoft/fluid-map": "^0.10.0",
+    "@microsoft/fluid-runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/fluid-webpack-component-loader": "^0.10.0",

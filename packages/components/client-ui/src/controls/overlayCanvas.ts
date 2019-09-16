@@ -4,7 +4,7 @@
  */
 
 import * as api from "@prague/client-api";
-import * as ink from "@prague/ink";
+import * as ink from "@microsoft/fluid-ink-stream";
 import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";

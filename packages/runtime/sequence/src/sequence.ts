@@ -7,8 +7,8 @@ import {
     IValueChanged,
     IValueType,
     SharedMap,
-} from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+} from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
     ISequencedDocumentMessage,
     ITree,
@@ -17,8 +17,8 @@ import {
     IChannelAttributes,
     IComponentRuntime,
     IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { parseHandles, serializeHandles } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports

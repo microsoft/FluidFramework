@@ -12,10 +12,10 @@ import {
     IDirectory,
     IDirectoryValueChanged,
     ISharedDirectory,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
     SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 import React, { useEffect, useRef, useState } from "react";
 import ReactList from "react-list";

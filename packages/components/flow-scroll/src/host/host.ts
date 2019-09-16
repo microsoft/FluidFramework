@@ -9,7 +9,7 @@ import { Editor, FlowDocument, htmlFormatter, Tag } from "@chaincode/webflow";
 import { IComponent, IComponentHTMLView, IComponentHTMLVisual, IComponentLoadable } from "@prague/component-core-interfaces";
 import { KeyCode, randomId, Template } from "@prague/flow-util";
 import { IComponentCollection } from "@prague/framework-definitions";
-import { TST } from "@prague/merge-tree";
+import { TST } from "@microsoft/fluid-merge-tree";
 import * as styles from "./index.css";
 
 const template = new Template(

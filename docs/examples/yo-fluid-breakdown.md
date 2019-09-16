@@ -82,7 +82,7 @@ First we will declare all our imports. Here is a quick description and use cases
 
 `PrimedComponent` and `PrimedComponentFactory` from <xref:@prague/aqueduct!> provides helper functionality.
 `IComponentHTMLVisual` from <xref:@prague/component-core-interfaces!> provides the interface for enabling rendering.
-`CounterValueType` from <xref:@prague/map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
+`CounterValueType` from <xref:@microsoft/fluid-map!> is a Value Type we'll use in our root Distributed Data Structure (more on that later).
 `IComponentContext` and `IComponentRuntime` are the interfaces for important fluid objects passed to our Component.
 `React` and `ReactDOM` are *only for React* and enable React use.
 
@@ -96,11 +96,11 @@ import {
 } from "@prague/component-core-interfaces";
 import {
   CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
   IComponentContext,
   IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 
 import * as React from "react"; // only used with react
 import * as ReactDOM from "react-dom"; // only used with react

@@ -5,9 +5,9 @@
 
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
-import * as Sequence from "@prague/sequence";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { Translator } from "@prague/translator";
 import { Provider } from "nconf";
 import { BaseWork} from "./baseWork";

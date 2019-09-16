@@ -17,14 +17,14 @@ import {
 import {
     IComponentCollection,
 } from "@prague/framework-definitions";
-import { SharedMap } from "@prague/map";
+import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
     IComponentContext,
     IComponentRuntime,
     ITask,
     ITaskManager,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { HostView  } from "./host";
 import { importDoc } from "./template";
 

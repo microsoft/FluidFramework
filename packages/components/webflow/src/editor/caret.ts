@@ -4,7 +4,7 @@
  */
 
 import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@prague/flow-util";
-import { LocalReference } from "@prague/merge-tree";
+import { LocalReference } from "@microsoft/fluid-merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";
 import { updateRef } from "../util/localref";

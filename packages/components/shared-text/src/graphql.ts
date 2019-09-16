@@ -4,7 +4,7 @@
  */
 
 import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import * as GraphiQL from "graphiql";
 import * as React from "react";

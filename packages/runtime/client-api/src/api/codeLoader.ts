@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@prague/cell";
+import * as cell from "@microsoft/fluid-cell";
 import { IRequest } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { ConsensusQueue, ConsensusStack } from "@prague/consensus-ordered-collection";
-import { ConsensusRegisterCollection } from "@prague/consensus-register-collection";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ConsensusQueue, ConsensusStack } from "@microsoft/fluid-ordered-collection";
+import { ConsensusRegisterCollection } from "@microsoft/fluid-register-collection";
 import {
     ICodeLoader,
     IContainerContext,
     IRuntime,
     IRuntimeFactory,
 } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@prague/container-runtime";
-import * as ink from "@prague/ink";
-import * as map from "@prague/map";
+import { ContainerRuntime, IComponentRegistry, IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import * as ink from "@microsoft/fluid-ink-stream";
+import * as map from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentFactory,
-} from "@prague/runtime-definitions";
-import * as sequence from "@prague/sequence";
+} from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
 import { Document } from "./document";
 
 const rootMapId = "root";

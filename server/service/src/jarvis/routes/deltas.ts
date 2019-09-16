@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@prague/runtime-definitions";
+import { ISequencedDocumentMessage } from "@microsoft/fluid-runtime-definitions";
 import { IAlfredTenant } from "@microsoft/fluid-server-services-core";
 import * as utils from "@microsoft/fluid-server-services-utils";
 import { Router } from "express";

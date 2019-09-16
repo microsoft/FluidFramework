@@ -7,14 +7,14 @@ import {
 } from "@prague/aqueduct";
 import {
     SharedCell,
-} from "@prague/cell";
+} from "@microsoft/fluid-cell";
 import {
     SharedMap,
-} from "@prague/map";
-import { IComponentFactory } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-map";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 import { Todo } from "./index";
 

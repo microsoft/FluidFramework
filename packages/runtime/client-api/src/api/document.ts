@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import * as cell from "@prague/cell";
-import { ComponentRuntime } from "@prague/component-runtime";
+import * as cell from "@microsoft/fluid-cell";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import {
     IDeltaManager,
     IGenericBlob,
     IHost,
 } from "@prague/container-definitions";
 import { Container, Loader } from "@prague/container-loader";
-import { IContainerRuntimeOptions } from "@prague/container-runtime";
-import * as ink from "@prague/ink";
-import { ISharedMap, SharedMap } from "@prague/map";
+import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
+import * as ink from "@microsoft/fluid-ink-stream";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@prague/protocol-definitions";
-import { IComponentContext } from "@prague/runtime-definitions";
-import * as sequence from "@prague/sequence";
-import { ISharedObject } from "@prague/shared-object-common";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";

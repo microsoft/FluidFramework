@@ -4,9 +4,9 @@
  */
 
 import { IRequest } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { SharedMap } from "@prague/map";
-import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { PinpointRunner } from "./runner";
 
 class PinpointMapsFactory implements IComponentFactory {

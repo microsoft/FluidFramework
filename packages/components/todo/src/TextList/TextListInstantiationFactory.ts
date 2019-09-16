@@ -5,9 +5,9 @@
 import {
     PrimedComponentFactory,
 } from "@prague/aqueduct";
-import { IComponentFactory } from "@prague/runtime-definitions";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import { TextList } from "./index";
 
 export const TextListInstantiationFactory: IComponentFactory = new PrimedComponentFactory(

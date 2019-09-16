@@ -5,9 +5,9 @@
 
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@prague/consensus-ordered-collection";
-import { ISharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

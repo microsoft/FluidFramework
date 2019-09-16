@@ -52,7 +52,7 @@ import {
     IHelpMessage,
     IHostRuntime,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     buildHierarchy,
     ComponentSerializer,

@@ -8,14 +8,14 @@ import {
     MapFactory,
     SharedDirectory,
     SharedMap,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
-} from "@prague/shared-object-common";
+} from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 import { SharedComponentFactory } from "./sharedComponentFactory";
 

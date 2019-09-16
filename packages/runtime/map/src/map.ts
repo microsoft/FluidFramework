@@ -15,14 +15,14 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
     parseHandles,
     serializeHandles,
     SharedObject,
     ValueType,
-} from "@prague/shared-object-common";
+} from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {

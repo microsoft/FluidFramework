@@ -4,8 +4,8 @@ uid: SharedMap
 
 # SharedMap
 
-* Package: <xref:@prague/map!>
-* API documentation: <xref:@prague/map!SharedMap:class>
+* Package: <xref:@microsoft/fluid-map!>
+* API documentation: <xref:@microsoft/fluid-map!SharedMap:class>
 
 The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and
 retrieving values that JavaScript developers are accustomed to with the

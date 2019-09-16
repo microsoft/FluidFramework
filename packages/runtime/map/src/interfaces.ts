@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { ISharedObject } from "@prague/shared-object-common";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
 export interface ISet<T> {
     add(value: T): ISet<T>;

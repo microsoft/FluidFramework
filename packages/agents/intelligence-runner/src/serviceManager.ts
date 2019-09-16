@@ -4,9 +4,9 @@
  */
 
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import * as Sequence from "@prague/sequence";
+import * as Sequence from "@microsoft/fluid-sequence";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
 

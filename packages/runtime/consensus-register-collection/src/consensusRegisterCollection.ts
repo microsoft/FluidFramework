@@ -11,8 +11,8 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
-import { ISharedObject, SharedObject, ValueType } from "@prague/shared-object-common";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";

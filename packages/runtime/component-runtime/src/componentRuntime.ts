@@ -33,8 +33,8 @@ import {
     IComponentRuntime,
     IEnvelope,
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import { buildHierarchy, ChildLogger, Deferred, flatten, raiseConnectedEvent } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

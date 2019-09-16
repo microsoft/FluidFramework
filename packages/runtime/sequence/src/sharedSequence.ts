@@ -8,8 +8,8 @@ import {
     IJSONSegment,
     ISegment,
     PropertySet,
-} from "@prague/merge-tree";
-import { IChannelAttributes, IComponentRuntime } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 
 const MaxRun = 128;

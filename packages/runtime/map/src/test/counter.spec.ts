@@ -5,7 +5,7 @@
 
 // tslint:disable: newline-per-chained-call
 // tslint:disable: no-backbone-get-set-outside-model
-import { MockRuntime } from "@prague/runtime-test-utils";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import * as map from "..";
 

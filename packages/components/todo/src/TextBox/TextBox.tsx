@@ -18,7 +18,7 @@ import {
 } from "@prague/framework-definitions";
 import {
   SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Counter } from '@prague/map';
+import { Counter } from '@microsoft/fluid-map';
 import * as React from 'react';
 
 interface TeamScoreProps {

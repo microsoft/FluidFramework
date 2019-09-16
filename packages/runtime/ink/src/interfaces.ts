@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject } from "@prague/shared-object-common";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 
 /**
  * X/Y point.

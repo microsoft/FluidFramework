@@ -8,7 +8,7 @@ import { IDocumentMessage, ISequencedDocumentMessage } from "@prague/protocol-de
 import {
     IDeltaConnection,
     IDeltaHandler,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 
 export class ChannelDeltaConnection implements IDeltaConnection {

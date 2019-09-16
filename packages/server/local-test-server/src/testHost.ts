@@ -5,10 +5,10 @@
 
 import { PrimedComponent, PrimedComponentFactory, SimpleContainerRuntimeFactory } from "@prague/aqueduct";
 import { IComponentHandle, IComponentLoadable } from "@prague/component-core-interfaces";
-import { IComponentRegistry, WrappedComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory, IComponentRuntime } from "@prague/runtime-definitions";
-import { SharedString, SparseMatrix } from "@prague/sequence";
-import { ISharedObject } from "@prague/shared-object-common";
+import { IComponentRegistry, WrappedComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { SharedString, SparseMatrix } from "@microsoft/fluid-sequence";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import {
     IDocumentDeltaEvent,
     ITestDeltaConnectionServer,

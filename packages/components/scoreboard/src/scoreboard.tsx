@@ -5,7 +5,7 @@
 
 import { IComponentHTMLOptions, IComponentHTMLVisual } from '@prague/component-core-interfaces';
 import { PrimedComponent, SimpleModuleInstantiationFactory, PrimedComponentFactory } from '@prague/aqueduct';
-import { CounterValueType } from '@prague/map';
+import { CounterValueType } from '@microsoft/fluid-map';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { TeamScore } from './teamScore';

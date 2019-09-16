@@ -8,7 +8,7 @@ import "mocha";
 
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
-import { Marker, ReferenceType } from "@prague/merge-tree";
+import { Marker, ReferenceType } from "@microsoft/fluid-merge-tree";
 import * as assert from "assert";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";

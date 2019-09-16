@@ -6,15 +6,15 @@
 import {
     IRequest,
 } from "@prague/component-core-interfaces";
-import { ComponentRuntime, ISharedObjectRegistry } from "@prague/component-runtime";
+import { ComponentRuntime, ISharedObjectRegistry } from "@microsoft/fluid-component-runtime";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     ISharedObjectFactory,
-} from "@prague/shared-object-common";
+} from "@microsoft/fluid-shared-object-base";
 import { SharedComponent } from "../components/sharedComponent";
 
 export class SharedComponentFactory implements IComponentFactory {

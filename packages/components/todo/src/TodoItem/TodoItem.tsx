@@ -15,7 +15,7 @@ import {
 import {
   ISharedCell,
   SharedCell,
-} from "@prague/cell";
+} from "@microsoft/fluid-cell";
 import {
   IComponentHandle,
   IComponentHTMLVisual,
@@ -26,10 +26,10 @@ import {
 import {
   Counter,
   CounterValueType,
-} from "@prague/map";
+} from "@microsoft/fluid-map";
 import {
   SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

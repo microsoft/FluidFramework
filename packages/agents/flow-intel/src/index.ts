@@ -10,7 +10,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { IntelRunner, ITokenConfig } from "./intelRunner";
 
 export class TextAnalyzer implements IComponentRouter, IComponentRunnable {

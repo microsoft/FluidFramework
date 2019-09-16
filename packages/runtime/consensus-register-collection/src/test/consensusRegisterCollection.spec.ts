@@ -4,7 +4,7 @@
  */
 
 import { ConnectionState } from "@prague/container-definitions";
-import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@prague/runtime-test-utils";
+import { MockDeltaConnectionFactory, MockRuntime, MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "../interfaces";

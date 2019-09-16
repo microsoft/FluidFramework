@@ -9,9 +9,9 @@ import {
     IJSONSegment,
     ISegment,
     PropertySet,
-} from "@prague/merge-tree";
-import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-merge-tree";
+import { IChannelAttributes, IComponentRuntime, ISharedObjectServices } from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import {
     SharedSegmentSequence,
     SubSequence,

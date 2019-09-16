@@ -23,16 +23,16 @@ import {
     IComponentKeyHandlers,
     IComponentLayout,
 } from "@prague/framework-definitions";
-import * as types from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+import * as types from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
     ISequencedDocumentMessage,
     IUser,
 } from "@prague/protocol-definitions";
 import {
     IInboundSignalMessage,
-} from "@prague/runtime-definitions";
-import * as Sequence from "@prague/sequence";
+} from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
 // tslint:disable-next-line:no-var-requires
 const performanceNow = require("performance-now");
 import { blobUploadHandler } from "../blob";

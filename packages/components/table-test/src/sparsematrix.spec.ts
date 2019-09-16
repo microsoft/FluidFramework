@@ -5,7 +5,7 @@
 
 import "mocha";
 import * as assert from "assert";
-import { SparseMatrix, SparseMatrixFactory } from "@prague/sequence"
+import { SparseMatrix, SparseMatrixFactory } from "@microsoft/fluid-sequence"
 import { TestHost } from "@prague/local-test-server";
 
 describe("SparseMatrix", () => {

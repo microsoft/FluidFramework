@@ -11,8 +11,8 @@ import {
     ISharedDirectory,
     MapFactory,
     SharedDirectory,
-} from "@prague/map";
-import { ITaskManager } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-map";
+import { ITaskManager } from "@microsoft/fluid-runtime-definitions";
 import { SharedComponent } from "./sharedComponent";
 
 /**

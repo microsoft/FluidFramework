@@ -4,7 +4,7 @@
  */
 
 import { areStringsEquivalent } from "@prague/flow-util";
-import { ISegment } from "@prague/merge-tree";
+import { ISegment } from "@microsoft/fluid-merge-tree";
 import { emptyObject } from ".";
 
 export interface IHTMLAttributes {

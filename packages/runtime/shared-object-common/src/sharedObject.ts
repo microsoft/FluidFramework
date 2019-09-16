@@ -19,7 +19,7 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { ChildLogger, EventEmitterWithErrorHandling } from "@prague/utils";
 import * as assert from "assert";
 import * as Deque from "double-ended-queue";

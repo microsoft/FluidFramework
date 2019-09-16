@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SharedCell } from "@prague/cell";
+import { SharedCell } from "@microsoft/fluid-cell";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import {
@@ -13,27 +13,27 @@ import {
     IComponentLoadable,
     IRequest,
     IResponse } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@prague/component-runtime";
-import { IInk, Ink } from "@prague/ink";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IInk, Ink } from "@microsoft/fluid-ink-stream";
 import { TextAnalyzer } from "@prague/intelligence-runner";
-import * as DistributedMap from "@prague/map";
+import * as DistributedMap from "@microsoft/fluid-map";
 import {
     ISharedMap,
     SharedMap,
-} from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+} from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
     IComponentContext,
     IComponentRuntime,
     ITask,
     ITaskManager,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import {
     IProvideSharedString,
     SharedNumberSequence,
     SharedObjectSequence,
     SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 // tslint:disable:no-var-requires

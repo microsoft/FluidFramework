@@ -4,7 +4,7 @@
  */
 
 import { FlowDocument } from "@chaincode/webflow";
-import { ISharedMap } from "@prague/map";
+import { ISharedMap } from "@microsoft/fluid-map";
 import { resumeAnalytics, textAnalytics } from "./analytics" ;
 import { IntelligentServicesManager } from "./serviceManager";
 

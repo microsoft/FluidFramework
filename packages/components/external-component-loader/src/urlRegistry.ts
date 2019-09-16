@@ -5,8 +5,8 @@
 // tslint:disable: no-console
 import { IComponent, IComponentQueryableLegacy } from "@prague/component-core-interfaces";
 import { IFluidPackage, IPraguePackage } from "@prague/container-definitions";
-import { ComponentRegistryTypes, IComponentRegistry } from "@prague/container-runtime";
-import { ComponentFactoryTypes, IComponentFactory } from "@prague/runtime-definitions";
+import { ComponentRegistryTypes, IComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { ComponentFactoryTypes, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import { Deferred } from "@prague/utils";
 
 /**

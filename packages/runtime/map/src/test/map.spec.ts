@@ -4,7 +4,7 @@
  */
 
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { MockRuntime } from "@prague/runtime-test-utils";
+import { MockRuntime } from "@microsoft/fluid-test-runtime-utils";
 import * as assert from "assert";
 import * as map from "..";
 import { SharedMap } from "../map";

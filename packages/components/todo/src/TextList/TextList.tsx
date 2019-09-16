@@ -14,8 +14,8 @@ import {
 import {
   IComponentForge,
 } from "@prague/framework-definitions";
-import { IDirectory } from "@prague/map";
-import { SharedString } from "@prague/sequence";
+import { IDirectory } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

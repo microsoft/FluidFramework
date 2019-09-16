@@ -13,8 +13,8 @@ import {
 } from "@prague/component-core-interfaces";
 import { IPraguePackage } from "@prague/container-definitions";
 import { IComponentCollection } from "@prague/framework-definitions";
-import { MergeTreeDeltaType } from "@prague/merge-tree";
-import { SharedObjectSequence, SubSequence } from "@prague/sequence";
+import { MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
+import { SharedObjectSequence, SubSequence } from "@microsoft/fluid-sequence";
 
 // tslint:disable-next-line: no-var-requires no-require-imports
 const pkg = require("../../package.json") as IPraguePackage;

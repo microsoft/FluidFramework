@@ -4,8 +4,8 @@
  */
 
 // tslint:disable:whitespace align no-bitwise
-import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+import { IValueFactory, IValueOpEmitter, IValueOperation, IValueType } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { EventEmitter } from "events";
 

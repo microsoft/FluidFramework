@@ -7,7 +7,7 @@ import {
     Marker,
     ReferenceType,
     TextSegment,
-} from "@prague/merge-tree";
+} from "@microsoft/fluid-merge-tree";
 import * as assert from "assert";
 import { SubSequence } from "../sharedSequence";
 

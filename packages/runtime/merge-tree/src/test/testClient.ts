@@ -4,8 +4,8 @@
  */
 
 import { ISequencedDocumentMessage, ITree, MessageType } from "@prague/protocol-definitions";
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { MockStorage } from "@prague/runtime-test-utils";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { MockStorage } from "@microsoft/fluid-test-runtime-utils";
 import { DebugLogger } from "@prague/utils";
 import * as assert from "assert";
 import * as random from "random-js";

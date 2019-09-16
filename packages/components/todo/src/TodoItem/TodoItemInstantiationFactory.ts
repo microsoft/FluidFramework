@@ -7,11 +7,11 @@ import {
 } from "@prague/aqueduct";
 import {
     SharedCell,
-} from "@prague/cell";
-import { IComponentFactory } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-cell";
+import { IComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedString,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 
 import { TodoItem } from "./index";
 

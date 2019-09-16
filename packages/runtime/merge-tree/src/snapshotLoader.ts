@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { IComponentRuntime, IObjectStorageService } from "@prague/runtime-definitions";
+import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { Client } from "./client";

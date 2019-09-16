@@ -10,15 +10,15 @@ import {
     IntervalType,
     LocalReference,
     PropertySet,
-} from "@prague/merge-tree";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
     rowColToPosition,
     SharedNumberSequence,
     SparseMatrix,
     UnboxedOper,
-} from "@prague/sequence";
+} from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";

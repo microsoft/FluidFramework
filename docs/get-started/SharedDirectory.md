@@ -4,8 +4,8 @@ uid: SharedDirectory
 
 # SharedDirectory
 
-* Package: <xref:@prague/map!>
-* API documentation: <xref:@prague/map!SharedDirectory:class>
+* Package: <xref:@microsoft/fluid-map!>
+* API documentation: <xref:@microsoft/fluid-map!SharedDirectory:class>
 
 The SharedDirectory distributed data structure is similar to a <xref:SharedMap> and can be used to store key-value
 pairs. In addition to the typical Map functionality for getting, setting, and iterating over values, SharedDirectory

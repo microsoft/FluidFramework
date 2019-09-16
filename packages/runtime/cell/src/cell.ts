@@ -14,8 +14,8 @@ import {
 import {
     IComponentRuntime,
     IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { CellFactory } from "./cellFactory";
 import { debug } from "./debug";

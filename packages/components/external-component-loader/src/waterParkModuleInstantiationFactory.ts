@@ -7,7 +7,7 @@ import { SimpleContainerRuntimeFactory, SimpleModuleInstantiationFactory } from 
 import {
     IContainerContext, IRuntime,
 } from "@prague/container-definitions";
-import { ComponentRegistryTypes } from "@prague/container-runtime";
+import { ComponentRegistryTypes } from "@microsoft/fluid-container-runtime";
 import * as uuid from "uuid";
 import { ExternalComponentLoader, WaterParkLoaderName } from "./waterParkLoader";
 import { ExternalComponentView, WaterParkViewName } from "./waterParkView";

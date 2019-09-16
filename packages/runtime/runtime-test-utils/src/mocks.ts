@@ -21,7 +21,7 @@ import {
     IDeltaConnection,
     IDeltaHandler,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { ComponentSerializer, DebugLogger, Deferred, fromUtf8ToBase64 } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

@@ -4,10 +4,10 @@
  */
 
 // tslint:disable
-import * as MergeTree from "@prague/merge-tree";
-import { LocalClientId, NonCollabClient, UnassignedSequenceNumber, UniversalSequenceNumber, } from "@prague/merge-tree/dist/constants";
-import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@prague/merge-tree/dist/overlayTree";
-import { loadTextFromFile, TestClient, TestServer } from "@prague/merge-tree/dist/test/";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { LocalClientId, NonCollabClient, UnassignedSequenceNumber, UniversalSequenceNumber, } from "@microsoft/fluid-merge-tree/dist/constants";
+import { insertOverlayNode, onodeTypeKey, OverlayNodePosition } from "@microsoft/fluid-merge-tree/dist/overlayTree";
+import { loadTextFromFile, TestClient, TestServer } from "@microsoft/fluid-merge-tree/dist/test/";
 import * as JsDiff from "diff";
 import * as path from "path";
 import * as random from "random-js";
@@ -15,7 +15,7 @@ import * as fs from "fs";
 import * as Xmldoc from "xmldoc";
 import * as SharedString from "../intervalCollection";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
-import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp, MergeTreeTextHelper } from "@prague/merge-tree";
+import { TextSegment, createGroupOp, PropertySet, IMergeTreeOp, MergeTreeTextHelper } from "@microsoft/fluid-merge-tree";
 
 function clock() {
     return process.hrtime();

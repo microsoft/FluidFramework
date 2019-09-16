@@ -14,7 +14,7 @@ import { IComponentForge } from "@prague/framework-definitions";
 import {
     IComponentContext,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
+} from "@microsoft/fluid-runtime-definitions";
 import { EventEmitter } from "events";
 
 /**

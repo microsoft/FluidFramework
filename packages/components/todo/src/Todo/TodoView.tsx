@@ -6,9 +6,9 @@
 import {
     CollaborativeInput,
 } from "@prague/aqueduct-react";
-import { ISharedCell } from "@prague/cell";
-import { ISharedMap } from "@prague/map";
-import { SharedString } from "@prague/sequence";
+import { ISharedCell } from "@microsoft/fluid-cell";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as React from "react";
 
 import ReactList from "react-list";

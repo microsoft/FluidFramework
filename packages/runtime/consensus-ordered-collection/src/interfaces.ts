@@ -8,8 +8,8 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ISharedObject, ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObject, ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 
 /**
  * Consensus Ordered Collection channel factory interface

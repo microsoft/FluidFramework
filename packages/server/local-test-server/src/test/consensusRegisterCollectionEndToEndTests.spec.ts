@@ -9,9 +9,9 @@ import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
-} from "@prague/consensus-register-collection";
-import { ISharedMap } from "@prague/map";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+} from "@microsoft/fluid-register-collection";
+import { ISharedMap } from "@microsoft/fluid-map";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

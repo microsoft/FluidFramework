@@ -4,7 +4,7 @@
  */
 
 import { Document, load } from "@prague/client-api";
-import { IInboundSignalMessage } from "@prague/runtime-definitions";
+import { IInboundSignalMessage } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

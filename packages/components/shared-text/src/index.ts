@@ -9,9 +9,9 @@ import "./publicpath";
 
 import { IRequest } from "@prague/component-core-interfaces";
 import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
-import { ContainerRuntime, IComponentRegistry } from "@prague/container-runtime";
-import { IComponentContext, IComponentFactory } from "@prague/runtime-definitions";
-// import { SharedString } from "@prague/sequence";
+import { ContainerRuntime, IComponentRegistry } from "@microsoft/fluid-container-runtime";
+import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+// import { SharedString } from "@microsoft/fluid-sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";
 // import { GraphIQLView } from "./graphql";

@@ -6,7 +6,7 @@
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { MessageType } from "@prague/protocol-definitions";
-import { SharedString } from "@prague/sequence";
+import { SharedString } from "@microsoft/fluid-sequence";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

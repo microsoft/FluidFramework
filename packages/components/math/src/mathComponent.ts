@@ -17,7 +17,7 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
     ComponentCursorDirection,
@@ -28,15 +28,15 @@ import {
 import {
     ISharedMap,
     SharedMap,
-} from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+} from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import {
     IComponentContext,
     IComponentFactory,
     IComponentRuntime,
-} from "@prague/runtime-definitions";
-import * as Sequence from "@prague/sequence";
-import { ISharedObjectFactory } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 

@@ -12,7 +12,7 @@ import * as assert from "assert";
 import { SourceDocument } from "../src/document";
 
 import { PrimedComponentFactory } from "@prague/aqueduct";
-import { SharedStringFactory } from "@prague/sequence";
+import { SharedStringFactory } from "@microsoft/fluid-sequence";
 
 // tslint:disable:mocha-no-side-effect-code
 const sourceDocumentType = "@chaincode/source-document";

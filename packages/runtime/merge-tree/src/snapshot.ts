@@ -6,7 +6,7 @@
 import { IComponentHandle, IComponentHandleContext, IComponentSerializer } from "@prague/component-core-interfaces";
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { FileMode, ISequencedDocumentMessage, ITree, TreeEntry } from "@prague/protocol-definitions";
-import { IObjectStorageService} from "@prague/runtime-definitions";
+import { IObjectStorageService} from "@microsoft/fluid-runtime-definitions";
 import { ChildLogger, fromBase64ToUtf8 } from "@prague/utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import * as MergeTree from "./mergeTree";

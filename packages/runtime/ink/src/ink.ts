@@ -13,8 +13,8 @@ import {
 import {
     IComponentRuntime,
     IObjectStorageService,
-} from "@prague/runtime-definitions";
-import { SharedObject } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { SharedObject } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@prague/utils";
 // tslint:disable-next-line:no-submodule-imports
 import * as uuid from "uuid/v4";

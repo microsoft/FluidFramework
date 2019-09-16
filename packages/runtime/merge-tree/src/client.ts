@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@prague/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@prague/protocol-definitions";
-import { IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import { IIntegerRange } from "./base";
 import * as Collections from "./collections";

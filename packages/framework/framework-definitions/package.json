@@ -21,7 +21,7 @@
   "repository": "microsoft/prague",
   "dependencies": {
     "@prague/component-core-interfaces": "^0.10.0",
-    "@prague/runtime-definitions": "^0.10.0"
+    "@microsoft/fluid-runtime-definitions": "^0.10.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.3.11",

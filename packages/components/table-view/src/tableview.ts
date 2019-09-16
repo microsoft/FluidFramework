@@ -10,7 +10,7 @@ import {
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
 import { Template } from "@prague/flow-util";
-import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
+import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 

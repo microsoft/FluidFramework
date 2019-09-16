@@ -15,8 +15,8 @@ import {
     IComponentRuntime,
     IObjectStorageService,
     ISharedObjectServices,
-} from "@prague/runtime-definitions";
-import { ISharedObjectFactory, SharedObject, ValueType } from "@prague/shared-object-common";
+} from "@microsoft/fluid-runtime-definitions";
+import { ISharedObjectFactory, SharedObject, ValueType } from "@microsoft/fluid-shared-object-base";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import * as path from "path";
@@ -369,7 +369,7 @@ export class SharedDirectory extends SharedObject implements ISharedDirectory {
     }
 
     /**
-     * {@inheritDoc @prague/shared-object-common#SharedObject.snapshot}
+     * {@inheritDoc @microsoft/fluid-shared-object-base#SharedObject.snapshot}
      */
     public snapshot(): ITree {
         const tree: ITree = {

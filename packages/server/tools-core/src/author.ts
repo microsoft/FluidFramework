@@ -6,12 +6,12 @@
 import * as api from "@prague/client-api";
 import { IComponent } from "@prague/component-core-interfaces";
 import { ILoader } from "@prague/container-definitions";
-import { ISharedMap } from "@prague/map";
-import * as MergeTree from "@prague/merge-tree";
+import { ISharedMap } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
 import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import Counter = api.RateCounter;
-import { IComponentRuntime } from "@prague/runtime-definitions";
-import { ISharedString } from "@prague/sequence";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { ISharedString } from "@microsoft/fluid-sequence";
 // tslint:disable-next-line:no-submodule-imports
 import * as queue from "async/queue";
 // tslint:disable-next-line:no-submodule-imports
