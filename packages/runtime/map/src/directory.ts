@@ -801,38 +801,12 @@ class SubDirectory implements IDirectory {
     /**
      * {@inheritDoc IDirectory.set}
      */
-    public set<T = any>(key: string, value: T, type?: string): this {
-        let localValue: ILocalValue;
-        let serializableValue: ISerializableValue;
-
-        if (type && type !== ValueType[ValueType.Plain] && type !== ValueType[ValueType.Shared]) {
-            // value is actually initialization params in the value type case
-            localValue = this.directory.localValueMaker.makeValueType(
-                type,
-                this.directory.makeDirectoryValueOpEmitter(key, this.absolutePath),
-                value,
-            );
-
-            // TODO ideally we could use makeSerializable in this case as well. But the interval
-            // collection has assumptions of attach being called prior. Given the IComponentSerializer it
-            // may be possible to remove custom value type serialization entirely.
-            const transformedValue = value
-                ? JSON.parse(this.runtime.IComponentSerializer.stringify(
-                    value,
-                    this.runtime.IComponentHandleContext,
-                    this.directory.handle))
-                : value;
-
-            // This is a special form of serialized valuetype only used for set, containing info for initialization.
-            // After initialization, the serialized form will need to come from the .store of the value type's factory.
-            serializableValue = { type, value: transformedValue };
-        } else {
-            localValue = this.directory.localValueMaker.fromInMemory(value);
-            serializableValue = localValue.makeSerializable(
-                this.runtime.IComponentSerializer,
-                this.runtime.IComponentHandleContext,
-                this.directory.handle);
-        }
+    public set<T = any>(key: string, value: T): this {
+        const localValue = this.directory.localValueMaker.fromInMemory(value);
+        const serializableValue = localValue.makeSerializable(
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.directory.handle);
 
         this.setCore(
             key,
