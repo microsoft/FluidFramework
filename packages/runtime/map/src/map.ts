@@ -327,6 +327,46 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
+     * Create a new value type at the given key.
+     * @alpha
+     * @param key - key to create the value type at
+     * @param type - type of the value type to create
+     * @param params - initialization params for the value type
+     */
+    public createValueType(key: string, type: string, params: any) {
+        // value is actually initialization params in the value type case
+        const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
+
+        // TODO ideally we could use makeSerializable in this case as well. But the interval
+        // collection has assumptions of attach being called prior. Given the IComponentSerializer it
+        // may be possible to remove custom value type serialization entirely.
+        const transformedValue = serializeHandles(
+            params,
+            this.runtime.IComponentSerializer,
+            this.runtime.IComponentHandleContext,
+            this.handle);
+
+        // This is a special form of serialized valuetype only used for set, containing info for initialization.
+        // After initialization, the serialized form will need to come from the .store of the value type's factory.
+        const serializableValue = { type, value: transformedValue };
+
+        this.setCore(
+            key,
+            localValue,
+            true,
+            null,
+        );
+
+        const op: IMapSetOperation = {
+            key,
+            type: "set",
+            value: serializableValue,
+        };
+        this.submitMapKeyMessage(op);
+        return this;
+    }
+
+    /**
      * Public delete API.
      * @param key - key to delete
      */
