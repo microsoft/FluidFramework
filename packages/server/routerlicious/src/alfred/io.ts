@@ -160,7 +160,7 @@ export function register(
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
                     parentBranch: connection.parentBranch,

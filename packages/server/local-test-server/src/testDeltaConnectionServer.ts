@@ -239,7 +239,7 @@ export function register(
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: connection.existing,
+                    existing: details.existing,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
                     parentBranch: connection.parentBranch,
@@ -253,7 +253,7 @@ export function register(
                 const connectedMessage: IConnected = {
                     claims,
                     clientId,
-                    existing: true,
+                    existing: details.existing,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
                     parentBranch: null, // Does not matter for now.
