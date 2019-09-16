@@ -173,7 +173,7 @@ export class FlowDocument extends PrimedComponent {
     public addLocalRef(position: number) {
         // Special case for LocalReference to end of document.  (See comments on 'endOfTextSegment').
         if (position >= this.length) {
-            this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
+            return this.sharedString.createPositionReference(endOfTextSegment, 0, ReferenceType.Transient);
         }
 
         const { segment, offset } = this.getSegmentAndOffset(position);
