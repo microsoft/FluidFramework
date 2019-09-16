@@ -180,12 +180,13 @@ export function register(
     tenantManager: ITenantManager,
     contentCollection: ICollection<any>) {
 
+    const socketList: IWebSocket[] = [];
     webSocketServer.on("connection", (socket: IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, IOrdererConnection>();
         // Map from client IDs to room.
         const roomMap = new Map<string, string>();
-
+        socketList.push(socket);
         async function connectDocument(message: IConnect): Promise<IConnected> {
             // Validate token signature and claims
             const token = message.token;
@@ -329,7 +330,9 @@ export function register(
             };
 
             contentCollection.insertOne(dbMessage).then(() => {
-                socket.broadcastToRoom(roomMap.get(clientId), "op-content", broadCastMessage);
+                socketList.forEach((webSocket: IWebSocket) => {
+                    webSocket.emit("op-content", broadCastMessage);
+                });
                 return response(null);
             }, (error) => {
                 if (error.code !== 11000) {
@@ -345,15 +348,14 @@ export function register(
                 return response("Invalid client ID", null);
             }
 
-            const roomId = roomMap.get(clientId);
-
             for (const content of contents) {
-                const signalMessage: ISignalMessage = {
-                    clientId,
-                    content,
-                };
-
-                socket.emitToRoom(roomId, "signal", signalMessage);
+                socketList.forEach((webSocket: IWebSocket) => {
+                    const signalMessage: ISignalMessage = {
+                        clientId,
+                        content,
+                    };
+                    webSocket.emit("signal", signalMessage);
+                });
             }
 
             response(null);
