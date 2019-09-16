@@ -73,13 +73,24 @@ export interface IValueType<T> {
     ops: Map<string, IValueOperation<T>>;
 }
 
+export interface IValueTypeCreator {
+    /**
+     * Create a new value type at the given key.
+     * @alpha
+     * @param key - key to create the value type at
+     * @param type - type of the value type to create
+     * @param params - initialization params for the value type
+     */
+    createValueType(key: string, type: string, params: any): this;
+}
+
 /**
  * Interface describing actions on a directory.
  *
  * @remarks
  * When used as a Map, operates on its keys.
  */
-export interface IDirectory extends Map<string, any> {
+export interface IDirectory extends Map<string, any>, IValueTypeCreator {
     /**
      * The absolute path of the directory.
      */
@@ -161,7 +172,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 /**
  * Shared map interface
  */
-export interface ISharedMap extends ISharedObject, Map<string, any> {
+export interface ISharedMap extends ISharedObject, Map<string, any>, IValueTypeCreator {
     /**
      * Retrieves the given key from the map
      */
@@ -177,6 +188,15 @@ export interface ISharedMap extends ISharedObject, Map<string, any> {
      * to one of the registered value types.
      */
     set<T = any>(key: string, value: T, type?: string): this;
+
+    /**
+     * Create a new value type at the given key.
+     * @alpha
+     * @param key - key to create the value type at
+     * @param type - type of the value type to create
+     * @param params - initialization params for the value type
+     */
+    createValueType(key: string, type: string, params: any): this;
 
     /**
      * Registers a listener on the specified events

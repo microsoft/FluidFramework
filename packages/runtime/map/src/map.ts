@@ -327,13 +327,9 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     /**
-     * Create a new value type at the given key.
-     * @alpha
-     * @param key - key to create the value type at
-     * @param type - type of the value type to create
-     * @param params - initialization params for the value type
+     * {@inheritDoc IValueTypeCreator.createValueType}
      */
-    public createValueType(key: string, type: string, params: any) {
+    public createValueType(key: string, type: string, params: any): this {
         // value is actually initialization params in the value type case
         const localValue = this.localValueMaker.makeValueType(type, this.makeMapValueOpEmitter(key), params);
 
