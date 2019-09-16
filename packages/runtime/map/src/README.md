@@ -10,6 +10,9 @@ const myMap = SharedMap.create(this.runtime, id);
 ## Usage
 You can use a `SharedMap` mostly the same way you would a normal `Map` in JS.  However, keys must be strings only, and values must only be plain JS objects, `SharedObject` handles, or value types.  `SharedMap` also supports the following additional functionality as compared to a `Map`:
 
+### `.createValueType()`
+`SharedMap` has a `createValueType` method which creates a value type.  More on that below.
+
 ### `.wait()`
 `SharedMap` has a `wait` method in addition to the normal `get`, which returns a `Promise` that resolves to the value when the key becomes available.
 
@@ -26,7 +29,7 @@ const myDirectory = SharedDirectory.create(this.runtime, id);
 ```
 
 ## Usage
-The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same restrictions on keys and values.  To operate on the subdirectory structure, use the corresponding subdirectory methods.
+The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same extra functionality and restrictions on keys and values.  To operate on the subdirectory structure, use the corresponding subdirectory methods.
 
 ### `getWorkingDirectory()`
 To "navigate" the subdirectory structure, `IDirectory` provides a `getWorkingDirectory` method which takes a relative path and returns the `IDirectory` located at that path if it exists.
