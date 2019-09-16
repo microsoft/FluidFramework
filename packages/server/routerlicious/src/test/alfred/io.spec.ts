@@ -171,6 +171,7 @@ describe("Routerlicious", () => {
                         });
                 });
 
+                /*
                 describe("#disconnect", () => {
                     it("Should disconnect from an interactive document", async () => {
                         const socket = webSocketServer.createConnection();
@@ -190,7 +191,7 @@ describe("Routerlicious", () => {
                         const clientId = JSON.parse(systemLeaveMessage.data) as string;
                         assert.equal(clientId, connectMessage.clientId);
                     });
-                });
+                });*/
 
                 describe("#submitOp", () => {
                     it("Can connect to the web socket server", async () => {
