@@ -3,34 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
-    FileDeltaStorageService,
-} from "@prague/file-socket-storage";
-import {
-    IBlob,
-    ISequencedDocumentMessage,
-    ITree,
-    ITreeEntry,
-    MessageType,
-} from "@prague/protocol-definitions";
-import {
-    IAttachMessage,
-} from "@microsoft/fluid-runtime-definitions";
-import * as fs from "fs";
-
-import { createGroupOp, IJSONSegment, IMergeTreeOp, ISegment, MergeTreeDeltaType, } from "@microsoft/fluid-merge-tree";
-import {
-    TestClient
-    // tslint:disable-next-line: no-submodule-imports
-} from "@microsoft/fluid-merge-tree/dist/test/testClient";
+import { createGroupOp, IJSONSegment, IMergeTreeOp, ISegment, MergeTreeDeltaType } from "@microsoft/fluid-merge-tree";
+// tslint:disable-next-line: no-submodule-imports
+import { TestClient } from "@microsoft/fluid-merge-tree/dist/test/testClient";
+import { IAttachMessage } from "@microsoft/fluid-runtime-definitions";
 import {
     SharedNumberSequenceFactory,
     SharedObjectSequenceFactory,
     SharedStringFactory,
     SparseMatrixFactory,
 } from "@microsoft/fluid-sequence";
+import { FileDeltaStorageService } from "@prague/file-socket-storage";
+import { IBlob, ISequencedDocumentMessage, ITree, ITreeEntry, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
+import * as fs from "fs";
 import { ReplayArgs } from "./replayArgs";
+
 // tslint:disable-next-line:no-var-requires no-submodule-imports no-require-imports
 const cloneDeep = require("lodash/cloneDeep");
 

@@ -6,17 +6,6 @@
 import { TextAnalyzer } from "@chaincode/flow-intel";
 import { FlowIntelViewer } from "@chaincode/flow-intel-viewer";
 import { FlowDocument, FlowDocumentType } from "@chaincode/webflow";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import {
-    IComponent,
-    IComponentHandle,
-    IComponentHTMLOptions,
-    IComponentHTMLView,
-    IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-    IComponentCollection,
-} from "@prague/framework-definitions";
 import { SharedMap } from "@microsoft/fluid-map";
 import {
     FlushMode,
@@ -25,7 +14,16 @@ import {
     ITask,
     ITaskManager,
 } from "@microsoft/fluid-runtime-definitions";
-import { HostView  } from "./host";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import {
+    IComponent,
+    IComponentHandle,
+    IComponentHTMLOptions,
+    IComponentHTMLView,
+    IComponentHTMLVisual,
+} from "@prague/component-core-interfaces";
+import { IComponentCollection } from "@prague/framework-definitions";
+import { HostView } from "./host";
 import { importDoc } from "./template";
 
 const insightsMapId = "insights";

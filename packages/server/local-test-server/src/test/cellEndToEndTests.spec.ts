@@ -4,9 +4,9 @@
  */
 
 import { ISharedCell } from "@microsoft/fluid-cell";
+import { ISharedMap } from "@microsoft/fluid-map";
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ISharedMap } from "@microsoft/fluid-map";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

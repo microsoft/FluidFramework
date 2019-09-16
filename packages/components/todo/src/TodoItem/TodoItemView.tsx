@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-    CollaborativeCheckbox,
-    CollaborativeInput,
-} from "@prague/aqueduct-react";
 import { ISharedCell } from "@microsoft/fluid-cell";
 import { Counter } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
+import { CollaborativeCheckbox, CollaborativeInput } from "@prague/aqueduct-react";
 import * as React from "react";
-
 import { TodoItemSupportedComponents } from "./supportedComponent";
 
 interface p {

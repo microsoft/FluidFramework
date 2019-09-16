@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BaseSegment,
-    IJSONSegment,
-    ISegment,
-    PropertySet,
-} from "@microsoft/fluid-merge-tree";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@microsoft/fluid-merge-tree";
 import { IChannelAttributes, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import { SharedSegmentSequence } from "./sequence";
 

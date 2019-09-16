@@ -5,7 +5,7 @@
 
 import { FlowDocument } from "@chaincode/webflow";
 import { ISharedMap } from "@microsoft/fluid-map";
-import { resumeAnalytics, textAnalytics } from "./analytics" ;
+import { resumeAnalytics, textAnalytics } from "./analytics";
 import { IntelligentServicesManager } from "./serviceManager";
 
 export interface ITokenConfig {

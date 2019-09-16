@@ -3,13 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IBlob,
-    ITree,
-} from "@prague/protocol-definitions";
-import {
-    IObjectStorageService,
-} from "@microsoft/fluid-runtime-definitions";
+import { IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { IBlob, ITree } from "@prague/protocol-definitions";
 import * as assert from "assert";
 
 /**

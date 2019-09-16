@@ -4,10 +4,14 @@
  */
 
 import {
-    IComponent,
-    IRequest,
-    IResponse,
-} from "@prague/component-core-interfaces";
+    IAttachMessage,
+    IComponentContext,
+    IComponentRuntime,
+    IEnvelope,
+    IHostRuntime,
+    IInboundSignalMessage,
+} from "@microsoft/fluid-runtime-definitions";
+import { IComponent, IRequest, IResponse } from "@prague/component-core-interfaces";
 import {
     ConnectionState,
     IBlobManager,
@@ -26,14 +30,6 @@ import {
     MessageType,
     TreeEntry,
 } from "@prague/protocol-definitions";
-import {
-    IAttachMessage,
-    IComponentContext,
-    IComponentRuntime,
-    IEnvelope,
-    IHostRuntime,
-    IInboundSignalMessage,
-} from "@microsoft/fluid-runtime-definitions";
 import { Deferred, raiseConnectedEvent, readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { EventEmitter } from "events";

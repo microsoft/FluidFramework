@@ -4,6 +4,17 @@
  */
 
 import { SharedCell } from "@microsoft/fluid-cell";
+import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { IInk, Ink } from "@microsoft/fluid-ink-stream";
+import * as DistributedMap from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentRuntime, ITask, ITaskManager } from "@microsoft/fluid-runtime-definitions";
+import {
+    IProvideSharedString,
+    SharedNumberSequence,
+    SharedObjectSequence,
+    SharedString,
+} from "@microsoft/fluid-sequence";
 import * as API from "@prague/client-api";
 import { controls, ui } from "@prague/client-ui";
 import {
@@ -12,41 +23,19 @@ import {
     IComponentHTMLVisual,
     IComponentLoadable,
     IRequest,
-    IResponse } from "@prague/component-core-interfaces";
-import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import { IInk, Ink } from "@microsoft/fluid-ink-stream";
+    IResponse,
+} from "@prague/component-core-interfaces";
 import { TextAnalyzer } from "@prague/intelligence-runner";
-import * as DistributedMap from "@microsoft/fluid-map";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import {
-    IComponentContext,
-    IComponentRuntime,
-    ITask,
-    ITaskManager,
-} from "@microsoft/fluid-runtime-definitions";
-import {
-    IProvideSharedString,
-    SharedNumberSequence,
-    SharedObjectSequence,
-    SharedString,
-} from "@microsoft/fluid-sequence";
 import { EventEmitter } from "events";
 import { parse } from "querystring";
+import * as url from "url";
+import { Document } from "./document";
+import { downloadRawText, getInsights, setTranslation } from "./utils";
+
 // tslint:disable:no-var-requires
 const performanceNow = require("performance-now");
 const debug = require("debug")("fluid:shared-text");
 // tslint:enable:no-var-requires
-import * as url from "url";
-import { Document } from "./document";
-import {
-    downloadRawText,
-    getInsights,
-    setTranslation,
-} from "./utils";
 
 /**
  * Helper function to retrieve the handle for the default component route

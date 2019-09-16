@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
-import { IComponentHandle } from "@prague/component-core-interfaces";
+import { ISharedMap } from "@microsoft/fluid-map";
 import {
     ConsensusRegisterCollection,
     IConsensusRegisterCollection,
     ReadPolicy,
 } from "@microsoft/fluid-register-collection";
-import { ISharedMap } from "@microsoft/fluid-map";
 import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import * as api from "@prague/client-api";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

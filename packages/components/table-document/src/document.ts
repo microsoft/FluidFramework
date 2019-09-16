@@ -3,14 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import { IComponentHandle } from "@prague/component-core-interfaces";
-import {
-    ICombiningOp,
-    IntervalType,
-    LocalReference,
-    PropertySet,
-} from "@microsoft/fluid-merge-tree";
+import { ICombiningOp, IntervalType, LocalReference, PropertySet } from "@microsoft/fluid-merge-tree";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import {
     positionToRowCol,
@@ -19,6 +12,8 @@ import {
     SparseMatrix,
     UnboxedOper,
 } from "@microsoft/fluid-sequence";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { IComponentHandle } from "@prague/component-core-interfaces";
 import * as assert from "assert";
 import { CellRange } from "./cellrange";
 import { TableSliceType } from "./ComponentTypes";

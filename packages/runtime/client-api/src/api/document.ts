@@ -5,24 +5,20 @@
 
 import * as cell from "@microsoft/fluid-cell";
 import { ComponentRuntime } from "@microsoft/fluid-component-runtime";
-import {
-    IDeltaManager,
-    IGenericBlob,
-    IHost,
-} from "@prague/container-definitions";
-import { Container, Loader } from "@prague/container-loader";
 import { IContainerRuntimeOptions } from "@microsoft/fluid-container-runtime";
 import * as ink from "@microsoft/fluid-ink-stream";
 import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
+import * as sequence from "@microsoft/fluid-sequence";
+import { ISharedObject } from "@microsoft/fluid-shared-object-base";
+import { IDeltaManager, IGenericBlob, IHost } from "@prague/container-definitions";
+import { Container, Loader } from "@prague/container-loader";
 import {
     IDocumentMessage,
     IDocumentServiceFactory,
     ISequencedClient,
     ISequencedDocumentMessage,
 } from "@prague/protocol-definitions";
-import { IComponentContext } from "@microsoft/fluid-runtime-definitions";
-import * as sequence from "@microsoft/fluid-sequence";
-import { ISharedObject } from "@microsoft/fluid-shared-object-base";
 import { Deferred } from "@prague/utils";
 import { EventEmitter } from "events";
 import { CodeLoader } from "./codeLoader";

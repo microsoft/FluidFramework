@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
-import { IProvideRuntimeFactory } from "@prague/container-definitions";
 import { IProvideComponentFactory } from "@microsoft/fluid-runtime-definitions";
 import * as sequence from "@microsoft/fluid-sequence";
+import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IProvideRuntimeFactory } from "@prague/container-definitions";
 import { MonacoRunner } from "./chaincode";
 
 const componentFactory = new PrimedComponentFactory(

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { areStringsEquivalent } from "@prague/flow-util";
 import { ISegment } from "@microsoft/fluid-merge-tree";
-import { emptyObject } from ".";
+import { areStringsEquivalent } from "@prague/flow-util";
+import { emptyObject } from "./";
 
 export interface IHTMLAttributes {
     src?: string;

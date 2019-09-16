@@ -4,13 +4,10 @@
  */
 
 import { TableDocument, TableDocumentType } from "@chaincode/table-document";
-import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
-import {
-    IComponentHTMLOptions,
-    IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import { Template } from "@prague/flow-util";
 import { IComponentContext, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
+import { IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { Template } from "@prague/flow-util";
 import { GridView } from "./grid";
 import * as styles from "./index.css";
 

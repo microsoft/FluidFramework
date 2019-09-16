@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@prague/client-api";
 import * as ink from "@microsoft/fluid-ink-stream";
+import * as api from "@prague/client-api";
 import * as assert from "assert";
 import * as ui from "../ui";
 import { getShapes } from "./canvasCommon";

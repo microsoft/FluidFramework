@@ -3,30 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  EmbeddedReactComponentFactory,
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  ISharedCell,
-  SharedCell,
-} from "@microsoft/fluid-cell";
-import {
-  IComponentHandle,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  ISharedMap,
-  SharedMap,
-} from "@microsoft/fluid-map";
+import { ISharedCell, SharedCell } from "@microsoft/fluid-cell";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
-
+import { PrimedComponent } from "@prague/aqueduct";
+import { EmbeddedReactComponentFactory, IComponentReactViewable } from "@prague/aqueduct-react";
+import { IComponentHandle, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
 import { TodoItemName } from "../TodoItem/index";
 import { TodoView } from "./TodoView";
 

@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import {
+    IChannel,
+    IChannelAttributes,
+    IComponentContext,
+    IComponentRuntime,
+} from "@microsoft/fluid-runtime-definitions";
 import { ConnectionState } from "@prague/container-definitions";
 import {
     IDocumentStorageService,
@@ -11,12 +17,6 @@ import {
     ITree,
     MessageType,
 } from "@prague/protocol-definitions";
-import {
-    IChannel,
-    IChannelAttributes,
-    IComponentContext,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
 import { readAndParse } from "@prague/utils";
 import * as assert from "assert";
 import { createServiceEndpoints, IChannelContext, snapshotChannel } from "./channelContext";

@@ -6,7 +6,7 @@
 import { createInsertSegmentOp, createRemoveRangeOp, PropertySet } from "@microsoft/fluid-merge-tree";
 // tslint:disable-next-line: no-submodule-imports
 import { TestClient } from "@microsoft/fluid-merge-tree/dist/test";
-import {SubSequence } from "../sharedSequence";
+import { SubSequence } from "../sharedSequence";
 
 const clientNames = ["Ed", "Ted", "Ned", "Harv", "Marv", "Glenda", "Susan"];
 const verbose = true;

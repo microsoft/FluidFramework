@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IHelpMessage, IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import * as core from "@microsoft/fluid-server-services-core";
 import { ISequencedDocumentSystemMessage, MessageType, ScopeType } from "@prague/protocol-definitions";
-import { IHelpMessage, IQueueMessage } from "@microsoft/fluid-runtime-definitions";
 import { RateLimiter } from "@prague/utils";
 import * as winston from "winston";
 import { SequencedLambda } from "../sequencedLambda";

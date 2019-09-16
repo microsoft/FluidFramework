@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ClickerInstantiationFactory, ClickerName } from "@fluid-example/clicker";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { TextBoxInstantiationFactory, TextBoxName } from "./TextBox";

@@ -13,7 +13,7 @@ import {
     Stack,
     TrackingGroup,
 } from "@microsoft/fluid-merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence} from "@microsoft/fluid-sequence";
+import { SequenceDeltaEvent, SharedSegmentSequence } from "@microsoft/fluid-sequence";
 
 enum UndoRedoMode {None, Redo, Undo}
 

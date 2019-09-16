@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
+
 import { IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
+import { ISequencedDocumentMessage } from "@prague/protocol-definitions";
 import { fromBase64ToUtf8 } from "@prague/utils";
 import * as assert from "assert";
 import { Client } from "./client";

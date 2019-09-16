@@ -4,16 +4,15 @@
  */
 
 // set the base path for all dynamic imports first
-// tslint:disable-next-line:no-import-side-effect
-import "./publicpath";
-
-import { IRequest } from "@prague/component-core-interfaces";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 import { ContainerRuntime, IComponentRegistry } from "@microsoft/fluid-container-runtime";
 import { IComponentContext, IComponentFactory } from "@microsoft/fluid-runtime-definitions";
+import { IRequest } from "@prague/component-core-interfaces";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@prague/container-definitions";
 // import { SharedString } from "@microsoft/fluid-sequence";
 import * as Snapshotter from "@prague/snapshotter";
 import * as sharedTextComponent from "./component";
+// tslint:disable-next-line:no-import-side-effect
+import "./publicpath";
 // import { GraphIQLView } from "./graphql";
 import { waitForFullConnection } from "./utils";
 

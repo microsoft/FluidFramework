@@ -3,16 +3,14 @@
 * Licensed under the MIT License.
 */
 
-// tslint:disable-next-line:no-import-side-effect
-import "mocha";
-
+import { SharedStringFactory } from "@microsoft/fluid-sequence";
+import { PrimedComponentFactory } from "@prague/aqueduct";
 // tslint:disable:binary-expression-operand-order
 import { TestHost } from "@prague/local-test-server";
 import * as assert from "assert";
+// tslint:disable-next-line:no-import-side-effect
+import "mocha";
 import { SourceDocument } from "../src/document";
-
-import { PrimedComponentFactory } from "@prague/aqueduct";
-import { SharedStringFactory } from "@microsoft/fluid-sequence";
 
 // tslint:disable:mocha-no-side-effect-code
 const sourceDocumentType = "@chaincode/source-document";

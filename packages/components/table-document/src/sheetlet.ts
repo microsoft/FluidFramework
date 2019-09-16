@@ -17,7 +17,6 @@ import {
     Primitive,
     Trace,
 } from "@tiny-calc/nano";
-
 import * as assert from "assert";
 
 /* tslint:disable:prefer-method-signature */

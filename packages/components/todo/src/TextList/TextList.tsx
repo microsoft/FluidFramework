@@ -2,24 +2,15 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-  PrimedComponent,
-} from "@prague/aqueduct";
-import {
-  IComponentReactViewable,
-} from "@prague/aqueduct-react";
-import {
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
-import {
-  IComponentForge,
-} from "@prague/framework-definitions";
+
 import { IDirectory } from "@microsoft/fluid-map";
 import { SharedString } from "@microsoft/fluid-sequence";
-
+import { PrimedComponent } from "@prague/aqueduct";
+import { IComponentReactViewable } from "@prague/aqueduct-react";
+import { IComponentHTMLVisual } from "@prague/component-core-interfaces";
+import { IComponentForge } from "@prague/framework-definitions";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-
 import { TextListView } from "./TextListView";
 
 // tslint:disable-next-line: no-var-requires no-require-imports

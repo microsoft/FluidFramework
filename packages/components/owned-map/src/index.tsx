@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable:no-console
-import {
-  PrimedComponent,
-  PrimedComponentFactory,
-  SimpleModuleInstantiationFactory,
-} from "@prague/aqueduct";
-import {
-  IComponentHandle,
-  IComponentHTMLOptions,
-  IComponentHTMLVisual,
-} from "@prague/component-core-interfaces";
 import { Counter, CounterValueType } from "@microsoft/fluid-map";
+// tslint:disable:no-console
+import { PrimedComponent, PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
+import { IComponentHandle, IComponentHTMLOptions, IComponentHTMLVisual } from "@prague/component-core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { OwnedSharedMap } from "./ownedMap";

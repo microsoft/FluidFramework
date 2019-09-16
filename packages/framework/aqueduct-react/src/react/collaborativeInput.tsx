@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { SharedString } from "@microsoft/fluid-sequence";
-
 import * as React from "react";
 
 interface IProps {

@@ -5,7 +5,7 @@
 
 import { ISharedMap } from "@microsoft/fluid-map";
 import * as Sequence from "@microsoft/fluid-sequence";
-import { resumeAnalytics, textAnalytics } from "./analytics" ;
+import { resumeAnalytics, textAnalytics } from "./analytics";
 import { IntelligentServicesManager } from "./serviceManager";
 
 export interface ITokenConfig {

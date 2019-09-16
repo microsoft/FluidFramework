@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { ISharedMap } from "@microsoft/fluid-map";
+import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
+import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as api from "@prague/client-api";
 import { IComponentHandle } from "@prague/component-core-interfaces";
-import { ConsensusQueue, ConsensusStack, IConsensusOrderedCollection } from "@microsoft/fluid-ordered-collection";
-import { ISharedMap } from "@microsoft/fluid-map";
-import { IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
 import * as assert from "assert";
 import {
     DocumentDeltaEventManager,

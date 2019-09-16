@@ -4,11 +4,16 @@
  */
 
 import * as SearchMenu from "@chaincode/search-menu";
+import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
+import { ISharedMap, SharedMap } from "@microsoft/fluid-map";
+import * as MergeTree from "@microsoft/fluid-merge-tree";
+import { IComponentContext, IComponentFactory, IComponentRuntime } from "@microsoft/fluid-runtime-definitions";
+import * as Sequence from "@microsoft/fluid-sequence";
+import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as ClientUI from "@prague/client-ui";
 import {
     IComponent,
     IComponentHandleContext,
-
     IComponentHTMLOptions,
     IComponentHTMLView,
     IComponentHTMLVisual,
@@ -17,7 +22,6 @@ import {
     IRequest,
     IResponse,
 } from "@prague/component-core-interfaces";
-import { ComponentHandle, ComponentRuntime } from "@microsoft/fluid-component-runtime";
 import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
 import {
     ComponentCursorDirection,
@@ -25,18 +29,6 @@ import {
     IComponentCursor,
     IComponentLayout,
 } from "@prague/framework-definitions";
-import {
-    ISharedMap,
-    SharedMap,
-} from "@microsoft/fluid-map";
-import * as MergeTree from "@microsoft/fluid-merge-tree";
-import {
-    IComponentContext,
-    IComponentFactory,
-    IComponentRuntime,
-} from "@microsoft/fluid-runtime-definitions";
-import * as Sequence from "@microsoft/fluid-sequence";
-import { ISharedObjectFactory } from "@microsoft/fluid-shared-object-base";
 import * as Katex from "katex";
 import * as MathExpr from "./mathExpr";
 

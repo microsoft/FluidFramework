@@ -3,26 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-    IValueChanged,
-    IValueType,
-    SharedMap,
-} from "@microsoft/fluid-map";
+import { IValueChanged, IValueType, SharedMap } from "@microsoft/fluid-map";
 import * as MergeTree from "@microsoft/fluid-merge-tree";
-import {
-    ISequencedDocumentMessage,
-    ITree,
-} from "@prague/protocol-definitions";
-import {
-    IChannelAttributes,
-    IComponentRuntime,
-    IObjectStorageService,
-} from "@microsoft/fluid-runtime-definitions";
+import { IChannelAttributes, IComponentRuntime, IObjectStorageService } from "@microsoft/fluid-runtime-definitions";
 import { parseHandles, serializeHandles } from "@microsoft/fluid-shared-object-base";
+import { ISequencedDocumentMessage, ITree } from "@prague/protocol-definitions";
 import { ChildLogger, Deferred } from "@prague/utils";
 import * as assert from "assert";
-// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
-const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import {
     ISerializableInterval,
     SharedIntervalCollection,
@@ -32,6 +19,8 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 
+// tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
+const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 const valueTypes: IValueType<any>[] = [
     new SharedStringIntervalCollectionValueType(),
     new SharedIntervalCollectionValueType(),

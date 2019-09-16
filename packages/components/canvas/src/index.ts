@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { Ink } from "@microsoft/fluid-ink-stream";
+import { PrimedComponentFactory, SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 import { Canvas } from "./canvas";
 
 // tslint:disable-next-line: no-var-requires no-require-imports

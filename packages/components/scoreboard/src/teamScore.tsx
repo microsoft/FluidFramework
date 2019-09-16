@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Counter } from '@microsoft/fluid-map';
-import * as React from 'react';
+import { Counter } from "@microsoft/fluid-map";
+import * as React from "react";
 
 interface TeamScoreProps {
   name: string;
