@@ -26,3 +26,18 @@ export interface IComponentFactory extends IProvideComponentFactory {
 }
 
 export type ComponentFactoryTypes = IComponentFactory | { instantiateComponent(context: IComponentContext): void; };
+
+declare module "@prague/component-core-interfaces" {
+    export interface IComponent extends Readonly<Partial<IProvideComponentRegistry>> {}
+}
+
+export type ComponentRegistryTypes =
+    IComponentRegistry | { get(name: string): Promise<ComponentFactoryTypes> | undefined };
+
+export interface IProvideComponentRegistry {
+    IComponentRegistry: IComponentRegistry;
+}
+
+export interface IComponentRegistry extends IProvideComponentRegistry {
+    get(name: string): Promise<ComponentFactoryTypes> | undefined;
+}
