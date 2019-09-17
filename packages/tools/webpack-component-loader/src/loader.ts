@@ -81,7 +81,7 @@ async function getPkg(packageJson: IPackage, scriptIds: string[], component = fa
 
     // Add script to page, rather than load bundle directly
     const scriptLoadP: Promise<void>[] = [];
-    const scriptIdPrefix = "pragueDevServerScriptToLoad";
+    const scriptIdPrefix = "fluidDevServerScriptToLoad";
     let scriptIndex = 0;
     fluidPackage.fluid.browser.umd.files.forEach((file) => {
         const script = document.createElement("script");

@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-// tslint:disable no-var-requires no-unsafe-any non-literal-fs-path
 import * as express from "express";
-import * as fs from "fs";
 import * as moniker from "moniker";
 import * as path from "path";
 import WebpackDevServer from "webpack-dev-server";
 import { IRouteOptions } from "./loader";
 
-export const before = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
+export const before = (app: express.Application, server: WebpackDevServer) => {
+    // tslint:disable-next-line no-unsafe-any
+    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
+};
+
+export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: IRouteOptions) => {
     let options: IRouteOptions;
     if (!env) {
         options = { mode: "live" };
@@ -23,9 +26,7 @@ export const before = (app: express.Application, server: WebpackDevServer, baseD
         options = env;
     }
 
-    app.get("/", (req, res) => res.redirect(`/${moniker.choose()}`));
-    app.get("/fluid-loader.js", (req, res) => loader(req, res, baseDir));
-    app.get(/(.*(?<!\.js(\.map)?))$/i, (req, res) => fluid(req, res, baseDir, options));
+    app.get("/*", (req, res) => fluid(req, res, baseDir, options));
 };
 
 const fluid = (req: express.Request, res: express.Response,  baseDir: string, options: IRouteOptions) => {
@@ -37,6 +38,13 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
     );
     // tslint:disable-next-line: non-literal-require
     const packageJson = require(path.join(baseDir, "./package.json"));
+    const loaderPath = path.join(
+        "node_modules",
+        "@microsoft",
+        "fluid-webpack-component-loader",
+        "dist",
+        "fluid-loader.bundle.js"
+    );
 
     const html =
 `<!DOCTYPE html>
@@ -51,7 +59,7 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
         <div id="content"></div>
     </div>
 
-    <script src="/fluid-loader.js"></script>
+    <script src="${loaderPath}"></script>
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};
         var options = ${JSON.stringify(options)};
@@ -66,12 +74,4 @@ const fluid = (req: express.Request, res: express.Response,  baseDir: string, op
 
     res.setHeader("Content-Type", "text/html");
     res.end(html);
-};
-
-const loader = (req: express.Request, res: express.Response,  baseDir: string) => {
-    res.setHeader("Content-Type", "application/javascript");
-
-    fs.createReadStream(
-        path.join(baseDir, "node_modules", "@microsoft", "fluid-webpack-component-loader", "dist", "fluid-loader.bundle.js")
-    ).pipe(res);
 };
