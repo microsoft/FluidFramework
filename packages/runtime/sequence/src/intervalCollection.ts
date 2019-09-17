@@ -370,43 +370,43 @@ function compareSharedStringIntervalEnds(a: SharedStringInterval, b: SharedStrin
 }
 
 class SharedStringIntervalCollectionFactory
-    implements IValueFactory<SharedIntervalCollection<SharedStringInterval>> {
+    implements IValueFactory<IntervalCollection<SharedStringInterval>> {
     public load(
         emitter: IValueOpEmitter,
         raw: ISerializedInterval[] = [],
-    ): SharedIntervalCollection<SharedStringInterval> {
+    ): IntervalCollection<SharedStringInterval> {
         const helpers: IIntervalHelpers<SharedStringInterval> = {
             compareEnds: compareSharedStringIntervalEnds,
             create: createSharedStringInterval,
         };
-        return new SharedIntervalCollection<SharedStringInterval>(helpers, true, emitter, raw);
+        return new IntervalCollection<SharedStringInterval>(helpers, true, emitter, raw);
     }
 
-    public store(value: SharedIntervalCollection<SharedStringInterval>): ISerializedInterval[] {
+    public store(value: IntervalCollection<SharedStringInterval>): ISerializedInterval[] {
         return value.serializeInternal();
     }
 }
 
 export class SharedStringIntervalCollectionValueType
-    implements IValueType<SharedIntervalCollection<SharedStringInterval>> {
+    implements IValueType<IntervalCollection<SharedStringInterval>> {
     public static Name = "sharedStringIntervalCollection";
 
     public get name(): string {
         return SharedStringIntervalCollectionValueType.Name;
     }
 
-    public get factory(): IValueFactory<SharedIntervalCollection<SharedStringInterval>> {
+    public get factory(): IValueFactory<IntervalCollection<SharedStringInterval>> {
         return SharedStringIntervalCollectionValueType._factory;
     }
 
-    public get ops(): Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>> {
+    public get ops(): Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>> {
         return SharedStringIntervalCollectionValueType._ops;
     }
 
-    private static readonly _factory: IValueFactory<SharedIntervalCollection<SharedStringInterval>> =
+    private static readonly _factory: IValueFactory<IntervalCollection<SharedStringInterval>> =
         new SharedStringIntervalCollectionFactory();
-    private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>> =
-        new Map<string, IValueOperation<SharedIntervalCollection<SharedStringInterval>>>(
+    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>> =
+        new Map<string, IValueOperation<IntervalCollection<SharedStringInterval>>>(
         [[
             "add",
             {
@@ -436,43 +436,43 @@ function createInterval(label: string, start: number, end: number, client: Merge
     return new Interval(start, end, rangeProp);
 }
 
-class SharedIntervalCollectionFactory
-    implements IValueFactory<SharedIntervalCollection<Interval>> {
-    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[] = []): SharedIntervalCollection<Interval> {
+class IntervalCollectionFactory
+    implements IValueFactory<IntervalCollection<Interval>> {
+    public load(emitter: IValueOpEmitter, raw: ISerializedInterval[] = []): IntervalCollection<Interval> {
         const helpers: IIntervalHelpers<Interval> = {
             compareEnds: compareIntervalEnds,
             create: createInterval,
         };
-        const collection = new SharedIntervalCollection<Interval>(helpers, false, emitter, raw);
+        const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
         collection.attach(undefined, "");
         return collection;
     }
 
-    public store(value: SharedIntervalCollection<Interval>): ISerializedInterval[] {
+    public store(value: IntervalCollection<Interval>): ISerializedInterval[] {
         return value.serializeInternal();
     }
 }
 
-export class SharedIntervalCollectionValueType
-    implements IValueType<SharedIntervalCollection<Interval>> {
+export class IntervalCollectionValueType
+    implements IValueType<IntervalCollection<Interval>> {
     public static Name = "sharedIntervalCollection";
 
     public get name(): string {
-        return SharedIntervalCollectionValueType.Name;
+        return IntervalCollectionValueType.Name;
     }
 
-    public get factory(): IValueFactory<SharedIntervalCollection<Interval>> {
-        return SharedIntervalCollectionValueType._factory;
+    public get factory(): IValueFactory<IntervalCollection<Interval>> {
+        return IntervalCollectionValueType._factory;
     }
 
-    public get ops(): Map<string, IValueOperation<SharedIntervalCollection<Interval>>> {
-        return SharedIntervalCollectionValueType._ops;
+    public get ops(): Map<string, IValueOperation<IntervalCollection<Interval>>> {
+        return IntervalCollectionValueType._ops;
     }
 
-    private static readonly _factory: IValueFactory<SharedIntervalCollection<Interval>> =
-        new SharedIntervalCollectionFactory();
-    private static readonly _ops: Map<string, IValueOperation<SharedIntervalCollection<Interval>>> =
-        new Map<string, IValueOperation<SharedIntervalCollection<Interval>>>(
+    private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
+        new IntervalCollectionFactory();
+    private static readonly _ops: Map<string, IValueOperation<IntervalCollection<Interval>>> =
+        new Map<string, IValueOperation<IntervalCollection<Interval>>>(
         [[
             "add",
             {
@@ -490,7 +490,7 @@ export class SharedIntervalCollectionValueType
 
 export type DeserializeCallback = (properties: MergeTree.PropertySet) => void;
 
-export class SharedIntervalCollectionView<TInterval extends ISerializableInterval> extends EventEmitter {
+export class IntervalCollectionView<TInterval extends ISerializableInterval> extends EventEmitter {
     private readonly localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
 
@@ -612,9 +612,9 @@ export class SharedIntervalCollectionView<TInterval extends ISerializableInterva
     }
 }
 
-export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
+export class IntervalCollection<TInterval extends ISerializableInterval> {
     private savedSerializedIntervals?: ISerializedInterval[];
-    private view: SharedIntervalCollectionView<TInterval>;
+    private view: IntervalCollectionView<TInterval>;
 
     public get attached(): boolean {
         return !!this.view;
@@ -635,7 +635,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
             throw new Error("Client required for this collection");
         }
 
-        this.view = new SharedIntervalCollectionView<TInterval>(client,
+        this.view = new IntervalCollectionView<TInterval>(client,
             this.savedSerializedIntervals, label, this.helpers, this.emitter);
         this.savedSerializedIntervals = undefined;
     }
@@ -657,7 +657,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval> {
         this.view.addConflictResolver(conflictResolver);
     }
 
-    public async getView(onDeserialize?: DeserializeCallback): Promise<SharedIntervalCollectionView<TInterval>> {
+    public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollectionView<TInterval>> {
         if (!this.view) {
             return Promise.reject("attachSharedString must be called prior to retrieving the view");
         }

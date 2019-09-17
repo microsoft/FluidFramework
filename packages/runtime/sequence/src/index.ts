@@ -9,9 +9,9 @@ export {
     Interval,
     ISerializableInterval,
     ISerializedInterval,
-    SharedIntervalCollection,
-    SharedIntervalCollectionValueType,
-    SharedIntervalCollectionView,
+    IntervalCollection as SharedIntervalCollection,
+    IntervalCollectionValueType as SharedIntervalCollectionValueType,
+    IntervalCollectionView as SharedIntervalCollectionView,
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";

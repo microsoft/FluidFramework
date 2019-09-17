@@ -29,44 +29,44 @@ import {
     ValueTypeLocalValue,
 } from "./localValues";
 
-interface IMapMessageHandler {
+export interface IMapMessageHandler {
     process(op: IMapOperation, local: boolean, message: ISequencedDocumentMessage): void;
     submit(op: IMapOperation): void;
 }
 
-interface IMapValueTypeOperation {
+export interface IMapValueTypeOperation {
     type: "act";
     key: string;
     value: IValueTypeOperationValue;
 }
 
-interface IMapSetOperation {
+export interface IMapSetOperation {
     type: "set";
     key: string;
     value: ISerializableValue;
 }
 
-interface IMapDeleteOperation {
+export interface IMapDeleteOperation {
     type: "delete";
     key: string;
 }
 
-type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
+export type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
 
-interface IMapClearOperation {
+export interface IMapClearOperation {
     type: "clear";
 }
 
 /**
  * Description of a map delta operation
  */
-type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse
  */
-interface IMapDataObject {
+export interface IMapDataObject {
     [key: string]: ISerializableValue;
 }
 

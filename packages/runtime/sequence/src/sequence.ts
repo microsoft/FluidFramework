@@ -5,8 +5,6 @@
 
 import {
     IValueChanged,
-    IValueType,
-    SharedMap,
 } from "@prague/map";
 import * as MergeTree from "@prague/merge-tree";
 import {
@@ -24,26 +22,15 @@ import * as assert from "assert";
 // tslint:disable-next-line:no-submodule-imports no-var-requires no-require-imports
 const cloneDeep = require("lodash/cloneDeep") as <T>(value: T) => T;
 import {
-    ISerializableInterval,
-    SharedIntervalCollection,
-    SharedIntervalCollectionValueType,
+    IntervalCollection,
     SharedStringInterval,
     SharedStringIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
+import {intervalCollectionMapPath, SharedIntervalCollection} from "./SharedIntervaleCollection";
 
-const valueTypes: IValueType<any>[] = [
-    new SharedStringIntervalCollectionValueType(),
-    new SharedIntervalCollectionValueType(),
-];
-
-const intervalCollectionMapPath = "intervalCollections/";
-
-function getIntervalCollectionPath(label: string): string {
-    return `${intervalCollectionMapPath}${label}`;
-}
-
-export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extends SharedMap {
+export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
+extends SharedIntervalCollection<SharedStringInterval> {
     get loaded(): Promise<void> {
         return this.loadedDeferred.promise;
     }
@@ -106,11 +93,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         attributes: IChannelAttributes,
         public readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment,
     ) {
-        super(id, document, attributes);
-
-        for (const valueType of valueTypes) {
-            this.registerValueType(valueType);
-        }
+        super(id, document, attributes, new SharedStringIntervalCollectionValueType());
 
         /* tslint:disable:no-unsafe-any */
         this.client = new MergeTree.Client(
@@ -315,29 +298,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
     }
 
-    public async waitSharedIntervalCollection<TInterval extends ISerializableInterval>(
-        label: string,
-    ): Promise<SharedIntervalCollection<TInterval>> {
-        const translatedLabel = getIntervalCollectionPath(label);
-        return this.wait<SharedIntervalCollection<TInterval>>(translatedLabel);
-    }
-
-    // TODO: fix race condition on creation by putting type on every operation
-    public getSharedIntervalCollection(label: string): SharedIntervalCollection<SharedStringInterval> {
-        return this.getSharedIntervalCollectionInternal<SharedStringInterval>(
-            label,
-            SharedStringIntervalCollectionValueType.Name);
-    }
-
-    // TODO: fix race condition on creation by putting type on every operation
-    public getGenericSharedIntervalCollection<TInterval extends ISerializableInterval>(
-        label: string,
-    ): SharedIntervalCollection<TInterval> {
-        return this.getSharedIntervalCollectionInternal<TInterval>(
-            label,
-            SharedIntervalCollectionValueType.Name);
-    }
-
     public sendNACKed() {
         const groupOp = this.client.resetPendingSegmentsToOp();
         if (groupOp) {
@@ -420,6 +380,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     }
 
     protected initializeLocalCore() {
+        super.initializeLocalCore();
         assert(MergeTree.Snapshot.EmptyChunk.chunkSequenceNumber === 0);
         this.loadFinished();
     }
@@ -505,23 +466,6 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         return;
     }
 
-    private getSharedIntervalCollectionInternal<TInterval extends ISerializableInterval>(
-        label: string,
-        type: string,
-    ): SharedIntervalCollection<TInterval> {
-        const translatedLabel = getIntervalCollectionPath(label);
-
-        if (!this.has(translatedLabel)) {
-            this.set(
-                translatedLabel,
-                undefined,
-                type);
-        }
-
-        const sharedCollection = this.get<SharedIntervalCollection<TInterval>>(translatedLabel);
-        return sharedCollection;
-    }
-
     private processMinSequenceNumberChanged(minSeq: number) {
         let index = 0;
         for (; index < this.messagesSinceMSNChange.length; index++) {
@@ -538,8 +482,21 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
         this.client.applyMsg(message);
     }
 
+    private loadFinished(error?: any) {
+        // initialize the interval collections
+        this.initializeIntervalCollections();
+        if (error) {
+            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
+            this.loadedDeferred.reject(error);
+        } else {
+            this.isLoaded = true;
+            this.loadedDeferred.resolve();
+        }
+    }
+
     private initializeIntervalCollections() {
-        const intervalCollections = Array.from(this.keys())
+
+        const intervalCollections = Array.from(this.kernal.keys())
             .filter((key) => key.indexOf(intervalCollectionMapPath) === 0);
 
         // Listen and initialize new SharedIntervalCollections
@@ -548,7 +505,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
                 return;
             }
 
-            const intervalCollection = this.get<SharedIntervalCollection<SharedStringInterval>>(ev.key);
+            const intervalCollection = this.kernal.get<IntervalCollection<SharedStringInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attach(this.client, ev.key);
             }
@@ -556,21 +513,8 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
 
         // Initialize existing SharedIntervalCollections
         for (const key of intervalCollections) {
-            const intervalCollection = this.get<SharedIntervalCollection<SharedStringInterval>>(key);
+            const intervalCollection = this.kernal.get<IntervalCollection<SharedStringInterval>>(key);
             intervalCollection.attach(this.client, key);
-        }
-    }
-
-    private loadFinished(error?: any) {
-        // initialize the interval collections
-        this.initializeIntervalCollections();
-
-        if (error) {
-            this.logger.sendErrorEvent({eventName: "SequenceLoadFailed" }, error);
-            this.loadedDeferred.reject(error);
-        } else {
-            this.isLoaded = true;
-            this.loadedDeferred.resolve();
         }
     }
 }

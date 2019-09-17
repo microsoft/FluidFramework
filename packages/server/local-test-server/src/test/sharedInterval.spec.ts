@@ -10,12 +10,10 @@ import { IntervalType, LocalReference } from "@prague/merge-tree";
 import { IBlob } from "@prague/protocol-definitions";
 import {
     ISerializedInterval,
-    SharedIntervalCollection,
     SharedIntervalCollectionView,
     SharedString,
     SharedStringFactory,
     SharedStringInterval,
-    SharedStringIntervalCollectionValueType,
 } from "@prague/sequence";
 import * as assert from "assert";
 import {
@@ -68,7 +66,7 @@ describe("SharedInterval", () => {
             host = new TestHost([]);
             sharedString = await host.createType("text", SharedStringFactory.Type);
             sharedString.insertText(0, "012");
-            intervals = await sharedString.getSharedIntervalCollection("intervals").getView();
+            intervals = await sharedString.getIntervalCollection("intervals").getView();
         });
 
         afterEach(async () => {
@@ -186,7 +184,7 @@ describe("SharedInterval", () => {
             const host1 = new TestHost([]);
             const sharedString1 = await host1.createType<SharedString>("text", SharedStringFactory.Type);
             sharedString1.insertText(0, "0123456789");
-            const intervals1 = await sharedString1.getSharedIntervalCollection("intervals").getView();
+            const intervals1 = await sharedString1.getIntervalCollection("intervals").getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
             assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
@@ -194,7 +192,7 @@ describe("SharedInterval", () => {
             await TestHost.sync(host1, host2);
 
             const sharedString2 = await host2.getType<SharedString>("text");
-            const intervals2 = await sharedString2.getSharedIntervalCollection("intervals").getView();
+            const intervals2 = await sharedString2.getIntervalCollection("intervals").getView();
             assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
             sharedString2.removeRange(4, 5);
@@ -256,12 +254,12 @@ describe("SharedInterval", () => {
 
             outerString1.insertText(0, "outer string");
 
-            outerString1.set("comments", undefined, SharedStringIntervalCollectionValueType.Name);
+            outerString1.createIntervalCollection("comments");
             await documentDeltaEventManager.process(user1Document, user2Document, user3Document);
 
-            const intervalCollection1 = outerString1.get<SharedIntervalCollection<SharedStringInterval>>("comments");
-            const intervalCollection2 = outerString2.get<SharedIntervalCollection<SharedStringInterval>>("comments");
-            const intervalCollection3 = outerString3.get<SharedIntervalCollection<SharedStringInterval>>("comments");
+            const intervalCollection1 = outerString1.getIntervalCollection("comments");
+            const intervalCollection2 = outerString2.getIntervalCollection("comments");
+            const intervalCollection3 = outerString3.getIntervalCollection("comments");
             assert.ok(intervalCollection1);
             assert.ok(intervalCollection2);
             assert.ok(intervalCollection3);
