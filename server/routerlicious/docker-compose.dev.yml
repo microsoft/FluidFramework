@@ -12,6 +12,9 @@ services:
     scriptorium:
         volumes:
             - ../..:/usr/src/server
+    hard-disk:
+        volumes:
+            - ../..:/usr/src/server
     broadcaster:
         volumes:
             - ../..:/usr/src/server

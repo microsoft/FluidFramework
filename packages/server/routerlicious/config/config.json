@@ -110,6 +110,10 @@
             "group": "scriptorium",
             "topic": "deltas"
         },
+        "hard-disk": {
+            "group": "hard-disk",
+            "topic": "rawdeltas"
+        },
         "broadcaster": {
             "group": "broadcaster",
             "topic": "deltas"
@@ -131,6 +135,13 @@
         "topic": "deltas",
         "kafkaClientId": "scriptorium",
         "groupId": "scriptorium",
+        "checkpointBatchSize": 1,
+        "checkpointTimeIntervalMsec": 1000
+    },
+    "hard-disk": {
+        "topic": "rawdeltas",
+        "kafkaClientId": "hard-disk",
+        "groupId": "hard-disk",
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },
