@@ -107,6 +107,9 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
     // Snapshot if 1000 ops received since last snapshot.
     maxOps: 1000,
+
+    // Wait 10 minutes for summary ack
+    maxAckWaitTime: 600000,
 };
 
 /**
@@ -548,8 +551,8 @@ export class ContainerRuntime extends EventEmitter implements IHostRuntime {
             this.clearPartialChunks(clientId);
         });
 
-        const summaryConfiguration = context.serviceConfiguration && context.serviceConfiguration.summary
-            ? context.serviceConfiguration.summary
+        const summaryConfiguration = context.serviceConfiguration
+            ? { ...DefaultSummaryConfiguration, ...context.serviceConfiguration.summary }
             : DefaultSummaryConfiguration;
 
         // We always create the summarizer in the case that we are asked to generate summaries. But this may

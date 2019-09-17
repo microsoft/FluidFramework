@@ -64,6 +64,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         idleTime: 5000,
         maxOps: 1000,
         maxTime: 5000 * 12,
+        maxAckWaitTime: 600000,
     },
 };
 
