@@ -110,8 +110,8 @@
             "group": "scriptorium",
             "topic": "deltas"
         },
-        "hard-disk": {
-            "group": "hard-disk",
+        "copier": {
+            "group": "copier",
             "topic": "rawdeltas"
         },
         "broadcaster": {
@@ -138,10 +138,10 @@
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },
-    "hard-disk": {
+    "copier": {
         "topic": "rawdeltas",
-        "kafkaClientId": "hard-disk",
-        "groupId": "hard-disk",
+        "kafkaClientId": "copier",
+        "groupId": "copier",
         "checkpointBatchSize": 1,
         "checkpointTimeIntervalMsec": 1000
     },

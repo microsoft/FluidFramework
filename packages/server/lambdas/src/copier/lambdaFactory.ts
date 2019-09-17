@@ -12,9 +12,9 @@ import {
 } from "@microsoft/fluid-server-services-core";
 import { EventEmitter } from "events";
 import { Provider } from "nconf";
-import { HardDiskLambda } from "./lambda";
+import { CopierLambda } from "./lambda";
 
-export class HardDiskLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class CopierLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private mongoManager: MongoManager,
         private opCollection: ICollection<any>,
@@ -27,7 +27,7 @@ export class HardDiskLambdaFactory extends EventEmitter implements IPartitionLam
         // Takes in the io as well as the collection. I can probably keep the same lambda but only ever give it stuff
         // from a single document
         console.log("lambda factory create");
-        return new HardDiskLambda(context); // this.opCollection, this.contentCollection, context);
+        return new CopierLambda(context); // this.opCollection, this.contentCollection, context);
     }
 
     public async dispose(): Promise<void> {

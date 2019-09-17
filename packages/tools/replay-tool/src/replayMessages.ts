@@ -263,7 +263,7 @@ class Document {
                 storageUrl: "replay.com",
             },
             tokens: {},
-            type: "prague",
+            type: "fluid",
             url: `fluid-file://localhost:6000/prague/${FileStorageDocumentName}`,
         };
 

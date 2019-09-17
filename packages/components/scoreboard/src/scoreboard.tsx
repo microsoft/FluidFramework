@@ -20,8 +20,8 @@ export class Scoreboard extends PrimedComponent implements IComponentHTMLVisual 
   * Setup the distributed data structures; called once when the component is created (NOT initialized)
   */
   protected async componentInitializingFirstTime() {
-    this.root.set('Hardcoders', 0, CounterValueType.Name);
-    this.root.set('Chaincoders', 0, CounterValueType.Name);
+    this.root.createValueType('Hardcoders', CounterValueType.Name, 0);
+    this.root.createValueType('Chaincoders', CounterValueType.Name, 0);
   }
 
   render(hostingElement: HTMLElement, options?: IComponentHTMLOptions): void {

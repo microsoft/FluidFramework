@@ -158,9 +158,10 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
             commits[decodeURIComponent(key)] = hierarchicalTree.commits[key];
         }
 
-        if (commits && commits[".protocol"] && commits[".app"]) {
+        if (commits && commits[".app"]) {
             // the latest snapshot is a summary
-            return this.readSummaryTree(tree.sha, commits[".protocol"] as string, commits[".app"] as string);
+            // attempt to read .protocol from commits for backwards compat
+            return this.readSummaryTree(tree.sha, commits[".protocol"] || hierarchicalTree.trees[".protocol"], commits[".app"] as string);
         }
 
         if (hierarchicalTree.blobs) {
@@ -237,7 +238,7 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
                 // snapshot code path. We should leverage the fact that these deltas are returned to speed up the deltas fetch.
                 const { headers, url } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/trees/latest?deltas=1&channels=1&blobs=2`, storageToken);
 
-                const {trees, blobs, ops, sha} = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
+                const { trees, blobs, ops, sha } = await this.fetchWrapper.get<IOdspSnapshot>(url, this.documentId, headers);
 
                 const treesLatestEndTime = performance.now();
                 this.logger.send({
@@ -387,28 +388,40 @@ export class OdspDocumentStorageManager implements IDocumentStorageManager {
     /**
      * Reads a summary tree
      * @param snapshotTreeId - Id of the snapshot
-     * @param protocolTreeId - Id of the protocol tree
+     * @param protocolTreeOrId - Protocol snapshot tree or id of the protocol tree
      * @param appTreeId - Id of the app tree
      */
-    private async readSummaryTree(snapshotTreeId: string, protocolTreeId: string, appTreeId: string): Promise<api.ISnapshotTree> {
+    private async readSummaryTree(snapshotTreeId: string, protocolTreeOrId: api.ISnapshotTree | string, appTreeId: string): Promise<api.ISnapshotTree> {
         // load the app and protocol trees and return them
-        const trees = await Promise.all([
-            this.readTree(protocolTreeId),
-            this.readTree(appTreeId),
-        ]);
+        let hierarchicalProtocolTree: api.ISnapshotTree;
+        let appTree: resources.ITree | null;
 
-        // merge trees
-        const protocolTree = trees[0];
-        if (!protocolTree) {
-            throw new Error("Invalid protocol tree");
+        if (typeof (protocolTreeOrId) === "string") {
+            // backwards compat for older summaries
+            const trees = await Promise.all([
+                this.readTree(protocolTreeOrId),
+                this.readTree(appTreeId),
+            ]);
+
+            const protocolTree = trees[0];
+            if (!protocolTree) {
+                throw new Error("Invalid protocol tree");
+            }
+
+            appTree = trees[1];
+
+            hierarchicalProtocolTree = buildHierarchy(protocolTree);
+
+        } else {
+            appTree = await this.readTree(appTreeId);
+
+            hierarchicalProtocolTree = protocolTreeOrId;
         }
 
-        const appTree = trees[1];
         if (!appTree) {
             throw new Error("Invalid app tree");
         }
 
-        const hierarchicalProtocolTree = buildHierarchy(protocolTree);
         const hierarchicalAppTree = buildHierarchy(appTree);
 
         if (hierarchicalProtocolTree.blobs) {

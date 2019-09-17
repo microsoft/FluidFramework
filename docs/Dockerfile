@@ -53,6 +53,9 @@ RUN git config --global user.name "Prague build server"
 
 ARG DOCSGITPASSWORD
 RUN git clone https://%24praguedocs:$DOCSGITPASSWORD@praguedocs.scm.azurewebsites.net:443/praguedocs.git praguedocs
+WORKDIR /praguedocs
+RUN git pull
+WORKDIR /
 RUN rsync docs/_site/ praguedocs/ -rv --exclude '.git'
 
 WORKDIR /praguedocs
