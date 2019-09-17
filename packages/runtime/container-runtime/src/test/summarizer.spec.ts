@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager, IDeltaQueue } from "@prague/container-definitions";
+import { IDeltaManager, IDeltaQueue, ITelemetryLogger } from "@prague/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage, ISummaryConfiguration, MessageType } from "@prague/protocol-definitions";
 import * as assert from "assert";
 import { EventEmitter } from "events";
@@ -48,6 +48,9 @@ describe("Runtime", () => {
                             deltaManager: {
                                 inbound: emitter as IDeltaQueue<ISequencedDocumentMessage>,
                             } as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+                            logger: {
+                                sendTelemetryEvent: (event) => {},
+                            } as ITelemetryLogger,
                         } as ContainerRuntime,
                         summaryConfig,
                         async () => { emitter.emit(generateSummaryEvent); },

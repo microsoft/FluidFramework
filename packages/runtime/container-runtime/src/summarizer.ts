@@ -12,6 +12,7 @@ import {
     MessageType,
 } from "@prague/protocol-definitions";
 import { Deferred } from "@prague/utils";
+import * as assert from "assert";
 import { ContainerRuntime } from "./containerRuntime";
 import { debug } from "./debug";
 
@@ -99,6 +100,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             if (this.summaryPending) {
                 const pendingTime = Date.now() - this.lastSummaryTime;
                 if (pendingTime > this.configuration.maxAckWaitTime) {
+                    this.runtime.logger.sendTelemetryEvent({ eventName: "SummaryAckWaitTimeout" });
                     debug("Summarizer timed out while waiting for SummaryAck/SummaryNack from server.");
                     this.summaryPending = false;
                 }
@@ -131,6 +133,9 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
     private async summarize(message: string) {
         try {
+            // it shouldn't be possible to enter here if already summarizing or pending
+            assert(!this.summarizing && !this.summaryPending);
+
             // generateSummary could take some time
             // mark that we are currently summarizing to prevent concurrent summarizing
             this.summarizing = true;
@@ -139,8 +144,8 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
 
             const summarySequenceNumber = this.lastOp ? this.lastOp.sequenceNumber : 1;
 
-            await this.generateSummary();
             this.summaryPending = true;
+            await this.generateSummary();
 
             // On success note the time of the snapshot and op sequence number.
             // Skip on error to cause us to attempt the snapshot again.
@@ -148,6 +153,7 @@ export class Summarizer implements IComponentLoadable, ISummarizer {
             this.lastSummarySeqNumber = summarySequenceNumber;
         } catch (ex) {
             debug(`Summarize error ${this.runtime.id}`, ex);
+            this.summaryPending = false;
         } finally {
             this.summarizing = false;
         }
