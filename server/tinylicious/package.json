@@ -1,0 +1,29 @@
+{
+  "name": "tinylicious",
+  "version": "0.1.0",
+  "description": "Tiny routerlicious",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@microsoft/fluid-build-common": "^0.10.13429",
+    "@types/node": "^12.7.5",
+    "tslint": "^5.20.0",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "@microsoft/fluid-server-memory-orderer": "^0.10.13429",
+    "@microsoft/fluid-server-services": "^0.10.13429",
+    "@microsoft/fluid-server-services-core": "^0.10.13429",
+    "@microsoft/fluid-server-services-utils": "^0.10.13429",
+    "@prague/socket-storage-shared": "^0.10.13429",
+    "lodash": "^4.17.15"
+  }
+}
