@@ -31,7 +31,7 @@ import {
 import {
     valueTypes,
 } from "./localValues";
-import { MapKernal } from "./mapKernal";
+import { Mapkernel } from "./mapkernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -148,7 +148,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedMap";
-    private readonly kernal: MapKernal;
+    private readonly kernel: Mapkernel;
 
     /**
      * Constructs a new shared map. If the object is non-local an id and service interfaces will
@@ -160,7 +160,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         attributes = MapFactory.Attributes,
     ) {
         super(id, runtime, attributes);
-        this.kernal = new MapKernal(
+        this.kernel = new Mapkernel(
             runtime,
             this.handle,
             (op) => this.submitMapMessage(op),
@@ -170,28 +170,28 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public keys(): IterableIterator<string> {
-        return this.kernal.keys();
+        return this.kernel.keys();
     }
 
     public entries(): IterableIterator<[string, any]> {
-        return this.kernal.entries();
+        return this.kernel.entries();
     }
 
     public values(): IterableIterator<any> {
-        return this.kernal.values();
+        return this.kernel.values();
     }
 
     public [Symbol.iterator](): IterableIterator<[string, any]> {
-        return this.kernal.entries();
+        return this.kernel.entries();
     }
 
     public get size() {
-        return this.kernal.size;
+        return this.kernel.size;
     }
 
     // TODO: fix to pass-through when meta-data moved to separate map
     public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void) {
-        this.kernal.forEach((value, key, m) => {
+        this.kernel.forEach((value, key, m) => {
             callbackFn(value, key, m);
         });
     }
@@ -200,15 +200,15 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * Retrieves the value with the given key from the map.
      */
     public get<T = any>(key: string): T {
-        return this.kernal.get<T>(key);
+        return this.kernel.get<T>(key);
     }
 
     public async wait<T = any>(key: string): Promise<T> {
-        return this.kernal.wait<T>(key);
+        return this.kernel.wait<T>(key);
     }
 
     public has(key: string): boolean {
-        return this.kernal.has(key);
+        return this.kernel.has(key);
     }
 
     /**
@@ -217,7 +217,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * @param value - value to set
      */
     public set(key: string, value: any): this {
-        this.kernal.set(key, value);
+        this.kernel.set(key, value);
         return this;
     }
 
@@ -234,14 +234,14 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * @param key - key to delete
      */
     public delete(key: string): boolean {
-        return this.kernal.delete(key);
+        return this.kernel.delete(key);
     }
 
     /**
      * Public clear API.
      */
     public clear(): void {
-        this.kernal.clear();
+        this.kernel.clear();
     }
 
     public snapshot(): ITree {
@@ -252,7 +252,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.kernal.serialize(),
+                        contents: this.kernel.serialize(),
                         encoding: "utf-8",
                     },
                 },
@@ -293,7 +293,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public serialize() {
-        return this.kernal.serialize();
+        return this.kernel.serialize();
     }
 
     protected onDisconnect() {
@@ -309,7 +309,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         const mapMessages: IMapOperation[] = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
-            if (this.kernal.hasHandlerFor(message)) {
+            if (this.kernel.hasHandlerFor(message)) {
                 mapMessages.push(message);
             } else {
                 contentMessages.push(message);
@@ -318,7 +318,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.kernal.messageHandlers.get(message.type);
+            const handler = this.kernel.messageHandlers.get(message.type);
             handler.submit(message);
         }
 
@@ -333,7 +333,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         const header = await storage.read(snapshotFileName);
 
         const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        this.kernal.populate(data as IMapDataObject);
+        this.kernel.populate(data as IMapDataObject);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
@@ -351,8 +351,8 @@ export class SharedMap extends SharedObject implements ISharedMap {
         let handled = false;
         if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents as IMapOperation;
-            if (this.kernal.messageHandlers.has(op.type)) {
-                this.kernal.messageHandlers.get(op.type)
+            if (this.kernel.messageHandlers.has(op.type)) {
+                this.kernel.messageHandlers.get(op.type)
                     .process(op, local, message);
                 handled = true;
             }

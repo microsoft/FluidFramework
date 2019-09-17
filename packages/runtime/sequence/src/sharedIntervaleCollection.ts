@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueType, MapKernal } from "@prague/map";
+import { ContentObjectStorage, IMapDataObject, IMapOperation, IValueType, Mapkernel } from "@prague/map";
 import {
     FileMode,
     ISequencedDocumentMessage,
@@ -84,7 +84,7 @@ export class SharedIntervalCollectionFactory implements ISharedObjectFactory {
 export class SharedIntervalCollection<TInterval extends ISerializableInterval = Interval> extends SharedObject {
 
     public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-    protected readonly intervalMapkernal: MapKernal;
+    protected readonly intervalMapkernel: Mapkernel;
 
     /**
      * Constructs a new shared map. If the object is non-local an id and service interfaces will
@@ -97,7 +97,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         private readonly valueType: IValueType<IntervalCollection<TInterval>>,
     ) {
         super(id, runtime, attributes);
-        this.intervalMapkernal = new MapKernal(
+        this.intervalMapkernel = new Mapkernel(
             runtime,
             this.handle,
             (op) => this.submitLocalMessage(op),
@@ -108,20 +108,20 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     public async waitSharedIntervalCollection(
         label: string,
     ): Promise<IntervalCollection<TInterval>> {
-        return this.intervalMapkernal.wait<IntervalCollection<TInterval>>(label);
+        return this.intervalMapkernel.wait<IntervalCollection<TInterval>>(label);
     }
 
     // TODO: fix race condition on creation by putting type on every operation
     public getIntervalCollection(label: string): IntervalCollection<TInterval> {
-        if (!this.intervalMapkernal.has(label)) {
-            this.intervalMapkernal.createValueType(
+        if (!this.intervalMapkernel.has(label)) {
+            this.intervalMapkernel.createValueType(
                 label,
                 this.valueType.name,
                 undefined);
         }
 
         const sharedCollection =
-            this.intervalMapkernal.get<IntervalCollection<TInterval>>(label);
+            this.intervalMapkernel.get<IntervalCollection<TInterval>>(label);
         return sharedCollection;
     }
 
@@ -133,7 +133,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
                     path: snapshotFileName,
                     type: TreeEntry[TreeEntry.Blob],
                     value: {
-                        contents: this.intervalMapkernal.serialize(),
+                        contents: this.intervalMapkernel.serialize(),
                         encoding: "utf-8",
                     },
                 },
@@ -156,7 +156,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     public serialize() {
-        return this.intervalMapkernal.serialize();
+        return this.intervalMapkernel.serialize();
     }
 
     protected onDisconnect() {
@@ -172,7 +172,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         const mapMessages: IMapOperation[] = [];
         const contentMessages: any[] = [];
         for (const message of pending) {
-            if (this.intervalMapkernal.hasHandlerFor(message)) {
+            if (this.intervalMapkernel.hasHandlerFor(message)) {
                 mapMessages.push(message);
             } else {
                 contentMessages.push(message);
@@ -181,7 +181,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
 
         // Deal with the map messages - for the map it's always last one wins so we just resend
         for (const message of mapMessages) {
-            const handler = this.intervalMapkernal.messageHandlers.get(message.type);
+            const handler = this.intervalMapkernel.messageHandlers.get(message.type);
             handler.submit(message);
         }
 
@@ -196,7 +196,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         const header = await storage.read(snapshotFileName);
 
         const data = header ? JSON.parse(fromBase64ToUtf8(header)) : {};
-        this.intervalMapkernal.populate(data as IMapDataObject);
+        this.intervalMapkernel.populate(data as IMapDataObject);
 
         const contentStorage = new ContentObjectStorage(storage);
         await this.loadContent(
@@ -214,8 +214,8 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         let handled = false;
         if (message.type === MessageType.Operation) {
             const op: IMapOperation = message.contents as IMapOperation;
-            if (this.intervalMapkernal.messageHandlers.has(op.type)) {
-                this.intervalMapkernal.messageHandlers.get(op.type)
+            if (this.intervalMapkernel.messageHandlers.has(op.type)) {
+                this.intervalMapkernel.messageHandlers.get(op.type)
                     .process(op, local, message);
                 handled = true;
             }
@@ -227,7 +227,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     }
 
     protected registerCore() {
-        for (const value of this.intervalMapkernal.values()) {
+        for (const value of this.intervalMapkernel.values()) {
             if (SharedObject.is(value)) {
                 value.register();
             }

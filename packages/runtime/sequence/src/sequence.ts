@@ -497,16 +497,16 @@ extends SharedIntervalCollection<SequenceInterval> {
     private initializeIntervalCollections() {
 
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapkernal.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalMapkernal.get<IntervalCollection<SequenceInterval>>(ev.key);
+        this.intervalMapkernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
+            const intervalCollection = this.intervalMapkernel.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attach(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalMapkernal.keys()) {
-            const intervalCollection = this.intervalMapkernal.get<IntervalCollection<SequenceInterval>>(key);
+        for (const key of this.intervalMapkernel.keys()) {
+            const intervalCollection = this.intervalMapkernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attach(this.client, key);
         }
     }

@@ -73,7 +73,7 @@ export interface IMapDataObject {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernal {
+export class Mapkernel {
 
     public get size() {
         return this.data.size;
