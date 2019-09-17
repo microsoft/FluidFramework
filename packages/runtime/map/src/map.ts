@@ -165,6 +165,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
             this.handle,
             (op) => this.submitMapMessage(op),
             valueTypes,
+            this,
         );
     }
 

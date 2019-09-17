@@ -73,7 +73,7 @@ export interface IMapDataObject {
 /**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernal extends EventEmitter {
+export class MapKernal {
 
     public get size() {
         return this.data.size;
@@ -94,8 +94,8 @@ export class MapKernal extends EventEmitter {
         private readonly handle: IComponentHandle,
         private readonly submitMessage: (op: IMapOperation) => number,
         valueTypes: Readonly<IValueType<any>[]>,
+        public readonly eventEmitter = new EventEmitter(),
     ) {
-        super();
         this.localValueMaker = new LocalValueMaker(runtime);
         this.messageHandlers = this.setMessageHandlers();
         for (const type of valueTypes) {
@@ -183,11 +183,11 @@ export class MapKernal extends EventEmitter {
             const callback = (changed: IValueChanged) => {
                 if (key === changed.key) {
                     resolve(this.get<T>(changed.key));
-                    this.removeListener("valueChanged", callback);
+                    this.eventEmitter.removeListener("valueChanged", callback);
                 }
             };
 
-            this.on("valueChanged", callback);
+            this.eventEmitter.on("valueChanged", callback);
         });
     }
 
@@ -272,24 +272,6 @@ export class MapKernal extends EventEmitter {
     }
 
     /**
-     * Registers a listener on the specified events
-     */
-    public on(
-        event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
-    public on(event: "valueChanged", listener: (
-        changed: IValueChanged,
-        local: boolean,
-        op: ISequencedDocumentMessage,
-        target: this) => void): this;
-    public on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-    /* tslint:disable:no-unnecessary-override */
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
-    /**
      * Serializes the shared map to a JSON string
      */
     public serialize(): string {
@@ -314,7 +296,7 @@ export class MapKernal extends EventEmitter {
         }
     }
 
-    public hasHandlerFor(message: any): boolean {
+    public hasHandlerFor(message: any): message is IMapOperation {
         // tslint:disable-next-line:no-unsafe-any
         return this.messageHandlers.has(message.type);
     }
@@ -323,12 +305,12 @@ export class MapKernal extends EventEmitter {
         const previousValue = this.get(key);
         this.data.set(key, value);
         const event: IValueChanged = { key, previousValue };
-        this.emit("valueChanged", event, local, op, this);
+        this.eventEmitter.emit("valueChanged", event, local, op, this);
     }
 
     private clearCore(local: boolean, op: ISequencedDocumentMessage) {
         this.data.clear();
-        this.emit("clear", local, op, this);
+        this.eventEmitter.emit("clear", local, op, this);
     }
 
     private deleteCore(key: string, local: boolean, op: ISequencedDocumentMessage) {
@@ -336,7 +318,7 @@ export class MapKernal extends EventEmitter {
         const successfullyRemoved = this.data.delete(key);
         if (successfullyRemoved) {
             const event: IValueChanged = { key, previousValue };
-            this.emit("valueChanged", event, local, op, this);
+            this.eventEmitter.emit("valueChanged", event, local, op, this);
         }
         return successfullyRemoved;
     }
@@ -474,7 +456,7 @@ export class MapKernal extends EventEmitter {
                         this.runtime.IComponentHandleContext);
                     handler.process(previousValue, translatedValue, local, message);
                     const event: IValueChanged = { key: op.key, previousValue };
-                    this.emit("valueChanged", event, local, message, this);
+                    this.eventEmitter.emit("valueChanged", event, local, message, this);
                 },
                 submit: this.submitMessage,
             });
@@ -515,7 +497,7 @@ export class MapKernal extends EventEmitter {
             this.submitMessage(op);
 
             const event: IValueChanged = { key, previousValue };
-            this.emit("valueChanged", event, true, null, this);
+            this.eventEmitter.emit("valueChanged", event, true, null, this);
         };
 
         return { emit };
