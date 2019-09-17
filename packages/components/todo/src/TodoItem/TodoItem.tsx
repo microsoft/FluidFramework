@@ -85,7 +85,7 @@ export class TodoItem extends PrimedComponent
     // create a counter that will be used for the checkbox
     // we use a counter so if both users press the button at the same time it will result
     // in the button being the same value.
-    this.root.set("checked", 0, CounterValueType.Name);
+    this.root.createValueType("checked", CounterValueType.Name, 0);
 
     // Each Todo Item has one inner component that it can have. This value is originally empty since we let the
     // user choose the component they want to embed. We store it in a cell for easier event handling.

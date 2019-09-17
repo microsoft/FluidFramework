@@ -4,12 +4,12 @@
       {
         "files": [
           "**.md",
-          "**.yml",
+          "**.yml"
         ],
         "exclude": [
           "_site/**",
           "templates/**",
-          "legacy/**",
+          "legacy/**"
         ]
       },
       {
@@ -17,10 +17,12 @@
         "files": [
           "samples/hosts/README.md",
           "packages/drivers/fluid-debugger/README.md",
-          "packages/tools/prague-dump/README.md",
-          "packages/tools/replay-tool/README.md",
-          ],
-        "exclude": ["**/node_modules/**"]
+          "packages/tools/fluid-fetch/README.md",
+          "packages/tools/replay-tool/README.md"
+        ],
+        "exclude": [
+          "**/node_modules/**"
+        ]
       }
     ],
     "resource": [
@@ -29,15 +31,17 @@
           "images/**",
           "examples/**/*.html",
           "**.png",
-          "**.jpg",
+          "**.jpg"
         ]
       },
       {
         "src": "../",
         "files": [
-          "packages/drivers/fluid-debugger/images/**.jpg",
+          "packages/drivers/fluid-debugger/images/**.jpg"
         ],
-        "exclude": ["**/node_modules/**"]
+        "exclude": [
+          "**/node_modules/**"
+        ]
       }
     ],
     "dest": "_site",
@@ -53,7 +57,7 @@
     "fileMetadataFiles": [],
     "template": [
       "default",
-      "templates/fluid",
+      "templates/fluid"
     ],
     "postProcessors": [],
     "markdownEngineName": "dfm-latest",
