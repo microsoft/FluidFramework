@@ -5,12 +5,11 @@
 
 import { APP_BASE_HREF } from '@angular/common';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { Component, Document } from "@prague/app-component";
-import { IContainerContext, IRuntime, IRequest, IPlatform } from "@prague/container-definitions";
-import { ISharedMap } from '@prague/map';
-import { Runtime } from "@prague/runtime";
-import { IComponent } from '@prague/runtime-definitions';
-import { EventEmitter } from "events";
+import { PrimedComponent, PrimedComponentFactory } from "@microsoft/fluid-aqueduct";
+import { IContainerContext, IRuntime, IRuntimeFactory } from "@microsoft/fluid-container-definitions";
+import { IComponentHTMLVisual, IRequest } from "@microsoft/fluid-component-core-interfaces";
+import { ContainerRuntime } from "@microsoft/fluid-container-runtime";
+import { ComponentFactoryTypes, IComponentContext, IComponentFactory, IComponentRegistry } from '@microsoft/fluid-runtime-definitions';
 import * as GraphiQL from "graphiql";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -19,20 +18,14 @@ import { AppModule } from './app/app.module';
 import { PRAGUE_PATH, PRAGUE_ROOT } from "./app/tokens";
 import { GraphQLService } from "./app/hero.service";
 
-class ViewPlatform extends EventEmitter implements IPlatform {
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-    
-    public async detach() {
-        return;
-    }
-}
+export class TourOfHeroes extends PrimedComponent implements IComponentHTMLVisual {
 
-export class TourOfHeroes extends Document {
+    public get IComponentHTMLVisual() { return this; }
+
     // Create the component's schema and perform other initialization tasks
     // (only called when document is initially created).
-    protected async create() {
+    protected async componentInitializingFirstTime() {
+        await super.componentInitializingFirstTime();
         const defaultHeroes = [
             { id: 11, name: 'Mr. Nice' },
             { id: 12, name: 'Narco' },
@@ -52,24 +45,14 @@ export class TourOfHeroes extends Document {
         }
     }
 
-    public getRoot(): ISharedMap {
-        return this.root;
-    }
-
     // The component has been loaded. Attempt to get a div from the host. TODO explain this better.
-    public async opened() {
-        await this.connected;
-
-        // If the host provided a <div>, render the component into that Div
-        const maybeDiv = await this.platform.queryInterface<HTMLDivElement>("div");
-        if (!maybeDiv) {
-            return;
-        }
+    public render(elm: HTMLElement) {
+        const maybeDiv = elm as HTMLDivElement;
 
         // Create root angular element
         const ngRoot = document.createElement("app-root");
         maybeDiv.appendChild(ngRoot);
-        
+
         const pathname = parse(window.location.href).pathname
 
         // And then bootstrap
@@ -83,40 +66,18 @@ export class TourOfHeroes extends Document {
     }
 }
 
-class TourOfHeroesComponentView extends EventEmitter implements IComponent, IPlatform {
+class TourOfHeroesComponentView implements IComponentHTMLVisual {
+    public get IComponentHTMLVisual() { return this; }
+
     public get id() {
         return this.path;
     }
 
     constructor(private realComponent: TourOfHeroes, private path: string) {
-        super();
     }
 
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-
-    public async detach() {
-        return;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        // To get the base component to fully initialize we attach (so opened is called) and then await the
-        // component interface to make sure it has been fully created.
-        // TODO should be an easier and cleaner way to do this
-        const realPlatform = await this.realComponent.attach(new ViewPlatform());
-        await realPlatform.queryInterface("component");
-
-        this.renderPath(platform);
-        return this;
-    }
-
-    private async renderPath(platform: IPlatform) {
-        // If the host provided a <div>, render the component into that Div
-        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        if (!maybeDiv) {
-            return;
-        }
+    public render(elm: HTMLElement) {
+        const maybeDiv = elm as HTMLDivElement;
 
         // Create root angular element
         const ngRoot = document.createElement("app-root");
@@ -129,7 +90,7 @@ class TourOfHeroesComponentView extends EventEmitter implements IComponent, IPla
             [
                 { provide: APP_BASE_HREF, useValue: pathname },
                 { provide: PRAGUE_PATH, useValue: this.path },
-                { provide: PRAGUE_ROOT, useValue: this.realComponent.getRoot() },
+                { provide: PRAGUE_ROOT, useValue: this.realComponent.root },
             ])
             .bootstrapModule(AppModule)
     }
@@ -137,27 +98,16 @@ class TourOfHeroesComponentView extends EventEmitter implements IComponent, IPla
 
 // Note on defining components - snapshotting does not seem like it should be part of an IChaincodeComponent given
 // these synthetic components don't need it. We may want this to just be "attach"
-class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
+class GraphIQLView implements IComponentHTMLVisual {
+    public get IComponentHTMLVisual() { return this; }
+
     public readonly id = "graphiql";
 
     constructor(private realComponent: TourOfHeroes) {
-        super();
     }
 
-    public async queryInterface<T>(id: string): Promise<T> {
-        return null;
-    }
-
-    public async detach() {
-        return;
-    }
-
-    public async attach(platform: IPlatform): Promise<IPlatform> {
-        // If the host provided a <div>, render the component into that Div
-        const maybeDiv = await platform.queryInterface<HTMLDivElement>("div");
-        if (!maybeDiv) {
-            return;
-        }
+    public render(elm: HTMLElement) {
+        const maybeDiv = elm as HTMLDivElement;
 
         maybeDiv.style.width = "100vw";
         maybeDiv.style.height = "100vh";
@@ -167,13 +117,7 @@ class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
         styleTag.innerText = css;
         document.head.appendChild(styleTag);
 
-        // To get the base component to fully initialize we attach (so opened is called) and then await the
-        // component interface to make sure it has been fully created.
-        // TODO should be an easier and cleaner way to do this
-        const realPlatform = await this.realComponent.attach(new ViewPlatform());
-        await realPlatform.queryInterface("component");
-
-        const graphQLServer = new GraphQLService(this.realComponent.getRoot());
+        const graphQLServer = new GraphQLService(this.realComponent.root);
 
         function graphQLFetcher(graphQLParams) {
             return graphQLServer.runQuery(graphQLParams.query, graphQLParams.variables);
@@ -191,40 +135,54 @@ class GraphIQLView extends EventEmitter implements IComponent, IPlatform {
     }
 }
 
-export async function instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-    const registry = new Map<string, any>([
-        [
-            "@chaincode/tourofheroes",
-            Promise.resolve(Component.createComponentFactory(TourOfHeroes)),
-        ],
-    ]);
+const TourOfHeroesType = "@chaincode/tourofheroes";
+const TourOfHeroesInstantiationFactory = new PrimedComponentFactory(TourOfHeroes, []);
+class TourOfHeroesContainerInstantiationFactory implements IRuntimeFactory, IComponentRegistry, IComponentFactory {
+    public get IComponentFactory() { return this; }
+    public get IComponentRegistry() { return this; }
+    public get IRuntimeFactory() { return this; }
 
-    const runtime = await Runtime.Load(registry, context);
-
-    // Register path handler for inbound messages
-    runtime.registerRequestHandler(async (request: IRequest) => {
-        const componentRuntime = await runtime.getComponent("app", true);
-        const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
-
-        // Root entry we will use the full component. Otherwise we will proxy to a view
-        if (!request.url) {
-            return { status: 200, mimeType: "fluid/component", value: tourOfHeroes };
-        } else if (request.url === "/graphiql") {
-            return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(tourOfHeroes) };
-        } else {
-            const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
-            return { status: 200, mimeType: "fluid/component", value: view };
+    public get(name: string): Promise<ComponentFactoryTypes> | undefined {
+        if (name === TourOfHeroesType) {
+            return Promise.resolve(TourOfHeroesInstantiationFactory);
         }
-    });
-
-    runtime.registerTasks(["snapshot"]);
-
-    // On first boot create the base component
-    if (!runtime.existing) {
-        runtime.createAndAttachComponent("app", "@chaincode/tourofheroes").catch((error) => {
-            context.error(error);
-        });
+        return undefined;
     }
 
-    return runtime;
-}
+    public instantiateComponent(context: IComponentContext): void {
+        TourOfHeroesInstantiationFactory.instantiateComponent(context);
+    }
+
+    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
+        const runtime = await ContainerRuntime.load(context, this,
+            TourOfHeroesContainerInstantiationFactory.createRequestHandler,
+            { generateSummaries: true });
+
+        // On first boot create the base component
+        if (!runtime.existing) {
+            const componentRuntime = await runtime.createComponent("app", TourOfHeroesType);
+            componentRuntime.attach();
+        }
+
+        return runtime;
+    }
+
+    private static createRequestHandler(runtime: ContainerRuntime) {
+        return async (request: IRequest) => {
+            const componentRuntime = await runtime.getComponentRuntime("app", true);
+            const tourOfHeroes = (await componentRuntime.request({ url: "/" })).value as TourOfHeroes;
+
+            // Root entry we will use the full component. Otherwise we will proxy to a view
+            if (!request.url) {
+                return { status: 200, mimeType: "fluid/component", value: tourOfHeroes };
+            } else if (request.url === "/graphiql") {
+                return { status: 200, mimeType: "fluid/component", value: new GraphIQLView(tourOfHeroes) };
+            } else {
+                const view = new TourOfHeroesComponentView(tourOfHeroes, request.url);
+                return { status: 200, mimeType: "fluid/component", value: view };
+            }
+        };
+    }
+};
+
+export const fluidExport = new TourOfHeroesContainerInstantiationFactory();
