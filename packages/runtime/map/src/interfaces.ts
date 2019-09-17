@@ -123,7 +123,7 @@ export interface IDirectory extends Map<string, any>, IValueTypeCreator {
 
     /**
      * Gets an IDirectory child of this IDirectory, if it exists.
-     * @param subdirName - Name of the child directory to create
+     * @param subdirName - Name of the child directory to get
      */
     getSubDirectory(subdirName: string): IDirectory;
 
@@ -194,10 +194,10 @@ export interface ISharedMap extends ISharedObject, Map<string, any>, IValueTypeC
         event: "pre-op" | "op",
         listener: (op: ISequencedDocumentMessage, local: boolean, target: this) => void): this;
     on(event: "valueChanged", listener: (
-                                        changed: IValueChanged,
-                                        local: boolean,
-                                        op: ISequencedDocumentMessage,
-                                        target: this) => void): this;
+        changed: IValueChanged,
+        local: boolean,
+        op: ISequencedDocumentMessage,
+        target: this) => void): this;
 }
 
 /**
