@@ -26,12 +26,7 @@ import { IWebsocketEndpoint } from "./contracts";
  * clients
  */
 export class ExperimentalOdspDocumentService implements IDocumentService {
-  // This should be used to make web socket endpoint requests, it ensures we only have one active join session call at a time.
-  private readonly websocketEndpointRequestThrottler: SinglePromise<IWebsocketEndpoint>;
-
-  // This is the result of a call to websocketEndpointSingleP, it is used to make sure that we don't make two join session
-  // calls to handle connecting to delta storage and delta stream.
-  private websocketEndpointP: Promise<IWebsocketEndpoint> | undefined;
+  private readonly joinSessionCache: JoinSessionCache;
 
   private storageManager?: OdspDocumentStorageManager;
 
@@ -66,7 +61,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
     private readonly deltasFetchWrapper: IFetchWrapper,
     private readonly socketIOClientP: Promise<SocketIOClientStatic>,
   ) {
-    this.websocketEndpointRequestThrottler = new SinglePromise(() =>
+    this.joinSessionCache = new JoinSessionCache(() =>
       getSocketStorageDiscovery(
         appId,
         driveId,
@@ -78,6 +73,10 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
         getWebsocketToken,
       ),
     );
+
+    // Pre-populate the join session cache.
+    // tslint:disable-next-line: no-floating-promises
+    this.joinSessionCache.getResponse();
   }
 
   /**
@@ -113,16 +112,7 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
    */
   public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
     const urlProvider = async () => {
-      if (!this.websocketEndpointP) {
-        // We should never get here
-        // the very first (proactive) call to fetch ops should be serviced from latest snapshot, resulting in no opStream call
-        // any other requests are result of catching up on missing ops and are coming after websocket is established (or reconnected),
-        // and thus we already have fresh join session call.
-        this.logger.send({category: "error", eventName: "OdspOpStreamPerf" });
-
-        this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
-      }
-      const websocketEndpoint = await this.websocketEndpointP;
+      const websocketEndpoint = await this.joinSessionCache.getResponse();
       return websocketEndpoint.deltaStorageUrl;
     };
 
@@ -143,10 +133,9 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
   public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
     // TODO: we should add protection to ensure we are only ever processing one connectToDeltaStream
 
-    // We should refresh our knowledge before attempting to reconnect
-    this.websocketEndpointP = this.websocketEndpointRequestThrottler.response;
+    const websocketEndpointP = this.joinSessionCache.getResponse();
 
-    const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
+    const [websocketEndpoint, webSocketToken, io] = await Promise.all([websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
     return DocumentDeltaConnection.create(
       websocketEndpoint.tenantId,
@@ -168,35 +157,34 @@ export class ExperimentalOdspDocumentService implements IDocumentService {
 }
 
 /**
- * Utility that makes sure that an expensive function fn
- * only has a single running instance at a time. For example,
- * this can ensure that only a single web request is pending at a
- * given time.
+ * Class that caches join session calls for a period of time
  */
-class SinglePromise<T> {
-  private pResponse: Promise<T> | undefined;
-  private active: boolean;
-  constructor(private readonly fn: () => Promise<T>) {
-    this.active = false;
-  }
+class JoinSessionCache {
+  // The cached join session call
+  private cachedJoinSessionCall: Promise<IWebsocketEndpoint> | undefined;
 
-  public get response(): Promise<T> {
-    // if we are actively running and we have a response return it
-    if (this.active && this.pResponse) {
-      return this.pResponse;
+  // The timestamp of the cached join session call
+  private joinSessionCallTime: number | undefined;
+
+  // Cache join session calls for 5 minutes.
+  private readonly joinSessionCacheTime = 5 * 60 * 1000;
+
+  constructor(private readonly joinSession: () => Promise<IWebsocketEndpoint>) {}
+
+  public getResponse(): Promise<IWebsocketEndpoint> {
+    if (!this.cachedJoinSessionCall || !this.joinSessionCallTime || this.joinSessionCallTime < performance.now() - this.joinSessionCacheTime) {
+      this.cachedJoinSessionCall = this.joinSession();
+      this.joinSessionCallTime = performance.now();
+
+      // If there is an exception, clear the cache.
+      this.cachedJoinSessionCall.catch(() => this.clearCache());
     }
 
-    this.active = true;
-    this.pResponse = this.fn()
-      .then((response) => {
-        this.active = false;
-        return response;
-      })
-      .catch((e) => {
-        this.active = false;
-        return Promise.reject(e);
-      });
+    return this.cachedJoinSessionCall;
+  }
 
-    return this.pResponse;
+  public clearCache() {
+    this.cachedJoinSessionCall = undefined;
+    this.joinSessionCallTime = undefined;
   }
 }
