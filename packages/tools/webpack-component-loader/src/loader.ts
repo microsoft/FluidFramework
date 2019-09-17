@@ -68,7 +68,7 @@ function modifyFluidPackage(packageJson: IPackage): IFluidPackage {
     return fluidPackage;
 }
 
-async function getPkg(packageJson: IPackage, scriptId: string, component = false): Promise<IResolvedPackage> {
+async function getPkg(packageJson: IPackage, scriptIds: string[], component = false): Promise<IResolvedPackage> {
 
     // Start the creation of pkg.
     if (!packageJson) {
@@ -81,10 +81,14 @@ async function getPkg(packageJson: IPackage, scriptId: string, component = false
 
     // Add script to page, rather than load bundle directly
     const scriptLoadP: Promise<void>[] = [];
+    const scriptIdPrefix = "pragueDevServerScriptToLoad";
+    let scriptIndex = 0;
     fluidPackage.fluid.browser.umd.files.forEach((file) => {
         const script = document.createElement("script");
         script.src = file;
+        const scriptId = `${scriptIdPrefix}_${scriptIndex++}`;
         script.id = scriptId;
+        scriptIds.push(scriptId);
 
         scriptLoadP.push(new Promise((resolve) => {
             script.onload = () => {
@@ -147,9 +151,8 @@ export async function start(
     const url = window.location.href;
 
     // Create Package
-    const scriptId = "pragueDevServerScriptToLoad";
-    const scriptIds = [scriptId];
-    const pkg = await getPkg(packageJson, scriptId, !!options.component);
+    const scriptIds: string[] = [];
+    const pkg = await getPkg(packageJson, scriptIds, !!options.component);
 
     // Construct a request
     const req: IRequest = {
