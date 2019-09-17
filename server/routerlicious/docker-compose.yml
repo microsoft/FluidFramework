@@ -47,12 +47,12 @@ services:
             - DEBUG=fluid:*
             - NODE_ENV=development
         restart: always
-    hard-disk:
+    copier:
         build:
             context: ../..
             dockerfile: server/routerlicious/Dockerfile
             target: runner
-        command: node dist/kafka-service/index.js hard-disk /usr/src/server/packages/server/routerlicious/dist/hard-disk/index.js
+        command: node dist/kafka-service/index.js copier /usr/src/server/packages/server/routerlicious/dist/copier/index.js
         environment:
             - DEBUG=fluid:*
             - NODE_ENV=development
