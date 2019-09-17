@@ -13,6 +13,29 @@ import {
 } from "@prague/protocol-definitions";
 
 /**
+ * Interface for error responses for the WebSocket connection
+ */
+export interface IOdspSocketError {
+    /**
+     * An error code number for the error that occurred
+     * It will be a valid HTTP status code
+     */
+    code: number;
+
+    /**
+     * A message about the error that occurred for debugging / logging purposes
+     * This should not be displayed to the user directly
+     */
+    message: string;
+
+    /**
+     * Optional Retry-After time in seconds
+     * The client should wait this many seconds before retrying its request
+     */
+    retryAfter?: number;
+}
+
+/**
  * Message sent to connect to the given document
  */
 export interface IConnect {

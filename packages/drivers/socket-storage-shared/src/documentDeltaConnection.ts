@@ -33,6 +33,9 @@ function createErrorObject(handler: string, error: any, critical = false) {
     // Can't use spread here because the error object's properties are not enumerable.
     // Just add the "critical" property in.
     (errorObj as any).critical = critical;
+    if (typeof error === "object") {
+        (errorObj as any).socketError = error;
+    }
     return errorObj;
 }
 

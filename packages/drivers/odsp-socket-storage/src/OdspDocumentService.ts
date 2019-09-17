@@ -12,13 +12,14 @@ import {
     IDocumentStorageService,
     IErrorTrackingService,
 } from "@prague/protocol-definitions";
-import { DocumentDeltaConnection } from "@prague/socket-storage-shared";
+import { DocumentDeltaConnection, IOdspSocketError } from "@prague/socket-storage-shared";
 import { SinglePromise } from "@prague/utils";
 import { IWebsocketEndpoint } from "./contracts";
 import { IFetchWrapper } from "./fetchWrapper";
 import { OdspDeltaStorageService } from "./OdspDeltaStorageService";
 import { OdspDocumentStorageManager } from "./OdspDocumentStorageManager";
 import { OdspDocumentStorageService } from "./OdspDocumentStorageService";
+import { delay } from "./utils";
 import { getSocketStorageDiscovery } from "./Vroom";
 
 /**
@@ -141,14 +142,28 @@ export class OdspDocumentService implements IDocumentService {
 
         const [websocketEndpoint, webSocketToken, io] = await Promise.all([this.websocketEndpointP, this.getWebsocketToken(), this.socketIOClientP]);
 
-        return DocumentDeltaConnection.create(
-            websocketEndpoint.tenantId,
-            websocketEndpoint.id,
-            webSocketToken,
-            io,
-            client,
-            websocketEndpoint.deltaStreamSocketUrl,
-        );
+        let documentDeltaConnection: IDocumentDeltaConnection;
+
+        try {
+            documentDeltaConnection = await DocumentDeltaConnection.create(
+                websocketEndpoint.tenantId,
+                websocketEndpoint.id,
+                webSocketToken,
+                io,
+                client,
+                websocketEndpoint.deltaStreamSocketUrl,
+            );
+        } catch (error) {
+            const socketError = (error as any).socketError as IOdspSocketError;
+            if (socketError && socketError.retryAfter) {
+                return delay(socketError.retryAfter).then(() => {
+                    return this.connectToDeltaStream(client);
+                });
+            } else {
+                throw error;
+            }
+        }
+        return documentDeltaConnection;
     }
 
     public async branch(): Promise<string> {
