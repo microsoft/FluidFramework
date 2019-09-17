@@ -303,7 +303,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.kernal.hasHandlerFor(message)) {
-                mapMessages.push(message as IMapOperation);
+                mapMessages.push(message);
             } else {
                 contentMessages.push(message);
             }

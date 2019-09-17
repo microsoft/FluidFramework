@@ -173,7 +173,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         const contentMessages: any[] = [];
         for (const message of pending) {
             if (this.intervalMapkernal.hasHandlerFor(message)) {
-                mapMessages.push(message as IMapOperation);
+                mapMessages.push(message);
             } else {
                 contentMessages.push(message);
             }
