@@ -18,7 +18,6 @@ export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
         if (!this.innerDocumentServiceP) {
-
             this.innerDocumentServiceP = InnerDocumentService.create();
         }
         return this.innerDocumentServiceP;

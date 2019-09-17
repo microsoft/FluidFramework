@@ -78,11 +78,9 @@ export class OuterDocumentService implements IDocumentService {
         const iframeContentWindow = frame!.contentWindow!;
 
         const connected = async () => {
-            console.log("OuterDocumentService.connected");
             return true;
         };
 
-        console.log("OuterDocumentService.DeltaConnected");
         const outerDocumentServiceProxy: IOuterProxy = {
             ...(this.outerDocumentDeltaConnection as OuterDocumentDeltaConnection)
                 .getOuterDocumentDeltaConnection(),
@@ -137,7 +135,6 @@ export class OuterDocumentService implements IDocumentService {
 
     private createDocumentDeltaConnection(client: IClient): IDocumentDeltaConnection {
         if (!this.outerDocumentDeltaConnection) {
-            // tslint:disable-next-line: promise-must-complete
             const proxiedFunctionsFromInnerFrameP = this.handshake.promise;
 
             assert((this.deltaConnection as any).socket !== undefined);
