@@ -40,8 +40,8 @@ available.
 `SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications. You should register for
 these events and respond appropriately as the data is modified.
 
-[valueChanged](xref:@prague/map!SharedMap%23on:member(2)) will be emitted in response to a
-<xref:@prague/map!SharedMap%23set:member(1)>, <xref:@prague/map!SharedMap%23clear:delete(1)> and provide the key and
+[valueChanged](<xref:@prague/map!SharedMap%23on:member(2)>) will be emitted in response to a
+<xref:@prague/map!SharedMap%23set:member(1)>, <xref:@prague/map!SharedMap%23delete:member(1)> and provide the key and
 previous value that was stored at that key.
 
 `clear` will be emitted in response to <xref:@prague/map!SharedMap%23clear:member(1)>.
