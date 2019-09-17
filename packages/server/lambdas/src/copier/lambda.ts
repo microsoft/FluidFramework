@@ -14,7 +14,7 @@ import {
 } from "@microsoft/fluid-server-services-core";
 // import * as winston from "winston";
 
-export class HardDiskLambda implements IPartitionLambda {
+export class CopierLambda implements IPartitionLambda {
     // private pending = new Map<string, ISequencedOperationMessage[]>();
     // private pendingOffset: number;
     // private current = new Map<string, ISequencedOperationMessage[]>();
@@ -29,7 +29,7 @@ export class HardDiskLambda implements IPartitionLambda {
     public handler(message: IKafkaMessage): void {
         const boxcar = extractBoxcar(message);
         // tslint:disable-next-line: prefer-template
-        console.log("hard-disk got a message! at doc id: " + boxcar.documentId);
+        console.log("copier got a message! at doc id: " + boxcar.documentId);
 
         // for (const baseMessage of boxcar.contents) {
         //     if (baseMessage.type === SequencedOperationType) {

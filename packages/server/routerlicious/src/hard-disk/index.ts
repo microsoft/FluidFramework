@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HardDiskLambdaFactory } from "@microsoft/fluid-server-lambdas";
+import { CopierLambdaFactory } from "@microsoft/fluid-server-lambdas";
 import * as services from "@microsoft/fluid-server-services";
 import { IPartitionLambdaFactory, MongoManager } from "@microsoft/fluid-server-services-core";
 import { Provider } from "nconf";
@@ -33,7 +33,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         },
         false);
 
-    console.log("hard-disk created!");
+    console.log("copier created!");
 
-    return new HardDiskLambdaFactory(mongoManager, opCollection, contentCollection);
+    return new CopierLambdaFactory(mongoManager, opCollection, contentCollection);
 }
