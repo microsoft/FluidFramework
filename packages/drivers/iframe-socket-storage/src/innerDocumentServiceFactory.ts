@@ -11,11 +11,16 @@ import { InnerDocumentService } from "./innerDocumentService";
  */
 export class InnerDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
+    private innerDocumentServiceP: Promise<IDocumentService> | undefined;
     constructor() {
 
     }
 
     public async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        return InnerDocumentService.create();
+        if (!this.innerDocumentServiceP) {
+
+            this.innerDocumentServiceP = InnerDocumentService.create();
+        }
+        return this.innerDocumentServiceP;
     }
 }
