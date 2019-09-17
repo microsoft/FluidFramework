@@ -23,15 +23,13 @@ import {
 import { fromBase64ToUtf8 } from "@prague/utils";
 import { debug } from "./debug";
 import {
-    ISerializableValue,
     ISharedMap,
     IValueChanged,
-    IValueTypeOperationValue,
 } from "./interfaces";
 import {
     valueTypes,
 } from "./localValues";
-import { Mapkernel } from "./mapkernel";
+import { IMapDataObject, IMapOperation, MapKernel } from "./MapKernel";
 import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
@@ -45,42 +43,6 @@ export class ContentObjectStorage implements IObjectStorageService {
     public read(path: string): Promise<string> {
         return this.storage.read(`${contentPath}/${path}`);
     }
-}
-
-interface IMapValueTypeOperation {
-    type: "act";
-    key: string;
-    value: IValueTypeOperationValue;
-}
-
-interface IMapSetOperation {
-    type: "set";
-    key: string;
-    value: ISerializableValue;
-}
-
-interface IMapDeleteOperation {
-    type: "delete";
-    key: string;
-}
-
-type IMapKeyOperation = IMapValueTypeOperation | IMapSetOperation | IMapDeleteOperation;
-
-interface IMapClearOperation {
-    type: "clear";
-}
-
-/**
- * Description of a map delta operation
- */
-type IMapOperation = IMapKeyOperation | IMapClearOperation;
-
-/**
- * Defines the in-memory object structure to be used for the conversion to/from serialized.
- * Directly used in JSON.stringify, direct result from JSON.parse
- */
-interface IMapDataObject {
-    [key: string]: ISerializableValue;
 }
 
 /**
@@ -148,7 +110,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
     }
 
     public readonly [Symbol.toStringTag]: string = "SharedMap";
-    private readonly kernel: Mapkernel;
+    private readonly kernel: MapKernel;
 
     /**
      * Constructs a new shared map. If the object is non-local an id and service interfaces will
@@ -160,7 +122,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
         attributes = MapFactory.Attributes,
     ) {
         super(id, runtime, attributes);
-        this.kernel = new Mapkernel(
+        this.kernel = new MapKernel(
             runtime,
             this.handle,
             (op) => this.submitMapMessage(op),
@@ -225,7 +187,7 @@ export class SharedMap extends SharedObject implements ISharedMap {
      * {@inheritDoc IValueTypeCreator.createValueType}
      */
     public createValueType(key: string, type: string, params: any): this {
-        this.createValueType(key, type, params);
+        this.kernel.createValueType(key, type, params);
         return this;
     }
 

@@ -27,7 +27,7 @@ import {
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { SharedIntervalCollection} from "./sharedIntervaleCollection";
+import { SharedIntervalCollection} from "./sharedIntervalCollection";
 
 export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
 extends SharedIntervalCollection<SequenceInterval> {
@@ -497,16 +497,16 @@ extends SharedIntervalCollection<SequenceInterval> {
     private initializeIntervalCollections() {
 
         // Listen and initialize new SharedIntervalCollections
-        this.intervalMapkernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
-            const intervalCollection = this.intervalMapkernel.get<IntervalCollection<SequenceInterval>>(ev.key);
+        this.intervalMapKernel.eventEmitter.on("valueChanged", (ev: IValueChanged) => {
+            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(ev.key);
             if (!intervalCollection.attached) {
                 intervalCollection.attach(this.client, ev.key);
             }
         });
 
         // Initialize existing SharedIntervalCollections
-        for (const key of this.intervalMapkernel.keys()) {
-            const intervalCollection = this.intervalMapkernel.get<IntervalCollection<SequenceInterval>>(key);
+        for (const key of this.intervalMapKernel.keys()) {
+            const intervalCollection = this.intervalMapKernel.get<IntervalCollection<SequenceInterval>>(key);
             intervalCollection.attach(this.client, key);
         }
     }

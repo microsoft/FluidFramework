@@ -20,4 +20,4 @@ export * from "./counter";
 export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
-export * from "./mapkernel";
+export * from "./MapKernel";
