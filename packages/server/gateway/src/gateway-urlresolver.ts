@@ -77,7 +77,7 @@ function r11sResolveUrl(
             storageUrl,
         },
         tokens: { jwt: token },
-        type: "prague",
+        type: "fluid",
         url: fluidUrl,
     };
     const resolvedP = Promise.resolve(resolvedUrl);
