@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Char, KeyCode, randomId } from "@prague/flow-util";
+import { Char, KeyCode, randomId } from "@fluid-example/flow-util-lib";
 import { ISegment, MapLike, TextSegment } from "@prague/merge-tree";
 import { strict as assert } from "assert";
 import { FlowDocument, getDocSegmentKind } from "../document";

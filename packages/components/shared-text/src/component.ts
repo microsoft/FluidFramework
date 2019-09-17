@@ -5,7 +5,7 @@
 
 import { SharedCell } from "@prague/cell";
 import * as API from "@prague/client-api";
-import { controls, ui } from "@prague/client-ui";
+import { controls, ui } from "@fluid-example/client-ui-lib";
 import {
     IComponent,
     IComponentHandle,
@@ -15,7 +15,7 @@ import {
     IResponse } from "@prague/component-core-interfaces";
 import { ComponentRuntime } from "@prague/component-runtime";
 import { IInk, Ink } from "@prague/ink";
-import { TextAnalyzer } from "@prague/intelligence-runner";
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as DistributedMap from "@prague/map";
 import {
     ISharedMap,

@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/scribe",
+  "name": "@fluid-example/scribe",
   "description": "Scribe document writer",
   "version": "0.10.0",
   "author": "Microsoft",

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocumentType } from "@chaincode/table-document";
+import { TableDocumentType } from "@fluid-example/table-document";
 import { SimpleModuleInstantiationFactory } from "@prague/aqueduct";
 
-export const tableViewType = "@chaincode/table-view";
+export const tableViewType = "@fluid-example/table-view";
 
 export const fluidExport = new SimpleModuleInstantiationFactory(
     tableViewType,
     new Map([
         [tableViewType, import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableview").then((m) => m.TableView.getFactory())],
-        [TableDocumentType, import(/* webpackChunkName: "table-document", webpackPreload: true */ "@chaincode/table-document").then((m) => m.TableDocument.getFactory())],
+        [TableDocumentType, import(/* webpackChunkName: "table-document", webpackPreload: true */ "@fluid-example/table-document").then((m) => m.TableDocument.getFactory())],
     ]),
 );

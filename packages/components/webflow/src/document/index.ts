@@ -5,7 +5,7 @@
 
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import { IComponent, IComponentHandle, IComponentHTMLOptions } from "@prague/component-core-interfaces";
-import { randomId, TokenList } from "@prague/flow-util";
+import { randomId, TokenList } from "@fluid-example/flow-util-lib";
 import {
     BaseSegment,
     createInsertSegmentOp,

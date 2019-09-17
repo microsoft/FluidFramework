@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TableDocument, TableDocumentType } from "@chaincode/table-document";
+import { TableDocument, TableDocumentType } from "@fluid-example/table-document";
 import { PrimedComponent, PrimedComponentFactory } from "@prague/aqueduct";
 import {
     IComponentHTMLOptions,
     IComponentHTMLVisual,
 } from "@prague/component-core-interfaces";
-import { Template } from "@prague/flow-util";
+import { Template } from "@fluid-example/flow-util-lib";
 import { IComponentContext, IComponentRuntime } from "@prague/runtime-definitions";
 import { GridView } from "./grid";
 import * as styles from "./index.css";

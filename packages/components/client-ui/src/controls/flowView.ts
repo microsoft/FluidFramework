@@ -5,7 +5,7 @@
 
 // tslint:disable:no-bitwise whitespace align switch-default no-string-literal ban-types
 // tslint:disable:no-angle-bracket-type-assertion arrow-parens
-import * as SearchMenu from "@chaincode/search-menu";
+import * as SearchMenu from "@fluid-example/search-menu";
 import * as api from "@prague/client-api";
 import {
     IComponent,

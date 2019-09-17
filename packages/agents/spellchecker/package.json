@@ -1,5 +1,5 @@
 {
-  "name": "@prague/spellchecker",
+  "name": "@fluid-example/spellchecker-agent",
   "version": "0.10.0",
   "description": "Spellchecker for sharedString",
   "main": "dist/index.js",

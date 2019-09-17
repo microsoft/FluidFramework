@@ -5,7 +5,7 @@
 
 import { IComponentHandle } from "@prague/component-core-interfaces";
 import { IHost } from "@prague/container-definitions";
-import { TextAnalyzer } from "@prague/intelligence-runner";
+import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import { ISharedMap, SharedMap } from "@prague/map";
 import { IDocumentServiceFactory } from "@prague/protocol-definitions";
 import * as Sequence from "@prague/sequence";

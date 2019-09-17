@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@prague/flow-util";
+import { CaretEventType, Direction, Dom, getDeltaX, getDeltaY, ICaretEvent } from "@fluid-example/flow-util-lib";
 import { LocalReference } from "@prague/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp } from "../util";

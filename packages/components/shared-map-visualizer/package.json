@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/shared-map-visualizer",
+  "name": "@fluid-example/shared-map-visualizer",
   "description": "Shared map visualizer",
   "version": "0.10.0",
   "author": "Microsoft",

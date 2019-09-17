@@ -4,7 +4,7 @@
  */
 
 import { IComponent } from "@prague/component-core-interfaces";
-import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@prague/flow-util";
+import { Caret as CaretUtil, Direction, getDeltaX, getDeltaY, KeyCode, Scheduler } from "@fluid-example/flow-util-lib";
 import { DocSegmentKind, FlowDocument, getDocSegmentKind } from "../document";
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter";
 import { eotSegment, Layout } from "../view/layout";

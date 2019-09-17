@@ -1,5 +1,5 @@
 {
-  "name": "@prague/translator",
+  "name": "@fluid-example/translator-agent",
   "version": "0.10.0",
   "description": "Translator for sharedString",
   "main": "dist/index.js",

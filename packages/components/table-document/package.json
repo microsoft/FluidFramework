@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/table-document",
+  "name": "@fluid-example/table-document",
   "description": "Chaincode component containing a table's data",
   "version": "0.10.0",
   "author": "Microsoft",

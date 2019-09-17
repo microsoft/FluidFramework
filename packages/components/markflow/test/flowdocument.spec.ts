@@ -13,7 +13,7 @@ import * as assert from "assert";
 import { FlowDocument, flowDocumentFactory } from "../src/document";
 import { FlowDocumentType } from "../src/runtime";
 
-import { randomId } from "@prague/flow-util";
+import { randomId } from "@fluid-example/flow-util-lib";
 import { Tag } from "../src/util/tag";
 
 describe("FlowDocument", () => {

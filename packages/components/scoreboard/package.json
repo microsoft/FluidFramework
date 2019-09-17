@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/scoreboard",
+  "name": "@fluid-example/scoreboard",
   "description": "Scoreboard component",
   "version": "0.10.0",
   "author": "Microsoft",

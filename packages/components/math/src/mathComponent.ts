@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as SearchMenu from "@chaincode/search-menu";
-import * as ClientUI from "@prague/client-ui";
+import * as SearchMenu from "@fluid-example/search-menu";
+import * as ClientUI from "@fluid-example/client-ui-lib";
 import {
     IComponent,
     IComponentHandleContext,
@@ -18,7 +18,7 @@ import {
     IResponse,
 } from "@prague/component-core-interfaces";
 import { ComponentHandle, ComponentRuntime } from "@prague/component-runtime";
-import { Caret, CaretEventType, Direction, ICaretEvent } from "@prague/flow-util";
+import { Caret, CaretEventType, Direction, ICaretEvent } from "@fluid-example/flow-util-lib";
 import {
     ComponentCursorDirection,
     IComponentCollection,

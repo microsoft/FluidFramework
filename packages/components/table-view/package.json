@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/table-view",
+  "name": "@fluid-example/table-view",
   "version": "0.10.0",
   "description": "Chaincode component that provides a view for a table-document.",
   "main": "dist/index.js",
@@ -45,11 +45,11 @@
   "author": "Microsoft",
   "repository": "microsoft/prague",
   "dependencies": {
-    "@chaincode/table-document": "^0.10.0",
+    "@fluid-example/table-document": "^0.10.0",
     "@prague/aqueduct": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
-    "@prague/flow-util": "^0.10.0",
+    "@fluid-example/flow-util-lib": "^0.10.0",
     "@prague/map": "^0.10.0",
     "@prague/runtime-definitions": "^0.10.0"
   },

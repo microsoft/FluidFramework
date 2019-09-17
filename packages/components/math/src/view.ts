@@ -5,7 +5,7 @@
 
 // tslint:disable:no-empty-interface
 
-import { Caret, CaretEventType, Direction, Dom, ICaretEvent, KeyCode, Template, View } from "@prague/flow-util";
+import { Caret, CaretEventType, Direction, Dom, ICaretEvent, KeyCode, Template, View } from "@fluid-example/flow-util-lib";
 import { debug } from "./debug";
 import * as style from "./index.css";
 

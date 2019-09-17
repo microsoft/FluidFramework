@@ -4,7 +4,7 @@
  */
 // tslint:disable:align
 import { IComponent } from "@prague/component-core-interfaces";
-import { Dom, Scheduler } from "@prague/flow-util";
+import { Dom, Scheduler } from "@fluid-example/flow-util-lib";
 import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@prague/merge-tree";
 import { SequenceEvent } from "@prague/sequence";
 import * as assert from "assert";

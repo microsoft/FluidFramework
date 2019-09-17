@@ -1,5 +1,5 @@
 {
-  "name": "@chaincode/search-menu",
+  "name": "@fluid-example/search-menu",
   "description": "Search menu",
   "version": "0.10.0",
   "author": "Microsoft",

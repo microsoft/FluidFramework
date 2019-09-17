@@ -4,7 +4,7 @@
  */
 
 import { PrimedComponent } from "@prague/aqueduct";
-import { controls, ui } from "@prague/client-ui";
+import { controls, ui } from "@fluid-example/client-ui-lib";
 import {
     IComponentHandle,
     IComponentHTMLOptions,

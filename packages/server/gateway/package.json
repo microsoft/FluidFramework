@@ -49,11 +49,11 @@
     "report-dir": "nyc/report"
   },
   "dependencies": {
-    "@chaincode/shared-text": "^0.10.0",
+    "@fluid-example/shared-text": "^0.10.0",
     "@microsoft/fluid-server-agent": "^0.10.0",
     "@prague/base-host": "^0.10.0",
     "@prague/client-api": "^0.10.0",
-    "@prague/client-ui": "^0.10.0",
+    "@fluid-example/client-ui-lib": "^0.10.0",
     "@prague/component-core-interfaces": "^0.10.0",
     "@prague/container-definitions": "^0.10.0",
     "@prague/container-loader": "^0.10.0",

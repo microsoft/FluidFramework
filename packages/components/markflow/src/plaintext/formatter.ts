@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Char, Direction, getDeltaX, KeyCode } from "@prague/flow-util";
+import { Char, Direction, getDeltaX, KeyCode } from "@fluid-example/flow-util-lib";
 import { ISegment, TextSegment } from "@prague/merge-tree";
 import { FlowDocument } from "..";
 import { ClipboardFormat } from "../clipboard/paste";

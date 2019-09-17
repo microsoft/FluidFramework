@@ -1,5 +1,5 @@
 {
-  "name": "@component/blob-manager",
+  "name": "@microsoft/fluid-blob-manager",
   "version": "0.10.0",
   "description": "Blob management component",
   "main": "dist/index.js",

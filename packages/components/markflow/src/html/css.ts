@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { areStringsEquivalent } from "@prague/flow-util";
+import { areStringsEquivalent } from "@fluid-example/flow-util-lib";
 import { ISegment } from "@prague/merge-tree";
 import { getCss } from "../document";
 

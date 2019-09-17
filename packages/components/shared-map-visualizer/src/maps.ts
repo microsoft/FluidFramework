@@ -224,11 +224,11 @@ class SharedMapVisualizerFactory implements IComponentFactory, IRuntimeFactory {
 
     public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
         const registry = new Map<string, Promise<IComponentFactory>>([
-            ["@chaincode/shared-map-visualizer", Promise.resolve(this)],
+            ["@fluid-example/shared-map-visualizer", Promise.resolve(this)],
         ]);
 
         const defaultComponentId = "default";
-        const defaultComponent = "@chaincode/shared-map-visualizer";
+        const defaultComponent = "@fluid-example/shared-map-visualizer";
 
         const runtime = await ContainerRuntime.load(
             context,
