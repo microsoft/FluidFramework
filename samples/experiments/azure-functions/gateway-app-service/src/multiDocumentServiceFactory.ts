@@ -9,7 +9,7 @@ import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@prague
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(private factoryMap: { [protocol: string]: IDocumentServiceFactory }) { }
     public createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-        if (resolvedUrl.type === "prague") {
+        if (resolvedUrl.type === "fluid") {
             const urlObj = new URL(resolvedUrl.url);
             const factory = this.factoryMap[urlObj.protocol];
             if (factory === undefined) { return Promise.reject(new Error("Unknown prague protocol")); }
